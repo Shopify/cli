@@ -230,12 +230,12 @@ describe('getUIExtensionPayload', () => {
           assets: {
             main: {
               name: 'main',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/src/ExtensionPointA.js',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
               lastUpdated: expect.any(Number),
             },
             should_render: {
               name: 'should_render',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/src/ShouldRender.js',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-conditions.js',
               lastUpdated: expect.any(Number),
             },
           },

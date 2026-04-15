@@ -38,10 +38,7 @@ const webPixelSpec = createExtensionSpecification({
   clientSteps: [
     {
       lifecycle: 'deploy',
-      steps: [
-        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
-        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
-      ],
+      steps: [{id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}}],
     },
   ],
   deployConfig: async (config, _) => {

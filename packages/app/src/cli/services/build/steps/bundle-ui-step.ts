@@ -1,7 +1,9 @@
-import {mergeManifestEntries} from './include-assets/generate-manifest.js'
+import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import type {LifecycleStep, BuildContext} from '../client-steps.js'
+import {copyFile} from '@shopify/cli-kit/node/fs'
+import {dirname} from '@shopify/cli-kit/node/path'
+import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
 interface ExtensionPointWithBuildManifest {
   target: string
@@ -11,23 +13,28 @@ interface ExtensionPointWithBuildManifest {
 /**
  * Executes a bundle_ui build step.
  *
- * Bundles the UI extension using esbuild, writing output to extension.outputPath.
- * When `generatesAssetsManifest` is true, writes built asset entries (from
- * build_manifest) into manifest.json so downstream steps can merge on top.
+ * Bundles the UI extension using esbuild into the extension's local directory
+ * and copies the output to the bundle. When `generatesAssetsManifest` is true,
+ * writes built asset entries (from build_manifest) into manifest.json so
+ * downstream steps can merge on top.
  */
-export async function executeBundleUIStep(step: LifecycleStep, context: BuildContext): Promise<void> {
-  await buildUIExtension(context.extension, context.options)
+export async function executeBundleUIStep(step: BundleUIStep, context: BuildContext): Promise<void> {
+  const config = context.extension.configuration
+  const localOutputPath = await buildUIExtension(context.extension, context.options)
+  // Copy the locally built files into the bundle
+  await copyFile(dirname(localOutputPath), dirname(context.extension.outputPath))
 
-  if (!('generatesAssetsManifest' in step) || !step.generatesAssetsManifest) return
+  if (!step.config?.generatesAssetsManifest) return
 
-  const config = context.extension.configuration as Record<string, unknown>
-  const extensionPoints = config.extension_points
-  if (!Array.isArray(extensionPoints) || !extensionPoints.every((ep) => typeof ep === 'object' && ep?.build_manifest))
-    return
+  if (!Array.isArray(config.extension_points)) return
 
-  const entries = extractBuiltAssetEntries(extensionPoints as ExtensionPointWithBuildManifest[])
+  const pointsWithManifest = config.extension_points.filter(
+    (ep): ep is ExtensionPointWithBuildManifest => typeof ep === 'object' && ep.build_manifest,
+  )
+
+  const entries = extractBuiltAssetEntries(pointsWithManifest)
   if (Object.keys(entries).length > 0) {
-    await mergeManifestEntries(context, entries)
+    await createOrUpdateManifestFile(context, entries)
   }
 }
 

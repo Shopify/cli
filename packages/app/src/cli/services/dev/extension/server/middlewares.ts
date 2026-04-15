@@ -5,7 +5,7 @@ import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
-import {joinPath, resolvePath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -78,13 +78,23 @@ export function getExtensionAssetMiddleware({getExtensions}: GetExtensionsMiddle
       })
     }
 
-    // Try the extension's build output first (for compiled assets), then fall back
-    // to the extension's source directory (for static assets like tools, instructions).
-    const buildPath = joinPath(extension.directory, extension.outputRelativePath)
-    if (await fileExists(buildPath)) {
-      return fileServerMiddleware(event, {filePath: buildPath})
+    const resolvedExtensionDirectory = resolvePath(extension.directory)
+    const builtAssetPath = joinPath(
+      dirname(joinPath(resolvedExtensionDirectory, extension.outputRelativePath)),
+      assetPath,
+    )
+
+    // Try the build output directory first (for compiled assets like dist/handle.js),
+    // then fall back to the extension's source directory (for static assets like tools, instructions).
+    const filePath = (await fileExists(builtAssetPath))
+      ? builtAssetPath
+      : joinPath(resolvedExtensionDirectory, assetPath)
+
+    if (!filePath.startsWith(resolvedExtensionDirectory)) {
+      return sendError(event, {statusCode: 403, statusMessage: 'Path traversal is not allowed'})
     }
-    return fileServerMiddleware(event, {filePath: joinPath(extension.directory, assetPath)})
+
+    return fileServerMiddleware(event, {filePath})
   })
 }
 

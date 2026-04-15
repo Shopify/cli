@@ -109,7 +109,7 @@ export async function generateManifestFile(
     return
   }
 
-  await mergeManifestEntries(context, manifest)
+  await createOrUpdateManifestFile(context, manifest)
 }
 
 /**
@@ -117,7 +117,10 @@ export async function generateManifestFile(
  * Reads the existing manifest if present and deep merges the new entries.
  * This allows multiple build steps to contribute to the same manifest.
  */
-export async function mergeManifestEntries(context: BuildContext, entries: {[key: string]: unknown}): Promise<void> {
+export async function createOrUpdateManifestFile(
+  context: BuildContext,
+  entries: {[key: string]: unknown},
+): Promise<void> {
   const outputPath = context.extension.outputPath
   /**
    * Resolves the output directory from an extension's outputPath.
@@ -127,13 +130,20 @@ export async function mergeManifestEntries(context: BuildContext, entries: {[key
 
   const manifestPath = joinPath(outputDir, 'manifest.json')
 
+  // Create the output directory
+  if (!(await fileExists(outputDir))) {
+    await mkdir(outputDir)
+  }
+
   let existing: {[key: string]: unknown} = {}
   if (await fileExists(manifestPath)) {
-    const content = await readFile(manifestPath)
-    existing = JSON.parse(content)
-  } else {
-    // Create the output directory
-    await mkdir(outputDir)
+    try {
+      const content = await readFile(manifestPath)
+      existing = JSON.parse(content)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      outputDebug(`Warning: could not parse existing manifest.json, starting fresh\n`, context.options.stdout)
+    }
   }
 
   // Deep merge: for each key, if both old and new are objects, merge their fields

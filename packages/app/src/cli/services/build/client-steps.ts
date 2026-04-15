@@ -22,15 +22,16 @@ interface IncludeAssetsStep extends BaseStep {
 }
 
 /** Step with typed config specific to bundle_ui. */
-interface BundleUIStep extends BaseStep {
+export interface BundleUIStep extends BaseStep {
   readonly type: 'bundle_ui'
-  readonly generatesAssetsManifest?: boolean
-  readonly config?: Record<string, never>
+  readonly config?: {
+    readonly generatesAssetsManifest?: boolean
+  }
 }
 
 /** Steps that don't require any config yet. */
 interface NoConfigStep extends BaseStep {
-  readonly type: 'build_theme' | 'bundle_theme' | 'copy_static_assets' | 'build_function' | 'create_tax_stub'
+  readonly type: 'build_theme' | 'bundle_theme' | 'build_function' | 'create_tax_stub'
   readonly config?: Record<string, never>
 }
 

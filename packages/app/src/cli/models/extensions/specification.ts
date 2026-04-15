@@ -134,11 +134,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   ) => Promise<void>
 
   /**
-   * Copy static assets from the extension directory to the output path
-   */
-  copyStaticAssets?: (configuration: TConfiguration, directory: string, outputPath: string) => Promise<void>
-
-  /**
    * Custom watch configuration for dev sessions.
    * Return a DevSessionWatchConfig with paths to watch and optionally paths to ignore,
    * or undefined to watch all files in the extension directory.

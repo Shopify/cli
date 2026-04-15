@@ -460,16 +460,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   /**
-   * Copy static assets from the extension directory to the output path
-   * Used by both dev and deploy builds
-   */
-  async copyStaticAssets(outputPath?: string) {
-    if (this.specification.copyStaticAssets) {
-      return this.specification.copyStaticAssets(this.configuration, this.directory, outputPath ?? this.outputPath)
-    }
-  }
-
-  /**
    * Rescans imports for this extension and updates the cached import paths
    * Returns true if the imports changed
    */

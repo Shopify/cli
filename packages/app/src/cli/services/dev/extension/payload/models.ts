@@ -1,5 +1,6 @@
 import {Localization} from '../localization.js'
 import type {NewExtensionPointSchemaType, ApiVersionSchemaType} from '../../../../models/extensions/schemas.js'
+import type {BuildManifest} from '../../../../models/extensions/specifications/ui_extension.js'
 
 interface ExtensionsPayloadInterface {
   app: {
@@ -48,12 +49,13 @@ export interface DevNewExtensionPointSchema extends Omit<NewExtensionPointSchema
   resource: {
     url: string
   }
+  build_manifest?: BuildManifest
   intents?: {
     type: string
     action: string
     name?: string
     description?: string
-    schema: Asset
+    schema: string | Asset
   }[]
 }
 

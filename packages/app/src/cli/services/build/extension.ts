@@ -58,13 +58,17 @@ export interface ExtensionBuildOptions {
 /**
  * It builds the UI extensions.
  * @param options - Build options.
+ * @returns The local output path.
  */
-export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
+export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<string> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
   const env = options.app.dotenv?.variables ?? {}
   if (options.appURL) {
     env.APP_URL = options.appURL
   }
+
+  // Always build into the extension's local directory (e.g. ext/dist/handle.js)
+  const localOutputPath = joinPath(extension.directory, extension.outputRelativePath)
 
   const {main, assets} = extension.getBundleExtensionStdinContent()
 
@@ -72,7 +76,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   try {
     await bundleExtension({
       minify: true,
-      outputPath: extension.outputPath,
+      outputPath: localOutputPath,
       stdin: {
         contents: main,
         resolveDir: extension.directory,
@@ -89,7 +93,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
         assets.map(async (asset) => {
           await bundleExtension({
             minify: true,
-            outputPath: joinPath(dirname(extension.outputPath), asset.outputFileName),
+            outputPath: joinPath(dirname(localOutputPath), asset.outputFileName),
             stdin: {
               contents: asset.content,
               resolveDir: extension.directory,
@@ -120,8 +124,9 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   await extension.buildValidation()
 
   const duration = Math.round(performance.now() - startTime)
-  const sizeInfo = await formatBundleSize(extension.outputPath)
+  const sizeInfo = await formatBundleSize(localOutputPath)
   options.stdout.write(`${extension.localIdentifier} successfully built in ${duration}ms${sizeInfo}`)
+  return localOutputPath
 }
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions

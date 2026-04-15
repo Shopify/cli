@@ -258,17 +258,17 @@ describe('getExtensionAssetMiddleware()', () => {
         },
       })
 
-      // Create the built output file at the outputRelativePath (e.g. dist/handle.js)
+      // Create the built output file in dist/ (e.g. dist/handle.js)
       const outputDir = joinPath(tmpDir, 'dist')
       await mkdir(outputDir)
-      const outputFile = joinPath(tmpDir, extension.outputRelativePath)
+      const outputFile = joinPath(outputDir, extension.outputFileName)
       await touchFile(outputFile)
       await writeFile(outputFile, 'compiled bundle content')
 
       const event = getMockEvent({
         params: {
           extensionId: extension.devUUID,
-          assetPath: extension.outputRelativePath,
+          assetPath: extension.outputFileName,
         },
       })
 
@@ -276,6 +276,37 @@ describe('getExtensionAssetMiddleware()', () => {
 
       expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/javascript')
       expect(result).toBe('compiled bundle content')
+    })
+  })
+
+  test('serves built asset over source file when both exist', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const extension = await testUIExtension({directory: tmpDir})
+
+      const options = getOptions({
+        devOptions: {
+          extensions: [extension],
+        },
+      })
+
+      // Create both a source file and a built file with the same name
+      const fileName = extension.outputFileName
+      await writeFile(joinPath(tmpDir, fileName), 'source content')
+      const outputDir = joinPath(tmpDir, 'dist')
+      await mkdir(outputDir)
+      await writeFile(joinPath(outputDir, fileName), 'built content')
+
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: fileName,
+        },
+      })
+
+      const result = await getExtensionAssetMiddleware(options)(event)
+
+      // Built asset takes priority
+      expect(result).toBe('built content')
     })
   })
 })
