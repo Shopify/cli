@@ -522,7 +522,7 @@ describe('ExtensionsPayloadStore()', () => {
       store.updateAdminConfigFromExtensionEvents([{extension: adminExt} as unknown as ExtensionEvent])
 
       // Then
-      expect(store.getRawPayload().app.allowed_domains).toBeUndefined()
+      expect(store.getRawPayload().app.allowed_domains).toStrictEqual([])
     })
 
     test('does nothing when no admin extension event is present', () => {
