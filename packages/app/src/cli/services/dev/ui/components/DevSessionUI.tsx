@@ -15,7 +15,7 @@ import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, terminalSupportsHyperlinks} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
@@ -126,7 +126,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       shortcuts: [
         {
           key: 'p',
-          condition: () => Boolean(status.previewURL && status.isReady),
+          condition: () => Boolean(status.isReady && status.previewURL),
           action: async () => {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_preview_url_opened: true,
@@ -138,7 +138,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         },
         {
           key: 'g',
-          condition: () => Boolean(status.graphiqlURL && status.isReady),
+          condition: () => Boolean(status.isReady && status.graphiqlURL),
           action: async () => {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_graphiql_opened: true,
@@ -168,19 +168,34 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           )}
           {canUseShortcuts && (
             <Box marginTop={1} flexDirection="column">
-              {status.isReady ? (
+              {status.isReady && status.previewURL ? (
                 <Text>
-                  {figures.pointerSmall} <Text bold>(p)</Text> Open app preview
+                  {figures.pointerSmall} <Text bold>(p)</Text>{' '}
+                  {terminalSupportsHyperlinks() ? (
+                    <Link url={status.previewURL} label="Open app preview" />
+                  ) : (
+                    'Open app preview'
+                  )}
                 </Text>
               ) : null}
               {status.isReady && !status.appEmbedded && status.hasExtensions ? (
                 <Text>
-                  {figures.pointerSmall} <Text bold>(c)</Text> Open Dev Console for extension previews
+                  {figures.pointerSmall} <Text bold>(c)</Text>{' '}
+                  {terminalSupportsHyperlinks() ? (
+                    <Link url={buildDevConsoleURL(shopFqdn)} label="Open Dev Console for extension previews" />
+                  ) : (
+                    'Open Dev Console for extension previews'
+                  )}
                 </Text>
               ) : null}
-              {status.graphiqlURL && status.isReady ? (
+              {status.isReady && status.graphiqlURL ? (
                 <Text>
-                  {figures.pointerSmall} <Text bold>(g)</Text> Open GraphiQL (Admin API)
+                  {figures.pointerSmall} <Text bold>(g)</Text>{' '}
+                  {terminalSupportsHyperlinks() ? (
+                    <Link url={status.graphiqlURL} label="Open GraphiQL (Admin API)" />
+                  ) : (
+                    'Open GraphiQL (Admin API)'
+                  )}
                 </Text>
               ) : null}
             </Box>
@@ -190,7 +205,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               <Text>{isShuttingDownMessage}</Text>
             ) : (
               <>
-                {status.isReady && (
+                {status.isReady && !(canUseShortcuts && terminalSupportsHyperlinks()) && (
                   <>
                     {status.previewURL ? (
                       <Text>

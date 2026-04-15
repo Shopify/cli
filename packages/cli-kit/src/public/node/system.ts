@@ -7,6 +7,7 @@ import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from './output.js'
 import {execa, execaCommand, ExecaChildProcess} from 'execa'
+import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
 import {delimiter} from 'pathe'
 
@@ -344,6 +345,15 @@ export async function sleep(seconds: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, 1000 * seconds)
   })
+}
+
+/**
+ * Check if the terminal supports OSC 8 hyperlinks.
+ *
+ * @returns True if the terminal supports hyperlinks.
+ */
+export function terminalSupportsHyperlinks(): boolean {
+  return supportsHyperlinks.stdout
 }
 
 /**

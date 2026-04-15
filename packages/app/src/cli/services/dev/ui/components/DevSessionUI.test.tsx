@@ -14,7 +14,14 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+  return {
+    ...actual,
+    openURL: vi.fn(),
+    terminalSupportsHyperlinks: mocks.terminalSupportsHyperlinks,
+  }
+})
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/tree-kill')
 
@@ -23,6 +30,7 @@ const mocks = vi.hoisted(() => {
     useStdin: vi.fn(() => {
       return {isRawModeSupported: true}
     }),
+    terminalSupportsHyperlinks: vi.fn(() => false),
   }
 })
 
@@ -48,6 +56,8 @@ const onAbort = vi.fn()
 
 describe('DevSessionUI', () => {
   beforeEach(() => {
+    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
+    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
     devSessionStatusManager = new DevSessionStatusManager()
     devSessionStatusManager.reset()
     devSessionStatusManager.updateStatus(initialStatus)
@@ -544,6 +554,62 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
+  test('hides URL list when terminal supports hyperlinks', async () => {
+    // Given
+    mocks.terminalSupportsHyperlinks.mockReturnValue(true)
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - shortcuts with label text should be present but URL list should be hidden
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
+    expect(output).not.toContain('Preview URL:')
+    expect(output).not.toContain('Dev Console URL:')
+    expect(output).not.toContain('GraphiQL URL:')
+
+    renderInstance.unmount()
+  })
+
+  test('shows URL list when terminal does not support hyperlinks', async () => {
+    // Given
+    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - both shortcuts with label text and URL list should be present
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
+    expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('Dev Console URL: https://mystore.myshopify.com/admin?dev-console=show')
+    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+
+    renderInstance.unmount()
+  })
+
   test('shows non-interactive fallback when raw mode is not supported', async () => {
     // Given - mock useStdin to return false for isRawModeSupported
     mocks.useStdin.mockReturnValue({isRawModeSupported: false})
@@ -570,8 +636,5 @@ describe('DevSessionUI', () => {
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
-
-    // Restore original mock for other tests
-    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
   })
 })
