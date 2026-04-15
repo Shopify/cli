@@ -2,6 +2,8 @@ import {autoUpgradeIfNeeded} from './postrun.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
 import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from '../upgrade.js'
 import {isMajorVersionChange} from '../version.js'
+import {inferPackageManagerForGlobalCLI} from '../is-global.js'
+import {addPublicMetadata} from '../metadata.js'
 import {describe, expect, test, vi, afterEach} from 'vitest'
 
 vi.mock('../upgrade.js', async (importOriginal) => {
@@ -22,6 +24,22 @@ vi.mock('../version.js', async (importOriginal) => {
   }
 })
 
+vi.mock('../is-global.js', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    inferPackageManagerForGlobalCLI: vi.fn(),
+  }
+})
+
+vi.mock('../metadata.js', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    addPublicMetadata: vi.fn().mockResolvedValue(undefined),
+  }
+})
+
 // Always execute the task so the rate limit doesn't interfere with tests
 vi.mock('../../../private/node/conf-store.js', async (importOriginal) => {
   const actual: any = await importOriginal()
@@ -36,6 +54,7 @@ vi.mock('../../../private/node/conf-store.js', async (importOriginal) => {
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
+  vi.mocked(addPublicMetadata).mockClear()
 })
 
 describe('autoUpgradeIfNeeded', () => {
@@ -92,5 +111,45 @@ describe('autoUpgradeIfNeeded', () => {
     expect(runCLIUpgrade).not.toHaveBeenCalled()
     expect(getOutputUpdateCLIReminder).toHaveBeenCalledWith('4.0.0', true)
     expect(outputMock.warn()).toMatch(installReminder)
+  })
+
+  test('records skipped_reason for major version bump', async () => {
+    vi.mocked(versionToAutoUpgrade).mockReturnValue('4.0.0')
+    vi.mocked(isMajorVersionChange).mockReturnValue(true)
+    vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('upgrade reminder')
+
+    await autoUpgradeIfNeeded()
+
+    const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+    expect(calls).toContainEqual(
+      expect.objectContaining({
+        env_auto_upgrade_skipped_reason: 'major_version',
+      }),
+    )
+  })
+
+  test('records success=true on successful upgrade', async () => {
+    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(isMajorVersionChange).mockReturnValue(false)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(runCLIUpgrade).mockResolvedValue(undefined)
+
+    await autoUpgradeIfNeeded()
+
+    const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+    expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_success: true}))
+  })
+
+  test('records success=false on failed upgrade', async () => {
+    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(isMajorVersionChange).mockReturnValue(false)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(runCLIUpgrade).mockRejectedValue(new Error('upgrade failed'))
+    vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('upgrade reminder')
+
+    await autoUpgradeIfNeeded()
+
+    const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+    expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_success: false}))
   })
 })
