@@ -150,7 +150,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         },
         {
           key: 'c',
-          condition: () => Boolean(status.isReady && !status.appEmbedded && status.hasExtensions),
+          condition: () => Boolean(status.isReady && status.appEmbedded === false && status.hasExtensions),
           action: async () => {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_preview_url_opened: true,

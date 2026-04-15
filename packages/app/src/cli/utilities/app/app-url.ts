@@ -14,7 +14,8 @@ export function buildAppURLForAdmin(storeFqdn: string, apiKey: string, adminDoma
 }
 
 export function buildDevConsoleURL(storeFqdn: string) {
-  return `https://${storeFqdn}/admin?dev-console=show`
+  const normalizedFQDN = normalizeStoreFqdn(storeFqdn)
+  return `https://${normalizedFQDN}/admin?dev-console=show`
 }
 
 export function buildAppURLForMobile(storeFqdn: string, apiKey: string) {
