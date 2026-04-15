@@ -1,5 +1,5 @@
 import {Spinner} from './Spinner.js'
-import {TabPanel, Tab} from './TabPanel.js'
+import {TabPanel, Tab, TabShortcut} from './TabPanel.js'
 import metadata from '../../../../metadata.js'
 import {
   DevSessionStatus,
@@ -21,6 +21,12 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {postRunHookHasCompleted} from '@shopify/cli-kit/node/hooks/postrun'
 import {Writable} from 'stream'
+
+interface DevStatusShortcut extends TabShortcut {
+  shortcutLabel: string
+  linkLabel: string
+  url?: string
+}
 
 interface DevSesionUIProps {
   processes: OutputProcess[]
@@ -119,46 +125,59 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
     }
   }
 
+  const devStatusShortcuts: DevStatusShortcut[] = [
+    {
+      key: 'p',
+      shortcutLabel: 'Open app preview',
+      linkLabel: 'Preview',
+      url: status.previewURL,
+      condition: () => Boolean(status.isReady && status.previewURL),
+      action: async () => {
+        await metadata.addPublicMetadata(() => ({
+          cmd_dev_preview_url_opened: true,
+        }))
+        if (status.previewURL) {
+          await openURL(status.previewURL)
+        }
+      },
+    },
+    {
+      key: 'c',
+      shortcutLabel: 'Open Dev Console for extension previews',
+      linkLabel: 'Dev Console',
+      url: buildDevConsoleURL(shopFqdn),
+      condition: () => Boolean(status.isReady && status.appEmbedded === false && status.hasExtensions),
+      action: async () => {
+        await metadata.addPublicMetadata(() => ({
+          cmd_dev_preview_url_opened: true,
+        }))
+        await openURL(buildDevConsoleURL(shopFqdn))
+      },
+    },
+    {
+      key: 'g',
+      shortcutLabel: 'Open GraphiQL (Admin API)',
+      linkLabel: 'GraphiQL',
+      url: status.graphiqlURL,
+      condition: () => Boolean(status.isReady && status.graphiqlURL),
+      action: async () => {
+        await metadata.addPublicMetadata(() => ({
+          cmd_dev_graphiql_opened: true,
+        }))
+        if (status.graphiqlURL) {
+          await openURL(status.graphiqlURL)
+        }
+      },
+    },
+  ]
+
+  const activeShortcuts = devStatusShortcuts.filter((shortcut) => shortcut.condition?.() ?? true)
+
   const tabs: {[key: string]: Tab} = {
     // eslint-disable-next-line id-length
     d: {
       label: 'Dev status',
-      shortcuts: [
-        {
-          key: 'p',
-          condition: () => Boolean(status.isReady && status.previewURL),
-          action: async () => {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_preview_url_opened: true,
-            }))
-            if (status.previewURL) {
-              await openURL(status.previewURL)
-            }
-          },
-        },
-        {
-          key: 'g',
-          condition: () => Boolean(status.isReady && status.graphiqlURL),
-          action: async () => {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_graphiql_opened: true,
-            }))
-            if (status.graphiqlURL) {
-              await openURL(status.graphiqlURL)
-            }
-          },
-        },
-        {
-          key: 'c',
-          condition: () => Boolean(status.isReady && status.appEmbedded === false && status.hasExtensions),
-          action: async () => {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_preview_url_opened: true,
-            }))
-            await openURL(buildDevConsoleURL(shopFqdn))
-          },
-        },
-      ],
+      shortcuts: devStatusShortcuts,
       content: (
         <>
           {status.statusMessage && (
@@ -166,38 +185,18 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
             </Text>
           )}
-          {canUseShortcuts && (
+          {canUseShortcuts && activeShortcuts.length > 0 && (
             <Box marginTop={1} flexDirection="column">
-              {status.isReady && status.previewURL ? (
-                <Text>
-                  {figures.pointerSmall} <Text bold>(p)</Text>{' '}
-                  {terminalSupportsHyperlinks() ? (
-                    <Link url={status.previewURL} label="Open app preview" />
+              {activeShortcuts.map((shortcut) => (
+                <Text key={shortcut.key}>
+                  {figures.pointerSmall} <Text bold>({shortcut.key})</Text>{' '}
+                  {terminalSupportsHyperlinks() && shortcut.url ? (
+                    <Link url={shortcut.url} label={shortcut.shortcutLabel} />
                   ) : (
-                    'Open app preview'
+                    shortcut.shortcutLabel
                   )}
                 </Text>
-              ) : null}
-              {status.isReady && !status.appEmbedded && status.hasExtensions ? (
-                <Text>
-                  {figures.pointerSmall} <Text bold>(c)</Text>{' '}
-                  {terminalSupportsHyperlinks() ? (
-                    <Link url={buildDevConsoleURL(shopFqdn)} label="Open Dev Console for extension previews" />
-                  ) : (
-                    'Open Dev Console for extension previews'
-                  )}
-                </Text>
-              ) : null}
-              {status.isReady && status.graphiqlURL ? (
-                <Text>
-                  {figures.pointerSmall} <Text bold>(g)</Text>{' '}
-                  {terminalSupportsHyperlinks() ? (
-                    <Link url={status.graphiqlURL} label="Open GraphiQL (Admin API)" />
-                  ) : (
-                    'Open GraphiQL (Admin API)'
-                  )}
-                </Text>
-              ) : null}
+              ))}
             </Box>
           )}
           <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
@@ -207,21 +206,13 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               <>
                 {status.isReady && !(canUseShortcuts && terminalSupportsHyperlinks()) && (
                   <>
-                    {status.previewURL ? (
-                      <Text>
-                        Preview URL: <Link url={status.previewURL} />
-                      </Text>
-                    ) : null}
-                    {status.appEmbedded === false && status.hasExtensions ? (
-                      <Text>
-                        Dev Console URL: <Link url={buildDevConsoleURL(shopFqdn)} />
-                      </Text>
-                    ) : null}
-                    {status.graphiqlURL ? (
-                      <Text>
-                        GraphiQL URL: <Link url={status.graphiqlURL} />
-                      </Text>
-                    ) : null}
+                    {activeShortcuts
+                      .filter((shortcut) => shortcut.url)
+                      .map((shortcut) => (
+                        <Text key={shortcut.key}>
+                          {shortcut.linkLabel} URL: <Link url={shortcut.url!} />
+                        </Text>
+                      ))}
                   </>
                 )}
               </>
