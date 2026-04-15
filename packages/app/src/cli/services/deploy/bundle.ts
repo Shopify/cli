@@ -68,8 +68,16 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     },
   }))
 
+  // Web builds must complete before extension builds start. Extensions like
+  // the admin module copy output from web builds (e.g. dist/) into the bundle
+  // via include_assets. Running them in parallel causes a race condition where
+  // dist/ is empty or missing when the admin extension tries to copy it.
+  if (webBuildProcesses.length > 0) {
+    await renderConcurrent({processes: webBuildProcesses, showTimestamps: false})
+  }
+
   await renderConcurrent({
-    processes: [webBuildProcesses, extensionBuildProcesses].flat(),
+    processes: extensionBuildProcesses,
     showTimestamps: false,
   })
 

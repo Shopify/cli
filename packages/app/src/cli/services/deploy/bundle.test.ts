@@ -256,7 +256,7 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
-  test('runs web build command concurrently with extensions when build command is defined', async () => {
+  test('runs web build before extensions when build command is defined', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
