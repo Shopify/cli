@@ -15,7 +15,7 @@ export interface ExtensionsPayloadStoreOptions extends ExtensionDevOptions {
 }
 
 interface AdminConfig {
-  allowedDomains?: string[]
+  allowedDomains: string[]
   staticRoot?: string
 }
 

@@ -142,6 +142,28 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     expect(rawPayload.app.allowedDomains).toStrictEqual(['https://cdn.example.com'])
     expect(rawPayload.app.assets).toBeUndefined()
   })
+
+  test('defaults allowed_domains to empty array when admin has no allowed_domains configured', async () => {
+    // Given
+    vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({mock: 'ext'} as unknown as UIExtensionPayload)
+    const adminExt = createAdminExtension({})
+
+    const options = {
+      apiKey: 'api-key',
+      appName: 'my-app',
+      url: 'https://tunnel.example.com',
+      websocketURL: 'wss://tunnel.example.com',
+      extensions: [adminExt],
+      storeFqdn: 'store.myshopify.com',
+      manifestVersion: '3',
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    // When
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'bundle-path')
+
+    // Then
+    expect(rawPayload.app.allowedDomains).toStrictEqual([])
+  })
 })
 
 describe('ExtensionsPayloadStore()', () => {
