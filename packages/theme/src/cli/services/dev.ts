@@ -1,7 +1,6 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {prepareStandardEventsSupport} from '../utilities/theme-environment/standard-events.js'
 import {DevServerContext, ErrorOverlayMode, LiveReload} from '../utilities/theme-environment/types.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
@@ -34,7 +33,6 @@ interface DevOptions {
   port?: string
   force: boolean
   'standard-events-inspector': boolean
-  'standard-events-types': boolean
   'theme-editor-sync': boolean
   'live-reload': LiveReload
   'error-overlay': ErrorOverlayMode
@@ -153,14 +151,6 @@ export async function dev(options: DevOptions) {
           openURLSafely(urls.local, 'development server')
         }
       }),
-    options['standard-events-types']
-      ? prepareStandardEventsSupport(options.directory).catch((error) => {
-          renderWarning({
-            headline: 'Failed to update standard events types.',
-            body: error instanceof Error ? (error.stack ?? error.message) : String(error),
-          })
-        })
-      : undefined,
   ])
 }
 

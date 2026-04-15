@@ -82,11 +82,6 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR',
       default: false,
     }),
-    'standard-events-types': Flags.boolean({
-      description: 'Download standard events type definitions into assets and wire them into assets/jsconfig.json.',
-      env: 'SHOPIFY_FLAG_STANDARD_EVENTS_TYPES',
-      default: false,
-    }),
     port: Flags.string({
       description: 'Local port to serve theme preview from.',
       env: 'SHOPIFY_FLAG_PORT',
@@ -190,7 +185,6 @@ You can run this command only in a directory that matches the [default Shopify t
       open: flags.open,
       'theme-editor-sync': flags['theme-editor-sync'],
       'standard-events-inspector': flags['standard-events-inspector'],
-      'standard-events-types': flags['standard-events-types'],
       noDelete: flags.nodelete,
       ignore,
       only,

@@ -1,5 +1,4 @@
 import {dev, openURLSafely, renderLinks, createKeypressHandler} from './dev.js'
-import {prepareStandardEventsSupport} from '../utilities/theme-environment/standard-events.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
@@ -31,13 +30,6 @@ vi.mock('../utilities/theme-environment/theme-environment.js', () => ({
     backgroundJobPromise: Promise.resolve(undefined as never),
   })),
 }))
-vi.mock('../utilities/theme-environment/standard-events.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../utilities/theme-environment/standard-events.js')>()
-  return {
-    ...actual,
-    prepareStandardEventsSupport: vi.fn().mockResolvedValue(undefined),
-  }
-})
 vi.mock('../utilities/theme-environment/storefront-session.js', () => ({
   isStorefrontPasswordProtected: vi.fn().mockResolvedValue(false),
 }))
@@ -78,17 +70,6 @@ vi.mock('@shopify/cli-kit/node/system', () => ({
 const store = 'my-store.myshopify.com'
 const theme = buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!
 
-function createDeferred<T>() {
-  let resolve!: (value: T | PromiseLike<T>) => void
-  let reject!: (reason?: unknown) => void
-  const promise = new Promise<T>((promiseResolve, promiseReject) => {
-    resolve = promiseResolve
-    reject = promiseReject
-  })
-
-  return {promise, resolve, reject}
-}
-
 beforeEach(() => {
   vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
   vi.mocked(mountThemeFileSystem).mockReturnValue({files: new Map(), uploadErrors: new Map()} as never)
@@ -100,7 +81,6 @@ beforeEach(() => {
     renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
     backgroundJobPromise: Promise.resolve(undefined as never),
   })
-  vi.mocked(prepareStandardEventsSupport).mockResolvedValue(undefined)
   vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
   vi.mocked(emptyThemeExtFileSystem).mockReturnValue({files: new Map()} as never)
   vi.mocked(initializeDevServerSession).mockResolvedValue({
@@ -115,7 +95,7 @@ beforeEach(() => {
 })
 
 describe('dev', () => {
-  test('enables the standard events dev bundle by default without preparing types', async () => {
+  test('enables the standard events dev bundle by default', async () => {
     const adminSession = {storeFqdn: store} as AdminSession
 
     await dev({
@@ -126,7 +106,6 @@ describe('dev', () => {
       theme,
       force: false,
       'standard-events-inspector': false,
-      'standard-events-types': false,
       'theme-editor-sync': false,
       'live-reload': 'hot-reload',
       'error-overlay': 'default',
@@ -135,7 +114,6 @@ describe('dev', () => {
       only: [],
     })
 
-    expect(prepareStandardEventsSupport).not.toHaveBeenCalled()
     expect(setupDevServer).toHaveBeenCalledWith(
       theme,
       expect.objectContaining({
@@ -147,7 +125,7 @@ describe('dev', () => {
     )
   })
 
-  test('prepares standard events types and propagates the inspector option to the dev server context', async () => {
+  test('propagates the inspector option to the dev server context', async () => {
     const adminSession = {storeFqdn: store} as AdminSession
 
     await dev({
@@ -158,7 +136,6 @@ describe('dev', () => {
       theme,
       force: false,
       'standard-events-inspector': true,
-      'standard-events-types': true,
       'theme-editor-sync': false,
       'live-reload': 'hot-reload',
       'error-overlay': 'default',
@@ -167,7 +144,6 @@ describe('dev', () => {
       only: [],
     })
 
-    expect(prepareStandardEventsSupport).toHaveBeenCalledWith('/tmp/theme')
     expect(setupDevServer).toHaveBeenCalledWith(
       theme,
       expect.objectContaining({
@@ -177,70 +153,6 @@ describe('dev', () => {
         }),
       }),
     )
-  })
-
-  test('does not block dev startup on standard events setup', async () => {
-    const adminSession = {storeFqdn: store} as AdminSession
-    const standardEventsDeferred = createDeferred<void>()
-
-    vi.mocked(prepareStandardEventsSupport).mockReturnValue(standardEventsDeferred.promise)
-
-    const devPromise = dev({
-      adminSession,
-      directory: '/tmp/theme',
-      store,
-      open: false,
-      theme,
-      force: false,
-      'standard-events-inspector': false,
-      'standard-events-types': true,
-      'theme-editor-sync': false,
-      'live-reload': 'hot-reload',
-      'error-overlay': 'default',
-      noDelete: false,
-      ignore: [],
-      only: [],
-    })
-
-    await vi.waitFor(() => {
-      expect(setupDevServer).toHaveBeenCalled()
-      expect(prepareStandardEventsSupport).toHaveBeenCalledWith('/tmp/theme')
-      expect(renderSuccess).toHaveBeenCalled()
-    })
-
-    standardEventsDeferred.resolve()
-    await devPromise
-  })
-
-  test('warns when background standard events setup fails', async () => {
-    const adminSession = {storeFqdn: store} as AdminSession
-    const error = new Error('refresh failed')
-    vi.mocked(prepareStandardEventsSupport).mockRejectedValue(error)
-
-    await dev({
-      adminSession,
-      directory: '/tmp/theme',
-      store,
-      open: false,
-      theme,
-      force: false,
-      'standard-events-inspector': false,
-      'standard-events-types': true,
-      'theme-editor-sync': false,
-      'live-reload': 'hot-reload',
-      'error-overlay': 'default',
-      noDelete: false,
-      ignore: [],
-      only: [],
-    })
-
-    await vi.waitFor(() => {
-      expect(renderWarning).toHaveBeenCalledWith({
-        headline: 'Failed to update standard events types.',
-        body: error.stack ?? error.message,
-      })
-    })
-    expect(setupDevServer).toHaveBeenCalled()
   })
 })
 
