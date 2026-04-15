@@ -66,6 +66,7 @@ include_config_on_deploy = true
 
       try {
         await proc.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
+        await proc.waitForOutput('read_products', CLI_TIMEOUT.medium)
 
         const output = proc.getOutput()
 
@@ -138,6 +139,7 @@ api_version = "2025-01"
 
       try {
         await proc.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
+        await proc.waitForOutput('write_products', CLI_TIMEOUT.medium)
 
         const output = proc.getOutput()
 
