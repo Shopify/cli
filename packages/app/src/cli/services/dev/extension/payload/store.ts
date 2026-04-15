@@ -15,7 +15,7 @@ export interface ExtensionsPayloadStoreOptions extends ExtensionDevOptions {
 }
 
 interface AdminConfig {
-  allowedDomains?: string[]
+  allowedDomains: string[]
   staticRoot?: string
 }
 
@@ -24,7 +24,7 @@ function getAdminConfig(extensions: ExtensionInstance[]): AdminConfig | undefine
   if (!adminExtension) return undefined
   const admin = (adminExtension.configuration as AdminConfigType).admin
   return {
-    allowedDomains: admin?.allowed_domains,
+    allowedDomains: admin?.allowed_domains ?? [],
     staticRoot: admin?.static_root,
   }
 }
