@@ -209,7 +209,6 @@ describe('sends errors to Bugsnag', () => {
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
-
   test.each([null, undefined, {}, {message: 'nope'}])('deals with strange things to throw %s', async (throwable) => {
     const res = await sendErrorToBugsnag(throwable, 'unexpected_error')
     expect(res.reported).toEqual(false)
