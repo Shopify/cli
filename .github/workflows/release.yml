@@ -10,7 +10,7 @@ on:
   push:
     branches:
       - main
-      - stable/3.*
+      - stable/*
 
   # Trigger for manual/cron release functionality
   schedule:

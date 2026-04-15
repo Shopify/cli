@@ -40,11 +40,16 @@ program
     if (options.openPr) {
       console.log(`Opening a PR in shopify/homebrew-shopify to update the formula ${version}`)
 
+      const majorVersion = parseInt(version.split('.')[0], 10)
       const files = {}
       switch (templateVersion) {
-        case "3":
+        case "stable":
           files["shopify-cli.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli.rb"))).toString()
-          files["shopify-cli@3.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli@3.rb"))).toString()
+          // Only keep the @3 versioned formula up to date while we are on major version 3.
+          // Once we move to v4+, shopify-cli@3.rb stays frozen at the last 3.x release.
+          if (majorVersion === 3) {
+            files["shopify-cli@3.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli@3.rb"))).toString()
+          }
           break
         case "pre":
           files["shopify-cli-pre.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli-pre.rb"))).toString()
@@ -70,7 +75,7 @@ program
           changes: [
             {
               files,
-              commit: `Update Shopify CLI 3 formula to install the version ${version}`,
+              commit: `Update Shopify CLI formula to install version ${version}`,
             },
           ],
           createWhenEmpty: false,
@@ -106,7 +111,7 @@ async function versionToRelease() {
 function getTemplateVersion(version) {
   if (version.includes("pre")) return "pre"
   if (version.includes("nightly")) return "nightly"
-  if (version.match(/^3\.\d+\.\d+$/)) return "3"
+  if (version.match(/^\d+\.\d+\.\d+$/)) return "stable"
   throw `Unrecognized version string ${version}`
 }
 
