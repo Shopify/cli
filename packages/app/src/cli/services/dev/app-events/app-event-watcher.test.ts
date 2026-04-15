@@ -1,6 +1,5 @@
-import {AppEvent, AppEventWatcher, EventType, ExtensionEvent} from './app-event-watcher.js'
+import {AppEventWatcher, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {OutputContextOptions, WatcherEvent, FileWatcher} from './file-watcher.js'
-import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -14,7 +13,7 @@ import {loadApp, reloadApp} from '../../../models/app/loader.js'
 import {AppLinkedInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi, type MockInstance} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -22,12 +21,26 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 vi.mock('../../../models/app/loader.js')
-vi.mock('./app-watcher-esbuild.js')
 
 // Extensions 1 and 1B simulate extensions defined in the same directory (same toml)
-const extension1 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1'})
-const extension1B = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1B'})
-const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2', uid: 'uid2'})
+const extension1 = await testUIExtension({
+  type: 'ui_extension',
+  handle: 'h1',
+  directory: '/extensions/ui_extension_1',
+  uid: 'uid1',
+})
+const extension1B = await testUIExtension({
+  type: 'ui_extension',
+  handle: 'h2',
+  directory: '/extensions/ui_extension_1',
+  uid: 'uid1B',
+})
+const extension2 = await testUIExtension({
+  type: 'ui_extension',
+  handle: 'h3',
+  directory: '/extensions/ui_extension_2',
+  uid: 'uid2',
+})
 const flowExtension = await testFlowActionExtension('/extensions/flow_action')
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
@@ -36,12 +49,14 @@ const webhookExtension = await testSingleWebhookSubscriptionExtension()
 // Simulate updated extensions
 const extension1Updated = await testUIExtension({
   type: 'ui_extension',
+  handle: 'h1',
   name: 'updated_name1',
   directory: '/extensions/ui_extension_1',
   uid: 'uid1',
 })
 const extension1BUpdated = await testUIExtension({
   type: 'ui_extension',
+  handle: 'h2',
   name: 'updated_name1B',
   directory: '/extensions/ui_extension_1',
   uid: 'uid1B',
@@ -57,6 +72,35 @@ const testAppConfiguration: CurrentAppConfiguration = {
   name: 'my-app',
   application_url: 'https://example.com',
   embedded: true,
+}
+
+/**
+ * Waits for the watcher to emit a given event by polling the emit spy.
+ * This replaces fragile fixed-timeout waits (setTimeout(10)) that cause flaky tests when the async
+ * event processing chain takes longer than expected.
+ */
+type EmitSpy = MockInstance<(eventName: string | symbol, ...args: unknown[]) => boolean>
+
+async function waitForWatcherEmit(emitSpy: EmitSpy, event: string, timeoutMs = 3000): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const startTime = Date.now()
+    const poll = () => {
+      const emitted = emitSpy.mock.calls.some((call) => call[0] === event)
+      if (emitted) {
+        resolve()
+      } else if (Date.now() - startTime < timeoutMs) {
+        setTimeout(poll, 10)
+      } else {
+        reject(new Error(`Timeout waiting for watcher to emit "${event}" event`))
+      }
+    }
+    poll()
+  })
+}
+
+/** Waits until successful change handling finishes (`emit('all', ...)`). */
+async function waitForWatcherEvent(emitSpy: EmitSpy, timeoutMs = 3000): Promise<void> {
+  await waitForWatcherEmit(emitSpy, 'all', timeoutMs)
 }
 
 /**
@@ -213,6 +257,32 @@ const testCases: TestCase[] = [
     ],
   },
   {
+    name: 'file_updated with extensionHandle targets only the specified extension',
+    fileWatchEvent: {
+      type: 'file_updated',
+      path: '/extensions/ui_extension_1/src/file.js',
+      extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
+      startTime: [0, 0],
+    },
+    initialExtensions: [extension1, extension1B, extension2, posExtension],
+    finalExtensions: [extension1, extension1B, extension2, posExtension],
+    extensionEvents: [{type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', uid: 'uid1'}}],
+  },
+  {
+    name: 'file_created with extensionHandle targets only the specified extension',
+    fileWatchEvent: {
+      type: 'file_created',
+      path: '/extensions/ui_extension_1/src/new-file.js',
+      extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h2',
+      startTime: [0, 0],
+    },
+    initialExtensions: [extension1, extension1B, extension2, posExtension],
+    finalExtensions: [extension1, extension1B, extension2, posExtension],
+    extensionEvents: [{type: EventType.Updated, extension: extension1B, buildResult: {status: 'ok', uid: 'uid1B'}}],
+  },
+  {
     name: 'app config updated with multiple extensions affected',
     fileWatchEvent: {
       type: 'extensions_config_updated',
@@ -264,6 +334,24 @@ describe('app-event-watcher', () => {
     stdout = {write: vi.fn()}
     stderr = {write: vi.fn()}
     abortController = new AbortController()
+
+    // Mock buildForBundle on all test extensions so the watcher doesn't attempt real builds
+    const allExtensions = [
+      extension1,
+      extension1B,
+      extension2,
+      extension1Updated,
+      extension1BUpdated,
+      flowExtension,
+      posExtension,
+      posExtensionUpdated,
+      appAccessExtension,
+      webhookExtension,
+    ]
+    for (const ext of allExtensions) {
+      vi.spyOn(ext, 'buildForBundle').mockResolvedValue()
+      vi.spyOn(ext, 'rescanImports').mockResolvedValue(false)
+    }
   })
 
   afterEach(() => {
@@ -288,9 +376,8 @@ describe('app-event-watcher', () => {
             configuration: testAppConfiguration,
           })
 
-          const mockManager = new MockESBuildContextManager()
           const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
-          const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+          const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
           const emitSpy = vi.spyOn(watcher, 'emit')
           await watcher.start({stdout, stderr, signal: abortController.signal})
 
@@ -361,16 +448,13 @@ describe('app-event-watcher', () => {
         })
         const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
 
-        const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then
         expect(generateTypesSpy).toHaveBeenCalled()
@@ -398,16 +482,13 @@ describe('app-event-watcher', () => {
           configuration: testAppConfiguration,
         })
 
-        const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then - not called in watcher because it was already called during reloadApp
         expect(generateTypesSpy).not.toHaveBeenCalled()
@@ -435,16 +516,13 @@ describe('app-event-watcher', () => {
           configuration: testAppConfiguration,
         })
 
-        const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then - not called in watcher because it was already called during reloadApp
         expect(generateTypesSpy).not.toHaveBeenCalled()
@@ -469,16 +547,13 @@ describe('app-event-watcher', () => {
         })
         const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
 
-        const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then - generateExtensionTypes should still be called when extensions are deleted
         // to clean up type definitions for the removed extension
@@ -507,24 +582,24 @@ describe('app-event-watcher', () => {
           ],
         }
 
-        const mockManager = new MockESBuildContextManager()
-        mockManager.rebuildContext = vi.fn().mockRejectedValueOnce(esbuildError)
-
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
           configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
+        // First call succeeds (initial build on start), second call fails (file watcher triggered build)
+        vi.spyOn(extension1, 'buildForBundle').mockResolvedValueOnce().mockRejectedValueOnce(esbuildError)
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
 
         // When
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
         const stderr = {write: vi.fn()} as unknown as Writable
         const stdout = {write: vi.fn()} as unknown as Writable
         await watcher.start({stdout, stderr, signal: abortController.signal})
 
-        await flushPromises()
+        await waitForWatcherEvent(emitSpy)
 
         // Then
         expect(stderr.write).toHaveBeenCalledWith(
@@ -562,15 +637,16 @@ describe('app-event-watcher', () => {
         })
 
         // When
-        const mockManager = new MockESBuildContextManager()
+
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
         const stderr = {write: vi.fn()} as unknown as Writable
         const stdout = {write: vi.fn()} as unknown as Writable
 
         await watcher.start({stdout, stderr, signal: abortController.signal})
 
-        await flushPromises()
+        await waitForWatcherEvent(emitSpy)
 
         // Then
         expect(stderr.write).toHaveBeenCalledWith(`Build failed`)
@@ -595,13 +671,15 @@ describe('app-event-watcher', () => {
           configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
+
+        // Make rescanImports throw to simulate an uncaught error in the watcher pipeline
+        vi.spyOn(extension1, 'rescanImports').mockRejectedValueOnce(uncaughtError)
+
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
 
         // When
-        const mockManager = new MockESBuildContextManager()
-        mockManager.updateContexts = vi.fn().mockRejectedValueOnce(uncaughtError)
-
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
         const stderr = {write: vi.fn()} as unknown as Writable
         const stdout = {write: vi.fn()} as unknown as Writable
         const errorHandler = vi.fn()
@@ -609,10 +687,7 @@ describe('app-event-watcher', () => {
 
         await watcher.start({stdout, stderr, signal: abortController.signal})
 
-        await flushPromises()
-        // Wait for the async setTimeout in MockFileWatcher
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        await flushPromises()
+        await waitForWatcherEmit(emitSpy, 'error')
 
         // Then
         expect(errorHandler).toHaveBeenCalledWith(uncaughtError)
@@ -620,26 +695,6 @@ describe('app-event-watcher', () => {
     })
   })
 })
-// Mock class for ESBuildContextManager
-// It handles the ESBuild contexts for the extensions that are being watched
-class MockESBuildContextManager extends ESBuildContextManager {
-  contexts = {
-    // The keys are the extension handles, the values are the ESBuild contexts mocked
-    uid1: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
-    uid1B: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
-    uid2: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
-    'test-ui-extension': [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
-  }
-
-  constructor() {
-    super({dotEnvVariables: {}, url: 'url', outputPath: 'outputPath'})
-  }
-
-  async createContexts(extensions: ExtensionInstance[]) {}
-  async updateContexts(appEvent: AppEvent) {}
-  async deleteContexts(extensions: ExtensionInstance[]) {}
-}
-
 // Mock class for FileWatcher
 // Used to trigger mocked file system events immediately after the watcher is started.
 class MockFileWatcher extends FileWatcher {

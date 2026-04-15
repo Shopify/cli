@@ -219,7 +219,7 @@ jobs:
     name: 'E2E tests'
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3
@@ -234,19 +234,18 @@ jobs:
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Install Playwright Chromium
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
         working-directory: packages/e2e
       - name: Rebuild node-pty
         run: pnpm rebuild node-pty
       - name: Run E2E tests
         working-directory: packages/e2e
         env:
-          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.E2E_CLIENT_ID }}
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
           E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
-          E2E_SECONDARY_CLIENT_ID: ${{ secrets.E2E_SECONDARY_CLIENT_ID }}
-        run: npx playwright test
+          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+        run: pnpm exec playwright test
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

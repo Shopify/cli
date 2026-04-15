@@ -120,6 +120,9 @@ export interface CreateAppOptions {
   scopesArray?: string[]
   directory?: string
   isEmbedded?: boolean
+  applicationUrl?: string
+  redirectUrls?: string[]
+  staticRoot?: string
 }
 
 interface AppModuleVersionSpecification {
@@ -260,6 +263,7 @@ export interface DeveloperPlatformClient {
     activeAppVersion?: AppVersion,
   ) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
+  appInstallCount: (app: MinimalAppIdentifiers) => Promise<number>
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<AppVersion | undefined>
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>

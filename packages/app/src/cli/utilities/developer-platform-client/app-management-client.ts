@@ -82,6 +82,7 @@ import {ListOrganizations} from '../../api/graphql/business-platform-destination
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
+import {AdminSpecIdentifier} from '../../models/extensions/specifications/admin.js'
 
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {
@@ -90,10 +91,7 @@ import {
   DevSessionUpdateMutationVariables,
 } from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
-import {
-  FetchStoreByDomain,
-  FetchStoreByDomainQueryVariables,
-} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
+import {FetchStoreByDomain} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
 import {
   ListAppDevStores,
   ListAppDevStoresQuery,
@@ -117,6 +115,7 @@ import {
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
+import {AppInstallCount} from '../../api/graphql/app-management/generated/app-install-count.js'
 import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
@@ -647,6 +646,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
+  async appInstallCount({id}: MinimalAppIdentifiers): Promise<number> {
+    const query = AppInstallCount
+    const variables = {appId: id}
+    const result = await this.appManagementRequest({query, variables})
+    return result.app.installCount ?? 0
+  }
+
   async appVersionByTag(
     {id: appId, organizationId}: MinimalOrganizationApp,
     versionTag: string,
@@ -841,26 +847,30 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async storeByDomain(orgId: string, shopDomain: string, storeTypes: Store[]): Promise<OrganizationStore | undefined> {
-    const queryVariables: FetchStoreByDomainQueryVariables = {
-      domain: shopDomain,
-      storeTypes: storeTypes.map((t) => t.toLowerCase()).join(','),
-    }
-    const storesResult = await this.businessPlatformOrganizationsRequest({
-      query: FetchStoreByDomain,
-      organizationId: String(numberFromGid(orgId)),
-      variables: queryVariables,
-    })
+    const results = await Promise.all(
+      storeTypes.map((storeType) =>
+        this.businessPlatformOrganizationsRequest({
+          query: FetchStoreByDomain,
+          organizationId: String(numberFromGid(orgId)),
+          variables: {
+            domain: shopDomain,
+            filters: [{field: 'STORE_TYPE' as const, operator: 'EQUALS' as const, value: storeType.toLowerCase()}],
+          },
+        }),
+      ),
+    )
 
-    const organization = storesResult.organization
-
-    if (!organization) {
+    const organizations = results.map((result) => result.organization).filter((org) => org != null)
+    if (organizations.length === 0) {
       throw new AbortError(`No organization found`)
     }
 
-    const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
-    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray, provisionable)
-    return storesArray[0]
+    const stores = organizations.flatMap((org) => {
+      const nodes = org.accessibleShops?.edges.map((edge) => edge.node) ?? []
+      const provisionable = isStoreProvisionable(org.currentUser?.organizationPermissions ?? [])
+      return mapBusinessPlatformStoresToOrganizationStores(nodes, provisionable)
+    })
+    return stores[0]
   }
 
   async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
@@ -1063,7 +1073,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const url = `https://${await developerDashboardFqdn()}/dashboard/${org.id}/stores`
     return [
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.`,
-      {link: {url, label: 'Create one now'}},
+      {link: {url, label: 'Create a store in Dev Dashboard'}},
     ]
   }
 
@@ -1203,6 +1213,9 @@ function createAppVars(
   apiVersion: string,
 ): CreateAppMutationVariables {
   const {isLaunchable, scopesArray, name} = options
+  const defaultAppUrl = isLaunchable ? 'https://example.com' : MAGIC_URL
+  const defaultRedirectUrl = isLaunchable ? 'https://example.com/api/auth' : MAGIC_REDIRECT_URL
+
   const source: AppVersionSource = {
     source: {
       name,
@@ -1210,7 +1223,7 @@ function createAppVars(
         {
           type: AppHomeSpecIdentifier,
           config: {
-            app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
+            app_url: options.applicationUrl ?? defaultAppUrl,
             // Ext-only apps should be embedded = false, however we are hardcoding this to
             // match Partners behaviour for now
             // https://github.com/Shopify/develop-app-inner-loop/issues/2789
@@ -1228,10 +1241,18 @@ function createAppVars(
         {
           type: AppAccessSpecIdentifier,
           config: {
-            redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
+            redirect_url_allowlist: options.redirectUrls ?? [defaultRedirectUrl],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
           },
         },
+        ...(options.staticRoot
+          ? [
+              {
+                type: AdminSpecIdentifier,
+                config: {admin: {static_root: options.staticRoot}},
+              },
+            ]
+          : []),
       ],
     },
   }

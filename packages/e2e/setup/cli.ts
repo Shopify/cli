@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import {CLI_TIMEOUT} from './constants.js'
 import {envFixture, executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {execa, type Options as ExecaOptions} from 'execa'
@@ -47,8 +48,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
 
     const cli: CLIProcess = {
       async exec(args, opts = {}) {
-        // 3 min default
-        const timeout = opts.timeout ?? 3 * 60 * 1000
+        const timeout = opts.timeout ?? CLI_TIMEOUT.medium
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
           env: {...env.processEnv, ...opts.env},
@@ -70,8 +70,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
       },
 
       async execCreateApp(args, opts = {}) {
-        // 5 min default for scaffolding
-        const timeout = opts.timeout ?? 5 * 60 * 1000
+        const timeout = opts.timeout ?? CLI_TIMEOUT.long
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
           env: {...env.processEnv, ...opts.env},
@@ -153,7 +152,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         const spawned: SpawnedProcess = {
           ptyProcess,
 
-          waitForOutput(text: string, timeoutMs = 3 * 60 * 1000) {
+          waitForOutput(text: string, timeoutMs = CLI_TIMEOUT.medium) {
             // Check if already in output (raw or stripped)
             if (stripAnsi(output).includes(text) || output.includes(text)) {
               return Promise.resolve()
@@ -194,7 +193,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
             ptyProcess.write(`${line}\r`)
           },
 
-          waitForExit(timeoutMs = 60 * 1000) {
+          waitForExit(timeoutMs = CLI_TIMEOUT.short) {
             if (exitCode !== undefined) {
               return Promise.resolve(exitCode)
             }
@@ -238,5 +237,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
     }
   },
 })
+
+export interface CLIContext {
+  cli: CLIProcess
+  appDir: string
+}
 
 export {type E2EEnv}

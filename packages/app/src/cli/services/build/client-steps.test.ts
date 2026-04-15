@@ -41,14 +41,6 @@ describe('executeStep', () => {
       if (result.success) expect(result.output).toEqual({filesCopied: 3})
       expect(result.duration).toBeGreaterThanOrEqual(0)
     })
-
-    test('logs step execution to stdout', async () => {
-      vi.mocked(stepsIndex.executeStepByType).mockResolvedValue({})
-
-      await executeStep(step, mockContext)
-
-      expect(mockContext.options.stdout.write).toHaveBeenCalledWith('Executing step: Test Step\n')
-    })
   })
 
   describe('failure', () => {

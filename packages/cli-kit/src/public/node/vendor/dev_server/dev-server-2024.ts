@@ -5,7 +5,7 @@ import fs from 'node:fs'
 
 import type {HostOptions} from './types.js'
 
-const NON_SHOP_PREFIXES = ['app', 'dev', 'shopify']
+const NON_SHOP_PREFIXES = ['admin', 'app', 'dev', 'shopify']
 const BACKEND_PORT = 8080
 
 /**

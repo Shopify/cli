@@ -1,46 +1,47 @@
-import {appScaffoldFixture as test} from '../setup/app.js'
+import {appTestFixture as test, createApp, deployApp, versionsList, teardownApp} from '../setup/app.js'
+import {TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
+import * as fs from 'fs'
+import * as path from 'path' // eslint-disable-line no-restricted-imports
 
 test.describe('App deploy', () => {
-  test('deploy and verify version exists', async ({appScaffold, cli, env}) => {
-    requireEnv(env, 'clientId')
+  test('deploy and verify version exists', async ({cli, env, browserPage}) => {
+    test.setTimeout(TEST_TIMEOUT.long)
+    requireEnv(env, 'orgId')
 
-    // Step 1: Create an extension-only app (no scopes needed for deploy)
-    const initResult = await appScaffold.init({
-      template: 'none',
-      packageManager: 'npm',
-    })
-    expect(initResult.exitCode).toBe(0)
+    const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
+    const appName = `E2E-deploy-${Date.now()}`
 
-    // Step 2: Deploy with a tagged version
-    const versionTag = `e2e-v-${Date.now()}`
-    const deployResult = await cli.exec(
-      [
-        'app',
-        'deploy',
-        '--path',
-        appScaffold.appDir,
-        '--force',
-        '--version',
-        versionTag,
-        '--message',
-        'E2E test deployment',
-      ],
-      {timeout: 5 * 60 * 1000},
-    )
-    const deployOutput = deployResult.stdout + deployResult.stderr
-    expect(deployResult.exitCode, `deploy failed:\n${deployOutput}`).toBe(0)
+    try {
+      // Step 1: Create an extension-only app (no scopes needed for deploy)
+      const initResult = await createApp({
+        cli,
+        parentDir,
+        name: appName,
+        template: 'none',
+        packageManager: 'npm',
+        orgId: env.orgId,
+      })
+      expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
+        0,
+      )
+      const appDir = initResult.appDir
 
-    // Step 3: Verify the version exists via versions list
-    const listResult = await cli.exec(['app', 'versions', 'list', '--path', appScaffold.appDir, '--json'], {
-      timeout: 60 * 1000,
-    })
-    const listOutput = listResult.stdout + listResult.stderr
-    expect(listResult.exitCode, `versions list failed:\n${listOutput}`).toBe(0)
+      // Step 2: Deploy with a tagged version
+      const versionTag = `e2e-v-${Date.now()}`
+      const deployResult = await deployApp({cli, appDir, version: versionTag, message: 'E2E test deployment'})
+      const deployOutput = deployResult.stdout + deployResult.stderr
+      expect(deployResult.exitCode, `deploy failed:\n${deployOutput}`).toBe(0)
 
-    // Check that our version tag appears in the output
-    const allOutput = listResult.stdout + listResult.stderr
-    expect(allOutput).toContain(versionTag)
+      // Step 3: Verify the version exists via versions list
+      const listResult = await versionsList({cli, appDir})
+      const listOutput = listResult.stdout + listResult.stderr
+      expect(listResult.exitCode, `versions list failed:\n${listOutput}`).toBe(0)
+      expect(listOutput).toContain(versionTag)
+    } finally {
+      fs.rmSync(parentDir, {recursive: true, force: true})
+      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+    }
   })
 })

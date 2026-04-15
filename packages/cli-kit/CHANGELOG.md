@@ -1,5 +1,22 @@
 # @shopify/cli-kit
 
+## 3.93.0
+
+### Minor Changes
+
+- a52b36d: Add support for SHOPIFY_APP_AUTOMATION_TOKEN env var as a new name for SHOPIFY_CLI_PARTNERS_TOKEN
+- 9a39b44: Add `--development-context` flag to `theme push`
+
+  The new `--development-context` flag (short: `-c`) allows you to specify a unique identifier for a development theme context (e.g., PR number, branch name). This gives developers the ability to programmatically create or reuse named development themes; particularly useful when running `shopify theme push` in a CI environment where you might want to associate a particular development theme to a branch or pull request.
+
+### Patch Changes
+
+- 07d4304: Remove `custom-oclif-loader.ts` and use oclif's `Config` directly. The development-only shim for loading a local `@shopify/cli-hydrogen` plugin is no longer needed as the Hydrogen repo now handles this via its own patch scripts.
+- 35ba22b: Set the current theme in local development on create or find
+- 34e19bc: Change wording for current development theme in `theme list`
+
+  Previously you could only have one development theme at a time so we'd add `[yours]` beside the development theme that you were currently attached to. Now you can have multiple development themes so we're changing the language to `[current]` to show which theme you are actively connected to.
+
 ## 3.92.0
 
 ## 3.91.0
@@ -586,7 +603,6 @@
 - db5981a1e: Clean errors related to metrics requests on theme dev
 - 7f8a9436d: Add log information when graphql requests return an error
 - d2a352442: Added 2 new utilities on the git module:
-
   - git.ensureIsClean(directory?: string): Promise<void>: If the .git directory tree is not clean (has uncommitted changes) it throws an abort error.
   - git.isClean(directory?: string): Promise<boolean>: Returns true if the .git directory tree is clean (no uncommitted changes).
 

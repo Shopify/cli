@@ -53,15 +53,20 @@ export interface ActiveConfig {
  * config's client_id.
  * @public
  */
-export async function selectActiveConfig(project: Project, userProvidedConfigName?: string): Promise<ActiveConfig> {
+export async function selectActiveConfig(
+  project: Project,
+  userProvidedConfigName?: string,
+  options?: {skipPrompts?: boolean},
+): Promise<ActiveConfig> {
   let configName = userProvidedConfigName
 
   // Check cache for previously selected config
   const cachedConfigName = getCachedAppInfo(project.directory)?.configFile
   const cachedConfigPath = cachedConfigName ? joinPath(project.directory, cachedConfigName) : null
+  const cacheIsStale = Boolean(!configName && cachedConfigPath && !fileExistsSync(cachedConfigPath))
 
   // Handle stale cache: cached config file no longer exists
-  if (!configName && cachedConfigPath && !fileExistsSync(cachedConfigPath)) {
+  if (cacheIsStale && !options?.skipPrompts) {
     const warningContent = {
       headline: `Couldn't find ${cachedConfigName}`,
       body: [
@@ -71,7 +76,8 @@ export async function selectActiveConfig(project: Project, userProvidedConfigNam
     configName = await use({directory: project.directory, warningContent, shouldRenderSuccess: false})
   }
 
-  configName = configName ?? cachedConfigName
+  // Don't fall back to stale cached name — it points to a non-existent file
+  configName = configName ?? (cacheIsStale ? undefined : cachedConfigName)
 
   // Determine source after resolution so it reflects the actual selection path
   let source: ConfigSource

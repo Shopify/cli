@@ -28,6 +28,34 @@ embedded = false
 "
 `;
 
+exports[`link > creates a new shopify.app.staging.toml file when shopify.app.toml already linked 2`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
 exports[`link > creates a new shopify.app.toml file when it does not exist using existing app version configuration instead of the api client configuration 1`] = `
 "# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 

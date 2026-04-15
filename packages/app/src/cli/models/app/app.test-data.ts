@@ -1376,6 +1376,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
+    appInstallCount: (_app: MinimalAppIdentifiers) => Promise.resolve(0),
     templateSpecifications: (_app: MinimalAppIdentifiers) =>
       Promise.resolve({templates: testRemoteExtensionTemplates, groupOrder: []}),
     orgAndApps: (_orgId: string) =>
@@ -1438,7 +1439,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devSessionDelete: (_input: DevSessionDeleteOptions) => Promise.resolve({devSessionDelete: {userErrors: []}}),
     getCreateDevStoreLink: (org: Organization) =>
       Promise.resolve(
-        `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard. Create one now https://partners.shopify.com/1234/stores`,
+        `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard. Create a store in Partner Dashboard https://partners.shopify.com/1234/stores`,
       ),
     ...stubs,
   }

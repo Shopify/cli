@@ -12,6 +12,7 @@ import {
   addResolutionOrOverride,
   writePackageJSON,
   getPackageManager,
+  packageManagerBinaryCommandForDirectory,
   installNPMDependenciesRecursively,
   addNPMDependencies,
   DependencyVersion,
@@ -20,6 +21,7 @@ import {
   checkForCachedNewVersion,
   inferPackageManager,
   PackageManager,
+  npmLockfile,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -845,12 +847,9 @@ describe('writePackageJSON', () => {
 describe('getPackageManager', () => {
   test('finds if npm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const packageJSON = {name: 'mock name'}
-
-      // When
-      await writePackageJSON(tmpDir, packageJSON)
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
+      // Given — pin NPM in the temp project
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, npmLockfile), '')
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -861,13 +860,8 @@ describe('getPackageManager', () => {
   test('finds if yarn is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJSON = {name: 'mock name'}
-      const yarnLock = joinPath(tmpDir, 'yarn.lock')
-
-      // When
-      await writePackageJSON(tmpDir, packageJSON)
-      await writeFile(yarnLock, '')
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -878,13 +872,8 @@ describe('getPackageManager', () => {
   test('finds if pnpm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJSON = {name: 'mock name'}
-      const pnpmLock = joinPath(tmpDir, 'pnpm-lock.yaml')
-
-      // When
-      await writePackageJSON(tmpDir, packageJSON)
-      await writeFile(pnpmLock, '')
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'pnpm-lock.yaml'), '')
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -892,37 +881,200 @@ describe('getPackageManager', () => {
     })
   })
 
-  test('falls back to packageManagerFromUserAgent when npm prefix fails', async () => {
+  test('finds if bun is being used from bun.lock', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      vi.stubEnv('npm_config_user_agent', 'yarn/1.22.0')
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'bun.lock'), '')
 
-      // Mock npm prefix to fail
-      mockedCaptureOutput.mockRejectedValueOnce(new Error('npm prefix failed'))
+      const packageManager = await getPackageManager(tmpDir)
+      expect(packageManager).toEqual('bun')
+    })
+  })
+
+  test('finds if bun is being used from bun.lockb', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'bun.lockb'), '')
+
+      const packageManager = await getPackageManager(tmpDir)
+      expect(packageManager).toEqual('bun')
+    })
+  })
+
+  test('finds pnpm from a nested workspace package when the lockfile is only at the repo root', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'root'})
+      await writeFile(joinPath(tmpDir, 'pnpm-lock.yaml'), '')
+      const nested = joinPath(tmpDir, 'extensions', 'cart-transformer')
+      await mkdir(nested)
+      await writePackageJSON(nested, {name: 'cart-transformer'})
+
+      const packageManager = await getPackageManager(nested)
+      expect(packageManager).toEqual('pnpm')
+    })
+  })
+
+  test('finds pnpm from a nested workspace package when pnpm-workspace.yaml is only at the repo root', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'root'})
+      await writeFile(joinPath(tmpDir, 'pnpm-workspace.yaml'), '')
+      const nested = joinPath(tmpDir, 'extensions', 'cart-transformer')
+      await mkdir(nested)
+      await writePackageJSON(nested, {name: 'cart-transformer'})
+
+      const packageManager = await getPackageManager(nested)
+      expect(packageManager).toEqual('pnpm')
+    })
+  })
+
+  test('falls back to packageManagerFromUserAgent when no package.json is found', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given — no package.json in tmpDir, stub user agent to yarn
+      vi.stubEnv('npm_config_user_agent', 'yarn/1.22.0')
 
       // When
       const packageManager = await getPackageManager(tmpDir)
 
       // Then
-      expect(mockedCaptureOutput).toHaveBeenCalledWith('npm', ['prefix'], expect.anything())
-      expect(packageManager).toEqual('yarn')
-
-      // Restore original implementation
       vi.unstubAllEnvs()
+      expect(packageManager).toEqual('yarn')
     })
   })
 
   test("tries to guess the package manager from the environment if it can't find a package.json", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const subDirectory = joinPath(tmpDir, 'subdir')
-      await mkdir(subDirectory)
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
-
-      // When/Then
+      // When/Then — no package.json, falls back to user agent
       const packageManager = await getPackageManager(tmpDir)
       // pnpm is used locally and in CI
       expect(packageManager).toEqual('pnpm')
+    })
+  })
+})
+
+describe('packageManagerBinaryCommandForDirectory', () => {
+  test('uses npm exec with -- for npm', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, npmLockfile), '')
+
+      await expect(
+        packageManagerBinaryCommandForDirectory(tmpDir, 'graphql-code-generator', '--config', 'package.json'),
+      ).resolves.toEqual({
+        command: 'npm',
+        args: ['exec', '--', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('uses exec without -- for pnpm when detected from an ancestor workspace marker', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'app-root'})
+      await writeFile(joinPath(tmpDir, 'pnpm-workspace.yaml'), '')
+      const extensionDirectory = joinPath(tmpDir, 'extensions', 'my-function')
+      await mkdir(extensionDirectory)
+      await writePackageJSON(extensionDirectory, {name: 'my-function'})
+
+      await expect(
+        packageManagerBinaryCommandForDirectory(
+          extensionDirectory,
+          'graphql-code-generator',
+          '--config',
+          'package.json',
+        ),
+      ).resolves.toEqual({
+        command: 'pnpm',
+        args: ['exec', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('uses yarn run when detected from yarn.lock', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+
+      await expect(
+        packageManagerBinaryCommandForDirectory(tmpDir, 'graphql-code-generator', '--config', 'package.json'),
+      ).resolves.toEqual({
+        command: 'yarn',
+        args: ['run', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('uses bun x for bun when detected from bun.lock', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'bun.lock'), '')
+
+      await expect(
+        packageManagerBinaryCommandForDirectory(tmpDir, 'graphql-code-generator', '--config', 'package.json'),
+      ).resolves.toEqual({
+        command: 'bun',
+        args: ['x', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('uses bun x for bun when detected from bun.lockb', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'bun.lockb'), '')
+
+      await expect(
+        packageManagerBinaryCommandForDirectory(tmpDir, 'graphql-code-generator', '--config', 'package.json'),
+      ).resolves.toEqual({
+        command: 'bun',
+        args: ['x', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('falls back to yarn run when the user agent is yarn', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDirectory = joinPath(tmpDir, 'subdir')
+      await mkdir(extensionDirectory)
+      vi.stubEnv('npm_config_user_agent', 'yarn/1.22.0')
+
+      try {
+        await expect(
+          packageManagerBinaryCommandForDirectory(
+            extensionDirectory,
+            'graphql-code-generator',
+            '--config',
+            'package.json',
+          ),
+        ).resolves.toEqual({
+          command: 'yarn',
+          args: ['run', 'graphql-code-generator', '--config', 'package.json'],
+        })
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test('falls back to npm when no package manager markers or user agent are available', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDirectory = joinPath(tmpDir, 'subdir')
+      await mkdir(extensionDirectory)
+      vi.stubEnv('npm_config_user_agent', '')
+
+      try {
+        await expect(
+          packageManagerBinaryCommandForDirectory(
+            extensionDirectory,
+            'graphql-code-generator',
+            '--config',
+            'package.json',
+          ),
+        ).resolves.toEqual({
+          command: 'npm',
+          args: ['exec', '--', 'graphql-code-generator', '--config', 'package.json'],
+        })
+      } finally {
+        vi.unstubAllEnvs()
+      }
     })
   })
 })

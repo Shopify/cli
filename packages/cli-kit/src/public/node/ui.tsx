@@ -486,15 +486,22 @@ interface RenderTasksOptions {
 export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
-) {
-  return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} noProgressBar={noProgressBar} />, {
+): Promise<TContext> {
+  let taskResult: TContext
+  await render(
+    <Tasks
+      tasks={tasks}
+      onComplete={(ctx) => {
+        taskResult = ctx
+      }}
+      noProgressBar={noProgressBar}
+    />,
+    {
       ...renderOptions,
       exitOnCtrlC: false,
-    })
-      .then(() => {})
-      .catch(reject)
-  })
+    },
+  )
+  return taskResult!
 }
 
 export interface RenderSingleTaskOptions<T> {
@@ -521,12 +528,22 @@ export async function renderSingleTask<T>({
   onAbort,
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    render(<SingleTask title={title} task={task} onComplete={resolve} onAbort={onAbort} />, {
+  let taskResult: T
+  await render(
+    <SingleTask
+      title={title}
+      task={task}
+      onComplete={(result) => {
+        taskResult = result
+      }}
+      onAbort={onAbort}
+    />,
+    {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
-  })
+    },
+  )
+  return taskResult!
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {

@@ -88,6 +88,10 @@ export interface Schemas {
       cmd_app_linked_config_uses_cli_managed_urls?: Optional<boolean>
       cmd_app_warning_api_key_deprecation_displayed?: Optional<boolean>
       cmd_app_deployment_mode?: Optional<string>
+      cmd_app_validate_json?: Optional<boolean>
+      cmd_app_validate_valid?: Optional<boolean>
+      cmd_app_validate_issue_count?: Optional<number>
+      cmd_app_validate_file_count?: Optional<number>
 
       // Dev related commands
       cmd_dev_tunnel_type?: Optional<string>

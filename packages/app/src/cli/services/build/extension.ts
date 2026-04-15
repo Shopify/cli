@@ -1,3 +1,4 @@
+import {formatBundleSize} from './bundle-size.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
@@ -67,6 +68,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
   const {main, assets} = extension.getBundleExtensionStdinContent()
 
+  const startTime = performance.now()
   try {
     await bundleExtension({
       minify: true,
@@ -101,16 +103,25 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
         }),
       )
     }
-  } catch (extensionBundlingError) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (extensionBundlingError: any) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
-    throw new AbortError(
+    // Preserve esbuild errors array so the dev watcher can format actionable error messages
+    const errorMessage = (extensionBundlingError as Error).message ?? 'Unknown error occurred'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newError: any = new AbortError(
       `Failed to bundle extension ${extension.localIdentifier}. Please check the extension source code for errors.`,
+      errorMessage,
     )
+    newError.errors = extensionBundlingError.errors
+    throw newError
   }
 
   await extension.buildValidation()
 
-  options.stdout.write(`${extension.localIdentifier} successfully built`)
+  const duration = Math.round(performance.now() - startTime)
+  const sizeInfo = await formatBundleSize(extension.outputPath)
+  options.stdout.write(`${extension.localIdentifier} successfully built in ${duration}ms${sizeInfo}`)
 }
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions
@@ -159,9 +170,18 @@ export async function buildFunctionExtension(
       await runTrampoline(extension.outputPath)
     }
 
-    if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
+    const projectOutputPath = joinPath(extension.directory, extension.outputRelativePath)
+
+    if (
+      fileExistsSync(extension.outputPath) &&
+      bundlePath !== extension.outputPath &&
+      bundlePath !== projectOutputPath &&
+      dirname(bundlePath) !== dirname(extension.outputPath)
+    ) {
+      // Bundle build for deploy: base64-encode into the bundle directory
       await bundleFunctionExtension(extension.outputPath, bundlePath)
     }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.

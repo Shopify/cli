@@ -3,9 +3,9 @@ import {inTemporaryDirectory, writeFile, fileExists, mkdir, readFile} from '@sho
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
-const makeContext = (configuration: Record<string, unknown>) => ({
+const makeContext = (configuration: Record<string, unknown>, stdout: any = {write: vi.fn()}) => ({
   extension: {configuration} as any,
-  options: {} as any,
+  options: {stdout} as any,
   stepResults: new Map(),
 })
 
@@ -26,11 +26,8 @@ describe('copyConfigKeyEntry', () => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-      const context = makeContext({static_root: 'public'})
-      const result = await copyConfigKeyEntry(
-        {key: 'static_root', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const context = makeContext({static_root: 'public'}, mockStdout)
+      const result = await copyConfigKeyEntry({key: 'static_root', baseDir: tmpDir, outputDir: outDir, context})
 
       expect(result.filesCopied).toBe(2)
       await expect(fileExists(joinPath(outDir, 'index.html'))).resolves.toBe(true)
@@ -49,11 +46,8 @@ describe('copyConfigKeyEntry', () => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-      const context = makeContext({schema_path: 'src/schema.json'})
-      const result = await copyConfigKeyEntry(
-        {key: 'schema_path', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const context = makeContext({schema_path: 'src/schema.json'}, mockStdout)
+      const result = await copyConfigKeyEntry({key: 'schema_path', baseDir: tmpDir, outputDir: outDir, context})
 
       expect(result.filesCopied).toBe(1)
       await expect(fileExists(joinPath(outDir, 'schema.json'))).resolves.toBe(true)
@@ -74,11 +68,8 @@ describe('copyConfigKeyEntry', () => {
       // Pre-create the first candidate to force a rename
       await writeFile(joinPath(outDir, 'tools-a.json'), 'existing')
 
-      const context = makeContext({files: ['tools-a.json', 'tools-b.json']})
-      const result = await copyConfigKeyEntry(
-        {key: 'files', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const context = makeContext({files: ['tools-a.json', 'tools-b.json']}, mockStdout)
+      const result = await copyConfigKeyEntry({key: 'files', baseDir: tmpDir, outputDir: outDir, context})
 
       expect(result.filesCopied).toBe(2)
       // tools-a.json was taken, so the copy lands as tools-a-1.json
@@ -87,20 +78,16 @@ describe('copyConfigKeyEntry', () => {
     })
   })
 
-  test('skips with log message when configKey is absent from configuration', async () => {
+  test('skips when configKey is absent from configuration', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-      const context = makeContext({})
-      const result = await copyConfigKeyEntry(
-        {key: 'static_root', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const context = makeContext({}, mockStdout)
+      const result = await copyConfigKeyEntry({key: 'static_root', baseDir: tmpDir, outputDir: outDir, context})
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith("No value for configKey 'static_root', skipping\n")
     })
   })
 
@@ -110,11 +97,8 @@ describe('copyConfigKeyEntry', () => {
       await mkdir(outDir)
 
       // 'nonexistent' directory is NOT created, so fileExists returns false naturally
-      const context = makeContext({assets_dir: 'nonexistent'})
-      const result = await copyConfigKeyEntry(
-        {key: 'assets_dir', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const context = makeContext({assets_dir: 'nonexistent'}, mockStdout)
+      const result = await copyConfigKeyEntry({key: 'assets_dir', baseDir: tmpDir, outputDir: outDir, context})
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
@@ -138,11 +122,8 @@ describe('copyConfigKeyEntry', () => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-      const context = makeContext({roots: ['public', 'assets']})
-      const result = await copyConfigKeyEntry(
-        {key: 'roots', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const context = makeContext({roots: ['public', 'assets']}, mockStdout)
+      const result = await copyConfigKeyEntry({key: 'roots', baseDir: tmpDir, outputDir: outDir, context})
 
       // Promise.all runs copies sequentially; glob on the shared outDir may see files
       // from the other copy, so the total count is at least 3 (one per real file).
@@ -162,11 +143,14 @@ describe('copyConfigKeyEntry', () => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-      const context = makeContext({icons_dir: 'icons'})
-      await copyConfigKeyEntry(
-        {key: 'icons_dir', baseDir: tmpDir, outputDir: outDir, context, destination: 'static/icons'},
-        {stdout: mockStdout},
-      )
+      const context = makeContext({icons_dir: 'icons'}, mockStdout)
+      await copyConfigKeyEntry({
+        key: 'icons_dir',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+        destination: 'static/icons',
+      })
 
       await expect(fileExists(joinPath(outDir, 'static', 'icons', 'icon.svg'))).resolves.toBe(true)
     })
@@ -187,10 +171,12 @@ describe('copyConfigKeyEntry', () => {
           {targeting: [{schema: 'schema-c.json'}]},
         ],
       })
-      const result = await copyConfigKeyEntry(
-        {key: 'extensions[].targeting[].schema', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const result = await copyConfigKeyEntry({
+        key: 'extensions[].targeting[].schema',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+      })
 
       expect(result.filesCopied).toBe(3)
       await expect(fileExists(joinPath(outDir, 'schema-a.json'))).resolves.toBe(true)
@@ -199,25 +185,27 @@ describe('copyConfigKeyEntry', () => {
     })
   })
 
-  test('skips with no-value log when [] flatten resolves to a non-array (contract violated)', async () => {
+  test('skips when [] flatten resolves to a non-array (contract violated)', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-      const context = makeContext({
-        extensions: {targeting: {schema: 'schema.json'}},
-      })
-
-      const result = await copyConfigKeyEntry(
-        {key: 'extensions[].targeting[].schema', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
+      const context = makeContext(
+        {
+          extensions: {targeting: {schema: 'schema.json'}},
+        },
+        mockStdout,
       )
+
+      const result = await copyConfigKeyEntry({
+        key: 'extensions[].targeting[].schema',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+      })
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith(
-        expect.stringContaining("No value for configKey 'extensions[].targeting[].schema'"),
-      )
     })
   })
 
@@ -232,10 +220,12 @@ describe('copyConfigKeyEntry', () => {
       const context = makeContext({
         extensions: [{targeting: [{tools: 'tools.json'}, {tools: 'tools.json'}]}],
       })
-      const result = await copyConfigKeyEntry(
-        {key: 'extensions[].targeting[].tools', baseDir: tmpDir, outputDir: outDir, context},
-        {stdout: mockStdout},
-      )
+      const result = await copyConfigKeyEntry({
+        key: 'extensions[].targeting[].tools',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+      })
 
       expect(result.filesCopied).toBe(1)
       await expect(fileExists(joinPath(outDir, 'tools.json'))).resolves.toBe(true)

@@ -4,7 +4,6 @@ import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 
-import isInteractive from 'is-interactive'
 import macaddress from 'macaddress'
 
 import {homedir} from 'os'
@@ -15,7 +14,7 @@ import {homedir} from 'os'
  * @returns True if the terminal is interactive.
  */
 export function isTerminalInteractive(): boolean {
-  return isInteractive()
+  return Boolean(process.stdout.isTTY && process.env.TERM !== 'dumb' && !('CI' in process.env))
 }
 
 /**

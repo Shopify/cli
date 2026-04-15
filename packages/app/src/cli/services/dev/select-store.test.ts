@@ -214,7 +214,7 @@ describe('selectStore', async () => {
       clientName: ClientName.AppManagement,
       getCreateDevStoreLink: (org: Organization) =>
         Promise.resolve(
-          `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard. Create one now https://dev.shopify.com/dashboard/1234/stores`,
+          `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard. Create a store in Dev Dashboard https://dev.shopify.com/dashboard/1234/stores`,
         ),
     })
 

@@ -502,13 +502,16 @@ describe('Dev', () => {
     )
 
     // Then
-    // Wait long enough for multiple polling cycles
-    await sleep(0.05)
+    // Wait for polling to call fetchMode multiple times (avoids timing-dependent flakiness)
+    await vi.waitFor(
+      () => {
+        expect(developerPreview.fetchMode.mock.calls.length).toBeGreaterThanOrEqual(2)
+      },
+      {timeout: 2000, interval: 10},
+    )
 
     // enable should be called once at startup
     expect(developerPreview.enable).toHaveBeenCalledTimes(1)
-    // fetchMode should be called multiple times due to polling
-    expect(developerPreview.fetchMode.mock.calls.length).toBeGreaterThanOrEqual(2)
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -525,9 +528,14 @@ describe('Dev', () => {
       },
     }
 
-    vi.mocked(developerPreview.fetchMode).mockReset()
-    vi.mocked(developerPreview.fetchMode).mockResolvedValue(true)
-    vi.mocked(developerPreview.enable).mockReset()
+    // Use a locally-scoped mock to isolate from any leaked polling intervals
+    // from previous tests that might call the module-level developerPreview mock
+    const localDeveloperPreview = {
+      fetchMode: vi.fn(async () => true),
+      enable: vi.fn(async () => true),
+      disable: vi.fn(async () => {}),
+      update: vi.fn(async (_state: boolean) => true),
+    }
 
     // When
     const renderInstance = render(
@@ -543,13 +551,13 @@ describe('Dev', () => {
         }}
         // Set a very short polling time for tests
         pollingTime={10}
-        developerPreview={developerPreview}
+        developerPreview={localDeveloperPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
 
     // Then
-    // Wait long enough for multiple polling cycles
+    // Wait to ensure no polling occurs
     await sleep(0.05)
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
@@ -566,13 +574,13 @@ describe('Dev', () => {
       GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
-    expect(developerPreview.enable).not.toHaveBeenCalled()
-    expect(developerPreview.fetchMode).not.toHaveBeenCalled()
+    expect(localDeveloperPreview.enable).not.toHaveBeenCalled()
+    expect(localDeveloperPreview.fetchMode).not.toHaveBeenCalled()
 
     // Verify 'd' input doesn't trigger update when app doesn't support preview
     await waitForInputsToBeReady()
     await sendInputAndWait(renderInstance, 10, 'd')
-    expect(developerPreview.update).not.toHaveBeenCalled()
+    expect(localDeveloperPreview.update).not.toHaveBeenCalled()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()

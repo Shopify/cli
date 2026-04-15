@@ -4,7 +4,8 @@ import * as path from 'pathe'
 import * as url from 'url'
 import {execa} from 'execa'
 import fg from 'fast-glob'
-import {temporaryDirectoryTask} from 'tempy'
+import {mkdtemp, rm} from 'fs/promises'
+import os from 'os'
 import git from 'simple-git'
 import {setOutput} from '@actions/core'
 import {promises as fs, existsSync} from 'fs'
@@ -95,7 +96,8 @@ ${
   )
 }
 
-await temporaryDirectoryTask(async (tmpDir) => {
+const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'type-diff-'))
+try {
   const baselineDirectory = await cloneCLIRepository(tmpDir)
   const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
   const baselineFiles = await build(baselineDirectory, {name: 'baseline'})
@@ -106,4 +108,6 @@ await temporaryDirectoryTask(async (tmpDir) => {
     baselineFiles,
     currentFiles,
   })
-})
+} finally {
+  await rm(tmpDir, {recursive: true, force: true, maxRetries: 2})
+}

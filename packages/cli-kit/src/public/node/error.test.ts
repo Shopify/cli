@@ -70,4 +70,8 @@ describe('shouldReportErrorAsUnexpected helper', () => {
   test('returns false for errors that imply environment issues', () => {
     expect(shouldReportErrorAsUnexpected(new Error('EPERM: operation not permitted, scandir'))).toBe(false)
   })
+
+  test('returns false for user-aborted requests', () => {
+    expect(shouldReportErrorAsUnexpected(new Error('The user aborted a request.'))).toBe(false)
+  })
 })

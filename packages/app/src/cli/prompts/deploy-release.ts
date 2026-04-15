@@ -24,6 +24,7 @@ interface DeployOrReleaseConfirmationPromptOptions {
   /** If true, allow removing extensions and configuration without user confirmation */
   allowDeletes?: boolean
   showConfig?: boolean
+  installCount?: number
 }
 
 interface DeployConfirmationPromptOptions {
@@ -36,6 +37,7 @@ interface DeployConfirmationPromptOptions {
     configInfoTable: InfoTableSection
   }
   release: boolean
+  installCount?: number
 }
 
 /**
@@ -97,6 +99,7 @@ export async function deployOrReleaseConfirmationPrompt({
   configExtensionIdentifiersBreakdown,
   appTitle,
   release,
+  installCount,
 }: DeployOrReleaseConfirmationPromptOptions): Promise<boolean> {
   await metadata.addPublicMetadata(() => buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown))
 
@@ -117,6 +120,7 @@ export async function deployOrReleaseConfirmationPrompt({
     extensionsContentPrompt,
     configContentPrompt,
     release,
+    installCount,
   })
 }
 
@@ -125,6 +129,7 @@ async function deployConfirmationPrompt({
   extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
   configContentPrompt,
   release,
+  installCount,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
@@ -149,11 +154,21 @@ async function deployConfirmationPrompt({
   }
 
   const question = `${release ? 'Release' : 'Create'} a new version${appTitle ? ` of ${appTitle}` : ''}?`
+  const showInstallCountWarning = hasDeletedExtensions && installCount !== undefined && installCount > 0
   if (isDangerous) {
     confirmationResponse = await renderDangerousConfirmationPrompt({
       message: question,
       infoTable,
       confirmation: appTitle,
+      ...(showInstallCountWarning
+        ? {
+            warningItem: [
+              'This release removes extensions and related data from',
+              {error: installCount.toString()},
+              'app installations.\nUse caution as this may include production data on live stores.',
+            ],
+          }
+        : {}),
     })
   } else {
     confirmationResponse = await renderConfirmationPrompt({

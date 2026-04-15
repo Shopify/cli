@@ -1,4 +1,4 @@
-import {relativizePath, normalizePath, cwd, sniffForPath} from './path.js'
+import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory} from './path.js'
 import {describe, test, expect} from 'vitest'
 
 describe('relativize', () => {
@@ -22,6 +22,40 @@ describe('cwd', () => {
 
     // Then
     expect(path).toStrictEqual(normalizePath(process.env.INIT_CWD!))
+  })
+})
+
+describe('commonParentDirectory', () => {
+  // Parity tests with the original 'commondir' npm package (v1.0.1)
+  test('finds common parent for paths sharing a prefix', () => {
+    expect(commonParentDirectory('/foo', '/foo/bar')).toBe('/foo')
+    expect(commonParentDirectory('/foo/bar', '/foo//bar/baz')).toBe('/foo/bar')
+  })
+
+  test('finds deepest common ancestor', () => {
+    expect(commonParentDirectory('/a/b/c', '/a/b')).toBe('/a/b')
+    expect(commonParentDirectory('/a/b', '/a/b/c/d/e')).toBe('/a/b')
+  })
+
+  test('returns root when paths diverge at top level', () => {
+    expect(commonParentDirectory('/x/y/z/w', '/xy/z')).toBe('/')
+  })
+
+  test('handles Windows-style paths', () => {
+    expect(commonParentDirectory('X:\\foo', 'X:\\\\foo\\bar')).toBe('X:/foo')
+    expect(commonParentDirectory('X:\\a\\b\\c', 'X:\\a\\b')).toBe('X:/a/b')
+  })
+
+  test('returns root for completely divergent Windows paths', () => {
+    expect(commonParentDirectory('X:\\x\\y\\z\\w', '\\\\xy\\z')).toBe('/')
+  })
+
+  test('returns root for single-component paths', () => {
+    expect(commonParentDirectory('/', '/')).toBe('/')
+  })
+
+  test('handles identical paths', () => {
+    expect(commonParentDirectory('/a/b/c', '/a/b/c')).toBe('/a/b/c')
   })
 })
 

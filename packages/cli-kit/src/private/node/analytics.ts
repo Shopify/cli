@@ -103,6 +103,12 @@ export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
 }
 
 function getShopifyEnvironmentVariables() {
+  // Agent callers can identify themselves today via SHOPIFY_* environment
+  // variables. The current contract is intentionally lightweight and is kept in
+  // the sensitive payload until we prove which dimensions deserve first-class
+  // Monorail fields, e.g. SHOPIFY_CLI_AGENT, SHOPIFY_CLI_AGENT_VERSION,
+  // SHOPIFY_CLI_AGENT_RUN_ID, SHOPIFY_CLI_AGENT_SESSION_ID, and
+  // SHOPIFY_CLI_AGENT_PROVIDER.
   return Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
 }
 

@@ -3,12 +3,30 @@ import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {AdminConfigType} from '../../../../models/extensions/specifications/admin.js'
+import {ExtensionEvent} from '../../app-events/app-event-watcher.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 import {EventEmitter} from 'events'
 
 export interface ExtensionsPayloadStoreOptions extends ExtensionDevOptions {
   websocketURL: string
+}
+
+interface AdminConfig {
+  allowedDomains?: string[]
+  staticRoot?: string
+}
+
+function getAdminConfig(extensions: ExtensionInstance[]): AdminConfig | undefined {
+  const adminExtension = extensions.find((ext) => ext.type === 'admin')
+  if (!adminExtension) return undefined
+  const admin = (adminExtension.configuration as AdminConfigType).admin
+  return {
+    allowedDomains: admin?.allowed_domains,
+    staticRoot: admin?.static_root,
+  }
 }
 
 export enum ExtensionsPayloadStoreEvent {
@@ -19,7 +37,7 @@ export async function getExtensionsPayloadStoreRawPayload(
   options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
   bundlePath: string,
 ): Promise<ExtensionsEndpointPayload> {
-  return {
+  const payload: ExtensionsEndpointPayload = {
     app: {
       title: options.appName,
       apiKey: options.apiKey,
@@ -38,18 +56,46 @@ export async function getExtensionsPayloadStoreRawPayload(
       url: new URL('/extensions/dev-console', options.url).toString(),
     },
     store: options.storeFqdn,
-    extensions: await Promise.all(options.extensions.map((ext) => getUIExtensionPayload(ext, bundlePath, options))),
+    extensions: await Promise.all(
+      options.extensions
+        .filter((ext) => ext.isPreviewable)
+        .map((ext) => getUIExtensionPayload(ext, bundlePath, options)),
+    ),
   }
+
+  // Admin extension contributes app-level config to the payload
+  const adminConfig = getAdminConfig(options.extensions)
+  if (adminConfig) {
+    payload.app.allowedDomains = adminConfig.allowedDomains
+    if (adminConfig.staticRoot) {
+      const assetKey = 'staticRoot'
+      payload.app.assets = {
+        [assetKey]: {
+          url: new URL(`/extensions/assets/${assetKey}/`, options.url).toString(),
+          lastUpdated: Date.now(),
+        },
+      }
+    }
+  }
+
+  return payload
 }
 
 export class ExtensionsPayloadStore extends EventEmitter {
   private readonly options: ExtensionsPayloadStoreOptions
   private rawPayload: ExtensionsEndpointPayload
+  private appAssetDirectories: Record<string, string> | undefined
 
   constructor(rawPayload: ExtensionsEndpointPayload, options: ExtensionsPayloadStoreOptions) {
     super()
     this.rawPayload = rawPayload
     this.options = options
+
+    this.refreshAppAssetDirectories()
+  }
+
+  getAppAssets(): Record<string, string> | undefined {
+    return this.appAssetDirectories
   }
 
   getConnectedPayload() {
@@ -168,6 +214,28 @@ export class ExtensionsPayloadStore extends EventEmitter {
   async addExtension(extension: ExtensionInstance, bundlePath: string) {
     this.rawPayload.extensions.push(await getUIExtensionPayload(extension, bundlePath, this.options))
     this.emitUpdate([extension.devUUID])
+  }
+
+  updateAdminConfigFromExtensionEvents(extensionEvents: ExtensionEvent[]) {
+    const adminConfig = getAdminConfig(extensionEvents.map((event) => event.extension))
+    if (!adminConfig) return
+    this.rawPayload.app.allowedDomains = adminConfig.allowedDomains
+
+    this.refreshAppAssetDirectories()
+    if (this.rawPayload.app.assets) {
+      for (const key of Object.keys(this.rawPayload.app.assets)) {
+        this.rawPayload.app.assets[key]!.lastUpdated = Date.now()
+      }
+    }
+
+    this.emitUpdate([])
+  }
+
+  private refreshAppAssetDirectories() {
+    const adminConfig = getAdminConfig(this.options.extensions)
+    this.appAssetDirectories = adminConfig?.staticRoot
+      ? {staticRoot: joinPath(this.options.appDirectory, adminConfig.staticRoot)}
+      : undefined
   }
 
   private emitUpdate(extensionIds: string[]) {
