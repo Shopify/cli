@@ -174,6 +174,15 @@ describe('skips sending errors to Bugsnag', () => {
     expect(onNotify).not.toHaveBeenCalled()
     expect(mockOutput.debug()).toMatch('Skipping Bugsnag report')
   })
+
+  test('when error is expected', async () => {
+    const mockOutput = mockAndCaptureOutput()
+    const res = await sendErrorToBugsnag(new error.AbortError('In test'), 'expected_error')
+    expect(res.reported).toEqual(false)
+    expect(res.unhandled).toBeUndefined()
+    expect(onNotify).not.toHaveBeenCalled()
+    expect(mockOutput.debug()).toMatch('Skipping Bugsnag report for expected error')
+  })
 })
 
 describe('sends errors to Bugsnag', () => {
@@ -197,13 +206,6 @@ describe('sends errors to Bugsnag', () => {
     expect(res.reported).toEqual(true)
     const {error} = res as any
     expect(error.stack).toMatch(/^Error: In test/)
-    expect(onNotify).toHaveBeenCalledWith(res.error)
-  })
-
-  test('processes AbortErrors as handled', async () => {
-    const res = await sendErrorToBugsnag(new error.AbortError('In test'), 'expected_error')
-    expect(res.reported).toEqual(true)
-    expect(res.unhandled).toEqual(false)
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
