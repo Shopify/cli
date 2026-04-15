@@ -176,6 +176,44 @@ client_id="test-api-key"`
     })
   })
 
+  test('forceRelink skips config selection before link to avoid spurious TOML prompt', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given — no config file on disk, so getAppConfigurationContext would prompt for TOML selection
+      // if called before link. We verify link is called first (without a prior config load).
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+
+      const getAppConfigSpy = vi.spyOn(loader, 'getAppConfigurationContext')
+
+      vi.mocked(link).mockResolvedValue({
+        remoteApp: mockRemoteApp,
+        configFileName: 'shopify.app.toml',
+        configuration: {
+          client_id: 'test-api-key',
+          name: 'test-app',
+          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+        } as any,
+      })
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: true,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+      })
+
+      // Then — getAppConfigurationContext should only be called AFTER link, not before
+      const linkCallOrder = vi.mocked(link).mock.invocationCallOrder[0]!
+      const configCallOrders = getAppConfigSpy.mock.invocationCallOrder
+      expect(configCallOrders.every((order) => order > linkCallOrder)).toBe(true)
+
+      getAppConfigSpy.mockRestore()
+    })
+  })
+
   test('logs metadata', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
