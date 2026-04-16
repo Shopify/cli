@@ -20,7 +20,7 @@ test.describe('App dev server', () => {
         parentDir,
         name: appName,
         template: 'none',
-        packageManager: 'npm',
+        packageManager: 'pnpm',
         orgId: env.orgId,
       })
       expect(initResult.exitCode).toBe(0)

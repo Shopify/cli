@@ -22,7 +22,7 @@ test.describe('App scaffold', () => {
         name: appName,
         template: 'reactRouter',
         flavor: 'javascript',
-        packageManager: 'npm',
+        packageManager: 'pnpm',
         orgId: env.orgId,
       })
       expect(initResult.exitCode).toBe(0)
@@ -57,7 +57,7 @@ test.describe('App scaffold', () => {
         parentDir,
         name: appName,
         template: 'none',
-        packageManager: 'npm',
+        packageManager: 'pnpm',
         orgId: env.orgId,
       })
       expect(initResult.exitCode).toBe(0)
@@ -86,7 +86,7 @@ test.describe('App scaffold', () => {
         name: appName,
         template: 'reactRouter',
         flavor: 'javascript',
-        packageManager: 'npm',
+        packageManager: 'pnpm',
         orgId: env.orgId,
       })
       expect(initResult.exitCode).toBe(0)
