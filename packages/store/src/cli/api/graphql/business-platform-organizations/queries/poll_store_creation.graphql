@@ -1,0 +1,8 @@
+query PollStoreCreation($shopDomain: String!) {
+  organization {
+    id
+    storeCreation(shopDomain: $shopDomain) {
+      status
+    }
+  }
+}
