@@ -63,7 +63,8 @@ describe('AutoupgradeStatus', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
     "╭─ info ───────────────────────────────────────────────────────────────────────╮
     │                                                                              │
-    │  Auto-upgrade not configured. Run \`shopify upgrade\` to set your preference.  │
+    │  Auto-upgrade not configured. Run \`shopify config autoupgrade on\` to enable  │
+    │   it.                                                                        │
     │                                                                              │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     "
