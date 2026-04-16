@@ -1,4 +1,5 @@
 import {ExtensionSpecification} from './specification.js'
+import {ModuleRegistry} from './module-registry.js'
 import appHomeSpec, {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
 import appProxySpec, {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
 import appPOSSpec, {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
@@ -49,6 +50,17 @@ export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpec
     SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specA.identifier) -
     SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specB.identifier)
   return loadSpecifications().sort(sortConfigModules)
+}
+
+/**
+ * Load the module registry with all migrated module descriptors.
+ * Descriptors registered here use the new ApplicationModule subclass path
+ * instead of the legacy ExtensionSpecification factory pattern.
+ */
+export function loadModuleRegistry(): ModuleRegistry {
+  const registry = new ModuleRegistry()
+  // Descriptors will be registered here as specs are migrated.
+  return registry
 }
 
 function loadSpecifications() {
