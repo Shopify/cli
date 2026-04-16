@@ -1,6 +1,3 @@
-// Re-export shared types from their canonical location in application-module.ts.
-// Consumers currently import these from specification.ts; these re-exports
-// preserve backward compatibility during the migration.
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
@@ -23,6 +20,9 @@ import type {
   DevSessionWatchConfig,
 } from './application-module.js'
 
+// Re-export shared types from their canonical location in application-module.ts.
+// Consumers currently import these from specification.ts; these re-exports
+// preserve backward compatibility during the migration.
 export {type ExtensionFeature, AssetIdentifier, type Asset, type DevSessionWatchConfig} from './application-module.js'
 
 export type TransformationConfig = Record<string, string>

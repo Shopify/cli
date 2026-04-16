@@ -27,8 +27,8 @@ import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
-import channelSpecificationSpec from './specifications/channel.js'
 import adminSpecificationSpec from './specifications/admin.js'
+import {channelDescriptor} from './specifications/channel_module.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -59,7 +59,7 @@ export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpec
  */
 export function loadModuleRegistry(): ModuleRegistry {
   const registry = new ModuleRegistry()
-  // Descriptors will be registered here as specs are migrated.
+  registry.register(channelDescriptor)
   return registry
 }
 
@@ -91,7 +91,6 @@ function loadSpecifications() {
     uiExtensionSpec,
     webPixelSpec,
     editorExtensionCollectionSpecification,
-    channelSpecificationSpec,
   ]
 
   return [...configModuleSpecs, ...moduleSpecs] as ExtensionSpecification[]

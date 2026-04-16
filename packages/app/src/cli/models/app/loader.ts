@@ -336,20 +336,22 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
 
   // Build the module registry and merge remote spec values into it so
   // descriptors have up-to-date identity data from the platform API.
-  const moduleRegistry = loadModuleRegistry()
-  const remoteSpecsForMerge = specifications.map((spec) => ({
-    name: spec.externalName,
-    externalName: spec.externalName,
-    identifier: spec.identifier,
-    gated: false,
-    externalIdentifier: spec.externalIdentifier,
-    experience: spec.experience as 'extension' | 'configuration' | 'deprecated',
-    managementExperience: 'cli' as const,
-    registrationLimit: spec.registrationLimit,
-    uidStrategy: spec.uidStrategy,
-    surface: spec.surface,
-  }))
-  moduleRegistry.mergeRemoteSpecs(remoteSpecsForMerge)
+  const moduleRegistry = loadModuleRegistry?.() ?? new ModuleRegistry()
+  if (moduleRegistry.size > 0) {
+    const remoteSpecsForMerge = specifications.map((spec) => ({
+      name: spec.externalName,
+      externalName: spec.externalName,
+      identifier: spec.identifier,
+      gated: false,
+      externalIdentifier: spec.externalIdentifier,
+      experience: spec.experience as 'extension' | 'configuration' | 'deprecated',
+      managementExperience: 'cli' as const,
+      registrationLimit: spec.registrationLimit,
+      uidStrategy: spec.uidStrategy,
+      surface: spec.surface,
+    }))
+    moduleRegistry.mergeRemoteSpecs(remoteSpecsForMerge)
+  }
 
   const loadedConfiguration: ConfigurationLoaderResult<CurrentAppConfiguration, TModuleSpec> = {
     directory: project.directory,
