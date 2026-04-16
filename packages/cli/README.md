@@ -1196,7 +1196,8 @@ DESCRIPTION
 
   Enable automatic upgrades for Shopify CLI.
 
-  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
+  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version
+  upgrades are skipped and must be done manually.
 
   To disable auto-upgrade, run `shopify config autoupgrade off`.
 ```

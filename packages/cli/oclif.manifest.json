@@ -3411,8 +3411,8 @@
       ],
       "args": {
       },
-      "description": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
-      "descriptionWithMarkdown": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
+      "description": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
+      "descriptionWithMarkdown": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
       "enableJsonFlag": false,
       "flags": {
       },
