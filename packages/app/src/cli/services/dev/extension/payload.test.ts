@@ -1,6 +1,8 @@
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import * as appModel from '../../../models/app/app.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -55,6 +57,28 @@ describe('getUIExtensionPayload', () => {
       // eslint-disable-next-line no-await-in-loop
       await writeFile(fullPath, content)
     }
+  }
+
+  async function testAdminLink(
+    directory: string,
+    configuration: Record<string, unknown>,
+    overrides: {devUUID?: string} = {},
+  ) {
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    const specification = allSpecs.find((spec) => spec.identifier === 'admin_link')!
+    const parsed = specification.parseConfigurationObject(configuration)
+    if (parsed.state !== 'ok') {
+      throw new Error("Couldn't parse admin_link configuration")
+    }
+    const extension = new ExtensionInstance({
+      configuration: parsed.data,
+      directory,
+      specification,
+      configurationPath: joinPath(directory, 'shopify.extension.toml'),
+      entryPath: '',
+    })
+    if (overrides.devUUID) extension.devUUID = overrides.devUUID
+    return extension
   }
 
   test('returns the right payload', async () => {
@@ -364,6 +388,44 @@ describe('getUIExtensionPayload', () => {
         },
       ])
       expect((got.extensionPoints as any[])[0].assets).toBeUndefined()
+    })
+  })
+
+  test('reads from targeting when extension_points is not set (admin_link)', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const adminLinkExtension = await testAdminLink(
+        tmpDir,
+        {
+          name: 'test-admin-link',
+          targeting: [{target: 'admin.app.intent.link', url: '/editor', tools: './tools.json'}],
+        },
+        {devUUID: 'devUUID'},
+      )
+
+      await setupBuildOutput(
+        adminLinkExtension,
+        tmpDir,
+        {'admin.app.intent.link': {tools: 'tools.json'}},
+        {'tools.json': '{"tools": []}'},
+      )
+
+      const got = await getUIExtensionPayload(adminLinkExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [adminLinkExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'admin.app.intent.link',
+          assets: {
+            tools: {
+              name: 'tools',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/tools.json',
+              lastUpdated: expect.any(Number),
+            },
+          },
+        },
+      ])
     })
   })
 
