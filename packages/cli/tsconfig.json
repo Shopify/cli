@@ -9,6 +9,7 @@
   },
   "references": [
     {"path": "../cli-kit"},
-    {"path": "../plugin-did-you-mean"}
+    {"path": "../plugin-did-you-mean"},
+    {"path": "../store"}
   ]
 }
