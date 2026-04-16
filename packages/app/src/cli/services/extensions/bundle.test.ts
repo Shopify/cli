@@ -1,7 +1,7 @@
 import {bundleExtension, bundleThemeExtension, copyFilesForExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstance, SpecificationBackedExtension} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
 import {glob, inTemporaryDirectory, mkdir, touchFileSync, writeFile} from '@shopify/cli-kit/node/fs'
@@ -311,7 +311,7 @@ describe('bundleExtension()', () => {
         // Given
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
-        const themeExtension = new ExtensionInstance({
+        const themeExtension = new SpecificationBackedExtension({
           configuration: {
             name: 'theme extension name',
             type: 'theme' as const,

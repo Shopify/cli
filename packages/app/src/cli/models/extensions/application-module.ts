@@ -68,8 +68,8 @@ export interface DevSessionWatchConfig {
  * while the base class provides shared infrastructure (build pipeline, file watching,
  * handle/uid computation, bundling).
  *
- * This replaces the old ExtensionInstance + ExtensionSpecification composition pattern
- * with a cleaner inheritance model where per-type behavior lives in subclasses.
+ * Legacy spec-based extensions use SpecificationBackedExtension (which extends this).
+ * New module types extend this class directly with their own behavior.
  */
 export abstract class ApplicationModule<TConfiguration extends BaseConfigType = BaseConfigType> {
   entrySourceFilePath: string

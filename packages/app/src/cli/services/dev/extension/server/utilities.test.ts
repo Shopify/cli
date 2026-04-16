@@ -1,6 +1,6 @@
 import {getRedirectUrl, getExtensionPointRedirectUrl} from './utilities.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {type ExtensionInstance, SpecificationBackedExtension} from '../../../../models/extensions/extension-instance.js'
 import {ExtensionsPayloadStoreOptions} from '../payload/store.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -15,7 +15,7 @@ describe('getRedirectURL()', () => {
     })
 
     // Overwrite the surface to be admin (we don't have real values in tests)
-    extension.specification.surface = 'admin'
+    ;(extension as SpecificationBackedExtension).specification.surface = 'admin'
 
     const options = {
       storeFqdn: 'example.myshopify.com',
@@ -35,7 +35,7 @@ describe('getRedirectURL()', () => {
     })
 
     // Overwrite the surface to be checkout (we don't have real values in tests)
-    extension.specification.surface = 'checkout'
+    ;(extension as SpecificationBackedExtension).specification.surface = 'checkout'
 
     const options = {
       storeFqdn: 'example.myshopify.com',

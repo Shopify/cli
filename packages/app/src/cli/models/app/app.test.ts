@@ -486,7 +486,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
       }
       const editorExtensionCollection = (await testEditorExtensionCollection({
         configuration,
-      })) as ExtensionInstance<EditorExtensionCollectionType>
+      })) as unknown as ExtensionInstance<EditorExtensionCollectionType>
 
       const orderDiscountFunction = await testFunctionExtension({
         config: {

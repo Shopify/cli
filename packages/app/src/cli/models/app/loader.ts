@@ -20,7 +20,7 @@ import {
 } from './config-file-naming.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstance, SpecificationBackedExtension} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
@@ -635,7 +635,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       entryPath = await this.findEntryPath(directory, specification)
     }
 
-    const extensionInstance = new ExtensionInstance({
+    const extensionInstance = new SpecificationBackedExtension({
       configuration,
       configurationPath,
       entryPath,

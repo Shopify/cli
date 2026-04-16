@@ -487,7 +487,7 @@ describe('localAppContext', () => {
       })
 
       // Then
-      const realExtensions = result.app.allExtensions.filter((ext) => ext.specification.experience !== 'configuration')
+      const realExtensions = result.app.allExtensions.filter((ext) => ext.experience !== 'configuration')
       expect(realExtensions).toHaveLength(1)
       expect(realExtensions[0]).toEqual(
         expect.objectContaining({

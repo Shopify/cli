@@ -19,7 +19,7 @@ import {
   OrganizationSource,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstance, SpecificationBackedExtension} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {BaseConfigType} from '../extensions/schemas.js'
@@ -278,7 +278,7 @@ export async function testUIExtension(
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration: configuration as BaseConfigType,
     configurationPath,
     entryPath,
@@ -302,7 +302,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory,
@@ -324,7 +324,7 @@ export async function testAppConfigExtensions(emptyConfig = false, directory?: s
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: directory ?? './',
@@ -354,7 +354,7 @@ export async function testAppAccessConfigExtension(
         },
       } as unknown as BaseConfigType)
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: directory ?? './',
@@ -377,7 +377,7 @@ export async function testAppHomeConfigExtension(): Promise<ExtensionInstance> {
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === AppHomeSpecIdentifier)!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory: './',
@@ -403,7 +403,7 @@ export async function testAppProxyConfigExtension(): Promise<ExtensionInstance> 
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === AppProxySpecIdentifier)!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory: './',
@@ -424,7 +424,7 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory,
@@ -478,14 +478,14 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   const webhooksSpecification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
   const privacySpecification = allSpecs.find((spec) => spec.identifier === 'privacy_compliance_webhooks')!
 
-  const webhooksExtension = new ExtensionInstance({
+  const webhooksExtension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory: './',
     specification: webhooksSpecification,
   })
 
-  const privacyExtension = new ExtensionInstance({
+  const privacyExtension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory: './',
@@ -512,7 +512,7 @@ export async function testSingleWebhookSubscriptionExtension({
   // we create the extension instances in loader
   const configuration = emptyConfig ? ({} as unknown as BaseConfigType) : (config as unknown as BaseConfigType)
 
-  const webhooksExtension = new ExtensionInstance({
+  const webhooksExtension = new SpecificationBackedExtension({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: './',
@@ -539,7 +539,7 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory,
@@ -560,7 +560,7 @@ export async function testFlowActionExtension(directory = './my-extension'): Pro
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'flow_action')!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     directory,
@@ -600,7 +600,7 @@ export async function testFunctionExtension(
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'function')!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     entryPath: opts.entryPath,
@@ -641,7 +641,7 @@ export async function testEditorExtensionCollection({
   }
   const configuration = parsed.data
 
-  return new ExtensionInstance({
+  return new SpecificationBackedExtension({
     configuration,
     directory: resolvedDir,
     specification,
@@ -664,7 +664,7 @@ export async function testPaymentsAppExtension(
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
-  const extension = new ExtensionInstance({
+  const extension = new SpecificationBackedExtension({
     configuration,
     configurationPath: '',
     entryPath: opts.entryPath,

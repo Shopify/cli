@@ -1,6 +1,6 @@
 import {getShouldRenderTarget} from './ui_extension.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {ExtensionInstance} from '../extension-instance.js'
+import {SpecificationBackedExtension} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {AssetIdentifier} from '../specification.js'
@@ -68,7 +68,7 @@ describe('ui_extension', async () => {
       urls: {},
     }
 
-    return new ExtensionInstance({
+    return new SpecificationBackedExtension({
       configuration,
       directory,
       specification,
@@ -1003,7 +1003,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-        const uiExtension = new ExtensionInstance({
+        const uiExtension = new SpecificationBackedExtension({
           configuration: {
             extension_points: [],
             api_version: '2023-01' as const,
@@ -1042,7 +1042,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-        const uiExtension = new ExtensionInstance({
+        const uiExtension = new SpecificationBackedExtension({
           configuration: {
             extension_points: [],
             api_version: '2023-01' as const,
@@ -1081,7 +1081,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-        const uiExtension = new ExtensionInstance({
+        const uiExtension = new SpecificationBackedExtension({
           configuration: {
             extension_points: [],
             api_version: '2023-01' as const,
@@ -1346,7 +1346,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
 
-    const extension = new ExtensionInstance({
+    const extension = new SpecificationBackedExtension({
       configuration: {
         api_version: apiVersion,
         extension_points: [
@@ -1814,7 +1814,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
 
-        const extension = new ExtensionInstance({
+        const extension = new SpecificationBackedExtension({
           configuration: {
             api_version: '2025-10',
             extension_points: [
@@ -1889,7 +1889,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
 
-        const extension = new ExtensionInstance({
+        const extension = new SpecificationBackedExtension({
           configuration: {
             // Remote DOM supported version
             api_version: '2025-10',
@@ -1984,7 +1984,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
 
-        const extension = new ExtensionInstance({
+        const extension = new SpecificationBackedExtension({
           configuration: {
             // Remote DOM supported version
             api_version: '2025-10',
@@ -2088,7 +2088,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         const allSpecs = await loadLocalExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
 
-        const extension = new ExtensionInstance({
+        const extension = new SpecificationBackedExtension({
           configuration: {
             // Remote DOM supported version
             api_version: '2025-10',

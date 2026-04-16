@@ -92,10 +92,10 @@ function moduleFromExtension(extension: ExtensionInstance) {
     handle: extension.handle,
     config: extension.configuration,
     specification: {
-      identifier: extension.specification.identifier,
-      externalIdentifier: extension.specification.externalIdentifier,
-      name: extension.specification.externalName,
-      experience: extension.specification.experience,
+      identifier: extension.type,
+      externalIdentifier: extension.externalType,
+      name: extension.humanName,
+      experience: extension.experience,
       managementExperience: 'cli',
     },
   }

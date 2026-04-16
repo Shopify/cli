@@ -442,7 +442,7 @@ describe('draftMessages', async () => {
       const extensionInstance = await testAppConfigExtensions()
 
       // Then
-      expect(extensionInstance.handle).toBe(extensionInstance.specification.identifier)
+      expect(extensionInstance.handle).toBe(extensionInstance.type)
     })
 
     test('extensions handle is a hashString when specification uidStrategy is dynamic and it is a webhook subscription extension', async () => {
@@ -470,7 +470,7 @@ describe('draftMessages', async () => {
       const extensionInstance = await testAppConfigExtensions()
 
       // Then
-      expect(extensionInstance.uid).toBe(extensionInstance.specification.identifier)
+      expect(extensionInstance.uid).toBe(extensionInstance.type)
     })
 
     test('returns configuration uid when strategy is uuid and uid exists', async () => {
