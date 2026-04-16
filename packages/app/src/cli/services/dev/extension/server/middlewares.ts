@@ -66,7 +66,7 @@ export async function fileServerMiddleware(event: H3Event, options: {filePath: s
   return fileContent
 }
 
-export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
+export function getExtensionAssetMiddleware({getExtensions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler(async (event) => {
     const {extensionId, assetPath = ''} = getRouterParams(event)
     const extension = getExtensions().find((ext) => ext.devUUID === extensionId)
@@ -78,14 +78,23 @@ export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExte
       })
     }
 
-    const bundlePath = devOptions.appWatcher.buildOutputPath
-    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
+    const resolvedExtensionDirectory = resolvePath(extension.directory)
+    const builtAssetPath = joinPath(
+      dirname(joinPath(resolvedExtensionDirectory, extension.outputRelativePath)),
+      assetPath,
+    )
 
-    const buildDirectory = dirname(extensionOutputPath)
+    // Try the build output directory first (for compiled assets like dist/handle.js),
+    // then fall back to the extension's source directory (for static assets like tools, instructions).
+    const filePath = (await fileExists(builtAssetPath))
+      ? builtAssetPath
+      : joinPath(resolvedExtensionDirectory, assetPath)
 
-    return fileServerMiddleware(event, {
-      filePath: joinPath(buildDirectory, assetPath),
-    })
+    if (!filePath.startsWith(resolvedExtensionDirectory)) {
+      return sendError(event, {statusCode: 403, statusMessage: 'Path traversal is not allowed'})
+    }
+
+    return fileServerMiddleware(event, {filePath})
   })
 }
 

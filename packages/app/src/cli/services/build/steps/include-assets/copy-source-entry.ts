@@ -36,12 +36,17 @@ export async function copySourceEntry(
   }
 
   if (sourceIsDir) {
+    // Glob the source directory (not the destination) to get the accurate file list.
+    // During dev, the include_assets step runs on every rebuild. If we glob the
+    // destination instead, it would pick up files accumulated from previous builds
+    // that may no longer exist in the source, inflating the file count and producing
+    // stale entries in the manifest.
+    const sourceFiles = await glob(['**/*'], {cwd: sourcePath, absolute: false})
     await copyDirectoryContents(sourcePath, destPath)
-    const copied = await glob(['**/*'], {cwd: destPath, absolute: false})
     options.stdout.write(logMsg)
     const destRelToOutput = relativePath(outputDir, destPath)
-    const outputPaths = destRelToOutput ? copied.map((file) => joinPath(destRelToOutput, file)) : copied
-    return {filesCopied: copied.length, outputPaths}
+    const outputPaths = destRelToOutput ? sourceFiles.map((file) => joinPath(destRelToOutput, file)) : sourceFiles
+    return {filesCopied: sourceFiles.length, outputPaths}
   }
 
   await mkdir(dirname(destPath))

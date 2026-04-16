@@ -40,9 +40,9 @@ const testClientSteps: ClientSteps = [
     lifecycle: 'deploy',
     steps: [
       {
-        id: 'copy_static',
-        name: 'Copy static assets',
-        type: 'copy_static_assets',
+        id: 'bundle-ui',
+        name: 'Bundle UI Extension',
+        type: 'bundle_ui',
       },
     ],
   },

@@ -42,6 +42,7 @@ export enum AssetIdentifier {
   Main = 'main',
   Tools = 'tools',
   Instructions = 'instructions',
+  Intents = 'intents',
 }
 
 export interface Asset {
@@ -131,11 +132,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     extension: ExtensionInstance<TConfiguration>,
     typeDefinitionsByFile: Map<string, Set<string>>,
   ) => Promise<void>
-
-  /**
-   * Copy static assets from the extension directory to the output path
-   */
-  copyStaticAssets?: (configuration: TConfiguration, directory: string, outputPath: string) => Promise<void>
 
   /**
    * Custom watch configuration for dev sessions.

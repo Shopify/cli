@@ -5,10 +5,7 @@ import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import {BuildAsset} from '../../../models/extensions/specification.js'
-import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
-import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
+import {fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
@@ -19,7 +16,7 @@ export type GetUIExtensionPayloadOptions = Omit<ExtensionsPayloadStoreOptions, '
 
 interface AssetMapperContext {
   identifier: string
-  asset: BuildAsset
+  extensionPoint: DevNewExtensionPointSchema
   url: string
   extension: ExtensionInstance
 }
@@ -34,7 +31,8 @@ export async function getUIExtensionPayload(
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
     const renderer = await getUIExtensionRendererVersion(extension)
-    const extensionPoints = await getExtensionPoints(extension, url)
+    const buildDirectory = dirname(extensionOutputPath)
+    const extensionPoints = await getExtensionPoints(extension, url, buildDirectory)
 
     let metafields: {namespace: string; key: string}[] | null = null
     if (
@@ -104,7 +102,7 @@ export async function getUIExtensionPayload(
   })
 }
 
-async function getExtensionPoints(extension: ExtensionInstance, url: string) {
+async function getExtensionPoints(extension: ExtensionInstance, url: string, buildDirectory: string) {
   let extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
 
   if (extension.type === 'checkout_post_purchase') {
@@ -113,6 +111,8 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
   }
 
   if (isNewExtensionPointsSchema(extensionPoints)) {
+    const manifest = await readBundleManifest(buildDirectory)
+
     return Promise.all(
       extensionPoints.map(async (extensionPoint) => {
         const {target, resource} = extensionPoint
@@ -126,18 +126,14 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
           resource: resource || {url: ''},
         }
 
-        if (!('build_manifest' in extensionPoint)) {
+        const manifestEntry = manifest?.[target]
+        if (!manifestEntry) {
           return payload
         }
 
         return {
           ...payload,
-          ...(await mapBuildManifestToPayload(
-            extensionPoint.build_manifest,
-            extensionPoint as NewExtensionPointSchemaType & {build_manifest: BuildManifest},
-            url,
-            extension,
-          )),
+          ...(await mapManifestAssetsToPayload(manifestEntry, extensionPoint, url, extension)),
         }
       }),
     )
@@ -147,35 +143,98 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
 }
 
 /**
- * Default asset mapper - adds asset to the assets object
+ * Reads and parses manifest.json from the extension's build output directory.
+ * Returns null if the file doesn't exist.
  */
-async function defaultAssetMapper({
-  identifier,
-  asset,
-  url,
-  extension,
-}: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
-  const payload = await getAssetPayload(identifier, asset, url, extension)
-  return {
-    assets: {[payload.name]: payload},
+async function readBundleManifest(
+  buildDirectory: string,
+): Promise<{[target: string]: {[assetName: string]: unknown}} | null> {
+  try {
+    const manifestPath = joinPath(buildDirectory, 'manifest.json')
+    const content = await readFile(manifestPath)
+    return JSON.parse(content)
+  } catch (error: unknown) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid manifest.json in ${buildDirectory}: ${error.message}`)
+    }
+    return null
   }
 }
 
 /**
- * Maps build manifest assets to payload format
- * Each mapper returns a partial that gets merged into the extension point
+ * Default asset mapper - reads the source path from the extension point config,
+ * falling back to build_manifest.assets for compiled assets like main and
+ * should_render where the config field name doesn't match the asset identifier.
  */
-async function mapBuildManifestToPayload(
-  buildManifest: BuildManifest,
-  _extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest},
+async function defaultAssetMapper({
+  identifier,
+  extensionPoint,
+  url,
+  extension,
+}: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
+  // Dynamic key lookup — identifier can be "tools", "instructions", etc.
+  const filepath = extensionPoint[identifier as keyof typeof extensionPoint]
+  if (typeof filepath === 'string') {
+    const payload = await getAssetPayload(identifier, filepath, url, extension)
+    return {assets: {[payload.name]: payload}}
+  }
+
+  const buildManifest = extensionPoint.build_manifest
+  const asset = buildManifest?.assets?.[identifier as keyof typeof buildManifest.assets]
+  if (asset?.filepath) {
+    const payload = await getAssetPayload(identifier, asset.filepath, url, extension, asset.module)
+    return {assets: {[payload.name]: payload}}
+  }
+
+  return {}
+}
+
+/**
+ * Intents asset mapper - iterates the extension point's intents array
+ * and resolves each intent's schema to an asset payload.
+ */
+async function intentsAssetMapper({
+  extensionPoint,
+  url,
+  extension,
+}: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
+  if (!extensionPoint.intents) return {}
+
+  const intents = await Promise.all(
+    extensionPoint.intents.map(async (intent) => ({
+      ...intent,
+      schema: await getAssetPayload('schema', intent.schema as string, url, extension),
+    })),
+  )
+
+  return {intents}
+}
+
+type AssetMapper = (context: AssetMapperContext) => Promise<Partial<DevNewExtensionPointSchema>>
+
+/**
+ * Asset mappers registry - defines how each asset type should be handled.
+ * Assets not in this registry use the defaultAssetMapper.
+ */
+const ASSET_MAPPERS: {[key: string]: AssetMapper | undefined} = {
+  intents: intentsAssetMapper,
+}
+
+/**
+ * Maps manifest entry to payload format.
+ * Uses the manifest entry to know which assets exist for a target,
+ * then reads source paths from the extension point config.
+ */
+async function mapManifestAssetsToPayload(
+  manifestEntry: {[assetName: string]: unknown},
+  extensionPoint: DevNewExtensionPointSchema,
   url: string,
   extension: ExtensionInstance,
 ): Promise<Partial<DevNewExtensionPointSchema>> {
-  if (!buildManifest?.assets) return {}
-
   const mappingResults = await Promise.all(
-    Object.entries(buildManifest.assets).map(async ([identifier, asset]) => {
-      return defaultAssetMapper({identifier, asset, url, extension})
+    Object.keys(manifestEntry).map(async (identifier) => {
+      const context: AssetMapperContext = {identifier, extensionPoint, url, extension}
+      return ASSET_MAPPERS[identifier]?.(context) ?? defaultAssetMapper(context)
     }),
   )
 
@@ -196,10 +255,24 @@ export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionP
   )
 }
 
-async function getAssetPayload(name: string, asset: BuildAsset, url: string, extension: ExtensionInstance) {
+/**
+ * Builds an asset payload entry.
+ *
+ * @param sourcePath - Optional source file path for the timestamp. When provided
+ *   (e.g. for compiled assets), the URL uses `filepath` (the build output name)
+ *   while `lastUpdated` is read from `sourcePath` (the source module). For static
+ *   assets, `filepath` is used for both.
+ */
+async function getAssetPayload(
+  name: string,
+  filepath: string,
+  url: string,
+  extension: ExtensionInstance,
+  sourcePath?: string,
+) {
   return {
     name,
-    url: `${url}${joinPath('/assets/', asset.filepath)}`,
-    lastUpdated: (await fileLastUpdatedTimestamp(joinPath(dirname(extension.outputPath), asset.filepath))) ?? 0,
+    url: `${url}${joinPath('/assets/', filepath)}`,
+    lastUpdated: (await fileLastUpdatedTimestamp(joinPath(extension.directory, sourcePath ?? filepath))) ?? 0,
   }
 }

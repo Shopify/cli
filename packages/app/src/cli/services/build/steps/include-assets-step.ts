@@ -128,11 +128,13 @@ export async function executeIncludeAssetsStep(
   const outputDir = extname(extension.outputPath) ? dirname(extension.outputPath) : extension.outputPath
 
   const aggregatedPathMap = new Map<string, string | string[]>()
+  // Track basenames written across all configKey entries in this build to detect
+  // true conflicts (different sources, same basename) while allowing overwrites
+  // from previous builds.
+  const usedBasenames = new Set<string>()
 
-  // configKey entries run sequentially: copyConfigKeyEntry uses findUniqueDestPath
-  // which checks filesystem state before writing. Running two configKey entries in
-  // parallel against the same output directory can cause both to see the same
-  // candidate path as free and silently overwrite each other.
+  // configKey entries run sequentially to avoid filesystem race conditions
+  // when multiple entries target the same output directory.
   let configKeyCount = 0
   for (const entry of config.inclusions) {
     if (entry.type !== 'configKey') continue
@@ -146,6 +148,7 @@ export async function executeIncludeAssetsStep(
       outputDir,
       context,
       destination: sanitizedDest,
+      usedBasenames,
     })
     result.pathMap.forEach((val, key) => aggregatedPathMap.set(key, val))
     configKeyCount += result.filesCopied
@@ -198,7 +201,7 @@ export async function executeIncludeAssetsStep(
 
   if (config.generatesAssetsManifest) {
     const configKeyEntries = config.inclusions.filter((entry) => entry.type === 'configKey')
-    await generateManifestFile(configKeyEntries, context, outputDir, aggregatedPathMap, otherFiles)
+    await generateManifestFile(configKeyEntries, context, aggregatedPathMap, otherFiles)
   }
 
   return {filesCopied: counts.reduce<number>((sum, count) => sum + (count ?? 0), 0)}

@@ -17,7 +17,7 @@ import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 import type {H3Event} from 'h3'
 
@@ -220,25 +220,19 @@ describe('getExtensionAssetMiddleware()', () => {
     })
   })
 
-  test('returns the file for that asset path', async () => {
+  test('returns static asset from extension source directory', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
-      const extension = await testUIExtension({})
-      const outputPath = extension.getOutputPathForDirectory(tmpDir)
+      const extension = await testUIExtension({directory: tmpDir})
 
       const options = getOptions({
         devOptions: {
           extensions: [extension],
-          appWatcher: {
-            buildOutputPath: tmpDir,
-          } as unknown as AppEventWatcher,
         },
       })
 
-      const fileName = 'test-ui-extension.js'
-
-      await mkdir(dirname(outputPath))
-      await touchFile(outputPath)
-      await writeFile(outputPath, `content from ${fileName}`)
+      const fileName = 'tools.json'
+      await touchFile(joinPath(tmpDir, fileName))
+      await writeFile(joinPath(tmpDir, fileName), '{"tools": []}')
 
       const event = getMockEvent({
         params: {
@@ -249,8 +243,70 @@ describe('getExtensionAssetMiddleware()', () => {
 
       const result = await getExtensionAssetMiddleware(options)(event)
 
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json')
+      expect(result).toBe('{"tools": []}')
+    })
+  })
+
+  test('returns built asset from extension build output directory', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const extension = await testUIExtension({directory: tmpDir})
+
+      const options = getOptions({
+        devOptions: {
+          extensions: [extension],
+        },
+      })
+
+      // Create the built output file in dist/ (e.g. dist/handle.js)
+      const outputDir = joinPath(tmpDir, 'dist')
+      await mkdir(outputDir)
+      const outputFile = joinPath(outputDir, extension.outputFileName)
+      await touchFile(outputFile)
+      await writeFile(outputFile, 'compiled bundle content')
+
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: extension.outputFileName,
+        },
+      })
+
+      const result = await getExtensionAssetMiddleware(options)(event)
+
       expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/javascript')
-      expect(result).toBe(`content from ${fileName}`)
+      expect(result).toBe('compiled bundle content')
+    })
+  })
+
+  test('serves built asset over source file when both exist', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const extension = await testUIExtension({directory: tmpDir})
+
+      const options = getOptions({
+        devOptions: {
+          extensions: [extension],
+        },
+      })
+
+      // Create both a source file and a built file with the same name
+      const fileName = extension.outputFileName
+      await writeFile(joinPath(tmpDir, fileName), 'source content')
+      const outputDir = joinPath(tmpDir, 'dist')
+      await mkdir(outputDir)
+      await writeFile(joinPath(outputDir, fileName), 'built content')
+
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: fileName,
+        },
+      })
+
+      const result = await getExtensionAssetMiddleware(options)(event)
+
+      // Built asset takes priority
+      expect(result).toBe('built content')
     })
   })
 })

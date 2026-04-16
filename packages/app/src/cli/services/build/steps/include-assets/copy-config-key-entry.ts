@@ -1,6 +1,6 @@
 import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
 
 /**
@@ -11,10 +11,8 @@ import type {BuildContext} from '../../client-steps.js'
  * skipped silently with a log message. When `destination` is given, the
  * resolved directory is placed under `outputDir/destination`.
  *
- * File sources are copied with `copyFile` using a unique destination name
- * (via `findUniqueDestPath`) to prevent overwrites when multiple config values
- * resolve to files with the same basename. Directory sources use
- * `copyDirectoryContents`.
+ * File sources are copied with `copyFile` to the output directory.
+ * Directory sources use `copyDirectoryContents`.
  *
  * Returns `{filesCopied, pathMap}` where `pathMap` maps each raw config path
  * value to its output-relative location. File sources map to a single string.
@@ -26,8 +24,9 @@ export async function copyConfigKeyEntry(config: {
   outputDir: string
   context: BuildContext
   destination?: string
+  usedBasenames?: Set<string>
 }): Promise<{filesCopied: number; pathMap: Map<string, string | string[]>}> {
-  const {key, baseDir, outputDir, context, destination} = config
+  const {key, baseDir, outputDir, context, destination, usedBasenames = new Set()} = config
   const {stdout} = context.options
   const value = getNestedValue(context.extension.configuration, key)
   let paths: string[]
@@ -50,8 +49,7 @@ export async function copyConfigKeyEntry(config: {
   // should only be copied once; the pathMap entry is reused for all references.
   const uniquePaths = [...new Set(paths)]
 
-  // Process sequentially — findUniqueDestPath relies on filesystem state that
-  // would race if multiple copies ran in parallel against the same output dir.
+  // Process sequentially to avoid filesystem race conditions on shared output paths.
   const pathMap = new Map<string, string | string[]>()
   let filesCopied = 0
 
@@ -60,8 +58,10 @@ export async function copyConfigKeyEntry(config: {
     const fullPath = joinPath(baseDir, sourcePath)
     const exists = await fileExists(fullPath)
     if (!exists) {
-      stdout.write(`Warning: path '${sourcePath}' does not exist, skipping\n`)
-      continue
+      throw new Error(
+        outputContent`Couldn't find ${outputToken.path(fullPath)}\n  Please check the path '${sourcePath}' in your configuration`
+          .value,
+      )
     }
 
     const sourceIsDir = await isDirectory(fullPath)
@@ -69,17 +69,25 @@ export async function copyConfigKeyEntry(config: {
     const destDir = effectiveOutputDir
 
     if (sourceIsDir) {
+      // Glob the source directory (not the destination) to get the accurate file list.
+      // During dev, the include_assets step runs on every rebuild. If we glob the
+      // destination instead, it would pick up files accumulated from previous builds
+      // that may no longer exist in the source, inflating the file count and producing
+      // stale entries in the manifest's pathMap.
+      const sourceFiles = await glob(['**/*'], {cwd: fullPath, absolute: false})
       await copyDirectoryContents(fullPath, destDir)
-      const copied = await glob(['**/*'], {cwd: destDir, absolute: false})
       stdout.write(`Included '${sourcePath}'\n`)
-      const relFiles = copied.map((file) => relativePath(outputDir, joinPath(destDir, file)))
+      const relFiles = sourceFiles.map((file) => relativePath(outputDir, joinPath(destDir, file)))
       pathMap.set(sourcePath, relFiles)
-      filesCopied += copied.length
+      filesCopied += sourceFiles.length
     } else {
       await mkdir(destDir)
-      const uniqueDestPath = await findUniqueDestPath(destDir, basename(fullPath))
-      await copyFile(fullPath, uniqueDestPath)
-      const outputRelative = relativePath(outputDir, uniqueDestPath)
+      const filename = basename(fullPath)
+      const destFilename = uniqueBasename(filename, usedBasenames)
+      usedBasenames.add(destFilename)
+      const destPath = joinPath(destDir, destFilename)
+      await copyFile(fullPath, destPath)
+      const outputRelative = relativePath(outputDir, destPath)
       stdout.write(`Included '${sourcePath}'\n`)
       pathMap.set(sourcePath, outputRelative)
       filesCopied += 1
@@ -91,25 +99,24 @@ export async function copyConfigKeyEntry(config: {
 }
 
 /**
- * Returns a destination path for `filename` inside `dir` that does not already
- * exist. If `dir/filename` is free, returns it as-is. Otherwise appends a
- * counter before the extension: `name-1.ext`, `name-2.ext`, …
+ * Returns a unique filename given the set of basenames already used in this
+ * build. If `filename` hasn't been used, returns it as-is. Otherwise appends
+ * a counter: `name-1.ext`, `name-2.ext`, …
  */
-async function findUniqueDestPath(dir: string, filename: string): Promise<string> {
-  const candidate = joinPath(dir, filename)
-  if (!(await fileExists(candidate))) return candidate
+function uniqueBasename(filename: string, used: Set<string>): string {
+  if (!used.has(filename)) return filename
 
   const ext = extname(filename)
   const base = ext ? filename.slice(0, -ext.length) : filename
-  let counter = 1
   const maxAttempts = 1000
-  while (counter <= maxAttempts) {
-    const next = joinPath(dir, `${base}-${counter}${ext}`)
-    // eslint-disable-next-line no-await-in-loop
-    if (!(await fileExists(next))) return next
+  let counter = 1
+  while (used.has(`${base}-${counter}${ext}`)) {
     counter++
+    if (counter > maxAttempts) {
+      throw new Error(`Unable to find unique basename for '${filename}' after ${maxAttempts} attempts`)
+    }
   }
-  throw new Error(`Unable to find unique destination path for '${filename}' in '${dir}' after ${maxAttempts} attempts`)
+  return `${base}-${counter}${ext}`
 }
 
 /**

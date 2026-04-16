@@ -324,6 +324,53 @@ describe('ExtensionsPayloadStore()', () => {
       })
     })
 
+    test('replaces arrays in extension points instead of merging them', () => {
+      // Given — initial payload has intents with resolved schema (Asset objects)
+      const payload = {
+        extensions: [
+          {
+            uuid: '123',
+            extensionPoints: [
+              {
+                target: 'admin.app.intent.link',
+                resource: {url: ''},
+                intents: [
+                  {
+                    type: 'application/email',
+                    action: 'edit',
+                    schema: {name: 'schema', url: '/old-url', lastUpdated: 1},
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      } as unknown as ExtensionsEndpointPayload
+
+      const extensionsPayloadStore = new ExtensionsPayloadStore(payload, mockOptions)
+
+      // When — update with new intents (simulating a rebuild)
+      extensionsPayloadStore.updateExtensions([
+        {
+          uuid: '123',
+          extensionPoints: [
+            {
+              target: 'admin.app.intent.link',
+              resource: {url: ''},
+              intents: [
+                {type: 'application/email', action: 'edit', schema: {name: 'schema', url: '/new-url', lastUpdated: 2}},
+              ],
+            },
+          ],
+        },
+      ] as unknown as UIExtensionPayload[])
+
+      // Then — intents should be replaced, not accumulated
+      const extensionPoints = extensionsPayloadStore.getRawPayload().extensions[0]?.extensionPoints as any[]
+      expect(extensionPoints[0].intents).toHaveLength(1)
+      expect(extensionPoints[0].intents[0].schema.url).toBe('/new-url')
+    })
+
     test('informs event listeners of updated extensions', () => {
       // Given
       const payload = {
