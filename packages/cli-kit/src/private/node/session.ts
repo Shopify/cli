@@ -8,6 +8,7 @@ import {
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
+  InvalidTargetError,
 } from './session/exchange.js'
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
@@ -16,6 +17,8 @@ import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
+import {terminalSupportsPrompting} from '../../public/node/system.js'
+import {renderWarning} from '../../public/node/ui.js'
 import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -186,6 +189,10 @@ export interface EnsureAuthenticatedAdditionalOptions {
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
+ * If the current account lacks authorization for the requested store and the terminal supports prompting,
+ * the user is offered an inline account selection prompt to switch accounts and retry authentication
+ * without having to re-run the command.
+ *
  * @param applications - An object containing the applications we need to be authenticated with.
  * @param _env - Optional environment variables to use.
  * @param options - Optional extra options to use.
@@ -194,6 +201,24 @@ export interface EnsureAuthenticatedAdditionalOptions {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
+  options: EnsureAuthenticatedAdditionalOptions = {},
+): Promise<OAuthSession> {
+  try {
+    return await performAuthentication(applications, options)
+  } catch (error) {
+    if (error instanceof InvalidTargetError && !options.noPrompt && terminalSupportsPrompting()) {
+      renderWarning({headline: error.message})
+      // Dynamic import to avoid circular dependency: session-prompt → session (public) → session (private)
+      const {promptSessionSelect} = await import('../../public/node/session-prompt.js')
+      await promptSessionSelect()
+      return performAuthentication(applications, options)
+    }
+    throw error
+  }
+}
+
+async function performAuthentication(
+  applications: OAuthApplications,
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
