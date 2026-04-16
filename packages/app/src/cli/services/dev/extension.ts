@@ -146,7 +146,8 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, payloadOptions.stdout)
 
-  const eventHandler = async ({appWasReloaded, app, extensionEvents}: AppEvent) => {
+  const eventHandler = async ({appWasReloaded, app, extensionEvents, buildId}: AppEvent) => {
+    outputDebug(`[build:${buildId}] devUIExtensions eventHandler received (${extensionEvents.length} events)`, payloadOptions.stdout)
     if (appWasReloaded) {
       extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
     }
@@ -155,6 +156,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
     // for the payloed. No other exceptions should be added, if this pattern is needed again we should
     // generalize it.
     payloadStore.updateAdminConfigFromExtensionEvents(extensionEvents)
+    outputDebug(`[build:${buildId}] devUIExtensions: payload store updated`, payloadOptions.stdout)
 
     for (const event of extensionEvents) {
       if (!event.extension.isPreviewable) continue

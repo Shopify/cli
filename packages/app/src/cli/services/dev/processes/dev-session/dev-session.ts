@@ -82,9 +82,13 @@ export class DevSession {
    * @param event - The app event
    */
   private async onEvent(event: AppEvent) {
+    await this.logger.debug(`[build:${event.buildId}] DevSession.onEvent received`)
     const eventIsValid = await this.validateAppEvent(event)
-    if (!eventIsValid) return
-
+    if (!eventIsValid) {
+      await this.logger.debug(`[build:${event.buildId}] validateAppEvent returned false, dropping`)
+      return
+    }
+    await this.logger.debug(`[build:${event.buildId}] enqueuing to SerialBatchProcessor`)
     this.appEventsProcessor.enqueue(event)
   }
 
@@ -95,21 +99,44 @@ export class DevSession {
    * @param event - The app event to process
    */
   private async processEvents(events: AppEvent[]) {
+    const buildIds = events.map((e) => e.buildId).join(',')
+    await this.logger.debug(`[build:${buildIds}] processEvents: ${events.length} event(s), ${this.failedEvents.length} failed retries`)
     // Include any previously failed events to be processed again
     const allEvents = [...this.failedEvents, ...events]
     const event = this.consolidateAppEvents(allEvents)
     this.failedEvents = []
-    if (!event) return
+    if (!event) {
+      await this.logger.debug(`[build:${buildIds}] processEvents: consolidate returned undefined, skipping`)
+      return
+    }
 
     this.statusManager.setMessage('CHANGE_DETECTED')
     this.updatePreviewURL(event)
     await this.logger.logExtensionEvents(event)
 
     const networkStartTime = startHRTime()
-    const result = await this.bundleExtensionsAndUpload(event)
+    await this.logger.debug(`[build:${event.buildId}] processEvents: starting bundleExtensionsAndUpload`)
+
+    // LEVER: DEV_UPLOAD_TIMEOUT_MS — detect if bundleExtensionsAndUpload hangs forever
+    const timeoutMs = process.env.DEV_UPLOAD_TIMEOUT_MS ? parseInt(process.env.DEV_UPLOAD_TIMEOUT_MS, 10) : 0
+    let result: DevSessionResult
+    if (timeoutMs > 0) {
+      const timeout = new Promise<DevSessionResult>((_, reject) =>
+        setTimeout(() => reject(new Error(`[build:${event.buildId}] bundleExtensionsAndUpload TIMED OUT after ${timeoutMs}ms`)), timeoutMs),
+      )
+      try {
+        result = await Promise.race([this.bundleExtensionsAndUpload(event), timeout])
+      } catch (error: any) {
+        await this.logger.debug(error.message)
+        result = {status: 'unknown-error', error}
+      }
+    } else {
+      result = await this.bundleExtensionsAndUpload(event)
+    }
+    await this.logger.debug(`[build:${event.buildId}] processEvents: result=${result.status}`)
     await this.handleDevSessionResult(result, event)
     await this.logger.debug(
-      `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
+      `[build:${event.buildId}] Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
     )
   }
 
@@ -184,6 +211,7 @@ export class DevSession {
    */
   private async validateAppEvent(event: AppEvent): Promise<boolean> {
     if (!this.statusManager.status.isReady) {
+      await this.logger.debug(`[build:${event.buildId}] validate: NOT READY`)
       await this.logger.warning('Change detected, but dev preview is not ready yet.')
       return false
     }
@@ -191,18 +219,21 @@ export class DevSession {
     // If there are any build errors, don't update the dev session
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
+      await this.logger.debug(`[build:${event.buildId}] validate: BUILD ERRORS (${errors.length})`)
       await this.logger.logMultipleErrors(errors)
       this.statusManager.setMessage('BUILD_ERROR')
       return false
     }
 
     if (event.extensionEvents.length === 0) {
+      await this.logger.debug(`[build:${event.buildId}] validate: NO EXTENSION EVENTS`)
       // The app was probably reloaded, but no extensions were affected, we are ready for new changes.
       // But we shouldn't trigger a new dev session update in this case.
       this.statusManager.setMessage('READY')
       return false
     }
 
+    await this.logger.debug(`[build:${event.buildId}] validate: VALID (${event.extensionEvents.length} events)`)
     return true
   }
 

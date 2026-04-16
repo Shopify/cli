@@ -81,6 +81,8 @@ export interface AppEvent {
   path: string
   startTime: [number, number]
   appWasReloaded?: boolean
+  /** Monotonic build ID for tracing an event through the pipeline */
+  buildId?: number
 }
 
 type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; file?: string; uid: string}
@@ -88,6 +90,8 @@ type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; erro
 /**
  * App event watcher will emit events when changes are detected in the file system.
  */
+let nextBuildId = 1
+
 export class AppEventWatcher extends EventEmitter {
   buildOutputPath: string
   private app: AppLinkedInterface
@@ -125,35 +129,72 @@ export class AppEventWatcher extends EventEmitter {
     }
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
+    // Mutex for DEV_SERIALIZE_ONCHANGE lever
+    let onChangeLock: Promise<void> = Promise.resolve()
+
     this.fileWatcher.onChange((events) => {
-      handleWatcherEvents(events, this.app, this.options)
-        .then(async (appEvent) => {
-          if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
-          if (!appEvent) return
+      const buildId = nextBuildId++
+      outputDebug(`[build:${buildId}] onChange: ${events.length} event(s): ${events.map((e) => `${e.type}:${e.path.split('/').pop()}`).join(', ')}\n`, this.options.stdout)
 
-          this.app = appEvent.app
-          if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
+      const doWork = async () => {
+        const appEvent = await handleWatcherEvents(events, this.app, this.options)
+        if (appEvent?.extensionEvents.length === 0) {
+          outputDebug(`[build:${buildId}] no extensions affected, skipping`)
+          return
+        }
+        if (!appEvent) {
+          outputDebug(`[build:${buildId}] handleWatcherEvents returned undefined, skipping`)
+          return
+        }
+
+        appEvent.buildId = buildId
+        const extSummary = appEvent.extensionEvents.map((e) => `${e.type}:${e.extension.handle}`).join(', ')
+        outputDebug(`[build:${buildId}] processing ${appEvent.extensionEvents.length} extension event(s): ${extSummary}\n`, this.options.stdout)
+
+        this.app = appEvent.app
+        if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
+
+        // LEVER: DEV_SKIP_RESCAN_IMPORTS — skip rescanImports to test if watcher restart causes the break
+        if (!process.env.DEV_SKIP_RESCAN_IMPORTS) {
           await this.rescanImports(appEvent)
+        } else {
+          outputDebug(`[build:${buildId}] LEVER: skipping rescanImports\n`, this.options.stdout)
+        }
 
-          // Find affected created/updated extensions and build them
-          const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
+        // Find affected created/updated extensions and build them
+        const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
 
-          // Build the created/updated extensions and update the extension events with the build result
-          await this.buildExtensions(buildableEvents)
+        // Build the created/updated extensions and update the extension events with the build result
+        await this.buildExtensions(buildableEvents)
+        outputDebug(`[build:${buildId}] buildExtensions complete\n`, this.options.stdout)
 
-          // Generate the extension types after building the extensions so new imports are included
-          // Skip if the app was reloaded, as generateExtensionTypes was already called during reload
-          if (!appEvent.appWasReloaded) {
-            await this.app.generateExtensionTypes()
-          }
+        // LEVER: DEV_SKIP_GENERATE_TYPES — skip generateExtensionTypes to test if it hangs
+        if (!appEvent.appWasReloaded && !process.env.DEV_SKIP_GENERATE_TYPES) {
+          await this.app.generateExtensionTypes()
+        } else if (process.env.DEV_SKIP_GENERATE_TYPES) {
+          outputDebug(`[build:${buildId}] LEVER: skipping generateExtensionTypes\n`, this.options.stdout)
+        }
+        outputDebug(`[build:${buildId}] post-build steps complete\n`, this.options.stdout)
 
-          // Find deleted extensions and delete their previous build output
-          await this.deleteExtensionsBuildOutput(appEvent)
-          this.emit('all', appEvent)
-        })
-        .catch((error) => {
+        // Find deleted extensions and delete their previous build output
+        await this.deleteExtensionsBuildOutput(appEvent)
+        outputDebug(`[build:${buildId}] emitting 'all'\n`, this.options.stdout)
+        this.emit('all', appEvent)
+        outputDebug(`[build:${buildId}] 'all' emitted, listeners returned\n`, this.options.stdout)
+      }
+
+      // LEVER: DEV_SERIALIZE_ONCHANGE — serialize onChange handlers to test if concurrency causes the break
+      if (process.env.DEV_SERIALIZE_ONCHANGE) {
+        onChangeLock = onChangeLock.then(doWork).catch((error) => {
+          outputDebug(`[build:${buildId}] ERROR in onChange pipeline: ${error.message}\n`, this.options.stdout)
           this.emit('error', error)
         })
+      } else {
+        doWork().catch((error) => {
+          outputDebug(`[build:${buildId}] ERROR in onChange pipeline: ${error.message}\n`, this.options.stdout)
+          this.emit('error', error)
+        })
+      }
     })
     await this.fileWatcher.start()
 
