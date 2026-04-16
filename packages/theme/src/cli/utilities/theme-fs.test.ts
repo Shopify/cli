@@ -18,6 +18,7 @@ import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopi
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 import EventEmitter from 'events'
@@ -33,6 +34,13 @@ vi.mock('./asset-ignore.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/analytics', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/analytics')>()
+  return {
+    ...actual,
+    recordError: vi.fn(),
+  }
+})
 vi.mock('./theme-environment/hot-reload/server.js')
 
 beforeEach(async () => {
@@ -848,6 +856,35 @@ describe('theme-fs', () => {
         headline: 'Failed to delete file "assets/base.css" from remote theme.',
         body: expect.any(String),
       })
+    })
+  })
+
+  describe('watcher error handling', () => {
+    const themeId = '123'
+    const adminSession = {token: 'token'} as AdminSession
+    const root = joinPath(locationOfThisFile, 'fixtures/theme')
+
+    beforeEach(() => {
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+    })
+
+    test('outputs a warning when the watcher emits an error', async () => {
+      // Given
+      const {outputWarn} = await import('@shopify/cli-kit/node/output')
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // When
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('error', new Error('EMFILE: too many open files'))
+
+      // Then
+      expect(outputWarn).toHaveBeenCalledWith('File watcher error: Error: EMFILE: too many open files')
+      expect(recordError).toHaveBeenCalledWith('theme-service:file-watcher:error')
     })
   })
 
