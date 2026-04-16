@@ -1,128 +1,25 @@
-import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
-import {FunctionConfigType} from './specifications/function.js'
-import {DevSessionWatchConfig, ExtensionFeature, ExtensionSpecification} from './specification.js'
-import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {ExtensionBuildOptions, bundleFunctionExtension} from '../../services/build/extension.js'
-import {bundleThemeExtension} from '../../services/extensions/bundle.js'
-import {Identifiers} from '../app/identifiers.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {BaseConfigType} from './schemas.js'
+import {ApplicationModule, ExtensionDeployConfigOptions} from './application-module.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {ExtensionFeature, ExtensionSpecification, DevSessionWatchConfig} from './specification.js'
+import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
-import {executeStep, BuildContext} from '../../services/build/client-steps.js'
-import {ok} from '@shopify/cli-kit/node/result'
-import {constantize, slugify} from '@shopify/cli-kit/common/string'
-import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, normalizePath, resolvePath, relativePath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, moveFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
-import {getPathValue} from '@shopify/cli-kit/common/object'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {
-  extractJSImports,
-  extractImportPathsRecursively,
-  clearImportPathsCache,
-  getImportScanningCacheStats,
-} from '@shopify/cli-kit/node/import-extractor'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {uniq} from '@shopify/cli-kit/common/array'
+import {ok, Result} from '@shopify/cli-kit/node/result'
 
 /**
- * Class that represents an instance of a local extension
- * Before creating this class we've validated that:
- * - There is a spec for this type of extension
- * - The Schema for that spec is followed by the extension config toml file
- * - We were able to find an entry point file for that extension
+ * Backward-compatible class that bridges the old ExtensionSpecification-based
+ * composition pattern with the new ApplicationModule inheritance model.
  *
- * It supports extension points, making this Class compatible with both new ui-extension
- * and legacy extension types. Extension points are optional and this class will handle them if present.
+ * This class extends ApplicationModule and delegates identity/behavior to the
+ * existing ExtensionSpecification object, preserving the current API surface
+ * for all 76+ consuming files.
  *
- * This class holds the public interface to interact with extensions
+ * Once all specs are migrated to ApplicationModule subclasses, this class
+ * will be removed and consumers will use ApplicationModule directly.
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> {
-  entrySourceFilePath: string
-  devUUID: string
-  localIdentifier: string
-  idEnvironmentVariableName: string
-  directory: string
-  configuration: TConfiguration
-  configurationPath: string
-  outputPath: string
-  handle: string
+export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> extends ApplicationModule<TConfiguration> {
   specification: ExtensionSpecification
-  uid: string
-  private cachedImportPaths?: string[]
-
-  get graphQLType() {
-    return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
-  }
-
-  get type(): string {
-    return this.specification.identifier
-  }
-
-  get humanName() {
-    return this.specification.externalName
-  }
-
-  get name(): string {
-    return this.configuration.name ?? this.specification.externalName
-  }
-
-  get dependency() {
-    return this.specification.dependency
-  }
-
-  get externalType() {
-    return this.specification.externalIdentifier
-  }
-
-  get surface() {
-    return this.specification.surface
-  }
-
-  get isPreviewable() {
-    return this.features.includes('ui_preview')
-  }
-
-  get isThemeExtension() {
-    return this.features.includes('theme')
-  }
-
-  get isFunctionExtension() {
-    return this.features.includes('function')
-  }
-
-  get isESBuildExtension() {
-    return this.features.includes('esbuild')
-  }
-
-  get isSourceMapGeneratingExtension() {
-    return this.features.includes('generates_source_maps')
-  }
-
-  get isAppConfigExtension() {
-    return this.specification.experience === 'configuration'
-  }
-
-  get isFlow() {
-    return this.specification.identifier.includes('flow')
-  }
-
-  get isEditorExtensionCollection() {
-    return this.specification.identifier === 'editor_extension_collection'
-  }
-
-  get features(): ExtensionFeature[] {
-    return this.specification.appModuleFeatures(this.configuration)
-  }
-
-  get outputFileName() {
-    return basename(this.outputRelativePath)
-  }
-
-  get outputRelativePath() {
-    return this.specification.getOutputRelativePath?.(this) ?? ''
-  }
 
   constructor(options: {
     configuration: TConfiguration
@@ -131,456 +28,160 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     directory: string
     specification: ExtensionSpecification
   }) {
-    this.configuration = options.configuration
-    this.configurationPath = options.configurationPath
-    this.entrySourceFilePath = options.entryPath ?? ''
-    this.directory = options.directory
+    super({
+      ...options,
+      remoteSpec: {
+        name: options.specification.externalName,
+        externalName: options.specification.externalName,
+        identifier: options.specification.identifier,
+        gated: false,
+        externalIdentifier: options.specification.externalIdentifier,
+        experience: options.specification.experience,
+        managementExperience: 'cli',
+        registrationLimit: options.specification.registrationLimit,
+        uidStrategy: options.specification.uidStrategy,
+        surface: options.specification.surface,
+      },
+    })
     this.specification = options.specification
-    this.handle = this.buildHandle()
-    this.localIdentifier = this.handle
-    this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
+    // Recompute outputPath now that specification is set, since the
+    // override of outputRelativePath delegates to specification.
     this.outputPath = joinPath(this.directory, this.outputRelativePath)
-    this.uid = this.buildUIDFromStrategy()
-    this.devUUID = `dev-${this.uid}`
   }
 
-  get draftMessages() {
-    if (this.isAppConfigExtension) return {successMessage: undefined, errorMessage: undefined}
-    const successMessage = `Draft updated successfully for extension: ${this.localIdentifier}`
-    const errorMessage = `Error updating extension draft for ${this.localIdentifier}`
-    return {successMessage, errorMessage}
+  // ------------------------------------------------------------------
+  // Identity — delegates to specification for backward compatibility.
+  // Uses ?. fallback to remoteSpec during construction (before
+  // this.specification is set by the subclass constructor).
+  // ------------------------------------------------------------------
+
+  override get identifier(): string {
+    return this.specification?.identifier ?? this.remoteSpec.identifier
   }
 
-  get isUUIDStrategyExtension() {
-    return this.specification.uidStrategy === 'uuid'
+  override get externalIdentifier(): string {
+    return this.specification?.externalIdentifier ?? this.remoteSpec.externalIdentifier
   }
 
-  get isSingleStrategyExtension() {
-    return this.specification.uidStrategy === 'single'
+  override get externalName(): string {
+    return this.specification?.externalName ?? this.remoteSpec.externalName
   }
 
-  get isDynamicStrategyExtension() {
-    return this.specification.uidStrategy === 'dynamic'
+  override get partnersWebIdentifier(): string {
+    return this.specification?.partnersWebIdentifier ?? this.remoteSpec.identifier
   }
 
-  get outputPrefix() {
-    return this.handle
+  override get graphQLType(): string {
+    if (!this.specification) return this.remoteSpec.identifier.toUpperCase()
+    return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
-  isSentToMetrics() {
-    return !this.isAppConfigExtension
+  override get experience() {
+    return (this.specification?.experience ?? this.remoteSpec.experience) as 'extension' | 'configuration'
   }
 
-  isReturnedAsInfo() {
-    return !this.isAppConfigExtension
+  override get uidStrategy() {
+    return this.specification?.uidStrategy ?? this.remoteSpec.uidStrategy
   }
 
-  async deployConfig({
+  override get surface(): string {
+    return this.specification?.surface ?? this.remoteSpec.surface ?? ''
+  }
+
+  override get dependency(): string | undefined {
+    return this.specification?.dependency
+  }
+
+  // ------------------------------------------------------------------
+  // Behavior — delegates to specification
+  // ------------------------------------------------------------------
+
+  appModuleFeatures(): ExtensionFeature[] {
+    return this.specification.appModuleFeatures(this.configuration)
+  }
+
+  override get buildConfig() {
+    return this.specification.buildConfig
+  }
+
+  override get clientSteps() {
+    return this.specification.clientSteps
+  }
+
+  override get outputRelativePath(): string {
+    return this.specification?.getOutputRelativePath?.(this) ?? ''
+  }
+
+  override async deployConfig({
     apiKey,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+    const deployConfigResult = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined
-    const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
+    const resultDeployConfig = deployConfigResult ?? transformedConfig ?? undefined
     return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
   }
 
-  validate() {
+  override validate(): Promise<Result<unknown, string>> {
     if (!this.specification.validate) return Promise.resolve(ok(undefined))
     return this.specification.validate(this.configuration, this.configurationPath, this.directory)
   }
 
-  preDeployValidation(): Promise<void> {
+  override preDeployValidation(): Promise<void> {
     if (!this.specification.preDeployValidation) return Promise.resolve()
     return this.specification.preDeployValidation(this)
   }
 
-  buildValidation(): Promise<void> {
+  override buildValidation(): Promise<void> {
     if (!this.specification.buildValidation) return Promise.resolve()
     return this.specification.buildValidation(this)
   }
 
-  async keepBuiltSourcemapsLocally(inputPath: string): Promise<void> {
-    if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
-
-    const pathsToMove = await glob(`**/${this.handle}.js.map`, {
-      cwd: inputPath,
-      absolute: true,
-      followSymbolicLinks: false,
-    })
-
-    const pathToMove = pathsToMove[0]
-    if (pathToMove === undefined) return Promise.resolve()
-
-    const outputPath = joinPath(this.directory, relativePath(inputPath, pathToMove))
-    await moveFile(pathToMove, outputPath, {overwrite: true})
-    outputDebug(`Source map for ${this.localIdentifier} created: ${outputPath}`)
-  }
-
-  async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
-    const fqdn = await partnersFqdn()
-    const parnersPath = this.specification.partnersWebIdentifier
-    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
-  }
-
-  getOutputFolderId(outputId?: string) {
-    // Ideally we want to return `this.uid` always. To keep supporting Partners API we accept a value to override that.
-
-    return outputId ?? this.uid
-  }
-
-  // UI Specific properties
-  getBundleExtensionStdinContent() {
+  override getBundleExtensionStdinContent() {
     if (this.specification.getBundleExtensionStdinContent) {
       return this.specification.getBundleExtensionStdinContent(this.configuration)
     }
-    const relativeImportPath = this.entrySourceFilePath.replace(this.directory, '')
-    return {main: `import '.${relativeImportPath}';`}
+    return super.getBundleExtensionStdinContent()
   }
 
-  shouldFetchCartUrl(): boolean {
-    return this.features.includes('cart_url')
-  }
-
-  hasExtensionPointTarget(target: string): boolean {
+  override hasExtensionPointTarget(target: string): boolean {
     return this.specification.hasExtensionPointTarget?.(this.configuration, target) ?? false
   }
 
-  // Functions specific properties
-  get buildCommand() {
-    const config = this.configuration as unknown as FunctionConfigType
-    return config.build?.command
+  override transformLocalToRemote(appConfiguration: AppConfiguration): object | undefined {
+    return this.specification.transformLocalToRemote?.(this.configuration, appConfiguration)
   }
 
-  get typegenCommand() {
-    const config = this.configuration as unknown as FunctionConfigType
-    return config.build?.typegen_command
+  override transformRemoteToLocal(options?: {flags?: Flag[]}): object | undefined {
+    return this.specification.transformRemoteToLocal?.(this.configuration, options)
   }
 
-  /**
-   * Default entry paths to be watched in a dev session.
-   * It returns the entry source file path if defined,
-   * or the list of files generated from the bundle content (UI extensions).
-   * @returns Array of strings with the paths to be watched
-   */
-  devSessionDefaultWatchPaths(): string[] {
-    // For UI extensions, use the generated bundle content
-    if (this.specification.identifier === 'ui_extension') {
-      const {main, assets} = this.getBundleExtensionStdinContent()
-      const mainPaths = extractJSImports(main, this.directory)
-      const assetPaths = assets?.flatMap((asset) => extractJSImports(asset.content, this.directory)) ?? []
-      return mainPaths.concat(...assetPaths)
-    }
-
-    return [this.entrySourceFilePath]
-  }
-
-  // Custom watch configuration for dev sessions
-  // Return undefined to watch everything (default for 'extension' experience)
-  // Return a config with empty paths to watch nothing (default for 'configuration' experience)
-  get devSessionWatchConfig(): DevSessionWatchConfig | undefined {
-    if (this.specification.devSessionWatchConfig) {
-      return this.specification.devSessionWatchConfig(this)
-    }
-
-    return this.isAppConfigExtension ? {paths: []} : undefined
-  }
-
-  async watchConfigurationPaths() {
-    if (this.isAppConfigExtension) {
-      return [this.configurationPath]
-    } else {
-      const additionalPaths = []
-      if (await fileExists(joinPath(this.directory, 'locales'))) {
-        additionalPaths.push(joinPath(this.directory, 'locales', '**.json'))
-      }
-      additionalPaths.push(joinPath(this.directory, '**.toml'))
-      return additionalPaths
-    }
-  }
-
-  get inputQueryPath() {
-    return joinPath(this.directory, 'input.graphql')
-  }
-
-  get isJavaScript() {
-    return Boolean(this.entrySourceFilePath.endsWith('.js') || this.entrySourceFilePath.endsWith('.ts'))
-  }
-
-  async build(options: ExtensionBuildOptions): Promise<void> {
-    const {clientSteps = []} = this.specification
-
-    const context: BuildContext = {
-      extension: this,
-      options,
-      stepResults: new Map(),
-    }
-
-    const steps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
-
-    for (const step of steps) {
-      // eslint-disable-next-line no-await-in-loop
-      const result = await executeStep(step, context)
-      context.stepResults.set(step.id, result)
-    }
-  }
-
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    await this.build(options)
-
-    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
-    await this.keepBuiltSourcemapsLocally(bundleInputPath)
-  }
-
-  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
-    const defaultOutputPath = this.outputPath
-
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
-
-    const buildMode = this.specification.buildConfig.mode
-
-    if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    } else if (buildMode !== 'none') {
-      outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
-      if (await fileExists(defaultOutputPath)) {
-        await copyFile(defaultOutputPath, this.outputPath)
-
-        if (buildMode === 'function') {
-          await bundleFunctionExtension(this.outputPath, this.outputPath)
-        }
-      }
-    }
-  }
-
-  getOutputPathForDirectory(directory: string, outputId?: string) {
-    const id = this.getOutputFolderId(outputId)
-    return joinPath(directory, id, this.outputRelativePath)
-  }
-
-  get singleTarget() {
-    const targets = (getPathValue(this.configuration, 'targeting') as {target: string}[]) ?? []
-    if (targets.length !== 1) return undefined
-    return targets[0]?.target
-  }
-
-  get contextValue() {
-    let context = this.singleTarget ?? ''
-    if (this.isFlow) context = this.configuration.handle ?? ''
-    return context
-  }
-
-  async bundleConfig({
-    identifiers,
-    developerPlatformClient,
-    apiKey,
-    appConfiguration,
-  }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
-    const configValue = await this.deployConfig({apiKey, appConfiguration})
-    if (!configValue) return undefined
-
-    const result = {
-      config: JSON.stringify(configValue),
-      context: this.contextValue,
-      handle: this.handle,
-    }
-
-    const uuid = this.isUUIDStrategyExtension
-      ? identifiers.extensions[this.localIdentifier]!
-      : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
-
-    return {
-      ...result,
-      uid: this.uid,
-      uuid,
-      specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(this.graphQLType),
-    }
-  }
-
-  async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
-    if (!this.specification.getDevSessionUpdateMessages) return undefined
-    return this.specification.getDevSessionUpdateMessages(this.configuration)
-  }
-
-  /**
-   * Patches the configuration with the app dev URLs if applicable
-   * Only for modules that use the app URL in their configuration.
-   * @param urls - The app dev URLs
-   */
-  patchWithAppDevURLs(urls: ApplicationURLs) {
+  override patchWithAppDevURLs(urls: ApplicationURLs): void {
     if (!this.specification.patchWithAppDevURLs) return
     this.specification.patchWithAppDevURLs(this.configuration, urls)
   }
 
-  async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
+  override async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
+    if (!this.specification.getDevSessionUpdateMessages) return undefined
+    return this.specification.getDevSessionUpdateMessages(this.configuration)
+  }
+
+  override async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>): Promise<void> {
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
   }
 
-  /**
-   * Returns all files that need to be watched for this extension
-   * This includes files in the extension directory (respecting watch paths and gitignore)
-   * as well as any imported files from outside the extension directory
-   */
-  watchedFiles(): string[] {
-    const watchedFiles: string[] = []
-
-    const defaultIgnore = [
-      '**/node_modules/**',
-      '**/.git/**',
-      '**/*.test.*',
-      '**/dist/**',
-      '**/*.swp',
-      '**/generated/**',
-      '**/.gitignore',
-    ]
-    const watchConfig = this.devSessionWatchConfig
-
-    const patterns = watchConfig?.paths ?? ['**/*']
-    const ignore = watchConfig?.ignore ?? defaultIgnore
-    const files = patterns.flatMap((pattern) =>
-      globSync(pattern, {
-        cwd: this.directory,
-        absolute: true,
-        followSymbolicLinks: false,
-        ignore,
-      }),
-    )
-    watchedFiles.push(...files.flat())
-
-    // Add imported files from outside the extension directory unless custom watch config is defined
-    if (!watchConfig) {
-      const importedFiles = this.scanImports()
-      watchedFiles.push(...importedFiles)
-    }
-
-    return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
-  }
-
-  /**
-   * Copy static assets from the extension directory to the output path
-   * Used by both dev and deploy builds
-   */
-  async copyStaticAssets(outputPath?: string) {
+  override async copyStaticAssets(outputPath?: string): Promise<void> {
     if (this.specification.copyStaticAssets) {
       return this.specification.copyStaticAssets(this.configuration, this.directory, outputPath ?? this.outputPath)
     }
   }
 
-  /**
-   * Rescans imports for this extension and updates the cached import paths
-   * Returns true if the imports changed
-   */
-  async rescanImports(): Promise<boolean> {
-    const oldImportPaths = this.cachedImportPaths
-    this.cachedImportPaths = undefined
-    clearImportPathsCache()
-    this.scanImports()
-    return oldImportPaths !== this.cachedImportPaths
+  override get devSessionWatchConfig(): DevSessionWatchConfig | undefined {
+    if (this.specification.devSessionWatchConfig) {
+      return this.specification.devSessionWatchConfig(this)
+    }
+    return super.devSessionWatchConfig
   }
-
-  /**
-   * Scans for imports in this extension's entry files
-   * Returns absolute paths of imported files that are outside the extension directory
-   */
-  private scanImports(): string[] {
-    // Return cached paths if available
-    if (this.cachedImportPaths !== undefined) {
-      return this.cachedImportPaths
-    }
-
-    if (isTruthy(process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING)) {
-      this.cachedImportPaths = []
-      return this.cachedImportPaths
-    }
-
-    try {
-      const startTime = performance.now()
-      const entryFiles = this.devSessionDefaultWatchPaths()
-
-      const imports = entryFiles.flatMap((entryFile) => {
-        return extractImportPathsRecursively(entryFile).map((importPath) => normalizePath(resolvePath(importPath)))
-      })
-
-      this.cachedImportPaths = uniq(imports) ?? []
-      const elapsed = Math.round(performance.now() - startTime)
-      const cacheStats = getImportScanningCacheStats()
-      const cacheInfo = cacheStats ? ` (cache: ${cacheStats.directImports} parsed, ${cacheStats.fileExists} stats)` : ''
-      outputDebug(
-        `Import scan for "${this.handle}": ${entryFiles.length} entries, ${this.cachedImportPaths.length} files, ${elapsed}ms${cacheInfo}`,
-      )
-      return this.cachedImportPaths
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      outputDebug(`Failed to scan imports for extension ${this.handle}: ${error}`)
-      this.cachedImportPaths = []
-      return this.cachedImportPaths
-    }
-  }
-
-  private buildHandle() {
-    switch (this.specification.uidStrategy) {
-      case 'single':
-        return this.specification.identifier
-      case 'uuid':
-        return this.configuration.handle ?? slugify(this.name ?? '')
-      case 'dynamic':
-        // Hardcoded temporal solution for webhooks
-        if ('topic' in this.configuration && 'uri' in this.configuration) {
-          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-          const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
-          return hashString(handle).substring(0, MAX_EXTENSION_HANDLE_LENGTH)
-        } else {
-          return nonRandomUUID(JSON.stringify(this.configuration))
-        }
-      default:
-        return this.specification.identifier
-    }
-  }
-
-  private buildUIDFromStrategy() {
-    switch (this.specification.uidStrategy) {
-      case 'single':
-        return this.specification.identifier
-      case 'uuid':
-        return this.configuration.uid ?? nonRandomUUID(this.handle)
-      case 'dynamic':
-        // NOTE: This is a temporary special case for webhook subscriptions.
-        // We're directly checking for webhook properties and casting the configuration
-        // instead of using a proper dynamic strategy implementation.
-        // To remove this special case:
-        // 1. Implement a proper dynamic UID strategy for webhooks in the server-side specification
-        // 2. Update the CLI to use that strategy instead of this hardcoded logic
-        // Related issues: PR #559094 in old Core repo
-        if ('topic' in this.configuration && 'uri' in this.configuration) {
-          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-          return `${subscription.topic}::${subscription.filter}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
-        } else {
-          return nonRandomUUID(JSON.stringify(this.configuration))
-        }
-    }
-  }
-}
-
-interface ExtensionDeployConfigOptions {
-  apiKey: string
-  appConfiguration: AppConfiguration
-}
-
-interface ExtensionBundleConfigOptions {
-  identifiers: Identifiers
-  developerPlatformClient: DeveloperPlatformClient
-  apiKey: string
-  appConfiguration: AppConfiguration
-}
-
-interface BundleConfig {
-  config: string
-  context: string
-  handle: string
-  uid: string
-  uuid: string
-  specificationIdentifier: string
 }

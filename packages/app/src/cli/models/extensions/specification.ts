@@ -1,8 +1,10 @@
+// Re-export shared types from their canonical location in application-module.ts.
+// Consumers currently import these from specification.ts; these re-exports
+// preserve backward compatibility during the migration.
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
-
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
@@ -12,16 +14,16 @@ import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import type {
+  ExtensionFeature,
+  ExtensionExperience,
+  UidStrategy,
+  BuildConfig,
+  Asset,
+  DevSessionWatchConfig,
+} from './application-module.js'
 
-export type ExtensionFeature =
-  | 'ui_preview'
-  | 'function'
-  | 'theme'
-  | 'cart_url'
-  | 'esbuild'
-  | 'single_js_entry_path'
-  | 'localization'
-  | 'generates_source_maps'
+export {type ExtensionFeature, AssetIdentifier, type Asset, type DevSessionWatchConfig} from './application-module.js'
 
 export type TransformationConfig = Record<string, string>
 
@@ -30,24 +32,8 @@ export interface CustomTransformationConfig {
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
-type ExtensionExperience = 'extension' | 'configuration'
-
 export function isAppConfigSpecification(spec: {experience: string}): boolean {
   return spec.experience === 'configuration'
-}
-type UidStrategy = 'single' | 'dynamic' | 'uuid'
-
-export enum AssetIdentifier {
-  ShouldRender = 'should_render',
-  Main = 'main',
-  Tools = 'tools',
-  Instructions = 'instructions',
-}
-
-export interface Asset {
-  identifier: AssetIdentifier
-  outputFileName: string
-  content: string
 }
 
 export interface BuildAsset {
@@ -55,10 +41,6 @@ export interface BuildAsset {
   module: string
   static?: boolean
 }
-
-type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'hosted_app_home'}
-  | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -143,13 +125,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * or undefined to watch all files in the extension directory.
    */
   devSessionWatchConfig?: (extension: ExtensionInstance<TConfiguration>) => DevSessionWatchConfig | undefined
-}
-
-export interface DevSessionWatchConfig {
-  /** Absolute paths or globs to watch */
-  paths: string[]
-  /** Glob patterns to ignore. When provided, replaces the default ignore list entirely. */
-  ignore?: string[]
 }
 
 /**
