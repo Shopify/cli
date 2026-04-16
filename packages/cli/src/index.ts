@@ -17,6 +17,9 @@ import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
 import StoreAuth from './cli/commands/store/auth.js'
 import StoreExecute from './cli/commands/store/execute.js'
+import AutoupgradeOff from './cli/commands/config/autoupgrade/off.js'
+import AutoupgradeOn from './cli/commands/config/autoupgrade/on.js'
+import AutoupgradeStatus from './cli/commands/config/autoupgrade/status.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
@@ -154,6 +157,9 @@ export const COMMANDS: any = {
   'cache:clear': ClearCache,
   'store:auth': StoreAuth,
   'store:execute': StoreExecute,
+  'config:autoupgrade:off': AutoupgradeOff,
+  'config:autoupgrade:on': AutoupgradeOn,
+  'config:autoupgrade:status': AutoupgradeStatus,
 }
 
 export default runShopifyCLI

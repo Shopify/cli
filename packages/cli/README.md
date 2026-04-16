@@ -36,6 +36,9 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
+* [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
+* [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
+* [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -1160,6 +1163,60 @@ DESCRIPTION
   available.
 
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
+```
+
+## `shopify config autoupgrade off`
+
+Disable automatic upgrades for Shopify CLI.
+
+```
+USAGE
+  $ shopify config autoupgrade off
+
+DESCRIPTION
+  Disable automatic upgrades for Shopify CLI.
+
+  Disable automatic upgrades for Shopify CLI.
+
+  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.
+
+  To enable auto-upgrade, run `shopify config autoupgrade on`.
+```
+
+## `shopify config autoupgrade on`
+
+Enable automatic upgrades for Shopify CLI.
+
+```
+USAGE
+  $ shopify config autoupgrade on
+
+DESCRIPTION
+  Enable automatic upgrades for Shopify CLI.
+
+  Enable automatic upgrades for Shopify CLI.
+
+  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
+
+  To disable auto-upgrade, run `shopify config autoupgrade off`.
+```
+
+## `shopify config autoupgrade status`
+
+Check whether auto-upgrade is enabled, disabled, or not yet configured.
+
+```
+USAGE
+  $ shopify config autoupgrade status
+
+DESCRIPTION
+  Check whether auto-upgrade is enabled, disabled, or not yet configured.
+
+  Check whether auto-upgrade is enabled, disabled, or not yet configured.
+
+  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
+
+  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
 ```
 
 ## `shopify help [command] [flags]`

@@ -3386,6 +3386,66 @@
       "strict": true,
       "summary": "Check whether autocorrect is enabled or disabled. On by default."
     },
+    "config:autoupgrade:off": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Disable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n",
+      "descriptionWithMarkdown": "Disable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:autoupgrade:off",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Disable automatic upgrades for Shopify CLI."
+    },
+    "config:autoupgrade:on": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
+      "descriptionWithMarkdown": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:autoupgrade:on",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Enable automatic upgrades for Shopify CLI."
+    },
+    "config:autoupgrade:status": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Check whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n",
+      "descriptionWithMarkdown": "Check whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:autoupgrade:status",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Check whether auto-upgrade is enabled, disabled, or not yet configured."
+    },
     "debug:command-flags": {
       "aliases": [
       ],
