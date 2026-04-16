@@ -1,0 +1,79 @@
+{
+  "name": "organizations",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/organizations/src",
+  "projectType": "library",
+  "tags": ["scope:feature"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/organizations"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "options": {
+        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "cwd": "packages/organizations"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint \"src/**/*.ts\"",
+        "cwd": "packages/organizations"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "cwd": "packages/organizations"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc --noEmit",
+        "cwd": "packages/organizations"
+      }
+    },
+    "graphql-codegen": {
+      "executor": "nx:noop",
+      "dependsOn": ["graphql-codegen:formatting"]
+    },
+    "graphql-codegen:formatting": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["graphql-codegen:postfix"],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
+      "options": {
+        "commands": ["pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix"],
+        "cwd": "packages/organizations"
+      }
+    },
+    "graphql-codegen:postfix": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["graphql-codegen:generate:organizations-destinations"],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
+      "options": {
+        "commands": [
+          "find ./packages/organizations/src/cli/api/graphql/business-platform-destinations/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
+        ],
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "graphql-codegen:generate:organizations-destinations": {
+      "executor": "nx:run-commands",
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql"],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
+      "options": {
+        "commands": ["pnpm exec graphql-codegen --project=organizationsDestinations"],
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

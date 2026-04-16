@@ -32,7 +32,7 @@ import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/ap
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
-import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
+import {fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -49,6 +49,7 @@ import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/api/app-management')
+vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/api/webhooks')
 
 beforeEach(() => {
@@ -1917,45 +1918,14 @@ describe('appExtensionRegistrations', () => {
 })
 
 describe('organizations', () => {
-  test('returns empty array when currentUserAccount is null', async () => {
+  test('returns organizations with source added', async () => {
     // Given
     const client = AppManagementClient.getInstance()
-    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-
-    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
-      currentUserAccount: null,
-    })
-
-    // When
-    const result = await client.organizations()
-
-    // Then
-    expect(result).toEqual([])
-    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({
-        query: ListOrganizations,
-        token: 'business-platform-token',
-      }),
-    )
-  })
-
-  test('returns organizations with unique names', async () => {
-    // Given
-    const client = AppManagementClient.getInstance()
-    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const mockResponse = {
-      currentUserAccount: {
-        uuid: 'user-123',
-        organizationsWithAccessToDestination: {
-          nodes: [
-            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMQ==', name: 'Org One'},
-            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMg==', name: 'Org Two'},
-            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMw==', name: 'Org Three'},
-          ],
-        },
-      },
-    }
-    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce(mockResponse)
+    vi.mocked(fetchOrganizations).mockResolvedValueOnce([
+      {id: '1', businessName: 'Org One'},
+      {id: '2', businessName: 'Org Two'},
+      {id: '3', businessName: 'Org Three'},
+    ])
 
     // When
     const result = await client.organizations()
@@ -1968,19 +1938,10 @@ describe('organizations', () => {
     ])
   })
 
-  test('returns empty array when organizationsWithAccessToDestination is empty', async () => {
+  test('returns empty array when fetchOrganizations returns empty', async () => {
     // Given
     const client = AppManagementClient.getInstance()
-    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const mockResponse = {
-      currentUserAccount: {
-        uuid: 'user-123',
-        organizationsWithAccessToDestination: {
-          nodes: [],
-        },
-      },
-    }
-    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce(mockResponse)
+    vi.mocked(fetchOrganizations).mockResolvedValueOnce([])
 
     // When
     const result = await client.organizations()

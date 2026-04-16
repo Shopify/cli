@@ -208,6 +208,23 @@
           ]
         }
       },
+      "packages/organizations": {
+        "entry": [
+          "**/index.ts!"
+        ],
+        "project": "**/*.ts!",
+        "ignore": [
+          "**/graphql/**/generated/*.ts"
+        ],
+        "ignoreDependencies": [
+          "@graphql-typed-document-node/core"
+        ],
+        "vite": {
+          "config": [
+            "vite.config.ts"
+          ]
+        }
+      },
       "packages/cli": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
