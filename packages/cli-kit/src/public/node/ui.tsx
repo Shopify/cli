@@ -479,7 +479,6 @@ interface RenderTasksOptions {
 /**
  * Runs async tasks and displays their progress to the console.
  * @example
- * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Installing dependencies ...
  */
 
@@ -497,6 +496,7 @@ export async function renderTasks<TContext>(
       noProgressBar={noProgressBar}
     />,
     {
+      stdout: process.stderr as unknown as NodeJS.WriteStream,
       ...renderOptions,
       exitOnCtrlC: false,
     },
@@ -519,7 +519,6 @@ export interface RenderSingleTaskOptions<T> {
  * @param options.renderOptions - Optional render configuration
  * @returns The result of the task
  * @example
- * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Loading app ...
  */
 export async function renderSingleTask<T>({
@@ -539,6 +538,7 @@ export async function renderSingleTask<T>({
       onAbort={onAbort}
     />,
     {
+      stdout: process.stderr as unknown as NodeJS.WriteStream,
       ...renderOptions,
       exitOnCtrlC: false,
     },
