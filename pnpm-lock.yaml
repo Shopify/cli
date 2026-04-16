@@ -157,6 +157,9 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.94.0
         version: link:../cli-kit
+      '@shopify/organizations':
+        specifier: 3.94.0
+        version: link:../organizations
       '@shopify/plugin-cloudflare':
         specifier: 3.94.0
         version: link:../plugin-cloudflare
@@ -597,6 +600,19 @@ importers:
       prettier:
         specifier: 3.8.1
         version: 3.8.1
+
+  packages/organizations:
+    dependencies:
+      '@graphql-typed-document-node/core':
+        specifier: 3.2.0
+        version: 3.2.0(graphql@16.10.0)
+      '@shopify/cli-kit':
+        specifier: 3.94.0
+        version: link:../cli-kit
+    devDependencies:
+      '@vitest/coverage-istanbul':
+        specifier: ^3.1.4
+        version: 3.2.4(vitest@3.2.4(@types/node@22.19.17)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@22.19.17)(typescript@5.9.3))(sass@1.97.3)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/plugin-cloudflare:
     dependencies:

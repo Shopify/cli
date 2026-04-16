@@ -1,7 +1,6 @@
 import {InfoOptions, info} from './info.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp, OrganizationSource} from '../models/organization.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
   testOrganizationApp,
@@ -12,13 +11,14 @@ import {
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 
-vi.mock('../prompts/dev.js')
+vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('../utilities/developer-platform-client.js')
 

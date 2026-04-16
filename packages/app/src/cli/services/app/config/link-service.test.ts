@@ -2,14 +2,16 @@ import link from './link.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {OrganizationApp, OrganizationSource} from '../../../models/organization.js'
-import {appNamePrompt, createAsNewAppPrompt, selectOrganizationPrompt} from '../../../prompts/dev.js'
+import {appNamePrompt, createAsNewAppPrompt} from '../../../prompts/dev.js'
 import {selectConfigName} from '../../../prompts/config.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/dev.js')
+vi.mock('@shopify/organizations')
 vi.mock('../../../prompts/config.js')
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -84,7 +86,6 @@ api_version = "2024-01"
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({
         id: '12345',
         businessName: 'test',
-        source: OrganizationSource.BusinessPlatform,
       })
       vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
 
@@ -178,7 +179,6 @@ api_version = "2025-07"
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({
         id: '12345',
         businessName: 'test',
-        source: OrganizationSource.BusinessPlatform,
       })
 
       const options = {
@@ -227,7 +227,6 @@ required = true
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({
         id: '12345',
         businessName: 'test',
-        source: OrganizationSource.BusinessPlatform,
       })
 
       const options = {

@@ -78,7 +78,6 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
-import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
@@ -141,6 +140,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {fetchOrganizations} from '@shopify/organizations'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -375,12 +375,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async organizations(): Promise<Organization[]> {
-    const organizationsResult = await this.businessPlatformRequest({query: ListOrganizations})
-    if (!organizationsResult.currentUserAccount) return []
-    const orgs = organizationsResult.currentUserAccount.organizationsWithAccessToDestination.nodes
+    const orgs = await fetchOrganizations()
     return orgs.map((org) => ({
-      id: idFromEncodedGid(org.id),
-      businessName: org.name,
+      ...org,
       source: this.organizationSource,
     }))
   }
