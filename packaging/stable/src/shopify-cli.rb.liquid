@@ -4,7 +4,7 @@ require "formula"
 require "language/node"
 require "fileutils"
 
-class ShopifyCli{% if formulaVersion %}{% if formulaVersion == '3' %}AT3{% else %}{{ formulaVersion | capitalize }}{% endif %}{% endif %} < Formula
+class ShopifyCli{% if formulaVersion %}{% if formulaVersion == 'nightly' or formulaVersion == 'pre' %}{{ formulaVersion | capitalize }}{% else %}AT{{ formulaVersion }}{% endif %}{% endif %} < Formula
   desc "A CLI tool to build for the Shopify platform"
   homepage "https://github.com/shopify/cli#readme"
   url "{{ cliTarball }}"
@@ -31,13 +31,13 @@ class ShopifyCli{% if formulaVersion %}{% if formulaVersion == '3' %}AT3{% else 
     system "npm", "install", *Language::Node.std_npm_install_args(libexec)
 
     original_executable_path = "#{libexec}/bin/shopify"
-    executable_path = "#{original_executable_path}{% if formulaVersion %}{% if formulaVersion != '3' %}-{% endif %}{{formulaVersion}}{% endif %}"
+    executable_path = "#{original_executable_path}{% if formulaVersion %}{% if formulaVersion == 'nightly' or formulaVersion == 'pre' %}-{% endif %}{{formulaVersion}}{% endif %}"
     new_original_executable_path = "#{executable_path}-original"
     FileUtils.move(original_executable_path, new_original_executable_path)
     executable_content = <<~SCRIPT
       #!/usr/bin/env #{Formula["node"].opt_bin}/node
 
-      process.env.SHOPIFY_HOMEBREW_FORMULA = "shopify-cli{% if formulaVersion %}{% if formulaVersion == '3' %}@{% else %}-{% endif %}{{formulaVersion}}{% endif %}"
+      process.env.SHOPIFY_HOMEBREW_FORMULA = "shopify-cli{% if formulaVersion %}{% if formulaVersion == 'nightly' or formulaVersion == 'pre' %}-{% else %}@{% endif %}{{formulaVersion}}{% endif %}"
 
       import("#{new_original_executable_path}")
     SCRIPT
