@@ -28,7 +28,7 @@ export const themeFlags = {
       if (!isDirectorySync(resolvedPath)) {
         renderError({
           headline: 'The path must be a directory, not a file.',
-          body: [`The provided path is a file: ${resolvedPath}`, `Did you mean: ${dirname(resolvedPath)}`],
+          body: [`The provided path is not a directory: ${resolvedPath}`, `Did you mean: ${dirname(resolvedPath)}`],
         })
         return process.exit(1)
       }
