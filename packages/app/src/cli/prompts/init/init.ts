@@ -36,7 +36,7 @@ export function buildNoneTemplate(): Template {
       ? 'https://github.com/Shopify/shopify-app-template-extension-only'
       : 'https://github.com/Shopify/shopify-app-template-none',
     label: hostedAppsEnabled
-      ? 'Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)'
+      ? 'Build an extension-only app (Serverless app home and extensions. No back-end)'
       : 'Build an extension-only app',
     visible: true,
   }

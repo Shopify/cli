@@ -48,7 +48,7 @@ describe('init', () => {
       const got = buildNoneTemplate()
 
       // Then
-      expect(got.label).toBe('Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)')
+      expect(got.label).toBe('Build an extension-only app (Serverless app home and extensions. No back-end)')
       expect(got.url).toBe('https://github.com/Shopify/shopify-app-template-extension-only')
     })
 
