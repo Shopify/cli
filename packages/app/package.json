@@ -63,6 +63,7 @@
     "@oclif/core": "4.5.3",
     "@shopify/cli-kit": "4.1.0",
     "@shopify/plugin-cloudflare": "4.1.0",
+    "@shopify/organizations": "4.1.0",
     "@shopify/polaris": "12.27.0",
     "@shopify/polaris-icons": "8.11.1",
     "@shopify/theme": "4.1.0",
