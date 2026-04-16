@@ -327,7 +327,8 @@ describe('when existing session is valid', () => {
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    // Env automation token takes precedence for getLastSeenUserIdAfterAuth (analytics identity).
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(nonRandomUUID('custom_cli_token'))
     await expect(getLastSeenAuthMethod()).resolves.toEqual('partners_token')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
