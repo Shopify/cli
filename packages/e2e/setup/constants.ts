@@ -16,7 +16,7 @@ export const CLI_TIMEOUT = {
   short: 1 * 60_000,
   /** 3 min — standard commands (deploy, build, config link) */
   medium: 3 * 60_000,
-  /** 5 min — slow commands (create app, scaffold + npm install) */
+  /** 5 min — slow commands (create app, scaffold) */
   long: 5 * 60_000,
 } as const
 

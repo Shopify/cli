@@ -20,7 +20,7 @@ test.describe('App deploy', () => {
         parentDir,
         name: appName,
         template: 'none',
-        packageManager: 'npm',
+        packageManager: 'pnpm',
         orgId: env.orgId,
       })
       expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
