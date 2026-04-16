@@ -120,25 +120,27 @@ let userId: undefined | string
 let authMethod: AuthMethod = 'none'
 
 /**
- * Retrieves the user ID from the current session or returns 'unknown' if not found.
+ * Retrieves a stable user identifier for analytics, or `'unknown'` if none applies.
  *
- * This function performs the following steps:
- * 1. Checks for a cached user ID in memory (obtained in the current run).
- * 2. Attempts to fetch it from the local storage (from a previous auth session).
- * 3. Checks if a custom token was used (either as a theme password or partners token).
- * 4. If a custom token is present in the environment, generates a UUID and uses it as userId.
- * 5. If after all this we don't have a userId, then reports as 'unknown'.
+ * Evaluation order:
+ * 1. If an app automation token or theme token is used, returns a deterministic UUID
+ *    derived from that secret.
+ * 2. Otherwise, if `setLastSeenUserIdAfterAuth` was called (e.g. after OAuth), returns that value.
+ * 3. Otherwise, if a persisted CLI session id is available, returns it.
+ * 4. Otherwise returns `'unknown'`.
  *
  * @returns A Promise that resolves to the user ID as a string.
  */
 export async function getLastSeenUserIdAfterAuth(): Promise<string> {
+  const customToken = getAppAutomationToken() ?? themeToken()
+  if (customToken) return nonRandomUUID(customToken)
+
   if (userId) return userId
 
   const currentSessionId = getCurrentSessionId()
   if (currentSessionId) return currentSessionId
 
-  const customToken = getAppAutomationToken() ?? themeToken()
-  return customToken ? nonRandomUUID(customToken) : 'unknown'
+  return 'unknown'
 }
 
 export function setLastSeenUserIdAfterAuth(id: string) {
