@@ -5741,7 +5741,6 @@
       },
       "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
       "descriptionWithMarkdown": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
-      "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --json"
@@ -5809,7 +5808,6 @@
       },
       "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
-      "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"query { shop { name } }\"",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query-file ./operation.graphql --variables '{\"id\":\"gid://shopify/Product/1\"}'",

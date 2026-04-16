@@ -1,11 +1,11 @@
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
 
-export default class StoreAuth extends Command {
+export default class StoreAuth extends StoreCommand {
   static summary = 'Authenticate an app against a store for store commands.'
 
   static descriptionWithMarkdown = `Authenticates the app against the specified store for store commands and stores an online access token for later reuse.
@@ -36,7 +36,7 @@ Re-run this command if the stored token is missing, expires, or no longer has th
     }),
   }
 
-  async run(): Promise<void> {
+  public async run(): Promise<void> {
     const {flags} = await this.parse(StoreAuth)
 
     await authenticateStoreWithApp(
