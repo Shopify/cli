@@ -16,7 +16,6 @@ const productSubscriptionSpec = createExtensionSpecification({
   graphQLType: 'subscription_management',
   schema: BaseSchema,
   appModuleFeatures: (_) => ['ui_preview', 'esbuild', 'single_js_entry_path'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<ProductSubscriptionConfigType>) => `dist/${extension.handle}.js`,
   clientSteps: [
     {

@@ -83,7 +83,6 @@ const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<UIExtensionConfigType>) => `dist/${extension.handle}.js`,
   clientSteps: [
     {

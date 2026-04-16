@@ -31,7 +31,6 @@ const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
   schema: TaxCalculationsSchema,
   appModuleFeatures: (_) => [],
-  buildConfig: {mode: 'tax_calculation'},
   getOutputRelativePath: (extension: ExtensionInstance<TaxCalculationsConfigType>) =>
     joinPath('dist', `${extension.handle}.js`),
   clientSteps: [

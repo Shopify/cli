@@ -57,10 +57,6 @@ export interface BuildAsset {
   static?: boolean
 }
 
-type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'hosted_app_home'}
-  | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
-
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -75,7 +71,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   registrationLimit: number
   experience: ExtensionExperience
   clientSteps?: ClientSteps
-  buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
   getOutputRelativePath?: (extension: ExtensionInstance<TConfiguration>) => string
@@ -220,7 +215,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     clientSteps: spec.clientSteps,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
   const merged = {...defaults, ...spec}
 
@@ -269,7 +263,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   identifier: string
   schema: ZodSchemaType<TConfiguration>
   clientSteps?: ClientSteps
-  buildConfig?: BuildConfig
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
@@ -288,7 +281,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     clientSteps: spec.clientSteps,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
@@ -299,7 +291,6 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     CreateExtensionSpecType<TConfiguration>,
     | 'identifier'
     | 'appModuleFeatures'
-    | 'buildConfig'
     | 'uidStrategy'
     | 'clientSteps'
     | 'experience'
@@ -312,7 +303,6 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
     experience: spec.experience,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
     clientSteps: spec.clientSteps,
     uidStrategy: spec.uidStrategy,
     transformRemoteToLocal: spec.transformRemoteToLocal,
