@@ -23,6 +23,9 @@ function getAdminConfig(extensions: ExtensionInstance[]): AdminConfig | undefine
   const adminExtension = extensions.find((ext) => ext.type === 'admin')
   if (!adminExtension) return undefined
   const admin = (adminExtension.configuration as AdminConfigType).admin
+
+  console.log('..........getAdminConfig........')
+
   return {
     allowedDomains: admin?.allowed_domains ?? [],
     staticRoot: admin?.static_root,
