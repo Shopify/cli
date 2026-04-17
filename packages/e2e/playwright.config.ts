@@ -13,7 +13,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: 0,
-  workers: 5,
+  workers: 10,
   maxFailures: isCI ? 3 : 0, // Stop early in CI after 3 failures
   reporter: isCI ? [['html', {open: 'never'}], ['list']] : [['list']],
   timeout: TEST_TIMEOUT.default, // Heavy tests override via test.setTimeout()
