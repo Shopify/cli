@@ -79,20 +79,6 @@ function renderAuthCallbackPage(title: string, message: string): string {
         line-height: 20px;
         color: rgb(109, 113, 117);
       }
-      .footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px 20px;
-        font-size: 12px;
-        line-height: 16px;
-        color: rgb(191, 199, 200);
-        text-align: center;
-      }
     </style>
   </head>
   <body>
@@ -103,7 +89,6 @@ function renderAuthCallbackPage(title: string, message: string): string {
         <p>${safeMessage}</p>
       </main>
     </div>
-    <footer class="footer">Shopify CLI</footer>
   </body>
 </html>`
 }
@@ -150,7 +135,7 @@ export async function waitForStoreAuthCode({
       outputDebug(outputContent`Received OAuth callback for shop ${outputToken.raw(returnedStore ?? 'unknown')}`)
 
       if (!returnedStore) {
-        fail('OAuth callback store does not match the requested store.')
+        fail('OAuth callback store doesn\'t match the requested store')
         return
       }
 
@@ -162,7 +147,7 @@ export async function waitForStoreAuthCode({
 
       const returnedState = searchParams.get('state')
       if (!returnedState || !constantTimeEqual(returnedState, state)) {
-        fail('OAuth callback state does not match the original request.')
+        fail('OAuth callback state doesn\'t match the original request')
         return
       }
 
@@ -174,7 +159,7 @@ export async function waitForStoreAuthCode({
 
       const code = searchParams.get('code')
       if (!code) {
-        fail('OAuth callback did not include an authorization code.')
+        fail('OAuth callback didn\'t include an authorization code')
         return
       }
 
@@ -185,7 +170,7 @@ export async function waitForStoreAuthCode({
       res.setHeader('Connection', 'close')
       res.once('finish', () => settle(() => resolve(code)))
       res.end(
-        renderAuthCallbackPage('Authentication succeeded', 'You can close this window and return to the terminal.'),
+        renderAuthCallbackPage('Authentication succeeded', 'Close this window and return to the terminal'),
       )
     })
 
