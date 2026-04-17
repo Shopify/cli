@@ -2658,5 +2658,67 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         expect(helperType).not.toContain('CreateApplicationEmailIntentRequest')
       })
     })
+
+    test('generates intent types from an intent schema file that declares a value schema', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+          target: 'admin.app.intent.render',
+        })
+
+        // Given an intent schema file that declares a root-level `value` schema
+        const intentSchemaContent = JSON.stringify({
+          value: {
+            type: 'object',
+            properties: {
+              productId: {type: 'string'},
+            },
+            required: ['productId'],
+          },
+          inputSchema: {
+            type: 'object',
+            properties: {
+              title: {type: 'string'},
+            },
+          },
+          outputSchema: {
+            type: 'object',
+            properties: {
+              id: {type: 'string'},
+            },
+          },
+        })
+        await writeFile(joinPath(tmpDir, 'intent-schema.json'), intentSchemaContent)
+        ;(extension.configuration.extension_points[0] as any).intents = [
+          {
+            action: 'edit',
+            type: 'shopify/Product',
+            schema: './intent-schema.json',
+          },
+        ]
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - the value schema is compiled into EditShopifyProductIntentValue
+        // and wired through the request type.
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).toContain('interface EditShopifyProductIntentValue')
+        expect(typeDefinition).toContain('productId: string;')
+        expect(typeDefinition).toContain('value?: EditShopifyProductIntentValue;')
+        // Sanity: the value type is not the `unknown` fallback used when no schema is provided.
+        expect(typeDefinition).not.toContain('type EditShopifyProductIntentValue = unknown')
+      })
+    })
   })
 })
