@@ -293,21 +293,11 @@ const uiExtensionSpec = createExtensionSpecification({
         let toolsTypeDefinition = ''
         if (toolsDefinition) {
           try {
-            const toolsFilePath = joinPath(extension.directory, toolsDefinition)
-            if (await fileExists(toolsFilePath)) {
-              // Read and parse the tools JSON file
-              const toolsContent = await readFile(toolsFilePath)
-              const tools = ToolsFileSchema.safeParse(JSON.parse(toolsContent))
-              if (tools.success) {
-                // Generate tools type definition
-                toolsTypeDefinition = await createToolsTypeDefinition(tools.data)
-              } else {
-                outputWarn(
-                  `Invalid tools definition in "${toolsDefinition}": ${tools.error.issues
-                    .map((issue) => issue.message)
-                    .join(', ')}`,
-                )
-              }
+            const tools = await readAndValidateJsonAsset(extension.directory, toolsDefinition, ToolsFileSchema)
+            if (tools.status === 'ok') {
+              toolsTypeDefinition = await createToolsTypeDefinition(tools.data)
+            } else if (tools.status === 'invalid') {
+              outputWarn(`Invalid tools definition in "${toolsDefinition}": ${tools.issues}`)
             }
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (error) {
@@ -389,6 +379,29 @@ function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest
   }
 }
 
+type JsonAssetResult<T> = {status: 'ok'; data: T} | {status: 'missing'} | {status: 'invalid'; issues: string}
+
+async function readAndValidateJsonAsset<T>(
+  extensionDirectory: string,
+  relativePath: string,
+  schema: zod.ZodType<T>,
+): Promise<JsonAssetResult<T>> {
+  const filePath = joinPath(extensionDirectory, relativePath)
+  const exists = await fileExists(filePath)
+  if (!exists) return {status: 'missing'}
+
+  const content = await readFile(filePath)
+  const parsed = schema.safeParse(JSON.parse(content))
+  if (!parsed.success) {
+    return {
+      status: 'invalid',
+      issues: parsed.error.issues.map((issue) => issue.message).join(', '),
+    }
+  }
+
+  return {status: 'ok', data: parsed.data}
+}
+
 async function parseIntentTypeDefinitions(
   extensionDirectory: string,
   intents: NonNullable<NewExtensionPointSchemaType['intents']>,
@@ -396,19 +409,11 @@ async function parseIntentTypeDefinitions(
   const parsedIntentDefinitions = await Promise.all(
     intents.map(async (intent) => {
       try {
-        const intentSchemaFilePath = joinPath(extensionDirectory, intent.schema)
-        const schemaExists = await fileExists(intentSchemaFilePath)
-        if (!schemaExists) return null
+        const intentSchema = await readAndValidateJsonAsset(extensionDirectory, intent.schema, IntentSchemaFileSchema)
+        if (intentSchema.status === 'missing') return null
 
-        const intentSchemaContent = await readFile(intentSchemaFilePath)
-        const intentSchema = IntentSchemaFileSchema.safeParse(JSON.parse(intentSchemaContent))
-
-        if (!intentSchema.success) {
-          outputWarn(
-            `Invalid intent schema in "${intent.schema}": ${intentSchema.error.issues
-              .map((issue) => issue.message)
-              .join(', ')}`,
-          )
+        if (intentSchema.status === 'invalid') {
+          outputWarn(`Invalid intent schema in "${intent.schema}": ${intentSchema.issues}`)
           return null
         }
 

@@ -320,6 +320,20 @@ interface GeneratedIntentResponseFallback<GeneratedResponse> {
   response?: NonNullable<GeneratedResponse>;
 }
 
+interface GeneratedIntentRequestConstraint<Request> {
+  request: Request;
+}
+
+type ReplaceSubscribableValue<Base, Value> = Base extends {value: unknown; subscribe: (callback: (value: infer _) => void) => () => void}
+  ? Omit<Base, 'value' | 'subscribe'> & {
+      readonly value: Value;
+      subscribe: (callback: (value: Value) => void) => () => void;
+    }
+  : {
+      readonly value: Value;
+      subscribe: (callback: (value: Value) => void) => () => void;
+    };
+
 interface GeneratedIntentsConstraint<Intents> {
   intents?: Intents;
 }
@@ -335,11 +349,19 @@ interface GeneratedIntentsFallback {
 
 type MergeGeneratedIntentResponse<Intents> =
   ShopifyGeneratedIntentVariants extends infer Generated
-    ? Generated extends GeneratedIntentResponseConstraint<infer GeneratedResponse>
-      ? Omit<Generated, 'response'> &
-          (Intents extends GeneratedIntentResponseConstraint<infer BaseResponse>
+    ? Generated extends GeneratedIntentRequestConstraint<infer GeneratedRequest>
+      ? Omit<Generated, 'request' | 'response'> & {
+          request: Intents extends GeneratedIntentRequestConstraint<infer BaseRequest>
+            ? ReplaceSubscribableValue<BaseRequest, GeneratedRequest | null>
+            : {
+                readonly value: GeneratedRequest | null;
+                subscribe: (callback: (value: GeneratedRequest | null) => void) => () => void;
+              };
+        } & (Generated extends GeneratedIntentResponseConstraint<infer GeneratedResponse>
+          ? Intents extends GeneratedIntentResponseConstraint<infer BaseResponse>
             ? GeneratedIntentResponseOverride<BaseResponse, GeneratedResponse>
-            : GeneratedIntentResponseFallback<GeneratedResponse>)
+            : GeneratedIntentResponseFallback<GeneratedResponse>
+          : unknown)
       : Generated
     : never;`)
 
