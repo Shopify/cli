@@ -17,9 +17,7 @@ export default class AutoupgradeStatus extends Command {
 
   async run(): Promise<void> {
     const enabled = getAutoUpgradeEnabled()
-    if (enabled === undefined) {
-      renderInfo({body: autoUpgradeStatus.notConfigured})
-    } else if (enabled) {
+    if (enabled) {
       renderInfo({body: autoUpgradeStatus.on})
     } else {
       renderInfo({body: autoUpgradeStatus.off})

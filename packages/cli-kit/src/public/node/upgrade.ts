@@ -14,10 +14,10 @@ import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '.
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
 import {isPreReleaseVersion} from './version.js'
-import {getAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
+import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 
-export {getAutoUpgradeEnabled}
+export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
 
 /**
  * Utility function for generating an install command for the user to run
