@@ -10,7 +10,7 @@ import {ApplicationURLs} from '../../services/dev/urls.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
-import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
+import {getPathValue, pickBy, setPathValue} from '@shopify/cli-kit/common/object'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export type ExtensionFeature =
@@ -222,7 +222,12 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     clientSteps: spec.clientSteps,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
-  const merged = {...defaults, ...spec}
+  // Strip undefined keys from `spec` before merging so wrapper helpers that
+  // forward optional fields as explicit `undefined` don't shadow the defaults.
+  const definedSpec = pickBy(spec as unknown as Record<string, unknown>, (value) => value !== undefined) as Partial<
+    CreateExtensionSpecType<TConfiguration>
+  >
+  const merged = {...defaults, ...definedSpec} as typeof defaults & CreateExtensionSpecType<TConfiguration>
 
   return {
     ...merged,

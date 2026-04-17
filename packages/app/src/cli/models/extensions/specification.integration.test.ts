@@ -109,6 +109,23 @@ describe('createExtensionSpecification', () => {
     // Then
     expect(got.clientSteps).toEqual(testClientSteps)
   })
+
+  test('does not let explicit-undefined spec keys shadow the computed defaults', () => {
+    // When — wrapper-helper style: optional fields are forwarded as `undefined`
+    const got = createExtensionSpecification({
+      identifier: 'test_extension',
+      appModuleFeatures: () => [],
+      experience: undefined,
+      uidStrategy: undefined,
+      buildConfig: undefined,
+      clientSteps: undefined,
+    })
+
+    // Then — defaults apply instead of `undefined` leaking through
+    expect(got.experience).toBe('extension')
+    expect(got.uidStrategy).toBe('uuid')
+    expect(got.buildConfig).toEqual({mode: 'none'})
+  })
 })
 
 describe('createConfigExtensionSpecification', () => {
