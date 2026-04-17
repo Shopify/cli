@@ -2271,7 +2271,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         expect(typeDefinition).toContain('interface SearchProductsInput')
         expect(typeDefinition).toContain('interface SearchProductsOutput')
         expect(typeDefinition).toContain("name: 'search_products'")
-        expect(typeDefinition).toContain('tools: ShopifyTools')
+        expect(typeDefinition).toContain("tools: Omit<NonNullable<Tools>, 'register'> & ShopifyTools")
       })
     })
 
@@ -2496,6 +2496,120 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Imported file should NOT have ShopifyTools
         const helperType = types.find((t) => t.includes('./src/utils/helper.js'))
         expect(helperType).not.toContain('ShopifyTools')
+      })
+    })
+
+    test('generates shopify.d.ts with generated intent request and response types when intent schema is present', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+          target: 'admin.app.intent.render',
+        })
+
+        const intentSchemaContent = JSON.stringify({
+          inputSchema: {
+            type: 'object',
+            properties: {
+              recipient: {type: 'string'},
+            },
+            required: ['recipient'],
+          },
+          outputSchema: {
+            type: 'object',
+            properties: {
+              success: {type: 'boolean'},
+            },
+          },
+        })
+        await writeFile(joinPath(tmpDir, 'intent-schema.json'), intentSchemaContent)
+        ;(extension.configuration.extension_points[0] as any).intents = [
+          {
+            action: 'create',
+            type: 'application/email',
+            schema: './intent-schema.json',
+          },
+        ]
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).toContain('interface CreateApplicationEmailIntentInput')
+        expect(typeDefinition).toContain('interface CreateApplicationEmailIntentRequest')
+        expect(typeDefinition).toContain(`action: 'create';`)
+        expect(typeDefinition).toContain(`type: 'application/email';`)
+        expect(typeDefinition).toContain(
+          'response?: ShopifyGeneratedIntentResponse<CreateApplicationEmailIntentOutput>;',
+        )
+        expect(typeDefinition).toContain('type ShopifyGeneratedIntentsApi =')
+        expect(typeDefinition).toContain('WithGeneratedIntents<')
+      })
+    })
+
+    test('generates intent types only for entry point file, not for imported files', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: `
+            import './utils/helper.js';
+            // Main extension code
+          `,
+          apiVersion: '2025-10',
+          target: 'admin.app.intent.render',
+        })
+
+        const utilsDir = joinPath(tmpDir, 'src', 'utils')
+        await mkdir(utilsDir)
+        await writeFile(joinPath(utilsDir, 'helper.js'), 'export const helper = () => {};')
+
+        const intentSchemaContent = JSON.stringify({
+          inputSchema: {
+            type: 'object',
+            properties: {
+              recipient: {type: 'string'},
+            },
+          },
+        })
+        await writeFile(joinPath(tmpDir, 'intent-schema.json'), intentSchemaContent)
+        ;(extension.configuration.extension_points[0] as any).intents = [
+          {
+            action: 'create',
+            type: 'application/email',
+            schema: './intent-schema.json',
+          },
+        ]
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should have 2 type definitions (entry point and helper)
+        expect(types).toHaveLength(2)
+
+        const entryPointType = types.find((t) => t.includes('./src/index.jsx'))
+        expect(entryPointType).toContain('ShopifyGeneratedIntentsApi')
+        expect(entryPointType).toContain('CreateApplicationEmailIntentRequest')
+
+        const helperType = types.find((t) => t.includes('./src/utils/helper.js'))
+        expect(helperType).not.toContain('ShopifyGeneratedIntentsApi')
+        expect(helperType).not.toContain('CreateApplicationEmailIntentRequest')
       })
     })
   })

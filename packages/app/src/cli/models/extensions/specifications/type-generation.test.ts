@@ -1,6 +1,140 @@
-import {createToolsTypeDefinition} from './type-generation.js'
+import {createIntentsTypeDefinition, createToolsTypeDefinition} from './type-generation.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test} from 'vitest'
+
+describe('createIntentsTypeDefinition', () => {
+  test('returns empty string when intents array is empty', async () => {
+    // When
+    const result = await createIntentsTypeDefinition([])
+
+    // Then
+    expect(result).toBe('')
+  })
+
+  test('generates request and response types for a single intent schema', async () => {
+    // Given
+    const intents = [
+      {
+        action: 'create',
+        type: 'application/email',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            recipient: {type: 'string'},
+          },
+          required: ['recipient'],
+        },
+        outputSchema: {
+          type: 'object',
+          properties: {
+            success: {type: 'boolean'},
+          },
+        },
+      },
+    ]
+
+    // When
+    const result = await createIntentsTypeDefinition(intents)
+
+    // Then
+    expect(result).toBe(`interface CreateApplicationEmailIntentInput {
+  recipient: string;
+  [k: string]: unknown;
+}
+
+type CreateApplicationEmailIntentValue = unknown
+interface CreateApplicationEmailIntentOutput {
+  success?: boolean;
+  [k: string]: unknown;
+}
+
+interface CreateApplicationEmailIntentRequest {
+  action: "create";
+  type: "application/email";
+  data: CreateApplicationEmailIntentInput;
+  value?: CreateApplicationEmailIntentValue;
+}
+
+type ShopifyGeneratedIntentResponse<Data = unknown> = {
+  ok(data?: Data): Promise<void>;
+}
+
+type ShopifyGeneratedIntentsApi =
+  | {
+      request: CreateApplicationEmailIntentRequest;
+      response?: ShopifyGeneratedIntentResponse<CreateApplicationEmailIntentOutput>;
+    }
+`)
+  })
+
+  test('supports multiple intents with value schemas', async () => {
+    // Given
+    const intents = [
+      {
+        action: 'create',
+        type: 'application/email',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            recipient: {type: 'string'},
+          },
+        },
+      },
+      {
+        action: 'edit',
+        type: 'shopify/Product',
+        valueSchema: {
+          type: 'string',
+        },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            title: {type: 'string'},
+          },
+        },
+        outputSchema: {
+          type: 'object',
+          properties: {
+            id: {type: 'string'},
+          },
+        },
+      },
+    ]
+
+    // When
+    const result = await createIntentsTypeDefinition(intents)
+
+    // Then
+    expect(result).toContain('interface CreateApplicationEmailIntentRequest')
+    expect(result).toContain('type CreateApplicationEmailIntentOutput = unknown')
+    expect(result).toContain('interface EditShopifyProductIntentRequest')
+    expect(result).toContain('type EditShopifyProductIntentValue = string')
+    expect(result).toContain('response?: ShopifyGeneratedIntentResponse<EditShopifyProductIntentOutput>;')
+  })
+
+  test('throws AbortError when intent action/type pairs are duplicated', async () => {
+    // Given
+    const intents = [
+      {
+        action: 'create',
+        type: 'application/email',
+        inputSchema: {type: 'object'},
+      },
+      {
+        action: 'create',
+        type: 'application/email',
+        inputSchema: {type: 'object'},
+      },
+    ]
+
+    // When & Then
+    await expect(createIntentsTypeDefinition(intents)).rejects.toThrow(
+      new AbortError(
+        'Intent "create:application/email" is defined multiple times. Intents must be unique within a target.',
+      ),
+    )
+  })
+})
 
 describe('createToolsTypeDefinition', () => {
   test('returns empty string when tools array is empty', async () => {

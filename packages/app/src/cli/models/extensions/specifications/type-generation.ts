@@ -174,6 +174,12 @@ interface CreateTypeDefinitionOptions {
   targets: string[]
   apiVersion: string
   toolsTypeDefinition?: string
+  intentsTypeDefinition?: string
+}
+
+interface ShopifyTypeOptions {
+  includesTools: boolean
+  includesIntents: boolean
 }
 
 /**
@@ -218,23 +224,19 @@ async function targetExportsShopifyGlobal(targetDtsPath: string): Promise<boolea
 }
 
 /**
- * Builds the shopify API type based on targets, their resolved .d.ts paths,
- * and optional tools type.
+ * Builds the base shopify API type based on targets and their resolved .d.ts paths.
  *
- * If a target re-exports `ShopifyGlobal`, the emitted type is
+ * If a target re-exports `ShopifyGlobal`, the emitted type includes
  * `import('<target>').Api & import('<target>').ShopifyGlobal` so consumers
  * retain access to both the target's data surface and host-level APIs
  * (e.g. `shopify.addEventListener`). Otherwise emits just `.Api`.
  *
  * Returns null if no targets are provided.
  */
-async function buildShopifyType(
+async function buildBaseShopifyType(
   targets: string[],
   resolvedTargetPaths: Map<string, string>,
-  toolsTypeDefinition?: string,
 ): Promise<string | null> {
-  const toolsSuffix = toolsTypeDefinition ? ' & { tools: ShopifyTools }' : ''
-
   const typeForTarget = async (target: string): Promise<string> => {
     const base = `import('@shopify/ui-extensions/${target}').Api`
     const dtsPath = resolvedTargetPaths.get(target)
@@ -244,10 +246,74 @@ async function buildShopifyType(
     return base
   }
 
-  if (targets.length === 0) return null
-  if (targets.length === 1) return `${await typeForTarget(targets[0] ?? '')}${toolsSuffix}`
-  const typesForTargets = await Promise.all(targets.map(typeForTarget))
-  return `(${typesForTargets.join(' | ')})${toolsSuffix}`
+  if (targets.length === 1) {
+    return typeForTarget(targets[0] ?? '')
+  }
+
+  if (targets.length > 1) {
+    const typesForTargets = await Promise.all(targets.map(typeForTarget))
+    return `(${typesForTargets.join(' | ')})`
+  }
+
+  return null
+}
+
+/**
+ * Builds the shopify API type based on targets and optional generated tool / intent types.
+ *
+ * Generated tools and intents are layered on top of the base target type via
+ * wrapper utility types.
+ *
+ * Returns null if no targets are provided.
+ */
+async function buildShopifyType(
+  targets: string[],
+  resolvedTargetPaths: Map<string, string>,
+  {includesTools, includesIntents}: ShopifyTypeOptions,
+): Promise<string | null> {
+  const baseShopifyType = await buildBaseShopifyType(targets, resolvedTargetPaths)
+  if (!baseShopifyType) return null
+
+  if (!includesTools && !includesIntents) {
+    return baseShopifyType
+  }
+
+  const wrappers = [
+    ...(includesIntents ? ['WithGeneratedIntents'] : []),
+    ...(includesTools ? ['WithGeneratedTools'] : []),
+  ]
+
+  return wrappers.reduce((shopifyType, wrapper) => `${wrapper}<${shopifyType}>`, baseShopifyType)
+}
+
+function buildShopifyUtilityTypes({includesTools, includesIntents}: ShopifyTypeOptions): string {
+  const utilityTypes: string[] = []
+
+  if (includesTools) {
+    utilityTypes.push(`type WithGeneratedTools<T> = T extends {tools?: infer Tools}
+  ? Omit<T, 'tools'> & {tools: Omit<NonNullable<Tools>, 'register'> & ShopifyTools}
+  : T & {tools: ShopifyTools}`)
+  }
+
+  if (includesIntents) {
+    utilityTypes.push(`type MergeGeneratedIntentResponse<Intents> = ShopifyGeneratedIntentsApi extends infer Generated
+  ? Generated extends {response?: infer GeneratedResponse}
+    ? Omit<Generated, 'response'> & {
+        response?: Intents extends {response?: infer BaseResponse}
+          ? Omit<NonNullable<BaseResponse>, 'ok'> & NonNullable<GeneratedResponse>
+          : NonNullable<GeneratedResponse>
+      }
+    : Generated
+  : never`)
+
+    utilityTypes.push(`type WithGeneratedIntents<T> = T extends {intents?: infer Intents}
+  ? Omit<T, 'intents'> & {
+      intents: Omit<NonNullable<Intents>, 'request' | 'response'> & MergeGeneratedIntentResponse<NonNullable<Intents>>
+    }
+  : T & {intents: ShopifyGeneratedIntentsApi}`)
+  }
+
+  return utilityTypes.join('\n\n')
 }
 
 export async function createTypeDefinition({
@@ -256,6 +322,7 @@ export async function createTypeDefinition({
   targets,
   apiVersion,
   toolsTypeDefinition,
+  intentsTypeDefinition,
 }: CreateTypeDefinitionOptions): Promise<string | null> {
   try {
     const resolvedTargetPaths = new Map<string, string>()
@@ -278,14 +345,20 @@ export async function createTypeDefinition({
     }
 
     const relativePath = relativizePath(fullPath, dirname(typeFilePath))
+    const includesTools = Boolean(toolsTypeDefinition)
+    const includesIntents = Boolean(intentsTypeDefinition)
 
-    const shopifyType = await buildShopifyType(targets, resolvedTargetPaths, toolsTypeDefinition)
+    const shopifyType = await buildShopifyType(targets, resolvedTargetPaths, {includesTools, includesIntents})
     if (!shopifyType) return null
+
+    const shopifyUtilityTypes = buildShopifyUtilityTypes({includesTools, includesIntents})
 
     const lines = [
       '//@ts-ignore',
       `declare module './${relativePath}' {`,
-      ...(toolsTypeDefinition ? [`  ${toolsTypeDefinition}`] : []),
+      ...(toolsTypeDefinition ? [toolsTypeDefinition] : []),
+      ...(intentsTypeDefinition ? [intentsTypeDefinition] : []),
+      ...(shopifyUtilityTypes ? [shopifyUtilityTypes] : []),
       `  const shopify: ${shopifyType};`,
       '  const globalThis: { shopify: typeof shopify };',
       '}',
@@ -337,6 +410,92 @@ const ToolDefinitionSchema: zod.ZodType<ToolDefinition> = zod.object({
 })
 
 export const ToolsFileSchema = zod.array(ToolDefinitionSchema)
+
+interface IntentTypeDefinition {
+  action: string
+  type: string
+  inputSchema: object
+  valueSchema?: object
+  outputSchema?: object
+}
+
+interface IntentSchemaFile {
+  value?: object
+  inputSchema: object
+  outputSchema?: object
+}
+
+export const IntentSchemaFileSchema: zod.ZodType<IntentSchemaFile> = zod.object({
+  value: zod.object({}).passthrough().optional(),
+  inputSchema: zod.object({}).passthrough(),
+  outputSchema: zod.object({}).passthrough().optional(),
+})
+
+function intentTypeBaseName(intent: Pick<IntentTypeDefinition, 'action' | 'type'>): string {
+  return pascalize(`${intent.action} ${intent.type}`.replace(/[^a-zA-Z0-9]+/g, ' '))
+}
+
+/**
+ * Generates TypeScript types for shopify.intents.request and shopify.intents.response.ok
+ * based on intent schema definitions.
+ */
+export async function createIntentsTypeDefinition(intents: IntentTypeDefinition[]): Promise<string> {
+  if (intents.length === 0) return ''
+
+  const intentKeys = new Set<string>()
+  const typePromises = intents.map(async (intent) => {
+    const intentKey = `${intent.action}:${intent.type}`
+    if (intentKeys.has(intentKey)) {
+      throw new AbortError(`Intent "${intentKey}" is defined multiple times. Intents must be unique within a target.`)
+    }
+    intentKeys.add(intentKey)
+
+    const typeBaseName = intentTypeBaseName(intent)
+    const inputTypeName = `${typeBaseName}IntentInput`
+    const valueTypeName = `${typeBaseName}IntentValue`
+    const outputTypeName = `${typeBaseName}IntentOutput`
+    const requestTypeName = `${typeBaseName}IntentRequest`
+
+    const inputType = await formatJsonSchemaType(inputTypeName, intent.inputSchema)
+    const valueType = await formatJsonSchemaType(valueTypeName, intent.valueSchema)
+    const outputType = await formatJsonSchemaType(outputTypeName, intent.outputSchema)
+
+    const requestType = `interface ${requestTypeName} {
+  action: ${JSON.stringify(intent.action)};
+  type: ${JSON.stringify(intent.type)};
+  data: ${inputTypeName};
+  value?: ${valueTypeName};
+}`
+
+    return {
+      inputType,
+      valueType,
+      outputType,
+      requestType,
+      requestTypeName,
+      outputTypeName,
+    }
+  })
+
+  const types = await Promise.all(typePromises)
+
+  const generatedIntents = types
+    .map(({requestTypeName, outputTypeName}) => {
+      return `  | {
+      request: ${requestTypeName};
+      response?: ShopifyGeneratedIntentResponse<${outputTypeName}>;
+    }`
+    })
+    .join('\n')
+
+  return `${types
+    .map(
+      ({inputType, valueType, outputType, requestType}) => `${inputType}\n${valueType}\n${outputType}\n${requestType}`,
+    )
+    .join('\n\n')}\n\ntype ShopifyGeneratedIntentResponse<Data = unknown> = {
+  ok(data?: Data): Promise<void>;
+}\n\ntype ShopifyGeneratedIntentsApi =\n${generatedIntents}\n`
+}
 
 /**
  * Generates TypeScript types for shopify.tools.register based on tool definitions
@@ -392,8 +551,15 @@ export async function createToolsTypeDefinition(tools: ToolDefinition[]): Promis
     .join('\n')}\ninterface ShopifyTools {\n${toolRegistrations}\n}\n`
 }
 
+function renameGeneratedType(typeDefinition: string, name: string): string {
+  return typeDefinition.replace(/^(interface|type|enum)\s+[A-Za-z0-9_]+/, `$1 ${name}`)
+}
+
 async function formatJsonSchemaType(name: string, schema?: object): Promise<string> {
-  const outputType = schema ? await compile(schema, name, {bannerComment: ''}) : `type ${name} = unknown`
-  // The json-schema-to-typescript library adds an export keyword to the type definition, we need to remove it
-  return outputType.startsWith('export ') ? outputType.slice(7) : outputType
+  if (!schema) return `type ${name} = unknown`
+
+  const outputType = await compile(schema, name, {bannerComment: ''})
+  const normalizedOutputType = outputType.startsWith('export ') ? outputType.slice(7) : outputType
+
+  return renameGeneratedType(normalizedOutputType, name)
 }

@@ -1,9 +1,11 @@
 import {
   findAllImportedFiles,
+  createIntentsTypeDefinition,
   createTypeDefinition,
-  findNearestTsConfigDir,
-  parseApiVersion,
   createToolsTypeDefinition,
+  findNearestTsConfigDir,
+  IntentSchemaFileSchema,
+  parseApiVersion,
   ToolsFileSchema,
 } from './type-generation.js'
 import {Asset, AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
@@ -31,6 +33,8 @@ export interface BuildManifest {
     [AssetIdentifier.ShouldRender]?: BuildAsset
   }
 }
+
+type GeneratedIntentTypeDefinition = Parameters<typeof createIntentsTypeDefinition>[0][number]
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
@@ -202,6 +206,7 @@ const uiExtensionSpec = createExtensionSpecification({
     // Track all files and their associated targets
     const fileToTargetsMap = new Map<string, string[]>()
     const fileToToolsMap = new Map<string, string>()
+    const fileToIntentsMap = new Map<string, NonNullable<NewExtensionPointSchemaType['intents']>>()
 
     // First pass: collect all entry point files and their targets
     for await (const extensionPoint of configuration.extension_points) {
@@ -217,6 +222,12 @@ const uiExtensionSpec = createExtensionSpecification({
       // Add tools module if present
       if (extensionPoint.tools) {
         fileToToolsMap.set(fullPath, extensionPoint.tools)
+      }
+      // Add intent schema files if present
+      if (extensionPoint.intents?.length) {
+        const currentIntents: NonNullable<NewExtensionPointSchemaType['intents']> = fileToIntentsMap.get(fullPath) ?? []
+        currentIntents.push(...extensionPoint.intents)
+        fileToIntentsMap.set(fullPath, currentIntents)
       }
       // Add should render module if present
       if (extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]?.module) {
@@ -307,12 +318,33 @@ const uiExtensionSpec = createExtensionSpecification({
             )
           }
         }
+
+        const intentsDefinitions = fileToIntentsMap.get(filePath)
+        let intentsTypeDefinition = ''
+        if (intentsDefinitions?.length) {
+          const parsedIntents = await parseIntentTypeDefinitions(extension.directory, intentsDefinitions)
+
+          if (parsedIntents.length > 0) {
+            try {
+              intentsTypeDefinition = await createIntentsTypeDefinition(parsedIntents)
+              // eslint-disable-next-line no-catch-all/no-catch-all
+            } catch (error) {
+              outputWarn(
+                `Failed to create intent type definition for intent schema files "${intentsDefinitions
+                  .map((intent) => intent.schema)
+                  .join(', ')}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+              )
+            }
+          }
+        }
+
         let typeDefinition = await createTypeDefinition({
           fullPath: filePath,
           typeFilePath,
           targets: uniqueTargets,
           apiVersion: configuration.api_version,
           toolsTypeDefinition,
+          intentsTypeDefinition,
         })
         if (typeDefinition) {
           const currentTypes = typeDefinitionsByFile.get(typeFilePath) ?? new Set<string>()
@@ -355,6 +387,58 @@ function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest
       ),
     },
   }
+}
+
+async function parseIntentTypeDefinitions(
+  extensionDirectory: string,
+  intents: NonNullable<NewExtensionPointSchemaType['intents']>,
+): Promise<GeneratedIntentTypeDefinition[]> {
+  const parsedIntentDefinitions = await Promise.all(
+    intents.map(async (intent) => {
+      try {
+        const intentSchemaFilePath = joinPath(extensionDirectory, intent.schema)
+        const schemaExists = await fileExists(intentSchemaFilePath)
+        if (!schemaExists) return null
+
+        const intentSchemaContent = await readFile(intentSchemaFilePath)
+        const intentSchema = IntentSchemaFileSchema.safeParse(JSON.parse(intentSchemaContent))
+
+        if (!intentSchema.success) {
+          outputWarn(
+            `Invalid intent schema in "${intent.schema}": ${intentSchema.error.issues
+              .map((issue) => issue.message)
+              .join(', ')}`,
+          )
+          return null
+        }
+
+        return {
+          action: intent.action,
+          type: intent.type,
+          inputSchema: intentSchema.data.inputSchema,
+          valueSchema: intentSchema.data.value,
+          outputSchema: intentSchema.data.outputSchema,
+        }
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        outputWarn(
+          `Failed to create intent type definition for intent schema file "${intent.schema}": ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
+        )
+        return null
+      }
+    }),
+  )
+
+  const parsedIntents: GeneratedIntentTypeDefinition[] = []
+  for (const parsedIntentDefinition of parsedIntentDefinitions) {
+    if (parsedIntentDefinition) {
+      parsedIntents.push(parsedIntentDefinition)
+    }
+  }
+
+  return parsedIntents
 }
 
 async function checkForMissingPath(
