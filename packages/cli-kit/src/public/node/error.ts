@@ -234,6 +234,8 @@ function errorMessageImpliesEnvironmentIssue(message: string): boolean {
     'spawn EPERM',
     'socket hang up',
     'The user aborted a request.',
+    'write EPIPE',
+    'Unsupported platform',
   ]
   const anyMatches = environmentIssueMessages.some((issueMessage) => message.includes(issueMessage))
   return anyMatches
