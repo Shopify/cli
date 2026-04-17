@@ -1,10 +1,8 @@
 /**
  * Playwright globalSetup — authenticates once before any workers start.
  *
- * Uses a stable `global-auth/` dir for session caching across runs.
- * On subsequent runs, validates the cached browser session before
- * re-authenticating. Workers copy the session files into their own
- * isolated XDG dirs via E2E_AUTH_* env vars.
+ * Auth artifacts are stored in a stable `global-auth/` dir. Workers copy
+ * the session files into their own isolated XDG dirs via E2E_AUTH_* env vars.
  */
 
 /* eslint-disable no-restricted-imports */
@@ -36,7 +34,7 @@ export default async function globalSetup() {
   const debug = process.env.DEBUG === '1'
   globalLog('auth', 'global setup starting')
 
-  // Use a stable auth dir (reused across runs for session caching)
+  // All auth artifacts stored in a stable dir
   const tmpBase = process.env.E2E_TEMP_DIR ?? path.join(directories.root, '.e2e-tmp')
   fs.mkdirSync(tmpBase, {recursive: true})
   const authDir = path.join(tmpBase, 'global-auth')
@@ -57,29 +55,6 @@ export default async function globalSetup() {
     CI: '1',
     SHOPIFY_CLI_1P_DEV: undefined,
     SHOPIFY_FLAG_CLIENT_ID: undefined,
-  }
-
-  // Check if cached session from a previous run is still valid
-  if (fs.existsSync(storageStatePath)) {
-    const browser = await chromium.launch({headless: true})
-    try {
-      const context = await browser.newContext({storageState: storageStatePath})
-      const page = await context.newPage()
-      await page.goto('https://admin.shopify.com/', {waitUntil: 'domcontentloaded', timeout: BROWSER_TIMEOUT.long})
-      if (!isAccountsShopifyUrl(page.url())) {
-        globalLog('auth', 'reusing cached session')
-        setAuthEnvVars(xdgEnv, storageStatePath)
-        return
-      }
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_error) {
-      // Browser check failed — fall through to re-authenticate
-    } finally {
-      await browser.close().catch(() => {})
-    }
-    globalLog('auth', 'cached session expired, re-authenticating')
-  } else {
-    globalLog('auth', 'no cached session found')
   }
 
   // Create fresh XDG dirs
@@ -161,7 +136,15 @@ export default async function globalSetup() {
     }
   }
 
-  setAuthEnvVars(xdgEnv, storageStatePath)
+  // Store paths so workers can copy CLI auth + load browser state
+  /* eslint-disable require-atomic-updates */
+  process.env.E2E_AUTH_CONFIG_DIR = xdgEnv.XDG_CONFIG_HOME
+  process.env.E2E_AUTH_DATA_DIR = xdgEnv.XDG_DATA_HOME
+  process.env.E2E_AUTH_STATE_DIR = xdgEnv.XDG_STATE_HOME
+  process.env.E2E_AUTH_CACHE_DIR = xdgEnv.XDG_CACHE_HOME
+  process.env.E2E_BROWSER_STATE_PATH = storageStatePath
+  /* eslint-enable require-atomic-updates */
+
   globalLog('auth', `global setup done, config at ${xdgEnv.XDG_CONFIG_HOME}`)
 }
 
@@ -176,12 +159,4 @@ async function visitAndHandleAccountPicker(page: Page, url: string, email: strin
       await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     }
   }
-}
-
-function setAuthEnvVars(xdgEnv: Record<string, string>, storageStatePath: string): void {
-  process.env.E2E_AUTH_CONFIG_DIR = xdgEnv.XDG_CONFIG_HOME
-  process.env.E2E_AUTH_DATA_DIR = xdgEnv.XDG_DATA_HOME
-  process.env.E2E_AUTH_STATE_DIR = xdgEnv.XDG_STATE_HOME
-  process.env.E2E_AUTH_CACHE_DIR = xdgEnv.XDG_CACHE_HOME
-  process.env.E2E_BROWSER_STATE_PATH = storageStatePath
 }
