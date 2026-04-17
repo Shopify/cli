@@ -55,15 +55,17 @@ interface CreateApplicationEmailIntentRequest {
   value?: CreateApplicationEmailIntentValue;
 }
 
-type ShopifyGeneratedIntentResponse<Data = unknown> = {
+interface ShopifyGeneratedIntentResponse<Data = unknown> {
   ok(data?: Data): Promise<void>;
 }
 
-type ShopifyGeneratedIntentsApi =
-  | {
-      request: CreateApplicationEmailIntentRequest;
-      response?: ShopifyGeneratedIntentResponse<CreateApplicationEmailIntentOutput>;
-    }
+interface ShopifyGeneratedIntentsApi<Request = unknown, ResponseData = unknown> {
+  request: Request;
+  response?: ShopifyGeneratedIntentResponse<ResponseData>;
+}
+
+type ShopifyGeneratedIntentVariants =
+  | ShopifyGeneratedIntentsApi<CreateApplicationEmailIntentRequest, CreateApplicationEmailIntentOutput>
 `)
   })
 
@@ -109,7 +111,10 @@ type ShopifyGeneratedIntentsApi =
     expect(result).toContain('type CreateApplicationEmailIntentOutput = unknown')
     expect(result).toContain('interface EditShopifyProductIntentRequest')
     expect(result).toContain('type EditShopifyProductIntentValue = string')
-    expect(result).toContain('response?: ShopifyGeneratedIntentResponse<EditShopifyProductIntentOutput>;')
+    expect(result).toContain('response?: ShopifyGeneratedIntentResponse<ResponseData>;')
+    expect(result).toContain(
+      'ShopifyGeneratedIntentsApi<EditShopifyProductIntentRequest, EditShopifyProductIntentOutput>',
+    )
   })
 
   test('throws AbortError when intent action/type pairs are duplicated', async () => {

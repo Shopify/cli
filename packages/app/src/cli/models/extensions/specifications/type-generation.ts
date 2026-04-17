@@ -290,27 +290,62 @@ function buildShopifyUtilityTypes({includesTools, includesIntents}: ShopifyTypeO
   const utilityTypes: string[] = []
 
   if (includesTools) {
-    utilityTypes.push(`type WithGeneratedTools<T> = T extends {tools?: infer Tools}
-  ? Omit<T, 'tools'> & {tools: Omit<NonNullable<Tools>, 'register'> & ShopifyTools}
-  : T & {tools: ShopifyTools}`)
+    utilityTypes.push(`interface GeneratedToolsConstraint<Tools> {
+  tools?: Tools;
+}
+
+interface GeneratedToolsOverride<Tools> {
+  tools: Omit<NonNullable<Tools>, 'register'> & ShopifyTools;
+}
+
+interface GeneratedToolsFallback {
+  tools: ShopifyTools;
+}
+
+type WithGeneratedTools<T> = T extends GeneratedToolsConstraint<infer Tools>
+  ? Omit<T, 'tools'> & GeneratedToolsOverride<Tools>
+  : T & GeneratedToolsFallback;`)
   }
 
   if (includesIntents) {
-    utilityTypes.push(`type MergeGeneratedIntentResponse<Intents> = ShopifyGeneratedIntentsApi extends infer Generated
-  ? Generated extends {response?: infer GeneratedResponse}
-    ? Omit<Generated, 'response'> & {
-        response?: Intents extends {response?: infer BaseResponse}
-          ? Omit<NonNullable<BaseResponse>, 'ok'> & NonNullable<GeneratedResponse>
-          : NonNullable<GeneratedResponse>
-      }
-    : Generated
-  : never`)
+    utilityTypes.push(`interface GeneratedIntentResponseConstraint<Response> {
+  response?: Response;
+}
 
-    utilityTypes.push(`type WithGeneratedIntents<T> = T extends {intents?: infer Intents}
-  ? Omit<T, 'intents'> & {
-      intents: Omit<NonNullable<Intents>, 'request' | 'response'> & MergeGeneratedIntentResponse<NonNullable<Intents>>
-    }
-  : T & {intents: ShopifyGeneratedIntentsApi}`)
+interface GeneratedIntentResponseOverride<BaseResponse, GeneratedResponse> {
+  response?: Omit<NonNullable<BaseResponse>, 'ok'> & NonNullable<GeneratedResponse>;
+}
+
+interface GeneratedIntentResponseFallback<GeneratedResponse> {
+  response?: NonNullable<GeneratedResponse>;
+}
+
+interface GeneratedIntentsConstraint<Intents> {
+  intents?: Intents;
+}
+
+interface GeneratedIntentsOverride<Intents> {
+  intents: Omit<NonNullable<Intents>, 'request' | 'response'> &
+    MergeGeneratedIntentResponse<NonNullable<Intents>>;
+}
+
+interface GeneratedIntentsFallback {
+  intents: ShopifyGeneratedIntentVariants;
+}
+
+type MergeGeneratedIntentResponse<Intents> =
+  ShopifyGeneratedIntentVariants extends infer Generated
+    ? Generated extends GeneratedIntentResponseConstraint<infer GeneratedResponse>
+      ? Omit<Generated, 'response'> &
+          (Intents extends GeneratedIntentResponseConstraint<infer BaseResponse>
+            ? GeneratedIntentResponseOverride<BaseResponse, GeneratedResponse>
+            : GeneratedIntentResponseFallback<GeneratedResponse>)
+      : Generated
+    : never;`)
+
+    utilityTypes.push(`type WithGeneratedIntents<T> = T extends GeneratedIntentsConstraint<infer Intents>
+  ? Omit<T, 'intents'> & GeneratedIntentsOverride<Intents>
+  : T & GeneratedIntentsFallback;`)
   }
 
   return utilityTypes.join('\n\n')
@@ -360,7 +395,9 @@ export async function createTypeDefinition({
       ...(intentsTypeDefinition ? [intentsTypeDefinition] : []),
       ...(shopifyUtilityTypes ? [shopifyUtilityTypes] : []),
       `  const shopify: ${shopifyType};`,
-      '  const globalThis: { shopify: typeof shopify };',
+      '  const globalThis: {',
+      '    shopify: typeof shopify;',
+      '  };',
       '}',
       '',
     ]
@@ -481,10 +518,7 @@ export async function createIntentsTypeDefinition(intents: IntentTypeDefinition[
 
   const generatedIntents = types
     .map(({requestTypeName, outputTypeName}) => {
-      return `  | {
-      request: ${requestTypeName};
-      response?: ShopifyGeneratedIntentResponse<${outputTypeName}>;
-    }`
+      return `  | ShopifyGeneratedIntentsApi<${requestTypeName}, ${outputTypeName}>`
     })
     .join('\n')
 
@@ -492,9 +526,12 @@ export async function createIntentsTypeDefinition(intents: IntentTypeDefinition[
     .map(
       ({inputType, valueType, outputType, requestType}) => `${inputType}\n${valueType}\n${outputType}\n${requestType}`,
     )
-    .join('\n\n')}\n\ntype ShopifyGeneratedIntentResponse<Data = unknown> = {
+    .join('\n\n')}\n\ninterface ShopifyGeneratedIntentResponse<Data = unknown> {
   ok(data?: Data): Promise<void>;
-}\n\ntype ShopifyGeneratedIntentsApi =\n${generatedIntents}\n`
+}\n\ninterface ShopifyGeneratedIntentsApi<Request = unknown, ResponseData = unknown> {
+  request: Request;
+  response?: ShopifyGeneratedIntentResponse<ResponseData>;
+}\n\ntype ShopifyGeneratedIntentVariants =\n${generatedIntents}\n`
 }
 
 /**

@@ -1364,11 +1364,15 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               new Set([
                 `//@ts-ignore\ndeclare module './src/index.jsx' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
-  const globalThis: { shopify: typeof shopify };
+  const globalThis: {
+    shopify: typeof shopify;
+  };
 }\n`,
                 `//@ts-ignore\ndeclare module './src/condition/should-render.js' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
-  const globalThis: { shopify: typeof shopify };
+  const globalThis: {
+    shopify: typeof shopify;
+  };
 }\n`,
               ]),
             ],
@@ -1425,11 +1429,15 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               new Set([
                 `//@ts-ignore\ndeclare module './src/index.jsx' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
-  const globalThis: { shopify: typeof shopify };
+  const globalThis: {
+    shopify: typeof shopify;
+  };
 }\n`,
                 `//@ts-ignore\ndeclare module './src/another-target-module.jsx' {
   const shopify: import('@shopify/ui-extensions/admin.orders-details.block.render').Api;
-  const globalThis: { shopify: typeof shopify };
+  const globalThis: {
+    shopify: typeof shopify;
+  };
 }\n`,
               ]),
             ],
@@ -1438,7 +1446,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               new Set([
                 `//@ts-ignore\ndeclare module './should-render.js' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
-  const globalThis: { shopify: typeof shopify };
+  const globalThis: {
+    shopify: typeof shopify;
+  };
 }\n`,
               ]),
             ],
@@ -1681,10 +1691,14 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then - should include types for imported modules when single target
         expect(Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './src/utils/helper.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/utils/helper.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
         expect(Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
       })
     })
@@ -1743,7 +1757,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then - should generate union type for shared module
         expect(Array.from(types ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './shared/utils.js' {\n  const shopify:\n    | import('@shopify/ui-extensions/admin.product-details.action.render').Api\n    | import('@shopify/ui-extensions/admin.orders-details.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './shared/utils.js' {\n  const shopify:\n    | import('@shopify/ui-extensions/admin.product-details.action.render').Api\n    | import('@shopify/ui-extensions/admin.orders-details.block.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
       })
     })
@@ -1804,7 +1820,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Then - should generate union types for shared files
         // when targets are from different surfaces (admin vs checkout)
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './src/components/Shared.jsx' {\n  const shopify:\n    | import('@shopify/ui-extensions/admin.product-details.action.render').Api\n    | import('@shopify/ui-extensions/purchase.checkout.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/components/Shared.jsx' {\n  const shopify:\n    | import('@shopify/ui-extensions/admin.product-details.action.render').Api\n    | import('@shopify/ui-extensions/purchase.checkout.block.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
       })
     })
@@ -1854,10 +1872,14 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then - should resolve aliased imports and include types
         expect(Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './src/utils/helper.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/utils/helper.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
         expect(Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
       })
     })
@@ -1928,7 +1950,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         const extensionTypes = typeDefinitionsByFile.get(extensionShopifyDtsPath)
         expect(Array.from(extensionTypes ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './src/index.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/index.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
 
         expect(Array.from(extensionTypes ?? [])).not.toContain(expect.stringContaining('helpers/utils.ts'))
@@ -2002,10 +2026,14 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then - should include type definition for both the main file and the root-level shared file
         expect(Array.from(types ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './src/extension.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/extension.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
         expect(Array.from(types ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './shared_file.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './shared_file.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
       })
     })
@@ -2098,16 +2126,24 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Then - should include type definitions for all files:
         // main file, component, and both root-level shared files
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './src/extension.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/extension.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './src/components/Component.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/components/Component.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './shared_file.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './shared_file.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './utils.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './utils.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
       })
     })
@@ -2202,17 +2238,23 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Then - should include type definitions for all files in the chain:
         // 1. Main extension file
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './src/extension.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/extension.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
 
         // 2. Component file that imports from root
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
 
         // 3. Root-level shared file (imported by component, not directly by extension)
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './shared_utils.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './shared_utils.ts' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: {
+    shopify: typeof shopify;
+  };\n}\n`,
         )
 
         // Verify we have exactly 3 type definitions (no duplicates)
@@ -2271,6 +2313,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         expect(typeDefinition).toContain('interface SearchProductsInput')
         expect(typeDefinition).toContain('interface SearchProductsOutput')
         expect(typeDefinition).toContain("name: 'search_products'")
+        expect(typeDefinition).toContain('interface GeneratedToolsConstraint<Tools>')
         expect(typeDefinition).toContain("tools: Omit<NonNullable<Tools>, 'register'> & ShopifyTools")
       })
     })
@@ -2549,10 +2592,13 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         expect(typeDefinition).toContain('interface CreateApplicationEmailIntentRequest')
         expect(typeDefinition).toContain(`action: 'create';`)
         expect(typeDefinition).toContain(`type: 'application/email';`)
-        expect(typeDefinition).toContain(
-          'response?: ShopifyGeneratedIntentResponse<CreateApplicationEmailIntentOutput>;',
-        )
-        expect(typeDefinition).toContain('type ShopifyGeneratedIntentsApi =')
+        expect(typeDefinition).toContain('interface ShopifyGeneratedIntentResponse<Data = unknown>')
+        expect(typeDefinition).toContain('interface ShopifyGeneratedIntentsApi<')
+        expect(typeDefinition).toContain('Request = unknown,')
+        expect(typeDefinition).toContain('ResponseData = unknown,')
+        expect(typeDefinition).toContain('type ShopifyGeneratedIntentVariants = ShopifyGeneratedIntentsApi<')
+        expect(typeDefinition).toContain('CreateApplicationEmailIntentRequest,')
+        expect(typeDefinition).toContain('CreateApplicationEmailIntentOutput')
         expect(typeDefinition).toContain('WithGeneratedIntents<')
       })
     })
