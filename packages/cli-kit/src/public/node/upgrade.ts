@@ -18,6 +18,8 @@ import {isPreReleaseVersion} from './version.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 
+export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
+
 /**
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
@@ -158,6 +160,9 @@ export function getOutputUpdateCLIReminder(version: string, isMajor = false): st
  * @returns Whether the user chose to enable auto-upgrade.
  */
 export async function promptAutoUpgrade(): Promise<boolean> {
+  const current = getAutoUpgradeEnabled()
+  if (current !== undefined) return current
+
   const enabled = await renderConfirmationPrompt({
     message: 'Enable automatic updates for Shopify CLI?',
     confirmationMessage: 'Yes, automatically update',
