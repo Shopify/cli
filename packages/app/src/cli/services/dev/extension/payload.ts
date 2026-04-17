@@ -19,6 +19,7 @@ interface AssetMapperContext {
   extensionPoint: DevNewExtensionPointSchema
   url: string
   extension: ExtensionInstance
+  manifestValue?: unknown
 }
 
 export async function getUIExtensionPayload(
@@ -47,11 +48,14 @@ export async function getUIExtensionPayload(
 
     const defaultConfig = {
       assets: {
-        main: {
-          name: 'main',
-          url: `${url}/assets/${extension.outputFileName}`,
-          lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
-        },
+        main:
+          isNewExtensionPointsSchema(extensionPoints) && extensionPoints[0]?.assets?.main
+            ? extensionPoints[0].assets.main
+            : {
+                name: 'main',
+                url: `${url}/assets/${extension.outputFileName}`,
+                lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
+              },
       },
       supportedFeatures: {
         runsOffline: extension.configuration.supported_features?.runs_offline ?? false,
@@ -134,10 +138,11 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string, bui
           return payload
         }
 
-        return {
+        const payloadWithAssets = {
           ...payload,
           ...(await mapManifestAssetsToPayload(manifestEntry, extensionPoint, url, extension)),
         }
+        return payloadWithAssets
       }),
     )
   }
@@ -206,6 +211,7 @@ async function intentsAssetMapper({
   const intents = await Promise.all(
     extensionPoint.intents.map(async (intent) => ({
       ...intent,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       schema: await getAssetPayload('schema', intent.schema as string, url, extension),
     })),
   )
@@ -216,11 +222,28 @@ async function intentsAssetMapper({
 type AssetMapper = (context: AssetMapperContext) => Promise<Partial<DevNewExtensionPointSchema>>
 
 /**
+ * Mapper for compiled built assets (main, should_render).
+ * Reads the filepath directly from manifest.json so the bundleFolder prefix is preserved.
+ */
+async function builtAssetMapper({
+  identifier,
+  manifestValue,
+  url,
+  extension,
+}: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
+  if (typeof manifestValue !== 'string') return {}
+  const payload = await getAssetPayload(identifier, manifestValue, url, extension)
+  return {assets: {[payload.name]: payload}}
+}
+
+/**
  * Asset mappers registry - defines how each asset type should be handled.
  * Assets not in this registry use the defaultAssetMapper.
  */
 const ASSET_MAPPERS: {[key: string]: AssetMapper | undefined} = {
   intents: intentsAssetMapper,
+  main: builtAssetMapper,
+  should_render: builtAssetMapper,
 }
 
 /**
@@ -236,7 +259,13 @@ async function mapManifestAssetsToPayload(
 ): Promise<Partial<DevNewExtensionPointSchema>> {
   const mappingResults = await Promise.all(
     Object.keys(manifestEntry).map(async (identifier) => {
-      const context: AssetMapperContext = {identifier, extensionPoint, url, extension}
+      const context: AssetMapperContext = {
+        identifier,
+        extensionPoint,
+        url,
+        extension,
+        manifestValue: manifestEntry[identifier],
+      }
       return ASSET_MAPPERS[identifier]?.(context) ?? defaultAssetMapper(context)
     }),
   )
