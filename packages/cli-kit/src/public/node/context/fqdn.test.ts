@@ -6,6 +6,7 @@ import {
   businessPlatformFqdn,
   appDevFqdn,
   adminFqdn,
+  signupsFqdn,
 } from './fqdn.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {expect, describe, test, vi} from 'vitest'
@@ -147,6 +148,30 @@ describe('identity', () => {
 
     // Then
     expect(got).toEqual('accounts.shopify.com')
+  })
+})
+
+describe('signupsFqdn', () => {
+  test('returns the local fqdn when the environment is local', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+
+    // When
+    const got = await signupsFqdn()
+
+    // Then
+    expect(got).toEqual('shopify.myshopify.io')
+  })
+
+  test('returns the production fqdn when the environment is production', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
+
+    // When
+    const got = await signupsFqdn()
+
+    // Then
+    expect(got).toEqual('shopify.com')
   })
 })
 
