@@ -47,6 +47,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   configuration: TConfiguration
   configurationPath: string
   outputPath: string
+  bundleRoot: string
   handle: string
   specification: ExtensionSpecification
   uid: string
@@ -124,6 +125,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.getOutputRelativePath?.(this) ?? ''
   }
 
+  get localOutputPath() {
+    return joinPath(this.directory, this.outputRelativePath)
+  }
+
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -139,9 +144,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.handle = this.buildHandle()
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
-    this.outputPath = joinPath(this.directory, this.outputRelativePath)
+    this.outputPath = this.localOutputPath
     this.uid = this.buildUIDFromStrategy()
     this.devUUID = `dev-${this.uid}`
+    // We're not yet doing dev or deploy so the default bundle root is the extension directory
+    this.bundleRoot = this.directory
   }
 
   get draftMessages() {
@@ -328,17 +335,18 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
+    this.bundleRoot = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
+    this.outputPath = joinPath(this.bundleRoot, this.outputRelativePath)
     await this.build(options)
 
-    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
-    await this.keepBuiltSourcemapsLocally(bundleInputPath)
+    await this.keepBuiltSourcemapsLocally(this.bundleRoot)
   }
 
   async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
     const defaultOutputPath = this.outputPath
 
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
+    this.bundleRoot = joinPath(bundleDirectory, this.getOutputFolderId(extensionUuid))
+    this.outputPath = joinPath(this.bundleRoot, this.outputRelativePath)
 
     const buildMode = this.specification.buildConfig.mode
 

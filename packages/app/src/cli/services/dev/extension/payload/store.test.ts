@@ -41,7 +41,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     } as unknown as ExtensionsPayloadStoreOptions
 
     // When
-    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'mock-bundle-path')
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options)
 
     // Then
     expect(rawPayload).toMatchObject({
@@ -84,7 +84,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     } as unknown as ExtensionsPayloadStoreOptions
 
     // When
-    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'bundle-path')
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options)
 
     // Then
     expect(rawPayload.app.allowedDomains).toStrictEqual(['https://cdn.example.com'])
@@ -113,7 +113,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     } as unknown as ExtensionsPayloadStoreOptions
 
     // When
-    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'bundle-path')
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options)
 
     // Then
     expect(rawPayload.app.allowedDomains).toBeUndefined()
@@ -136,7 +136,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     } as unknown as ExtensionsPayloadStoreOptions
 
     // When
-    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'bundle-path')
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options)
 
     // Then
     expect(rawPayload.app.allowedDomains).toStrictEqual(['https://cdn.example.com'])
@@ -159,7 +159,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     } as unknown as ExtensionsPayloadStoreOptions
 
     // When
-    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'bundle-path')
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options)
 
     // Then
     expect(rawPayload.app.allowedDomains).toStrictEqual([])
@@ -411,10 +411,10 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path', {hidden: true})
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, {hidden: true})
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
         ...mockOptions,
         currentDevelopmentPayload: {hidden: true},
       })
@@ -438,10 +438,10 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
         ...mockOptions,
         currentDevelopmentPayload: {
           status: 'success',
@@ -469,10 +469,10 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
         ...mockOptions,
         currentDevelopmentPayload: {
           status: 'success',
@@ -497,7 +497,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
       expect(onUpdateSpy).toHaveBeenCalledWith(['123'])
@@ -517,7 +517,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
       expect(initialRawPayload).toStrictEqual(extensionsPayloadStore.getRawPayload())

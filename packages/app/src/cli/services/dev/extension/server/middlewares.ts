@@ -195,8 +195,6 @@ export function getExtensionPayloadMiddleware({devOptions, getExtensions}: GetEx
         return sendRedirect(event, url, 307)
       }
     }
-    const bundlePath = devOptions.appWatcher.buildOutputPath
-
     setResponseHeader(event, 'content-type', 'application/json')
     return {
       app: {
@@ -213,7 +211,7 @@ export function getExtensionPayloadMiddleware({devOptions, getExtensions}: GetEx
         url: new URL('/extensions/dev-console', devOptions.url).toString(),
       },
       store: devOptions.storeFqdn,
-      extension: await getUIExtensionPayload(extension, bundlePath, devOptions),
+      extension: await getUIExtensionPayload(extension, devOptions),
     }
   })
 }

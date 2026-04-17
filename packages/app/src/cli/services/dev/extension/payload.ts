@@ -23,18 +23,13 @@ interface AssetMapperContext {
 
 export async function getUIExtensionPayload(
   extension: ExtensionInstance,
-  bundlePath: string,
   options: GetUIExtensionPayloadOptions,
 ): Promise<UIExtensionPayload> {
   return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
-    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
     const renderer = await getUIExtensionRendererVersion(extension)
-    // If the extension has a custom output relative path, use that as the build directory
-    // ex. ext/dist/handle.js -> ext/dist
-    const buildDirectory = extension.outputRelativePath ? dirname(extensionOutputPath) : extensionOutputPath
-    const extensionPoints = await getExtensionPoints(extension, url, buildDirectory)
+    const extensionPoints = await getExtensionPoints(extension, url)
 
     let metafields: {namespace: string; key: string}[] | null = null
     if (
@@ -47,11 +42,8 @@ export async function getUIExtensionPayload(
 
     const defaultConfig = {
       assets: {
-        main: {
-          name: 'main',
-          url: `${url}/assets/${extension.outputFileName}`,
-          lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
-        },
+        // Always use the local output path for the main asset
+        main: await getAssetPayload('main', extension.outputFileName, url, extension, extension.localOutputPath),
       },
       supportedFeatures: {
         runsOffline: extension.configuration.supported_features?.runs_offline ?? false,
@@ -104,7 +96,7 @@ export async function getUIExtensionPayload(
   })
 }
 
-async function getExtensionPoints(extension: ExtensionInstance, url: string, buildDirectory: string) {
+async function getExtensionPoints(extension: ExtensionInstance, url: string) {
   const config = extension.configuration as Record<string, unknown>
   let extensionPoints = (config.extension_points ?? config.targeting) as DevNewExtensionPointSchema[]
 
@@ -114,7 +106,7 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string, bui
   }
 
   if (isNewExtensionPointsSchema(extensionPoints)) {
-    const manifest = await readBundleManifest(buildDirectory)
+    const manifest = await readBundleManifest(extension.bundleRoot)
 
     return Promise.all(
       extensionPoints.map(async (extensionPoint) => {
@@ -185,7 +177,8 @@ async function defaultAssetMapper({
   const buildManifest = extensionPoint.build_manifest
   const asset = buildManifest?.assets?.[identifier as keyof typeof buildManifest.assets]
   if (asset?.filepath) {
-    const payload = await getAssetPayload(identifier, asset.filepath, url, extension, asset.module)
+    const builtPath = joinPath(dirname(extension.localOutputPath), asset.filepath)
+    const payload = await getAssetPayload(identifier, asset.filepath, url, extension, builtPath)
     return {assets: {[payload.name]: payload}}
   }
 
@@ -261,10 +254,9 @@ export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionP
 /**
  * Builds an asset payload entry.
  *
- * @param sourcePath - Optional source file path for the timestamp. When provided
- *   (e.g. for compiled assets), the URL uses `filepath` (the build output name)
- *   while `lastUpdated` is read from `sourcePath` (the source module). For static
- *   assets, `filepath` is used for both.
+ * @param sourcePath - Absolute path of the file whose mtime should be used for
+ *   `lastUpdated`. When omitted, defaults to `extension.directory/<filepath>`
+ *   (the source location for static assets).
  */
 async function getAssetPayload(
   name: string,
@@ -276,6 +268,6 @@ async function getAssetPayload(
   return {
     name,
     url: `${url}${joinPath('/assets/', filepath)}`,
-    lastUpdated: (await fileLastUpdatedTimestamp(joinPath(extension.directory, sourcePath ?? filepath))) ?? 0,
+    lastUpdated: (await fileLastUpdatedTimestamp(sourcePath ?? joinPath(extension.directory, filepath))) ?? 0,
   }
 }

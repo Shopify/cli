@@ -124,8 +124,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   // NOTE: Always use `payloadOptions`, never `options` directly. This way we can mutate `payloadOptions` without
   // affecting the original `options` object and we only need to care about `payloadOptions` in this function.
 
-  const bundlePath = payloadOptions.appWatcher.buildOutputPath
-  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
+  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
   let extensions = payloadOptions.extensions.filter((ext) => ext.isPreviewable)
 
@@ -173,10 +172,10 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
             // eslint-disable-next-line require-atomic-updates
             payloadOptions.checkoutCartUrl = cartUrl
           }
-          await payloadStore.addExtension(event.extension, bundlePath)
+          await payloadStore.addExtension(event.extension)
           break
         case EventType.Updated:
-          await payloadStore.updateExtension(event.extension, payloadOptions, bundlePath, {status, error})
+          await payloadStore.updateExtension(event.extension, payloadOptions, {status, error})
           break
         case EventType.Deleted:
           payloadOptions.extensions = payloadOptions.extensions.filter((ext) => ext.devUUID !== event.extension.devUUID)

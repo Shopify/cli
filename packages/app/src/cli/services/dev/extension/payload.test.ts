@@ -48,7 +48,11 @@ describe('getUIExtensionPayload', () => {
     const buildDir = extname(extensionOutputPath) ? dirname(extensionOutputPath) : extensionOutputPath
     await mkdir(buildDir)
     if (extname(extensionOutputPath)) await touchFile(extensionOutputPath)
-    await writeFile(joinPath(buildDir, 'manifest.json'), JSON.stringify(manifest))
+    // Simulate post-buildForBundle state: bundleRoot is the extension's bundle folder,
+    // where manifest.json is written.
+    extension.bundleRoot = joinPath(bundlePath, extension.uid)
+    await mkdir(extension.bundleRoot)
+    await writeFile(joinPath(extension.bundleRoot, 'manifest.json'), JSON.stringify(manifest))
 
     for (const [filepath, content] of Object.entries(sourceFiles)) {
       const fullPath = joinPath(extension.directory, filepath)
@@ -110,7 +114,7 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...createMockOptions(tmpDir, [uiExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -181,7 +185,7 @@ describe('getUIExtensionPayload', () => {
         {'tools.json': '{"tools": []}', 'instructions.md': '# Instructions'},
       )
 
-      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...createMockOptions(tmpDir, [uiExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -243,7 +247,7 @@ describe('getUIExtensionPayload', () => {
         {},
       )
 
-      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...createMockOptions(tmpDir, [uiExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -296,7 +300,7 @@ describe('getUIExtensionPayload', () => {
         {'intents/create-schema.json': '{"type": "object"}', 'intents/update-schema.json': '{"type": "object"}'},
       )
 
-      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...createMockOptions(tmpDir, [uiExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -344,7 +348,7 @@ describe('getUIExtensionPayload', () => {
       })
 
       // No setupBuildOutput — manifest.json doesn't exist
-      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...createMockOptions(tmpDir, [uiExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -373,8 +377,9 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      // Use a non-existent bundle path — parent directory doesn't exist
-      const got = await getUIExtensionPayload(uiExtension, joinPath(tmpDir, 'nonexistent', 'bundle'), {
+      // Point bundleRoot at a non-existent directory so manifest.json lookup fails.
+      uiExtension.bundleRoot = joinPath(tmpDir, 'nonexistent', 'bundle')
+      const got = await getUIExtensionPayload(uiExtension, {
         ...createMockOptions(tmpDir, [uiExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -409,7 +414,7 @@ describe('getUIExtensionPayload', () => {
         {'tools.json': '{"tools": []}'},
       )
 
-      const got = await getUIExtensionPayload(adminLinkExtension, tmpDir, {
+      const got = await getUIExtensionPayload(adminLinkExtension, {
         ...createMockOptions(tmpDir, [adminLinkExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -458,7 +463,7 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const got = await getUIExtensionPayload(postPurchaseExtension, 'mock-bundle-path', {
+      const got = await getUIExtensionPayload(postPurchaseExtension, {
         ...createMockOptions(tmpDir, [postPurchaseExtension]),
         currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
@@ -486,7 +491,7 @@ describe('getUIExtensionPayload', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const uiExtension = await testUIExtension({directory: tmpDir})
 
-      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...({} as ExtensionsPayloadStoreOptions),
         currentDevelopmentPayload: {},
       })
@@ -519,7 +524,7 @@ describe('getUIExtensionPayload', () => {
           },
         })
 
-        const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+        const got = await getUIExtensionPayload(uiExtension, {
           ...({} as ExtensionsPayloadStoreOptions),
           currentDevelopmentPayload: {},
         })
@@ -542,7 +547,7 @@ describe('getUIExtensionPayload', () => {
           },
         })
 
-        const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+        const got = await getUIExtensionPayload(uiExtension, {
           ...({} as ExtensionsPayloadStoreOptions),
           currentDevelopmentPayload: {},
         })
@@ -564,7 +569,7 @@ describe('getUIExtensionPayload', () => {
           },
         })
 
-        const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+        const got = await getUIExtensionPayload(uiExtension, {
           ...({} as ExtensionsPayloadStoreOptions),
           currentDevelopmentPayload: {},
         })
@@ -597,7 +602,7 @@ describe('getUIExtensionPayload', () => {
         },
       })
 
-      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...({} as ExtensionsPayloadStoreOptions),
         currentDevelopmentPayload: {},
         url: 'http://tunnel-url.com',
@@ -651,7 +656,7 @@ describe('getUIExtensionPayload', () => {
         },
       })
 
-      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+      const got = await getUIExtensionPayload(uiExtension, {
         ...({} as ExtensionsPayloadStoreOptions),
         currentDevelopmentPayload: {},
         url: 'http://tunnel-url.com',

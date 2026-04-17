@@ -2,7 +2,7 @@ import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
 import {copyFile} from '@shopify/cli-kit/node/fs'
-import {dirname} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
 interface ExtensionPointWithBuildManifest {
@@ -32,7 +32,8 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
     (ep): ep is ExtensionPointWithBuildManifest => typeof ep === 'object' && ep.build_manifest,
   )
 
-  const entries = extractBuiltAssetEntries(pointsWithManifest)
+  const outputDirRelative = relativePath(context.extension.bundleRoot, dirname(context.extension.outputPath))
+  const entries = extractBuiltAssetEntries(pointsWithManifest, outputDirRelative)
   if (Object.keys(entries).length > 0) {
     await createOrUpdateManifestFile(context, entries)
   }
@@ -40,9 +41,14 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
 
 /**
  * Extracts built asset filepaths from `build_manifest` on each extension point,
- * grouped by target. Returns a map of target → `{assetName: filepath}`.
+ * grouped by target. Returns a map of target → `{assetName: filepath}`. Filepaths
+ * are rewritten to be bundle-root-relative so downstream consumers (dev asset
+ * server, deploy server) resolve them consistently against the bundle root.
  */
-function extractBuiltAssetEntries(extensionPoints: {target: string; build_manifest: BuildManifest}[]): {
+function extractBuiltAssetEntries(
+  extensionPoints: {target: string; build_manifest: BuildManifest}[],
+  outputDirRelative: string,
+): {
   [target: string]: {[assetName: string]: string}
 } {
   const entries: {[target: string]: {[assetName: string]: string}} = {}
@@ -50,7 +56,7 @@ function extractBuiltAssetEntries(extensionPoints: {target: string; build_manife
     if (!buildManifest?.assets) continue
     const assets: {[name: string]: string} = {}
     for (const [name, asset] of Object.entries(buildManifest.assets)) {
-      if (asset?.filepath) assets[name] = asset.filepath
+      if (asset?.filepath) assets[name] = joinPath(outputDirRelative, asset.filepath)
     }
     if (Object.keys(assets).length > 0) entries[target] = assets
   }

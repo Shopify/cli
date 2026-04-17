@@ -18,6 +18,7 @@ describe('executeIncludeAssetsStep', () => {
     mockExtension = {
       directory: '/test/extension',
       outputPath: '/test/output/extension.js',
+      bundleRoot: '/test/output',
     } as ExtensionInstance
 
     mockContext = {

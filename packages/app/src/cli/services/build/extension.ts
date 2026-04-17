@@ -68,7 +68,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   }
 
   // Always build into the extension's local directory (e.g. ext/dist/handle.js)
-  const localOutputPath = joinPath(extension.directory, extension.outputRelativePath)
+  const localOutputPath = extension.localOutputPath
 
   const {main, assets} = extension.getBundleExtensionStdinContent()
 
@@ -175,7 +175,7 @@ export async function buildFunctionExtension(
       await runTrampoline(extension.outputPath)
     }
 
-    const projectOutputPath = joinPath(extension.directory, extension.outputRelativePath)
+    const projectOutputPath = extension.localOutputPath
 
     if (
       fileExistsSync(extension.outputPath) &&

@@ -2,7 +2,7 @@ import {generateManifestFile} from './include-assets/generate-manifest.js'
 import {copyByPattern} from './include-assets/copy-by-pattern.js'
 import {copySourceEntry} from './include-assets/copy-source-entry.js'
 import {copyConfigKeyEntry} from './include-assets/copy-config-key-entry.js'
-import {joinPath, dirname, extname, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
 import {z} from 'zod'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
@@ -68,7 +68,7 @@ const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, S
  * then `pattern` and `static` entries run in parallel.
  *
  * When `generatesAssetsManifest` is `true`, a `manifest.json` file is written
- * to the output directory after all inclusions complete. All entry types
+ * to the bundle root after all inclusions complete. All entry types
  * contribute their copied output paths to the manifest. `configKey` entries
  * with `anchor` and `groupBy` produce structured manifest entries; `pattern`
  * and `static` entries contribute their paths under a `"files"` key.
@@ -107,15 +107,18 @@ type IncludeAssetsConfig = z.input<typeof IncludeAssetsConfigSchema>
  *
  * Iterates over `config.inclusions` and dispatches each entry by type:
  *
- * - `type: 'static'` — copy a file or directory into the output.
+ * - `type: 'static'` — copy a file or directory into the bundle root.
  * - `type: 'configKey'` — resolve a path from the extension's
- *   config and copy into the output; silently skipped if absent.
+ *   config and copy into the bundle root; silently skipped if absent.
  *   Runs sequentially to avoid filesystem race conditions.
  * - `type: 'pattern'` — glob-based file selection from a source directory
- *   (defaults to extension root when `source` is omitted).
+ *   (defaults to extension root when `baseDir` is omitted).
+ *
+ * All static assets copy to `extension.bundleRoot`. The `bundle_ui` step is
+ * responsible for placing built JS into `dist/`.
  *
  * When `generatesAssetsManifest` is `true`, all entry types contribute their
- * copied output paths to `manifest.json`.
+ * copied output paths (bundle-root-relative) to `manifest.json`.
  */
 export async function executeIncludeAssetsStep(
   step: LifecycleStep,
@@ -123,9 +126,7 @@ export async function executeIncludeAssetsStep(
 ): Promise<{filesCopied: number}> {
   const config = IncludeAssetsConfigSchema.parse(step.config)
   const {extension, options} = context
-  // When outputPath is a file (e.g. index.js, index.wasm), the output directory is its
-  // parent. When outputPath has no extension, it IS the output directory.
-  const outputDir = extname(extension.outputPath) ? dirname(extension.outputPath) : extension.outputPath
+  const bundleRoot = extension.bundleRoot
 
   const aggregatedPathMap = new Map<string, string | string[]>()
   // Track basenames written across all configKey entries in this build to detect
@@ -145,7 +146,7 @@ export async function executeIncludeAssetsStep(
     const result = await copyConfigKeyEntry({
       key: entry.key,
       baseDir: extension.directory,
-      outputDir,
+      outputDir: bundleRoot,
       context,
       destination: sanitizedDest,
       usedBasenames,
@@ -164,7 +165,7 @@ export async function executeIncludeAssetsStep(
 
         if (entry.type === 'pattern') {
           const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
-          const destinationDir = sanitizedDest ? joinPath(outputDir, sanitizedDest) : outputDir
+          const destinationDir = sanitizedDest ? joinPath(bundleRoot, sanitizedDest) : bundleRoot
           const result = await copyByPattern(
             {
               sourceDir,
@@ -174,7 +175,7 @@ export async function executeIncludeAssetsStep(
             },
             options,
           )
-          // result.outputPaths are relative to destinationDir; prefix with sanitizedDest for outer outputDir relativity
+          // result.outputPaths are relative to destinationDir; prefix with sanitizedDest for bundle-root relativity
           const outputPaths = sanitizedDest
             ? result.outputPaths.map((outputPath) => joinPath(sanitizedDest, outputPath))
             : result.outputPaths
@@ -187,7 +188,7 @@ export async function executeIncludeAssetsStep(
               source: entry.source,
               destination: sanitizedDest,
               baseDir: extension.directory,
-              outputDir,
+              outputDir: bundleRoot,
             },
             options,
           )

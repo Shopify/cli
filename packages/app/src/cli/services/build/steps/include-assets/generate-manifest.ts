@@ -1,5 +1,5 @@
 import {getNestedValue, tokenizePath} from './copy-config-key-entry.js'
-import {joinPath, dirname, extname} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
@@ -121,18 +121,11 @@ export async function createOrUpdateManifestFile(
   context: BuildContext,
   entries: {[key: string]: unknown},
 ): Promise<void> {
-  const outputPath = context.extension.outputPath
-  /**
-   * Resolves the output directory from an extension's outputPath.
-   * When outputPath is a file (has extension), uses dirname. Otherwise uses outputPath directly.
-   */
-  const outputDir = extname(outputPath) ? dirname(outputPath) : outputPath
+  const bundleRoot = context.extension.bundleRoot
+  const manifestPath = joinPath(bundleRoot, 'manifest.json')
 
-  const manifestPath = joinPath(outputDir, 'manifest.json')
-
-  // Create the output directory
-  if (!(await fileExists(outputDir))) {
-    await mkdir(outputDir)
+  if (!(await fileExists(bundleRoot))) {
+    await mkdir(bundleRoot)
   }
 
   let existing: {[key: string]: unknown} = {}
@@ -163,7 +156,7 @@ export async function createOrUpdateManifestFile(
   }
 
   await writeFile(manifestPath, JSON.stringify(existing, null, 2))
-  outputDebug(`Updated manifest.json in ${outputDir}\n`, context.options.stdout)
+  outputDebug(`Updated manifest.json in ${bundleRoot}\n`, context.options.stdout)
 }
 
 /**

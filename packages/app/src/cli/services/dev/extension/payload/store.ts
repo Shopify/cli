@@ -35,7 +35,6 @@ export enum ExtensionsPayloadStoreEvent {
 
 export async function getExtensionsPayloadStoreRawPayload(
   options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
-  bundlePath: string,
 ): Promise<ExtensionsEndpointPayload> {
   const payload: ExtensionsEndpointPayload = {
     app: {
@@ -57,9 +56,7 @@ export async function getExtensionsPayloadStoreRawPayload(
     },
     store: options.storeFqdn,
     extensions: await Promise.all(
-      options.extensions
-        .filter((ext) => ext.isPreviewable)
-        .map((ext) => getUIExtensionPayload(ext, bundlePath, options)),
+      options.extensions.filter((ext) => ext.isPreviewable).map((ext) => getUIExtensionPayload(ext, options)),
     ),
   }
 
@@ -178,7 +175,6 @@ export class ExtensionsPayloadStore extends EventEmitter {
   async updateExtension(
     extension: ExtensionInstance,
     options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
-    bundlePath: string,
     development?: Partial<UIExtensionPayload['development']>,
   ) {
     const payloadExtensions = this.rawPayload.extensions
@@ -192,7 +188,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
       return
     }
 
-    payloadExtensions[index] = await getUIExtensionPayload(extension, bundlePath, {
+    payloadExtensions[index] = await getUIExtensionPayload(extension, {
       ...this.options,
       currentDevelopmentPayload: development ?? {status: payloadExtensions[index]?.development.status},
       currentLocalizationPayload: payloadExtensions[index]?.localization,
@@ -211,8 +207,8 @@ export class ExtensionsPayloadStore extends EventEmitter {
     }
   }
 
-  async addExtension(extension: ExtensionInstance, bundlePath: string) {
-    this.rawPayload.extensions.push(await getUIExtensionPayload(extension, bundlePath, this.options))
+  async addExtension(extension: ExtensionInstance) {
+    this.rawPayload.extensions.push(await getUIExtensionPayload(extension, this.options))
     this.emitUpdate([extension.devUUID])
   }
 
