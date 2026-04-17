@@ -1,12 +1,12 @@
 import {executeStoreOperation} from '../../services/store/execute/index.js'
 import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
 
-export default class StoreExecute extends Command {
+export default class StoreExecute extends StoreCommand {
   static summary = 'Execute GraphQL queries and mutations on a store.'
 
   static descriptionWithMarkdown = `Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.
@@ -75,7 +75,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
     }),
   }
 
-  async run(): Promise<void> {
+  public async run(): Promise<void> {
     const {flags} = await this.parse(StoreExecute)
 
     const result = await executeStoreOperation({
