@@ -417,9 +417,7 @@ export async function createTypeDefinition({
       ...(intentsTypeDefinition ? [intentsTypeDefinition] : []),
       ...(shopifyUtilityTypes ? [shopifyUtilityTypes] : []),
       `  const shopify: ${shopifyType};`,
-      '  const globalThis: {',
-      '    shopify: typeof shopify;',
-      '  };',
+      '  const globalThis: { shopify: typeof shopify };',
       '}',
       '',
     ]
