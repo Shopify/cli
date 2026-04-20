@@ -55,7 +55,7 @@
     "@shopify/polaris": "12.27.0",
     "@shopify/polaris-icons": "8.11.1",
     "@shopify/theme": "3.93.0",
-    "@shopify/theme-check-node": "3.24.0",
+    "@shopify/theme-check-node": "3.25.0",
     "@shopify/toml-patch": "0.3.0",
     "chokidar": "3.6.0",
     "diff": "5.2.2",
