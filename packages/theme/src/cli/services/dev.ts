@@ -14,15 +14,22 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {debounce} from '@shopify/cli-kit/common/function'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
+import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 import chalk from '@shopify/cli-kit/node/colors'
+import {Config} from '@oclif/core'
 
 import readline from 'readline'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
 
+let hasReportedAnalyticsEvent = false
+
 interface DevOptions {
   adminSession: AdminSession
+  commandConfig: Config
   directory: string
   store: string
   password?: string
@@ -68,6 +75,8 @@ export async function dev(options: DevOptions) {
       },
     })
   }
+
+  hasReportedAnalyticsEvent = false
 
   if (options.listing) {
     await ensureListingExists(options.directory, options.listing)
@@ -128,11 +137,14 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  const {serverStart, renderDevSetupProgress, backgroundJobPromise} = setupDevServer(options.theme, ctx)
+  const {serverStart, renderDevSetupProgress, backgroundJobPromise, resolveBackgroundJob} = setupDevServer(
+    options.theme,
+    ctx,
+  )
 
   readline.emitKeypressEvents(process.stdin)
 
-  const keypressHandler = createKeypressHandler(urls, ctx)
+  const keypressHandler = createKeypressHandler(urls, ctx, resolveBackgroundJob)
   process.stdin.on('keypress', keypressHandler)
 
   await Promise.all([
@@ -149,17 +161,36 @@ export async function dev(options: DevOptions) {
         }
       }),
   ])
+
+  await reportDevAnalytics(options.commandConfig, options.adminSession)
+
+  process.exit(0)
+}
+
+export async function reportDevAnalytics(config: Config, session: AdminSession): Promise<void> {
+  if (hasReportedAnalyticsEvent) return
+  hasReportedAnalyticsEvent = true
+
+  try {
+    await addPublicMetadata(() => ({store_fqdn_hash: hashString(session.storeFqdn)}))
+    await addSensitiveMetadata(() => ({store_fqdn: session.storeFqdn}))
+    await reportAnalyticsEvent({config, exitMode: 'ok'})
+  } catch (_error) {
+    // Analytics must never block exit.
+  }
 }
 
 export function createKeypressHandler(
   urls: {local: string; giftCard: string; themeEditor: string; preview: string},
   ctx: {lastRequestedPath: string},
+  onClose: () => void,
 ) {
   const debouncedOpenURL = debounce(openURLSafely, 100, {leading: true, trailing: false})
 
   return (_str: string, key: {ctrl?: boolean; name?: string}) => {
     if (key.ctrl && key.name === 'c') {
-      process.exit()
+      onClose()
+      return
     }
 
     switch (key.name) {
@@ -182,6 +213,7 @@ export function createKeypressHandler(
       case 'g':
         debouncedOpenURL(urls.giftCard, 'gift card preview')
         break
+      case undefined:
       default:
         break
     }

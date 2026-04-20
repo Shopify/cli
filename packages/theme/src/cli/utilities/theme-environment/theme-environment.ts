@@ -18,7 +18,11 @@ import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  const {promise: backgroundJobPromise, reject: rejectBackgroundJob} = promiseWithResolvers<never>()
+  const {
+    promise: backgroundJobPromise,
+    resolve: resolveBackgroundJob,
+    reject: rejectBackgroundJob,
+  } = promiseWithResolvers<void>()
 
   const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx)
   const envSetup = ensureThemeEnvironmentSetup(theme, ctx, rejectBackgroundJob)
@@ -33,6 +37,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
     backgroundJobPromise,
+    resolveBackgroundJob,
   }
 }
 
