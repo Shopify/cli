@@ -8,7 +8,7 @@ import * as metadata from '../../public/node/metadata.js'
 import {platformAndArch} from '../../public/node/os.js'
 import {ciPlatform, cloudEnvironment, macAddress} from '../../public/node/context/local.js'
 import {cwd} from '../../public/node/path.js'
-import {currentProcessIsGlobal} from '../../public/node/is-global.js'
+import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from '../../public/node/is-global.js'
 import {isWsl} from '../../public/node/system.js'
 
 import {Command, Interfaces} from '@oclif/core'
@@ -64,6 +64,7 @@ interface EnvironmentData {
   env_device_id: string
   env_cloud: string
   env_package_manager: string
+  env_install_package_manager: string
   env_is_global: boolean
   env_auth_method: string
   env_is_wsl: boolean
@@ -90,6 +91,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_device_id: hashString(await macAddress()),
     env_cloud: cloudEnvironment().platform,
     env_package_manager: await getPackageManager(cwd()),
+    env_install_package_manager: inferPackageManagerForGlobalCLI(),
     env_is_global: currentProcessIsGlobal(),
     env_auth_method: await getLastSeenAuthMethod(),
     env_is_wsl: await isWsl(),
