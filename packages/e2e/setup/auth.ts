@@ -1,17 +1,21 @@
-import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {browserFixture} from './browser.js'
-import {executables} from './env.js'
+import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
+import {globalLog, executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {execa} from 'execa'
+import * as fs from 'fs'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const log = {log: (_ctx: any, msg: string) => globalLog('auth', msg)}
 
 /**
- * Worker-scoped fixture that performs OAuth login using the shared browser page.
+ * Worker-scoped fixture that provides an authenticated CLI session.
  *
- * Extends browserFixture — the browser is already running when auth starts.
- * After login, the CLI session is stored in XDG dirs and the browser page
- * remains available for other browser-based actions (dashboard navigation, etc.).
+ * If globalSetup already ran auth (E2E_AUTH_CONFIG_DIR is set), copies the
+ * pre-authenticated session files into this worker's isolated XDG dirs.
+ * Otherwise falls back to running auth login directly (single-worker mode).
  *
  * Fixture chain: envFixture → cliFixture → browserFixture → authFixture
  */
@@ -26,22 +30,47 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
         return
       }
 
-      process.stdout.write('[e2e] Authenticating automatically — no action required.\n')
+      const authConfigDir = process.env.E2E_AUTH_CONFIG_DIR
+      const authDataDir = process.env.E2E_AUTH_DATA_DIR
+      const authStateDir = process.env.E2E_AUTH_STATE_DIR
+      const authCacheDir = process.env.E2E_AUTH_CACHE_DIR
 
-      // Clear any existing session
+      if (authConfigDir && authDataDir && authStateDir && authCacheDir) {
+        // Copy pre-authenticated session from global setup
+        log.log(env, 'copying session from global setup')
+
+        if (
+          !fs.existsSync(authConfigDir) ||
+          !fs.existsSync(authDataDir) ||
+          !fs.existsSync(authStateDir) ||
+          !fs.existsSync(authCacheDir)
+        ) {
+          throw new Error('Global auth dirs missing — global setup may not have completed successfully')
+        }
+
+        fs.cpSync(authConfigDir, env.processEnv.XDG_CONFIG_HOME!, {recursive: true})
+        fs.cpSync(authDataDir, env.processEnv.XDG_DATA_HOME!, {recursive: true})
+        fs.cpSync(authStateDir, env.processEnv.XDG_STATE_HOME!, {recursive: true})
+        fs.cpSync(authCacheDir, env.processEnv.XDG_CACHE_HOME!, {recursive: true})
+
+        await use()
+        return
+      }
+
+      // Fallback: run auth login directly (single-worker / no global setup)
+      log.log(env, 'authenticating automatically')
+
       await execa('node', [executables.cli, 'auth', 'logout'], {
         env: env.processEnv,
         reject: false,
       })
 
-      // Spawn auth login via PTY (must not have CI=1)
       const nodePty = await import('node-pty')
       const spawnEnv: {[key: string]: string} = {}
       for (const [key, value] of Object.entries(env.processEnv)) {
         if (value !== undefined) spawnEnv[key] = value
       }
       spawnEnv.CI = ''
-      // Print login URL directly instead of opening system browser
       spawnEnv.CODESPACES = 'true'
 
       const ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {

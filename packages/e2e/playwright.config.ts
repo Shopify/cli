@@ -8,6 +8,7 @@ config()
 const isCI = Boolean(process.env.CI)
 
 export default defineConfig({
+  globalSetup: './setup/global-auth.ts',
   testDir: './tests',
   fullyParallel: false,
   forbidOnly: isCI,

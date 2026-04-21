@@ -72,6 +72,13 @@ export function requireEnv(env: E2EEnv, ...keys: (keyof Pick<E2EEnv, 'storeFqdn'
   }
 }
 
+/** Log a message during global setup (before workers start). Only prints when DEBUG=1. */
+export function globalLog(tag: string, msg: string): void {
+  if (process.env.DEBUG === '1') {
+    process.stdout.write(`[e2e][${tag}] ${msg}\n`)
+  }
+}
+
 /**
  * Worker-scoped fixture providing environment configuration.
  * Env vars are optional — tests that need them should call requireEnv().
