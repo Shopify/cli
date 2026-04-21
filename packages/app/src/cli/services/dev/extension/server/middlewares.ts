@@ -152,25 +152,6 @@ export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
   })
 })
 
-export function getAppAssetsMiddleware(getAppAssets: () => Record<string, string> | undefined) {
-  return defineEventHandler(async (event) => {
-    const {assetKey = '', filePath = ''} = getRouterParams(event)
-    const appAssets = getAppAssets()
-    const directory = appAssets?.[assetKey]
-    if (!directory) {
-      return sendError(event, {statusCode: 404, statusMessage: `No app assets configured for key: ${assetKey}`})
-    }
-    const resolvedDirectory = resolvePath(directory)
-    const resolvedFilePath = resolvePath(directory, filePath)
-    if (!resolvedFilePath.startsWith(resolvedDirectory)) {
-      return sendError(event, {statusCode: 403, statusMessage: 'Path traversal is not allowed'})
-    }
-    return fileServerMiddleware(event, {
-      filePath: resolvedFilePath,
-    })
-  })
-}
-
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler((event) => {
     outputDebug(`UI extensions server received a ${event.method} request to URL ${event.path}`, devOptions.stdout)

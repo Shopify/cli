@@ -432,18 +432,12 @@ export class App<
   }
 
   creationDefaultOptions(): CreateAppOptions {
-    const applicationUrl = this.configuration.application_url
-    const redirectUrls = this.configuration.auth?.redirect_urls
-    const staticRoot = this.configuration.admin?.static_root
     return {
       isLaunchable: this.appIsLaunchable(),
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
       isEmbedded: this.appIsEmbedded,
       directory: this.directory,
-      applicationUrl,
-      redirectUrls,
-      staticRoot,
     }
   }
 
