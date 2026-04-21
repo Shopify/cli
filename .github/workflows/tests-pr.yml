@@ -216,11 +216,15 @@ jobs:
         run: exit 1
 
   e2e-tests:
-    name: 'E2E tests'
+    name: "E2E tests (shard ${{ matrix.shard }})"
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/2', '2/2']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -245,19 +249,19 @@ jobs:
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
           E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
-        run: pnpm exec playwright test
+        run: pnpm exec playwright test --shard ${{ matrix.shard }}
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ strategy.job-index }}
           path: packages/e2e/playwright-report/
           retention-days: 14
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-results
+          name: playwright-results-${{ strategy.job-index }}
           path: packages/e2e/test-results/
           retention-days: 14
 
