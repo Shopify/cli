@@ -21,8 +21,12 @@ interface ExtensionPointWithBuildManifest {
 export async function executeBundleUIStep(step: BundleUIStep, context: BuildContext): Promise<void> {
   const config = context.extension.configuration
   const localOutputPath = await buildUIExtension(context.extension, context.options)
-  // Copy the locally built files into the bundle
-  await copyFile(dirname(localOutputPath), dirname(context.extension.outputPath))
+  // When invoked outside a bundle directory (e.g. `shopify app build`), localOutputPath and outputPath collapse onto the same directory; fs-extra rejects same-path copies.
+  const localOutputDir = dirname(localOutputPath)
+  const bundleOutputDir = dirname(context.extension.outputPath)
+  if (localOutputDir !== bundleOutputDir) {
+    await copyFile(localOutputDir, bundleOutputDir)
+  }
 
   if (!step.config?.generatesAssetsManifest) return
 
