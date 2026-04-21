@@ -49,8 +49,8 @@ test.describe('App dev server', () => {
       const exitCode = await dev.waitForExit(CLI_TIMEOUT.short)
       expect(exitCode, `dev exited with non-zero code. Output:\n${dev.getOutput()}`).toBe(0)
     } finally {
-      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
-      if (!process.env.E2E_SKIP_CLEANUP) {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           browserPage,

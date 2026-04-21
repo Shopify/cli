@@ -57,8 +57,7 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
  */
 export async function refreshIfPageError(page: Page): Promise<boolean> {
   const pageText = (await page.textContent('body')) ?? ''
-  if (!pageText.includes('Internal Server Error') && !pageText.includes('502 Bad Gateway')) return false
-  // if (process.env.DEBUG === '1') process.stdout.write('                   page refreshing...\n')
+  if (!pageText.includes('500: Internal Server Error') && !pageText.includes('502 Bad Gateway')) return false
   await page.reload({waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   return true

@@ -27,20 +27,16 @@ export async function createApp(ctx: {
   const template = ctx.template ?? 'reactRouter'
   const packageManager =
     ctx.packageManager ?? (process.env.E2E_PACKAGE_MANAGER as 'npm' | 'yarn' | 'pnpm' | 'bun') ?? 'pnpm'
+  // reactRouter/remix both require a --flavor or they'll hang on the language
+  // prompt in non-interactive runs. Default to javascript when template needs
+  // it. For `--template none` (extension-only) flavor is ignored.
+  const flavor = ctx.flavor ?? (template === 'none' ? undefined : 'javascript')
 
-  const args = [
-    '--name',
-    name,
-    '--path',
-    parentDir,
-    '--package-manager',
-    packageManager,
-    '--local',
-    '--template',
-    template,
-  ]
+  const args = ['--template', template]
+  if (flavor) args.push('--flavor', flavor)
+  args.push('--name', name, '--package-manager', packageManager, '--local')
   if (ctx.orgId) args.push('--organization-id', ctx.orgId)
-  if (ctx.flavor) args.push('--flavor', ctx.flavor)
+  args.push('--path', parentDir)
 
   const result = await cli.execCreateApp(args, {
     env: {FORCE_COLOR: '0'},
@@ -116,8 +112,9 @@ export async function generateExtension(
     flavor?: string
   },
 ): Promise<ExecResult> {
-  const args = ['app', 'generate', 'extension', '--name', ctx.name, '--path', ctx.appDir, '--template', ctx.template]
+  const args = ['app', 'generate', 'extension', '--template', ctx.template]
   if (ctx.flavor) args.push('--flavor', ctx.flavor)
+  args.push('--name', ctx.name, '--path', ctx.appDir)
   return ctx.cli.exec(args, {timeout: CLI_TIMEOUT.long})
 }
 
@@ -134,12 +131,13 @@ export async function deployApp(
     noBuild?: boolean
   },
 ): Promise<ExecResult> {
-  const args = ['app', 'deploy', '--path', ctx.appDir]
-  if (ctx.force ?? true) args.push('--force')
-  if (ctx.noBuild) args.push('--no-build')
+  const args = ['app', 'deploy']
   if (ctx.version) args.push('--version', ctx.version)
   if (ctx.message) args.push('--message', ctx.message)
   if (ctx.config) args.push('--config', ctx.config)
+  if (ctx.force ?? true) args.push('--force')
+  if (ctx.noBuild) args.push('--no-build')
+  args.push('--path', ctx.appDir)
   return ctx.cli.exec(args, {timeout: CLI_TIMEOUT.long})
 }
 
@@ -152,7 +150,7 @@ export async function appInfo(ctx: CLIContext): Promise<{
     entrySourceFilePath: string
   }[]
 }> {
-  const result = await ctx.cli.exec(['app', 'info', '--path', ctx.appDir, '--json'])
+  const result = await ctx.cli.exec(['app', 'info', '--json', '--path', ctx.appDir])
   if (result.exitCode !== 0) {
     throw new Error(`app info failed (exit ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`)
   }
@@ -168,25 +166,124 @@ export async function functionRun(
     inputPath: string
   },
 ): Promise<ExecResult> {
-  return ctx.cli.exec(['app', 'function', 'run', '--path', ctx.appDir, '--input', ctx.inputPath], {
+  return ctx.cli.exec(['app', 'function', 'run', '--input', ctx.inputPath, '--path', ctx.appDir], {
     timeout: CLI_TIMEOUT.short,
   })
 }
 
-export async function versionsList(ctx: CLIContext): Promise<ExecResult> {
-  return ctx.cli.exec(['app', 'versions', 'list', '--path', ctx.appDir, '--json'], {
-    timeout: CLI_TIMEOUT.short,
-  })
-}
-
-export async function configLink(
+export async function versionsList(
   ctx: CLIContext & {
-    clientId: string
+    config?: string
   },
 ): Promise<ExecResult> {
-  return ctx.cli.exec(['app', 'config', 'link', '--path', ctx.appDir, '--client-id', ctx.clientId], {
-    timeout: CLI_TIMEOUT.medium,
+  const args = ['app', 'versions', 'list', '--json']
+  if (ctx.config) args.push('--config', ctx.config)
+  args.push('--path', ctx.appDir)
+  return ctx.cli.exec(args, {timeout: CLI_TIMEOUT.short})
+}
+
+/**
+ * Run `app config link` to create a brand-new app on Shopify interactively.
+ * Answers the prompts:
+ *   "Which organization is this work for?" → filter by orgId → Enter
+ *   "Create this project as a new app on Shopify?" → Yes (default)
+ *   "App name" → appName
+ *   "Configuration file name" → skipped via `--config` flag
+ *
+ * Env overrides (via PTY spawn):
+ *   CI=undefined                        — drop the key so prompts render.
+ *                                         Fixture default is CI=1; Ink's `is-in-ci`
+ *                                         treats `'CI' in env` as CI even when ''.
+ *                                         In CI mode Ink suppresses prompt frames
+ *                                         (only emitted on unmount), so waitForOutput
+ *                                         hangs until the process is killed.
+ *   SHOPIFY_CLI_NEVER_USE_PARTNERS_API=1 — skip Partners client in fetchOrganizations.
+ *                                         Without this, fetchOrganizations iterates
+ *                                         AppManagement AND Partners sequentially.
+ *                                         Partners requires SHOPIFY_CLI_PARTNERS_TOKEN
+ *                                         (not set in OAuth-auth'd tests) and hangs
+ *                                         for minutes trying to authenticate. The e2e
+ *                                         test org (161686155) lives in AppManagement.
+ */
+export async function configLink(
+  ctx: CLIContext & {
+    appName: string
+    orgId: string
+    configName?: string
+  },
+): Promise<ExecResult> {
+  const args = ['app', 'config', 'link']
+  // Pass configName as --config flag. link.ts → loadConfigurationFileName skips
+  // the "Configuration file name" prompt when options.configName is set, which
+  // also side-steps a painful interactive quirk: that prompt uses
+  // `initialAnswer = remoteApp.title`, so any text we write would be appended
+  // to the app name rather than replacing it.
+  if (ctx.configName) args.push('--config', ctx.configName)
+  args.push('--path', ctx.appDir)
+
+  const proc = await ctx.cli.spawn(args, {
+    env: {
+      CI: undefined,
+      SHOPIFY_CLI_NEVER_USE_PARTNERS_API: '1',
+    },
   })
+
+  // Short sleep so Ink's useInput hooks attach before we start writing.
+  // Without this, an Enter press arrives mid-mount and a subsequent render can
+  // flip the prompt state unexpectedly (e.g. turning a select into search mode).
+  const settle = (ms = 150) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+  try {
+    // The first prompt is either the multi-org selector or — when the account
+    // has only one org, or none of the orgs have existing apps — we jump
+    // straight to `createAsNewAppPrompt`. Race both.
+    const firstPrompt = await Promise.race([
+      proc.waitForOutput('Which organization', CLI_TIMEOUT.medium).then(() => 'org' as const),
+      proc.waitForOutput('Create this project as a new app', CLI_TIMEOUT.medium).then(() => 'create' as const),
+      proc.waitForOutput('App name', CLI_TIMEOUT.medium).then(() => 'appName' as const),
+    ])
+
+    if (firstPrompt === 'org') {
+      // Type the orgId to filter the autocomplete prompt to exactly one match.
+      // selectOrganizationPrompt's label includes `(${org.id})` when duplicate
+      // org names exist (which is true for the e2e test account), so substring
+      // matching on the numeric ID is unique. Avoids relying on MRU ordering.
+      await settle()
+      proc.ptyProcess.write(ctx.orgId)
+      await settle()
+      proc.sendKey('\r')
+      // After org selection the CLI fetches apps for the chosen org. If
+      // the org has existing apps → "Create this project" prompt. If it has
+      // zero apps → selectOrCreateApp skips straight to appNamePrompt.
+      const next = await Promise.race([
+        proc.waitForOutput('Create this project as a new app', CLI_TIMEOUT.medium).then(() => 'create' as const),
+        proc.waitForOutput('App name', CLI_TIMEOUT.medium).then(() => 'appName' as const),
+      ])
+      if (next === 'create') {
+        await settle()
+        proc.sendKey('\r')
+      }
+    } else if (firstPrompt === 'create') {
+      await settle()
+      proc.sendKey('\r')
+    }
+
+    // Wait for "App name" text prompt and submit the desired name.
+    // Important: Ink parses each PTY data event as ONE keypress. If we write
+    // "name\r" in one call, parseKeypress sees the whole string and treats
+    // it as text (not Enter), so the prompt never submits. We must write the
+    // text, wait for it to be consumed, then write \r separately.
+    await proc.waitForOutput('App name', CLI_TIMEOUT.medium)
+    await settle()
+    proc.ptyProcess.write(ctx.appName)
+    await settle()
+    proc.sendKey('\r')
+
+    const exitCode = await proc.waitForExit(CLI_TIMEOUT.long)
+    return {exitCode, stdout: proc.getOutput(), stderr: ''}
+  } finally {
+    proc.kill()
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -225,70 +322,61 @@ export async function findAppOnDevDashboard(page: Page, appName: string, orgId?:
   return null
 }
 
-/** Delete an app from its dev dashboard settings page. Returns true if deleted, false if not. */
+/**
+ * Delete an app from its dev dashboard settings page. Returns true if deleted.
+ *
+ * Single attempt — caller owns the retry loop.
+ *
+ * Fail-fast on STILL_HAS_INSTALLS: the Delete button stays disabled while
+ * installs exist, so we throw to let the caller skip instead of spinning.
+ */
 export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Promise<boolean> {
-  // Step 1: Navigate to settings page
+  // Step 1: Navigate to the app's settings page. 404 → already deleted. 5xx → throw for retry.
   await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-  await refreshIfPageError(page)
+  const bodyText = (await page.textContent('body')) ?? ''
+  if (bodyText.includes('404: Not Found')) return true
+  if (bodyText.includes('500: Internal Server Error') || bodyText.includes('502 Bad Gateway')) {
+    throw new Error('Server error loading app settings page')
+  }
 
-  // Step 2: Wait for "Delete app" button to be enabled, then click (retry with error check)
-  const deleteAppBtn = page.locator('button:has-text("Delete app")').first()
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    if (await refreshIfPageError(page)) continue
-    const isDisabled = await deleteAppBtn.getAttribute('disabled').catch(() => 'true')
-    if (!isDisabled) break
+  // Step 2: Click "Delete app" to open the confirmation modal.
+  // Button can be below the fold, and takes ~1-2s to enable after uninstall (one reload covers propagation lag).
+  // If it stays disabled after reload, installs remain — fail fast for caller.
+  const deleteBtn = page.locator('button:has-text("Delete app")').first()
+  await deleteBtn.scrollIntoViewIfNeeded()
+  if (!(await deleteBtn.isEnabled())) {
     await page.reload({waitUntil: 'domcontentloaded'})
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+    await deleteBtn.scrollIntoViewIfNeeded()
+    if (!(await deleteBtn.isEnabled())) throw new Error('STILL_HAS_INSTALLS')
   }
-
-  // Click the delete button — if it's not found, the page didn't load properly
-  const deleteClicked = await deleteAppBtn
-    .click({timeout: BROWSER_TIMEOUT.long})
-    .then(() => true)
-    .catch(() => false)
-  if (!deleteClicked) return false
+  await deleteBtn.click({timeout: 2 * BROWSER_TIMEOUT.long})
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
-  // Step 3: Click confirm "Delete" in the modal (retry step 2+3 if not visible)
-  // The dev dashboard modal has a submit button with class "critical" inside a form
-  const confirmAppBtn = page.locator('button.critical[type="submit"]')
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    if (await confirmAppBtn.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) break
-    if (attempt === 3) return false
-    // Retry: re-click the delete button to reopen modal
-    await page.keyboard.press('Escape')
+  // Step 3: Some confirmation modals require typing "DELETE". Fill if the input is present.
+  const confirmInput = page.locator('input[type="text"]').last()
+  if (await confirmInput.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
+    await confirmInput.fill('DELETE')
     await page.waitForTimeout(BROWSER_TIMEOUT.short)
-    const retryClicked = await deleteAppBtn
-      .click({timeout: BROWSER_TIMEOUT.long})
-      .then(() => true)
-      .catch(() => false)
-    if (!retryClicked) return false
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
-  const urlBefore = page.url()
-  const confirmClicked = await confirmAppBtn
-    .click({timeout: BROWSER_TIMEOUT.long})
-    .then(() => true)
-    .catch(() => false)
-  if (!confirmClicked) return false
+  // Step 4: Click the confirm button (second "Delete app" button on the page, inside the modal).
+  const confirmBtn = page.locator('button:has-text("Delete app")').last()
+  await confirmBtn.click({timeout: BROWSER_TIMEOUT.long})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
-  // Wait for page to navigate away after deletion
-  try {
-    await page.waitForURL((url) => url.toString() !== urlBefore, {timeout: BROWSER_TIMEOUT.max})
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_err) {
-    // URL didn't change — check if page error occurred during redirect
-    if (await refreshIfPageError(page)) {
-      // After refresh, 404 means the app was deleted (settings page no longer exists)
-      const bodyText = (await page.textContent('body')) ?? ''
-      if (bodyText.includes('404: Not Found')) return true
-      return false
-    }
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+  // Step 5: Reload the settings page to confirm deletion.
+  // Success → 404.
+  // Failure → same settings page.
+  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.short)
+  const afterText = (await page.textContent('body')) ?? ''
+  if (afterText.includes('404: Not Found')) return true
+  if (afterText.includes('500: Internal Server Error') || afterText.includes('502 Bad Gateway')) {
+    throw new Error('Server error verifying app deletion')
   }
-  return page.url() !== urlBefore
+  return false
 }
 
 // ---------------------------------------------------------------------------

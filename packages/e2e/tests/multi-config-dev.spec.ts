@@ -84,8 +84,8 @@ include_config_on_deploy = true
         proc.kill()
       }
     } finally {
-      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
-      if (!process.env.E2E_SKIP_CLEANUP) {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           browserPage,
@@ -156,8 +156,8 @@ api_version = "2025-01"
         proc.kill()
       }
     } finally {
-      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
-      if (!process.env.E2E_SKIP_CLEANUP) {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           browserPage,

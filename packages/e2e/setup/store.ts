@@ -9,7 +9,7 @@ import type {Page} from '@playwright/test'
 const log = createLogger('browser')
 
 // ---------------------------------------------------------------------------
-// Dev store management — create and delete stores via browser automation
+// Dev store provisioning — create new stores via browser automation
 // ---------------------------------------------------------------------------
 
 /** Generate a unique store name for a worker. */
@@ -122,7 +122,7 @@ export async function createDevStore(
 }
 
 // ---------------------------------------------------------------------------
-// Store admin browser actions — uninstall apps and delete stores
+// Store admin browser actions — uninstall apps, delete stores, and helpers
 // ---------------------------------------------------------------------------
 
 /** Dismiss the Dev Console panel if visible on a store admin page. */
@@ -138,49 +138,49 @@ export async function dismissDevConsole(page: Page): Promise<void> {
 }
 
 /**
- * Uninstall an app from a store's admin settings page.
- * Navigates to /settings/apps, finds the app by name, uninstalls it, and verifies removal.
- * Returns true if app is confirmed gone, false if still present.
+ * Uninstall an app from a store's admin settings/apps page. Returns true if confirmed uninstalled.
+ *
+ * Single attempt — caller owns the retry loop.
  */
 export async function uninstallAppFromStore(page: Page, storeSlug: string, appName: string): Promise<boolean> {
+  // Step 1: Navigate to the store's settings/apps page.
   await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
     waitUntil: 'domcontentloaded',
   })
   await page.waitForTimeout(BROWSER_TIMEOUT.long)
   await dismissDevConsole(page)
 
+  // Step 2: Find the app by name. Not visible → already uninstalled.
   const appSpan = page.locator(`span:has-text("${appName}"):not([class*="Polaris"])`).first()
   if (!(await appSpan.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false))) return true
 
-  // Click ⋯ menu → Uninstall → Confirm
+  // Step 3: Open the ⋯ menu and click Uninstall.
   await appSpan.locator('xpath=./following::button[1]').click()
   await page.waitForTimeout(BROWSER_TIMEOUT.short)
-
   const uninstallOpt = page.locator('text=Uninstall').last()
   if (!(await uninstallOpt.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) return false
   await uninstallOpt.click()
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
+  // Step 4: Confirm the uninstall in the modal (if one appears).
   const confirmBtn = page.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
   if (await confirmBtn.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
     await confirmBtn.click()
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
-  // Verify: check the specific app is gone
-  const check = async () =>
-    page
-      .locator(`span:has-text("${appName}"):not([class*="Polaris"])`)
-      .first()
-      .isVisible({timeout: BROWSER_TIMEOUT.medium})
-      .catch(() => false)
-
-  if (!(await check())) return true
-
-  // If still visible — reload and check again
+  // Step 5: Reload the page to confirm the app is no longer listed.
+  // Success → app is not on listed on the page.
+  // Failure → app is still listed.
   await page.reload({waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.long)
-  return !(await check())
+  await dismissDevConsole(page)
+  const stillVisible = await page
+    .locator(`span:has-text("${appName}"):not([class*="Polaris"])`)
+    .first()
+    .isVisible({timeout: BROWSER_TIMEOUT.medium})
+    .catch(() => false)
+  return !stillVisible
 }
 
 /** Check if the current page shows the empty state (zero apps installed). Caller must navigate first. */
@@ -195,76 +195,61 @@ export async function isStoreAppsEmpty(page: Page): Promise<boolean> {
 }
 
 /**
- * Delete a store via the admin settings plan page.
- * Caller must verify no apps are installed before calling.
- * Returns true if deleted, false if not.
+ * Delete a store via the admin /settings/plan/cancel page. Returns true if deleted.
+ *
+ * Gate: store must have zero apps installed.
+ * Caller should verify via `isStoreAppsEmpty` and skip this call if apps remain,
+ * otherwise step 4 will exhaust its micro-retry (Delete button never enables) and throw.
+ *
+ * Single attempt — caller owns the retry loop.
  */
 export async function deleteStore(page: Page, storeSlug: string): Promise<boolean> {
-  // Step 1: Navigate to plan page and click delete button to open modal (retry navigation on failure)
-  const planUrl = `https://admin.shopify.com/store/${storeSlug}/settings/plan`
-  const deleteButton = page.locator('s-internal-button[tone="critical"]').locator('button')
+  // Step 1: Navigate to /settings/plan/cancel (auto-opens the "Review before deleting store" modal).
+  const cancelUrl = `https://admin.shopify.com/store/${storeSlug}/settings/plan/cancel`
+  await page.goto(cancelUrl, {waitUntil: 'domcontentloaded'})
 
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      await page.goto(planUrl, {waitUntil: 'domcontentloaded'})
-      await page.waitForTimeout(BROWSER_TIMEOUT.long)
-      // If redirected to access_account, store is already deleted
-      if (page.url().includes('access_account')) return true
-      await deleteButton.click({timeout: BROWSER_TIMEOUT.long})
-      break
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_err) {
-      if (attempt === 3) return false
-    }
-  }
-  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-  const modal = page.locator('.Polaris-Modal-Dialog__Modal')
-
-  // Step 2: Check the confirmation checkbox (retry step 1+2 if fails)
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const checkbox = modal.locator('input[type="checkbox"]')
-    if (await checkbox.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
-      await checkbox.check({force: true})
-      await page.waitForTimeout(BROWSER_TIMEOUT.short)
-      break
-    }
-    if (attempt === 3) return false
-    // Retry: close modal and re-click delete
-    await page.keyboard.press('Escape')
-    await page.waitForTimeout(BROWSER_TIMEOUT.short)
-    await deleteButton.click({timeout: BROWSER_TIMEOUT.max})
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-  }
-
-  // Step 3: Click confirm (retry step 2+3 if button is still disabled)
-  const confirmButton = modal.locator('button:has-text("Delete store")')
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const isDisabled = await confirmButton
-      .evaluate((el) => el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('disabled'))
-      .catch(() => true)
-    if (!isDisabled) break
-    if (attempt === 3) return false
-    // Retry: re-check the checkbox
-    const checkbox = modal.locator('input[type="checkbox"]')
-    await checkbox.check({force: true})
-    await page.waitForTimeout(BROWSER_TIMEOUT.short)
-  }
-
-  const confirmClicked = await confirmButton
-    .click({force: true})
-    .then(() => true)
-    .catch(() => false)
-  if (!confirmClicked) return false
-
-  // Verify: URL reaching access_account confirms store is deleted
+  // Step 2: Race — modal renders (normal) vs. redirect to /access_account (already deleted).
+  // The redirect can fire post-DOMContentLoaded, so a URL check right after goto is too early.
+  const modal = page.locator('.Polaris-Modal-Dialog__Modal:has-text("Review before deleting store")')
+  const checkbox = modal.locator('input[type="checkbox"]')
   try {
-    await page.waitForURL(/access_account/, {timeout: BROWSER_TIMEOUT.max})
-    return true
+    await Promise.race([
+      checkbox.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}),
+      page.waitForURL(/access_account/, {timeout: BROWSER_TIMEOUT.max}),
+    ])
     // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_err) {
-    return false
+  } catch {
+    // Both branches timed out — fall through so outer retry can decide.
   }
+  if (page.url().includes('access_account')) return true
+
+  // Step 3: Check the confirmation checkbox (enables the Delete button).
+  await checkbox.check()
+
+  // Step 4: Wait for the Delete button to enable, then click.
+  // Micro-retry for flaky checkbox state — different concern from caller's retry loop.
+  const confirmButton = modal.locator('button:has-text("Delete store")')
+  for (let i = 1; i <= 3; i++) {
+    if (await confirmButton.isEnabled().catch(() => false)) break
+    if (i === 3) throw new Error('Confirm button still disabled')
+    await checkbox.check()
+    await page.waitForTimeout(BROWSER_TIMEOUT.short)
+  }
+  await confirmButton.click()
+
+  // Step 5: Wait for the delete POST to finish before reloading.
+  try {
+    await page.waitForLoadState('networkidle', {timeout: BROWSER_TIMEOUT.max})
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // networkidle can miss on busy pages — fall through to reload anyway.
+  }
+
+  // Step 6: Reload /settings/plan/cancel to confirm deletion.
+  // Success → redirect to /access_account.
+  // Failure → still on /settings/plan/cancel
+  await page.reload({waitUntil: 'domcontentloaded'})
+  return page.url().includes('access_account')
 }
 
 // ---------------------------------------------------------------------------

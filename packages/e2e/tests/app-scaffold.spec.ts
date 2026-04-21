@@ -45,8 +45,8 @@ test.describe('App scaffold', () => {
         `buildApp failed:\nstdout: ${buildResult.stdout}\nstderr: ${buildResult.stderr}`,
       ).toBe(0)
     } finally {
-      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
-      if (!process.env.E2E_SKIP_CLEANUP) {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           browserPage,
@@ -80,8 +80,8 @@ test.describe('App scaffold', () => {
       expect(fs.existsSync(initResult.appDir)).toBe(true)
       expect(fs.existsSync(path.join(initResult.appDir, 'shopify.app.toml'))).toBe(true)
     } finally {
-      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
-      if (!process.env.E2E_SKIP_CLEANUP) {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           browserPage,
@@ -138,8 +138,8 @@ test.describe('App scaffold', () => {
         `buildApp failed:\nstdout: ${buildResult.stdout}\nstderr: ${buildResult.stderr}`,
       ).toBe(0)
     } finally {
-      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
-      if (!process.env.E2E_SKIP_CLEANUP) {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           browserPage,
