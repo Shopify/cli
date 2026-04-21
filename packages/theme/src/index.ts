@@ -13,6 +13,7 @@ import Profile from './cli/commands/theme/profile.js'
 import Publish from './cli/commands/theme/publish.js'
 import MetafieldsPull from './cli/commands/theme/metafields/pull.js'
 import Preview from './cli/commands/theme/preview.js'
+import SandboxPreview from './cli/commands/theme/sandbox-preview.js'
 import Pull from './cli/commands/theme/pull.js'
 import Push from './cli/commands/theme/push.js'
 import Rename from './cli/commands/theme/rename.js'
@@ -35,6 +36,7 @@ const COMMANDS = {
   'theme:profile': Profile,
   'theme:publish': Publish,
   'theme:preview': Preview,
+  'theme:sandbox-preview': SandboxPreview,
   'theme:pull': Pull,
   'theme:push': Push,
   'theme:rename': Rename,

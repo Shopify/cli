@@ -1,6 +1,7 @@
 import {openURLSafely} from './dev.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {createThemePreview, updateThemePreview} from '../utilities/theme-previews/preview.js'
+import {startMockShopPreviewSession} from '../utilities/theme-previews/mock-shop.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -12,13 +13,15 @@ interface ThemeOverrides {
 }
 
 interface DevWithOverrideFileOptions {
-  adminSession: AdminSession
+  adminSession?: AdminSession
   overrideJson: string
-  themeId: string
+  themeId?: string
   previewIdentifier?: string
   open: boolean
   password?: string
   json?: boolean
+  mockShop?: boolean
+  mockShopStorefrontUrl?: string
 }
 
 /**
@@ -39,8 +42,53 @@ export async function devWithOverrideFile(options: DevWithOverrideFileOptions) {
     throw new AbortError(`Failed to parse override file: ${options.overrideJson}`, reason)
   }
 
-  const session = await fetchDevServerSession(options.themeId, options.adminSession, options.password)
   const overridesContent = JSON.stringify(overrides)
+
+  if (options.mockShop) {
+    if (options.previewIdentifier) {
+      throw new AbortError('The --preview-id flag is not supported with --mock-shop.')
+    }
+
+    if (options.json) {
+      throw new AbortError('The --json flag is not supported with --mock-shop.')
+    }
+
+    const preview = await startMockShopPreviewSession(overridesContent, {
+      storefrontUrl: options.mockShopStorefrontUrl,
+    })
+
+    renderSuccess({
+      body: [
+        {
+          list: {
+            title: 'Mock.shop preview is ready',
+            items: [
+              {link: {url: preview.launcherUrl}},
+              `Target: ${preview.targetUrl}`,
+              'This prototype opens an initial preview only.',
+            ],
+          },
+        },
+      ],
+    })
+
+    if (options.open) {
+      openURLSafely(preview.launcherUrl, 'mock.shop preview')
+    }
+
+    await preview.completion
+    return
+  }
+
+  if (!options.themeId) {
+    throw new AbortError('A theme ID is required unless --mock-shop is used.')
+  }
+
+  if (!options.adminSession) {
+    throw new AbortError('An admin session is required unless --mock-shop is used.')
+  }
+
+  const session = await fetchDevServerSession(options.themeId, options.adminSession, options.password)
 
   const preview = options.previewIdentifier
     ? await updateThemePreview({
