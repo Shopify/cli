@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {appTestFixture as test, createApp, injectFixtureToml, teardownApp} from '../setup/app.js'
+import {createApp, injectFixtureToml} from '../setup/app.js'
+import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
+import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -33,14 +35,22 @@ test.describe('TOML config regression', () => {
       const output = result.stdout + result.stderr
       expect(result.exitCode, `deploy failed:\n${output}`).toBe(0)
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 
-  test('dev starts with fully populated toml', async ({cli, env, browserPage}) => {
+  test('dev starts with fully populated toml', async ({cli, env, browserPage, storeFqdn}) => {
     test.setTimeout(TEST_TIMEOUT.long)
-    requireEnv(env, 'orgId', 'storeFqdn')
+    requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = `E2E-toml-dev-${Date.now()}`
@@ -52,7 +62,7 @@ test.describe('TOML config regression', () => {
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
-      const proc = await cli.spawn(['app', 'dev', '--path', appDir], {env: {CI: ''}})
+      const proc = await cli.spawn(['app', 'dev', '--path', appDir], {env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn}})
 
       try {
         await proc.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
@@ -67,8 +77,17 @@ test.describe('TOML config regression', () => {
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          storeFqdn,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 })

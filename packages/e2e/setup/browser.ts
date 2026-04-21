@@ -48,8 +48,22 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
 })
 
 // ---------------------------------------------------------------------------
-// Browser helpers — generic dashboard navigation
+// Browser helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Check if the current page shows a server error (500, 502). If so, refresh and return true.
+ * Call this in retry loops when a selector isn't found — the page might be an error page.
+ */
+export async function refreshIfPageError(page: Page): Promise<boolean> {
+  const pageText = (await page.textContent('body')) ?? ''
+  if (!pageText.includes('Internal Server Error') && !pageText.includes('502 Bad Gateway')) return false
+  // if (process.env.DEBUG === '1') process.stdout.write('                   page refreshing...\n')
+  await page.reload({waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+  return true
+}
+
 /** Navigate to the dev dashboard for the configured org. */
 export async function navigateToDashboard(
   ctx: BrowserContext & {
@@ -63,6 +77,9 @@ export async function navigateToDashboard(
   await browserPage.goto(dashboardUrl, {waitUntil: 'domcontentloaded'})
   await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 
+  // Retry on server errors
+  await refreshIfPageError(browserPage)
+
   // Handle account picker (skip if email not provided)
   if (ctx.email) {
     const accountButton = browserPage.locator(`text=${ctx.email}`).first()
@@ -70,13 +87,5 @@ export async function navigateToDashboard(
       await accountButton.click()
       await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
     }
-  }
-
-  // Retry on 500 errors
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const pageText = (await browserPage.textContent('body')) ?? '' // eslint-disable-line no-await-in-loop
-    if (!pageText.includes('500: Internal Server Error') && !pageText.includes('Internal Server Error')) break
-    await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium) // eslint-disable-line no-await-in-loop
-    await browserPage.reload({waitUntil: 'domcontentloaded'}) // eslint-disable-line no-await-in-loop
   }
 }
