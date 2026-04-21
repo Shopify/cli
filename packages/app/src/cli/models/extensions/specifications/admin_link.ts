@@ -2,6 +2,8 @@ import {createContractBasedModuleSpecification} from '../specification.js'
 
 const adminLinkSpec = createContractBasedModuleSpecification({
   identifier: 'admin_link',
+  uidStrategy: 'uuid',
+  experience: 'extension',
   clientSteps: [
     {
       lifecycle: 'deploy',
