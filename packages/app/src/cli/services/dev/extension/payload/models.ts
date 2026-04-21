@@ -8,13 +8,6 @@ interface ExtensionsPayloadInterface {
     url: string
     mobileUrl: string
     title: string
-    allowedDomains?: string[]
-    assets?: {
-      [key: string]: {
-        url: string
-        lastUpdated: number
-      }
-    }
   }
   appId?: string
   store: string

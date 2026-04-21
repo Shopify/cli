@@ -84,19 +84,6 @@ describe('isUnitTest', () => {
   })
 })
 
-describe('isDevelopment', () => {
-  test('returns true when SHOPIFY_CLI_ENV is debug', () => {
-    // Given
-    const env = {SHOPIFY_CLI_ENV: 'development'}
-
-    // When
-    const got = isDevelopment(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-})
-
 describe('isHostedAppsMode', () => {
   test('returns true when HOSTED_APPS is truthy', () => {
     // Given
@@ -118,6 +105,19 @@ describe('isHostedAppsMode', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('isDevelopment', () => {
+  test('returns true when SHOPIFY_CLI_ENV is debug', () => {
+    // Given
+    const env = {SHOPIFY_CLI_ENV: 'development'}
+
+    // When
+    const got = isDevelopment(env)
+
+    // Then
+    expect(got).toBe(true)
   })
 })
 

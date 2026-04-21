@@ -55,16 +55,6 @@ export function isVerbose(env = process.env): boolean {
 }
 
 /**
- * Returns true if the hosted apps mode is enabled.
- *
- * @param env - The environment variables from the environment of the current process.
- * @returns True if HOSTED_APPS is truthy.
- */
-export function isHostedAppsMode(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.hostedApps])
-}
-
-/**
  * Returns true if the environment in which the CLI is running is either
  * a local environment (where dev is present).
  *
@@ -89,6 +79,16 @@ export async function isShopify(env = process.env): Promise<boolean> {
  */
 export function isUnitTest(env = process.env): boolean {
   return isTruthy(env[environmentVariables.unitTest])
+}
+
+/**
+ * Returns true if the CLI is running in hosted apps mode.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if the HOSTED_APPS environment variable is truthy.
+ */
+export function isHostedAppsMode(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.hostedApps])
 }
 
 /**
