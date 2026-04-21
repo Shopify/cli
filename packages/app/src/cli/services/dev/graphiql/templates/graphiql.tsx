@@ -219,7 +219,7 @@ export function graphiqlTemplate({
                   <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 5, xl: 5}}>
                     <div id="scopes-note" className="top-bar-section">
                       <Text as="span" tone="subdued">
-                        GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
+                        GraphiQL runs on the same access scopes you've defined in the TOML file for your app.
                       </Text>
                     </div>
                   </Grid.Cell>
