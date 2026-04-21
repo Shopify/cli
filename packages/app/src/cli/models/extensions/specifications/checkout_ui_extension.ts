@@ -23,7 +23,6 @@ const checkoutSpec = createExtensionSpecification({
   dependency,
   schema: CheckoutSchema,
   appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path', 'generates_source_maps'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<CheckoutConfigType>) => `dist/${extension.handle}.js`,
   clientSteps: [
     {

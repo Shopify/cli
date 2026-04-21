@@ -16,7 +16,6 @@ const checkoutPostPurchaseSpec = createExtensionSpecification({
   partnersWebIdentifier: 'post_purchase',
   schema: CheckoutPostPurchaseSchema,
   appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<CheckoutPostPurchaseConfigType>) =>
     `dist/${extension.handle}.js`,
   clientSteps: [

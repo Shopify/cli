@@ -112,6 +112,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.identifier === 'editor_extension_collection'
   }
 
+  get hasDeploySteps(): boolean {
+    return (
+      this.specification.clientSteps?.some((group) => group.lifecycle === 'deploy' && group.steps.length > 0) ?? false
+    )
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
@@ -340,16 +346,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.specification.buildConfig.mode
-
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
-    } else if (buildMode !== 'none') {
+    } else if (this.hasDeploySteps) {
       outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
       if (await fileExists(defaultOutputPath)) {
         await copyFile(defaultOutputPath, this.outputPath)
 
-        if (buildMode === 'function') {
+        if (this.isFunctionExtension) {
           await bundleFunctionExtension(this.outputPath, this.outputPath)
         }
       }

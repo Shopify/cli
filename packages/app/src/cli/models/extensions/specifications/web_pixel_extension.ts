@@ -33,7 +33,6 @@ const webPixelSpec = createExtensionSpecification({
   partnersWebIdentifier: 'web_pixel',
   schema: WebPixelSchema,
   appModuleFeatures: (_) => ['esbuild', 'single_js_entry_path'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<WebPixelConfigType>) => `dist/${extension.handle}.js`,
   clientSteps: [
     {

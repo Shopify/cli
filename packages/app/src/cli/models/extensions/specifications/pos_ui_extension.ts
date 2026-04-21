@@ -15,7 +15,6 @@ const posUISpec = createExtensionSpecification({
   dependency,
   schema: PosUISchema,
   appModuleFeatures: (_) => ['ui_preview', 'esbuild', 'single_js_entry_path'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<PosUIConfigType>) => `dist/${extension.handle}.js`,
   clientSteps: [
     {

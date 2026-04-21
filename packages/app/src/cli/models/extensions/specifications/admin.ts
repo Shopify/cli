@@ -41,10 +41,6 @@ const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
       },
     }
   },
-  buildConfig: {
-    mode: 'copy_files',
-    filePatterns: [],
-  },
   clientSteps: [
     {
       lifecycle: 'deploy',

@@ -213,20 +213,19 @@ export async function deploy(options: DeployOptions) {
   let uploadExtensionsBundleResult!: UploadExtensionsBundleOutput
 
   try {
-    const bundle = app.allExtensions.some((ext) => ext.specification.buildConfig.mode !== 'none')
-    let bundlePath: string | undefined
-
-    if (bundle) {
-      bundlePath = joinPath(options.app.directory, '.shopify', `deploy-bundle.${developerPlatformClient.bundleFormat}`)
-      await mkdir(dirname(bundlePath))
-    }
+    const candidateBundlePath = joinPath(
+      options.app.directory,
+      '.shopify',
+      `deploy-bundle.${developerPlatformClient.bundleFormat}`,
+    )
+    await mkdir(dirname(candidateBundlePath))
 
     const appManifest = await app.manifest(identifiers)
 
-    await bundleAndBuildExtensions({
+    const bundlePath = await bundleAndBuildExtensions({
       app,
       appManifest,
-      bundlePath,
+      bundlePath: candidateBundlePath,
       identifiers,
       skipBuild: options.skipBuild,
       isDevDashboardApp: developerPlatformClient.supportsAtomicDeployments,

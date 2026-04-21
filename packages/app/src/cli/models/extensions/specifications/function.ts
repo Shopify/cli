@@ -88,7 +88,6 @@ const functionSpec = createExtensionSpecification({
   ],
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],
-  buildConfig: {mode: 'function'},
   getOutputRelativePath: (_extension: ExtensionInstance<FunctionConfigType>) => joinPath('dist', 'index.wasm'),
   devSessionWatchConfig: (extension: ExtensionInstance<FunctionConfigType>) => {
     const config = extension.configuration

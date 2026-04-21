@@ -1,5 +1,11 @@
 import {bundleAndBuildExtensions} from './bundle.js'
-import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
+import {
+  testApp,
+  testAppConfigExtensions,
+  testFunctionExtension,
+  testThemeExtensions,
+  testUIExtension,
+} from '../../models/app/app.test-data.js'
 import {AppInterface, AppManifest, WebType} from '../../models/app/app.js'
 import * as bundle from '../bundle.js'
 import * as functionBuild from '../function/build.js'
@@ -475,6 +481,40 @@ describe('bundleAndBuildExtensions', () => {
       expect(uiCopyMock).toHaveBeenCalledTimes(1)
 
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
+    })
+  })
+
+  test('returns undefined and skips compression when no extension has deploy steps', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, '.shopify', 'deploy-bundle.zip')
+      const compressSpy = vi.spyOn(bundle, 'compressBundle').mockResolvedValue()
+
+      const configExtension = await testAppConfigExtensions()
+      const app = testApp({allExtensions: [configExtension], directory: tmpDir})
+
+      const identifiers = {
+        app: 'app-id',
+        extensions: {},
+        extensionIds: {},
+        extensionsNonUuidManaged: {[configExtension.localIdentifier]: configExtension.localIdentifier},
+      }
+      appManifest = await app.manifest(identifiers)
+
+      // When
+      const result = await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: false,
+        isDevDashboardApp: false,
+      })
+
+      // Then
+      expect(result).toBeUndefined()
+      expect(compressSpy).not.toHaveBeenCalled()
+      await expect(file.fileExists(bundlePath)).resolves.toBe(false)
     })
   })
 })
