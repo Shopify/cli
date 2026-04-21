@@ -211,7 +211,6 @@ async function intentsAssetMapper({
   const intents = await Promise.all(
     extensionPoint.intents.map(async (intent) => ({
       ...intent,
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       schema: await getAssetPayload('schema', intent.schema as string, url, extension),
     })),
   )

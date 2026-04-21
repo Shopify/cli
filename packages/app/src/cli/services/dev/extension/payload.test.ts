@@ -275,7 +275,12 @@ describe('getUIExtensionPayload', () => {
       await setupBuildOutput(
         uiExtension,
         tmpDir,
-        {CUSTOM_EXTENSION_POINT: {main: 'dist/test-ui-extension.js', should_render: 'dist/test-ui-extension-conditions.js'}},
+        {
+          CUSTOM_EXTENSION_POINT: {
+            main: 'dist/test-ui-extension.js',
+            should_render: 'dist/test-ui-extension-conditions.js',
+          },
+        },
         {},
       )
 
