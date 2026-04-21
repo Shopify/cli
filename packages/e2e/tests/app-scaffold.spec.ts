@@ -25,7 +25,9 @@ test.describe('App scaffold', () => {
         packageManager: 'pnpm',
         orgId: env.orgId,
       })
-      expect(initResult.exitCode).toBe(0)
+      expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
+        0,
+      )
       const initOutput = initResult.stdout + initResult.stderr
       expect(initOutput).toContain('is ready for you to build!')
       const appDir = initResult.appDir
@@ -37,7 +39,10 @@ test.describe('App scaffold', () => {
 
       // Step 3: Build the app
       const buildResult = await buildApp({cli, appDir})
-      expect(buildResult.exitCode, `build failed:\nstderr: ${buildResult.stderr}`).toBe(0)
+      expect(
+        buildResult.exitCode,
+        `buildApp failed:\nstdout: ${buildResult.stdout}\nstderr: ${buildResult.stderr}`,
+      ).toBe(0)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})
       await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
@@ -60,7 +65,9 @@ test.describe('App scaffold', () => {
         packageManager: 'pnpm',
         orgId: env.orgId,
       })
-      expect(initResult.exitCode).toBe(0)
+      expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
+        0,
+      )
       expect(fs.existsSync(initResult.appDir)).toBe(true)
       expect(fs.existsSync(path.join(initResult.appDir, 'shopify.app.toml'))).toBe(true)
     } finally {
@@ -89,7 +96,9 @@ test.describe('App scaffold', () => {
         packageManager: 'pnpm',
         orgId: env.orgId,
       })
-      expect(initResult.exitCode).toBe(0)
+      expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
+        0,
+      )
       const appDir = initResult.appDir
 
       const extensionConfigs = [
@@ -100,11 +109,17 @@ test.describe('App scaffold', () => {
       for (const ext of extensionConfigs) {
         // eslint-disable-next-line no-await-in-loop
         const result = await generateExtension({cli, appDir, ...ext})
-        expect(result.exitCode, `generate "${ext.name}" failed:\nstderr: ${result.stderr}`).toBe(0)
+        expect(
+          result.exitCode,
+          `generateExtension "${ext.name}" failed:\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+        ).toBe(0)
       }
 
       const buildResult = await buildApp({cli, appDir})
-      expect(buildResult.exitCode, `build failed:\nstderr: ${buildResult.stderr}`).toBe(0)
+      expect(
+        buildResult.exitCode,
+        `buildApp failed:\nstdout: ${buildResult.stdout}\nstderr: ${buildResult.stderr}`,
+      ).toBe(0)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})
       await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})

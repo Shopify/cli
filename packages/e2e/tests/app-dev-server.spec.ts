@@ -23,7 +23,9 @@ test.describe('App dev server', () => {
         packageManager: 'pnpm',
         orgId: env.orgId,
       })
-      expect(initResult.exitCode).toBe(0)
+      expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
+        0,
+      )
       const appDir = initResult.appDir
 
       // Step 2: Start dev server via PTY
@@ -42,7 +44,7 @@ test.describe('App dev server', () => {
 
       // Step 6: Wait for clean exit
       const exitCode = await dev.waitForExit(CLI_TIMEOUT.short)
-      expect(exitCode).toBe(0)
+      expect(exitCode, `dev exited with non-zero code. Output:\n${dev.getOutput()}`).toBe(0)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})
       await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
