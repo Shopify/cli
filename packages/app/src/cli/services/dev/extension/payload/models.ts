@@ -39,7 +39,7 @@ interface Asset {
   lastUpdated: number
 }
 
-export interface DevNewExtensionPointSchema extends Omit<NewExtensionPointSchemaType, 'intents'> {
+export interface DevNewExtensionPointSchema extends Omit<NewExtensionPointSchemaType, 'intents' | 'assets'> {
   assets: {
     [name: string]: Asset
   }

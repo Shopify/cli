@@ -151,6 +151,7 @@ describe('ui_extension', async () => {
           tools: undefined,
           instructions: undefined,
           intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
@@ -219,6 +220,7 @@ describe('ui_extension', async () => {
           tools: undefined,
           instructions: undefined,
           intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
@@ -283,6 +285,7 @@ describe('ui_extension', async () => {
           tools: undefined,
           instructions: undefined,
           intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           urls: {},
@@ -347,6 +350,7 @@ describe('ui_extension', async () => {
           tools: undefined,
           instructions: undefined,
           intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -414,6 +418,7 @@ describe('ui_extension', async () => {
           tools: undefined,
           instructions: undefined,
           intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -483,6 +488,7 @@ describe('ui_extension', async () => {
           tools: undefined,
           instructions: undefined,
           intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -552,6 +558,7 @@ describe('ui_extension', async () => {
           tools: './tools.json',
           instructions: undefined,
           intents: undefined,
+          assets: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -616,6 +623,72 @@ describe('ui_extension', async () => {
           tools: undefined,
           instructions: './instructions.md',
           intents: undefined,
+          assets: undefined,
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+            },
+          },
+          urls: {},
+        },
+      ])
+    })
+
+    test('targeting object passes through assets when configured', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            assets: './assets',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          tools: undefined,
+          instructions: undefined,
+          intents: undefined,
+          assets: './assets',
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -779,6 +852,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           tools: './tools.json',
           instructions: './instructions.md',
           intents: undefined,
+          assets: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,

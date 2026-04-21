@@ -74,6 +74,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         tools: targeting.tools,
         instructions: targeting.instructions,
         intents: targeting.intents,
+        assets: targeting.assets,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -118,6 +119,12 @@ const uiExtensionSpec = createExtensionSpecification({
                 anchor: 'extension_points[]',
                 groupBy: 'target',
                 key: 'extension_points[].intents[].schema',
+              },
+              {
+                type: 'configKey',
+                anchor: 'extension_points[]',
+                groupBy: 'target',
+                key: 'extension_points[].assets',
               },
             ],
           },
