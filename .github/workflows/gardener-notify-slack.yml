@@ -1,11 +1,15 @@
 name: Gardener - Notify Slack
-# Runs after `Gardener - Notify Event` completes and does the real work:
-# applies the devtools-gardener label and posts a summary to Slack.
+# Runs after `Gardener - Notify Event` completes. Posts a summary to Slack,
+# and for Dependabot-opened PRs also applies the `devtools-gardener` label
+# (so Dependabot PRs show up in the gardener flow without a human having
+# to label them).
 #
 # The workflow_run trigger runs this job in the default-branch context with
 # full GITHUB_TOKEN permissions and Actions secret access — this is what
 # lets it succeed for Dependabot-opened PRs, where the upstream event
-# workflow can't label or reach secrets directly.
+# workflow can't label or reach secrets directly. Labels applied here via
+# GITHUB_TOKEN do not trigger another `labeled` run (loop prevention), so
+# Slack only gets one post per PR.
 on:
   workflow_run:
     workflows: ['Gardener - Notify Event']
@@ -34,23 +38,21 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add devtools-gardener label
+      - name: Add devtools-gardener label to Dependabot PR
         if: steps.download.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
           ACTION=$(jq -r '.action' event.json)
-          # On `labeled` events the label is already there — skip.
-          if [ "$ACTION" != "opened" ]; then
+          LOGIN=$(jq -r '.pull_request.user.login // ""' event.json)
+          # Only the Dependabot-opened path needs labeling here. On manual
+          # `labeled` events the label is already on the PR/issue.
+          if [ "$ACTION" != "opened" ] || [ "$LOGIN" != "dependabot[bot]" ]; then
             exit 0
           fi
-          NUMBER=$(jq -r '(.issue // .pull_request).number' event.json)
-          if jq -e 'has("pull_request")' event.json > /dev/null; then
-            gh pr edit "$NUMBER" --add-label devtools-gardener
-          else
-            gh issue edit "$NUMBER" --add-label devtools-gardener
-          fi
+          NUMBER=$(jq -r '.pull_request.number' event.json)
+          gh pr edit "$NUMBER" --add-label devtools-gardener
 
       - name: Post to Slack
         if: steps.download.outcome == 'success'
