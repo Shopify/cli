@@ -230,11 +230,11 @@ describe('versionToAutoUpgrade', () => {
     expect(versionToAutoUpgrade()).toBeUndefined()
   })
 
-  test('returns undefined when auto-upgrade preference has never been set', () => {
+  test('returns the newer version when auto-upgrade preference has never been set (default enabled)', () => {
     vi.mocked(checkForCachedNewVersion).mockReturnValue('3.91.0')
     vi.mocked(isCI).mockReturnValue(false)
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(undefined)
-    expect(versionToAutoUpgrade()).toBeUndefined()
+    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
+    expect(versionToAutoUpgrade()).toBe('3.91.0')
   })
 
   test('returns the newer version for a major version change when auto-upgrade is enabled', () => {
