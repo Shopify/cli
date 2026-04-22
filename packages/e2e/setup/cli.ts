@@ -46,6 +46,18 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
     const spawnedProcesses: SpawnedProcess[] = []
     const cliLog = createLogger('cli')
 
+    // When DEBUG=1, tee the subprocess streams to the parent so the CLI's
+    // info/success boxes and progress messages appear live, while still
+    // letting execa buffer and return the captured output.
+    const runExeca = (bin: string, args: string[], execaOpts: ExecaOptions) => {
+      const subprocess = execa('node', [bin, ...args], execaOpts)
+      if (process.env.DEBUG === '1') {
+        subprocess.stdout?.pipe(process.stdout, {end: false})
+        subprocess.stderr?.pipe(process.stderr, {end: false})
+      }
+      return subprocess
+    }
+
     const cli: CLIProcess = {
       async exec(args, opts = {}) {
         const timeout = opts.timeout ?? CLI_TIMEOUT.medium
@@ -56,9 +68,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           reject: false,
         }
 
-        cliLog.log(env, `exec: node ${executables.cli} ${args.join(' ')}`)
+        cliLog.log(env, `exec: node ${executables.cli}`)
+        cliLog.log(env, args.join(' '))
 
-        const result = await execa('node', [executables.cli, ...args], execaOpts)
+        const result = await runExeca(executables.cli, args, execaOpts)
 
         return {
           stdout: result.stdout ?? '',
@@ -76,9 +89,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           reject: false,
         }
 
-        cliLog.log(env, `exec: node ${executables.createApp} ${args.join(' ')}`)
+        cliLog.log(env, `exec: node ${executables.createApp}`)
+        cliLog.log(env, `app init ${args.join(' ')}`)
 
-        const result = await execa('node', [executables.createApp, ...args], execaOpts)
+        const result = await runExeca(executables.createApp, args, execaOpts)
 
         return {
           stdout: result.stdout ?? '',
@@ -98,7 +112,8 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           }
         }
 
-        cliLog.log(env, `spawn: node ${executables.cli} ${args.join(' ')}`)
+        cliLog.log(env, `spawn: node ${executables.cli}`)
+        cliLog.log(env, args.join(' '))
 
         const ptyProcess = nodePty.spawn('node', [executables.cli, ...args], {
           name: 'xterm-color',
