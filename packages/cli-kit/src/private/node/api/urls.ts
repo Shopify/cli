@@ -1,3 +1,19 @@
+// Query-string parameter names that may carry sensitive credentials and must
+// not be written to logs, verbose debug output, or any other user-visible
+// destination. Covers OAuth 2.0 / device-authorization / token-exchange
+// parameters.
+const SENSITIVE_QUERY_PARAMS = [
+  'access_token',
+  'refresh_token',
+  'id_token',
+  'subject_token',
+  'actor_token',
+  'device_code',
+  'client_secret',
+  'code',
+  'token',
+]
+
 /**
  * Removes the sensitive data from the url and outputs them as a string.
  * @param url - HTTP headers.
@@ -5,11 +21,10 @@
  */
 export function sanitizeURL(url: string): string {
   const parsedUrl = new URL(url)
-  if (parsedUrl.searchParams.has('subject_token')) {
-    parsedUrl.searchParams.set('subject_token', '****')
-  }
-  if (parsedUrl.searchParams.has('token')) {
-    parsedUrl.searchParams.set('token', '****')
+  for (const param of SENSITIVE_QUERY_PARAMS) {
+    if (parsedUrl.searchParams.has(param)) {
+      parsedUrl.searchParams.set(param, '****')
+    }
   }
   return parsedUrl.toString()
 }
