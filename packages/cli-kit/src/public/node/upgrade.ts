@@ -13,6 +13,7 @@ import {
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
+import {renderConfirmationPrompt} from './ui.js'
 import {isPreReleaseVersion} from './version.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -80,7 +81,7 @@ export async function runCLIUpgrade(): Promise<void> {
 
 /**
  * Returns the version to auto-upgrade to, or undefined if auto-upgrade should be skipped.
- * Auto-upgrade is enabled by default and can be disabled via `setAutoUpgradeEnabled(false)`.
+ * Auto-upgrade is disabled by default and must be enabled via `shopify upgrade`.
  * Also skips for CI, pre-release versions, or when no newer version is available.
  *
  * @returns The version string to upgrade to, or undefined if no upgrade should happen.
@@ -151,6 +152,24 @@ export function getOutputUpdateCLIReminder(version: string, isMajor = false): st
   }
 
   return base
+}
+
+/**
+ * Prompts the user to enable or disable automatic upgrades, then persists their choice.
+ *
+ * @returns Whether the user chose to enable auto-upgrade.
+ */
+export async function promptAutoUpgrade(): Promise<boolean> {
+  const current = getAutoUpgradeEnabled()
+  if (current !== undefined) return current
+
+  const enabled = await renderConfirmationPrompt({
+    message: 'Enable automatic updates for Shopify CLI?',
+    confirmationMessage: 'Yes, automatically update',
+    cancellationMessage: "No, I'll update manually",
+  })
+  setAutoUpgradeEnabled(enabled)
+  return enabled
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string) {
