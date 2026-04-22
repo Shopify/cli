@@ -41,4 +41,4 @@ Fixes #0000 <!-- link to issue if one exists -->
 - [ ] I've considered possible cross-platform impacts (Mac, Linux, Windows)
 - [ ] I've considered possible [documentation](https://shopify.dev) changes
 - [ ] I've considered analytics changes to measure impact
-- [ ] The change is user-facing — I've identified the correct bump type (`patch` for bug fixes · `minor` for new features · `major` for [breaking changes](../CONTRIBUTING.md#what-counts-as-a-breaking-change)) and added a changeset with `pnpm changeset add`
+- [ ] The change is user-facing — I've identified the correct [bump type](https://github.com/Shopify/cli/blob/main/CONTRIBUTING.md#choosing-the-right-bump-type) (`patch` for bug fixes · `minor` for new features · `major` for [breaking changes](https://github.com/Shopify/cli/blob/main/CONTRIBUTING.md#what-counts-as-a-breaking-change)) and added a changeset with `pnpm changeset add`
