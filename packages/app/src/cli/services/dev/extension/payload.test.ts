@@ -206,15 +206,8 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
-  test('maps main and should_render from build_manifest', async () => {
+  test('maps main and should_render paths from manifest.json', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      const buildManifest = {
-        assets: {
-          main: {module: './src/ExtensionPointA.js', filepath: 'test-ui-extension.js'},
-          should_render: {module: './src/ShouldRender.js', filepath: 'test-ui-extension-conditions.js'},
-        },
-      }
-
       const uiExtension = await testUIExtension({
         directory: tmpDir,
         configuration: {
@@ -224,17 +217,11 @@ describe('getUIExtensionPayload', () => {
             {
               target: 'CUSTOM_EXTENSION_POINT',
               module: './src/ExtensionPointA.js',
-              build_manifest: buildManifest,
             },
           ],
         },
         devUUID: 'devUUID',
       })
-
-      // Create source files so lastUpdated resolves
-      await mkdir(joinPath(tmpDir, 'src'))
-      await writeFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'), '// main')
-      await writeFile(joinPath(tmpDir, 'src', 'ShouldRender.js'), '// should render')
 
       await setupBuildOutput(
         uiExtension,
@@ -260,6 +247,60 @@ describe('getUIExtensionPayload', () => {
             should_render: {
               name: 'should_render',
               url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-conditions.js',
+              lastUpdated: expect.any(Number),
+            },
+          },
+        },
+      ])
+    })
+  })
+
+  test('maps main and should_render with bundleFolder prefix from manifest.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {
+              target: 'CUSTOM_EXTENSION_POINT',
+              module: './src/ExtensionPointA.js',
+            },
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      await setupBuildOutput(
+        uiExtension,
+        tmpDir,
+        {
+          CUSTOM_EXTENSION_POINT: {
+            main: 'dist/test-ui-extension.js',
+            should_render: 'dist/test-ui-extension-conditions.js',
+          },
+        },
+        {},
+      )
+
+      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          assets: {
+            main: {
+              name: 'main',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/dist/test-ui-extension.js',
+              lastUpdated: expect.any(Number),
+            },
+            should_render: {
+              name: 'should_render',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/dist/test-ui-extension-conditions.js',
               lastUpdated: expect.any(Number),
             },
           },

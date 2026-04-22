@@ -2,7 +2,7 @@ import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
 import {copyFile} from '@shopify/cli-kit/node/fs'
-import {dirname} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
 interface ExtensionPointWithBuildManifest {
@@ -20,10 +20,13 @@ interface ExtensionPointWithBuildManifest {
  */
 export async function executeBundleUIStep(step: BundleUIStep, context: BuildContext): Promise<void> {
   const config = context.extension.configuration
+  context.options.buildDirectory = step.config?.bundleFolder ?? undefined
   const localOutputPath = await buildUIExtension(context.extension, context.options)
   // When invoked outside a bundle directory (e.g. `shopify app build`), localOutputPath and outputPath collapse onto the same directory; fs-extra rejects same-path copies.
   const localOutputDir = dirname(localOutputPath)
-  const bundleOutputDir = dirname(context.extension.outputPath)
+  const bundleOutputDir = step.config?.bundleFolder
+    ? joinPath(dirname(context.extension.outputPath), step.config.bundleFolder)
+    : dirname(context.extension.outputPath)
   if (localOutputDir !== bundleOutputDir) {
     await copyFile(localOutputDir, bundleOutputDir)
   }
@@ -36,7 +39,7 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
     (ep): ep is ExtensionPointWithBuildManifest => typeof ep === 'object' && ep.build_manifest,
   )
 
-  const entries = extractBuiltAssetEntries(pointsWithManifest)
+  const entries = extractBuiltAssetEntries(pointsWithManifest, step.config?.bundleFolder)
   if (Object.keys(entries).length > 0) {
     await createOrUpdateManifestFile(context, entries)
   }
@@ -46,7 +49,10 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
  * Extracts built asset filepaths from `build_manifest` on each extension point,
  * grouped by target. Returns a map of target → `{assetName: filepath}`.
  */
-function extractBuiltAssetEntries(extensionPoints: {target: string; build_manifest: BuildManifest}[]): {
+function extractBuiltAssetEntries(
+  extensionPoints: {target: string; build_manifest: BuildManifest}[],
+  bundleFolder?: string,
+): {
   [target: string]: {[assetName: string]: string}
 } {
   const entries: {[target: string]: {[assetName: string]: string}} = {}
@@ -54,7 +60,7 @@ function extractBuiltAssetEntries(extensionPoints: {target: string; build_manife
     if (!buildManifest?.assets) continue
     const assets: {[name: string]: string} = {}
     for (const [name, asset] of Object.entries(buildManifest.assets)) {
-      if (asset?.filepath) assets[name] = asset.filepath
+      if (asset?.filepath) assets[name] = bundleFolder ? joinPath(bundleFolder, asset.filepath) : asset.filepath
     }
     if (Object.keys(assets).length > 0) entries[target] = assets
   }

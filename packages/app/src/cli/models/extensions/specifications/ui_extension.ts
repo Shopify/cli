@@ -83,12 +83,17 @@ const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
-  getOutputRelativePath: (extension: ExtensionInstance<UIExtensionConfigType>) => `dist/${extension.handle}.js`,
+  getOutputRelativePath: (extension: ExtensionInstance<UIExtensionConfigType>) => `${extension.handle}.js`,
   clientSteps: [
     {
       lifecycle: 'deploy',
       steps: [
-        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {generatesAssetsManifest: true}},
+        {
+          id: 'bundle-ui',
+          name: 'Bundle UI Extension',
+          type: 'bundle_ui',
+          config: {generatesAssetsManifest: true, bundleFolder: 'dist/'},
+        },
         {
           id: 'include-ui-extension-assets',
           name: 'Include UI Extension Assets',

@@ -67,8 +67,10 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     env.APP_URL = options.appURL
   }
 
+  const buildDirectory = options.buildDirectory ?? ''
+
   // Always build into the extension's local directory (e.g. ext/dist/handle.js)
-  const localOutputPath = joinPath(extension.directory, extension.outputRelativePath)
+  const localOutputPath = joinPath(extension.directory, buildDirectory, extension.outputRelativePath)
 
   const {main, assets} = extension.getBundleExtensionStdinContent()
 
