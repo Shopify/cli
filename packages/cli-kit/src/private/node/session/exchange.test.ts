@@ -271,8 +271,10 @@ describe.each(tokenExchangeMethods)(
     test(`Executing ${tokenExchangeMethod.name} returns access token and user ID for a valid CLI token`, async () => {
       // Given
       let capturedUrl = ''
+      let capturedInit: {method?: string; headers?: Record<string, string>; body?: string} = {}
       vi.mocked(shopifyFetch).mockImplementation(async (url, options) => {
         capturedUrl = url.toString()
+        capturedInit = (options ?? {}) as typeof capturedInit
         return Promise.resolve(
           new Response(
             JSON.stringify({
@@ -292,12 +294,21 @@ describe.each(tokenExchangeMethods)(
       await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(userId)
       await expect(getLastSeenAuthMethod()).resolves.toBe('partners_token')
 
-      // Assert token exchange parameters are correct
+      // Request is sent as POST form-encoded body (not query string), so the
+      // URL must not contain any OAuth parameters.
       const actualUrl = new URL(capturedUrl)
       expect(actualUrl).toBeDefined()
-      expect(actualUrl.href).toContain('https://fqdn.com/oauth/token')
+      expect(actualUrl.href).toBe('https://fqdn.com/oauth/token')
+      expect(actualUrl.search).toBe('')
 
-      const params = actualUrl.searchParams
+      expect(capturedInit.method).toBe('POST')
+      expect(capturedInit.headers).toMatchObject({
+        'Content-Type': 'application/x-www-form-urlencoded',
+      })
+      expect(typeof capturedInit.body).toBe('string')
+
+      // Assert token exchange parameters are correct and sent in the body.
+      const params = new URLSearchParams(capturedInit.body)
       expect(params.get('grant_type')).toBe(grantType)
       expect(params.get('requested_token_type')).toBe(accessTokenType)
       expect(params.get('subject_token_type')).toBe(accessTokenType)
