@@ -49,9 +49,9 @@ describe('AutoupgradeStatus', () => {
     `)
   })
 
-  test('displays auto-upgrade on message when never explicitly set (default enabled)', async () => {
+  test('displays not configured message when never set', async () => {
     // Given
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
+    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(undefined)
     const config = new Config({root: __dirname})
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -63,7 +63,8 @@ describe('AutoupgradeStatus', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
     "╭─ info ───────────────────────────────────────────────────────────────────────╮
     │                                                                              │
-    │  Auto-upgrade on. Shopify CLI will update automatically after each command.  │
+    │  Auto-upgrade not configured. Run \`shopify config autoupgrade on\` to enable  │
+    │   it.                                                                        │
     │                                                                              │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     "
