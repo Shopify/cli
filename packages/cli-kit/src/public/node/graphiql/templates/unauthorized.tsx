@@ -48,47 +48,72 @@ const shopifySvg = (
   </svg>
 )
 
-const polarisUnauthorizedContent = renderToStaticMarkup(
-  <AppProvider i18n={{}}>
-    <Page narrowWidth>
-      <div className="card-wrapper">
-        <Card padding="600">
-          <BlockStack gap="500">
-            {shopifySvg}
-            <div id="pre-install">
-              <BlockStack gap="200">
-                <Text variant="headingMd" as="h2">
-                  Install your app to access GraphiQL
-                </Text>
-                <p>The GraphiQL Explorer relies on your app being installed on your dev store to access its data.</p>
-                <p id="card-cta">
-                  <Button id="app-install-button">Install your app</Button>
-                </p>
-              </BlockStack>
-            </div>
+interface UnauthorizedTemplateOptions {
+  hasAppContext: boolean
+}
 
-            <div id="post-install">
-              <BlockStack gap="200">
-                <Text variant="headingMd" as="h2">
-                  Loading GraphiQL...
-                </Text>
-                <p>
-                  If you're not redirected automatically, <Link url="{{url}}/graphiql">click here</Link>.
-                </p>
-              </BlockStack>
-            </div>
-          </BlockStack>
-        </Card>
-      </div>
-    </Page>
-  </AppProvider>,
-)
+function polarisUnauthorizedContent({hasAppContext}: UnauthorizedTemplateOptions) {
+  return renderToStaticMarkup(
+    <AppProvider i18n={{}}>
+      <Page narrowWidth>
+        <div className="card-wrapper">
+          <Card padding="600">
+            <BlockStack gap="500">
+              {shopifySvg}
+              <div id="pre-install">{hasAppContext ? <AppUnauthorizedContent /> : <StoreUnauthorizedContent />}</div>
 
-export const unauthorizedTemplate = `
+              <div id="post-install">
+                <BlockStack gap="200">
+                  <Text variant="headingMd" as="h2">
+                    Loading GraphiQL...
+                  </Text>
+                  <p>
+                    If you're not redirected automatically, <Link url="{{url}}/graphiql">click here</Link>.
+                  </p>
+                </BlockStack>
+              </div>
+            </BlockStack>
+          </Card>
+        </div>
+      </Page>
+    </AppProvider>,
+  )
+}
+
+function AppUnauthorizedContent() {
+  return (
+    <BlockStack gap="200">
+      <Text variant="headingMd" as="h2">
+        Install your app to access GraphiQL
+      </Text>
+      <p>The GraphiQL Explorer relies on your app being installed on your dev store to access its data.</p>
+      <p id="card-cta">
+        <Button id="app-install-button">Install your app</Button>
+      </p>
+    </BlockStack>
+  )
+}
+
+function StoreUnauthorizedContent() {
+  return (
+    <BlockStack gap="200">
+      <Text variant="headingMd" as="h2">
+        Reconnect store authentication to access GraphiQL
+      </Text>
+      <p>The GraphiQL Explorer couldn't access this store with the stored authentication.</p>
+      <p>
+        Run <code>{'shopify store auth --store {{storeFqdn}}'}</code>, then refresh this page.
+      </p>
+    </BlockStack>
+  )
+}
+
+export function unauthorizedTemplate({hasAppContext}: UnauthorizedTemplateOptions): string {
+  return `
 <!DOCTYPE html>
 <html>
   <head>
-    <title>GraphiQL Explorer - App Not Installed</title>
+    <title>GraphiQL Explorer - Authentication Required</title>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
@@ -133,14 +158,16 @@ export const unauthorizedTemplate = `
       }
 
       document.addEventListener("DOMContentLoaded", function() {
-        document.getElementById('app-install-button').onclick = openAppInstallTab
+        const installButton = document.getElementById('app-install-button')
+        if (installButton) installButton.onclick = openAppInstallTab
       })
     </script>
   </head>
   <body>
     <div class="vertical-center">
-      ${polarisUnauthorizedContent}
+      ${polarisUnauthorizedContent({hasAppContext})}
     </div>
   </body>
 </html>
 `
+}
