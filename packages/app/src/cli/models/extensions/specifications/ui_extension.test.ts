@@ -1177,12 +1177,14 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     shouldRenderFileContent,
     apiVersion,
     target = 'admin.product-details.action.render',
+    targetDtsContent,
   }: {
     tmpDir: string
     fileContent: string
     shouldRenderFileContent?: string
     apiVersion: string
     target?: string
+    targetDtsContent?: string
   }) {
     // Create extension files
     const srcDir = joinPath(tmpDir, 'src')
@@ -1197,7 +1199,11 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
     const targetPath = joinPath(nodeModulesPath, target)
     await mkdir(targetPath)
-    await writeFile(joinPath(targetPath, 'index.js'), '// Mock UI extension target')
+    // `require.resolve('@shopify/ui-extensions/<target>')` resolves to this file,
+    // and the CLI's ShopifyGlobal detector reads whatever path require.resolve
+    // returned. Injecting `targetDtsContent` here lets tests exercise the
+    // detection branch; defaults preserve the original placeholder.
+    await writeFile(joinPath(targetPath, 'index.js'), targetDtsContent ?? '// Mock UI extension target')
 
     let shouldRenderFilePath
     if (shouldRenderFileContent) {
@@ -1358,6 +1364,88 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               new Set([
                 `//@ts-ignore\ndeclare module './should-render.js' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+          ]),
+        )
+      })
+    })
+
+    test('emits Api & ShopifyGlobal intersection when target re-exports ShopifyGlobal', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// JSX code',
+          // Remote DOM supported version
+          apiVersion: '2025-10',
+          // Mirrors the POS ui-extensions pattern: the target re-exports
+          // `ShopifyGlobal` via a named export specifier, which is the shape
+          // the AST helper detects.
+          targetDtsContent: `
+            interface _ShopifyGlobalInternal { addEventListener(type: string, listener: (event: unknown) => void): void }
+            export type {_ShopifyGlobalInternal as ShopifyGlobal}
+            export type Api = {placeholder: true}
+          `,
+        })
+
+        // Create tsconfig.json
+        const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(tsconfigPath, '// TypeScript config')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        // Then — prettier wraps the long intersection onto two lines.
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              shopifyDtsPath,
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api &
+    import('@shopify/ui-extensions/admin.product-details.action.render').ShopifyGlobal;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+          ]),
+        )
+      })
+    })
+
+    test('emits plain Api when target does not re-export ShopifyGlobal', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // No `targetDtsContent` — the helper writes the default placeholder,
+        // which contains no `ShopifyGlobal` export. This guards against the
+        // detection helper accidentally tripping on targets that don't opt in.
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// JSX code',
+          apiVersion: '2025-10',
+        })
+
+        const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(tsconfigPath, '// TypeScript config')
+
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              shopifyDtsPath,
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
   const globalThis: { shopify: typeof shopify };
 }\n`,
               ]),
