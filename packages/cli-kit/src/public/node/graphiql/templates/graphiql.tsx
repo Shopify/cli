@@ -49,10 +49,11 @@ export const defaultQuery = `query shopInfo {
 interface GraphiQLTemplateOptions {
   apiVersion: string
   apiVersions: string[]
-  appName: string
-  appUrl: string
+  appName?: string
+  appUrl?: string
   key: string
   storeFqdn: string
+  protectMutations?: boolean
 }
 
 export function graphiqlTemplate({
@@ -62,7 +63,10 @@ export function graphiqlTemplate({
   appUrl,
   key,
   storeFqdn,
+  protectMutations = false,
 }: GraphiQLTemplateOptions): string {
+  const hasAppContext = Boolean(appName && appUrl)
+  const unauthorizedLabel = hasAppContext ? 'App uninstalled' : 'Auth invalid'
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -193,7 +197,7 @@ export function graphiqlTemplate({
                         <div className="status-badge-option with-shrunk-icon" id="status-badge-unauthorized">
                           <span className="top-bar-section-title">Status: </span>
                           <Badge tone="attention" icon={AlertCircleIcon}>
-                            App uninstalled
+                            {unauthorizedLabel}
                           </Badge>
                         </div>
                         <div className="status-badge-option with-shrunk-icon" id="status-badge-disconnected">
@@ -219,7 +223,7 @@ export function graphiqlTemplate({
                   <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 5, xl: 5}}>
                     <div id="scopes-note" className="top-bar-section">
                       <Text as="span" tone="subdued">
-                        GraphiQL runs on the same access scopes you've defined in the TOML file for your app.
+                        {scopesNoteText({hasAppContext, protectMutations})}
                       </Text>
                     </div>
                   </Grid.Cell>
@@ -325,15 +329,25 @@ export function graphiqlTemplate({
             const {status, storeFqdn, appName, appUrl} = await response.json()
             appIsInstalled = status === 'OK'
             if (storeFqdn) {
-              document.getElementById('outbound-links').innerHTML = \`${renderToStaticMarkup(
-                // Create HTML string with substitutions included
-                <AppProvider i18n={{}}>
-                  {
-                    // eslint-disable-next-line no-template-curly-in-string
-                    linkPills({storeFqdn: '${storeFqdn}', appName: '${appName}', appUrl: '${appUrl}'})
-                  }
-                </AppProvider>,
-              )}\`
+              ${
+                hasAppContext
+                  ? `document.getElementById('outbound-links').innerHTML = \`${renderToStaticMarkup(
+                      <AppProvider i18n={{}}>
+                        {
+                          // eslint-disable-next-line no-template-curly-in-string
+                          linkPills({storeFqdn: '${storeFqdn}', appName: '${appName}', appUrl: '${appUrl}'})
+                        }
+                      </AppProvider>,
+                    )}\``
+                  : `document.getElementById('outbound-links').innerHTML = \`${renderToStaticMarkup(
+                      <AppProvider i18n={{}}>
+                        {
+                          // eslint-disable-next-line no-template-curly-in-string
+                          linkPills({storeFqdn: '${storeFqdn}'})
+                        }
+                      </AppProvider>,
+                    )}\``
+              }
             }
           })
       }, 5000)
@@ -345,8 +359,8 @@ export function graphiqlTemplate({
 
 interface LinkPillOptions {
   storeFqdn: string
-  appName: string
-  appUrl: string
+  appName?: string
+  appUrl?: string
 }
 
 function linkPills({storeFqdn, appName, appUrl}: LinkPillOptions) {
@@ -356,10 +370,30 @@ function linkPills({storeFqdn, appName, appUrl}: LinkPillOptions) {
       <Link url={`https://${storeFqdn}/admin`} target="_blank">
         <Badge tone="info" icon={LinkIcon} children={storeFqdn} />
       </Link>
-      <span className="top-bar-section-title">App: </span>
-      <Link url={appUrl} target="_blank">
-        <Badge tone="info" icon={LinkIcon} children={appName} />
-      </Link>
+      {appName && appUrl ? (
+        <>
+          <span className="top-bar-section-title">App: </span>
+          <Link url={appUrl} target="_blank">
+            <Badge tone="info" icon={LinkIcon} children={appName} />
+          </Link>
+        </>
+      ) : null}
     </div>
   )
+}
+
+function scopesNoteText({
+  hasAppContext,
+  protectMutations,
+}: {
+  hasAppContext: boolean
+  protectMutations: boolean
+}): string {
+  if (protectMutations) {
+    return 'Mutations are disabled. Re-run with --allow-mutations to enable mutations.'
+  }
+  if (hasAppContext) {
+    return "GraphiQL runs on the same access scopes you've defined in the TOML file for your app."
+  }
+  return 'GraphiQL runs with the access scopes granted to the stored app authentication for this store.'
 }
