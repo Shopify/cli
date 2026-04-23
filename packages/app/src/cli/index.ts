@@ -13,6 +13,7 @@ import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import BulkExecute from './commands/app/bulk/execute.js'
 import Execute from './commands/app/execute.js'
+import AppGraphiQL from './commands/app/graphiql.js'
 import FunctionBuild from './commands/app/function/build.js'
 import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
@@ -62,6 +63,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
   'app:execute': Execute,
+  'app:graphiql': AppGraphiQL,
   'app:bulk:execute': BulkExecute,
   'app:function:build': FunctionBuild,
   'app:function:replay': FunctionReplay,
