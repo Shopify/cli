@@ -5868,13 +5868,14 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
-      "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
+      "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nWhen neither `--query` nor `--query-file` is provided, opens a local GraphiQL UI in the browser pointed at the store. Use `--graphiql-port` to choose the port and `--no-open` to keep the browser closed.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data; the same flag controls whether the GraphiQL UI is allowed to issue mutations.",
+      "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nWhen neither `--query` nor `--query-file` is provided, opens a local GraphiQL UI in the browser pointed at the store. Use `--graphiql-port` to choose the port and `--no-open` to keep the browser closed.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data; the same flag controls whether the GraphiQL UI is allowed to issue mutations.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"query { shop { name } }\"",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query-file ./operation.graphql --variables '{\"id\":\"gid://shopify/Product/1\"}'",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"mutation { shop { id } }\" --allow-mutations",
-        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"query { shop { name } }\" --json"
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"query { shop { name } }\" --json",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com"
       ],
       "flags": {
         "allow-mutations": {
@@ -5883,6 +5884,14 @@
           "env": "SHOPIFY_FLAG_ALLOW_MUTATIONS",
           "name": "allow-mutations",
           "type": "boolean"
+        },
+        "graphiql-port": {
+          "description": "Local port for the GraphiQL server when no --query or --query-file is provided.",
+          "env": "SHOPIFY_FLAG_GRAPHIQL_PORT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "graphiql-port",
+          "type": "option"
         },
         "json": {
           "allowNo": false,
@@ -5901,6 +5910,13 @@
           "name": "no-color",
           "type": "boolean"
         },
+        "no-open": {
+          "allowNo": false,
+          "description": "Do not open the GraphiQL URL in the browser automatically.",
+          "env": "SHOPIFY_FLAG_NO_OPEN",
+          "name": "no-open",
+          "type": "boolean"
+        },
         "output-file": {
           "description": "The file name where results should be written, instead of STDOUT.",
           "env": "SHOPIFY_FLAG_OUTPUT_FILE",
@@ -5911,8 +5927,11 @@
         },
         "query": {
           "char": "q",
-          "description": "The GraphQL query or mutation, as a string.",
+          "description": "The GraphQL query or mutation, as a string. Omit to open GraphiQL.",
           "env": "SHOPIFY_FLAG_QUERY",
+          "exclusive": [
+            "query-file"
+          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "query",
@@ -5920,8 +5939,11 @@
           "type": "option"
         },
         "query-file": {
-          "description": "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+          "description": "Path to a file containing the GraphQL query or mutation. Can't be used with --query. Omit to open GraphiQL.",
           "env": "SHOPIFY_FLAG_QUERY_FILE",
+          "exclusive": [
+            "query"
+          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "query-file",
@@ -5985,7 +6007,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Execute GraphQL queries and mutations on a store."
+      "summary": "Execute GraphQL queries and mutations on a store, or open an interactive GraphiQL UI."
     },
     "theme:check": {
       "aliases": [

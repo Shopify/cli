@@ -2141,27 +2141,32 @@ EXAMPLES
 
 ## `shopify store execute`
 
-Execute GraphQL queries and mutations on a store.
+Execute GraphQL queries and mutations on a store, or open an interactive GraphiQL UI.
 
 ```
 USAGE
-  $ shopify store execute -s <value> [--allow-mutations] [-j] [--no-color] [--output-file <value>] [-q <value>]
-    [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+  $ shopify store execute -s <value> [--allow-mutations] [--graphiql-port <value>] [-j] [--no-color] [--no-open]
+    [--output-file <value>] [-q <value> | --query-file <value>] [--variable-file <value> | -v <value>] [--verbose]
+    [--version <value>]
 
 FLAGS
   -j, --json                   [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-  -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation, as a string.
+  -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation, as a string. Omit to open
+                               GraphiQL.
   -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to execute
                                against.
   -v, --variables=<value>      [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or
                                mutation, in JSON format.
       --allow-mutations        [env: SHOPIFY_FLAG_ALLOW_MUTATIONS] Allow GraphQL mutations to run against the target
                                store.
+      --graphiql-port=<value>  [env: SHOPIFY_FLAG_GRAPHIQL_PORT] Local port for the GraphiQL server when no --query or
+                               --query-file is provided.
       --no-color               [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --no-open                [env: SHOPIFY_FLAG_NO_OPEN] Do not open the GraphiQL URL in the browser automatically.
       --output-file=<value>    [env: SHOPIFY_FLAG_OUTPUT_FILE] The file name where results should be written, instead of
                                STDOUT.
       --query-file=<value>     [env: SHOPIFY_FLAG_QUERY_FILE] Path to a file containing the GraphQL query or mutation.
-                               Can't be used with --query.
+                               Can't be used with --query. Omit to open GraphiQL.
       --variable-file=<value>  [env: SHOPIFY_FLAG_VARIABLE_FILE] Path to a file containing GraphQL variables in JSON
                                format. Can't be used with --variables.
       --verbose                [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
@@ -2169,13 +2174,17 @@ FLAGS
                                the latest stable version.
 
 DESCRIPTION
-  Execute GraphQL queries and mutations on a store.
+  Execute GraphQL queries and mutations on a store, or open an interactive GraphiQL UI.
 
   Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.
 
   Run `shopify store auth` first to create stored auth for the store.
 
-  Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
+  When neither `--query` nor `--query-file` is provided, opens a local GraphiQL UI in the browser pointed at the store.
+  Use `--graphiql-port` to choose the port and `--no-open` to keep the browser closed.
+
+  Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data; the same flag
+  controls whether the GraphiQL UI is allowed to issue mutations.
 
 EXAMPLES
   $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }"
@@ -2185,6 +2194,8 @@ EXAMPLES
   $ shopify store execute --store shop.myshopify.com --query "mutation { shop { id } }" --allow-mutations
 
   $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }" --json
+
+  $ shopify store execute --store shop.myshopify.com
 ```
 
 ## `shopify theme check`
