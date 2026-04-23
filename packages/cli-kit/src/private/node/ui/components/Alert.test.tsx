@@ -126,6 +126,33 @@ describe('Alert', async () => {
     `)
   })
 
+  test('auto-detects URLs in a plain-string body and renders them as footnotes', async () => {
+    const options = {
+      body: 'See specification requirements: https://shopify.dev/docs/apps/build/sales-channels/channel-config-extension#specification-properties',
+    }
+
+    const {lastFrame} = render(<Alert type="error" {...options} />)
+    const frame = unstyled(lastFrame()!)
+
+    expect(frame).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  See specification requirements: [1]                                         │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1]
+      https://shopify.dev/docs/apps/build/sales-channels/channel-config-extension#specification-properties
+      "
+    `)
+
+    const footnoteLines = frame.split('\n').filter((line) => line.includes('[1]'))
+    footnoteLines.forEach((line) => {
+      if (line.startsWith('[1]')) {
+        expect(line).not.toContain('│')
+      }
+    })
+  })
+
   test('has the headline in bold', async () => {
     const options = {
       headline: 'Title.',

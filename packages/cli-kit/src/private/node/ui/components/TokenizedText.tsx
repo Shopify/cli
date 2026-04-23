@@ -152,9 +152,40 @@ interface TokenizedTextProps {
  * `TokenizedText` renders a text string with tokens that can be either strings,
  * links, and commands.
  */
+const URL_REGEX = /https?:\/\/\S+/g
+const URL_TRAILING_PUNCTUATION = /[.,;:!?)\]}>'"]+$/
+
+function renderStringWithLinks(str: string): JSX.Element {
+  const matches = Array.from(str.matchAll(URL_REGEX))
+  if (matches.length === 0) {
+    return <Text>{str}</Text>
+  }
+
+  const parts: JSX.Element[] = []
+  let cursor = 0
+  matches.forEach((match, index) => {
+    let url = match[0]
+    const trailing = url.match(URL_TRAILING_PUNCTUATION)
+    if (trailing) {
+      url = url.slice(0, url.length - trailing[0].length)
+    }
+    const start = match.index
+    const end = start + url.length
+    if (start > cursor) {
+      parts.push(<Text key={`t${index}`}>{str.slice(cursor, start)}</Text>)
+    }
+    parts.push(<Link key={`l${index}`} url={url} />)
+    cursor = end
+  })
+  if (cursor < str.length) {
+    parts.push(<Text key="tail">{str.slice(cursor)}</Text>)
+  }
+  return <Text>{parts}</Text>
+}
+
 const TokenizedText: FunctionComponent<TokenizedTextProps> = ({item}) => {
   if (typeof item === 'string') {
-    return <Text>{item}</Text>
+    return renderStringWithLinks(item)
   } else if ('command' in item) {
     return <Command command={item.command} />
   } else if ('link' in item) {

@@ -48,7 +48,11 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
         </Text>
       ) : null}
 
-      {error.formattedMessage ? <TokenizedText item={error.formattedMessage} /> : <Text>{error.message}</Text>}
+      {error.formattedMessage ? (
+        <TokenizedText item={error.formattedMessage} />
+      ) : (
+        <TokenizedText item={error.message} />
+      )}
 
       {error.tryMessage ? <TokenizedText item={error.tryMessage} /> : null}
 
