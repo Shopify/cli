@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {setupGraphiQLServer} from '../graphiql/server.js'
+import {setupGraphiQLServer} from '@shopify/cli-kit/node/graphiql/server'
 
 interface GraphiQLServerProcessOptions {
   appName: string

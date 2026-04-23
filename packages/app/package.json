@@ -64,8 +64,6 @@
     "@shopify/cli-kit": "4.1.0",
     "@shopify/plugin-cloudflare": "4.1.0",
     "@shopify/organizations": "4.1.0",
-    "@shopify/polaris": "12.27.0",
-    "@shopify/polaris-icons": "8.11.1",
     "@shopify/theme": "4.1.0",
     "@shopify/theme-check-node": "3.25.0",
     "@shopify/toml-patch": "0.3.0",
@@ -80,7 +78,6 @@
     "prettier": "3.8.1",
     "proper-lockfile": "4.1.2",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
     "which": "4.0.0",
     "ws": "8.18.0"
   },
@@ -88,7 +85,6 @@
     "@types/diff": "^5.0.3",
     "@types/proper-lockfile": "4.1.4",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
     "@types/which": "3.0.4",
     "@types/ws": "^8.5.13",
     "@vitest/coverage-istanbul": "^3.1.4"

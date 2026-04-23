@@ -8,7 +8,6 @@ import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session/dev-session-process.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {launchAppWatcher} from './app-watcher-process.js'
-import {resolveGraphiQLKey} from '../graphiql/server.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -31,6 +30,7 @@ import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import * as loader from '../../../models/app/loader.js'
+import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'

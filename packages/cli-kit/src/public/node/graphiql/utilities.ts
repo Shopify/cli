@@ -1,9 +1,9 @@
 /**
  * Headers that should NOT be forwarded from the GraphiQL client to the Admin API.
  * These include:
- * - Hop-by-hop headers (RFC 7230) that are connection-specific
- * - Browser-specific headers that are not relevant to API requests
- * - Headers the proxy sets itself (auth, content-type, etc.)
+ * - Hop-by-hop headers (RFC 7230) that are connection-specific.
+ * - Browser-specific headers that are not relevant to API requests.
+ * - Headers the proxy sets itself (auth, content-type, etc.).
  */
 const BLOCKED_HEADERS = new Set([
   // Hop-by-hop headers (RFC 7230 Section 6.1)
@@ -30,6 +30,9 @@ const BLOCKED_HEADERS = new Set([
 /**
  * Filters request headers to extract only custom headers that are safe to forward.
  * Blocked headers and non-string values are excluded.
+ *
+ * @param headers - The raw incoming request headers.
+ * @returns The subset of headers that are safe to forward to the Admin API.
  */
 export function filterCustomHeaders(headers: {[key: string]: string | string[] | undefined}): {[key: string]: string} {
   const customHeaders: {[key: string]: string} = {}
