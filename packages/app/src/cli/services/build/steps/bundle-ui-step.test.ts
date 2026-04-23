@@ -57,4 +57,13 @@ describe('executeBundleUIStep', () => {
     // Then
     expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/dist', '/bundle/handle')
   })
+
+  test('skips the copy when local and bundle output directories resolve to the same path but differ as strings', async () => {
+    mockContext.extension.outputPath = '/test/./extension/dist/handle.js'
+    vi.mocked(buildExtension.buildUIExtension).mockResolvedValue('/test/extension/dist/handle.js')
+
+    await executeBundleUIStep(step, mockContext)
+
+    expect(fs.copyFile).not.toHaveBeenCalled()
+  })
 })
