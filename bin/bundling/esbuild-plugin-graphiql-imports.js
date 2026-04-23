@@ -9,8 +9,8 @@ const GraphiQLImportsPlugin = {
       const contents = await readFile(args.path, 'utf8')
       return {
         contents: contents
-          .replace('@shopify/app/assets/graphiql/favicon.ico', './assets/graphiql/favicon.ico')
-          .replace('@shopify/app/assets/graphiql/style.css', './assets/graphiql/style.css'),
+          .replace('@shopify/cli-kit/assets/graphiql/favicon.ico', './assets/graphiql/favicon.ico')
+          .replace('@shopify/cli-kit/assets/graphiql/style.css', './assets/graphiql/style.css'),
       }
     })
   },
