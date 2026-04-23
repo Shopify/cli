@@ -3,9 +3,10 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
+import {resolveOutputDir} from '../../../build/steps/include-assets/generate-manifest.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
-import {joinPath, resolvePath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath, relativePath, isAbsolutePath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -31,14 +32,15 @@ export const redirectToDevConsoleMiddleware = defineEventHandler(async (event) =
 export async function fileServerMiddleware(event: H3Event, options: {filePath: string}) {
   let {filePath} = options
 
-  if (await isDirectory(filePath)) {
-    filePath += filePath.endsWith('/') ? `index.html` : '/index.html'
+  if (!(await fileExists(filePath))) {
+    return sendError(event, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
   }
 
-  const exists = await fileExists(filePath)
-
-  if (!exists) {
-    return sendError(event, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
+  if (await isDirectory(filePath)) {
+    filePath += filePath.endsWith('/') ? `index.html` : '/index.html'
+    if (!(await fileExists(filePath))) {
+      return sendError(event, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
+    }
   }
 
   // Pass `{}` to opt out of cli-kit's `{encoding: 'utf8'}` default — binary
@@ -70,7 +72,7 @@ export async function fileServerMiddleware(event: H3Event, options: {filePath: s
   return fileContent
 }
 
-export function getExtensionAssetMiddleware({getExtensions}: GetExtensionsMiddlewareOptions) {
+export function getExtensionAssetMiddleware({getExtensions, payloadStore}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler(async (event) => {
     const {extensionId, assetPath = ''} = getRouterParams(event)
     const extension = getExtensions().find((ext) => ext.devUUID === extensionId)
@@ -82,23 +84,26 @@ export function getExtensionAssetMiddleware({getExtensions}: GetExtensionsMiddle
       })
     }
 
-    const resolvedExtensionDirectory = resolvePath(extension.directory)
-    const builtAssetPath = joinPath(
-      dirname(joinPath(resolvedExtensionDirectory, extension.outputRelativePath)),
-      assetPath,
-    )
+    // Serve from the extension's bundle directory. The include_assets build step
+    // copies every configured static asset here, so the filesystem under
+    // outputDir is the effective allowlist for this route.
+    //
+    // URLs emitted by the payload are opaque (`<target>/<assetKey>`) and the
+    // resolver maps each to the actual (possibly uniqueBasename-renamed) file.
+    // Requests without a resolver entry fall through to direct outputDir serving
+    // — covers uncommon direct fetches of compiled artefacts by filename.
+    const resolver = payloadStore.getAssetResolver(extension.devUUID)
+    const filesystemPath = resolver?.get(assetPath) ?? assetPath
 
-    // Try the build output directory first (for compiled assets like dist/handle.js),
-    // then fall back to the extension's source directory (for static assets like tools, instructions).
-    const filePath = (await fileExists(builtAssetPath))
-      ? builtAssetPath
-      : joinPath(resolvedExtensionDirectory, assetPath)
+    const resolvedOutputDir = resolvePath(resolveOutputDir(extension.outputPath))
+    const candidate = resolvePath(joinPath(resolvedOutputDir, filesystemPath))
+    const rel = relativePath(resolvedOutputDir, candidate)
 
-    if (!filePath.startsWith(resolvedExtensionDirectory)) {
-      return sendError(event, {statusCode: 403, statusMessage: 'Path traversal is not allowed'})
+    if (rel.startsWith('..') || isAbsolutePath(rel)) {
+      return sendError(event, {statusCode: 404, statusMessage: 'Not Found'})
     }
 
-    return fileServerMiddleware(event, {filePath})
+    return fileServerMiddleware(event, {filePath: candidate})
   })
 }
 

@@ -61,6 +61,7 @@ describe('devUIExtensions()', () => {
     expect(store.ExtensionsPayloadStore).toHaveBeenCalledWith(
       {mock: 'payload'},
       {...options, websocketURL: 'wss://mock.url/extensions'},
+      expect.any(Map),
     )
   })
 

@@ -4,6 +4,14 @@ import {fileExists, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
 
+/**
+ * Resolves the output directory from an extension's outputPath.
+ * When outputPath is a file (has extension), uses dirname. Otherwise uses outputPath directly.
+ */
+export function resolveOutputDir(outputPath: string): string {
+  return extname(outputPath) ? dirname(outputPath) : outputPath
+}
+
 interface ConfigKeyManifestEntry {
   anchor?: string | undefined
   groupBy?: string | undefined
@@ -121,12 +129,7 @@ export async function createOrUpdateManifestFile(
   context: BuildContext,
   entries: {[key: string]: unknown},
 ): Promise<void> {
-  const outputPath = context.extension.outputPath
-  /**
-   * Resolves the output directory from an extension's outputPath.
-   * When outputPath is a file (has extension), uses dirname. Otherwise uses outputPath directly.
-   */
-  const outputDir = extname(outputPath) ? dirname(outputPath) : outputPath
+  const outputDir = resolveOutputDir(context.extension.outputPath)
 
   const manifestPath = joinPath(outputDir, 'manifest.json')
 

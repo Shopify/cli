@@ -1,6 +1,6 @@
 import {UIExtensionPayload, ExtensionsEndpointPayload, DevNewExtensionPointSchema} from './models.js'
 import {ExtensionDevOptions} from '../../extension.js'
-import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
+import {AssetResolver, getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {AdminConfigType} from '../../../../models/extensions/specifications/admin.js'
@@ -36,6 +36,7 @@ export enum ExtensionsPayloadStoreEvent {
 export async function getExtensionsPayloadStoreRawPayload(
   options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
   bundlePath: string,
+  resolvers?: Map<string, AssetResolver>,
 ): Promise<ExtensionsEndpointPayload> {
   const payload: ExtensionsEndpointPayload = {
     app: {
@@ -59,7 +60,9 @@ export async function getExtensionsPayloadStoreRawPayload(
     extensions: await Promise.all(
       options.extensions
         .filter((ext) => ext.isPreviewable)
-        .map((ext) => getUIExtensionPayload(ext, bundlePath, options)),
+        .map((ext) =>
+          getUIExtensionPayload(ext, bundlePath, options, resolvers && getOrCreateResolver(resolvers, ext.devUUID)),
+        ),
     ),
   }
 
@@ -81,21 +84,44 @@ export async function getExtensionsPayloadStoreRawPayload(
   return payload
 }
 
+function getOrCreateResolver(resolvers: Map<string, AssetResolver>, devUUID: string): AssetResolver {
+  let resolver = resolvers.get(devUUID)
+  if (!resolver) {
+    resolver = new Map()
+    resolvers.set(devUUID, resolver)
+  }
+  return resolver
+}
+
 export class ExtensionsPayloadStore extends EventEmitter {
   private readonly options: ExtensionsPayloadStoreOptions
   private rawPayload: ExtensionsEndpointPayload
   private appAssetDirectories: Record<string, string> | undefined
+  // Per-extension URL → output-relative filesystem path map, refreshed by
+  // `getUIExtensionPayload` on every build/rebuild. The dev server middleware
+  // consults this to serve the right file when asset basenames collide across
+  // extension points (`uniqueBasename` → `tools-1.json` etc.).
+  private readonly assetResolvers: Map<string, AssetResolver>
 
-  constructor(rawPayload: ExtensionsEndpointPayload, options: ExtensionsPayloadStoreOptions) {
+  constructor(
+    rawPayload: ExtensionsEndpointPayload,
+    options: ExtensionsPayloadStoreOptions,
+    assetResolvers: Map<string, AssetResolver> = new Map(),
+  ) {
     super()
     this.rawPayload = rawPayload
     this.options = options
+    this.assetResolvers = assetResolvers
 
     this.refreshAppAssetDirectories()
   }
 
   getAppAssets(): Record<string, string> | undefined {
     return this.appAssetDirectories
+  }
+
+  getAssetResolver(devUUID: string): AssetResolver | undefined {
+    return this.assetResolvers.get(devUUID)
   }
 
   getConnectedPayload() {
@@ -192,11 +218,16 @@ export class ExtensionsPayloadStore extends EventEmitter {
       return
     }
 
-    payloadExtensions[index] = await getUIExtensionPayload(extension, bundlePath, {
-      ...this.options,
-      currentDevelopmentPayload: development ?? {status: payloadExtensions[index]?.development.status},
-      currentLocalizationPayload: payloadExtensions[index]?.localization,
-    })
+    payloadExtensions[index] = await getUIExtensionPayload(
+      extension,
+      bundlePath,
+      {
+        ...this.options,
+        currentDevelopmentPayload: development ?? {status: payloadExtensions[index]?.development.status},
+        currentLocalizationPayload: payloadExtensions[index]?.localization,
+      },
+      getOrCreateResolver(this.assetResolvers, extension.devUUID),
+    )
 
     this.rawPayload.extensions = payloadExtensions
 
@@ -207,12 +238,20 @@ export class ExtensionsPayloadStore extends EventEmitter {
     const index = this.rawPayload.extensions.findIndex((ext) => ext.uuid === extension.devUUID)
     if (index !== -1) {
       this.rawPayload.extensions.splice(index, 1)
+      this.assetResolvers.delete(extension.devUUID)
       this.emitUpdate([extension.devUUID])
     }
   }
 
   async addExtension(extension: ExtensionInstance, bundlePath: string) {
-    this.rawPayload.extensions.push(await getUIExtensionPayload(extension, bundlePath, this.options))
+    this.rawPayload.extensions.push(
+      await getUIExtensionPayload(
+        extension,
+        bundlePath,
+        this.options,
+        getOrCreateResolver(this.assetResolvers, extension.devUUID),
+      ),
+    )
     this.emitUpdate([extension.devUUID])
   }
 

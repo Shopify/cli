@@ -414,10 +414,15 @@ describe('ExtensionsPayloadStore()', () => {
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path', {hidden: true})
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
-        ...mockOptions,
-        currentDevelopmentPayload: {hidden: true},
-      })
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(
+        updatedExtension,
+        'mock-bundle-path',
+        {
+          ...mockOptions,
+          currentDevelopmentPayload: {hidden: true},
+        },
+        expect.any(Map),
+      )
       expect(extensionsPayloadStore.getRawPayload()).toStrictEqual({
         mock: 'payload',
         extensions: [{mock: 'getExtensionsPayloadResponse'}, {uuid: '456', foo: 'bar'}],
@@ -441,12 +446,17 @@ describe('ExtensionsPayloadStore()', () => {
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
-        ...mockOptions,
-        currentDevelopmentPayload: {
-          status: 'success',
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(
+        updatedExtension,
+        'mock-bundle-path',
+        {
+          ...mockOptions,
+          currentDevelopmentPayload: {
+            status: 'success',
+          },
         },
-      })
+        expect.any(Map),
+      )
       expect(extensionsPayloadStore.getRawPayload()).toStrictEqual({
         mock: 'payload',
         extensions: [{mock: 'getExtensionsPayloadResponse'}, {uuid: '456', development: {status: 'error'}}],
@@ -472,13 +482,22 @@ describe('ExtensionsPayloadStore()', () => {
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
-        ...mockOptions,
-        currentDevelopmentPayload: {
-          status: 'success',
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(
+        updatedExtension,
+        'mock-bundle-path',
+        {
+          ...mockOptions,
+          currentDevelopmentPayload: {
+            status: 'success',
+          },
+          currentLocalizationPayload: {
+            defaultLocale: 'en',
+            lastUpdated: 100,
+            translations: {en: {welcome: 'Welcome!'}},
+          },
         },
-        currentLocalizationPayload: {defaultLocale: 'en', lastUpdated: 100, translations: {en: {welcome: 'Welcome!'}}},
-      })
+        expect.any(Map),
+      )
     })
 
     test('informs event listeners of the updated extension', async () => {
@@ -522,6 +541,25 @@ describe('ExtensionsPayloadStore()', () => {
       // Then
       expect(initialRawPayload).toStrictEqual(extensionsPayloadStore.getRawPayload())
       expect(onUpdateSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('deleteExtension()', () => {
+    test('removes the asset resolver entry for the deleted extension', () => {
+      // Given
+      const mockPayload = {extensions: [{uuid: '123'}, {uuid: '456'}]} as unknown as ExtensionsEndpointPayload
+      const assetResolvers = new Map<string, payload.AssetResolver>([
+        ['123', new Map([['CUSTOM_TARGET/tools', 'tools.json']])],
+        ['456', new Map([['CUSTOM_TARGET/tools', 'other.json']])],
+      ])
+      const store = new ExtensionsPayloadStore(mockPayload, mockOptions, assetResolvers)
+
+      // When
+      store.deleteExtension({devUUID: '123'} as unknown as ExtensionInstance)
+
+      // Then
+      expect(store.getAssetResolver('123')).toBeUndefined()
+      expect(store.getAssetResolver('456')).toBeDefined()
     })
   })
 

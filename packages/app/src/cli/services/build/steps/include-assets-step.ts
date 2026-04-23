@@ -1,8 +1,8 @@
-import {generateManifestFile} from './include-assets/generate-manifest.js'
+import {generateManifestFile, resolveOutputDir} from './include-assets/generate-manifest.js'
 import {copyByPattern} from './include-assets/copy-by-pattern.js'
 import {copySourceEntry} from './include-assets/copy-source-entry.js'
 import {copyConfigKeyEntry} from './include-assets/copy-config-key-entry.js'
-import {joinPath, dirname, extname, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
 import {z} from 'zod'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
@@ -123,9 +123,7 @@ export async function executeIncludeAssetsStep(
 ): Promise<{filesCopied: number}> {
   const config = IncludeAssetsConfigSchema.parse(step.config)
   const {extension, options} = context
-  // When outputPath is a file (e.g. index.js, index.wasm), the output directory is its
-  // parent. When outputPath has no extension, it IS the output directory.
-  const outputDir = extname(extension.outputPath) ? dirname(extension.outputPath) : extension.outputPath
+  const outputDir = resolveOutputDir(extension.outputPath)
 
   const aggregatedPathMap = new Map<string, string | string[]>()
   // Track basenames written across all configKey entries in this build to detect
