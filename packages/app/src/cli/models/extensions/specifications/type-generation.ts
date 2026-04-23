@@ -15,6 +15,27 @@ async function loadTypeScript(): Promise<typeof ts> {
 }
 
 const require = createRequire(import.meta.url)
+const uiExtensionsPackage = '@shopify/ui-extensions'
+
+function getGeneratedTypesHelperSurface(target: string): string {
+  const domain = target.toLowerCase().replace(/(::|\.).+$/, '')
+
+  switch (domain) {
+    case 'purchase':
+      return 'checkout'
+    case 'pos':
+      return 'point-of-sale'
+    default:
+      return domain
+  }
+}
+
+export function getGeneratedTypesHelperImportPath(targets: string[]): string {
+  const target = targets[0]
+  if (!target) return uiExtensionsPackage
+
+  return `${uiExtensionsPackage}/${getGeneratedTypesHelperSurface(target)}`
+}
 
 export function parseApiVersion(apiVersion: string): {year: number; month: number} | null {
   const [year, month] = apiVersion.split('-')
@@ -270,6 +291,7 @@ async function buildShopifyType(
   targets: string[],
   resolvedTargetPaths: Map<string, string>,
   {includesTools, includesIntents}: ShopifyTypeOptions,
+  generatedTypesHelperImportPath: string,
 ): Promise<string | null> {
   const baseShopifyType = await buildBaseShopifyType(targets, resolvedTargetPaths)
   if (!baseShopifyType) return null
@@ -278,99 +300,17 @@ async function buildShopifyType(
     return baseShopifyType
   }
 
-  const wrappers = [
-    ...(includesIntents ? ['WithGeneratedIntents'] : []),
-    ...(includesTools ? ['WithGeneratedTools'] : []),
-  ]
-
-  return wrappers.reduce((shopifyType, wrapper) => `${wrapper}<${shopifyType}>`, baseShopifyType)
-}
-
-function buildShopifyUtilityTypes({includesTools, includesIntents}: ShopifyTypeOptions): string {
-  const utilityTypes: string[] = []
-
-  if (includesTools) {
-    utilityTypes.push(`interface GeneratedToolsConstraint<Tools> {
-  tools?: Tools;
-}
-
-interface GeneratedToolsOverride<Tools> {
-  tools: Omit<NonNullable<Tools>, 'register'> & ShopifyTools;
-}
-
-interface GeneratedToolsFallback {
-  tools: ShopifyTools;
-}
-
-type WithGeneratedTools<T> = T extends GeneratedToolsConstraint<infer Tools>
-  ? Omit<T, 'tools'> & GeneratedToolsOverride<Tools>
-  : T & GeneratedToolsFallback;`)
-  }
+  let shopifyType = baseShopifyType
 
   if (includesIntents) {
-    utilityTypes.push(`interface GeneratedIntentResponseConstraint<Response> {
-  response?: Response;
-}
-
-interface GeneratedIntentResponseOverride<BaseResponse, GeneratedResponse> {
-  response?: Omit<NonNullable<BaseResponse>, 'ok'> & NonNullable<GeneratedResponse>;
-}
-
-interface GeneratedIntentResponseFallback<GeneratedResponse> {
-  response?: NonNullable<GeneratedResponse>;
-}
-
-interface GeneratedIntentRequestConstraint<Request> {
-  request: Request;
-}
-
-type ReplaceSubscribableValue<Base, Value> = Base extends {value: unknown; subscribe: (callback: (value: infer _) => void) => () => void}
-  ? Omit<Base, 'value' | 'subscribe'> & {
-      readonly value: Value;
-      subscribe: (callback: (value: Value) => void) => () => void;
-    }
-  : {
-      readonly value: Value;
-      subscribe: (callback: (value: Value) => void) => () => void;
-    };
-
-interface GeneratedIntentsConstraint<Intents> {
-  intents?: Intents;
-}
-
-interface GeneratedIntentsOverride<Intents> {
-  intents: Omit<NonNullable<Intents>, 'request' | 'response'> &
-    MergeGeneratedIntentResponse<NonNullable<Intents>>;
-}
-
-interface GeneratedIntentsFallback {
-  intents: ShopifyGeneratedIntentVariants;
-}
-
-type MergeGeneratedIntentResponse<Intents> =
-  ShopifyGeneratedIntentVariants extends infer Generated
-    ? Generated extends GeneratedIntentRequestConstraint<infer GeneratedRequest>
-      ? Omit<Generated, 'request' | 'response'> & {
-          request: Intents extends GeneratedIntentRequestConstraint<infer BaseRequest>
-            ? ReplaceSubscribableValue<BaseRequest, GeneratedRequest | null>
-            : {
-                readonly value: GeneratedRequest | null;
-                subscribe: (callback: (value: GeneratedRequest | null) => void) => () => void;
-              };
-        } & (Generated extends GeneratedIntentResponseConstraint<infer GeneratedResponse>
-          ? Intents extends GeneratedIntentResponseConstraint<infer BaseResponse>
-            ? GeneratedIntentResponseOverride<BaseResponse, GeneratedResponse>
-            : GeneratedIntentResponseFallback<GeneratedResponse>
-          : unknown)
-      : Generated
-    : never;`)
-
-    utilityTypes.push(`type WithGeneratedIntents<T> = T extends GeneratedIntentsConstraint<infer Intents>
-  ? Omit<T, 'intents'> & GeneratedIntentsOverride<Intents>
-  : T & GeneratedIntentsFallback;`)
+    shopifyType = `import('${generatedTypesHelperImportPath}').WithGeneratedIntents<${shopifyType}, ShopifyGeneratedIntentVariants>`
   }
 
-  return utilityTypes.join('\n\n')
+  if (includesTools) {
+    shopifyType = `import('${generatedTypesHelperImportPath}').WithGeneratedTools<${shopifyType}, ShopifyTools>`
+  }
+
+  return shopifyType
 }
 
 export async function createTypeDefinition({
@@ -383,6 +323,8 @@ export async function createTypeDefinition({
 }: CreateTypeDefinitionOptions): Promise<string | null> {
   try {
     const resolvedTargetPaths = new Map<string, string>()
+    const includesTools = Boolean(toolsTypeDefinition)
+    const includesIntents = Boolean(intentsTypeDefinition)
 
     // Validate that all targets can be resolved, and capture the resolved .d.ts
     // path so buildShopifyType can inspect it for ShopifyGlobal exports.
@@ -401,21 +343,34 @@ export async function createTypeDefinition({
       }
     }
 
+    const generatedTypesHelperImportPath = getGeneratedTypesHelperImportPath(targets)
+
+    if (includesTools || includesIntents) {
+      try {
+        require.resolve(generatedTypesHelperImportPath, {paths: [fullPath, typeFilePath]})
+      } catch (_) {
+        const {year, month} = parseApiVersion(apiVersion) ?? {year: 2025, month: 10}
+        throw new AbortError(
+          `Type reference for ${generatedTypesHelperImportPath} could not be found. You might be using the wrong @shopify/ui-extensions version.`,
+          `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~${year}.${month}.0, in your dependencies.`,
+        )
+      }
+    }
+
     const relativePath = relativizePath(fullPath, dirname(typeFilePath))
-    const includesTools = Boolean(toolsTypeDefinition)
-    const includesIntents = Boolean(intentsTypeDefinition)
-
-    const shopifyType = await buildShopifyType(targets, resolvedTargetPaths, {includesTools, includesIntents})
+    const shopifyType = await buildShopifyType(
+      targets,
+      resolvedTargetPaths,
+      {includesTools, includesIntents},
+      generatedTypesHelperImportPath,
+    )
     if (!shopifyType) return null
-
-    const shopifyUtilityTypes = buildShopifyUtilityTypes({includesTools, includesIntents})
 
     const lines = [
       '//@ts-ignore',
       `declare module './${relativePath}' {`,
       ...(toolsTypeDefinition ? [toolsTypeDefinition] : []),
       ...(intentsTypeDefinition ? [intentsTypeDefinition] : []),
-      ...(shopifyUtilityTypes ? [shopifyUtilityTypes] : []),
       `  const shopify: ${shopifyType};`,
       '  const globalThis: { shopify: typeof shopify };',
       '}',
@@ -496,7 +451,10 @@ function intentTypeBaseName(intent: Pick<IntentTypeDefinition, 'action' | 'type'
  * Generates TypeScript types for shopify.intents.request and shopify.intents.response.ok
  * based on intent schema definitions.
  */
-export async function createIntentsTypeDefinition(intents: IntentTypeDefinition[]): Promise<string> {
+export async function createIntentsTypeDefinition(
+  intents: IntentTypeDefinition[],
+  {generatedTypesHelperImportPath}: {generatedTypesHelperImportPath: string},
+): Promise<string> {
   if (intents.length === 0) return ''
 
   const intentKeys = new Set<string>()
@@ -538,7 +496,7 @@ export async function createIntentsTypeDefinition(intents: IntentTypeDefinition[
 
   const generatedIntents = types
     .map(({requestTypeName, outputTypeName}) => {
-      return `  | ShopifyGeneratedIntentsApi<${requestTypeName}, ${outputTypeName}>`
+      return `  | import('${generatedTypesHelperImportPath}').ShopifyGeneratedIntentVariant<${requestTypeName}, ${outputTypeName}>`
     })
     .join('\n')
 
@@ -546,12 +504,7 @@ export async function createIntentsTypeDefinition(intents: IntentTypeDefinition[
     .map(
       ({inputType, valueType, outputType, requestType}) => `${inputType}\n${valueType}\n${outputType}\n${requestType}`,
     )
-    .join('\n\n')}\n\ninterface ShopifyGeneratedIntentResponse<Data = unknown> {
-  ok(data?: Data): Promise<void>;
-}\n\ninterface ShopifyGeneratedIntentsApi<Request = unknown, ResponseData = unknown> {
-  request: Request;
-  response?: ShopifyGeneratedIntentResponse<ResponseData>;
-}\n\ntype ShopifyGeneratedIntentVariants =\n${generatedIntents}\n`
+    .join('\n\n')}\n\ntype ShopifyGeneratedIntentVariants =\n${generatedIntents}\n`
 }
 
 /**
@@ -599,7 +552,7 @@ export async function createToolsTypeDefinition(tools: ToolDefinition[]): Promis
         .split('\n')
         .map((line) => `   * ${line}`)
         .join('\n')
-      return `  /**\n${formattedDescription}\n   */\n  register(name: '${name}', handler: (input: ${inputTypeName}) => ${outputTypeName} | Promise<${outputTypeName}>);`
+      return `  /**\n${formattedDescription}\n   */\n  register(name: '${name}', handler: (input: ${inputTypeName}) => ${outputTypeName} | Promise<${outputTypeName}>): () => void;`
     })
     .join('\n')
 

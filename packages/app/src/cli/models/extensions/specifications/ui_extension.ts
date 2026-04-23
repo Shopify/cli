@@ -4,6 +4,7 @@ import {
   createTypeDefinition,
   createToolsTypeDefinition,
   findNearestTsConfigDir,
+  getGeneratedTypesHelperImportPath,
   IntentSchemaFileSchema,
   parseApiVersion,
   ToolsFileSchema,
@@ -19,6 +20,7 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -287,6 +289,7 @@ const uiExtensionSpec = createExtensionSpecification({
 
       // Remove duplicates from targets
       const uniqueTargets = [...new Set(targets)]
+      const generatedTypesHelperImportPath = getGeneratedTypesHelperImportPath(uniqueTargets)
 
       try {
         const toolsDefinition = fileToToolsMap.get(filePath)
@@ -316,9 +319,10 @@ const uiExtensionSpec = createExtensionSpecification({
 
           if (parsedIntents.length > 0) {
             try {
-              intentsTypeDefinition = await createIntentsTypeDefinition(parsedIntents)
-              // eslint-disable-next-line no-catch-all/no-catch-all
+              intentsTypeDefinition = await createIntentsTypeDefinition(parsedIntents, {generatedTypesHelperImportPath})
             } catch (error) {
+              if (error instanceof AbortError) throw error
+
               outputWarn(
                 `Failed to create intent type definition for intent schema files "${intentsDefinitions
                   .map((intent) => intent.schema)
@@ -410,7 +414,10 @@ async function parseIntentTypeDefinitions(
     intents.map(async (intent) => {
       try {
         const intentSchema = await readAndValidateJsonAsset(extensionDirectory, intent.schema, IntentSchemaFileSchema)
-        if (intentSchema.status === 'missing') return null
+        if (intentSchema.status === 'missing') {
+          outputWarn(`Intent schema file "${intent.schema}" was not found. Skipping intent type generation.`)
+          return null
+        }
 
         if (intentSchema.status === 'invalid') {
           outputWarn(`Invalid intent schema in "${intent.schema}": ${intentSchema.issues}`)

@@ -1,11 +1,32 @@
-import {createIntentsTypeDefinition, createToolsTypeDefinition} from './type-generation.js'
+import {
+  createIntentsTypeDefinition,
+  createToolsTypeDefinition,
+  getGeneratedTypesHelperImportPath,
+} from './type-generation.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test} from 'vitest'
+
+const adminGeneratedTypesHelperImportPath = '@shopify/ui-extensions/admin'
+
+describe('getGeneratedTypesHelperImportPath', () => {
+  test('returns the surface package for generated helper types', () => {
+    expect(getGeneratedTypesHelperImportPath(['admin.app.intent.render'])).toBe('@shopify/ui-extensions/admin')
+    expect(getGeneratedTypesHelperImportPath(['purchase.checkout.block.render'])).toBe(
+      '@shopify/ui-extensions/checkout',
+    )
+    expect(getGeneratedTypesHelperImportPath(['pos.home.tile.render'])).toBe('@shopify/ui-extensions/point-of-sale')
+    expect(getGeneratedTypesHelperImportPath(['customer-account.order-status.block.render'])).toBe(
+      '@shopify/ui-extensions/customer-account',
+    )
+  })
+})
 
 describe('createIntentsTypeDefinition', () => {
   test('returns empty string when intents array is empty', async () => {
     // When
-    const result = await createIntentsTypeDefinition([])
+    const result = await createIntentsTypeDefinition([], {
+      generatedTypesHelperImportPath: adminGeneratedTypesHelperImportPath,
+    })
 
     // Then
     expect(result).toBe('')
@@ -34,7 +55,9 @@ describe('createIntentsTypeDefinition', () => {
     ]
 
     // When
-    const result = await createIntentsTypeDefinition(intents)
+    const result = await createIntentsTypeDefinition(intents, {
+      generatedTypesHelperImportPath: adminGeneratedTypesHelperImportPath,
+    })
 
     // Then
     expect(result).toBe(`interface CreateApplicationEmailIntentInput {
@@ -55,17 +78,8 @@ interface CreateApplicationEmailIntentRequest {
   value?: CreateApplicationEmailIntentValue;
 }
 
-interface ShopifyGeneratedIntentResponse<Data = unknown> {
-  ok(data?: Data): Promise<void>;
-}
-
-interface ShopifyGeneratedIntentsApi<Request = unknown, ResponseData = unknown> {
-  request: Request;
-  response?: ShopifyGeneratedIntentResponse<ResponseData>;
-}
-
 type ShopifyGeneratedIntentVariants =
-  | ShopifyGeneratedIntentsApi<CreateApplicationEmailIntentRequest, CreateApplicationEmailIntentOutput>
+  | import('@shopify/ui-extensions/admin').ShopifyGeneratedIntentVariant<CreateApplicationEmailIntentRequest, CreateApplicationEmailIntentOutput>
 `)
   })
 
@@ -104,16 +118,18 @@ type ShopifyGeneratedIntentVariants =
     ]
 
     // When
-    const result = await createIntentsTypeDefinition(intents)
+    const result = await createIntentsTypeDefinition(intents, {
+      generatedTypesHelperImportPath: adminGeneratedTypesHelperImportPath,
+    })
 
     // Then
     expect(result).toContain('interface CreateApplicationEmailIntentRequest')
     expect(result).toContain('type CreateApplicationEmailIntentOutput = unknown')
     expect(result).toContain('interface EditShopifyProductIntentRequest')
     expect(result).toContain('type EditShopifyProductIntentValue = string')
-    expect(result).toContain('response?: ShopifyGeneratedIntentResponse<ResponseData>;')
+    expect(result).not.toContain('ShopifyGeneratedIntentsApi')
     expect(result).toContain(
-      'ShopifyGeneratedIntentsApi<EditShopifyProductIntentRequest, EditShopifyProductIntentOutput>',
+      "import('@shopify/ui-extensions/admin').ShopifyGeneratedIntentVariant<EditShopifyProductIntentRequest, EditShopifyProductIntentOutput>",
     )
   })
 
@@ -133,7 +149,9 @@ type ShopifyGeneratedIntentVariants =
     ]
 
     // When & Then
-    await expect(createIntentsTypeDefinition(intents)).rejects.toThrow(
+    await expect(
+      createIntentsTypeDefinition(intents, {generatedTypesHelperImportPath: adminGeneratedTypesHelperImportPath}),
+    ).rejects.toThrow(
       new AbortError(
         'Intent "create:application/email" is defined multiple times. Intents must be unique within a target.',
       ),
@@ -192,7 +210,7 @@ interface ShopifyTools {
   /**
    * Gets a product by ID
    */
-  register(name: 'get_product', handler: (input: GetProductInput) => GetProductOutput | Promise<GetProductOutput>);
+  register(name: 'get_product', handler: (input: GetProductInput) => GetProductOutput | Promise<GetProductOutput>): () => void;
 }
 `)
   })
@@ -226,7 +244,7 @@ interface ShopifyTools {
   /**
    * A simple action
    */
-  register(name: 'simple_action', handler: (input: SimpleActionInput) => SimpleActionOutput | Promise<SimpleActionOutput>);
+  register(name: 'simple_action', handler: (input: SimpleActionInput) => SimpleActionOutput | Promise<SimpleActionOutput>): () => void;
 }
 `)
   })
@@ -296,11 +314,11 @@ interface ShopifyTools {
   /**
    * First tool
    */
-  register(name: 'tool_one', handler: (input: ToolOneInput) => ToolOneOutput | Promise<ToolOneOutput>);
+  register(name: 'tool_one', handler: (input: ToolOneInput) => ToolOneOutput | Promise<ToolOneOutput>): () => void;
   /**
    * Second tool
    */
-  register(name: 'tool_two', handler: (input: ToolTwoInput) => ToolTwoOutput | Promise<ToolTwoOutput>);
+  register(name: 'tool_two', handler: (input: ToolTwoInput) => ToolTwoOutput | Promise<ToolTwoOutput>): () => void;
 }
 `)
   })
@@ -351,7 +369,7 @@ interface ShopifyTools {
   /**
    * This description contains *\\/ which could break comments
    */
-  register(name: 'tool_with_special_desc', handler: (input: ToolWithSpecialDescInput) => ToolWithSpecialDescOutput | Promise<ToolWithSpecialDescOutput>);
+  register(name: 'tool_with_special_desc', handler: (input: ToolWithSpecialDescInput) => ToolWithSpecialDescOutput | Promise<ToolWithSpecialDescOutput>): () => void;
 }
 `)
   })
@@ -381,7 +399,7 @@ interface ShopifyTools {
    * Line two
    * Line three
    */
-  register(name: 'documented_tool', handler: (input: DocumentedToolInput) => DocumentedToolOutput | Promise<DocumentedToolOutput>);
+  register(name: 'documented_tool', handler: (input: DocumentedToolInput) => DocumentedToolOutput | Promise<DocumentedToolOutput>): () => void;
 }
 `)
   })
@@ -413,7 +431,7 @@ interface ShopifyTools {
   /**
    * A tool with snake case name
    */
-  register(name: 'my_snake_case_tool', handler: (input: MySnakeCaseToolInput) => MySnakeCaseToolOutput | Promise<MySnakeCaseToolOutput>);
+  register(name: 'my_snake_case_tool', handler: (input: MySnakeCaseToolInput) => MySnakeCaseToolOutput | Promise<MySnakeCaseToolOutput>): () => void;
 }
 `)
   })
@@ -484,7 +502,7 @@ interface ShopifyTools {
   /**
    * A tool with nested schema
    */
-  register(name: 'complex_tool', handler: (input: ComplexToolInput) => ComplexToolOutput | Promise<ComplexToolOutput>);
+  register(name: 'complex_tool', handler: (input: ComplexToolInput) => ComplexToolOutput | Promise<ComplexToolOutput>): () => void;
 }
 `)
   })
@@ -512,9 +530,42 @@ interface ShopifyTools {
   /**
    * Gets product info
    */
-  register(name: 'get-product-info', handler: (input: GetProductInfoInput) => GetProductInfoOutput | Promise<GetProductInfoOutput>);
+  register(name: 'get-product-info', handler: (input: GetProductInfoInput) => GetProductInfoOutput | Promise<GetProductInfoOutput>): () => void;
 }
 `)
+  })
+
+  test('renames types generated from schemas with titles to the requested generated name', async () => {
+    // Given
+    const tools = [
+      {
+        name: 'expected_tool',
+        description: 'A tool with schema titles',
+        inputSchema: {
+          title: 'SchemaTitleInput',
+          type: 'object',
+          properties: {
+            id: {type: 'string'},
+          },
+        },
+        outputSchema: {
+          title: 'SchemaTitleOutput',
+          type: 'object',
+          properties: {
+            success: {type: 'boolean'},
+          },
+        },
+      },
+    ]
+
+    // When
+    const result = await createToolsTypeDefinition(tools)
+
+    // Then
+    expect(result).toContain('interface ExpectedToolInput')
+    expect(result).toContain('interface ExpectedToolOutput')
+    expect(result).not.toContain('interface SchemaTitleInput')
+    expect(result).not.toContain('interface SchemaTitleOutput')
   })
 
   test('does not include export declarations in the output', async () => {
