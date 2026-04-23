@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
 import {authFixture} from './auth.js'
-import {navigateToDashboard, refreshIfPageError} from './browser.js'
+import {getLastPageStatus, navigateToDashboard, refreshIfPageError} from './browser.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 import * as toml from '@iarna/toml'
@@ -334,10 +334,10 @@ export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Pro
   // Step 1: Navigate to the app's settings page. 404 → already deleted. 5xx → throw for retry.
   await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-  const bodyText = (await page.textContent('body')) ?? ''
-  if (bodyText.includes('404: Not Found')) return true
-  if (bodyText.includes('500: Internal Server Error') || bodyText.includes('502 Bad Gateway')) {
-    throw new Error('Server error loading app settings page')
+  const gotoStatus = getLastPageStatus(page)
+  if (gotoStatus === 404) return true
+  if (gotoStatus !== undefined && gotoStatus >= 500) {
+    throw new Error(`Server error loading app settings page (status ${gotoStatus})`)
   }
 
   // Step 2: Click "Delete app" to open the confirmation modal.
@@ -371,10 +371,10 @@ export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Pro
   // Failure → same settings page.
   await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.short)
-  const afterText = (await page.textContent('body')) ?? ''
-  if (afterText.includes('404: Not Found')) return true
-  if (afterText.includes('500: Internal Server Error') || afterText.includes('502 Bad Gateway')) {
-    throw new Error('Server error verifying app deletion')
+  const afterStatus = getLastPageStatus(page)
+  if (afterStatus === 404) return true
+  if (afterStatus !== undefined && afterStatus >= 500) {
+    throw new Error(`Server error verifying app deletion (status ${afterStatus})`)
   }
   return false
 }

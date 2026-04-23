@@ -12,6 +12,33 @@ export interface BrowserContext {
 }
 
 // ---------------------------------------------------------------------------
+// Main-frame response status tracking
+// ---------------------------------------------------------------------------
+
+/**
+ * Records the HTTP status of the most recent main-frame document response per
+ * page. Populated by a `response` listener attached when the page is created
+ * (see fixture below). Read via `getLastPageStatus(page)`.
+ *
+ * A WeakMap lets the entry be garbage-collected with the page — no manual
+ * cleanup required.
+ */
+const lastMainFrameStatus = new WeakMap<Page, number>()
+
+export function trackMainFrameStatus(page: Page): void {
+  page.on('response', (response) => {
+    if (response.frame() !== page.mainFrame()) return
+    if (response.request().resourceType() !== 'document') return
+    lastMainFrameStatus.set(page, response.status())
+  })
+}
+
+/** Get the HTTP status of the last main-frame document response on `page`. */
+export function getLastPageStatus(page: Page): number | undefined {
+  return lastMainFrameStatus.get(page)
+}
+
+// ---------------------------------------------------------------------------
 // Fixture
 // ---------------------------------------------------------------------------
 
@@ -40,6 +67,7 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
       context.setDefaultTimeout(BROWSER_TIMEOUT.max)
       context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
       const page = await context.newPage()
+      trackMainFrameStatus(page)
       await use(page)
       await browser.close()
     },
@@ -52,12 +80,16 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
 // ---------------------------------------------------------------------------
 
 /**
- * Check if the current page shows a server error (500, 502). If so, refresh and return true.
- * Call this in retry loops when a selector isn't found — the page might be an error page.
+ * If the most recent main-frame response was a 5xx server error, reload the
+ * page and return true. Otherwise return false. Call this in retry loops when
+ * a selector isn't found — the page might be an error page.
+ *
+ * Uses the HTTP status captured by `trackMainFrameStatus` rather than scraping
+ * body text, so it works regardless of how an error page is rendered.
  */
 export async function refreshIfPageError(page: Page): Promise<boolean> {
-  const pageText = (await page.textContent('body')) ?? ''
-  if (!pageText.includes('500: Internal Server Error') && !pageText.includes('502 Bad Gateway')) return false
+  const status = getLastPageStatus(page)
+  if (status === undefined || status < 500) return false
   await page.reload({waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   return true
