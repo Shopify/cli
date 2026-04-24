@@ -106,6 +106,12 @@ const uiExtensionSpec = createExtensionSpecification({
                 type: 'configKey',
                 anchor: 'extension_points[]',
                 groupBy: 'target',
+                key: 'extension_points[].assets',
+              },
+              {
+                type: 'configKey',
+                anchor: 'extension_points[]',
+                groupBy: 'target',
                 key: 'extension_points[].tools',
               },
               {
@@ -119,12 +125,6 @@ const uiExtensionSpec = createExtensionSpecification({
                 anchor: 'extension_points[]',
                 groupBy: 'target',
                 key: 'extension_points[].intents[].schema',
-              },
-              {
-                type: 'configKey',
-                anchor: 'extension_points[]',
-                groupBy: 'target',
-                key: 'extension_points[].assets',
               },
             ],
           },
