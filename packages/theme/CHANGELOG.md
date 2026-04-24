@@ -1,5 +1,20 @@
 # @shopify/theme
 
+## 3.94.0
+
+### Patch Changes
+
+- 3e3c971: Bump Shopify/theme-tools packages
+  - @shopify/theme-check-node: 3.24.0 → 3.25.0
+  - @shopify/theme-language-server-node: 2.20.2 → 2.21.0
+
+  Includes ValidScopedCSSClass theme check, color_palette input support, and various fixes.
+
+- b2fc8bc: Fix `ENOTDIR` error when a file path is passed to `--path` flag in theme commands. The flag now validates that the provided path is a directory and shows a helpful error message suggesting the parent directory instead.
+- a95ee0f: Add error handler to chokidar file watcher to prevent unhandled exceptions
+- Updated dependencies [04b8492]
+  - @shopify/cli-kit@3.94.0
+
 ## 3.93.0
 
 ### Minor Changes
