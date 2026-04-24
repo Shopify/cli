@@ -6,6 +6,7 @@
  */
 
 /* eslint-disable no-restricted-imports */
+import {isVisibleWithin} from './browser.js'
 import {directories, executables, globalLog} from './env.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
@@ -154,7 +155,7 @@ async function visitAndHandleAccountPicker(page: Page, url: string, email: strin
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   if (isAccountsShopifyUrl(page.url())) {
     const accountButton = page.locator(`text=${email}`).first()
-    if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
+    if (await isVisibleWithin(accountButton, BROWSER_TIMEOUT.long)) {
       await accountButton.click()
       await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     }

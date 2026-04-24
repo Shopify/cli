@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import {appTestFixture} from './app.js'
+import {isVisibleWithin} from './browser.js'
 import {BROWSER_TIMEOUT} from './constants.js'
 import {createLogger, e2eSection} from './env.js'
 import * as fs from 'fs'
@@ -63,7 +64,7 @@ export async function createDevStore(
 
     if (browserPage.url().includes('accounts.shopify.com') && email) {
       const accountButton = browserPage.locator(`text=${email}`).first()
-      if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
+      if (await isVisibleWithin(accountButton, BROWSER_TIMEOUT.long)) {
         await accountButton.click()
         await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
       }
@@ -73,7 +74,7 @@ export async function createDevStore(
   // Wait for the store creation form to load — retry if page didn't render
   const nameInput = browserPage.locator('s-internal-text-field[label="Store name"]').locator('input')
   for (let attempt = 1; attempt <= 3; attempt++) {
-    if (await nameInput.isVisible({timeout: BROWSER_TIMEOUT.max}).catch(() => false)) break
+    if (await isVisibleWithin(nameInput, BROWSER_TIMEOUT.max)) break
 
     log.log(ctx, `store form not loaded (attempt ${attempt}/3), url=${browserPage.url()}`)
     await browserPage.goto(`https://admin.shopify.com/store-create/organization/${orgId}`, {
@@ -128,10 +129,10 @@ export async function createDevStore(
 /** Dismiss the Dev Console panel if visible on a store admin page. */
 export async function dismissDevConsole(page: Page): Promise<void> {
   const devConsole = page.locator('h2:has-text("Dev Console")')
-  if (!(await devConsole.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) return
+  if (!(await isVisibleWithin(devConsole, BROWSER_TIMEOUT.medium))) return
 
   const hideBtn = page.locator('button[aria-label="hide"]').first()
-  if (await hideBtn.isVisible({timeout: BROWSER_TIMEOUT.short}).catch(() => false)) {
+  if (await isVisibleWithin(hideBtn, BROWSER_TIMEOUT.short)) {
     await hideBtn.click()
     await page.waitForTimeout(BROWSER_TIMEOUT.short)
   }
@@ -152,19 +153,19 @@ export async function uninstallAppFromStore(page: Page, storeSlug: string, appNa
 
   // Step 2: Find the app by name. Not visible → already uninstalled.
   const appSpan = page.locator(`span:has-text("${appName}"):not([class*="Polaris"])`).first()
-  if (!(await appSpan.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false))) return true
+  if (!(await isVisibleWithin(appSpan, BROWSER_TIMEOUT.long))) return true
 
   // Step 3: Open the ⋯ menu and click Uninstall.
   await appSpan.locator('xpath=./following::button[1]').click()
   await page.waitForTimeout(BROWSER_TIMEOUT.short)
   const uninstallOpt = page.locator('text=Uninstall').last()
-  if (!(await uninstallOpt.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) return false
+  if (!(await isVisibleWithin(uninstallOpt, BROWSER_TIMEOUT.medium))) return false
   await uninstallOpt.click()
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   // Step 4: Confirm the uninstall in the modal (if one appears).
   const confirmBtn = page.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
-  if (await confirmBtn.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
+  if (await isVisibleWithin(confirmBtn, BROWSER_TIMEOUT.medium)) {
     await confirmBtn.click()
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
@@ -175,11 +176,10 @@ export async function uninstallAppFromStore(page: Page, storeSlug: string, appNa
   await page.reload({waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.long)
   await dismissDevConsole(page)
-  const stillVisible = await page
-    .locator(`span:has-text("${appName}"):not([class*="Polaris"])`)
-    .first()
-    .isVisible({timeout: BROWSER_TIMEOUT.medium})
-    .catch(() => false)
+  const stillVisible = await isVisibleWithin(
+    page.locator(`span:has-text("${appName}"):not([class*="Polaris"])`).first(),
+    BROWSER_TIMEOUT.medium,
+  )
   return !stillVisible
 }
 
@@ -187,7 +187,7 @@ export async function uninstallAppFromStore(page: Page, storeSlug: string, appNa
 export async function isStoreAppsEmpty(page: Page): Promise<boolean> {
   // "Add apps to your store" empty state is the definitive zero-apps signal
   const emptyState = page.locator('text=Add apps to your store')
-  if (await emptyState.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) return true
+  if (await isVisibleWithin(emptyState, BROWSER_TIMEOUT.medium)) return true
 
   // Fallback: no "More actions" menu buttons in the app list
   const menuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()

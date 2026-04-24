@@ -1,3 +1,4 @@
+import {isVisibleWithin} from '../setup/browser.js'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import type {Page} from '@playwright/test'
 
@@ -47,12 +48,12 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
     ]).catch(() => {})
 
     // If passkey page shown, navigate to password login
-    if (await differentMethodBtn.isVisible({timeout: BROWSER_TIMEOUT.short}).catch(() => false)) {
+    if (await isVisibleWithin(differentMethodBtn, BROWSER_TIMEOUT.short)) {
       await differentMethodBtn.click()
       await page.waitForTimeout(BROWSER_TIMEOUT.short)
 
       const continueWithPassword = page.locator('text=Continue with password')
-      if (await continueWithPassword.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
+      if (await isVisibleWithin(continueWithPassword, BROWSER_TIMEOUT.medium)) {
         await continueWithPassword.click()
         await page.waitForTimeout(BROWSER_TIMEOUT.short)
       }
@@ -67,7 +68,7 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     try {
       const btn = page.locator('button[type="submit"]').first()
-      if (await btn.isVisible({timeout: BROWSER_TIMEOUT.long})) await btn.click()
+      if (await isVisibleWithin(btn, BROWSER_TIMEOUT.long)) await btn.click()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_error) {
       // No confirmation page — expected

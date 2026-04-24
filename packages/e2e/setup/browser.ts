@@ -1,6 +1,6 @@
 import {cliFixture} from './cli.js'
 import {BROWSER_TIMEOUT} from './constants.js'
-import {chromium, type Page} from '@playwright/test'
+import {chromium, type Locator, type Page} from '@playwright/test'
 import * as fs from 'fs'
 
 // ---------------------------------------------------------------------------
@@ -80,6 +80,22 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
 // ---------------------------------------------------------------------------
 
 /**
+ * Wait up to `timeoutMs` for `locator` to become visible. Returns `true` if it
+ * appears in time, `false` on timeout or any other locator error (detached
+ * element, closed context, etc.).
+ *
+ * Use this instead of `locator.isVisible({timeout})` — that API does not
+ * actually wait in modern Playwright; it returns the current visibility state.
+ * This helper uses `waitFor({state: 'visible', timeout})` for true polling.
+ */
+export async function isVisibleWithin(locator: Locator, timeoutMs: number): Promise<boolean> {
+  return locator
+    .waitFor({state: 'visible', timeout: timeoutMs})
+    .then(() => true)
+    .catch(() => false)
+}
+
+/**
  * If the most recent main-frame response was a 5xx server error, reload the
  * page and return true. Otherwise return false. Call this in retry loops when
  * a selector isn't found — the page might be an error page.
@@ -114,7 +130,7 @@ export async function navigateToDashboard(
   // Handle account picker (skip if email not provided)
   if (ctx.email) {
     const accountButton = browserPage.locator(`text=${ctx.email}`).first()
-    if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
+    if (await isVisibleWithin(accountButton, BROWSER_TIMEOUT.medium)) {
       await accountButton.click()
       await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
     }

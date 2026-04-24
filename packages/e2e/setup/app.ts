@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
 import {authFixture} from './auth.js'
-import {getLastPageStatus, navigateToDashboard, refreshIfPageError} from './browser.js'
+import {getLastPageStatus, isVisibleWithin, navigateToDashboard, refreshIfPageError} from './browser.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 import * as toml from '@iarna/toml'
@@ -334,7 +334,7 @@ export async function findAppOnDevDashboard(page: Page, appName: string, orgId?:
 
     // Check for next page
     const nextLink = page.locator('a[href*="next_cursor"]').first()
-    if (!(await nextLink.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) break
+    if (!(await isVisibleWithin(nextLink, BROWSER_TIMEOUT.medium))) break
     const nextHref = await nextLink.getAttribute('href')
     if (!nextHref) break
     const nextUrl = nextHref.startsWith('http') ? nextHref : `https://dev.shopify.com${nextHref}`
@@ -380,7 +380,7 @@ export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Pro
 
   // Step 3: Some confirmation modals require typing "DELETE". Fill if the input is present.
   const confirmInput = page.locator('input[type="text"]').last()
-  if (await confirmInput.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
+  if (await isVisibleWithin(confirmInput, BROWSER_TIMEOUT.medium)) {
     await confirmInput.fill('DELETE')
     await page.waitForTimeout(BROWSER_TIMEOUT.short)
   }
