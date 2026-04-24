@@ -19,7 +19,9 @@ import type {Page} from '@playwright/test'
 async function raceWaiters<T>(build: (signal: AbortSignal) => Promise<T>[]): Promise<T> {
   const ctrl = new AbortController()
   const promises = build(ctrl.signal)
-  promises.forEach((promise) => promise.catch(() => {}))
+  promises.forEach((promise) => {
+    promise.catch(() => {})
+  })
   try {
     return await Promise.race(promises)
   } finally {
