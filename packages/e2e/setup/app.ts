@@ -9,6 +9,24 @@ import * as fs from 'fs'
 import type {CLIContext, CLIProcess, ExecResult} from './cli.js'
 import type {Page} from '@playwright/test'
 
+/**
+ * Race the given promise builders. When the winner resolves, losers are
+ * cancelled via `AbortController.abort()` so their timers and `outputWaiters`
+ * entries inside `waitForOutput` are freed immediately rather than lingering
+ * until they hit their own timeout. Loser rejections are swallowed so they
+ * don't surface as unhandled promise rejections.
+ */
+async function raceWaiters<T>(build: (signal: AbortSignal) => Promise<T>[]): Promise<T> {
+  const ctrl = new AbortController()
+  const promises = build(ctrl.signal)
+  promises.forEach((promise) => promise.catch(() => {}))
+  try {
+    return await Promise.race(promises)
+  } finally {
+    ctrl.abort()
+  }
+}
+
 // ---------------------------------------------------------------------------
 // CLI helpers — thin wrappers around cli.exec()
 // ---------------------------------------------------------------------------
@@ -236,11 +254,15 @@ export async function configLink(
   try {
     // The first prompt is either the multi-org selector or — when the account
     // has only one org, or none of the orgs have existing apps — we jump
-    // straight to `createAsNewAppPrompt`. Race both.
-    const firstPrompt = await Promise.race([
-      proc.waitForOutput('Which organization', CLI_TIMEOUT.medium).then(() => 'org' as const),
-      proc.waitForOutput('Create this project as a new app', CLI_TIMEOUT.medium).then(() => 'create' as const),
-      proc.waitForOutput('App name', CLI_TIMEOUT.medium).then(() => 'appName' as const),
+    // straight to `createAsNewAppPrompt`. Race all three; the loser
+    // waitForOutput calls are cancelled via AbortSignal so their timers and
+    // outputWaiter entries are freed immediately when the winner resolves.
+    const firstPrompt = await raceWaiters((signal) => [
+      proc.waitForOutput('Which organization', {timeoutMs: CLI_TIMEOUT.medium, signal}).then(() => 'org' as const),
+      proc
+        .waitForOutput('Create this project as a new app', {timeoutMs: CLI_TIMEOUT.medium, signal})
+        .then(() => 'create' as const),
+      proc.waitForOutput('App name', {timeoutMs: CLI_TIMEOUT.medium, signal}).then(() => 'appName' as const),
     ])
 
     if (firstPrompt === 'org') {
@@ -255,9 +277,11 @@ export async function configLink(
       // After org selection the CLI fetches apps for the chosen org. If
       // the org has existing apps → "Create this project" prompt. If it has
       // zero apps → selectOrCreateApp skips straight to appNamePrompt.
-      const next = await Promise.race([
-        proc.waitForOutput('Create this project as a new app', CLI_TIMEOUT.medium).then(() => 'create' as const),
-        proc.waitForOutput('App name', CLI_TIMEOUT.medium).then(() => 'appName' as const),
+      const next = await raceWaiters((signal) => [
+        proc
+          .waitForOutput('Create this project as a new app', {timeoutMs: CLI_TIMEOUT.medium, signal})
+          .then(() => 'create' as const),
+        proc.waitForOutput('App name', {timeoutMs: CLI_TIMEOUT.medium, signal}).then(() => 'appName' as const),
       ])
       if (next === 'create') {
         await settle()

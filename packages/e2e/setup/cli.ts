@@ -11,9 +11,19 @@ export interface ExecResult {
   exitCode: number
 }
 
+export interface WaitForOutputOptions {
+  timeoutMs?: number
+  /** Cancel the wait early — frees the timer and removes the waiter entry. */
+  signal?: AbortSignal
+}
+
 export interface SpawnedProcess {
-  /** Wait for a string to appear in the PTY output */
-  waitForOutput(text: string, timeoutMs?: number): Promise<void>
+  /**
+   * Wait for a string to appear in the PTY output.
+   * Pass a number for the legacy positional `timeoutMs` form, or an options
+   * object to also supply an `AbortSignal` for cancellation.
+   */
+  waitForOutput(text: string, opts?: number | WaitForOutputOptions): Promise<void>
   /** Send a single key to the PTY */
   sendKey(key: string): void
   /** Send a line of text followed by Enter */
@@ -132,13 +142,13 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
             process.stdout.write(data)
           }
 
-          // Check if any waiters are satisfied (check both raw and stripped output)
+          // Check if any waiters are satisfied (check both raw and stripped
+          // output). resolve() removes the waiter from outputWaiters internally,
+          // so we iterate over a snapshot to avoid index shifting during the loop.
           const stripped = stripAnsi(output)
-          for (let idx = outputWaiters.length - 1; idx >= 0; idx--) {
-            const waiter = outputWaiters[idx]
-            if (waiter && (stripped.includes(waiter.text) || output.includes(waiter.text))) {
+          for (const waiter of [...outputWaiters]) {
+            if (stripped.includes(waiter.text) || output.includes(waiter.text)) {
               waiter.resolve()
-              outputWaiters.splice(idx, 1)
             }
           }
         })
@@ -151,26 +161,39 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           if (exitResolve) {
             exitResolve(code)
           }
-          // Reject any remaining output waiters
-          for (const waiter of outputWaiters) {
+          // Reject any remaining output waiters. reject() removes each waiter
+          // from outputWaiters, so iterate over a snapshot to avoid skipping.
+          for (const waiter of [...outputWaiters]) {
             waiter.reject(new Error(`Process exited (code ${code}) while waiting for output: "${waiter.text}"`))
           }
-          outputWaiters.length = 0
         })
 
         const spawned: SpawnedProcess = {
           ptyProcess,
 
-          waitForOutput(text: string, timeoutMs = CLI_TIMEOUT.medium) {
+          waitForOutput(text: string, opts: number | WaitForOutputOptions = {}) {
+            const {timeoutMs = CLI_TIMEOUT.medium, signal} =
+              typeof opts === 'number' ? {timeoutMs: opts, signal: undefined} : opts
+
             // Check if already in output (raw or stripped)
             if (stripAnsi(output).includes(text) || output.includes(text)) {
               return Promise.resolve()
             }
+            if (signal?.aborted) {
+              return Promise.reject(new Error(`Cancelled waiting for output: "${text}"`))
+            }
 
             return new Promise<void>((resolve, reject) => {
+              // eslint-disable-next-line prefer-const
+              let waiter: {text: string; resolve: () => void; reject: (err: Error) => void}
+
+              const removeWaiter = () => {
+                const idx = outputWaiters.indexOf(waiter)
+                if (idx >= 0) outputWaiters.splice(idx, 1)
+              }
+
               const timer = setTimeout(() => {
-                const waiterIdx = outputWaiters.findIndex((waiter) => waiter.text === text)
-                if (waiterIdx >= 0) outputWaiters.splice(waiterIdx, 1)
+                removeWaiter()
                 reject(
                   new Error(
                     `Timed out after ${timeoutMs}ms waiting for output: "${text}"\n\nCaptured output:\n${stripAnsi(
@@ -180,17 +203,32 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
                 )
               }, timeoutMs)
 
-              outputWaiters.push({
+              waiter = {
                 text,
                 resolve: () => {
                   clearTimeout(timer)
+                  removeWaiter()
                   resolve()
                 },
                 reject: (err) => {
                   clearTimeout(timer)
+                  removeWaiter()
                   reject(err)
                 },
-              })
+              }
+              outputWaiters.push(waiter)
+
+              if (signal) {
+                signal.addEventListener(
+                  'abort',
+                  () => {
+                    clearTimeout(timer)
+                    removeWaiter()
+                    reject(new Error(`Cancelled waiting for output: "${text}"`))
+                  },
+                  {once: true},
+                )
+              }
             })
           },
 
