@@ -33,11 +33,11 @@ const webPixelSpec = createExtensionSpecification({
   partnersWebIdentifier: 'web_pixel',
   schema: WebPixelSchema,
   appModuleFeatures: (_) => ['esbuild', 'single_js_entry_path'],
-  getOutputRelativePath: (extension: ExtensionInstance<WebPixelConfigType>) => `dist/${extension.handle}.js`,
+  getOutputRelativePath: (extension: ExtensionInstance<WebPixelConfigType>) => `${extension.handle}.js`,
   clientSteps: [
     {
       lifecycle: 'deploy',
-      steps: [{id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}}],
+      steps: [{id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {bundleFolder: 'dist/'}}],
     },
   ],
   deployConfig: async (config, _) => {
