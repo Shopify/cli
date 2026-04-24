@@ -249,7 +249,7 @@ export async function configLink(
   // Short sleep so Ink's useInput hooks attach before we start writing.
   // Without this, an Enter press arrives mid-mount and a subsequent render can
   // flip the prompt state unexpectedly (e.g. turning a select into search mode).
-  const settle = (ms = 150) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+  const settle = (ms = 50) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
   try {
     // The first prompt is either the multi-org selector or — when the account
