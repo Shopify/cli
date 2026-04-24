@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.94.0
+
+### Patch Changes
+
+- 04b8492: Render task progress bars to stderr to reduce output noise in non-TTY environments
+
 ## 3.93.0
 
 ### Minor Changes
