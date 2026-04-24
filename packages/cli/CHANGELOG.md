@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.94.1
+
+### Patch Changes
+
+- 14bfc42: Fix dev and build command for web_pixel extensions
+
 ## 3.94.0
 
 ## 3.93.0

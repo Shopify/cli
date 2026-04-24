@@ -1,6 +1,6 @@
 {
   "name": "@shopify/store",
-  "version": "3.94.0",
+  "version": "3.94.1",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for working with Shopify stores",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@oclif/core": "4.5.3",
-    "@shopify/cli-kit": "3.94.0"
+    "@shopify/cli-kit": "3.94.1"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.1.4"
