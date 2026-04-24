@@ -1,5 +1,5 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {loadEnvironment, environmentFilePath} from './environments.js'
+import {loadEnvironment, environmentFilePath, expandEnvironmentPatterns} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
@@ -146,18 +146,32 @@ This flag is required in non-interactive terminal environments, such as a CI env
     const environmentFileExists = await environmentFilePath(environmentsFileName, {from: flags.path})
 
     // Handle both string and array cases for environment flag
-    let environments: string[] = []
+    let environmentPatterns: string[] = []
     if (flags.environment) {
-      environments = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
+      environmentPatterns = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
     }
 
-    const environmentSpecified = environments.length > 0
+    const environmentSpecified = environmentPatterns.length > 0
 
     // Noop if no environment file exists and none was specified
     if (!environmentFileExists && !environmentSpecified) return originalResult
 
+    // Expand glob patterns (e.g. "*-production") against available environment names.
+    // Literal names pass through unchanged via minimatch identity matching.
+    // Only mutate flags.environment when expansion produced results — otherwise
+    // preserve the original values so loadEnvironment() can surface proper errors.
+    let environments = environmentPatterns
+    if (environmentSpecified && environmentFileExists) {
+      const expandedEnvironments = await expandEnvironmentPatterns(environmentPatterns, environmentsFileName, {
+        from: flags.path,
+      })
+      if (expandedEnvironments.length === 0) return originalResult
+      environments = expandedEnvironments
+      flags.environment = environments
+    }
+
     // Noop if multiple environments were specified (let commands handle this)
-    if (environmentSpecified && environments.length > 1) return originalResult
+    if (environments.length > 1) return originalResult
 
     const {environment, isDefaultEnvironment} = await this.loadEnvironmentForCommand(
       flags.path,
@@ -181,6 +195,13 @@ This flag is required in non-interactive terminal environments, such as a CI env
       ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult),
       ...(isDefaultEnvironment ? ['--environment', 'default'] : []),
     ])
+
+    // When the user specified environment patterns, ensure the flag reflects
+    // the expanded name rather than the original glob pattern.
+    if (environmentSpecified) {
+      const resultFlags = result.flags as EnvironmentFlags
+      resultFlags.environment = environments
+    }
 
     // Report successful application of the environment.
     reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(

@@ -4,6 +4,8 @@ import {resolvePath, cwd, dirname} from '@shopify/cli-kit/node/path'
 import {fileExistsSync, isDirectorySync} from '@shopify/cli-kit/node/fs'
 import {renderError} from '@shopify/cli-kit/node/ui'
 
+const globQuotesDescription = "Wrap the value in double quotes if you're using wildcards."
+
 /**
  * An object that contains the flags that
  * are shared across all the theme commands.
@@ -52,13 +54,11 @@ export const themeFlags = {
   }),
   environment: Flags.string({
     char: 'e',
-    description: 'The environment to apply to the current command.',
+    description: `The environment to apply to the current command. Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple environments only work on commands that support multiple environments. ${globQuotesDescription}`,
     env: 'SHOPIFY_FLAG_ENVIRONMENT',
     multiple: true,
   }),
 }
-
-const globQuotesDescription = "Wrap the value in double quotes if you're using wildcards."
 
 export const globFlags = (action: 'download' | 'upload') => ({
   only: Flags.string({

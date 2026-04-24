@@ -4,6 +4,7 @@ import {cwd} from './path.js'
 import * as metadata from './metadata.js'
 import {renderWarning} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
+import {minimatch} from 'minimatch'
 
 export type Environments = Record<string, JsonMap>
 
@@ -24,15 +25,13 @@ function renderWarningIfNeeded(message: Parameters<typeof renderWarning>[0], sil
 }
 
 /**
- * Loads environments from a file.
- * @param dir - The file path to load environments from.
- * @returns The loaded environments.
+ * Reads and parses the environments section from a TOML file.
+ * Returns the environments record or undefined if the file or section is missing.
  */
-export async function loadEnvironment(
-  environmentName: string,
+async function decodeEnvironments(
   fileName: string,
   options?: LoadEnvironmentOptions,
-): Promise<JsonMap | undefined> {
+): Promise<Environments | undefined> {
   const filePath = await environmentFilePath(fileName, options)
   if (!filePath) {
     renderWarningIfNeeded({body: 'Environment file not found.'}, options?.silent)
@@ -50,8 +49,18 @@ export async function loadEnvironment(
     )
     return undefined
   }
-  const environment = environments[environmentName] as JsonMap | undefined
+  return environments as Environments
+}
 
+export async function loadEnvironment(
+  environmentName: string,
+  fileName: string,
+  options?: LoadEnvironmentOptions,
+): Promise<JsonMap | undefined> {
+  const environments = await decodeEnvironments(fileName, options)
+  if (!environments) return undefined
+
+  const environment = environments[environmentName] as JsonMap | undefined
   if (!environment) {
     renderWarningIfNeeded(
       {
@@ -67,6 +76,46 @@ export async function loadEnvironment(
   }))
 
   return environment
+}
+
+/**
+ * Returns all environment names defined in the TOML file.
+ */
+export async function getEnvironmentNames(fileName: string, options?: LoadEnvironmentOptions): Promise<string[]> {
+  const environments = await decodeEnvironments(fileName, {silent: true, ...options})
+  if (!environments) return []
+  return Object.keys(environments)
+}
+
+/**
+ * Expands glob patterns against all available environment names.
+ * Literal (non-glob) names pass through unchanged via minimatch identity matching.
+ * Warns for each pattern that matches nothing.
+ */
+export async function expandEnvironmentPatterns(
+  patterns: string[],
+  fileName: string,
+  options?: LoadEnvironmentOptions,
+): Promise<string[]> {
+  const allNames = await getEnvironmentNames(fileName, options)
+  if (allNames.length === 0) return []
+
+  const matched = new Set<string>()
+  for (const pattern of patterns) {
+    const matches = allNames.filter((name) => minimatch(name, pattern))
+    if (matches.length === 0) {
+      renderWarningIfNeeded(
+        {
+          body: ['No environments matching', {command: pattern}, 'were found.'],
+        },
+        options?.silent,
+      )
+    }
+    for (const match of matches) {
+      matched.add(match)
+    }
+  }
+  return Array.from(matched)
 }
 
 export async function environmentFilePath(

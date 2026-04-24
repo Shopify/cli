@@ -11,7 +11,7 @@ export interface themedelete {
   '-d, --development'?: ''
 
   /**
-   * The environment to apply to the current command.
+   * The environment to apply to the current command. Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.
    * @environment SHOPIFY_FLAG_ENVIRONMENT
    */
   '-e, --environment <value>'?: string
