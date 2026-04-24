@@ -230,9 +230,7 @@ export function graphiqlTemplate({
                 </Grid>
                 <div id="top-error-bar">
                   <Banner tone="critical" onDismiss={() => {}} icon={DisabledIcon}>
-                    <p>
-                      The server has been stopped. Restart <code>dev</code> from the CLI.
-                    </p>
+                    <p>The server has been stopped. Restart it from the CLI.</p>
                   </Banner>
                 </div>
               </BlockStack>
