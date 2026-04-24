@@ -1382,9 +1382,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           fileContent: '// JSX code',
           // Remote DOM supported version
           apiVersion: '2025-10',
-          // Mirrors the POS ui-extensions pattern: the target re-exports
-          // `ShopifyGlobal` via a named export specifier, which is the shape
-          // the AST helper detects.
+          // The target re-exports `ShopifyGlobal` via a named export specifier,
+          // which is the shape the AST helper detects. Any surface can opt in
+          // by emitting this shape from its target `.d.ts`.
           targetDtsContent: `
             interface _ShopifyGlobalInternal { addEventListener(type: string, listener: (event: unknown) => void): void }
             export type {_ShopifyGlobalInternal as ShopifyGlobal}
@@ -1410,6 +1410,52 @@ Please check the configuration in ${uiExtension.configurationPath}`),
                 `//@ts-ignore\ndeclare module './src/index.jsx' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api &
     import('@shopify/ui-extensions/admin.product-details.action.render').ShopifyGlobal;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+          ]),
+        )
+      })
+    })
+
+    test('ShopifyGlobal detection is target-agnostic — any target with the re-export opts in', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // A fabricated target name belonging to no real surface. The detector
+        // is purely name-based on the public `ShopifyGlobal` export, so any
+        // surface's target can opt in by shipping this shape — there is no
+        // allowlist or hard-coded target in the CLI.
+        const genericTarget = 'fake-surface.any-target.render'
+
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// JSX code',
+          apiVersion: '2025-10',
+          target: genericTarget,
+          targetDtsContent: `
+            interface _FakeShopifyGlobal { someHostApi(): void }
+            export type {_FakeShopifyGlobal as ShopifyGlobal}
+            export type Api = {placeholder: true}
+          `,
+        })
+
+        const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(tsconfigPath, '// TypeScript config')
+
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              shopifyDtsPath,
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/${genericTarget}').Api &
+    import('@shopify/ui-extensions/${genericTarget}').ShopifyGlobal;
   const globalThis: { shopify: typeof shopify };
 }\n`,
               ]),
