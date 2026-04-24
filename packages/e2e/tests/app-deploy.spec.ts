@@ -41,8 +41,8 @@ test.describe('App deploy', () => {
       expect(listResult.exitCode, `versions list failed:\n${listOutput}`).toBe(0)
       expect(listOutput).toContain(versionTag)
     } finally {
-      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
-      if (!process.env.E2E_SKIP_CLEANUP) {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           browserPage,
