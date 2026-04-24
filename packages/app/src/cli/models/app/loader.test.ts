@@ -15,7 +15,8 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, createContractBasedModuleSpecification} from '../extensions/specification.js'
+import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -2665,6 +2666,44 @@ describe('load', () => {
 
     expect(app).toBeDefined()
     expect(app.name).toBe('for-testing')
+  })
+
+  test('does not flag a contract-based configuration spec section as unsupported', async () => {
+    // Given: A TOML config with a section that matches a contract-based config spec
+    const configWithContractSection = buildAppConfiguration({
+      extra: '[purchase_options]\nbundles = true',
+    })
+    await writeConfig(configWithContractSection)
+
+    // Create a contract-based config spec (mimicking a remote-only spec like purchase_options)
+    const contractSpec = createContractBasedModuleSpecification({
+      identifier: 'purchase_options',
+      uidStrategy: 'single',
+      experience: 'configuration',
+      appModuleFeatures: () => [],
+    })
+
+    // Attach a unified parser with the JSON schema contract, like the real flow does
+    const validationSchema = {
+      jsonSchema:
+        '{"type":"object","additionalProperties":false,"properties":{"bundles":{"type":"boolean","description":"Whether the app supports purchase options on bundle products"}}}',
+    }
+    const parseConfigurationObject = await unifiedConfigurationParserFactory(
+      contractSpec as any,
+      validationSchema,
+      'strip',
+    )
+    const specsWithContract = [...specifications, {...contractSpec, parseConfigurationObject}]
+
+    // When: The app is loaded with the contract-based spec included
+    const app = await loadApp({
+      directory: tmpDir,
+      specifications: specsWithContract,
+      userProvidedConfigName: undefined,
+    })
+
+    // Then: No "unsupported section" error for purchase_options
+    expect(app.errors.isEmpty()).toBe(true)
   })
 })
 

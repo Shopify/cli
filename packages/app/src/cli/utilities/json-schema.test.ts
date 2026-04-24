@@ -152,6 +152,85 @@ describe('unifiedConfigurationParserFactory', () => {
     expect(priceError).toBeDefined()
   })
 
+  test('scopes validation to the section contents for configuration specs when identifier matches a key in the config', async () => {
+    // Given: A contract-based config spec (like purchase_options) where the JSON schema
+    // describes the section contents ({bundles: boolean}), and the parser receives the
+    // entire app config with the section nested under the identifier key.
+    const merged = {
+      identifier: 'purchase_options',
+      experience: 'configuration',
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema:
+          '{"type":"object","additionalProperties":false,"properties":{"bundles":{"type":"boolean","description":"Whether the app supports purchase options on bundle products"}}}',
+      },
+    }
+
+    // When: The parser receives a full app config where "purchase_options" is a nested section
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema, 'strip')
+    const result = parser({
+      client_id: 'test-id',
+      name: 'my-app',
+      purchase_options: {bundles: true},
+      webhooks: {api_version: '2024-01'},
+    })
+
+    // Then: The parser should scope to the section, validate {bundles: true} against the
+    // schema, and return only the section contents — not an empty object.
+    expect(result.state).toBe('ok')
+    expect(result.data).toEqual({bundles: true})
+  })
+
+  test('returns empty object when config spec identifier is not present in the config', async () => {
+    // Given: Same contract-based config spec, but the TOML doesn't include the section
+    const merged = {
+      identifier: 'purchase_options',
+      experience: 'configuration',
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema:
+          '{"type":"object","additionalProperties":false,"properties":{"bundles":{"type":"boolean","description":"Whether the app supports purchase options on bundle products"}}}',
+      },
+    }
+
+    // When: The config does NOT contain "purchase_options"
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema, 'strip')
+    const result = parser({
+      client_id: 'test-id',
+      name: 'my-app',
+      webhooks: {api_version: '2024-01'},
+    })
+
+    // Then: No scoping happens; strip removes all non-matching keys, leaving {}
+    expect(result.state).toBe('ok')
+    expect(result.data).toEqual({})
+  })
+
+  test('validates section contents against the JSON schema when scoped', async () => {
+    // Given: A config spec with a required field in the JSON schema
+    const merged = {
+      identifier: 'my_config',
+      experience: 'configuration',
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema:
+          '{"type":"object","additionalProperties":false,"properties":{"enabled":{"type":"boolean"}},"required":["enabled"]}',
+      },
+    }
+
+    // When: The section exists but is missing the required field
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema, 'strip')
+    const result = parser({
+      client_id: 'test-id',
+      my_config: {not_enabled: true},
+    })
+
+    // Then: Validation should fail because "enabled" is required
+    expect(result.state).toBe('error')
+    expect(result.errors).toBeDefined()
+    expect(result.errors!.length).toBeGreaterThan(0)
+  })
+
   test('adds base properties to the JSON schema', async () => {
     // Given
     const merged = {

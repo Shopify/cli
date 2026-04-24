@@ -49,7 +49,18 @@ export async function unifiedConfigurationParserFactory(
 
     // Then, even if this failed, we try to validate against the contract.
     const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined
-    const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
+    let subjectForAjv = zodValidatedData ?? (config as JsonMapType)
+
+    // For contract-based specs (remote-only specs with zod.any()), the zod parse returns the
+    // entire app config. The JSON schema contract describes the section contents (e.g.
+    // {bundles: boolean} for purchase_options), not the whole config. If the spec identifier
+    // exists as a key in the parsed data, scope to that section before validating.
+    if (extensionIdentifier in subjectForAjv) {
+      const sectionData = subjectForAjv[extensionIdentifier as keyof typeof subjectForAjv]
+      if (sectionData !== null && typeof sectionData === 'object' && !Array.isArray(sectionData)) {
+        subjectForAjv = sectionData as JsonMapType
+      }
+    }
 
     const jsonSchemaParse = jsonSchemaValidate(
       subjectForAjv,

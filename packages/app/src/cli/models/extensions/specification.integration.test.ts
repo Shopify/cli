@@ -9,6 +9,7 @@ import {BaseSchema} from './schemas.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
 import {AppSchema} from '../app/app.js'
 import {describe, test, expect, beforeAll} from 'vitest'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 // If the AppSchema is not instanced, the dynamic loading of loadLocalExtensionsSpecifications is not working
 beforeAll(() => {
@@ -123,6 +124,63 @@ describe('createConfigExtensionSpecification', () => {
 
     // Then
     expect(got.clientSteps).toEqual(testClientSteps)
+  })
+})
+
+describe('contributeToAppConfigurationSchema', () => {
+  test('contract-based config spec with zod.any() contributes its identifier as a known key', () => {
+    // Given: A contract-based config spec with experience: 'configuration' and zod.any() schema
+    const spec = createContractBasedModuleSpecification({
+      identifier: 'purchase_options',
+      uidStrategy: 'single',
+      experience: 'configuration',
+      appModuleFeatures: () => [],
+    })
+
+    // When: It contributes to the app configuration schema
+    const baseSchema = zod.object({client_id: zod.string()})
+    const result = spec.contributeToAppConfigurationSchema(baseSchema)
+
+    // Then: The resulting schema should accept the identifier as a valid key
+    const parsed = result.safeParse({client_id: 'test', purchase_options: {bundles: true}})
+    expect(parsed.success).toBe(true)
+  })
+
+  test('contract-based config spec with experience: extension does not contribute to schema', () => {
+    // Given: A contract-based spec with experience: 'extension' (not 'configuration')
+    const spec = createContractBasedModuleSpecification({
+      identifier: 'some_extension',
+      uidStrategy: 'uuid',
+      experience: 'extension',
+      appModuleFeatures: () => [],
+    })
+
+    // When: It tries to contribute to the app configuration schema
+    const baseSchema = zod.object({client_id: zod.string()}).strict()
+    const result = spec.contributeToAppConfigurationSchema(baseSchema)
+
+    // Then: The schema should be unchanged — 'some_extension' is not accepted
+    const parsed = result.safeParse({client_id: 'test', some_extension: {enabled: true}})
+    expect(parsed.success).toBe(false)
+  })
+
+  test('config spec with explicit zod schema merges its schema shape', () => {
+    // Given: A locally-defined config spec with an explicit zod schema
+    const spec = createConfigExtensionSpecification({
+      identifier: 'test_config',
+      schema: BaseSchema.extend({
+        my_section: zod.object({enabled: zod.boolean()}).optional(),
+      }),
+      transformConfig: {},
+    })
+
+    // When: It contributes to the app configuration schema
+    const baseSchema = zod.object({client_id: zod.string()})
+    const result = spec.contributeToAppConfigurationSchema(baseSchema)
+
+    // Then: The schema should accept 'my_section' as a valid key
+    const parsed = result.safeParse({client_id: 'test', my_section: {enabled: true}})
+    expect(parsed.success).toBe(true)
   })
 })
 

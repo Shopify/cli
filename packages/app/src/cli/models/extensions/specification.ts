@@ -226,13 +226,20 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
       // This filters out webhook subscription specifications from contributing to the app configuration schema
       const hasSingleUidStrategy = merged.uidStrategy === 'single'
 
-      const canContribute = isConfig && hasSchema && hasSingleUidStrategy
-      if (!canContribute) {
-        // no change
+      if (!isConfig || !hasSingleUidStrategy) {
         return appConfigSchema
       }
+
+      if (hasSchema) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (appConfigSchema as any).merge(merged.schema)
+      }
+
+      // For contract-based config specs (e.g. remote-only specs with zod.any()), contribute
+      // the spec identifier as a known top-level key so it isn't flagged as unsupported.
+      const contractSchema = zod.object({[merged.identifier]: zod.any().optional()})
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (appConfigSchema as any).merge(merged.schema)
+      return (appConfigSchema as any).merge(contractSchema)
     },
     parseConfigurationObject: (configurationObject: unknown) => {
       const parseResult = merged.schema.safeParse(configurationObject)

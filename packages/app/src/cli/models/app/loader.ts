@@ -787,8 +787,21 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
             return [null, [] as string[]] as const
           }
           const specConfiguration = specResult.data
+          let claimedKeys = Object.keys(specConfiguration)
 
-          if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
+          // For contract-based configuration specs (remote-only specs using zod.any()), the
+          // parsed result contains section contents (e.g. {bundles: true}) rather than the
+          // top-level TOML key (e.g. purchase_options). Replace claimedKeys with just the
+          // identifier to avoid falsely claiming unrelated top-level keys that happen to
+          // collide with nested section content keys.
+          if (
+            !claimedKeys.includes(specification.identifier) &&
+            specification.identifier in (appConfiguration as Record<string, unknown>)
+          ) {
+            claimedKeys = [specification.identifier]
+          }
+
+          if (Object.keys(specConfiguration).length === 0) return [null, claimedKeys] as const
 
           const instance = await this.createExtensionInstance(
             specification.identifier,
@@ -802,7 +815,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
               extensionInstance,
             ),
           )
-          return [instance, Object.keys(specConfiguration)] as const
+          return [instance, claimedKeys] as const
         }),
     )
 
