@@ -36,7 +36,8 @@
     "dotenv": "16.4.7",
     "execa": "^7.2.0",
     "node-pty": "^1.0.0",
-    "strip-ansi": "^7.1.0"
+    "strip-ansi": "^7.1.0",
+    "tsx": "^4.21.0"
   },
   "engines": {
     "node": ">=20.10.0"
