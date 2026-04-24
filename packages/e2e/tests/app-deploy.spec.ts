@@ -1,10 +1,10 @@
-/* eslint-disable no-restricted-imports */
 import {appTestFixture as test, createApp, deployApp, versionsList, configLink} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
+// eslint-disable-next-line no-restricted-imports
 import * as path from 'path'
 
 /**
@@ -106,7 +106,9 @@ test.describe('App deploy', () => {
       })
       const linkOutput = linkResult.stdout + linkResult.stderr
       expect(linkResult.exitCode, `Step 4 - config link failed:\n${linkOutput}`).toBe(0)
-      expect(linkOutput, 'Step 4 - missing "is now linked to"').toContain('is now linked to')
+      expect(linkOutput, `Step 4 - missing "is now linked to \\"${secondaryAppName}\\""`).toContain(
+        `is now linked to "${secondaryAppName}"`,
+      )
       const secondaryTomlPath = path.join(appDir, `shopify.app.${secondaryConfig}.toml`)
       expect(
         fs.existsSync(secondaryTomlPath),
