@@ -1,4 +1,5 @@
 import {copyConfigKeyEntry} from './copy-config-key-entry.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, writeFile, fileExists, mkdir, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -203,6 +204,93 @@ describe('copyConfigKeyEntry', () => {
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
+    })
+  })
+
+  describe('preserveFilePaths', () => {
+    test('throws when two directory sources produce the same output-relative file', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const dirA = joinPath(tmpDir, 'a-assets')
+        const dirB = joinPath(tmpDir, 'b-assets')
+        await mkdir(dirA)
+        await mkdir(dirB)
+        await writeFile(joinPath(dirA, 'logo.png'), 'a')
+        await writeFile(joinPath(dirB, 'logo.png'), 'b')
+
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+
+        const usedBasenames = new Set<string>()
+        const contextA = makeContext({dir: 'a-assets'}, mockStdout)
+        await copyConfigKeyEntry({
+          key: 'dir',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context: contextA,
+          usedBasenames,
+          preserveFilePaths: true,
+        })
+
+        const contextB = makeContext({dir: 'b-assets'}, mockStdout)
+        const promise = copyConfigKeyEntry({
+          key: 'dir',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context: contextB,
+          usedBasenames,
+          preserveFilePaths: true,
+        })
+        await expect(promise).rejects.toThrow(AbortError)
+        await expect(promise).rejects.toThrow(/File collision: 'logo\.png'/)
+      })
+    })
+
+    test('throws when two single-file sources share a basename (no renaming)', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const dirA = joinPath(tmpDir, 'a')
+        const dirB = joinPath(tmpDir, 'b')
+        await mkdir(dirA)
+        await mkdir(dirB)
+        await writeFile(joinPath(dirA, 'schema.json'), '{"a": true}')
+        await writeFile(joinPath(dirB, 'schema.json'), '{"b": true}')
+
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+
+        const context = makeContext({files: ['a/schema.json', 'b/schema.json']}, mockStdout)
+        const promise = copyConfigKeyEntry({
+          key: 'files',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          preserveFilePaths: true,
+        })
+        await expect(promise).rejects.toThrow(AbortError)
+        await expect(promise).rejects.toThrow(/File collision: 'schema\.json'/)
+      })
+    })
+
+    test('does not throw when the same directory source is referenced twice (deduped within one call)', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const srcDir = joinPath(tmpDir, 'assets')
+        await mkdir(srcDir)
+        await writeFile(joinPath(srcDir, 'foo.json'), '{}')
+
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+
+        const context = makeContext({extensions: [{targeting: [{assets: 'assets'}, {assets: 'assets'}]}]}, mockStdout)
+        const result = await copyConfigKeyEntry({
+          key: 'extensions[].targeting[].assets',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          preserveFilePaths: true,
+        })
+
+        expect(result.filesCopied).toBe(1)
+        await expect(fileExists(joinPath(outDir, 'foo.json'))).resolves.toBe(true)
+      })
     })
   })
 
