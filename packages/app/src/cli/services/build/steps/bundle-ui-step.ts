@@ -2,7 +2,7 @@ import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
 import {copyFile} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
 interface ExtensionPointWithBuildManifest {
@@ -27,7 +27,7 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   const bundleOutputDir = step.config?.bundleFolder
     ? joinPath(dirname(context.extension.outputPath), step.config.bundleFolder)
     : dirname(context.extension.outputPath)
-  if (localOutputDir !== bundleOutputDir) {
+  if (resolvePath(localOutputDir) !== resolvePath(bundleOutputDir)) {
     await copyFile(localOutputDir, bundleOutputDir)
   }
 
