@@ -160,12 +160,6 @@ importers:
       '@shopify/plugin-cloudflare':
         specifier: 3.93.0
         version: link:../plugin-cloudflare
-      '@shopify/polaris':
-        specifier: 12.27.0
-        version: 12.27.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@shopify/polaris-icons':
-        specifier: 8.11.1
-        version: 8.11.1(react@19.2.4)
       '@shopify/theme':
         specifier: 3.93.0
         version: link:../theme
@@ -208,9 +202,6 @@ importers:
       react:
         specifier: 19.2.4
         version: 19.2.4
-      react-dom:
-        specifier: 19.2.4
-        version: 19.2.4(react@19.2.4)
       which:
         specifier: 4.0.0
         version: 4.0.0
@@ -227,9 +218,6 @@ importers:
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.3(@types/react@18.3.12)
       '@types/which':
         specifier: 3.0.4
         version: 3.0.4
@@ -324,6 +312,12 @@ importers:
       '@opentelemetry/sdk-metrics':
         specifier: 1.30.0
         version: 1.30.0(@opentelemetry/api@1.9.0)
+      '@shopify/polaris':
+        specifier: 12.27.0
+        version: 12.27.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@shopify/polaris-icons':
+        specifier: 8.11.1
+        version: 8.11.1(react@19.2.4)
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0
@@ -390,6 +384,9 @@ importers:
       graphql-request:
         specifier: 6.1.0
         version: 6.1.0(graphql@16.10.0)
+      h3:
+        specifier: 1.15.9
+        version: 1.15.9
       ignore:
         specifier: 6.0.2
         version: 6.0.2
@@ -441,6 +438,9 @@ importers:
       react:
         specifier: 19.2.4
         version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
       semver:
         specifier: 7.6.3
         version: 7.6.3
@@ -478,6 +478,9 @@ importers:
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@18.3.12)
       '@types/semver':
         specifier: ^7.5.2
         version: 7.7.1
