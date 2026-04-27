@@ -10,8 +10,8 @@ vi.mock('../version.js')
 vi.mock('../is-global.js')
 
 describe('showMultipleCLIWarningIfNeeded', () => {
-  beforeEach(() => {
-    clearCache()
+  beforeEach(async () => {
+    await clearCache()
   })
 
   test('shows warning if using global CLI but app has local dependency', async () => {

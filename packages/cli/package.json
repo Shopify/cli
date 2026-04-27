@@ -137,44 +137,20 @@
     ],
     "hooks": {
       "init": [
-        {
-          "target": "./dist/index.js",
-          "identifier": "AppInitHook"
-        },
-        {
-          "target": "./dist/index.js",
-          "identifier": "HydrogenInitHook"
-        }
+        "./dist/hooks/app-init.js",
+        "./dist/hooks/hydrogen-init.js"
       ],
       "prerun": "./dist/hooks/prerun.js",
       "postrun": "./dist/hooks/postrun.js",
-      "command_not_found": {
-        "target": "./dist/index.js",
-        "identifier": "DidYouMeanHook"
-      },
-      "tunnel_start": {
-        "target": "./dist/index.js",
-        "identifier": "TunnelStartHook"
-      },
-      "tunnel_provider": {
-        "target": "./dist/index.js",
-        "identifier": "TunnelProviderHook"
-      },
-      "update": {
-        "target": "./dist/index.js",
-        "identifier": "PluginHook"
-      },
+      "command_not_found": "./dist/hooks/did-you-mean.js",
+      "tunnel_start": "./dist/hooks/tunnel-start.js",
+      "tunnel_provider": "./dist/hooks/tunnel-provider.js",
+      "update": "./dist/hooks/plugin-plugins.js",
       "sensitive_command_metadata": [
-        {
-          "target": "./dist/index.js",
-          "identifier": "AppSensitiveMetadataHook"
-        }
+        "./dist/hooks/sensitive-metadata.js"
       ],
       "public_command_metadata": [
-        {
-          "target": "./dist/index.js",
-          "identifier": "AppPublicMetadataHook"
-        }
+        "./dist/hooks/public-metadata.js"
       ]
     }
   }

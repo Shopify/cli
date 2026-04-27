@@ -86,9 +86,7 @@ function md5(content: string | Buffer) {
  */
 export function rejectGeneratedStaticAssets(themeChecksums: Checksum[]) {
   const liquidAssetKeys = new Set(
-    themeChecksums
-      .filter(({key}) => key.startsWith('assets/') && key.endsWith('.liquid'))
-      .map(({key}) => key),
+    themeChecksums.filter(({key}) => key.startsWith('assets/') && key.endsWith('.liquid')).map(({key}) => key),
   )
 
   return themeChecksums.filter(({key}) => {

@@ -10,8 +10,7 @@ import {InferredFlags} from '@oclif/core/interfaces'
 type PreviewFlags = InferredFlags<typeof Preview.flags>
 
 export default class Preview extends ThemeCommand {
-  static summary =
-    'Applies JSON overrides to a theme and returns a preview URL.'
+  static summary = 'Applies JSON overrides to a theme and returns a preview URL.'
 
   static descriptionWithMarkdown = `Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.
 

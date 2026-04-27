@@ -196,6 +196,17 @@ const config = [
       '@shopify/strict-component-boundaries': 'off',
     },
   },
+
+  // The cli package uses a lazy command-loading pattern (command-registry.ts) that
+  // dynamically imports libraries at runtime. NX detects these dynamic imports and
+  // flags every static import of the same library elsewhere in the package. Since
+  // the command files themselves are lazy-loaded, their static imports are fine.
+  {
+    files: ['packages/cli/src/**/*.ts'],
+    rules: {
+      '@nx/enforce-module-boundaries': 'off',
+    },
+  },
 ]
 
 export default config

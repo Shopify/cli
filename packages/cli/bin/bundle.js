@@ -1,5 +1,6 @@
 /* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code, @nx/enforce-module-boundaries */
 import {createRequire} from 'module'
+import {readFileSync} from 'fs'
 
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
@@ -38,9 +39,47 @@ const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
 const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
 
+const commandEntryPoints = glob.sync('./src/cli/commands/**/*.ts', {
+  ignore: ['**/*.test.ts', '**/*.d.ts'],
+})
+const hookEntryPoints = glob.sync('./src/hooks/*.ts', {
+  ignore: ['**/*.test.ts', '**/*.d.ts'],
+})
+
+// Build esbuild entry points for app/theme commands so they get bundled into
+// the CLI's own dist/ with all imports resolved. This is needed because
+// @shopify/app and @shopify/theme are devDependencies (private packages) and
+// won't exist as real node_modules in the published snapshot.
+const manifest = JSON.parse(readFileSync(joinPath(process.cwd(), 'oclif.manifest.json'), 'utf8'))
+const commandEntryPointOverrides = {
+  'app:logs:sources': 'cli/commands/app/app-logs/sources',
+  'demo:watcher': 'cli/commands/app/demo/watcher',
+  'kitchen-sink': 'cli/commands/kitchen-sink/index',
+  'doctor-release': 'cli/commands/doctor-release/doctor-release',
+  'doctor-release:theme': 'cli/commands/doctor-release/theme/index',
+}
+const externalPackageDirs = {'@shopify/app': '../app/', '@shopify/theme': '../theme/'}
+
+const externalCommandEntryPoints = Object.entries(manifest.commands)
+  .filter(([, cmd]) => externalPackageDirs[cmd.customPluginName])
+  .map(([id, cmd]) => {
+    const out = commandEntryPointOverrides[id] ?? `cli/commands/${id.replace(/:/g, '/')}`
+    const inPath = externalPackageDirs[cmd.customPluginName] + `src/${out}.ts`
+    return {in: inPath, out}
+  })
+
+const toEntry = (f) => ({in: f, out: f.replace('./src/', '').replace('.ts', '')})
+
 esBuild({
   bundle: true,
-  entryPoints: ['./src/index.ts', './src/hooks/prerun.ts', './src/hooks/postrun.ts'],
+  entryPoints: [
+    {in: './src/index.ts', out: 'index'},
+    {in: './src/bootstrap.ts', out: 'bootstrap'},
+    {in: './src/command-registry.ts', out: 'command-registry'},
+    ...hookEntryPoints.map(toEntry),
+    ...commandEntryPoints.map(toEntry),
+    ...externalCommandEntryPoints,
+  ],
   outdir: './dist',
   platform: 'node',
   format: 'esm',

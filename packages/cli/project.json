@@ -25,6 +25,7 @@
     "bundle": {
       "executor": "nx:run-commands",
       "dependsOn": [
+        "build",
         "cli-kit:generate-version",
         "app:build",
         "theme:build"
