@@ -60,7 +60,9 @@ export const templates = {
   remix: {
     url: 'https://github.com/Shopify/shopify-app-template-remix',
     label: 'Build a Remix app',
-    visible: true,
+    // The remix template is deprecated: kept accessible via `--template remix` for back-compat,
+    // but hidden from help text and the interactive prompt. Use `reactRouter` instead.
+    visible: false,
     branches: {
       prompt: 'For your Remix template, which language do you want?',
       options: {

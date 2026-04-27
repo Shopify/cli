@@ -856,7 +856,7 @@ FLAGS
       --organization-id=<value>   [env: SHOPIFY_FLAG_ORGANIZATION_ID] The organization ID. Your organization ID can be
                                   found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>
       --template=<value>          [env: SHOPIFY_FLAG_TEMPLATE] The app template. Accepts one of the following:
-                                  - <reactRouter|remix|none>
+                                  - <reactRouter|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
