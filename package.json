@@ -26,6 +26,7 @@
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
     "release": "./bin/release",
     "post-release": "./bin/post-release",
+    "update-observe": "node bin/update-observe.js",
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "test:e2e": "nx run-many --target=build --projects=cli,create-app --skip-nx-cache && pnpm --filter e2e exec playwright test",
