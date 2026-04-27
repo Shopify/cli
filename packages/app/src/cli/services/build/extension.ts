@@ -123,7 +123,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     throw newError
   }
 
-  await extension.buildValidation()
+  await extension.buildValidation({outputPath: localOutputPath})
 
   const duration = Math.round(performance.now() - startTime)
   const sizeInfo = await formatBundleSize(localOutputPath)
