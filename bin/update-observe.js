@@ -6,9 +6,15 @@
  * require clicking through observe.shopify.io to update version filters by hand.
  *
  * Usage:
- *   pnpm update-observe                         # uses version from packages/cli-kit/package.json
- *   pnpm update-observe -- --version=3.94.2     # explicit version
- *   pnpm update-observe -- --dry-run            # print payloads without sending
+ *   pnpm update-observe -- --version=3.94.2                          # update all resources
+ *   pnpm update-observe -- --version=3.94.2 --resource=slo-p50-latency  # update one resource
+ *   pnpm update-observe -- --version=3.94.2 --dry-run                # print payloads without sending
+ *
+ * --version is required and must be semver X.Y.Z.
+ * --resource selects a single resource by its `key` from
+ *   bin/observe-cli-resources.json (e.g. slo-correctness-app-deploy,
+ *   slo-correctness, slo-p50-latency, slo-p75-latency, alert-spike-errors,
+ *   error-project-cli). Omit to update all of them.
  *
  * Auth: requires a Shopify Monitoring API token in $SHOPIFY_MONITORING_TOKEN.
  * Get one at https://observe.shopify.io/profile (under "API Tokens") or via
@@ -23,23 +29,41 @@ import {fileURLToPath} from 'node:url'
 import {parseArgs} from 'node:util'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const repoRoot = join(__dirname, '..')
 
 const {values: args} = parseArgs({
   options: {
     version: {type: 'string'},
+    resource: {type: 'string'},
     'dry-run': {type: 'boolean', default: false},
   },
   strict: true,
 })
 
 const dryRun = args['dry-run']
-const version = args.version ?? defaultVersion()
+const version = args.version
+if (!version) {
+  fail('--version is required (e.g. --version=3.94.2)')
+}
 if (!/^\d+\.\d+\.\d+$/.test(version)) {
   fail(`Version must be semver X.Y.Z (got: ${version})`)
 }
 
 const config = JSON.parse(readFileSync(join(__dirname, 'observe-cli-resources.json'), 'utf-8'))
+
+const allResources = [
+  ...config.slos.map((slo) => ({type: 'slo', value: slo})),
+  ...config.alertRules.map((rule) => ({type: 'alert', value: rule})),
+  ...config.errorProjects.map((project) => ({type: 'errorProject', value: project})),
+]
+
+let selectedResources = allResources
+if (args.resource) {
+  selectedResources = allResources.filter((r) => r.value.key === args.resource)
+  if (selectedResources.length === 0) {
+    const keys = allResources.map((r) => r.value.key).join(', ')
+    fail(`No resource with key "${args.resource}". Valid keys: ${keys}`)
+  }
+}
 const TOKEN = process.env.SHOPIFY_MONITORING_TOKEN
 if (!dryRun && !TOKEN) {
   fail('SHOPIFY_MONITORING_TOKEN is not set. See header of bin/update-observe.js for how to obtain one.')
@@ -80,20 +104,16 @@ const ERROR_PROJECT_MUTATION = `
 `
 
 const main = async () => {
-  console.log(`Updating Observe resources for ${config.service} → cli_version=${version}${dryRun ? ' (dry run)' : ''}`)
+  const scope = args.resource ? `resource=${args.resource}` : `${selectedResources.length} resources`
+  console.log(`Updating Observe ${scope} for ${config.service} → cli_version=${version}${dryRun ? ' (dry run)' : ''}`)
 
-  const tasks = [
-    ...config.slos.map((slo) => () => updateSlo(slo)),
-    ...config.alertRules.map((rule) => () => updateAlertRule(rule)),
-    ...config.errorProjects.map((project) => () => updateErrorProject(project)),
-  ]
-
-  const results = await Promise.all(tasks.map((run) => run()))
+  const handlers = {slo: updateSlo, alert: updateAlertRule, errorProject: updateErrorProject}
+  const results = await Promise.all(selectedResources.map(({type, value}) => handlers[type](value)))
   const failed = results.filter((ok) => !ok).length
   if (failed > 0) {
     fail(`${failed} of ${results.length} updates failed.`)
   }
-  console.log(`✓ ${results.length} resources updated.`)
+  console.log(`✓ ${results.length} resource${results.length === 1 ? '' : 's'} updated.`)
 }
 
 const updateSlo = async (slo) => {
@@ -171,10 +191,6 @@ const runMutation = async (kind, id, query, variables, getError) => {
     console.error(`✖ ${kind} ${id}: ${error.message}`)
     return false
   }
-}
-
-function defaultVersion() {
-  return JSON.parse(readFileSync(join(repoRoot, 'packages/cli-kit/package.json'), 'utf-8')).version
 }
 
 function fail(message) {

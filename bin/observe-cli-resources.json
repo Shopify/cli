@@ -5,18 +5,21 @@
   "vaultTeamId": "2238",
   "slos": [
     {
+      "key": "slo-correctness-app-deploy",
       "id": "6cb7fa5f-6f65-417b-aca1-3986c5976068",
       "name": "[CLI - Dev Platform] Correctness - App Deploy (${version})",
       "kind": "raw",
       "expression": "1 - (sum(rate(cli_commands_total{job=~\"@shopify/(app|store):.*\", exit=\"unexpected_error\", cli_version=\"${version}\"} [15m])) / sum(rate(cli_commands_total{job=~\"@shopify/(app|store):.*\", cli_version=\"${version}\"} [15m]))) * on() (sum(rate(cli_commands_total{job=~\"@shopify/(app|store):.*\", cli_version=\"${version}\"} [15m])) > 0.1)"
     },
     {
+      "key": "slo-correctness",
       "id": "d0131f4a-b9de-4704-9462-9c6ae3de080a",
       "name": "[CLI - Dev Platform] Correctness (Version ${version})",
       "kind": "raw",
       "expression": "1 - (sum(rate(cli_commands_total{job=~\"@shopify/(app|store):.*\", exit=\"unexpected_error\", cli_version=\"${version}\"} [15m])) / sum(rate(cli_commands_total{job=~\"@shopify/(app|store):.*\", cli_version=\"${version}\"} [15m]))) * on() (sum(rate(cli_commands_total{job=~\"@shopify/(app|store):.*\", cli_version=\"${version}\"}[15m])) > 0.1)"
     },
     {
+      "key": "slo-p50-latency",
       "id": "c1a167e1-9f23-4788-bb4e-7240e556d9b5",
       "name": "[CLI - Dev Platform] p50 Latency (Version ${version})",
       "kind": "histogram",
@@ -32,6 +35,7 @@
       ]
     },
     {
+      "key": "slo-p75-latency",
       "id": "1415409f-2750-4bdc-9333-7696f6cf1204",
       "name": "[CLI - Dev Platform] p75 Latency (Version ${version})",
       "kind": "histogram",
@@ -49,6 +53,7 @@
   ],
   "alertRules": [
     {
+      "key": "alert-spike-errors",
       "id": "2e527671-b84d-48af-9a52-2100cf295627",
       "name": "[CLI - Dev Platform] Spike in Errors (v${version})",
       "customErrorFilters": {
@@ -70,6 +75,7 @@
   ],
   "errorProjects": [
     {
+      "key": "error-project-cli",
       "id": "8fdca84d-03fa-4eb2-9131-bd019e87c3b2",
       "errorFilters": {
         "filters": null,
