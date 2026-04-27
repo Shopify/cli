@@ -356,6 +356,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(apiKey)
+    if (!app) return undefined
     const {name, appModules} = app.activeRelease.version
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
     const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
