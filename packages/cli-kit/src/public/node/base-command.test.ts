@@ -5,16 +5,26 @@ import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {terminalSupportsPrompting} from './system.js'
 import {unstyled} from './output.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 
-vi.mock('./system.js')
+let originalStdinIsTTY: boolean | undefined
+let originalStdoutIsTTY: boolean | undefined
 
 beforeEach(() => {
-  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+  originalStdinIsTTY = process.stdin.isTTY
+  originalStdoutIsTTY = process.stdout.isTTY
   vi.unstubAllEnvs()
+  // Default: simulate interactive TTY environment
+  Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
+  Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true, writable: true})
+  vi.stubEnv('CI', '')
+})
+
+afterEach(() => {
+  Object.defineProperty(process.stdin, 'isTTY', {value: originalStdinIsTTY, configurable: true, writable: true})
+  Object.defineProperty(process.stdout, 'isTTY', {value: originalStdoutIsTTY, configurable: true, writable: true})
 })
 
 let testResult: Record<string, unknown> = {}
@@ -406,8 +416,10 @@ describe('applying environments', async () => {
   )
 
   runTestInTmpDir('does not throw in TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
-    // Given
-    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+    // Given — simulate interactive terminal
+    Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
+    Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true, writable: true})
+    vi.stubEnv('CI', '')
 
     // When
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
@@ -417,8 +429,8 @@ describe('applying environments', async () => {
   })
 
   runTestInTmpDir('throws in non-TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
-    // Given
-    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+    // Given — simulate non-interactive (CI) environment
+    vi.stubEnv('CI', 'true')
 
     // When
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
