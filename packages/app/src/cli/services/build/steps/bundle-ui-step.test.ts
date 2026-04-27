@@ -35,17 +35,6 @@ describe('executeBundleUIStep', () => {
     config: {generatesAssetsManifest: false},
   }
 
-  test('skips the copy when local and bundle output directories are identical', async () => {
-    // Given
-    vi.mocked(buildExtension.buildUIExtension).mockResolvedValue('/test/extension/dist/handle.js')
-
-    // When
-    await executeBundleUIStep(step, mockContext)
-
-    // Then — fs-extra would throw "Source and destination must not be the same"
-    expect(fs.copyFile).not.toHaveBeenCalled()
-  })
-
   test('copies when local and bundle output directories differ', async () => {
     // Given
     mockContext.extension.outputPath = '/bundle/handle/handle.js'

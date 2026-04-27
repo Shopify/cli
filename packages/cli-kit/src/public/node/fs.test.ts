@@ -92,6 +92,19 @@ describe('copy', () => {
       await expect(readFile(joinPath(to, 'child', '.dotfile'))).resolves.toEqual(content)
     })
   })
+
+  test('skips the copy when source and destination resolve to the same path', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const content = 'test'
+      const path = joinPath(tmpDir, 'file')
+      await writeFile(path, content)
+
+      // When / Then — fs-extra would otherwise throw "Source and destination must not be the same"
+      await expect(copyFile(path, joinPath(path, '..', 'file'))).resolves.not.toThrow()
+      await expect(readFile(path)).resolves.toEqual(content)
+    })
+  })
 })
 
 describe('move', () => {
