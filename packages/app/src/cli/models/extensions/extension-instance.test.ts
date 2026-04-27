@@ -757,6 +757,95 @@ describe('rescanImports', async () => {
   })
 })
 
+describe('build() deploy-lifecycle filtering', () => {
+  test('skips bundle-only step types when includeBundleSteps is not set (default `shopify app build` behaviour)', async () => {
+    // Given a ui_extension whose deploy lifecycle has both a build-safe step
+    // (bundle_ui) and a deploy-only step (include_assets)
+    const extensionInstance = await testUIExtension({
+      type: 'ui_extension',
+      configuration: {
+        name: 'test-ui',
+        type: 'ui_extension',
+        handle: 'test-ui',
+        api_version: '2025-10',
+        extension_points: [{target: 'admin.app.tools.data', module: './src/index.js'}],
+      } as any,
+    })
+
+    const stepTypes = extensionInstance.specification.clientSteps
+      ?.find((group) => group.lifecycle === 'deploy')
+      ?.steps.map((step) => step.type)
+    expect(stepTypes).toEqual(expect.arrayContaining(['bundle_ui', 'include_assets']))
+
+    // Spy on the underlying step executor so we can see exactly which step
+    // types get dispatched. Importing client-steps directly so we can target
+    // the real exported binding for the spy.
+    const clientSteps = await import('../../services/build/client-steps.js')
+    const spy = vi.spyOn(clientSteps, 'executeStep').mockResolvedValue({
+      id: 'spy',
+      success: true,
+      duration: 0,
+      output: undefined,
+    } as any)
+
+    try {
+      // When called without includeBundleSteps (services/build.ts call path)
+      await extensionInstance.build({
+        stdout: new Writable({write: (_chunk, _enc, cb) => cb()}),
+        stderr: new Writable({write: (_chunk, _enc, cb) => cb()}),
+        app: {} as any,
+        environment: 'production',
+      } as ExtensionBuildOptions)
+
+      // Then only build-safe step types are dispatched
+      const dispatchedTypes = spy.mock.calls.map((call) => (call[0] as {type: string}).type)
+      expect(dispatchedTypes).toContain('bundle_ui')
+      expect(dispatchedTypes).not.toContain('include_assets')
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('runs every deploy-lifecycle step when includeBundleSteps is true (buildForBundle call path)', async () => {
+    const extensionInstance = await testUIExtension({
+      type: 'ui_extension',
+      configuration: {
+        name: 'test-ui',
+        type: 'ui_extension',
+        handle: 'test-ui',
+        api_version: '2025-10',
+        extension_points: [{target: 'admin.app.tools.data', module: './src/index.js'}],
+      } as any,
+    })
+
+    const clientSteps = await import('../../services/build/client-steps.js')
+    const spy = vi.spyOn(clientSteps, 'executeStep').mockResolvedValue({
+      id: 'spy',
+      success: true,
+      duration: 0,
+      output: undefined,
+    } as any)
+
+    try {
+      await extensionInstance.build(
+        {
+          stdout: new Writable({write: (_chunk, _enc, cb) => cb()}),
+          stderr: new Writable({write: (_chunk, _enc, cb) => cb()}),
+          app: {} as any,
+          environment: 'production',
+        } as ExtensionBuildOptions,
+        {includeBundleSteps: true},
+      )
+
+      const dispatchedTypes = spy.mock.calls.map((call) => (call[0] as {type: string}).type)
+      expect(dispatchedTypes).toContain('bundle_ui')
+      expect(dispatchedTypes).toContain('include_assets')
+    } finally {
+      spy.mockRestore()
+    }
+  })
+})
+
 describe('SHOPIFY_CLI_DISABLE_IMPORT_SCANNING', () => {
   test('skips import scanning when env var is set', async () => {
     await inTemporaryDirectory(async (tmpDir) => {

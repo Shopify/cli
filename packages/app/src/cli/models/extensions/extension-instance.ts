@@ -27,6 +27,27 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {uniq} from '@shopify/cli-kit/common/array'
 
 /**
+ * Step types whose only purpose is to populate the bundle directory used by
+ * `shopify app dev` and `shopify app deploy`. They require
+ * `extension.outputPath` to point at a bundle directory; running them during
+ * `shopify app build` (where outputPath stays at its in-source default)
+ * either crashes on same-path copies or writes bundle artifacts into the
+ * user's source tree.
+ */
+const DEPLOY_ONLY_STEP_TYPES: ReadonlySet<string> = new Set(['include_assets', 'bundle_theme'])
+
+/** Knobs for `extension.build()` controlling which steps in the deploy lifecycle run. */
+interface BuildRunOptions {
+  /**
+   * When `true`, run every deploy-lifecycle step including bundle-only ones.
+   * `buildForBundle` opts in because it has set `outputPath` to a bundle
+   * directory beforehand. `shopify app build` leaves it `false` so bundle-only
+   * steps are filtered out.
+   */
+  includeBundleSteps?: boolean
+}
+
+/**
  * Class that represents an instance of a local extension
  * Before creating this class we've validated that:
  * - There is a spec for this type of extension
@@ -315,7 +336,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return Boolean(this.entrySourceFilePath.endsWith('.js') || this.entrySourceFilePath.endsWith('.ts'))
   }
 
-  async build(options: ExtensionBuildOptions): Promise<void> {
+  async build(options: ExtensionBuildOptions, runOptions: BuildRunOptions = {}): Promise<void> {
     const {clientSteps = []} = this.specification
 
     const context: BuildContext = {
@@ -324,7 +345,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       stepResults: new Map(),
     }
 
-    const steps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
+    const allSteps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
+    // `shopify app build` doesn't set a bundle directory — outputPath stays at
+    // the constructor default. Steps that copy source files into the bundle
+    // directory (include_assets, bundle_theme) collapse onto extension.directory
+    // and either crash on same-path copies or pollute the source tree with
+    // bundle artifacts. Filter them out unless we're actually building for a
+    // bundle (dev/deploy via buildForBundle).
+    const steps = runOptions.includeBundleSteps
+      ? allSteps
+      : allSteps.filter((step) => !DEPLOY_ONLY_STEP_TYPES.has(step.type))
 
     for (const step of steps) {
       // eslint-disable-next-line no-await-in-loop
@@ -335,7 +365,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    await this.build(options)
+    await this.build(options, {includeBundleSteps: true})
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
