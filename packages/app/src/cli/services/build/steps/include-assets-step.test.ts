@@ -1439,4 +1439,56 @@ describe('executeIncludeAssetsStep', () => {
       )
     })
   })
+
+  describe('build-mode short-circuit', () => {
+    test('skips the step when outputDir resolves to the extension directory (e.g. `shopify app build`)', async () => {
+      // `shopify app build` doesn't reassign outputPath to a bundle directory, so
+      // outputDir collapses onto extension.directory. There's nothing to copy and
+      // writing manifest.json into the user's source tree is wrong — short-circuit.
+      mockExtension.outputPath = '/test/extension/handle.js'
+
+      const step: LifecycleStep = {
+        id: 'include-assets',
+        name: 'Include UI Extension Assets',
+        type: 'include_assets',
+        config: {
+          generatesAssetsManifest: true,
+          inclusions: [{type: 'configKey', key: 'tools_path'}],
+        },
+      }
+
+      const ctx = {
+        ...mockContext,
+        extension: {...mockExtension, configuration: {tools_path: 'tools.json'}} as ExtensionInstance,
+      }
+
+      const result = await executeIncludeAssetsStep(step, ctx)
+
+      expect(result.filesCopied).toBe(0)
+      // No copies attempted; no manifest written.
+      expect(fs.copyFile).not.toHaveBeenCalled()
+      expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
+      expect(fs.writeFile).not.toHaveBeenCalled()
+    })
+
+    test('skips the step even when outputDir differs from extension.directory only by non-canonical shape', async () => {
+      // Defensive: `.` segments / trailing slashes shouldn't slip through the guard.
+      mockExtension.directory = '/test/extension'
+      mockExtension.outputPath = '/test/./extension/handle.js'
+
+      const step: LifecycleStep = {
+        id: 'include-assets',
+        name: 'Include UI Extension Assets',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'dist'}],
+        },
+      }
+
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      expect(result.filesCopied).toBe(0)
+      expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
+    })
+  })
 })

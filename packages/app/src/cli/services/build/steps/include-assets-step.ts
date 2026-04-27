@@ -2,7 +2,7 @@ import {generateManifestFile} from './include-assets/generate-manifest.js'
 import {copyByPattern} from './include-assets/copy-by-pattern.js'
 import {copySourceEntry} from './include-assets/copy-source-entry.js'
 import {copyConfigKeyEntry} from './include-assets/copy-config-key-entry.js'
-import {joinPath, dirname, extname, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, extname, resolvePath, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
 import {z} from 'zod'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
@@ -126,6 +126,17 @@ export async function executeIncludeAssetsStep(
   // When outputPath is a file (e.g. index.js, index.wasm), the output directory is its
   // parent. When outputPath has no extension, it IS the output directory.
   const outputDir = extname(extension.outputPath) ? dirname(extension.outputPath) : extension.outputPath
+
+  // `shopify app dev` and `shopify app deploy` reassign extension.outputPath to a
+  // bundle directory (`.shopify/dev-bundle/<uid>`, `.shopify/deploy-bundle/<uid>`)
+  // before the build steps run. `shopify app build` doesn't — outputPath stays at
+  // the constructor default `joinPath(extension.directory, outputRelativePath)`,
+  // so outputDir collapses onto extension.directory. There's no bundle to populate;
+  // copying source files onto themselves and writing manifest.json into the user's
+  // source tree are both wrong. Skip the step.
+  if (resolvePath(outputDir) === resolvePath(extension.directory)) {
+    return {filesCopied: 0}
+  }
 
   const aggregatedPathMap = new Map<string, string | string[]>()
   // Track basenames written across all configKey entries in this build to detect
