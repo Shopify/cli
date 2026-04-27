@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.94.2
+
+### Patch Changes
+
+- 78aa659: Fix "shopify app build" for some ui extensions
+  - @shopify/cli-kit@3.94.2
+  - @shopify/theme@3.94.2
+  - @shopify/plugin-cloudflare@3.94.2
+
 ## 3.94.1
 
 ### Patch Changes
