@@ -21,13 +21,20 @@
  * --resource selects a single resource by its `key` from
  *   bin/observe-cli-resources.json. Omit to update all of them.
  *
- * Auth: requires a Shopify Monitoring API token in $SHOPIFY_MONITORING_TOKEN.
- * Get one at https://observe.shopify.io/profile (under "API Tokens").
+ * Auth: reuses the cookie cache from the Shopify `observe` Rust CLI
+ * (https://github.com/Shopify/world/tree/main/areas/tools/observe-cli). One-time
+ * setup:
+ *
+ *   observe auth        # opens browser, signs in via Okta, caches cookies to disk
+ *
+ * After that this script just reads the cached cookie file. If the cookie has
+ * expired, re-run `observe auth`.
  *
  * Templates live in bin/observe-cli-resources.json. To add or remove a managed
  * resource, edit that file — no script changes required.
  */
-import {readFileSync} from 'node:fs'
+import {existsSync, readFileSync} from 'node:fs'
+import {homedir, platform} from 'node:os'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {parseArgs} from 'node:util'
@@ -49,10 +56,7 @@ if (!version) fail('--version is required (e.g. --version=3.94.2)')
 if (!/^\d+\.\d+\.\d+$/.test(version)) fail(`Version must be semver X.Y.Z (got: ${version})`)
 
 const config = JSON.parse(readFileSync(join(__dirname, 'observe-cli-resources.json'), 'utf-8'))
-const TOKEN = process.env.SHOPIFY_MONITORING_TOKEN
-if (!dryRun && !TOKEN) {
-  fail('SHOPIFY_MONITORING_TOKEN is not set. See header of bin/update-observe.js for how to obtain one.')
-}
+const COOKIE = dryRun ? loadCookieOrNull() : loadCookie()
 
 let selected = config.resources
 if (args.resource) {
@@ -320,12 +324,47 @@ const HANDLERS = {
 const graphql = async (query, variables) => {
   const res = await fetch(config.endpoint, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}`},
+    headers: {'Content-Type': 'application/json', Cookie: COOKIE},
     body: JSON.stringify({query, variables}),
   })
-  const json = await res.json()
+  const text = await res.text()
+  if (text.trimStart().startsWith('<')) {
+    throw new Error('Auth failed (received HTML, likely an SSO redirect). Run `observe auth` to refresh cookies.')
+  }
+  const json = JSON.parse(text)
   if (json.errors) throw new Error(JSON.stringify(json.errors))
   return json.data
+}
+
+// -- Cookie cache (shared with the Rust `observe` CLI) ---------------------
+
+function observeConfigDir() {
+  if (platform() === 'darwin') return join(homedir(), 'Library', 'Application Support', 'observe')
+  if (platform() === 'win32') return join(process.env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'), 'observe')
+  return join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), 'observe')
+}
+
+function loadCookieOrNull() {
+  const dir = observeConfigDir()
+  for (const name of ['graphql_cookies.txt', 'cookies.txt']) {
+    const path = join(dir, name)
+    if (existsSync(path)) {
+      const value = readFileSync(path, 'utf-8').trim()
+      if (value) return value
+    }
+  }
+  return null
+}
+
+function loadCookie() {
+  const cookie = loadCookieOrNull()
+  if (!cookie) {
+    fail(
+      `No GraphQL cookies found in ${observeConfigDir()}.\n` +
+        'Run `observe auth` first to sign in via Okta and cache cookies (see https://github.com/Shopify/world/tree/main/areas/tools/observe-cli).',
+    )
+  }
+  return cookie
 }
 
 // -- Main loop --------------------------------------------------------------
@@ -337,20 +376,15 @@ const updateOne = async (resource) => {
     return false
   }
   try {
+    // In dry-run we still query (when authed) so the printed payload reflects real merging.
     let live
-    if (dryRun) {
-      // In dry-run we still query so the printed payload reflects real merging.
-      // If TOKEN is missing, fall back to a minimal stub.
-      live = TOKEN ? handler.pickLive(await graphql(handler.query, {id: resource.id})) : null
-      if (!live) {
-        console.log(`-- ${handler.label} ${resource.key} (dry-run, no live fetch) --`)
-        console.log('Note: set SHOPIFY_MONITORING_TOKEN to see the merged payload.')
-        return true
-      }
-    } else {
-      live = handler.pickLive(await graphql(handler.query, {id: resource.id}))
-      if (!live) throw new Error(`Resource ${resource.id} not found via API`)
+    if (dryRun && !COOKIE) {
+      console.log(`-- ${handler.label} ${resource.key} (dry-run, no observe cookie) --`)
+      console.log('Note: run `observe auth` to see the merged payload.')
+      return true
     }
+    live = handler.pickLive(await graphql(handler.query, {id: resource.id}))
+    if (!live) throw new Error(`Resource ${resource.id} not found via API`)
 
     const input = handler.buildInput(live, resource)
     const variables = {input: handler.wrapInput(input)}
