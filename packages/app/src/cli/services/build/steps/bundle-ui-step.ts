@@ -22,7 +22,6 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   const config = context.extension.configuration
   context.options.buildDirectory = step.config?.bundleFolder ?? undefined
   const localOutputPath = await buildUIExtension(context.extension, context.options)
-  // When invoked outside a bundle directory (e.g. `shopify app build`), localOutputPath and outputPath collapse onto the same directory; fs-extra rejects same-path copies.
   const localOutputDir = dirname(localOutputPath)
   const bundleOutputDir = step.config?.bundleFolder
     ? joinPath(dirname(context.extension.outputPath), step.config.bundleFolder)
