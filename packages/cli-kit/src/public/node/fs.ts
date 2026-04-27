@@ -1,5 +1,5 @@
 import {outputContent, outputToken, outputDebug} from './output.js'
-import {joinPath, normalizePath} from './path.js'
+import {joinPath, normalizePath, resolvePath} from './path.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
 import {systemTempDir} from '../../private/node/temp-dir.js'
@@ -153,6 +153,12 @@ export async function fileRealPath(path: string): Promise<string> {
  * @param to - Destination path.
  */
 export async function copyFile(from: string, to: string): Promise<void> {
+  if (resolvePath(from) === resolvePath(to)) {
+    outputDebug(
+      outputContent`Skipping copy file step because source and destination is the same: ${outputToken.path(from)}`,
+    )
+    return
+  }
   outputDebug(outputContent`Copying file from ${outputToken.path(from)} to ${outputToken.path(to)}...`)
   await fsCopy(from, to)
 }

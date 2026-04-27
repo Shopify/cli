@@ -83,7 +83,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   ) => Promise<Record<string, unknown> | undefined>
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
-  buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
+  buildValidation?: (extension: ExtensionInstance<TConfiguration>, outputPath: string) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>

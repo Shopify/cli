@@ -203,9 +203,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.preDeployValidation(this)
   }
 
-  buildValidation(): Promise<void> {
+  buildValidation({outputPath}: {outputPath: string}): Promise<void> {
     if (!this.specification.buildValidation) return Promise.resolve()
-    return this.specification.buildValidation(this)
+    return this.specification.buildValidation(this, outputPath)
   }
 
   async keepBuiltSourcemapsLocally(inputPath: string): Promise<void> {
