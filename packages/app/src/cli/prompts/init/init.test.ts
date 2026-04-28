@@ -1,4 +1,4 @@
-import init, {buildNoneTemplate, InitOptions} from './init.js'
+import init, {buildNoneTemplate, InitOptions, visibleTemplates} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
@@ -37,6 +37,16 @@ describe('init', () => {
       defaultValue: 'reactRouter',
     })
     expect(got).toEqual({...options, ...answers, templateType: 'none', globalCLIResult})
+  })
+
+  describe('visibleTemplates', () => {
+    test('omits the deprecated remix template so it is not advertised in --template help text', () => {
+      expect(visibleTemplates).not.toContain('remix')
+    })
+
+    test('exposes only the templates that are still actively offered', () => {
+      expect(visibleTemplates).toEqual(['reactRouter', 'none'])
+    })
   })
 
   describe('buildNoneTemplate', () => {

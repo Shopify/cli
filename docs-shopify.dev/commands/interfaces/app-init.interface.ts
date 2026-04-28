@@ -48,7 +48,7 @@ export interface appinit {
 
   /**
    * The app template. Accepts one of the following:
-       - <reactRouter|remix|none>
+       - <reactRouter|none>
        - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]
    * @environment SHOPIFY_FLAG_TEMPLATE
    */
