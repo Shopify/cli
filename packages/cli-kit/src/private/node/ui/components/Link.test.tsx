@@ -1,10 +1,33 @@
 import {Link} from './Link.js'
+import {LinksContext, Link as LinkEntry} from '../contexts/LinksContext.js'
 import {render} from '../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
-import React from 'react'
+import React, {FunctionComponent, useRef} from 'react'
 import supportsHyperlinks from 'supports-hyperlinks'
 
 vi.mock('supports-hyperlinks')
+
+const WithLinksContext: FunctionComponent<{children: React.ReactNode; addLinkSpy?: (label: string | undefined, url: string) => void}> = ({
+  children,
+  addLinkSpy,
+}) => {
+  const links = useRef<Record<string, LinkEntry>>({})
+  return (
+    <LinksContext.Provider
+      value={{
+        links,
+        addLink: (label, url) => {
+          addLinkSpy?.(label, url)
+          const newId = (Object.keys(links.current).length + 1).toString()
+          links.current = {...links.current, [newId]: {label, url}}
+          return newId
+        },
+      }}
+    >
+      {children}
+    </LinksContext.Provider>
+  )
+}
 
 describe('Link', async () => {
   test("renders correctly with a fallback for terminals that don't support hyperlinks", async () => {
@@ -98,6 +121,58 @@ describe('Link', async () => {
 
     // Then
     expect(lastFrame()).toMatchInlineSnapshot('"https://example.com"')
+  })
+
+  describe('inside a LinksContext (Banner)', async () => {
+    test('renders just `[N]` (not `url [N]`) for label-less links when the terminal does not support hyperlinks', async () => {
+      supportHyperLinks(false)
+
+      const {lastFrame} = render(
+        <WithLinksContext>
+          <Link url="https://example.com" />
+        </WithLinksContext>,
+      )
+
+      expect(lastFrame()).toBe('[1]')
+    })
+
+    test('uses the footnote mechanism for labeled links when the terminal does not support hyperlinks', async () => {
+      supportHyperLinks(false)
+
+      const {lastFrame} = render(
+        <WithLinksContext>
+          <Link url="https://example.com" label="Example" />
+        </WithLinksContext>,
+      )
+
+      expect(lastFrame()).toBe('Example [1]')
+    })
+
+    test('registers label-less links in context so the footnote mechanism is always used', async () => {
+      supportHyperLinks(false)
+      const addLinkSpy = vi.fn()
+
+      render(
+        <WithLinksContext addLinkSpy={addLinkSpy}>
+          <Link url="https://example.com" />
+        </WithLinksContext>,
+      )
+
+      expect(addLinkSpy).toHaveBeenCalledWith(undefined, 'https://example.com')
+    })
+
+    test('registers labeled links in context', async () => {
+      supportHyperLinks(false)
+      const addLinkSpy = vi.fn()
+
+      render(
+        <WithLinksContext addLinkSpy={addLinkSpy}>
+          <Link url="https://example.com" label="Example" />
+        </WithLinksContext>,
+      )
+
+      expect(addLinkSpy).toHaveBeenCalledWith('Example', 'https://example.com')
+    })
   })
 
   function supportHyperLinks(isSupported: boolean) {

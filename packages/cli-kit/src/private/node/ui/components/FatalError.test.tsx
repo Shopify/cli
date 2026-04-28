@@ -43,6 +43,23 @@ describe('FatalError', async () => {
     `)
   })
 
+  test('does not linkify user-supplied invalid URLs or placeholder URLs in error/tryMessage', async () => {
+    const error = new AbortError(`Invalid tunnel URL: https://asda`, `Valid format: "https://my-tunnel-url:port"`)
+
+    const {lastFrame} = render(<FatalError error={error} />)
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Invalid tunnel URL: https://asda                                            │
+      │                                                                              │
+      │  Valid format: \"https://my-tunnel-url:port\"                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
   test('renders correctly with a formatted message', async () => {
     const error = new AbortError([
       'There has been an error creating your deployment:',

@@ -4,7 +4,8 @@ import {List} from './List.js'
 import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
-import React, {FunctionComponent} from 'react'
+import {LinksContext} from '../contexts/LinksContext.js'
+import React, {FunctionComponent, useContext} from 'react'
 import {Box, Text} from 'ink'
 
 export interface LinkToken {
@@ -153,7 +154,16 @@ interface TokenizedTextProps {
  * links, and commands.
  */
 const URL_REGEX = /https?:\/\/\S+/g
-const URL_TRAILING_PUNCTUATION = /[.,;:!?)\]}>'"]+$/
+const URL_TRAILING_PUNCTUATION = /[.,;:!?'"]+$/
+
+function isLikelyRealUrl(candidate: string): boolean {
+  try {
+    const parsed = new URL(candidate)
+    return parsed.hostname.includes('.')
+  } catch {
+    return false
+  }
+}
 
 function renderStringWithLinks(str: string): JSX.Element {
   const matches = Array.from(str.matchAll(URL_REGEX))
@@ -169,6 +179,9 @@ function renderStringWithLinks(str: string): JSX.Element {
     if (trailing) {
       url = url.slice(0, url.length - trailing[0].length)
     }
+    if (!isLikelyRealUrl(url)) {
+      return
+    }
     const start = match.index
     const end = start + url.length
     if (start > cursor) {
@@ -177,6 +190,9 @@ function renderStringWithLinks(str: string): JSX.Element {
     parts.push(<Link key={`l${index}`} url={url} />)
     cursor = end
   })
+  if (parts.length === 0) {
+    return <Text>{str}</Text>
+  }
   if (cursor < str.length) {
     parts.push(<Text key="tail">{str.slice(cursor)}</Text>)
   }
@@ -184,8 +200,9 @@ function renderStringWithLinks(str: string): JSX.Element {
 }
 
 const TokenizedText: FunctionComponent<TokenizedTextProps> = ({item}) => {
+  const linksContext = useContext(LinksContext)
   if (typeof item === 'string') {
-    return renderStringWithLinks(item)
+    return linksContext === null ? <Text>{item}</Text> : renderStringWithLinks(item)
   } else if ('command' in item) {
     return <Command command={item.command} />
   } else if ('link' in item) {
