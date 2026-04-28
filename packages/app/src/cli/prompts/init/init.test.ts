@@ -29,7 +29,7 @@ describe('init', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
         {label: 'Build a React Router app (recommended)', value: 'reactRouter'},
-        {label: 'Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)', value: 'none'},
+        {label: 'Build an extension-only app', value: 'none'},
       ],
       message: 'Get started building your app:',
       defaultValue: 'reactRouter',
@@ -54,7 +54,10 @@ describe('init', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
         {label: 'Build a React Router app (recommended)', value: 'reactRouter'},
-        {label: 'Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)', value: 'none'},
+        {
+          label: 'Build an extension-only app',
+          value: 'none',
+        },
       ],
       message: 'Get started building your app:',
       defaultValue: 'reactRouter',

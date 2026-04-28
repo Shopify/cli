@@ -57,7 +57,7 @@ export const templates = {
   } as Template,
   none: {
     url: 'https://github.com/Shopify/shopify-app-template-extension-only',
-    label: 'Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)',
+    label: 'Build an extension-only app',
     visible: true,
   } as Template,
   node: {
