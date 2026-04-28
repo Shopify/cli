@@ -122,8 +122,11 @@ describe('oclif manifest packaging', () => {
         scripts?: {prepack?: string}
       }
 
-      if (!packageJson.files?.includes('/oclif.manifest.json')) continue
-      if (!packageJson.scripts?.prepack?.includes('pnpm oclif manifest')) {
+      const shipsOclifManifest = packageJson.files?.some((file) =>
+        file.replace(/^\.?\//, '').endsWith('oclif.manifest.json'),
+      )
+      if (!shipsOclifManifest) continue
+      if (!/\boclif\s+manifest\b/.test(packageJson.scripts?.prepack ?? '')) {
         missingManifestRefresh.push(path.relative(repoRoot, packageJsonPath))
       }
     }
