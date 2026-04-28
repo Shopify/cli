@@ -317,8 +317,26 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return Boolean(this.entrySourceFilePath.endsWith('.js') || this.entrySourceFilePath.endsWith('.ts'))
   }
 
-  async build(options: ExtensionBuildOptions, lifecycle: LifecyclePhase): Promise<void> {
-    const {clientSteps = []} = this.specification
+  async build(options: ExtensionBuildOptions): Promise<void> {
+    await this.runLifecyclePhase('build', options)
+  }
+
+  async bundle(options: ExtensionBuildOptions): Promise<void> {
+    await this.runLifecyclePhase('bundle', options)
+  }
+
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
+    await this.build(options)
+    await this.bundle(options)
+
+    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
+    await this.keepBuiltSourcemapsLocally(bundleInputPath)
+  }
+
+  private async runLifecyclePhase(phase: LifecyclePhase, options: ExtensionBuildOptions): Promise<void> {
+    const steps = this.specification.clientSteps?.find((group) => group.lifecycle === phase)?.steps ?? []
+    if (steps.length === 0) return
 
     const context: BuildContext = {
       extension: this,
@@ -326,25 +344,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       stepResults: new Map(),
     }
 
-    // Phases compose additively: 'bundle' runs build steps first, then bundle steps.
-    // Steps within each group preserve declaration order.
-    const buildSteps = clientSteps.find((group) => group.lifecycle === 'build')?.steps ?? []
-    const bundleSteps = clientSteps.find((group) => group.lifecycle === 'bundle')?.steps ?? []
-    const steps = lifecycle === 'build' ? buildSteps : [...buildSteps, ...bundleSteps]
-
     for (const step of steps) {
       // eslint-disable-next-line no-await-in-loop
       const result = await executeStep(step, context)
       context.stepResults.set(step.id, result)
     }
-  }
-
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    await this.build(options, 'bundle')
-
-    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
-    await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
   async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
