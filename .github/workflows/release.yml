@@ -170,6 +170,41 @@ jobs:
             --latest=legacy
           echo "Created release $TAG"
 
+      - name: Unlock main branch
+        if: steps.changesets.outputs.hasChangesets == 'false' && github.ref_name == 'main'
+        env:
+          ADMIN_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ADMIN_TOKEN:-}" ]; then
+            echo "::warning::RELEASE_ADMIN_TOKEN not configured; skipping main branch unlock"
+            exit 0
+          fi
+
+          RULE_ID=$(GITHUB_TOKEN="$ADMIN_TOKEN" gh api graphql \
+            -f query='query($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) {
+                branchProtectionRules(first: 50) { nodes { id pattern } }
+              }
+            }' \
+            -F owner="${GITHUB_REPOSITORY%/*}" \
+            -F repo="${GITHUB_REPOSITORY#*/}" \
+            --jq '.data.repository.branchProtectionRules.nodes[] | select(.pattern == "main") | .id')
+
+          if [ -z "$RULE_ID" ]; then
+            echo "::warning::No branch protection rule found for main; skipping unlock"
+            exit 0
+          fi
+
+          GITHUB_TOKEN="$ADMIN_TOKEN" gh api graphql \
+            -f query='mutation($id: ID!) {
+              updateBranchProtectionRule(input: { branchProtectionRuleId: $id, lockBranch: false }) {
+                branchProtectionRule { lockBranch }
+              }
+            }' \
+            -f id="$RULE_ID" >/dev/null
+          echo "Unlocked main branch"
+
   # Manual/Cron release job - runs on schedule or manual trigger with tag
   manual-cron-release:
     name: Manual & Cron Release
