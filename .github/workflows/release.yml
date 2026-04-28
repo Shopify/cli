@@ -116,6 +116,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
 
+      - name: Create git tag and GitHub Release
+        if: steps.changesets.outputs.hasChangesets == 'false' && startsWith(github.ref_name, 'stable/')
+        run: |
+          VERSION=$(node -p "require('./packages/cli-kit/package.json').version")
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+          gh release create "v${VERSION}" \
+            --title "${VERSION}" \
+            --notes "See the [CHANGELOG](https://github.com/Shopify/cli/blob/${{ github.ref_name }}/packages/cli/CHANGELOG.md) for details."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Open post-release PRs
+        if: steps.changesets.outputs.hasChangesets == 'false' && startsWith(github.ref_name, 'stable/')
+        run: pnpm post-release --skip-notification
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # Manual/Cron release job - runs on schedule or manual trigger with tag
   manual-cron-release:
     name: Manual & Cron Release
