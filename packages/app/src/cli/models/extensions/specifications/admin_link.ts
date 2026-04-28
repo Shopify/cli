@@ -6,7 +6,7 @@ const adminLinkSpec = createContractBasedModuleSpecification({
   experience: 'extension',
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'bundle',
       steps: [
         {
           id: 'include-admin-link-assets',

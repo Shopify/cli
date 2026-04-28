@@ -8,7 +8,7 @@ import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
-import {executeStep, BuildContext} from '../../services/build/client-steps.js'
+import {executeStep, BuildContext, LifecyclePhase} from '../../services/build/client-steps.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -114,7 +114,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get hasDeploySteps(): boolean {
     return (
-      this.specification.clientSteps?.some((group) => group.lifecycle === 'deploy' && group.steps.length > 0) ?? false
+      this.specification.clientSteps?.some(
+        (group) => (group.lifecycle === 'build' || group.lifecycle === 'bundle') && group.steps.length > 0,
+      ) ?? false
     )
   }
 
@@ -316,7 +318,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const {clientSteps = []} = this.specification
+    await this.runLifecyclePhase('build', options)
+  }
+
+  async bundle(options: ExtensionBuildOptions): Promise<void> {
+    await this.runLifecyclePhase('bundle', options)
+  }
+
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
+    await this.build(options)
+    await this.bundle(options)
+
+    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
+    await this.keepBuiltSourcemapsLocally(bundleInputPath)
+  }
+
+  private async runLifecyclePhase(phase: LifecyclePhase, options: ExtensionBuildOptions): Promise<void> {
+    const steps = this.specification.clientSteps?.find((group) => group.lifecycle === phase)?.steps ?? []
+    if (steps.length === 0) return
 
     const context: BuildContext = {
       extension: this,
@@ -324,21 +344,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       stepResults: new Map(),
     }
 
-    const steps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
-
     for (const step of steps) {
       // eslint-disable-next-line no-await-in-loop
       const result = await executeStep(step, context)
       context.stepResults.set(step.id, result)
     }
-  }
-
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    await this.build(options)
-
-    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
-    await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
   async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {

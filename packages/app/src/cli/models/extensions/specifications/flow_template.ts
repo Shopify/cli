@@ -51,7 +51,7 @@ const flowTemplateSpec = createExtensionSpecification({
   appModuleFeatures: (_) => ['ui_preview'],
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'bundle',
       steps: [
         {
           id: 'copy-files',

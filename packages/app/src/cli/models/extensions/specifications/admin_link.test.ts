@@ -52,7 +52,7 @@ describe('admin_link', async () => {
       const extension = await getTestAdminLink(tmpDir)
       const clientSteps = extension.specification.clientSteps!
       expect(clientSteps).toHaveLength(1)
-      expect(clientSteps[0]!.lifecycle).toBe('deploy')
+      expect(clientSteps[0]!.lifecycle).toBe('bundle')
 
       const steps = clientSteps[0]!.steps
       expect(steps).toHaveLength(1)

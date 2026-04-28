@@ -172,6 +172,27 @@ describe('build', async () => {
     })
   })
 
+  test('bundle() is a no-op when the spec declares no bundle lifecycle group', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given — tax_calculation only declares a 'build' lifecycle group.
+      const extensionInstance = await testTaxCalculationExtension(tmpDir)
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: (_chunk, _enc, cb) => cb()}),
+        stderr: new Writable({write: (_chunk, _enc, cb) => cb()}),
+        app: testApp(),
+        environment: 'production',
+      }
+
+      const outputFilePath = joinPath(tmpDir, `dist/${extensionInstance.outputFileName}`)
+
+      // When — bundle() runs only the bundle steps; with none declared this is a no-op.
+      await extensionInstance.bundle(options)
+
+      // Then — no output file is produced (build() was not called).
+      await expect(readFile(outputFilePath)).rejects.toThrow()
+    })
+  })
+
   test('does not copy shopify.extension.toml file when bundling theme extensions', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given

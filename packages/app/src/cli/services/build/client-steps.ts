@@ -25,7 +25,14 @@ interface IncludeAssetsStep extends BaseStep {
 export interface BundleUIStep extends BaseStep {
   readonly type: 'bundle_ui'
   readonly config?: {
-    readonly generatesAssetsManifest?: boolean
+    readonly bundleFolder?: string
+  }
+}
+
+/** Step with typed config specific to generate_ui_assets_manifest. */
+export interface GenerateUIAssetsManifestStep extends BaseStep {
+  readonly type: 'generate_ui_assets_manifest'
+  readonly config?: {
     readonly bundleFolder?: string
   }
 }
@@ -43,14 +50,31 @@ interface NoConfigStep extends BaseStep {
  * This is a discriminated union on `type`: each step type carries its own
  * typed `config`, so TypeScript catches config typos at compile time.
  */
-export type LifecycleStep = IncludeAssetsStep | BundleUIStep | NoConfigStep
+export type LifecycleStep = IncludeAssetsStep | BundleUIStep | GenerateUIAssetsManifestStep | NoConfigStep
+
+/**
+ * Lifecycle phases supported by the client-step pipeline.
+ *
+ * Phases compose additively. A spec lists only the steps that are *unique* to a
+ * phase; the runtime combines them per command:
+ *
+ * - `'build'` — local build (e.g. `shopify app build`). Steps required to
+ *   produce the on-disk artifact.
+ * - `'bundle'` — extra steps needed when bundling for upload (driven by `dev`
+ *   and `deploy`). Run *after* the build steps; never on their own.
+ *
+ * The `build` command runs `'build'` steps. The `dev`/`deploy` pipeline runs
+ * `'build'` then `'bundle'`. A spec only declares a `'bundle'` group when the
+ * bundle phase needs to do something the local build doesn't.
+ */
+export type LifecyclePhase = 'build' | 'bundle'
 
 /**
  * A group of steps scoped to a specific lifecycle phase.
- * Allows executing only the steps relevant to a given lifecycle (e.g. 'deploy').
+ * Allows executing only the steps relevant to a given lifecycle.
  */
 interface ClientLifecycleGroup {
-  readonly lifecycle: 'deploy'
+  readonly lifecycle: LifecyclePhase
   readonly steps: ReadonlyArray<LifecycleStep>
 }
 

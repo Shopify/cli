@@ -87,13 +87,24 @@ const uiExtensionSpec = createExtensionSpecification({
   getOutputRelativePath: (extension: ExtensionInstance<UIExtensionConfigType>) => `${extension.handle}.js`,
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'build',
       steps: [
         {
           id: 'bundle-ui',
           name: 'Bundle UI Extension',
           type: 'bundle_ui',
-          config: {generatesAssetsManifest: true, bundleFolder: 'dist/'},
+          config: {bundleFolder: 'dist/'},
+        },
+      ],
+    },
+    {
+      lifecycle: 'bundle',
+      steps: [
+        {
+          id: 'generate-ui-assets-manifest',
+          name: 'Generate UI Assets Manifest',
+          type: 'generate_ui_assets_manifest',
+          config: {bundleFolder: 'dist/'},
         },
         {
           id: 'include-ui-extension-assets',

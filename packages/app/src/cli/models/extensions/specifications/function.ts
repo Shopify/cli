@@ -103,7 +103,7 @@ const functionSpec = createExtensionSpecification({
   },
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'build',
       steps: [{id: 'build-function', name: 'Build Function', type: 'build_function', config: {}}],
     },
   ],

@@ -35,7 +35,7 @@ const spec = createExtensionSpecification({
     joinPath('dist', `${extension.handle}.js`),
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'build',
       steps: [{id: 'create-tax-stub', name: 'Create Tax Stub', type: 'create_tax_stub', config: {}}],
     },
   ],
