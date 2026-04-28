@@ -166,7 +166,7 @@ jobs:
           fi
           gh release create "$TAG" \
             --title "$TAG" \
-            --notes "" \
+            --generate-notes \
             --latest=legacy
           echo "Created release $TAG"
 
