@@ -1388,6 +1388,64 @@ describe('AppManagementClient', () => {
       expect(client.bundleFormat).toBe('br')
     })
   })
+
+  describe('appFromIdentifiers', () => {
+    test('returns undefined when the app is not found', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({app: null})
+
+      // When
+      const got = await client.appFromIdentifiers('non-existent-api-key')
+
+      // Then
+      expect(got).toBeUndefined()
+    })
+
+    test('returns the app when the app is found', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      const apiKey = 'existing-api-key'
+      const mockedResponse = {
+        app: {
+          id: 'gid://shopify/App/1',
+          key: apiKey,
+          organizationId: 'gid://shopify/Organization/2',
+          activeRoot: {
+            grantedShopifyApprovalScopes: ['read_products'],
+            clientCredentials: {secrets: [{key: 'secret-1'}]},
+          },
+          activeRelease: {
+            id: 'gid://shopify/Release/1',
+            version: {
+              name: 'My App',
+              appModules: [],
+            },
+          },
+        },
+      }
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedResponse)
+
+      // When
+      const got = await client.appFromIdentifiers(apiKey)
+
+      // Then
+      expect(got).toEqual({
+        id: 'gid://shopify/App/1',
+        title: 'My App',
+        apiKey,
+        apiSecretKeys: [{secret: 'secret-1'}],
+        organizationId: '2',
+        grantedScopes: ['read_products'],
+        applicationUrl: undefined,
+        embedded: undefined,
+        flags: [],
+        developerPlatformClient: client,
+      })
+    })
+  })
 })
 
 describe('ensureUserAccessToStore', () => {
