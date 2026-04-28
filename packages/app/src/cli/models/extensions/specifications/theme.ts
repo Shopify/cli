@@ -14,7 +14,7 @@ const themeSpec = createExtensionSpecification({
   graphQLType: 'theme_app_extension',
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'build',
       steps: [
         {id: 'build-theme', name: 'Build Theme Extension', type: 'build_theme', config: {}},
         {id: 'bundle-theme', name: 'Bundle Theme Extension', type: 'bundle_theme', config: {}},

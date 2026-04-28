@@ -32,7 +32,7 @@ describe('executeBundleUIStep', () => {
     id: 'bundle-ui',
     name: 'Bundle UI Extension',
     type: 'bundle_ui',
-    config: {generatesAssetsManifest: false},
+    config: {},
   }
 
   test('copies when local and bundle output directories differ', async () => {

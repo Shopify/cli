@@ -164,7 +164,29 @@ describe('build', async () => {
       const outputFilePath = joinPath(tmpDir, `dist/${extensionInstance.outputFileName}`)
 
       // When
-      await extensionInstance.build(options)
+      await extensionInstance.build(options, 'build')
+
+      // Then
+      const outputFileContent = await readFile(outputFilePath)
+      expect(outputFileContent).toEqual('(()=>{})();')
+    })
+  })
+
+  test("'bundle' lifecycle still runs the build steps even when no 'bundle' group is declared", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given — tax_calculation only declares a 'build' lifecycle group.
+      const extensionInstance = await testTaxCalculationExtension(tmpDir)
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: (_chunk, _enc, cb) => cb()}),
+        stderr: new Writable({write: (_chunk, _enc, cb) => cb()}),
+        app: testApp(),
+        environment: 'production',
+      }
+
+      const outputFilePath = joinPath(tmpDir, `dist/${extensionInstance.outputFileName}`)
+
+      // When — request the 'bundle' lifecycle. Composition still runs build steps even without a bundle group.
+      await extensionInstance.build(options, 'bundle')
 
       // Then
       const outputFileContent = await readFile(outputFilePath)

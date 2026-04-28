@@ -37,7 +37,7 @@ describe('allLocalSpecs', () => {
 
 const testClientSteps: ClientSteps = [
   {
-    lifecycle: 'deploy',
+    lifecycle: 'build',
     steps: [
       {
         id: 'bundle-ui',

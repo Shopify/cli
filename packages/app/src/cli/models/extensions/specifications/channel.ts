@@ -9,7 +9,7 @@ const channelSpecificationSpec = createContractBasedModuleSpecification({
   experience: 'extension',
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'build',
       steps: [
         {
           id: 'copy-files',

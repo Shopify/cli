@@ -42,7 +42,7 @@ async function build(options: BuildOptions) {
         return {
           prefix: ext.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-            await ext.build({stdout, stderr, signal, app: options.app, environment: 'production'})
+            await ext.build({stdout, stderr, signal, app: options.app, environment: 'production'}, 'build')
           },
         }
       }),

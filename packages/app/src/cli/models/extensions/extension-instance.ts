@@ -8,7 +8,7 @@ import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
-import {executeStep, BuildContext} from '../../services/build/client-steps.js'
+import {executeStep, BuildContext, LifecyclePhase} from '../../services/build/client-steps.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -114,7 +114,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get hasDeploySteps(): boolean {
     return (
-      this.specification.clientSteps?.some((group) => group.lifecycle === 'deploy' && group.steps.length > 0) ?? false
+      this.specification.clientSteps?.some(
+        (group) => (group.lifecycle === 'build' || group.lifecycle === 'bundle') && group.steps.length > 0,
+      ) ?? false
     )
   }
 
@@ -315,7 +317,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return Boolean(this.entrySourceFilePath.endsWith('.js') || this.entrySourceFilePath.endsWith('.ts'))
   }
 
-  async build(options: ExtensionBuildOptions): Promise<void> {
+  async build(options: ExtensionBuildOptions, lifecycle: LifecyclePhase): Promise<void> {
     const {clientSteps = []} = this.specification
 
     const context: BuildContext = {
@@ -324,7 +326,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       stepResults: new Map(),
     }
 
-    const steps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
+    // Phases compose additively: 'bundle' runs build steps first, then bundle steps.
+    // Steps within each group preserve declaration order.
+    const buildSteps = clientSteps.find((group) => group.lifecycle === 'build')?.steps ?? []
+    const bundleSteps = clientSteps.find((group) => group.lifecycle === 'bundle')?.steps ?? []
+    const steps = lifecycle === 'build' ? buildSteps : [...buildSteps, ...bundleSteps]
 
     for (const step of steps) {
       // eslint-disable-next-line no-await-in-loop
@@ -335,7 +341,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    await this.build(options)
+    await this.build(options, 'bundle')
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)

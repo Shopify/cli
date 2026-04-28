@@ -43,7 +43,7 @@ const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
   },
   clientSteps: [
     {
-      lifecycle: 'deploy',
+      lifecycle: 'build',
       steps: [
         {
           id: 'hosted_app_copy_files',
