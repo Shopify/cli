@@ -7,10 +7,10 @@ import supportsHyperlinks from 'supports-hyperlinks'
 
 vi.mock('supports-hyperlinks')
 
-const WithLinksContext: FunctionComponent<{children: React.ReactNode; addLinkSpy?: (label: string | undefined, url: string) => void}> = ({
-  children,
-  addLinkSpy,
-}) => {
+const WithLinksContext: FunctionComponent<{
+  children: React.ReactNode
+  addLinkSpy?: (label: string | undefined, url: string) => void
+}> = ({children, addLinkSpy}) => {
   const links = useRef<Record<string, LinkEntry>>({})
   return (
     <LinksContext.Provider

@@ -160,8 +160,11 @@ function isLikelyRealUrl(candidate: string): boolean {
   try {
     const parsed = new URL(candidate)
     return parsed.hostname.includes('.')
-  } catch {
-    return false
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
   }
 }
 

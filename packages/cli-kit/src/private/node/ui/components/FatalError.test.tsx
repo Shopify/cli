@@ -53,7 +53,7 @@ describe('FatalError', async () => {
       │                                                                              │
       │  Invalid tunnel URL: https://asda                                            │
       │                                                                              │
-      │  Valid format: \"https://my-tunnel-url:port\"                                  │
+      │  Valid format: "https://my-tunnel-url:port"                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
