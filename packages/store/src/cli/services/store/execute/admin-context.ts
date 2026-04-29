@@ -1,5 +1,6 @@
 import {fetchPublicApiVersions} from './admin-transport.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
+import {recordStoreCommandShopIdFromAdminApi} from '../metrics.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
@@ -44,6 +45,9 @@ export async function prepareAdminStoreGraphQLContext(input: {
     storeFqdn: session.store,
   }
   const version = await resolveApiVersion({session, adminSession, userSpecifiedVersion: input.userSpecifiedVersion})
+  if (version === 'unstable') {
+    await recordStoreCommandShopIdFromAdminApi({store: session.store, accessToken: session.accessToken})
+  }
 
   return {adminSession, version, session}
 }

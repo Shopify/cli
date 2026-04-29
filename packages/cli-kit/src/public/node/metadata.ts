@@ -177,7 +177,8 @@ export function createRuntimeMetadataContainer<
 
 // We want to track anything that ends up getting sent to monorail as `cmd_all_*`,
 // `cmd_app_*`, `cmd_theme_*`, `store_*`, and `env_auto_upgrade_*`
-type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_all_'> &
+type CmdFieldsFromMonorail = Pick<MonorailEventPublic, 'shop_id'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_all_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_app_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_create_app_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_theme_'> &

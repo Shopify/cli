@@ -2,11 +2,13 @@ import {prepareAdminStoreGraphQLContext} from './admin-context.js'
 import {fetchPublicApiVersions} from './admin-transport.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
+import {recordStoreCommandShopIdFromAdminApi} from '../metrics.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../auth/session-lifecycle.js', () => ({loadStoredStoreSession: vi.fn()}))
+vi.mock('../metrics.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./admin-transport.js', () => ({
   fetchPublicApiVersions: vi.fn(),
@@ -86,6 +88,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
       session: storedSession,
     })
     expect(fetchPublicApiVersions).not.toHaveBeenCalled()
+    expect(recordStoreCommandShopIdFromAdminApi).toHaveBeenCalledWith({store, accessToken: 'token'})
   })
 
   test('throws when the requested API version is invalid', async () => {

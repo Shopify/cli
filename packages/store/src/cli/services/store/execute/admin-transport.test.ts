@@ -6,6 +6,7 @@ import {
 } from './admin-transport.js'
 import {clearStoredStoreAppSession} from '../auth/session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
+import {recordStoreCommandShopIdFromAdminGid} from '../metrics.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -13,6 +14,7 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../auth/session-store.js')
+vi.mock('../metrics.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
@@ -188,6 +190,7 @@ describe('fetchPublicApiVersions', () => {
         {handle: '2025-10', supported: true},
         {handle: '2025-07', supported: true},
       ],
+      shop: {id: 'gid://shopify/Shop/123'},
     })
 
     const result = await fetchPublicApiVersions({adminSession, session})
@@ -196,6 +199,7 @@ describe('fetchPublicApiVersions', () => {
       {handle: '2025-10', supported: true},
       {handle: '2025-07', supported: true},
     ])
+    expect(recordStoreCommandShopIdFromAdminGid).toHaveBeenCalledWith('gid://shopify/Shop/123')
     expect(adminUrl).toHaveBeenCalledWith(store, 'unstable', adminSession)
     expect(graphqlRequest).toHaveBeenCalledWith(
       expect.objectContaining({
