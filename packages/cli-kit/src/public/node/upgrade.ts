@@ -1,3 +1,4 @@
+import {fetchNotifications, filterNotifications} from './notifications-system.js'
 import {isDevelopment} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from './is-global.js'
 import {
@@ -110,6 +111,32 @@ export function versionToAutoUpgrade(): string | undefined {
     return undefined
   }
   return newerVersion
+}
+
+/**
+ * Checks the freshly fetched notifications feed for a kill-switch notification that
+ * disables auto-upgrade. A blocking notification is one with `surface: "autoupgrade"`,
+ * `type: "error"`, and matching version/date ranges for the current CLI.
+ *
+ * Fails open: any error fetching or parsing the feed results in `false`, so a broken
+ * notifications endpoint never prevents users from auto-upgrading. Intentionally silent
+ * (no logs) — this is invoked on the auto-upgrade hot path.
+ *
+ * @returns `true` when an active blocking notification is found, `false` otherwise.
+ */
+export async function hasBlockingAutoUpgradeNotification(): Promise<boolean> {
+  try {
+    const {notifications} = await fetchNotifications()
+    // Reuse the standard notifications filtering for version/date/surface. The empty
+    // commandId disables the command filter; ['autoupgrade'] scopes to our surface.
+    // The frequency filter is a no-op here because we never render, so nothing gets
+    // written to the lastShown cache for these notifications.
+    const matching = filterNotifications(notifications, '', ['autoupgrade'])
+    return matching.some((notification) => notification.type === 'error')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
 /**

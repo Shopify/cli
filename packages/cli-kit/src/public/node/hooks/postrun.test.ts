@@ -1,6 +1,11 @@
 import {autoUpgradeIfNeeded} from './postrun.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
-import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from '../upgrade.js'
+import {
+  getOutputUpdateCLIReminder,
+  hasBlockingAutoUpgradeNotification,
+  runCLIUpgrade,
+  versionToAutoUpgrade,
+} from '../upgrade.js'
 import {isMajorVersionChange} from '../version.js'
 import {inferPackageManagerForGlobalCLI} from '../is-global.js'
 import {addPublicMetadata} from '../metadata.js'
@@ -13,6 +18,7 @@ vi.mock('../upgrade.js', async (importOriginal) => {
     runCLIUpgrade: vi.fn(),
     getOutputUpdateCLIReminder: vi.fn(),
     versionToAutoUpgrade: vi.fn(),
+    hasBlockingAutoUpgradeNotification: vi.fn().mockResolvedValue(false),
   }
 })
 
@@ -55,6 +61,7 @@ vi.mock('../../../private/node/conf-store.js', async (importOriginal) => {
 afterEach(() => {
   mockAndCaptureOutput().clear()
   vi.mocked(addPublicMetadata).mockClear()
+  vi.mocked(hasBlockingAutoUpgradeNotification).mockResolvedValue(false)
 })
 
 describe('autoUpgradeIfNeeded', () => {
@@ -126,6 +133,8 @@ describe('autoUpgradeIfNeeded', () => {
         env_auto_upgrade_skipped_reason: 'major_version',
       }),
     )
+    // Notifications should not be queried on the major-version skip path.
+    expect(hasBlockingAutoUpgradeNotification).not.toHaveBeenCalled()
   })
 
   test('records success=true on successful upgrade', async () => {
@@ -138,6 +147,29 @@ describe('autoUpgradeIfNeeded', () => {
 
     const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
     expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_success: true}))
+  })
+
+  test('silently skips the upgrade when a blocking autoupgrade notification is active', async () => {
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(isMajorVersionChange).mockReturnValue(false)
+    vi.mocked(hasBlockingAutoUpgradeNotification).mockResolvedValue(true)
+
+    await autoUpgradeIfNeeded()
+
+    expect(runCLIUpgrade).not.toHaveBeenCalled()
+    expect(outputMock.warn()).toBe('')
+    expect(outputMock.info()).toBe('')
+    const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+    expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_skipped_reason: 'blocked_by_notification'}))
+  })
+
+  test('does not query notifications when there is no version to upgrade to', async () => {
+    vi.mocked(versionToAutoUpgrade).mockReturnValue(undefined)
+
+    await autoUpgradeIfNeeded()
+
+    expect(hasBlockingAutoUpgradeNotification).not.toHaveBeenCalled()
   })
 
   test('records success=false on failed upgrade', async () => {
