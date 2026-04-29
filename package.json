@@ -68,7 +68,7 @@
     "graphql-tag": "^2.12.6",
     "json-stringify-deterministic": "1.0.12",
     "knip": "5.59.1",
-    "liquidjs": "10.25.0",
+    "liquidjs": "10.25.7",
     "node-fetch": "^3.3.2",
     "nx": "22.7.0",
     "oclif": "4.22.96",
