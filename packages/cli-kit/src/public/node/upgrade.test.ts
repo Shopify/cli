@@ -2,11 +2,25 @@ import {isDevelopment} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
 import {checkForCachedNewVersion, packageManagerFromUserAgent, PackageManager} from './node-package-manager.js'
 import {exec, isCI} from './system.js'
-import {cliInstallCommand, getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from './upgrade.js'
+import {
+  cliInstallCommand,
+  getOutputUpdateCLIReminder,
+  hasBlockingAutoUpgradeNotification,
+  runCLIUpgrade,
+  versionToAutoUpgrade,
+} from './upgrade.js'
+import {Notification, fetchNotifications} from './notifications-system.js'
 import {isPreReleaseVersion} from './version.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
 
+vi.mock('./notifications-system.js', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    fetchNotifications: vi.fn(),
+  }
+})
 vi.mock('./context/local.js')
 vi.mock('./is-global.js')
 vi.mock('./node-package-manager.js')
@@ -251,5 +265,58 @@ describe('versionToAutoUpgrade', () => {
     vi.mocked(isPreReleaseVersion).mockReturnValue(true)
     expect(versionToAutoUpgrade()).toBeUndefined()
     vi.mocked(isPreReleaseVersion).mockReturnValue(false)
+  })
+})
+
+describe('hasBlockingAutoUpgradeNotification', () => {
+  function notification(overrides: Partial<Notification> = {}): Notification {
+    return {
+      id: 'block-autoupgrade',
+      message: 'Auto-upgrade temporarily disabled',
+      type: 'error',
+      frequency: 'always',
+      ownerChannel: '#cli',
+      surface: 'autoupgrade',
+      ...overrides,
+    }
+  }
+
+  test('returns true when an error notification on the autoupgrade surface is active', async () => {
+    vi.mocked(fetchNotifications).mockResolvedValue({notifications: [notification()]})
+    await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(true)
+  })
+
+  test('returns false for non-error notifications on the autoupgrade surface', async () => {
+    vi.mocked(fetchNotifications).mockResolvedValue({
+      notifications: [notification({type: 'warning'}), notification({type: 'info'})],
+    })
+    await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(false)
+  })
+
+  test('returns false for error notifications on other surfaces', async () => {
+    vi.mocked(fetchNotifications).mockResolvedValue({notifications: [notification({surface: 'app'})]})
+    await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(false)
+  })
+
+  test('returns false when the current CLI version is below minVersion', async () => {
+    vi.mocked(fetchNotifications).mockResolvedValue({notifications: [notification({minVersion: '999.0.0'})]})
+    await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(false)
+  })
+
+  test('returns false when the current CLI version is above maxVersion', async () => {
+    vi.mocked(fetchNotifications).mockResolvedValue({notifications: [notification({maxVersion: '0.0.1'})]})
+    await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(false)
+  })
+
+  test('returns false when the notification window is in the past', async () => {
+    vi.mocked(fetchNotifications).mockResolvedValue({
+      notifications: [notification({minDate: '2000-01-01', maxDate: '2000-01-02'})],
+    })
+    await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(false)
+  })
+
+  test('fails open and returns false when fetching notifications throws', async () => {
+    vi.mocked(fetchNotifications).mockRejectedValue(new Error('network down'))
+    await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(false)
   })
 })

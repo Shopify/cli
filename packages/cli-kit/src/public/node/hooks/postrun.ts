@@ -66,7 +66,7 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
     {CLI_KIT_VERSION},
     {isMajorVersionChange},
     {outputWarn, outputDebug},
-    {getOutputUpdateCLIReminder, runCLIUpgrade},
+    {getOutputUpdateCLIReminder, runCLIUpgrade, hasBlockingAutoUpgradeNotification},
     metadata,
   ] = await Promise.all([
     import('../../common/version.js'),
@@ -80,6 +80,17 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
     outputWarn(getOutputUpdateCLIReminder(newerVersion, true))
     await metadata.addPublicMetadata(() => ({
       env_auto_upgrade_skipped_reason: 'major_version',
+    }))
+    return
+  }
+
+  // Notification kill switch: an `error`-type notification on the `autoupgrade` surface
+  // silently disables auto-upgrade. Checked last — after every other gate, including the
+  // daily rate limit and the major-version check — so the network fetch only happens when
+  // we're about to actually run the upgrade.
+  if (await hasBlockingAutoUpgradeNotification()) {
+    await metadata.addPublicMetadata(() => ({
+      env_auto_upgrade_skipped_reason: 'blocked_by_notification',
     }))
     return
   }
