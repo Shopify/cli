@@ -192,12 +192,12 @@ describe('getUIExtensionPayload', () => {
           assets: {
             tools: {
               name: 'tools',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/tools.json',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/tools.json',
               lastUpdated: expect.any(Number),
             },
             instructions: {
               name: 'instructions',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/instructions.md',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/instructions.md',
               lastUpdated: expect.any(Number),
             },
           },
@@ -241,12 +241,12 @@ describe('getUIExtensionPayload', () => {
           assets: {
             main: {
               name: 'main',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/main.js',
               lastUpdated: expect.any(Number),
             },
             should_render: {
               name: 'should_render',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-conditions.js',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/should_render.js',
               lastUpdated: expect.any(Number),
             },
           },
@@ -295,17 +295,216 @@ describe('getUIExtensionPayload', () => {
           assets: {
             main: {
               name: 'main',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/dist/test-ui-extension.js',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/main.js',
               lastUpdated: expect.any(Number),
             },
             should_render: {
               name: 'should_render',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/dist/test-ui-extension-conditions.js',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/should_render.js',
               lastUpdated: expect.any(Number),
             },
           },
         },
       ])
+    })
+  })
+
+  test('emits a distinct URL per extension point even when built assets share a filepath', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {target: 'TARGET_A', module: './src/ExtensionPointA.js'},
+            {target: 'TARGET_B', module: './src/ExtensionPointB.js'},
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      await setupBuildOutput(
+        uiExtension,
+        tmpDir,
+        {
+          TARGET_A: {main: 'dist/main.js'},
+          TARGET_B: {main: 'dist/main.js'},
+        },
+        {},
+      )
+
+      const resolver = new Map<string, string>()
+      const got = await getUIExtensionPayload(
+        uiExtension,
+        tmpDir,
+        {
+          ...createMockOptions(tmpDir, [uiExtension]),
+          currentDevelopmentPayload: {hidden: true, status: 'success'},
+        },
+        resolver,
+      )
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'TARGET_A',
+          assets: {
+            main: {name: 'main', url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_A/main.js'},
+          },
+        },
+        {
+          target: 'TARGET_B',
+          assets: {
+            main: {name: 'main', url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_B/main.js'},
+          },
+        },
+      ])
+      expect(resolver.get('TARGET_A/main.js')).toBe('dist/main.js')
+      expect(resolver.get('TARGET_B/main.js')).toBe('dist/main.js')
+    })
+  })
+
+  test('emits a directory-prefix URL and per-file resolver entries when the config points at a folder', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {
+              target: 'CUSTOM_EXTENSION_POINT',
+              module: './src/ExtensionPointA.js',
+              assets: './assets',
+            },
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      await setupBuildOutput(
+        uiExtension,
+        tmpDir,
+        {CUSTOM_EXTENSION_POINT: {assets: ['foo.json', 'subdir/bar.png']}},
+        {'foo.json': '{}', 'subdir/bar.png': 'stub'},
+      )
+
+      const extensionOutputPath = uiExtension.getOutputPathForDirectory(tmpDir)
+      const buildDirectory = extname(extensionOutputPath) ? dirname(extensionOutputPath) : extensionOutputPath
+      await writeFile(joinPath(buildDirectory, 'foo.json'), '{}')
+      await mkdir(joinPath(buildDirectory, 'subdir'))
+      await writeFile(joinPath(buildDirectory, 'subdir/bar.png'), 'stub')
+
+      const resolver = new Map<string, string>()
+      const got = await getUIExtensionPayload(
+        uiExtension,
+        tmpDir,
+        {
+          ...createMockOptions(tmpDir, [uiExtension]),
+          currentDevelopmentPayload: {hidden: true, status: 'success'},
+        },
+        resolver,
+      )
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          assets: {
+            assets: {
+              name: 'assets',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/assets/',
+              lastUpdated: expect.any(Number),
+            },
+          },
+        },
+      ])
+      expect(resolver.get('CUSTOM_EXTENSION_POINT/assets/foo.json')).toBe('foo.json')
+      expect(resolver.get('CUSTOM_EXTENSION_POINT/assets/subdir/bar.png')).toBe('subdir/bar.png')
+    })
+  })
+
+  test('emits distinct directory URLs per extension point when two targets share the same assets folder', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {target: 'TARGET_A', module: './src/ExtensionPointA.js', assets: './assets'},
+            {target: 'TARGET_B', module: './src/ExtensionPointB.js', assets: './assets'},
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      await setupBuildOutput(
+        uiExtension,
+        tmpDir,
+        {
+          TARGET_A: {assets: ['foo.json']},
+          TARGET_B: {assets: ['foo.json']},
+        },
+        {'foo.json': '{}'},
+      )
+      const extensionOutputPath = uiExtension.getOutputPathForDirectory(tmpDir)
+      const buildDirectory = extname(extensionOutputPath) ? dirname(extensionOutputPath) : extensionOutputPath
+      await writeFile(joinPath(buildDirectory, 'foo.json'), '{}')
+
+      const resolver = new Map<string, string>()
+      const got = await getUIExtensionPayload(
+        uiExtension,
+        tmpDir,
+        {
+          ...createMockOptions(tmpDir, [uiExtension]),
+          currentDevelopmentPayload: {hidden: true, status: 'success'},
+        },
+        resolver,
+      )
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'TARGET_A',
+          assets: {assets: {url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_A/assets/'}},
+        },
+        {
+          target: 'TARGET_B',
+          assets: {assets: {url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_B/assets/'}},
+        },
+      ])
+      // Both targets' resolver entries point at the same output-relative file.
+      expect(resolver.get('TARGET_A/assets/foo.json')).toBe('foo.json')
+      expect(resolver.get('TARGET_B/assets/foo.json')).toBe('foo.json')
+    })
+  })
+
+  test('clears stale resolver entries on each payload regeneration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [{target: 'CUSTOM_EXTENSION_POINT', module: './src/ExtensionPointA.js'}],
+        },
+        devUUID: 'devUUID',
+      })
+
+      await setupBuildOutput(uiExtension, tmpDir, {CUSTOM_EXTENSION_POINT: {main: 'dist/main.js'}}, {})
+
+      const resolver = new Map<string, string>([['STALE_TARGET/main.js', 'stale.js']])
+      await getUIExtensionPayload(
+        uiExtension,
+        tmpDir,
+        {
+          ...createMockOptions(tmpDir, [uiExtension]),
+          currentDevelopmentPayload: {hidden: true, status: 'success'},
+        },
+        resolver,
+      )
+
+      expect(resolver.has('STALE_TARGET/main.js')).toBe(false)
+      expect(resolver.get('CUSTOM_EXTENSION_POINT/main.js')).toBe('dist/main.js')
     })
   })
 
@@ -351,7 +550,7 @@ describe('getUIExtensionPayload', () => {
               action: 'create',
               schema: {
                 name: 'schema',
-                url: 'http://tunnel-url.com/extensions/devUUID/assets/intents/create-schema.json',
+                url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/intents/0/schema.json',
                 lastUpdated: expect.any(Number),
               },
             },
@@ -360,7 +559,7 @@ describe('getUIExtensionPayload', () => {
               action: 'update',
               schema: {
                 name: 'schema',
-                url: 'http://tunnel-url.com/extensions/devUUID/assets/intents/update-schema.json',
+                url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/intents/1/schema.json',
                 lastUpdated: expect.any(Number),
               },
             },
@@ -461,7 +660,7 @@ describe('getUIExtensionPayload', () => {
           assets: {
             tools: {
               name: 'tools',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/tools.json',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/admin.app.intent.link/tools.json',
               lastUpdated: expect.any(Number),
             },
           },

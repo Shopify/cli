@@ -125,8 +125,9 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   // affecting the original `options` object and we only need to care about `payloadOptions` in this function.
 
   const bundlePath = payloadOptions.appWatcher.buildOutputPath
-  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
-  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
+  const assetResolvers = new Map()
+  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath, assetResolvers)
+  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions, assetResolvers)
   let extensions = payloadOptions.extensions.filter((ext) => ext.isPreviewable)
 
   const getExtensions = () => {

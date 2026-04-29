@@ -14,6 +14,7 @@ import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
+import {copyConfigKeyEntry} from '../../../build/steps/include-assets/copy-config-key-entry.js'
 import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
@@ -56,11 +57,20 @@ function getMockEvent({
   return event as unknown as H3Event
 }
 
-function getOptions({devOptions}: {devOptions: Partial<GetExtensionsMiddlewareOptions['devOptions']>}) {
+function getOptions({
+  devOptions,
+  assetResolvers,
+}: {
+  devOptions: Partial<GetExtensionsMiddlewareOptions['devOptions']>
+  assetResolvers?: Map<string, Map<string, string>>
+}) {
   const extensions = devOptions.extensions
+  const resolvers = assetResolvers ?? new Map()
   return {
     devOptions,
-    payloadStore: {},
+    payloadStore: {
+      getAssetResolver: (devUUID: string) => resolvers.get(devUUID),
+    },
     getExtensions: () => extensions,
   } as unknown as GetExtensionsMiddlewareOptions
 }
@@ -101,8 +111,7 @@ describe('redirectToDevConsoleMiddleware()', () => {
 })
 
 describe('fileServerMiddleware()', async () => {
-  // eslint-disable-next-line vitest/no-disabled-tests
-  test.skip('returns 404 if file does not exist', async () => {
+  test('returns 404 if file does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
@@ -237,34 +246,6 @@ describe('getExtensionAssetMiddleware()', () => {
     })
   })
 
-  test('returns static asset from extension source directory', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
-      const extension = await testUIExtension({directory: tmpDir})
-
-      const options = getOptions({
-        devOptions: {
-          extensions: [extension],
-        },
-      })
-
-      const fileName = 'tools.json'
-      await touchFile(joinPath(tmpDir, fileName))
-      await writeFile(joinPath(tmpDir, fileName), '{"tools": []}')
-
-      const event = getMockEvent({
-        params: {
-          extensionId: extension.devUUID,
-          assetPath: fileName,
-        },
-      })
-
-      const result = await getExtensionAssetMiddleware(options)(event)
-
-      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json')
-      expect(String(result)).toBe('{"tools": []}')
-    })
-  })
-
   test('returns built asset from extension build output directory', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       const extension = await testUIExtension({directory: tmpDir})
@@ -296,7 +277,10 @@ describe('getExtensionAssetMiddleware()', () => {
     })
   })
 
-  test('serves built asset over source file when both exist', async () => {
+  test('returns static asset that include_assets copied into the output directory', async () => {
+    // Simulates admin_link/ui_extension: include_assets copies `targeting[].tools`
+    // (possibly from outside the extension directory) into outputDir via uniqueBasename.
+    // The dev server serves whatever lives there, keyed by the manifest's output-relative name.
     await inTemporaryDirectory(async (tmpDir: string) => {
       const extension = await testUIExtension({directory: tmpDir})
 
@@ -306,12 +290,10 @@ describe('getExtensionAssetMiddleware()', () => {
         },
       })
 
-      // Create both a source file and a built file with the same name
-      const fileName = extension.outputFileName
-      await writeFile(joinPath(tmpDir, fileName), 'source content')
       const outputDir = joinPath(tmpDir, 'dist')
       await mkdir(outputDir)
-      await writeFile(joinPath(outputDir, fileName), 'built content')
+      const fileName = 'tools.json'
+      await writeFile(joinPath(outputDir, fileName), '{"tools": []}')
 
       const event = getMockEvent({
         params: {
@@ -322,8 +304,225 @@ describe('getExtensionAssetMiddleware()', () => {
 
       const result = await getExtensionAssetMiddleware(options)(event)
 
-      // Built asset takes priority
-      expect(String(result)).toBe('built content')
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json')
+      expect(String(result)).toBe('{"tools": []}')
+    })
+  })
+
+  test('returns 404 when the requested file is not present in the output directory', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+      const extension = await testUIExtension({directory: tmpDir})
+
+      const options = getOptions({
+        devOptions: {
+          extensions: [extension],
+        },
+      })
+
+      const outputDir = joinPath(tmpDir, 'dist')
+      await mkdir(outputDir)
+
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: 'never-configured.json',
+        },
+      })
+
+      await getExtensionAssetMiddleware(options)(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, expect.objectContaining({statusCode: 404}))
+    })
+  })
+
+  test('returns 404 for path traversal attempts', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+      const extension = await testUIExtension({directory: tmpDir})
+
+      const options = getOptions({
+        devOptions: {
+          extensions: [extension],
+        },
+      })
+
+      // A file outside outputDir that we want to ensure can't be reached.
+      await writeFile(joinPath(tmpDir, 'secret.txt'), 'secret')
+
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: '../secret.txt',
+        },
+      })
+
+      await getExtensionAssetMiddleware(options)(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+      })
+    })
+  })
+
+  test('serves a ../tools.json source after include_assets flattens it into the output directory', async () => {
+    // End-to-end verification of the motivating scenario: a TOML config declares
+    // `tools = "../tools.json"` (a path outside the extension directory).
+    //   1. include_assets (via copyConfigKeyEntry) copies the outside file into
+    //      outputDir under its flat basename.
+    //   2. The payload emits an opaque <target>/tools URL and registers a
+    //      resolver entry mapping that URL to the flattened filename.
+    //   3. The dev server middleware resolves the request against the resolver
+    //      and serves the correct file.
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const extDir = joinPath(tmpDir, 'ext')
+      await mkdir(extDir)
+
+      // Source file lives OUTSIDE the extension directory — addressable from
+      // the extension as `../tools.json`.
+      const toolsContent = '{"tools":["outside-source"]}'
+      await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
+
+      // product_subscription's outputRelativePath is `dist/${handle}.js`, so
+      // outputDir resolves to `<extDir>/dist`.
+      const extension = await testUIExtension({
+        directory: extDir,
+        configuration: {
+          name: 'test-ext',
+          type: 'product_subscription',
+          handle: 'test-ext',
+          metafields: [],
+          extension_points: [{target: 'target1', tools: '../tools.json'}],
+        } as any,
+      })
+      const outputDir = joinPath(extDir, 'dist')
+      await mkdir(outputDir)
+
+      // Simulate the real include_assets step running against the config.
+      const buildResult = await copyConfigKeyEntry({
+        key: 'extension_points[].tools',
+        baseDir: extDir,
+        outputDir,
+        context: {extension, options: {stdout: {write: vi.fn()}}} as any,
+      })
+
+      const flattened = buildResult.pathMap.get('../tools.json') as string
+      expect(flattened).toBe('tools.json')
+
+      // Simulate what payload generation would register for this extension.
+      const resolvers = new Map<string, Map<string, string>>()
+      resolvers.set(extension.devUUID, new Map([[`target1/tools`, flattened]]))
+      const options = getOptions({devOptions: {extensions: [extension]}, assetResolvers: resolvers})
+
+      // Request the opaque URL the payload would have emitted.
+      const servedEvent = getMockEvent({
+        params: {extensionId: extension.devUUID, assetPath: 'target1/tools'},
+      })
+      const served = await getExtensionAssetMiddleware(options)(servedEvent)
+      expect(String(served)).toBe(toolsContent)
+
+      // The raw "../tools.json" is NOT reachable — outside the outputDir sandbox.
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+      const traversalEvent = getMockEvent({
+        params: {extensionId: extension.devUUID, assetPath: '../tools.json'},
+      })
+      await getExtensionAssetMiddleware(options)(traversalEvent)
+      expect(utilities.sendError).toHaveBeenCalledWith(traversalEvent, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+      })
+    })
+  })
+
+  test('serves distinct files for two targets whose source basenames collide', async () => {
+    // The motivating regression for the resolver: two extension points both
+    // declare a `tools.json` source (one at `../tools.json`, one at
+    // `./tools.json`). include_assets disambiguates on disk via uniqueBasename
+    // (`tools.json` + `tools-1.json`), and the resolver maps each target's
+    // opaque URL to its own file. Requests against `<target>/tools` serve
+    // distinct content per target even though the URL shape is uniform.
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const extension = await testUIExtension({directory: tmpDir})
+      const outputDir = joinPath(tmpDir, 'dist')
+      await mkdir(outputDir)
+      await writeFile(joinPath(outputDir, 'tools.json'), '{"source":"outside"}')
+      await writeFile(joinPath(outputDir, 'tools-1.json'), '{"source":"inside"}')
+
+      const resolvers = new Map<string, Map<string, string>>()
+      resolvers.set(
+        extension.devUUID,
+        new Map([
+          ['target-a/tools', 'tools.json'],
+          ['target-b/tools', 'tools-1.json'],
+        ]),
+      )
+      const options = getOptions({devOptions: {extensions: [extension]}, assetResolvers: resolvers})
+
+      const eventA = getMockEvent({params: {extensionId: extension.devUUID, assetPath: 'target-a/tools'}})
+      const eventB = getMockEvent({params: {extensionId: extension.devUUID, assetPath: 'target-b/tools'}})
+
+      const servedA = await getExtensionAssetMiddleware(options)(eventA)
+      const servedB = await getExtensionAssetMiddleware(options)(eventB)
+
+      expect(String(servedA)).toBe('{"source":"outside"}')
+      expect(String(servedB)).toBe('{"source":"inside"}')
+    })
+  })
+
+  test('serves files from a directory-valued config via the resolver, including nested subdirectories', async () => {
+    // Covers `assets = "./assets"` — include_assets copies each file into the
+    // bundle, the payload emits a directory-prefix URL, and the resolver has
+    // one entry per file so the middleware serves individual fetches.
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const extension = await testUIExtension({directory: tmpDir})
+      const outputDir = joinPath(tmpDir, 'dist')
+      await mkdir(joinPath(outputDir, 'subdir'))
+      await writeFile(joinPath(outputDir, 'foo.json'), '{"ok":true}')
+      await writeFile(joinPath(outputDir, 'subdir/bar.png'), 'nested')
+
+      const resolvers = new Map<string, Map<string, string>>()
+      resolvers.set(
+        extension.devUUID,
+        new Map([
+          ['TARGET/assets/foo.json', 'foo.json'],
+          ['TARGET/assets/subdir/bar.png', 'subdir/bar.png'],
+        ]),
+      )
+      const options = getOptions({devOptions: {extensions: [extension]}, assetResolvers: resolvers})
+
+      const rootFile = await getExtensionAssetMiddleware(options)(
+        getMockEvent({params: {extensionId: extension.devUUID, assetPath: 'TARGET/assets/foo.json'}}),
+      )
+      const nestedFile = await getExtensionAssetMiddleware(options)(
+        getMockEvent({params: {extensionId: extension.devUUID, assetPath: 'TARGET/assets/subdir/bar.png'}}),
+      )
+
+      expect(String(rootFile)).toBe('{"ok":true}')
+      expect(String(nestedFile)).toBe('nested')
+    })
+  })
+
+  test('returns 404 for a resolver-mapped path that escapes the output directory', async () => {
+    // A defensive check: even if the resolver somehow produced a malicious
+    // value (traversal string, absolute path), the traversal guard still
+    // blocks it before any file read.
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+      const extension = await testUIExtension({directory: tmpDir})
+      await writeFile(joinPath(tmpDir, 'secret.txt'), 'secret')
+
+      const resolvers = new Map<string, Map<string, string>>()
+      resolvers.set(extension.devUUID, new Map([['evil/tools', '../secret.txt']]))
+      const options = getOptions({devOptions: {extensions: [extension]}, assetResolvers: resolvers})
+
+      const event = getMockEvent({params: {extensionId: extension.devUUID, assetPath: 'evil/tools'}})
+      await getExtensionAssetMiddleware(options)(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+      })
     })
   })
 })
