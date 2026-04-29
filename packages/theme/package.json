@@ -41,12 +41,12 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "4.5.3",
+    "@oclif/core": "4.10.6",
     "@shopify/cli-kit": "3.94.0",
-    "@shopify/theme-check-node": "3.25.0",
-    "@shopify/theme-language-server-node": "2.21.0",
+    "@shopify/theme-check-node": "3.26.0",
+    "@shopify/theme-language-server-node": "2.21.2",
     "chokidar": "3.6.0",
-    "h3": "1.15.9",
+    "h3": "1.15.11",
     "yaml": "2.8.3"
   },
   "devDependencies": {
