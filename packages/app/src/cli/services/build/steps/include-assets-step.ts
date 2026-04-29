@@ -55,6 +55,7 @@ const ConfigKeyEntrySchema = z.object({
   destination: z.string().optional(),
   anchor: z.string().optional(),
   groupBy: z.string().optional(),
+  preserveFilePaths: z.boolean().default(false),
 })
 
 const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, StaticEntrySchema, ConfigKeyEntrySchema])
@@ -126,9 +127,10 @@ export async function executeIncludeAssetsStep(
   const outputDir = resolveOutputDir(extension.outputPath)
 
   const aggregatedPathMap = new Map<string, string | string[]>()
-  // Track basenames written across all configKey entries in this build to detect
-  // true conflicts (different sources, same basename) while allowing overwrites
-  // from previous builds.
+  // Track basenames written across all configKey entries in this build. In
+  // default mode `uniqueBasename` uses this to rename basename collisions; in
+  // `preserveFilePaths` mode it's used to detect cross-entry collisions
+  // (different sources writing the same basename to the bundle).
   const usedBasenames = new Set<string>()
 
   // configKey entries run sequentially to avoid filesystem race conditions
@@ -147,6 +149,7 @@ export async function executeIncludeAssetsStep(
       context,
       destination: sanitizedDest,
       usedBasenames,
+      preserveFilePaths: entry.preserveFilePaths,
     })
     result.pathMap.forEach((val, key) => aggregatedPathMap.set(key, val))
     configKeyCount += result.filesCopied

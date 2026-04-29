@@ -1,6 +1,7 @@
 import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import type {BuildContext} from '../../client-steps.js'
 
 /**
@@ -25,8 +26,17 @@ export async function copyConfigKeyEntry(config: {
   context: BuildContext
   destination?: string
   usedBasenames?: Set<string>
+  preserveFilePaths?: boolean
 }): Promise<{filesCopied: number; pathMap: Map<string, string | string[]>}> {
-  const {key, baseDir, outputDir, context, destination, usedBasenames = new Set()} = config
+  const {
+    key,
+    baseDir,
+    outputDir,
+    context,
+    destination,
+    usedBasenames = new Set<string>(),
+    preserveFilePaths = false,
+  } = config
   const {stdout} = context.options
   const value = getNestedValue(context.extension.configuration, key)
   let paths: string[]
@@ -75,19 +85,31 @@ export async function copyConfigKeyEntry(config: {
       // that may no longer exist in the source, inflating the file count and producing
       // stale entries in the manifest's pathMap.
       const sourceFiles = await glob(['**/*'], {cwd: fullPath, absolute: false})
+      const relFiles = sourceFiles.map((file) => relativePath(outputDir, joinPath(destDir, file)))
+      if (preserveFilePaths) {
+        for (const file of sourceFiles) assertNoCollision(basename(file), sourcePath, usedBasenames)
+      }
       await copyDirectoryContents(fullPath, destDir)
       stdout.write(`Included '${sourcePath}'\n`)
-      const relFiles = sourceFiles.map((file) => relativePath(outputDir, joinPath(destDir, file)))
+      for (const file of sourceFiles) usedBasenames.add(basename(file))
       pathMap.set(sourcePath, relFiles)
       filesCopied += sourceFiles.length
     } else {
       await mkdir(destDir)
       const filename = basename(fullPath)
-      const destFilename = uniqueBasename(filename, usedBasenames)
+      let destFilename: string
+      if (preserveFilePaths) {
+        // Strict mode: any prior entry that wrote the same basename is a collision.
+        assertNoCollision(filename, sourcePath, usedBasenames)
+        destFilename = filename
+      } else {
+        // Default mode: flat basename uniqueness across all destinations.
+        destFilename = uniqueBasename(filename, usedBasenames)
+      }
       usedBasenames.add(destFilename)
+      const outputRelative = relativePath(outputDir, joinPath(destDir, destFilename))
       const destPath = joinPath(destDir, destFilename)
       await copyFile(fullPath, destPath)
-      const outputRelative = relativePath(outputDir, destPath)
       stdout.write(`Included '${sourcePath}'\n`)
       pathMap.set(sourcePath, outputRelative)
       filesCopied += 1
@@ -96,6 +118,18 @@ export async function copyConfigKeyEntry(config: {
   /* eslint-enable no-await-in-loop */
 
   return {filesCopied, pathMap}
+}
+
+/**
+ * Throws if `path` is already present in `used`. Shared between directory and
+ * single-file branches so the error message and check shape stay in one place.
+ */
+function assertNoCollision(path: string, sourcePath: string, used: Set<string>): void {
+  if (used.has(path)) {
+    throw new AbortError(
+      `File collision: '${path}' from '${sourcePath}' would overwrite a file copied from a different source. Rename or relocate the conflicting file.`,
+    )
+  }
 }
 
 /**
