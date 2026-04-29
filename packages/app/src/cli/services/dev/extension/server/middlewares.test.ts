@@ -133,7 +133,7 @@ describe('fileServerMiddleware()', async () => {
       })
 
       expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html')
-      expect(result).toBe('<html></html>')
+      expect(String(result)).toBe('<html></html>')
     })
   })
 
@@ -166,7 +166,24 @@ describe('fileServerMiddleware()', async () => {
       })
 
       expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', contentType)
-      expect(result).toBe(fileContent)
+      expect(String(result)).toBe(fileContent)
+    })
+  })
+
+  test('serves binary files as a Buffer without UTF-8 corruption', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      // Bytes that are invalid as UTF-8 input (0x89, 0xFF, 0xFE) — if the
+      // middleware decoded these as UTF-8 they'd collapse to U+FFFD and the
+      // image would be corrupt. Includes the real PNG magic header.
+      const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe, 0x00, 0x42])
+      await mkdir(joinPath(tmpDir, 'img'))
+      await writeFile(joinPath(tmpDir, 'img', 'logo.png'), pngBytes)
+
+      const event = getMockEvent()
+      const result = await fileServerMiddleware(event, {filePath: joinPath(tmpDir, 'img', 'logo.png')})
+
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'image/png')
+      expect(Buffer.isBuffer(result)).toBe(true)
     })
   })
 
@@ -183,7 +200,7 @@ describe('fileServerMiddleware()', async () => {
       })
 
       expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/plain')
-      expect(result).toBe('Content for bar.foo')
+      expect(String(result)).toBe('Content for bar.foo')
     })
   })
 })
@@ -244,7 +261,7 @@ describe('getExtensionAssetMiddleware()', () => {
       const result = await getExtensionAssetMiddleware(options)(event)
 
       expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json')
-      expect(result).toBe('{"tools": []}')
+      expect(String(result)).toBe('{"tools": []}')
     })
   })
 
@@ -275,7 +292,7 @@ describe('getExtensionAssetMiddleware()', () => {
       const result = await getExtensionAssetMiddleware(options)(event)
 
       expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/javascript')
-      expect(result).toBe('compiled bundle content')
+      expect(String(result)).toBe('compiled bundle content')
     })
   })
 
@@ -306,7 +323,7 @@ describe('getExtensionAssetMiddleware()', () => {
       const result = await getExtensionAssetMiddleware(options)(event)
 
       // Built asset takes priority
-      expect(result).toBe('built content')
+      expect(String(result)).toBe('built content')
     })
   })
 })

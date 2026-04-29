@@ -41,7 +41,11 @@ export async function fileServerMiddleware(event: H3Event, options: {filePath: s
     return sendError(event, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
   }
 
-  const fileContent = await readFile(filePath)
+  // Pass `{}` to opt out of cli-kit's `{encoding: 'utf8'}` default — binary
+  // files (png, jpeg, pdf, wasm, …) must come back as a Buffer or their bytes
+  // get mangled into U+FFFD replacement chars by the UTF-8 decode. h3 sends
+  // Buffers as-is and the browser decodes per Content-Type for text types.
+  const fileContent = await readFile(filePath, {})
   const extensionToContent = {
     '.ico': 'image/x-icon',
     '.html': 'text/html',
