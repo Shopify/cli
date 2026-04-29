@@ -99,6 +99,10 @@ export interface Schemas {
       cmd_app_validate_issue_count?: Optional<number>
       cmd_app_validate_file_count?: Optional<number>
 
+      // Agent (`app:agent:*`) related commands
+      cmd_app_agent_upstream_status?: Optional<number>
+      cmd_app_agent_response_bytes?: Optional<number>
+
       // Dev related commands
       cmd_dev_tunnel_type?: Optional<string>
       cmd_dev_tunnel_custom_hash?: Optional<string>

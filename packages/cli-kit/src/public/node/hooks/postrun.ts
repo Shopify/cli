@@ -26,11 +26,14 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   deprecationsHook(Command)
 
   const {outputDebug} = await import('../output.js')
+  const isAgentCommand = Command.id.startsWith('app:agent:')
   const command = Command.id.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
   postRunHookCompleted = true
 
-  if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
+  if (!isAgentCommand && !command.includes('notifications') && !command.includes('upgrade')) {
+    await autoUpgradeIfNeeded()
+  }
 }
 
 /**

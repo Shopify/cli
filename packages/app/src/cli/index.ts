@@ -1,3 +1,4 @@
+import AgentGetSelfReviewRequirements from './commands/app/agent/get-self-review-requirements.js'
 import Build from './commands/app/build.js'
 import BulkCancel from './commands/app/bulk/cancel.js'
 import BulkStatus from './commands/app/bulk/status.js'
@@ -44,6 +45,7 @@ import BaseCommand from '@shopify/cli-kit/node/base-command'
  * Organization commands extend BaseCommand directly.
  */
 export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlinkedCommand | typeof BaseCommand} = {
+  'app:agent:get-self-review-requirements': AgentGetSelfReviewRequirements,
   'app:build': Build,
   'app:bulk:cancel': BulkCancel,
   'app:bulk:status': BulkStatus,

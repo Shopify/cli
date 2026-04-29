@@ -112,6 +112,10 @@
       "app:env": {
         "description": "Manage environment variables."
       },
+      "app:agent": {
+        "description": "Commands intended to be invoked by AI agents in tandem with the Shopify AI Toolkit. Not for direct human use.",
+        "hidden": true
+      },
       "app:function": {
         "description": "Manage Shopify Functions."
       },
