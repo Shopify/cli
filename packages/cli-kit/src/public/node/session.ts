@@ -42,6 +42,15 @@ export interface Session {
 
 export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountInfo
 
+/**
+ * Records the user ID that should be attached to command analytics for this process.
+ *
+ * @param userId - User identifier to report on the command analytics event.
+ */
+export function setLastSeenUserId(userId: string): void {
+  setLastSeenUserIdAfterAuth(userId)
+}
+
 interface UserAccountInfo {
   type: 'UserAccount'
   email: string

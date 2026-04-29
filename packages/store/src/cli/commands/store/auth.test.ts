@@ -4,6 +4,7 @@ import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/auth/index.js')
+vi.mock('../../services/store/metrics.js')
 vi.mock('../../services/store/auth/result.js', () => ({
   createStoreAuthPresenter: vi.fn((format: 'text' | 'json') => ({format})),
 }))
