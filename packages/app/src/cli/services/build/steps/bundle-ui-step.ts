@@ -26,9 +26,11 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   const bundleOutputDir = step.config?.bundleFolder
     ? joinPath(dirname(context.extension.outputPath), step.config.bundleFolder)
     : dirname(context.extension.outputPath)
-  if (resolvePath(localOutputDir) !== resolvePath(bundleOutputDir)) {
-    await copyFile(localOutputDir, bundleOutputDir)
-  }
+
+  // If the final output path is the same as the local one: don't copy the results and don't generate manifests.
+  if (resolvePath(localOutputDir) === resolvePath(bundleOutputDir)) return
+
+  await copyFile(localOutputDir, bundleOutputDir)
 
   if (!step.config?.generatesAssetsManifest) return
 
