@@ -1,7 +1,5 @@
-import {throwReauthenticateStoreAuthError} from '../auth/recovery.js'
-import {clearStoredStoreAppSession} from '../auth/session-store.js'
+import {fetchPublicApiVersions} from './admin-transport.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
-import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {StoredStoreAppSession} from '../auth/session-store.js'
@@ -21,25 +19,7 @@ async function resolveApiVersion(options: {
 
   if (userSpecifiedVersion === 'unstable') return userSpecifiedVersion
 
-  let availableVersions
-  try {
-    availableVersions = await fetchApiVersions(adminSession)
-  } catch (error) {
-    if (
-      error instanceof AbortError &&
-      error.message.includes(`Error connecting to your store ${adminSession.storeFqdn}:`) &&
-      /\b(?:401|404)\b/.test(error.message)
-    ) {
-      clearStoredStoreAppSession(session.store, session.userId)
-      throwReauthenticateStoreAuthError(
-        `Stored app authentication for ${session.store} is no longer valid.`,
-        session.store,
-        session.scopes.join(','),
-      )
-    }
-
-    throw error
-  }
+  const availableVersions = await fetchPublicApiVersions({adminSession, session})
 
   if (!userSpecifiedVersion) {
     const supportedVersions = availableVersions.filter((version) => version.supported).map((version) => version.handle)

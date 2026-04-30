@@ -1,22 +1,16 @@
 import {prepareAdminStoreGraphQLContext} from './admin-context.js'
-import {clearStoredStoreAppSession} from '../auth/session-store.js'
+import {fetchPublicApiVersions} from './admin-transport.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('../auth/session-store.js')
 vi.mock('../auth/session-lifecycle.js', () => ({loadStoredStoreSession: vi.fn()}))
-vi.mock('@shopify/cli-kit/node/api/admin', async () => {
-  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>(
-    '@shopify/cli-kit/node/api/admin',
-  )
-  return {
-    ...actual,
-    fetchApiVersions: vi.fn(),
-  }
-})
+vi.mock('./admin-transport.js', () => ({
+  fetchPublicApiVersions: vi.fn(),
+  // runAdminStoreGraphQLOperation isn't exercised here, but we re-export it for type completeness.
+  runAdminStoreGraphQLOperation: vi.fn(),
+}))
 
 describe('prepareAdminStoreGraphQLContext', () => {
   const store = 'shop.myshopify.com'
@@ -32,26 +26,23 @@ describe('prepareAdminStoreGraphQLContext', () => {
 
   beforeEach(() => {
     vi.mocked(loadStoredStoreSession).mockResolvedValue(storedSession)
-    vi.mocked(fetchApiVersions).mockResolvedValue([
+    vi.mocked(fetchPublicApiVersions).mockResolvedValue([
       {handle: '2025-10', supported: true},
       {handle: '2025-07', supported: true},
       {handle: 'unstable', supported: false},
-    ] as any)
+    ])
   })
 
   test('returns the stored admin session, version, and full auth session', async () => {
     const result = await prepareAdminStoreGraphQLContext({store})
 
     expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
-    expect(fetchApiVersions).toHaveBeenCalledWith({
-      token: 'token',
-      storeFqdn: store,
+    expect(fetchPublicApiVersions).toHaveBeenCalledWith({
+      adminSession: {token: 'token', storeFqdn: store},
+      session: storedSession,
     })
     expect(result).toEqual({
-      adminSession: {
-        token: 'token',
-        storeFqdn: store,
-      },
+      adminSession: {token: 'token', storeFqdn: store},
       version: '2025-10',
       session: storedSession,
     })
@@ -68,9 +59,9 @@ describe('prepareAdminStoreGraphQLContext', () => {
 
     const result = await prepareAdminStoreGraphQLContext({store})
 
-    expect(fetchApiVersions).toHaveBeenCalledWith({
-      token: 'fresh-token',
-      storeFqdn: store,
+    expect(fetchPublicApiVersions).toHaveBeenCalledWith({
+      adminSession: {token: 'fresh-token', storeFqdn: store},
+      session: refreshedSession,
     })
     expect(result.adminSession.token).toBe('fresh-token')
     expect(result.session).toEqual(refreshedSession)
@@ -82,36 +73,27 @@ describe('prepareAdminStoreGraphQLContext', () => {
     expect(result.version).toBe('2025-07')
   })
 
-  test('allows unstable without validating against fetched versions', async () => {
+  test('allows unstable without consulting the transport, but still loads the stored session', async () => {
     const result = await prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: 'unstable'})
 
-    expect(result.version).toBe('unstable')
-    expect(fetchApiVersions).not.toHaveBeenCalled()
-  })
-
-  test('clears the current stored auth and prompts re-auth with real scopes when API version lookup gets invalid auth', async () => {
-    vi.mocked(fetchApiVersions).mockRejectedValue(
-      new AbortError(`Error connecting to your store ${store}: unauthorized 401 {}`),
-    )
-
-    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
-      message: `Stored app authentication for ${store} is no longer valid.`,
-      tryMessage: 'To re-authenticate, run:',
-      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products,write_orders`}]],
+    expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
+    expect(result).toEqual({
+      adminSession: {token: 'token', storeFqdn: store},
+      version: 'unstable',
+      session: storedSession,
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
-  })
-
-  test('rethrows unrelated API version lookup failures', async () => {
-    vi.mocked(fetchApiVersions).mockRejectedValue(new AbortError('upstream exploded'))
-
-    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('upstream exploded')
-    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(fetchPublicApiVersions).not.toHaveBeenCalled()
   })
 
   test('throws when the requested API version is invalid', async () => {
     await expect(prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: '1999-01'})).rejects.toThrow(
       'Invalid API version',
     )
+  })
+
+  test('rethrows whatever the transport raises (errors are owned by the transport)', async () => {
+    vi.mocked(fetchPublicApiVersions).mockRejectedValue(new AbortError('upstream exploded'))
+
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('upstream exploded')
   })
 })
