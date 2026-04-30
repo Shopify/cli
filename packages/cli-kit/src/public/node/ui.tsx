@@ -417,6 +417,11 @@ export async function renderAutocompletePrompt<T>(
 ): Promise<T> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
+  // The default search filters in-memory choices synchronously, so it doesn't need
+  // throttling. Skipping the throttle makes the keystroke-to-result latency feel
+  // instant. Callers that supply their own (typically remote/paginated) search keep
+  // the component's default throttle unless they opt out via `searchDebounceMs`.
+  const usingDefaultSearch = props.search === undefined
   const newProps = {
     search(term: string) {
       const lowerTerm = term.toLowerCase()
@@ -426,6 +431,7 @@ export async function renderAutocompletePrompt<T>(
         }),
       })
     },
+    ...(usingDefaultSearch ? {searchDebounceMs: 0} : {}),
     ...props,
   }
 
