@@ -31,6 +31,7 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
     ...actual,
     renderTasks: vi.fn(async (tasks: {task: () => Promise<unknown>}[]) => {
       for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
         await task.task()
       }
     }),
