@@ -29,7 +29,7 @@ const modernBunLockfile = 'bun.lock'
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
 
 /** An array containing the lockfiles from all the package managers */
-export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile, bunLockfile]
+export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile, bunLockfile, modernBunLockfile]
 export const lockfilesByManager: Record<PackageManager, Lockfile | undefined> = {
   yarn: yarnLockfile,
   npm: npmLockfile,
@@ -38,7 +38,7 @@ export const lockfilesByManager: Record<PackageManager, Lockfile | undefined> = 
   homebrew: undefined,
   unknown: undefined,
 }
-export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb'
+export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb' | 'bun.lock'
 
 /**
  * A union type that represents the type of dependencies in the package.json
@@ -54,6 +54,13 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
 export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'homebrew', 'unknown'] as const
 export type PackageManager = (typeof packageManager)[number]
 type ProjectPackageManager = Extract<PackageManager, 'yarn' | 'npm' | 'pnpm' | 'bun'>
+
+export function lockfilesForPackageManager(packageManager: PackageManager): Lockfile[] {
+  if (packageManager === 'bun') return [bunLockfile, modernBunLockfile]
+
+  const lockfile = lockfilesByManager[packageManager]
+  return lockfile ? [lockfile] : []
+}
 
 /**
  * Returns an abort error that's thrown when the package manager can't be determined.
