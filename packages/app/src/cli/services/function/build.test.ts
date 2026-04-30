@@ -7,11 +7,13 @@ import {
   runWasmOpt,
   runTrampoline,
   buildJSFunction,
+  installTrampolines,
 } from './build.js'
 import {
   javyBinary,
   javyPluginBinary,
   wasmOptBinary,
+  downloadBinary,
   trampolineBinary,
   PREFERRED_FUNCTION_RUNNER_VERSION,
   PREFERRED_JAVY_VERSION,
@@ -452,6 +454,44 @@ describe('runTrampoline', () => {
       '-o',
       functionModulePath,
     ])
+  })
+})
+
+describe('installTrampolines', () => {
+  test('downloads both trampoline versions when app has function extensions', async () => {
+    // Given
+    vi.mocked(downloadBinary).mockResolvedValue(undefined)
+    const functionExtension = await testFunctionExtension()
+    const appWithFunctions = testApp({allExtensions: [functionExtension]})
+
+    // When
+    await installTrampolines(appWithFunctions)
+
+    // Then
+    expect(downloadBinary).toHaveBeenCalledWith(trampolineBinary(V1_TRAMPOLINE_VERSION))
+    expect(downloadBinary).toHaveBeenCalledWith(trampolineBinary(V2_TRAMPOLINE_VERSION))
+  })
+
+  test('does not download trampolines when app has no function extensions', async () => {
+    // Given
+    const appWithoutFunctions = testApp({allExtensions: []})
+    vi.mocked(downloadBinary).mockClear()
+
+    // When
+    await installTrampolines(appWithoutFunctions)
+
+    // Then
+    expect(downloadBinary).not.toHaveBeenCalled()
+  })
+
+  test('swallows download errors for unsupported platform/arch combos', async () => {
+    // Given
+    vi.mocked(downloadBinary).mockRejectedValue(new Error('Unsupported platform/architecture combination'))
+    const functionExtension = await testFunctionExtension()
+    const appWithFunctions = testApp({allExtensions: [functionExtension]})
+
+    // When / Then — should not throw
+    await expect(installTrampolines(appWithFunctions)).resolves.toBeUndefined()
   })
 })
 

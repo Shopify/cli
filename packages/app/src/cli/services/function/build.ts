@@ -379,6 +379,22 @@ export async function installJavy(app: AppInterface) {
   await Promise.all(downloadPromises)
 }
 
+export async function installTrampolines(app: AppInterface) {
+  const hasFunctionExtensions = app.allExtensions.some((ext) => ext.features.includes('function'))
+  if (!hasFunctionExtensions) {
+    return
+  }
+
+  await Promise.all([
+    downloadBinary(trampolineBinary(V1_TRAMPOLINE_VERSION)).catch((err) => {
+      outputDebug(`Failed to preload trampoline v${V1_TRAMPOLINE_VERSION}: ${err.message}`)
+    }),
+    downloadBinary(trampolineBinary(V2_TRAMPOLINE_VERSION)).catch((err) => {
+      outputDebug(`Failed to preload trampoline v${V2_TRAMPOLINE_VERSION}: ${err.message}`)
+    }),
+  ])
+}
+
 interface JavyBuilder {
   bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<BuildResult>
   compile(

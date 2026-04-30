@@ -21,6 +21,7 @@ import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
+import {installJavy, installTrampolines} from '../../function/build.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
@@ -97,6 +98,13 @@ export async function setupDevProcesses({
 
   // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
+
+  // Force the download of binaries in advance to avoid later problems,
+  // as it might be done multiple times in parallel.
+  // javy -> https://github.com/Shopify/cli/issues/2877
+  // trampoline -> ETXTBSY race conditions during parallel Rust builds
+  await Promise.all([installJavy(reloadedApp), installTrampolines(reloadedApp)])
+
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
   // Decide on the appropriate preview URL for a session with these processes

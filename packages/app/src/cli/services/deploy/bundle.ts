@@ -1,6 +1,6 @@
 import {AppInterface, AppManifest} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {installJavy} from '../function/build.js'
+import {installJavy, installTrampolines} from '../function/build.js'
 import buildWeb from '../web.js'
 import {compressBundle, writeManifestToBundle} from '../bundle.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -31,10 +31,12 @@ export async function bundleAndBuildExtensions(options: BundleOptions): Promise<
 
   await writeManifestToBundle(options.appManifest, bundleDirectory)
 
-  // Force the download of the javy binary in advance to avoid later problems,
-  // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
+  // Force the download of binaries in advance to avoid later problems,
+  // as it might be done multiple times in parallel.
+  // javy -> https://github.com/Shopify/cli/issues/2877
+  // trampoline -> ETXTBSY race conditions during parallel Rust builds
   if (!options.skipBuild) {
-    await installJavy(options.app)
+    await Promise.all([installJavy(options.app), installTrampolines(options.app)])
   }
 
   const webBuildProcesses = options.skipBuild

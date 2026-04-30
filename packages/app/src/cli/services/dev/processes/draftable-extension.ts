@@ -4,7 +4,6 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
-import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEvent, AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -28,10 +27,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   {stderr, stdout},
   {developerPlatformClient, apiKey, remoteExtensionIds: remoteExtensions, localApp: app, appWatcher},
 ) => {
-  // Force the download of the javy binary in advance to avoid later problems,
-  // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
-  await installJavy(app)
-
   const draftableExtensions = app.draftableExtensions.map((ext) => ext.handle)
 
   const handleAppEvent = async (event: AppEvent) => {
