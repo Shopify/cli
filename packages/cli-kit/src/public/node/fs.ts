@@ -1,5 +1,5 @@
 import {outputContent, outputToken, outputDebug} from './output.js'
-import {joinPath, normalizePath, resolvePath} from './path.js'
+import {joinPath, normalizePath, resolvePath, relativePath} from './path.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
 import {systemTempDir} from '../../private/node/temp-dir.js'
@@ -730,14 +730,11 @@ export async function copyDirectoryContents(srcDir: string, destDir: string): Pr
   // Get all files and directories in the source directory
   const items = await glob(joinPath(srcDir, '**/*'))
 
-  const filesToCopy = []
-
-  for (const item of items) {
-    const relativePath = item.replace(srcDir, '').replace(/^[/\\]/, '')
-    const destPath = joinPath(destDir, relativePath)
-
-    filesToCopy.push(copyFile(item, destPath))
-  }
+  const filesToCopy = items.map((item) => {
+    const relPath = relativePath(srcDir, item)
+    const destPath = joinPath(destDir, relPath)
+    return copyFile(item, destPath)
+  })
 
   await Promise.all(filesToCopy)
 }
