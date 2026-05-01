@@ -11,7 +11,7 @@ import {
   V2_TRAMPOLINE_VERSION,
 } from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
-import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi} from 'vitest'
 import {gzipSync} from 'zlib'
 
@@ -172,6 +172,52 @@ describe('javy', () => {
 
     // Then
     expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(javy.path)).resolves.toBeTruthy()
+  })
+
+  test('does not return early when file exists but rename is in progress', async () => {
+    // Given
+    await removeFile(javy.path)
+    await expect(fileExists(javy.path)).resolves.toBeFalsy()
+
+    let resolveDownload!: () => void
+    const blockDownload = new Promise<void>((resolve) => {
+      resolveDownload = resolve
+    })
+
+    vi.mocked(fetch).mockImplementation(async () => {
+      await blockDownload
+      return new Response(gzipSync('javy binary'))
+    })
+
+    // When
+    // Start first download — will block at fetch
+    const firstDownload = downloadBinary(javy)
+
+    // Allow first download to reach fetch and register in downloadsInProgress
+    await new Promise((resolve) => setTimeout(resolve, 1))
+
+    // Simulate file appearing on disk (e.g., non-atomic moveFile creating the destination
+    // while the download is still tracked as in-progress)
+    await writeFile(javy.path, 'incomplete binary')
+
+    // Start second download — should wait for first, not return early
+    let secondResolved = false
+    const secondDownload = downloadBinary(javy).then(() => {
+      secondResolved = true
+    })
+    await new Promise((resolve) => setTimeout(resolve, 1))
+
+    // Then — second download should be blocked waiting for first
+    expect(secondResolved).toBe(false)
+
+    // Complete the first download
+    resolveDownload()
+    await Promise.all([firstDownload, secondDownload])
+
+    // Only one fetch should have been made
+    expect(fetch).toHaveBeenCalledOnce()
+    expect(secondResolved).toBe(true)
     await expect(fileExists(javy.path)).resolves.toBeTruthy()
   })
 })

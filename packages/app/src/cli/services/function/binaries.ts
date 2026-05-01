@@ -230,7 +230,11 @@ export function trampolineBinary(version: string) {
 const downloadsInProgress = new Map<string, Promise<void>>()
 
 export async function downloadBinary(bin: DownloadableBinary) {
-  const isDownloaded = await fileExists(bin.path)
+  // If the file exists but its download is still in progress, the file cannot be used yet and we
+  // must wait for the download process to finish first.
+  // The `downloadsInProgress` check must happen after the async operation so the next `get` check
+  // runs in the same microtask.
+  const isDownloaded = (await fileExists(bin.path)) && !downloadsInProgress.has(bin.path)
   if (isDownloaded) {
     return
   }
