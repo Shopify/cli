@@ -1,7 +1,7 @@
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {resolvePath, cwd, dirname} from '@shopify/cli-kit/node/path'
+import {fileExistsSync, isDirectorySync} from '@shopify/cli-kit/node/fs'
 import {renderError} from '@shopify/cli-kit/node/ui'
 
 /**
@@ -15,17 +15,25 @@ export const themeFlags = {
     parse: async (input) => {
       const resolvedPath = resolvePath(input)
 
-      if (fileExistsSync(resolvedPath)) {
-        return resolvedPath
+      if (!fileExistsSync(resolvedPath)) {
+        // We can't use AbortError because oclif catches it and adds its own
+        // messaging that breaks our UI
+        renderError({
+          headline: "A path was explicitly provided but doesn't exist.",
+          body: [`Please check the path and try again: ${resolvedPath}`],
+        })
+        return process.exit(1)
       }
 
-      // We can't use AbortError because oclif catches it and adds its own
-      // messaging that breaks our UI
-      renderError({
-        headline: "A path was explicitly provided but doesn't exist.",
-        body: [`Please check the path and try again: ${resolvedPath}`],
-      })
-      process.exit(1)
+      if (!isDirectorySync(resolvedPath)) {
+        renderError({
+          headline: 'The path must be a directory, not a file.',
+          body: [`The provided path is not a directory: ${resolvedPath}`, `Did you mean: ${dirname(resolvedPath)}`],
+        })
+        return process.exit(1)
+      }
+
+      return resolvedPath
     },
     default: async () => cwd(),
     noCacheDefault: true,

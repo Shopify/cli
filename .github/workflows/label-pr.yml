@@ -1,0 +1,71 @@
+name: Label PR
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  label:
+    name: Apply labels from changesets
+    # Skip fork PRs — GITHUB_TOKEN is read-only there and the labeling would fail.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Determine and apply label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          CHANGESETS=$(git diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- '.changeset/*.md' | grep -v 'README\.md$' || true)
+
+          if [ -z "$CHANGESETS" ]; then
+            TARGET="no-changelog"
+          else
+            HAS_APP=0
+            HAS_THEME=0
+            HAS_OTHER=0
+            while IFS= read -r FILE; do
+              [ -z "$FILE" ] && continue
+              FRONTMATTER=$(awk '/^---$/{c++; if (c==2) exit; next} c==1' "$FILE")
+              while IFS= read -r PKG; do
+                case "$PKG" in
+                  @shopify/app|@shopify/create-app) HAS_APP=1 ;;
+                  @shopify/theme) HAS_THEME=1 ;;
+                  @shopify/*) HAS_OTHER=1 ;;
+                esac
+              done < <(echo "$FRONTMATTER" | grep -oE "'@shopify/[a-z-]+'" | tr -d "'")
+            done <<< "$CHANGESETS"
+
+            AREA_COUNT=$((HAS_APP + HAS_THEME + HAS_OTHER))
+            if [ "$AREA_COUNT" -eq 1 ] && [ "$HAS_APP" -eq 1 ]; then
+              TARGET="Area: @shopify/app"
+            elif [ "$AREA_COUNT" -eq 1 ] && [ "$HAS_THEME" -eq 1 ]; then
+              TARGET="Area: @shopify/theme"
+            else
+              TARGET="Area: @shopify/cli"
+            fi
+          fi
+
+          echo "Target label: $TARGET"
+
+          # Idempotently keep only the target label from the managed set.
+          for L in "no-changelog" "Area: @shopify/app" "Area: @shopify/theme" "Area: @shopify/cli"; do
+            if [ "$L" = "$TARGET" ]; then
+              gh pr edit "$PR_NUM" --add-label "$L"
+            else
+              gh pr edit "$PR_NUM" --remove-label "$L" 2>/dev/null || true
+            fi
+          done

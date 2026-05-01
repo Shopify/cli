@@ -1,0 +1,17 @@
+changelog:
+  exclude:
+    labels:
+      - no-changelog
+  categories:
+    - title: App
+      labels:
+        - "Area: @shopify/app"
+    - title: Theme
+      labels:
+        - "Area: @shopify/theme"
+    - title: CLI
+      labels:
+        - "Area: @shopify/cli"
+    - title: Other
+      labels:
+        - "*"

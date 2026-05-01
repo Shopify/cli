@@ -1,39 +1,93 @@
 /* eslint-disable no-console */
-import {tomlAppFixture as test} from '../setup/toml-app.js'
+/* eslint-disable no-restricted-imports */
+import {createApp, injectFixtureToml} from '../setup/app.js'
+import {teardownAll} from '../setup/teardown.js'
+import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
+import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
+import * as fs from 'fs'
+import * as path from 'path'
+import {fileURLToPath} from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('TOML config regression', () => {
-  test('deploy succeeds with fully populated toml', async ({cli, env, tomlAppDir}) => {
-    requireEnv(env, 'clientId')
+  test('deploy succeeds with fully populated toml', async ({cli, env, browserPage}) => {
+    test.setTimeout(TEST_TIMEOUT.long)
+    requireEnv(env, 'orgId')
 
-    const result = await cli.exec(['app', 'deploy', '--path', tomlAppDir, '--force'], {
-      timeout: 5 * 60 * 1000,
-    })
-    const output = result.stdout + result.stderr
-    expect(result.exitCode, `deploy failed:\n${output}`).toBe(0)
-  })
-
-  test('dev starts with fully populated toml', async ({cli, env, tomlAppDir}) => {
-    test.setTimeout(6 * 60 * 1000)
-    requireEnv(env, 'clientId', 'storeFqdn')
-
-    const proc = await cli.spawn(['app', 'dev', '--path', tomlAppDir], {
-      env: {CI: ''},
-    })
+    const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
+    const appName = `E2E-toml-deploy-${Date.now()}`
 
     try {
-      await proc.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000)
+      const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
+      expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
+      const appDir = initResult.appDir
 
-      proc.sendKey('q')
-      const exitCode = await proc.waitForExit(30_000)
-      expect(exitCode, `dev exited with non-zero code. Output:\n${proc.getOutput()}`).toBe(0)
-    } catch (error) {
-      const captured = proc.getOutput()
-      console.error(`[toml-config dev] Captured PTY output:\n${captured}`)
-      throw error
+      // Overwrite with fully populated TOML fixture (injects the real client_id)
+      injectFixtureToml(appDir, FIXTURE_TOML, appName)
+
+      const result = await cli.exec(['app', 'deploy', '--path', appDir, '--force'], {
+        timeout: CLI_TIMEOUT.long,
+      })
+      const output = result.stdout + result.stderr
+      expect(result.exitCode, `deploy failed:\n${output}`).toBe(0)
     } finally {
-      proc.kill()
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          workerIndex: env.workerIndex,
+        })
+      }
+    }
+  })
+
+  test('dev starts with fully populated toml', async ({cli, env, browserPage, storeFqdn}) => {
+    test.setTimeout(TEST_TIMEOUT.long)
+    requireEnv(env, 'orgId')
+
+    const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
+    const appName = `E2E-toml-dev-${Date.now()}`
+
+    try {
+      const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
+      expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
+      const appDir = initResult.appDir
+
+      injectFixtureToml(appDir, FIXTURE_TOML, appName)
+
+      const proc = await cli.spawn(['app', 'dev', '--path', appDir], {env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn}})
+
+      try {
+        await proc.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
+
+        proc.sendKey('q')
+        const exitCode = await proc.waitForExit(CLI_TIMEOUT.short)
+        expect(exitCode, `dev exited with non-zero code. Output:\n${proc.getOutput()}`).toBe(0)
+      } catch (error) {
+        console.error(`[toml-config dev] Captured PTY output:\n${proc.getOutput()}`)
+        throw error
+      } finally {
+        proc.kill()
+      }
+    } finally {
+      // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
+      if (!process.env.E2E_SKIP_TEARDOWN) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          storeFqdn,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 })

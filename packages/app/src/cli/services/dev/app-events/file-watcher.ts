@@ -19,12 +19,12 @@ const FILE_DELETE_TIMEOUT_IN_MS = 500
 /**
  * Event emitted by the file watcher
  *
- * Includes the type of the event, the path of the file that triggered the event and the extension path that contains the file.
- * path and extensionPath could be the same if the event is at the extension level (create, delete extension)
+ * Includes the type of the event, the path of the file that triggered the event and the extension handle that owns the file.
+ * For folder-level events (create, delete), extensionHandle is undefined since the extension may not exist yet.
  *
  * @typeParam type - The type of the event
  * @typeParam path - The path of the file that triggered the event
- * @typeParam extensionPath - The path of the extension that contains the file
+ * @typeParam extensionHandle - The unique handle of the extension that owns the file
  * @typeParam startTime - The time when the event was triggered
  */
 export interface WatcherEvent {
@@ -37,6 +37,9 @@ export interface WatcherEvent {
     | 'extensions_config_updated'
     | 'app_config_deleted'
   path: string
+  /** The unique handle of the extension that owns this file. Undefined for folder-level events. */
+  extensionHandle?: string
+  /** The directory path of the extension. Used for folder-level events (create/delete) where no extension handle exists yet. */
   extensionPath: string
   startTime: StartTime
 }
@@ -56,7 +59,7 @@ export class FileWatcher {
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
-  // Map of file paths to the extensions that watch them
+  // Map of file paths to the extension handles that watch them
   private readonly extensionWatchedFiles = new Map<string, Set<string>>()
 
   constructor(
@@ -115,15 +118,7 @@ export class FileWatcher {
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: [
-        '**/node_modules/**',
-        '**/.git/**',
-        '**/*.test.*',
-        '**/dist/**',
-        '**/*.swp',
-        '**/generated/**',
-        '**/.gitignore',
-      ],
+      ignored: ['**/node_modules/**', '**/.git/**'],
       persistent: true,
       ignoreInitial: true,
     })
@@ -155,22 +150,21 @@ export class FileWatcher {
   private getAllWatchedFiles(): string[] {
     this.extensionWatchedFiles.clear()
 
-    const extensionResults = this.app.nonConfigExtensions.map((extension) => ({
+    const extensionResults = this.app.realExtensions.map((extension) => ({
       extension,
       watchedFiles: extension.watchedFiles(),
     }))
 
     const allFiles = new Set<string>()
     for (const {extension, watchedFiles} of extensionResults) {
-      const extensionDir = normalizePath(extension.directory)
       for (const file of watchedFiles) {
         const normalizedPath = normalizePath(file)
         allFiles.add(normalizedPath)
 
-        // Track which extensions watch this file
-        const extensionsSet = this.extensionWatchedFiles.get(normalizedPath) ?? new Set()
-        extensionsSet.add(extensionDir)
-        this.extensionWatchedFiles.set(normalizedPath, extensionsSet)
+        // Track which extension handles watch this file
+        const handlesSet = this.extensionWatchedFiles.get(normalizedPath) ?? new Set()
+        handlesSet.add(extension.handle)
+        this.extensionWatchedFiles.set(normalizedPath, handlesSet)
       }
     }
 
@@ -204,13 +198,13 @@ export class FileWatcher {
     }
 
     // If the event is already in the list, don't push it again
-    // Check path, type, AND extensionPath to properly handle shared files
+    // Check path, type, AND extensionHandle to properly handle shared files
     if (
       this.currentEvents.some(
         (extEvent) =>
           extEvent.path === event.path &&
           extEvent.type === event.type &&
-          extEvent.extensionPath === event.extensionPath,
+          extEvent.extensionHandle === event.extensionHandle,
       )
     )
       return
@@ -229,7 +223,9 @@ export class FileWatcher {
   private shouldIgnoreEvent(event: WatcherEvent) {
     if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
 
-    const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
+    const extension = event.extensionHandle
+      ? this.app.realExtensions.find((ext) => ext.handle === event.extensionHandle)
+      : undefined
     const watchPaths = extension?.watchedFiles()
     const ignoreInstance = this.ignored[event.extensionPath]
 
@@ -255,8 +251,8 @@ export class FileWatcher {
     if (isConfigAppPath) {
       this.handleEventForExtension(event, path, this.app.directory, startTime, false)
     } else {
-      const affectedExtensions = this.extensionWatchedFiles.get(normalizedPath)
-      const isUnknownExtension = affectedExtensions === undefined || affectedExtensions.size === 0
+      const affectedHandles = this.extensionWatchedFiles.get(normalizedPath)
+      const isUnknownExtension = affectedHandles === undefined || affectedHandles.size === 0
 
       if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {
         // Ignore an event if it's not part of an existing extension
@@ -265,8 +261,10 @@ export class FileWatcher {
         return
       }
 
-      for (const extensionPath of affectedExtensions ?? []) {
-        this.handleEventForExtension(event, path, extensionPath, startTime, false)
+      for (const handle of affectedHandles ?? []) {
+        const extension = this.app.realExtensions.find((ext) => ext.handle === handle)
+        const extensionPath = extension ? normalizePath(extension.directory) : this.app.directory
+        this.handleEventForExtension(event, path, extensionPath, startTime, false, handle)
       }
       if (isUnknownExtension) {
         this.handleEventForExtension(event, path, this.app.directory, startTime, true)
@@ -281,6 +279,7 @@ export class FileWatcher {
     extensionPath: string,
     startTime: StartTime,
     isUnknownExtension: boolean,
+    extensionHandle?: string,
   ) {
     const isExtensionToml = path.endsWith('.extension.toml')
     const isConfigAppPath = path === this.app.configPath
@@ -293,9 +292,9 @@ export class FileWatcher {
           break
         }
         if (isExtensionToml || isConfigAppPath) {
-          this.pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
+          this.pushEvent({type: 'extensions_config_updated', path, extensionPath, extensionHandle, startTime})
         } else {
-          this.pushEvent({type: 'file_updated', path, extensionPath, startTime})
+          this.pushEvent({type: 'file_updated', path, extensionPath, extensionHandle, startTime})
         }
         break
       case 'add':
@@ -303,7 +302,7 @@ export class FileWatcher {
         // If a toml file was added, a new extension(s) is being created.
         // We need to wait for the lock file to disappear before triggering the event.
         if (!isExtensionToml) {
-          this.pushEvent({type: 'file_created', path, extensionPath, startTime})
+          this.pushEvent({type: 'file_created', path, extensionPath, extensionHandle, startTime})
           break
         }
         let totalWaitedTime = 0
@@ -339,7 +338,7 @@ export class FileWatcher {
           setTimeout(() => {
             // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
             if (!this.extensionPaths.includes(extensionPath)) return
-            this.pushEvent({type: 'file_deleted', path, extensionPath, startTime})
+            this.pushEvent({type: 'file_deleted', path, extensionPath, extensionHandle, startTime})
             // Force an emit because we are inside a timeout callback
             this.debouncedEmit()
           }, FILE_DELETE_TIMEOUT_IN_MS)

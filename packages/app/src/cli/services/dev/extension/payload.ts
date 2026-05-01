@@ -5,36 +5,60 @@ import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import {BuildAsset} from '../../../models/extensions/specification.js'
-import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
-import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
+import {fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, extname, joinPath} from '@shopify/cli-kit/node/path'
 
 export type GetUIExtensionPayloadOptions = Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
   currentLocalizationPayload?: UIExtensionPayload['localization']
 }
 
-interface AssetMapperContext {
-  identifier: string
-  asset: BuildAsset
+/**
+ * Per-extension map from an asset's URL subpath (relative to
+ * `/extensions/<devUUID>/assets/`) to its output-relative filesystem path
+ * inside the extension's bundle directory.
+ *
+ * Populated during payload generation as URLs are emitted; consumed by the
+ * dev-server middleware to serve the right file when two extension points
+ * reference assets that share a basename (e.g. `../tools.json` and
+ * `./tools.json` both collapsed to `tools` by `uniqueBasename`).
+ */
+export type AssetResolver = Map<string, string>
+
+/**
+ * Fields that stay constant across every asset mapping within one extension-point
+ * pass. Built once in `getExtensionPoints` and threaded into each mapper; the
+ * per-call parts (`identifier`, `manifestValue`) are passed as positional args.
+ */
+interface MappingContext {
+  target: string
+  extensionPoint: DevNewExtensionPointSchema
   url: string
   extension: ExtensionInstance
+  buildDirectory: string
+  resolver?: AssetResolver
 }
 
 export async function getUIExtensionPayload(
   extension: ExtensionInstance,
   bundlePath: string,
   options: GetUIExtensionPayloadOptions,
+  resolver?: AssetResolver,
 ): Promise<UIExtensionPayload> {
   return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
+    // Each payload regeneration is the source of truth for this extension's
+    // URL → filesystem mapping. Clear previous entries so stale targets or
+    // removed assets don't linger.
+    resolver?.clear()
     const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
     const renderer = await getUIExtensionRendererVersion(extension)
-    const extensionPoints = await getExtensionPoints(extension, url)
+    // If the extension has a custom output relative path, use that as the build directory
+    // ex. ext/dist/handle.js -> ext/dist
+    const buildDirectory = extension.outputRelativePath ? dirname(extensionOutputPath) : extensionOutputPath
+    const extensionPoints = await getExtensionPoints(extension, url, buildDirectory, resolver)
 
     let metafields: {namespace: string; key: string}[] | null = null
     if (
@@ -47,11 +71,14 @@ export async function getUIExtensionPayload(
 
     const defaultConfig = {
       assets: {
-        main: {
-          name: 'main',
-          url: `${url}/assets/${extension.outputFileName}`,
-          lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
-        },
+        main:
+          isNewExtensionPointsSchema(extensionPoints) && extensionPoints[0]?.assets?.main
+            ? extensionPoints[0].assets.main
+            : {
+                name: 'main',
+                url: `${url}/assets/${extension.outputFileName}`,
+                lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
+              },
       },
       supportedFeatures: {
         runsOffline: extension.configuration.supported_features?.runs_offline ?? false,
@@ -104,8 +131,14 @@ export async function getUIExtensionPayload(
   })
 }
 
-async function getExtensionPoints(extension: ExtensionInstance, url: string) {
-  let extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
+async function getExtensionPoints(
+  extension: ExtensionInstance,
+  url: string,
+  buildDirectory: string,
+  resolver?: AssetResolver,
+) {
+  const config = extension.configuration as Record<string, unknown>
+  let extensionPoints = (config.extension_points ?? config.targeting) as DevNewExtensionPointSchema[]
 
   if (extension.type === 'checkout_post_purchase') {
     // Mock target for post-purchase in order to get the right extension point redirect url
@@ -113,6 +146,8 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
   }
 
   if (isNewExtensionPointsSchema(extensionPoints)) {
+    const manifest = await readBundleManifest(buildDirectory)
+
     return Promise.all(
       extensionPoints.map(async (extensionPoint) => {
         const {target, resource} = extensionPoint
@@ -126,19 +161,14 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
           resource: resource || {url: ''},
         }
 
-        if (!('build_manifest' in extensionPoint)) {
+        const manifestEntry = manifest?.[target]
+        if (!manifestEntry) {
           return payload
         }
 
-        return {
-          ...payload,
-          ...(await mapBuildManifestToPayload(
-            extensionPoint.build_manifest,
-            extensionPoint as NewExtensionPointSchemaType & {build_manifest: BuildManifest},
-            url,
-            extension,
-          )),
-        }
+        const ctx: MappingContext = {target, extensionPoint, url, extension, buildDirectory, resolver}
+        const mappedResult = await mapManifestAssetsToPayload(manifestEntry, ctx)
+        return {...payload, ...mappedResult}
       }),
     )
   }
@@ -147,35 +177,165 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
 }
 
 /**
- * Default asset mapper - adds asset to the assets object
+ * Reads and parses manifest.json from the extension's build output directory.
+ * Returns null if the file doesn't exist.
  */
-async function defaultAssetMapper({
-  identifier,
-  asset,
-  url,
-  extension,
-}: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
-  const payload = await getAssetPayload(identifier, asset, url, extension)
-  return {
-    assets: {[payload.name]: payload},
+async function readBundleManifest(
+  buildDirectory: string,
+): Promise<{[target: string]: {[assetName: string]: unknown}} | null> {
+  try {
+    const manifestPath = joinPath(buildDirectory, 'manifest.json')
+    const content = await readFile(manifestPath)
+    return JSON.parse(content)
+  } catch (error: unknown) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid manifest.json in ${buildDirectory}: ${error.message}`)
+    }
+    return null
   }
 }
 
 /**
- * Maps build manifest assets to payload format
- * Each mapper returns a partial that gets merged into the extension point
+ * Default asset mapper - emits resolver-keyed URLs (`<target>/<identifier>`)
+ * and registers the manifest's output-relative path in the resolver so the dev
+ * server serves the right file per extension point. The raw config value is
+ * passed as sourcePath so `lastUpdated` reflects source edits.
+ * Falls back to build_manifest.assets for compiled assets like main and
+ * should_render where the config field name doesn't match the asset identifier.
  */
-async function mapBuildManifestToPayload(
-  buildManifest: BuildManifest,
-  _extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest},
-  url: string,
-  extension: ExtensionInstance,
+async function defaultAssetMapper(
+  {target, extensionPoint, url, extension, resolver}: MappingContext,
+  identifier: string,
+  manifestValue: unknown,
 ): Promise<Partial<DevNewExtensionPointSchema>> {
-  if (!buildManifest?.assets) return {}
+  const urlSubpath = `${target}/${identifier}`
+  // Dynamic key lookup — identifier can be "tools", "instructions", etc.
+  const rawFilepath = extensionPoint[identifier as keyof typeof extensionPoint]
+  if (typeof rawFilepath === 'string') {
+    const filepath = typeof manifestValue === 'string' ? manifestValue : rawFilepath
+    const sourcePath = typeof manifestValue === 'string' ? rawFilepath : undefined
+    const payload = await getAssetPayload(identifier, urlSubpath, filepath, url, extension, resolver, sourcePath)
+    return {assets: {[payload.name]: payload}}
+  }
 
+  const buildManifest = extensionPoint.build_manifest
+  const asset = buildManifest?.assets?.[identifier as keyof typeof buildManifest.assets]
+  if (asset?.filepath) {
+    const payload = await getAssetPayload(
+      identifier,
+      urlSubpath,
+      asset.filepath,
+      url,
+      extension,
+      resolver,
+      asset.module,
+    )
+    return {assets: {[payload.name]: payload}}
+  }
+
+  return {}
+}
+
+/**
+ * Static assets mapper - handles directory-valued configs (e.g. `assets = "./assets"`).
+ * `include_assets` copies every file into the bundle and the manifest entry is
+ * an array of output-relative file paths. Emits one payload entry for the
+ * directory (URL prefix with trailing slash), registers a resolver entry per
+ * file so the middleware can serve individual fetches, and reports `lastUpdated`
+ * as the max mtime across the directory so in-place edits surface.
+ */
+async function staticAssetsMapper(
+  {target, url, buildDirectory, resolver}: MappingContext,
+  identifier: string,
+  files: string[],
+): Promise<Partial<DevNewExtensionPointSchema>> {
+  if (files.length === 0) return {}
+  const urlSubpath = `${target}/${identifier}`
+  for (const file of files) {
+    resolver?.set(`${urlSubpath}/${file}`, file)
+  }
+  const updatedTimestamps = await Promise.all(
+    files.map(async (file) => (await fileLastUpdatedTimestamp(joinPath(buildDirectory, file))) ?? 0),
+  )
+  return {
+    assets: {
+      [identifier]: {
+        name: identifier,
+        url: `${url}/assets/${urlSubpath}/`,
+        lastUpdated: Math.max(...updatedTimestamps),
+      },
+    },
+  }
+}
+
+/**
+ * Intents asset mapper - iterates the extension point's intents array and
+ * resolves each intent's schema to an asset payload. Each intent's URL is
+ * scoped by its index (`<target>/intents/<index>/schema`) so two intents
+ * whose schema sources would share a basename still resolve correctly.
+ */
+async function intentsAssetMapper(
+  {target, extensionPoint, url, extension, resolver}: MappingContext,
+  manifestIntents: {schema: string}[],
+): Promise<Partial<DevNewExtensionPointSchema>> {
+  if (!extensionPoint.intents) return {}
+
+  const intents = await Promise.all(
+    extensionPoint.intents.map(async (intent, index) => {
+      const rawSchema = intent.schema as string
+      const manifestSchema = manifestIntents[index]?.schema
+      const filepath = typeof manifestSchema === 'string' ? manifestSchema : rawSchema
+      const sourcePath = typeof manifestSchema === 'string' ? rawSchema : undefined
+      return {
+        ...intent,
+        schema: await getAssetPayload(
+          'schema',
+          `${target}/intents/${index}/schema`,
+          filepath,
+          url,
+          extension,
+          resolver,
+          sourcePath,
+        ),
+      }
+    }),
+  )
+
+  return {intents}
+}
+
+/**
+ * Mapper for compiled built assets (main, should_render).
+ * Reads the filepath directly from manifest.json so the bundleFolder prefix is preserved.
+ */
+async function builtAssetMapper(
+  {target, url, extension, resolver}: MappingContext,
+  identifier: string,
+  manifestValue: string,
+): Promise<Partial<DevNewExtensionPointSchema>> {
+  const payload = await getAssetPayload(identifier, `${target}/${identifier}`, manifestValue, url, extension, resolver)
+  return {assets: {[payload.name]: payload}}
+}
+
+/**
+ * Maps manifest entry to payload format.
+ * Uses the manifest entry to know which assets exist for a target,
+ * then reads source paths from the extension point config.
+ * Dispatches each identifier to the mapper whose expected `manifestValue` shape
+ * matches. Unknown identifiers (or known ones with mismatched shapes) fall
+ * through to `defaultAssetMapper`.
+ */
+async function mapManifestAssetsToPayload(
+  manifestEntry: {[assetName: string]: unknown},
+  ctx: MappingContext,
+): Promise<Partial<DevNewExtensionPointSchema>> {
   const mappingResults = await Promise.all(
-    Object.entries(buildManifest.assets).map(async ([identifier, asset]) => {
-      return defaultAssetMapper({identifier, asset, url, extension})
+    Object.keys(manifestEntry).map(async (identifier) => {
+      const value = manifestEntry[identifier]
+      if (isIntentsAsset(identifier, value)) return intentsAssetMapper(ctx, value)
+      if (isBuiltAsset(identifier, value)) return builtAssetMapper(ctx, identifier, value)
+      if (isStaticAsset(identifier, value)) return staticAssetsMapper(ctx, identifier, value)
+      return defaultAssetMapper(ctx, identifier, value)
     }),
   )
 
@@ -196,10 +356,59 @@ export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionP
   )
 }
 
-async function getAssetPayload(name: string, asset: BuildAsset, url: string, extension: ExtensionInstance) {
+/**
+ * Builds an asset payload entry.
+ *
+ * The emitted URL is opaque — `/assets/<urlSubpath>` — and the actual
+ * filesystem path (`filepath`, relative to the extension's output directory) is
+ * recorded in `resolver` so the dev-server middleware can serve the right file
+ * even when two extension points reference sources whose basenames collide.
+ *
+ * @param name - The asset key as it appears in the payload (`main`, `tools`,
+ *   `schema`, …). Included in the payload for consumers that key by name.
+ * @param urlSubpath - Target-scoped URL subpath. Typically `<target>/<name>`;
+ *   `intents` map to `<target>/intents/<index>/schema` to disambiguate array
+ *   entries.
+ * @param filepath - Output-relative path inside the extension's bundle (what
+ *   the middleware will ultimately read).
+ * @param sourcePath - Optional source file path for the timestamp. When
+ *   provided (e.g. for compiled assets or static assets copied from outside
+ *   the extension), `lastUpdated` reads the source file's mtime so edits there
+ *   reflect in the payload.
+ */
+async function getAssetPayload(
+  name: string,
+  urlSubpath: string,
+  filepath: string,
+  url: string,
+  extension: ExtensionInstance,
+  resolver?: AssetResolver,
+  sourcePath?: string,
+) {
+  // Preserve the source file's extension in the URL so clients can infer the
+  // content type from the URL and the middleware's resolver key matches the
+  // emitted URL 1:1.
+  const urlSubpathWithExt = `${urlSubpath}${extname(filepath)}`
+  resolver?.set(urlSubpathWithExt, filepath)
   return {
     name,
-    url: `${url}${joinPath('/assets/', asset.filepath)}`,
-    lastUpdated: (await fileLastUpdatedTimestamp(joinPath(dirname(extension.outputPath), asset.filepath))) ?? 0,
+    url: `${url}/assets/${urlSubpathWithExt}`,
+    lastUpdated: (await fileLastUpdatedTimestamp(joinPath(extension.directory, sourcePath ?? filepath))) ?? 0,
   }
+}
+
+function isIntentsAsset(identifier: string, value: unknown): value is {schema: string}[] {
+  return identifier === 'intents' && Array.isArray(value)
+}
+
+function isBuiltAsset(identifier: string, value: unknown): value is string {
+  return (identifier === 'main' || identifier === 'should_render') && typeof value === 'string'
+}
+
+function isStaticAsset(identifier: string, value: unknown): value is string[] {
+  return (
+    identifier === 'assets' &&
+    Array.isArray(value) &&
+    value.every((entry): entry is string => typeof entry === 'string')
+  )
 }

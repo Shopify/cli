@@ -1,10 +1,3 @@
-import {CLI_KIT_VERSION} from '../../common/version.js'
-import {isPreReleaseVersion} from '../version.js'
-import {checkForNewVersion} from '../node-package-manager.js'
-import {startAnalytics} from '../../../private/node/analytics.js'
-import {outputDebug} from '../output.js'
-import Command from '../base-command.js'
-import {fetchNotificationsInBackground} from '../notifications-system.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -12,6 +5,7 @@ export declare interface CommandContent {
   topic?: string
   alias?: string
 }
+
 // This hook is called before each command run. More info: https://oclif.io/docs/hooks
 export const hook: Hook.Prerun = async (options) => {
   const commandContent = parseCommandContent({
@@ -20,10 +14,21 @@ export const hook: Hook.Prerun = async (options) => {
     pluginAlias: options.Command.plugin?.alias,
   })
   const args = options.argv
-  checkForNewVersionInBackground()
+
+  // Load heavy modules in parallel
+  const [{outputDebug}, analyticsMod, notificationsMod] = await Promise.all([
+    import('../output.js'),
+    import('../../../private/node/analytics.js'),
+    import('../notifications-system.js'),
+  ])
+
+  // Fire upgrade check in background (non-blocking)
+  // eslint-disable-next-line no-void
+  void checkForNewVersionInBackground()
+
   outputDebug(`Running command ${commandContent.command}`)
-  await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
-  fetchNotificationsInBackground(options.Command.id)
+  await analyticsMod.startAnalytics({commandContent, args, commandClass: options.Command})
+  notificationsMod.fetchNotificationsInBackground(options.Command.id)
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
@@ -88,7 +93,12 @@ function findAlias(aliases: string[]) {
  * Triggers a background check for a newer CLI version (non-blocking).
  * The result is cached and consumed by the postrun hook for auto-upgrade.
  */
-export function checkForNewVersionInBackground(): void {
+export async function checkForNewVersionInBackground(): Promise<void> {
+  const [{CLI_KIT_VERSION}, {isPreReleaseVersion}, {checkForNewVersion}] = await Promise.all([
+    import('../../common/version.js'),
+    import('../version.js'),
+    import('../node-package-manager.js'),
+  ])
   const currentVersion = CLI_KIT_VERSION
   if (isPreReleaseVersion(currentVersion)) {
     return

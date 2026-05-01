@@ -1,11 +1,5 @@
 import {setCurrentConfigPreference} from './use.js'
-import {
-  AppConfiguration,
-  CurrentAppConfiguration,
-  getAppVersionedSchema,
-  CliBuildPreferences,
-  getAppScopes,
-} from '../../../models/app/app.js'
+import {AppConfiguration, CurrentAppConfiguration, CliBuildPreferences, getAppScopes} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {
@@ -165,6 +159,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       directory: options.directory,
       userProvidedConfigName: options.configName,
       remoteFlags: undefined,
+      skipPrompts: true,
     })
 
     return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
@@ -231,6 +226,7 @@ export async function loadLocalAppOptions(
     configName: options.configName,
     specifications,
     remoteFlags,
+    skipPrompts: true,
   })
 
   switch (result.state) {
@@ -308,6 +304,9 @@ async function loadConfigurationFileName(
   const currentToml = existingTomls[remoteApp.apiKey]
   if (currentToml) return currentToml
 
+  // If no TOML files exist at all, use the default filename without prompting
+  if (isEmpty(existingTomls)) return 'shopify.app.toml'
+
   return selectConfigName(localAppInfo.appDirectory ?? options.directory, remoteApp.title)
 }
 
@@ -366,9 +365,7 @@ export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (mergedAppConfiguration as any).scopes
 
-  // Always output using the canonical schema
-  const schema = getAppVersionedSchema(specifications)
-  await writeAppConfigurationFile(mergedAppConfiguration, schema, configFilePath)
+  await writeAppConfigurationFile(mergedAppConfiguration, configFilePath)
   setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
 
   return mergedAppConfiguration

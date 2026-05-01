@@ -41,7 +41,11 @@
 │  └─ logout
 ├─ commands
 ├─ config
-│  └─ autocorrect
+│  ├─ autocorrect
+│  │  ├─ off
+│  │  ├─ on
+│  │  └─ status
+│  └─ autoupgrade
 │     ├─ off
 │     ├─ on
 │     └─ status

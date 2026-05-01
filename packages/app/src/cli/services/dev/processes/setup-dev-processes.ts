@@ -125,7 +125,15 @@ export async function setupDevProcesses({
     ? `http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(resolvedGraphiqlKey)}`
     : undefined
 
-  const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
+  const appEmbedded = reloadedApp.configuration.embedded
+  const hasExtensions = reloadedApp.nonConfigExtensions.length > 0
+  const devSessionStatusManager = new DevSessionStatusManager({
+    isReady: false,
+    previewURL,
+    graphiqlURL,
+    appEmbedded,
+    hasExtensions,
+  })
 
   const processes = [
     ...(await setupWebProcesses({
@@ -149,7 +157,7 @@ export async function setupDevProcesses({
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
-      allExtensions: reloadedApp.allExtensions,
+      allExtensions: reloadedApp.realExtensions,
       storeFqdn,
       storeId,
       apiKey,

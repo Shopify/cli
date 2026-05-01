@@ -1,11 +1,18 @@
 import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import ts from 'typescript'
 import {compile} from 'json-schema-to-typescript'
 import {pascalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {createRequire} from 'module'
+import type ts from 'typescript'
+
+async function loadTypeScript(): Promise<typeof ts> {
+  // typescript is CJS; dynamic import wraps it as { default: ... }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mod: any = await import('typescript')
+  return mod.default ?? mod
+}
 
 const require = createRequire(import.meta.url)
 
@@ -17,7 +24,10 @@ export function parseApiVersion(apiVersion: string): {year: number; month: numbe
   return {year: parseInt(year, 10), month: parseInt(month, 10)}
 }
 
-function loadTsConfig(startPath: string): {compilerOptions: ts.CompilerOptions; configPath: string | undefined} {
+async function loadTsConfig(
+  startPath: string,
+): Promise<{compilerOptions: ts.CompilerOptions; configPath: string | undefined}> {
+  const ts = await loadTypeScript()
   const configPath = ts.findConfigFile(startPath, ts.sys.fileExists.bind(ts.sys), 'tsconfig.json')
   if (!configPath) {
     return {compilerOptions: {}, configPath: undefined}
@@ -65,11 +75,12 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
 
 async function parseAndResolveImports(filePath: string): Promise<string[]> {
   try {
+    const ts = await loadTypeScript()
     const content = readFileSync(filePath).toString()
     const resolvedPaths: string[] = []
 
     // Load TypeScript configuration once
-    const {compilerOptions} = loadTsConfig(filePath)
+    const {compilerOptions} = await loadTsConfig(filePath)
 
     // Determine script kind based on file extension
     let scriptKind = ts.ScriptKind.JSX
@@ -166,40 +177,99 @@ interface CreateTypeDefinitionOptions {
 }
 
 /**
- * Builds the shopify API type based on targets and optional tools type.
- * Returns null if no targets are provided.
+ * Returns true when the resolved target declaration file re-exports a
+ * `ShopifyGlobal` type. Used to decide whether the `shopify` binding should be
+ * typed as `Api & ShopifyGlobal` or just `Api`.
+ *
+ * Uses the TS compiler API to avoid false positives from comments or string
+ * literals that happen to contain the word "ShopifyGlobal".
  */
-function buildShopifyType(targets: string[], toolsTypeDefinition?: string): string | null {
-  const toolsSuffix = toolsTypeDefinition ? ' & { tools: ShopifyTools }' : ''
-
-  if (targets.length === 1) {
-    const target = targets[0] ?? ''
-    return `import('@shopify/ui-extensions/${target}').Api${toolsSuffix}`
+async function targetExportsShopifyGlobal(targetDtsPath: string): Promise<boolean> {
+  let content: string
+  try {
+    content = readFileSync(targetDtsPath).toString()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
   }
 
-  if (targets.length > 1) {
-    const unionType = targets.map((target) => `import('@shopify/ui-extensions/${target}').Api`).join(' | ')
-    return `(${unionType})${toolsSuffix}`
-  }
+  const ts = await loadTypeScript()
+  const sourceFile = ts.createSourceFile(targetDtsPath, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
 
-  return null
+  let found = false
+  const visit = (node: ts.Node): void => {
+    if (found) return
+    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
+      for (const specifier of node.exportClause.elements) {
+        // Match on the exported (public) name. For `export {ShopifyGlobal}`,
+        // that's specifier.name. For `export {Foo as ShopifyGlobal}`,
+        // specifier.name is still 'ShopifyGlobal' (the public alias); the
+        // internal/local name 'Foo' lives on specifier.propertyName.
+        if (specifier.name.text === 'ShopifyGlobal') {
+          found = true
+          return
+        }
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(sourceFile)
+  return found
 }
 
-export function createTypeDefinition({
+/**
+ * Builds the shopify API type based on targets, their resolved .d.ts paths,
+ * and optional tools type.
+ *
+ * If a target re-exports `ShopifyGlobal`, the emitted type is
+ * `import('<target>').Api & import('<target>').ShopifyGlobal` so consumers
+ * retain access to both the target's data surface and host-level APIs
+ * (e.g. `shopify.addEventListener`). Otherwise emits just `.Api`.
+ *
+ * Returns null if no targets are provided.
+ */
+async function buildShopifyType(
+  targets: string[],
+  resolvedTargetPaths: Map<string, string>,
+  toolsTypeDefinition?: string,
+): Promise<string | null> {
+  const toolsSuffix = toolsTypeDefinition ? ' & { tools: ShopifyTools }' : ''
+
+  const typeForTarget = async (target: string): Promise<string> => {
+    const base = `import('@shopify/ui-extensions/${target}').Api`
+    const dtsPath = resolvedTargetPaths.get(target)
+    if (dtsPath && (await targetExportsShopifyGlobal(dtsPath))) {
+      return `${base} & import('@shopify/ui-extensions/${target}').ShopifyGlobal`
+    }
+    return base
+  }
+
+  if (targets.length === 0) return null
+  if (targets.length === 1) return `${await typeForTarget(targets[0] ?? '')}${toolsSuffix}`
+  const typesForTargets = await Promise.all(targets.map(typeForTarget))
+  return `(${typesForTargets.join(' | ')})${toolsSuffix}`
+}
+
+export async function createTypeDefinition({
   fullPath,
   typeFilePath,
   targets,
   apiVersion,
   toolsTypeDefinition,
-}: CreateTypeDefinitionOptions): string | null {
+}: CreateTypeDefinitionOptions): Promise<string | null> {
   try {
-    // Validate that all targets can be resolved
+    const resolvedTargetPaths = new Map<string, string>()
+
+    // Validate that all targets can be resolved, and capture the resolved .d.ts
+    // path so buildShopifyType can inspect it for ShopifyGlobal exports.
     for (const target of targets) {
       try {
-        require.resolve(`@shopify/ui-extensions/${target}`, {paths: [fullPath, typeFilePath]})
+        const resolved = require.resolve(`@shopify/ui-extensions/${target}`, {
+          paths: [fullPath, typeFilePath],
+        })
+        resolvedTargetPaths.set(target, resolved)
       } catch (_) {
         const {year, month} = parseApiVersion(apiVersion) ?? {year: 2025, month: 10}
-        // Throw specific error for the target that failed, matching the original getSharedTypeDefinition behavior
         throw new AbortError(
           `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version.`,
           `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~${year}.${month}.0, in your dependencies.`,
@@ -209,7 +279,7 @@ export function createTypeDefinition({
 
     const relativePath = relativizePath(fullPath, dirname(typeFilePath))
 
-    const shopifyType = buildShopifyType(targets, toolsTypeDefinition)
+    const shopifyType = await buildShopifyType(targets, resolvedTargetPaths, toolsTypeDefinition)
     if (!shopifyType) return null
 
     const lines = [
@@ -224,7 +294,6 @@ export function createTypeDefinition({
 
     return lines.join('\n')
   } catch (error) {
-    // Re-throw AbortError as-is, wrap other errors
     if (error instanceof AbortError) {
       throw error
     }

@@ -3,7 +3,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export function filterThemes(store: string, themes: Theme[], filter: Filter): Theme[] {
-  return filterByRole(store, themes, filter) || filterByTheme(store, themes, filter)
+  return filterByRole(store, themes, filter) ?? filterByTheme(store, themes, filter)
 }
 
 function filterByRole(store: string, themes: Theme[], filter: Filter) {

@@ -74,4 +74,12 @@ describe('shouldReportErrorAsUnexpected helper', () => {
   test('returns false for user-aborted requests', () => {
     expect(shouldReportErrorAsUnexpected(new Error('The user aborted a request.'))).toBe(false)
   })
+
+  test('returns false for EPIPE errors', () => {
+    expect(shouldReportErrorAsUnexpected(new Error('write EPIPE'))).toBe(false)
+  })
+
+  test('returns false for unsupported platform errors', () => {
+    expect(shouldReportErrorAsUnexpected(new Error('Unsupported platform: win32 arm64 LE'))).toBe(false)
+  })
 })

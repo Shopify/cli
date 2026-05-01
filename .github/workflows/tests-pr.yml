@@ -216,11 +216,15 @@ jobs:
         run: exit 1
 
   e2e-tests:
-    name: 'E2E tests'
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    name: "E2E tests (shard ${{ matrix.shard }})"
+    if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/2', '2/2']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -234,31 +238,30 @@ jobs:
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Install Playwright Chromium
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
         working-directory: packages/e2e
       - name: Rebuild node-pty
         run: pnpm rebuild node-pty
       - name: Run E2E tests
         working-directory: packages/e2e
         env:
-          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.E2E_CLIENT_ID }}
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
           E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
-          E2E_SECONDARY_CLIENT_ID: ${{ secrets.E2E_SECONDARY_CLIENT_ID }}
-        run: npx playwright test
+          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+        run: pnpm exec playwright test --shard ${{ matrix.shard }}
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ strategy.job-index }}
           path: packages/e2e/playwright-report/
           retention-days: 14
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-results
+          name: playwright-results-${{ strategy.job-index }}
           path: packages/e2e/test-results/
           retention-days: 14
 
@@ -288,3 +291,53 @@ jobs:
           header: Type-diff
           message: ${{ steps.type-diff.outputs.report }}
           recreate: true
+
+  major-change-check:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    name: 'Breaking change detection'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      has_breaking_changes: ${{ steps.check.outputs.has_breaking_changes }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+      - name: Check for breaking changes
+        id: check
+        run: node workspace/src/major-change-check.js
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
+        if: steps.check.outputs.has_breaking_changes == 'true'
+        with:
+          header: Breaking-change-detection
+          message: ${{ steps.check.outputs.report }}
+          recreate: true
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
+        if: steps.check.outputs.has_breaking_changes != 'true'
+        with:
+          header: Breaking-change-detection
+          delete: true
+      - name: Fail if breaking changes detected
+        if: steps.check.outputs.has_breaking_changes == 'true'
+        run: |
+          echo '::error::Breaking changes detected. A member of @shopify/dev_experience must approve the breaking-change-approval environment.'
+          exit 1
+
+  major-change-approval:
+    name: 'Breaking change approval'
+    needs: major-change-check
+    if: always() && needs.major-change-check.outputs.has_breaking_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: breaking-change-approval
+    steps:
+      - name: Approved
+        run: echo '✅ Breaking changes approved by dev_experience team member'

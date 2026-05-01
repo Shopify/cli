@@ -18,10 +18,10 @@ export interface EvaluationConfig {
 
 export async function evaluate(config: EvaluationConfig): Promise<string | number | undefined> {
   return (
-    (await evalResult(config)) ||
-    (await evalContext(config)) ||
-    (await evalAssignmentContext(config)) ||
-    (await evalSyntaxError(config)) ||
+    (await evalResult(config)) ??
+    (await evalContext(config)) ??
+    (await evalAssignmentContext(config)) ??
+    (await evalSyntaxError(config)) ??
     undefined
   )
 }
@@ -164,7 +164,7 @@ function isTooManyRequests(response: Response): boolean {
 
 function isResourceNotFound(response: Response): boolean {
   // We don't look for the status code here because the Section Rendering API returns 200 even on unknown paths.
-  return response.headers.get('server-timing')?.includes('pageType;desc="404"') || false
+  return response.headers.get('server-timing')?.includes('pageType;desc="404"') ?? false
 }
 
 function expiredSessionError(): never {

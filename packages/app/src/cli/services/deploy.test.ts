@@ -79,6 +79,12 @@ beforeEach(() => {
 
   // Mock filterOutImportedExtensions to return the extensions by default
   vi.mocked(filterOutImportedExtensions).mockImplementation((_app, extensions) => extensions)
+
+  // Mirror real bundleAndBuildExtensions behavior: return the bundlePath when
+  // at least one extension has deploy steps, otherwise undefined.
+  vi.mocked(bundleAndBuildExtensions).mockImplementation(async (opts) =>
+    opts.app.allExtensions.some((ext) => ext.hasDeploySteps) ? opts.bundlePath : undefined,
+  )
 })
 
 describe('deploy', () => {

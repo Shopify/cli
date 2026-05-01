@@ -1,8 +1,16 @@
 import {getNestedValue, tokenizePath} from './copy-config-key-entry.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname, extname} from '@shopify/cli-kit/node/path'
+import {fileExists, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
+
+/**
+ * Resolves the output directory from an extension's outputPath.
+ * When outputPath is a file (has extension), uses dirname. Otherwise uses outputPath directly.
+ */
+export function resolveOutputDir(outputPath: string): string {
+  return extname(outputPath) ? dirname(outputPath) : outputPath
+}
 
 interface ConfigKeyManifestEntry {
   anchor?: string | undefined
@@ -20,7 +28,7 @@ interface ConfigKeyManifestEntry {
  * 3. Build root-level entries.
  * 4. Build grouped entries (anchor/groupBy logic) with path strings resolved
  *    via `resolveManifestPaths` using the copy-tracked `pathMap`.
- * 5. Write `outputDir/manifest.json`; throw if the file already exists.
+ * 5. Write `outputDir/manifest.json`, overwriting any existing file.
  *
  * @param pathMap - Map from raw config path values to their output-relative
  *   paths, as recorded during the copy phase by `copyConfigKeyEntry`.
@@ -28,7 +36,6 @@ interface ConfigKeyManifestEntry {
 export async function generateManifestFile(
   configKeyEntries: ConfigKeyManifestEntry[],
   context: BuildContext,
-  outputDir: string,
   pathMap: Map<string, string | string[]>,
   otherFiles: string[],
 ): Promise<void> {
@@ -96,10 +103,8 @@ export async function generateManifestFile(
         )
       }
 
-      if (Object.prototype.hasOwnProperty.call(manifest, manifestKey)) {
-        options.stdout.write(`Warning: duplicate manifest key '${manifestKey}' — later entry overwrites earlier one\n`)
-      }
-      manifest[manifestKey] = shallowMerge(partials)
+      const existing = (manifest[manifestKey] ?? {}) as {[key: string]: unknown}
+      manifest[manifestKey] = shallowMerge([existing, ...partials])
     }
   }
 
@@ -112,16 +117,56 @@ export async function generateManifestFile(
     return
   }
 
+  await createOrUpdateManifestFile(context, manifest)
+}
+
+/**
+ * Merges new entries into the manifest.json for an extension.
+ * Reads the existing manifest if present and deep merges the new entries.
+ * This allows multiple build steps to contribute to the same manifest.
+ */
+export async function createOrUpdateManifestFile(
+  context: BuildContext,
+  entries: {[key: string]: unknown},
+): Promise<void> {
+  const outputDir = resolveOutputDir(context.extension.outputPath)
+
   const manifestPath = joinPath(outputDir, 'manifest.json')
-  if (await fileExists(manifestPath)) {
-    throw new Error(
-      `Can't write manifest.json: a file already exists at '${manifestPath}'. ` +
-        `Remove or rename the conflicting inclusion to avoid overwriting the generated manifest.`,
-    )
+
+  // Create the output directory
+  if (!(await fileExists(outputDir))) {
+    await mkdir(outputDir)
   }
-  await mkdir(outputDir)
-  await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
-  outputDebug(`Generated manifest.json in ${outputDir}\n`, options.stdout)
+
+  let existing: {[key: string]: unknown} = {}
+  if (await fileExists(manifestPath)) {
+    try {
+      const content = await readFile(manifestPath)
+      existing = JSON.parse(content)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      outputDebug(`Warning: could not parse existing manifest.json, starting fresh\n`, context.options.stdout)
+    }
+  }
+
+  // Deep merge: for each key, if both old and new are objects, merge their fields
+  for (const [key, value] of Object.entries(entries)) {
+    const existingValue = existing[key]
+    if (
+      existingValue &&
+      typeof existingValue === 'object' &&
+      !Array.isArray(existingValue) &&
+      typeof value === 'object' &&
+      !Array.isArray(value)
+    ) {
+      existing[key] = {...(existingValue as Record<string, unknown>), ...(value as Record<string, unknown>)}
+    } else {
+      existing[key] = value
+    }
+  }
+
+  await writeFile(manifestPath, JSON.stringify(existing, null, 2))
+  outputDebug(`Updated manifest.json in ${outputDir}\n`, context.options.stdout)
 }
 
 /**

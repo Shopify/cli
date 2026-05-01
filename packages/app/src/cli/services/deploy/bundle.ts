@@ -1,6 +1,7 @@
 import {AppInterface, AppManifest} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
+import buildWeb from '../web.js'
 import {compressBundle, writeManifestToBundle} from '../bundle.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {mkdir, rmdir} from '@shopify/cli-kit/node/fs'
@@ -11,13 +12,19 @@ import {Writable} from 'stream'
 interface BundleOptions {
   app: AppInterface
   appManifest: AppManifest
-  bundlePath?: string
+  bundlePath: string
   identifiers?: Identifiers
   skipBuild: boolean
   isDevDashboardApp: boolean
 }
 
-export async function bundleAndBuildExtensions(options: BundleOptions) {
+/**
+ * Builds all extensions into a bundle directory and compresses it when at
+ * least one extension declares deploy steps. Returns the bundlePath in that
+ * case, or undefined when no extension has deploy steps and there's nothing
+ * to upload beyond the manifest.
+ */
+export async function bundleAndBuildExtensions(options: BundleOptions): Promise<string | undefined> {
   const bundleDirectory = joinPath(options.app.directory, '.shopify', 'deploy-bundle')
   await rmdir(bundleDirectory, {force: true})
   await mkdir(bundleDirectory)
@@ -30,37 +37,54 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     await installJavy(options.app)
   }
 
-  await renderConcurrent({
-    processes: options.app.allExtensions.map((extension) => {
-      return {
-        prefix: extension.localIdentifier,
-        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          // This outputId is the UID for AppManagement, and UUID for Partners
-          // Comes from the matching logic in `ensureDeployContext`
-          const outputId = options.isDevDashboardApp
-            ? undefined
-            : options.identifiers?.extensions[extension.localIdentifier]
+  const webBuildProcesses = options.skipBuild
+    ? []
+    : options.app.webs
+        .filter((web) => web.configuration.commands.build)
+        .map((web) => ({
+          prefix: ['web', ...web.configuration.roles].join('-'),
+          action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+            if (options.skipBuild) return
+            await buildWeb('build', {web, stdout, stderr, signal})
+          },
+        }))
 
-          if (options.skipBuild) {
-            await extension.copyIntoBundle(
-              {stderr, stdout, signal, app: options.app, environment: 'production'},
-              bundleDirectory,
-              outputId,
-            )
-          } else {
-            await extension.buildForBundle(
-              {stderr, stdout, signal, app: options.app, environment: 'production'},
-              bundleDirectory,
-              outputId,
-            )
-          }
-        },
+  const extensionBuildProcesses = options.app.allExtensions.map((extension) => ({
+    prefix: extension.localIdentifier,
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      // This outputId is the UID for AppManagement, and UUID for Partners
+      // Comes from the matching logic in `ensureDeployContext`
+      const outputId = options.isDevDashboardApp
+        ? undefined
+        : options.identifiers?.extensions[extension.localIdentifier]
+
+      if (options.skipBuild) {
+        await extension.copyIntoBundle(
+          {stderr, stdout, signal, app: options.app, environment: 'production'},
+          bundleDirectory,
+          outputId,
+        )
+      } else {
+        await extension.buildForBundle(
+          {stderr, stdout, signal, app: options.app, environment: 'production'},
+          bundleDirectory,
+          outputId,
+        )
       }
-    }),
+    },
+  }))
+
+  await renderConcurrent({
+    processes: [webBuildProcesses, extensionBuildProcesses].flat(),
     showTimestamps: false,
   })
 
-  if (options.bundlePath) {
+  const hasExtensionOutput = options.app.allExtensions.some((ext) => ext.hasDeploySteps)
+
+  if (hasExtensionOutput) {
     await compressBundle(bundleDirectory, options.bundlePath)
+    return options.bundlePath
   }
+
+  return undefined
 }

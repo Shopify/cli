@@ -1,0 +1,39 @@
+{
+  "_comment": "Resources to keep in sync with the latest CLI version. Consumed by bin/update-observe.js, which fetches the live config for each resource and only patches the version-relevant fields (in-place: any X.Y.Z literal found in the name, raw SLI expression, or version filter is rewritten). For alerts and error projects, versionFilterColumn names the filter holding the CLI version.",
+  "endpoint": "https://shopify-monitoring.shopifycloud.com/query",
+  "service": "cli",
+  "resources": [
+    {
+      "key": "slo-correctness-app-deploy",
+      "kind": "slo",
+      "id": "6cb7fa5f-6f65-417b-aca1-3986c5976068"
+    },
+    {
+      "key": "slo-correctness",
+      "kind": "slo",
+      "id": "d0131f4a-b9de-4704-9462-9c6ae3de080a"
+    },
+    {
+      "key": "slo-p50-latency",
+      "kind": "slo",
+      "id": "c1a167e1-9f23-4788-bb4e-7240e556d9b5"
+    },
+    {
+      "key": "slo-p75-latency",
+      "kind": "slo",
+      "id": "1415409f-2750-4bdc-9333-7696f6cf1204"
+    },
+    {
+      "key": "alert-spike-errors",
+      "kind": "alert",
+      "id": "2e527671-b84d-48af-9a52-2100cf295627",
+      "versionFilterColumn": "app.version"
+    },
+    {
+      "key": "error-project-cli",
+      "kind": "errorProject",
+      "id": "8fdca84d-03fa-4eb2-9131-bd019e87c3b2",
+      "versionFilterColumn": "app.version"
+    }
+  ]
+}

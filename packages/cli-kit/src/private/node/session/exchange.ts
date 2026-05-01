@@ -226,10 +226,19 @@ async function tokenRequest(
   params: Record<string, string>,
 ): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
   const fqdn = await identityFqdn()
-  const url = new URL(`https://${fqdn}/oauth/token`)
-  url.search = new URLSearchParams(Object.entries(params)).toString()
+  const url = `https://${fqdn}/oauth/token`
 
-  const res = await shopifyFetch(url.href, {method: 'POST'})
+  // Send OAuth parameters in the request body (per RFC 6749) rather than the
+  // URL query string. This prevents sensitive credentials (subject_token,
+  // refresh_token, device_code, client_id, etc.) from being written to
+  // verbose CLI debug output or otherwise leaking through URLs.
+  const body = new URLSearchParams(Object.entries(params)).toString()
+
+  const res = await shopifyFetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body,
+  })
   try {
     const responseText = await res.text()
 

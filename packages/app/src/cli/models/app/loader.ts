@@ -206,6 +206,10 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   const isLaunchable = webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
 
   const scopesArray = getAppScopesArray(rawConfig as CurrentAppConfiguration)
+  const appConfig = rawConfig as CurrentAppConfiguration
+  const applicationUrl = appConfig.application_url
+  const redirectUrls = appConfig.auth?.redirect_urls
+  const staticRoot = appConfig.admin?.static_root
 
   return {
     isLaunchable,
@@ -214,6 +218,9 @@ export async function loadConfigForAppCreation(directory: string, name: string):
     directory: project.directory,
     // By default, and ONLY for `app init`, we consider the app as embedded if it is launchable.
     isEmbedded: isLaunchable,
+    applicationUrl,
+    redirectUrls,
+    staticRoot,
   }
 }
 
@@ -246,8 +253,13 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
   specifications: TModuleSpec[]
   remoteFlags?: Flag[]
   ignoreUnknownExtensions?: boolean
+  skipPrompts?: boolean
 }): Promise<AppInterface<CurrentAppConfiguration, TModuleSpec>> {
-  const {project, activeConfig} = await getAppConfigurationContext(options.directory, options.userProvidedConfigName)
+  const {project, activeConfig} = await getAppConfigurationContext(
+    options.directory,
+    options.userProvidedConfigName,
+    options.skipPrompts ? {skipPrompts: true} : undefined,
+  )
   return loadAppFromContext({
     project,
     activeConfig,
@@ -388,11 +400,16 @@ export async function loadOpaqueApp(options: {
   configName?: string
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
+  skipPrompts?: boolean
 }): Promise<OpaqueAppLoadResult> {
   // Try to load the app normally first — the loader always collects validation errors,
   // so only structural failures (TOML parse, missing files) will throw.
   try {
-    const {project, activeConfig} = await getAppConfigurationContext(options.directory, options.configName)
+    const {project, activeConfig} = await getAppConfigurationContext(
+      options.directory,
+      options.configName,
+      options.skipPrompts ? {skipPrompts: true} : undefined,
+    )
     const app = await loadAppFromContext({
       project,
       activeConfig,
@@ -906,9 +923,10 @@ type ConfigurationLoaderResult<
 export async function getAppConfigurationContext(
   workingDirectory: string,
   userProvidedConfigName?: string,
+  options?: {skipPrompts?: boolean},
 ): Promise<{project: Project; activeConfig: ActiveConfig}> {
   const project = await Project.load(workingDirectory)
-  const activeConfig = await selectActiveConfig(project, userProvidedConfigName)
+  const activeConfig = await selectActiveConfig(project, userProvidedConfigName, options)
   return {project, activeConfig}
 }
 

@@ -33,15 +33,11 @@ const webPixelSpec = createExtensionSpecification({
   partnersWebIdentifier: 'web_pixel',
   schema: WebPixelSchema,
   appModuleFeatures: (_) => ['esbuild', 'single_js_entry_path'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<WebPixelConfigType>) => `dist/${extension.handle}.js`,
   clientSteps: [
     {
       lifecycle: 'deploy',
-      steps: [
-        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
-        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
-      ],
+      steps: [{id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}}],
     },
   ],
   deployConfig: async (config, _) => {
@@ -51,8 +47,8 @@ const webPixelSpec = createExtensionSpecification({
       runtime_configuration_definition: config.settings,
     }
   },
-  buildValidation: async (extension) => {
-    const bundleSize = await fileSize(extension.outputPath)
+  buildValidation: async (_, outputPath) => {
+    const bundleSize = await fileSize(outputPath)
     if (bundleSize > BUNDLE_SIZE_LIMIT) {
       const humanReadableBundleSize = `${(bundleSize / kilobytes).toFixed(2)} kB`
       throw new AbortError(

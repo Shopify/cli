@@ -2,6 +2,7 @@ import {
   corsMiddleware,
   devConsoleAssetsMiddleware,
   devConsoleIndexMiddleware,
+  getAppAssetsMiddleware,
   getExtensionAssetMiddleware,
   getExtensionPayloadMiddleware,
   getExtensionPointMiddleware,
@@ -19,6 +20,7 @@ interface SetupHTTPServerOptions {
   devOptions: ExtensionsPayloadStoreOptions
   payloadStore: ExtensionsPayloadStore
   getExtensions: () => ExtensionInstance[]
+  getAppAssets?: () => Record<string, string> | undefined
 }
 
 export function setupHTTPServer(options: SetupHTTPServerOptions) {
@@ -28,6 +30,9 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpApp.use(getLogMiddleware(options))
   httpApp.use(corsMiddleware)
   httpApp.use(noCacheMiddleware)
+  if (options.getAppAssets) {
+    httpRouter.use('/extensions/assets/:assetKey/**:filePath', getAppAssetsMiddleware(options.getAppAssets))
+  }
   httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
   httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)
   httpRouter.use('/extensions/:extensionId', getExtensionPayloadMiddleware(options))

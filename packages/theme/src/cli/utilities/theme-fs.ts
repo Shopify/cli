@@ -10,6 +10,7 @@ import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 
@@ -347,6 +348,10 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         .on('add', queueFsEvent.bind(null, 'add'))
         .on('change', queueFsEvent.bind(null, 'change'))
         .on('unlink', queueFsEvent.bind(null, 'unlink'))
+        .on('error', (error) => {
+          outputWarn(`File watcher error: ${error}`)
+          recordError('theme-service:file-watcher:error')
+        })
     },
   }
 }

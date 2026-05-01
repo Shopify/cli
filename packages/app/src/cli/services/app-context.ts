@@ -82,21 +82,34 @@ export async function linkedAppContext({
   userProvidedConfigName,
   unsafeTolerateErrors = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
-  let {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
+  let project: Project
+  let activeConfig: ActiveConfig
   let remoteApp: OrganizationApp | undefined
 
-  if (activeConfig.file.errors.length > 0) {
-    throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
-  }
-
-  if (!activeConfig.isLinked || forceRelink) {
-    const configName = forceRelink ? undefined : basename(activeConfig.file.path)
-    const result = await link({directory, apiKey: clientId, configName})
+  if (forceRelink) {
+    // Skip getAppConfigurationContext() when force-relinking — it may prompt the
+    // user to select a TOML file that will be immediately discarded by link().
+    const result = await link({directory, apiKey: clientId})
     remoteApp = result.remoteApp
-    // Re-load project and re-select active config since link may have written new config
     const reloaded = await getAppConfigurationContext(directory, result.configFileName)
     project = reloaded.project
     activeConfig = reloaded.activeConfig
+  } else {
+    const loaded = await getAppConfigurationContext(directory, userProvidedConfigName)
+    project = loaded.project
+    activeConfig = loaded.activeConfig
+
+    if (activeConfig.file.errors.length > 0) {
+      throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
+    }
+
+    if (!activeConfig.isLinked) {
+      const result = await link({directory, apiKey: clientId, configName: basename(activeConfig.file.path)})
+      remoteApp = result.remoteApp
+      const reloaded = await getAppConfigurationContext(directory, result.configFileName)
+      project = reloaded.project
+      activeConfig = reloaded.activeConfig
+    }
   }
 
   // Determine the effective client ID

@@ -76,6 +76,8 @@ interface TestCaseSingleEvent {
   fileSystemEvent: string
   path: string
   expectedEvent?: Omit<WatcherEvent, 'startTime'> & {startTime?: WatcherEvent['startTime']}
+  expectedEventCount?: number
+  expectedHandles?: string[]
 }
 
 /**
@@ -103,7 +105,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_updated',
       path: '/extensions/ui_extension_1/index.js',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
+    expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'change in toml',
@@ -113,7 +118,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
+    expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'change in app config',
@@ -133,7 +141,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_created',
       path: '/extensions/ui_extension_1/new-file.js',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
+    expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'delete a file',
@@ -263,15 +274,7 @@ describe('file-watcher events', () => {
 
       // Then
       expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, '/shopify.app.toml'), joinPath(dir, '/extensions')], {
-        ignored: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/*.test.*',
-          '**/dist/**',
-          '**/*.swp',
-          '**/generated/**',
-          '**/.gitignore',
-        ],
+        ignored: ['**/node_modules/**', '**/.git/**'],
         ignoreInitial: true,
         persistent: true,
       })
@@ -280,7 +283,7 @@ describe('file-watcher events', () => {
 
   test.each(singleEventTestCases)(
     'The event $name returns the expected WatcherEvent',
-    async ({fileSystemEvent, path, expectedEvent}) => {
+    async ({fileSystemEvent, path, expectedEvent, expectedEventCount, expectedHandles}) => {
       // Given
       let eventHandler: any
 
@@ -369,7 +372,8 @@ describe('file-watcher events', () => {
               throw new Error('Expected onChange to be called with events, but all calls had empty arrays')
             }
 
-            expect(actualEvents).toHaveLength(1)
+            const eventCount = expectedEventCount ?? 1
+            expect(actualEvents).toHaveLength(eventCount)
             const actualEvent = actualEvents[0]
 
             expect(actualEvent.type).toBe(expectedEvent.type)
@@ -377,6 +381,14 @@ describe('file-watcher events', () => {
             expect(actualEvent.extensionPath).toBe(normalizePath(expectedEvent.extensionPath))
             expect(Array.isArray(actualEvent.startTime)).toBe(true)
             expect(actualEvent.startTime).toHaveLength(2)
+
+            // Verify extensionHandle is set correctly on file-level events
+            if (expectedHandles) {
+              const actualHandles = actualEvents.map((event: WatcherEvent) => event.extensionHandle).sort()
+              expect(actualHandles).toEqual(expectedHandles.sort())
+            } else if (expectedEvent.extensionHandle) {
+              expect(actualEvent.extensionHandle).toBe(expectedEvent.extensionHandle)
+            }
           },
           {timeout: 1000, interval: 50},
         )

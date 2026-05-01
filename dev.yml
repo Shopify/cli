@@ -23,7 +23,7 @@ up:
       meet: 'true'
   - custom:
       name: 'Install Playwright Chromium'
-      met?: cd packages/e2e && npx playwright install chromium
+      met?: cd packages/e2e && pnpx playwright install chromium
       meet: 'true'
   - custom:
       name: 'Rebuild node-pty'

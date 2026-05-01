@@ -1,19 +1,15 @@
 import {AbortError, BugError} from './error.js'
 import {AbortController, AbortSignal} from './abort.js'
-import {captureOutput, exec} from './system.js'
-import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
+import {exec} from './system.js'
+import {fileExists, readFile, writeFile, findPathUp, glob, fileExistsSync} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {parseJSON} from '../common/json.js'
-
-import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
-
 import type {Writable} from 'stream'
-
 import type {ExecOptions} from './system.js'
 
 /** The name of the Yarn lock file */
@@ -27,6 +23,7 @@ export const pnpmLockfile = 'pnpm-lock.yaml'
 
 /** The name of the bun lock file */
 export const bunLockfile = 'bun.lockb'
+const modernBunLockfile = 'bun.lock'
 
 /** The name of the pnpm workspace file */
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
@@ -56,6 +53,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
  */
 export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'homebrew', 'unknown'] as const
 export type PackageManager = (typeof packageManager)[number]
+type ProjectPackageManager = Extract<PackageManager, 'yarn' | 'npm' | 'pnpm' | 'bun'>
 
 /**
  * Returns an abort error that's thrown when the package manager can't be determined.
@@ -109,38 +107,81 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
   return 'unknown'
 }
 
+function hasBunLockfileSync(directory: string): boolean {
+  return fileExistsSync(joinPath(directory, bunLockfile)) || fileExistsSync(joinPath(directory, modernBunLockfile))
+}
+
+function normalizePackageManagerForProject(packageManager: PackageManager): ProjectPackageManager {
+  switch (packageManager) {
+    case 'yarn':
+    case 'npm':
+    case 'pnpm':
+    case 'bun':
+      return packageManager
+    case 'homebrew':
+    case 'unknown':
+      return 'npm'
+  }
+}
+
+function packageManagerBinaryCommand(
+  packageManager: ProjectPackageManager,
+  binary: string,
+  ...binaryArgs: string[]
+): {command: string; args: string[]} {
+  switch (packageManager) {
+    case 'npm':
+      return {command: 'npm', args: ['exec', '--', binary, ...binaryArgs]}
+    case 'pnpm':
+      return {command: 'pnpm', args: ['exec', binary, ...binaryArgs]}
+    case 'yarn':
+      return {command: 'yarn', args: ['run', binary, ...binaryArgs]}
+    case 'bun':
+      return {command: 'bun', args: ['x', binary, ...binaryArgs]}
+  }
+}
+
 /**
  * Returns the dependency manager used in a directory.
+ * Walks upward from `fromDirectory` so workspace packages (e.g. `extensions/my-fn/package.json`)
+ * still resolve to the repo root lockfile (`pnpm-lock.yaml`).
+ * If no lockfile is found, it falls back to the package manager from the user agent.
+ * If the package manager from the user agent is unknown, it returns 'npm'.
  * @param fromDirectory - The starting directory
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
-  let directory: string | undefined
-  let packageJson: string | undefined
-  try {
-    directory = await captureOutput('npm', ['prefix'], {cwd: fromDirectory})
-    outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
-    packageJson = joinPath(directory, 'package.json')
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    // if problems locating directoy/package file, we use user agent instead
+  let current = fromDirectory
+  outputDebug(outputContent`Looking for a lockfile in ${outputToken.path(current)}...`)
+  while (true) {
+    if (fileExistsSync(joinPath(current, yarnLockfile))) return 'yarn'
+    if (fileExistsSync(joinPath(current, pnpmLockfile)) || fileExistsSync(joinPath(current, pnpmWorkspaceFile))) {
+      return 'pnpm'
+    }
+    if (hasBunLockfileSync(current)) return 'bun'
+    if (fileExistsSync(joinPath(current, npmLockfile))) return 'npm'
+    const parent = dirname(current)
+    if (parent === current) break
+    current = parent
   }
 
-  if (!directory || !packageJson || !(await fileExists(packageJson))) {
-    return packageManagerFromUserAgent()
-  }
-  const yarnLockPath = joinPath(directory, yarnLockfile)
-  const pnpmLockPath = joinPath(directory, pnpmLockfile)
-  const bunLockPath = joinPath(directory, bunLockfile)
-  if (await fileExists(yarnLockPath)) {
-    return 'yarn'
-  } else if (await fileExists(pnpmLockPath)) {
-    return 'pnpm'
-  } else if (await fileExists(bunLockPath)) {
-    return 'bun'
-  } else {
-    return 'npm'
-  }
+  const pm: PackageManager = packageManagerFromUserAgent()
+  if (pm !== 'unknown') return pm
+
+  return 'npm'
+}
+
+/**
+ * Builds the command and argv needed to execute a local binary using the package manager
+ * detected from the provided directory or its ancestors.
+ */
+export async function packageManagerBinaryCommandForDirectory(
+  fromDirectory: string,
+  binary: string,
+  ...binaryArgs: string[]
+): Promise<{command: string; args: string[]}> {
+  const packageManager = normalizePackageManagerForProject(await getPackageManager(fromDirectory))
+  return packageManagerBinaryCommand(packageManager, binary, ...binaryArgs)
 }
 
 interface InstallNPMDependenciesRecursivelyOptions {
@@ -713,7 +754,8 @@ export async function addResolutionOrOverride(directory: string, dependencies: R
  */
 async function getLatestNPMPackageVersion(name: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
-  return runWithTimer('cmd_all_timing_network_ms')(() => {
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    const {default: latestVersion} = await import('latest-version')
     return latestVersion(name)
   })
 }

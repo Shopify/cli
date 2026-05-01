@@ -14,7 +14,7 @@ import {
   testSingleWebhookSubscriptionExtension,
   placeholderAppConfiguration,
 } from '../app/app.test-data.js'
-import {ExtensionBuildOptions, buildUIExtension} from '../../services/build/extension.js'
+import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -169,33 +169,6 @@ describe('build', async () => {
       // Then
       const outputFileContent = await readFile(outputFilePath)
       expect(outputFileContent).toEqual('(()=>{})();')
-    })
-  })
-
-  test('calls copyStaticAssets after buildUIExtension when building UI extensions', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const extensionInstance = await testUIExtension({
-        type: 'ui_extension',
-        directory: tmpDir,
-      })
-
-      const copyStaticAssetsSpy = vi.spyOn(extensionInstance, 'copyStaticAssets').mockResolvedValue()
-      vi.mocked(buildUIExtension).mockResolvedValue()
-
-      const options: ExtensionBuildOptions = {
-        stdout: new Writable({write: vi.fn()}),
-        stderr: new Writable({write: vi.fn()}),
-        app: testApp(),
-        environment: 'production',
-      }
-
-      // When
-      await extensionInstance.build(options)
-
-      // Then
-      expect(buildUIExtension).toHaveBeenCalledWith(extensionInstance, options)
-      expect(copyStaticAssetsSpy).toHaveBeenCalledOnce()
     })
   })
 
@@ -570,6 +543,36 @@ describe('draftMessages', async () => {
   })
 })
 
+describe('devSessionWatchConfig', () => {
+  test('returns undefined for extension experience (watch everything)', async () => {
+    const extensionInstance = await testUIExtension({type: 'ui_extension'})
+    expect(extensionInstance.devSessionWatchConfig).toBeUndefined()
+  })
+
+  test('returns empty paths for configuration experience (watch nothing)', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+    expect(extensionInstance.devSessionWatchConfig).toEqual({paths: []})
+  })
+
+  test('delegates to specification devSessionWatchConfig when defined', async () => {
+    const config = functionConfiguration()
+    config.build = {
+      watch: 'src/**/*.rs',
+      wasm_opt: true,
+    }
+    const extensionInstance = await testFunctionExtension({config, dir: '/tmp/my-function'})
+    const watchConfig = extensionInstance.devSessionWatchConfig
+    expect(watchConfig).toBeDefined()
+    expect(watchConfig!.paths).toContain(joinPath('/tmp/my-function', 'src/**/*.rs'))
+  })
+
+  test('returns undefined for function extension without build.watch', async () => {
+    const config = functionConfiguration()
+    const extensionInstance = await testFunctionExtension({config})
+    expect(extensionInstance.devSessionWatchConfig).toBeUndefined()
+  })
+})
+
 describe('watchedFiles', async () => {
   test('returns files based on devSessionWatchPaths when defined', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
@@ -604,6 +607,58 @@ describe('watchedFiles', async () => {
 
       // Clean up
       vi.mocked(extractImportPathsRecursively).mockReset()
+    })
+  })
+
+  test('respects custom ignore paths from devSessionWatchConfig', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - create an extension with a spec that defines custom ignore paths
+      const config = functionConfiguration()
+      config.build = {
+        watch: '**/*',
+        wasm_opt: true,
+      }
+      const extensionInstance = await testFunctionExtension({
+        config,
+        dir: tmpDir,
+      })
+
+      // Override devSessionWatchConfig to include ignore paths
+      vi.spyOn(extensionInstance, 'devSessionWatchConfig', 'get').mockReturnValue({
+        paths: [joinPath(tmpDir, '**/*')],
+        ignore: ['**/ignored-dir/**'],
+      })
+
+      // Create files - one in a normal dir, one in the ignored dir
+      const srcDir = joinPath(tmpDir, 'src')
+      const ignoredDir = joinPath(tmpDir, 'ignored-dir')
+      await mkdir(srcDir)
+      await mkdir(ignoredDir)
+      await writeFile(joinPath(srcDir, 'index.js'), 'code')
+      await writeFile(joinPath(ignoredDir, 'should-be-ignored.js'), 'ignored')
+
+      // When
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      // Then
+      expect(watchedFiles).toContain(joinPath(srcDir, 'index.js'))
+      expect(watchedFiles).not.toContain(joinPath(ignoredDir, 'should-be-ignored.js'))
+    })
+  })
+
+  test('returns empty watched files for configuration extensions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionInstance = await testAppConfigExtensions(false, tmpDir)
+
+      // Create files that should not be watched
+      await writeFile(joinPath(tmpDir, 'some-file.ts'), 'code')
+
+      // When
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      // Then - configuration extensions default to empty paths, so no files watched
+      expect(watchedFiles).toHaveLength(0)
     })
   })
 

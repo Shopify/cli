@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.93.0",
+  "version": "3.94.0",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for building and publishing themes",
@@ -31,7 +31,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "NODE_ENV=production pnpm nx build && pnpm oclif manifest && cp ../../README.md README.md",
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
@@ -42,9 +42,9 @@
   },
   "dependencies": {
     "@oclif/core": "4.5.3",
-    "@shopify/cli-kit": "3.93.0",
-    "@shopify/theme-check-node": "3.24.0",
-    "@shopify/theme-language-server-node": "2.20.2",
+    "@shopify/cli-kit": "3.94.0",
+    "@shopify/theme-check-node": "3.25.0",
+    "@shopify/theme-language-server-node": "2.21.0",
     "chokidar": "3.6.0",
     "h3": "1.15.9",
     "yaml": "2.8.3"

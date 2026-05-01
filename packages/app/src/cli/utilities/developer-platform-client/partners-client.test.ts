@@ -152,6 +152,39 @@ describe('createApp', () => {
     })
   })
 
+  test('uses applicationUrl and redirectUrls from options when provided', async () => {
+    // Given
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    vi.mocked(appNamePrompt).mockResolvedValue('app-name')
+    vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
+    const variables = {
+      org: 1,
+      title: LOCAL_APP.name,
+      appUrl: 'https://extensions.shopifycdn.com',
+      redir: ['https://shopify.dev/apps/default-app-home/api/auth'],
+      requestedAccessScopes: ['write_products'],
+      type: 'undecided',
+    }
+
+    // When
+    await partnersClient.createApp(
+      {...ORG1, source: OrganizationSource.Partners},
+      {
+        name: LOCAL_APP.name,
+        isLaunchable: false,
+        scopesArray: ['write_products'],
+        applicationUrl: 'https://extensions.shopifycdn.com',
+        redirectUrls: ['https://shopify.dev/apps/default-app-home/api/auth'],
+      },
+    )
+
+    // Then
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
+  })
+
   test('throws error if requests has a user error', async () => {
     // Given
     const partnersClient = PartnersClient.getInstance(testPartnersUserSession)

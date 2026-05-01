@@ -1,8 +1,8 @@
-import {generateManifestFile} from './include-assets/generate-manifest.js'
+import {generateManifestFile, resolveOutputDir} from './include-assets/generate-manifest.js'
 import {copyByPattern} from './include-assets/copy-by-pattern.js'
 import {copySourceEntry} from './include-assets/copy-source-entry.js'
 import {copyConfigKeyEntry} from './include-assets/copy-config-key-entry.js'
-import {joinPath, dirname, extname, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
 import {z} from 'zod'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
@@ -55,6 +55,7 @@ const ConfigKeyEntrySchema = z.object({
   destination: z.string().optional(),
   anchor: z.string().optional(),
   groupBy: z.string().optional(),
+  preserveFilePaths: z.boolean().default(false),
 })
 
 const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, StaticEntrySchema, ConfigKeyEntrySchema])
@@ -123,16 +124,17 @@ export async function executeIncludeAssetsStep(
 ): Promise<{filesCopied: number}> {
   const config = IncludeAssetsConfigSchema.parse(step.config)
   const {extension, options} = context
-  // When outputPath is a file (e.g. index.js, index.wasm), the output directory is its
-  // parent. When outputPath has no extension, it IS the output directory.
-  const outputDir = extname(extension.outputPath) ? dirname(extension.outputPath) : extension.outputPath
+  const outputDir = resolveOutputDir(extension.outputPath)
 
   const aggregatedPathMap = new Map<string, string | string[]>()
+  // Track basenames written across all configKey entries in this build. In
+  // default mode `uniqueBasename` uses this to rename basename collisions; in
+  // `preserveFilePaths` mode it's used to detect cross-entry collisions
+  // (different sources writing the same basename to the bundle).
+  const usedBasenames = new Set<string>()
 
-  // configKey entries run sequentially: copyConfigKeyEntry uses findUniqueDestPath
-  // which checks filesystem state before writing. Running two configKey entries in
-  // parallel against the same output directory can cause both to see the same
-  // candidate path as free and silently overwrite each other.
+  // configKey entries run sequentially to avoid filesystem race conditions
+  // when multiple entries target the same output directory.
   let configKeyCount = 0
   for (const entry of config.inclusions) {
     if (entry.type !== 'configKey') continue
@@ -146,6 +148,8 @@ export async function executeIncludeAssetsStep(
       outputDir,
       context,
       destination: sanitizedDest,
+      usedBasenames,
+      preserveFilePaths: entry.preserveFilePaths,
     })
     result.pathMap.forEach((val, key) => aggregatedPathMap.set(key, val))
     configKeyCount += result.filesCopied
@@ -198,7 +202,7 @@ export async function executeIncludeAssetsStep(
 
   if (config.generatesAssetsManifest) {
     const configKeyEntries = config.inclusions.filter((entry) => entry.type === 'configKey')
-    await generateManifestFile(configKeyEntries, context, outputDir, aggregatedPathMap, otherFiles)
+    await generateManifestFile(configKeyEntries, context, aggregatedPathMap, otherFiles)
   }
 
   return {filesCopied: counts.reduce<number>((sum, count) => sum + (count ?? 0), 0)}

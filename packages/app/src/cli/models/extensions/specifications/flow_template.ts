@@ -49,7 +49,6 @@ const flowTemplateSpec = createExtensionSpecification({
   identifier: 'flow_template',
   schema: FlowTemplateExtensionSchema,
   appModuleFeatures: (_) => ['ui_preview'],
-  buildConfig: {mode: 'copy_files', filePatterns: ['**/*.flow', '**/*.json', '**/*.toml']},
   clientSteps: [
     {
       lifecycle: 'deploy',

@@ -15,15 +15,11 @@ const posUISpec = createExtensionSpecification({
   dependency,
   schema: PosUISchema,
   appModuleFeatures: (_) => ['ui_preview', 'esbuild', 'single_js_entry_path'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<PosUIConfigType>) => `dist/${extension.handle}.js`,
   clientSteps: [
     {
       lifecycle: 'deploy',
-      steps: [
-        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
-        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
-      ],
+      steps: [{id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}}],
     },
   ],
   deployConfig: async (config, directory) => {

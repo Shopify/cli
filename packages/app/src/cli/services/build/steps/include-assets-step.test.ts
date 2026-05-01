@@ -259,8 +259,7 @@ describe('executeIncludeAssetsStep', () => {
       expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
     })
 
-    test('skips path that does not exist on disk but logs a warning', async () => {
-      // Given
+    test('throws an error when the referenced file does not exist on disk', async () => {
       const contextWithConfig = {
         ...mockContext,
         extension: {
@@ -280,18 +279,68 @@ describe('executeIncludeAssetsStep', () => {
         },
       }
 
-      // When
-      const result = await executeIncludeAssetsStep(step, contextWithConfig)
-
-      // Then — no error, logged warning
-      expect(result.filesCopied).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith(
-        expect.stringContaining("Warning: path 'nonexistent' does not exist"),
+      await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrow(
+        `Couldn't find /test/extension/nonexistent\n  Please check the path 'nonexistent' in your configuration`,
       )
     })
 
-    test('renames output file to avoid collision when candidate path already exists', async () => {
-      // Given — tools.json already exists in the output dir; findUniqueDestPath must try tools-1.json
+    test('throws an error when an intent schema file does not exist on disk', async () => {
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            targeting: [
+              {
+                target: 'admin.app.intent.link',
+                intents: [{type: 'application/email', action: 'edit', schema: './email-schema.json'}],
+              },
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      const step: LifecycleStep = {
+        id: 'copy-intents',
+        name: 'Copy Intents',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', key: 'targeting[].intents[].schema'}],
+        },
+      }
+
+      await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrow(
+        `Couldn't find /test/extension/email-schema.json\n  Please check the path './email-schema.json' in your configuration`,
+      )
+    })
+
+    test('does not throw when intent config key is absent', async () => {
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            targeting: [{target: 'admin.app.intent.link'}],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+      const step: LifecycleStep = {
+        id: 'copy-intents',
+        name: 'Copy Intents',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', key: 'targeting[].intents[].schema'}],
+        },
+      }
+
+      const result = await executeIncludeAssetsStep(step, contextWithConfig)
+      expect(result.filesCopied).toBe(0)
+    })
+
+    test('overwrites existing file on rebuild', async () => {
       const contextWithConfig = {
         ...mockContext,
         extension: {
@@ -302,7 +351,7 @@ describe('executeIncludeAssetsStep', () => {
 
       vi.mocked(fs.fileExists).mockImplementation(async (path) => {
         const pathStr = String(path)
-        // Source file exists; first candidate output path is taken; suffixed path is free
+        // Source file exists; output file also exists from previous build
         return pathStr === '/test/extension/tools.json' || pathStr === '/test/output/tools.json'
       })
       vi.mocked(fs.isDirectory).mockResolvedValue(false)
@@ -318,30 +367,28 @@ describe('executeIncludeAssetsStep', () => {
         },
       }
 
-      // When
       const result = await executeIncludeAssetsStep(step, contextWithConfig)
 
-      // Then — copied to tools-1.json, not tools.json
-      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/tools.json', '/test/output/tools-1.json')
+      // Overwrites the existing file rather than creating tools-1.json
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/tools.json', '/test/output/tools.json')
       expect(result.filesCopied).toBe(1)
     })
 
-    test('throws after exhausting 1000 rename attempts', async () => {
-      // Given — every candidate path (tools.json, tools-1.json … tools-1000.json) is taken
+    test('renames file to avoid collision when two different sources share the same basename', async () => {
       const contextWithConfig = {
         ...mockContext,
         extension: {
           ...mockExtension,
-          configuration: {tools: './tools.json'},
+          configuration: {tools_a: './a/schema.json', tools_b: './b/schema.json'},
         } as unknown as ExtensionInstance,
       }
 
       vi.mocked(fs.fileExists).mockImplementation(async (path) => {
         const pathStr = String(path)
-        // Source file exists; all 1001 output candidates are occupied
-        return pathStr.startsWith('/test/extension/') || pathStr.startsWith('/test/output/tools')
+        return pathStr === '/test/extension/a/schema.json' || pathStr === '/test/extension/b/schema.json'
       })
       vi.mocked(fs.isDirectory).mockResolvedValue(false)
+      vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
 
       const step: LifecycleStep = {
@@ -349,14 +396,18 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Copy Tools',
         type: 'include_assets',
         config: {
-          inclusions: [{type: 'configKey', key: 'tools'}],
+          inclusions: [
+            {type: 'configKey', key: 'tools_a'},
+            {type: 'configKey', key: 'tools_b'},
+          ],
         },
       }
 
-      // When / Then
-      await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrow(
-        "Unable to find unique destination path for 'tools.json' in '/test/output' after 1000 attempts",
-      )
+      const result = await executeIncludeAssetsStep(step, contextWithConfig)
+
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/a/schema.json', '/test/output/schema.json')
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/b/schema.json', '/test/output/schema-1.json')
+      expect(result.filesCopied).toBe(2)
     })
 
     test('resolves array config value and copies each path', async () => {
@@ -664,9 +715,7 @@ describe('executeIncludeAssetsStep', () => {
     beforeEach(() => {
       vi.mocked(fs.writeFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
-      // Source files exist; destination paths don't yet (so findUniqueDestPath
-      // resolves on the first candidate without looping). Individual tests can
-      // override for specific scenarios.
+      // Source files exist. Individual tests can override for specific scenarios.
       vi.mocked(fs.fileExists).mockImplementation(
         async (path) => typeof path === 'string' && path.startsWith('/test/extension'),
       )
@@ -869,8 +918,6 @@ describe('executeIncludeAssetsStep', () => {
         } as unknown as ExtensionInstance,
       }
 
-      vi.mocked(fs.fileExists).mockResolvedValue(false)
-
       // No generatesAssetsManifest field — defaults to false
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -1044,7 +1091,7 @@ describe('executeIncludeAssetsStep', () => {
       )
     })
 
-    test('throws when manifest.json already exists in the output directory', async () => {
+    test('overwrites manifest.json when it already exists in the output directory', async () => {
       // Given — a prior inclusion already copied a manifest.json to the output dir
       const contextWithConfig = {
         ...mockContext,
@@ -1056,12 +1103,12 @@ describe('executeIncludeAssetsStep', () => {
         } as unknown as ExtensionInstance,
       }
 
-      // Source files exist; output manifest.json already exists (simulating conflict);
-      // candidate output paths for tools.json are free so copyConfigKeyEntry succeeds.
+      // Source files exist; output manifest.json already exists from a prior step
       vi.mocked(fs.fileExists).mockImplementation(async (path) => {
         const pathStr = String(path)
         return pathStr === '/test/output/manifest.json' || pathStr.startsWith('/test/extension/')
       })
+      vi.mocked(fs.readFile).mockResolvedValue(Buffer.from('{ "admin.intent.link": { "tools": "tools.json" } }'))
       vi.mocked(fs.glob).mockResolvedValue([])
 
       const step: LifecycleStep = {
@@ -1081,10 +1128,9 @@ describe('executeIncludeAssetsStep', () => {
         },
       }
 
-      // When / Then — throws rather than silently overwriting
-      await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrow(
-        `Can't write manifest.json: a file already exists at '/test/output/manifest.json'`,
-      )
+      // When / Then — overwrites existing manifest.json
+      await expect(executeIncludeAssetsStep(step, contextWithConfig)).resolves.not.toThrow()
+      expect(fs.writeFile).toHaveBeenCalledWith('/test/output/manifest.json', expect.any(String))
     })
 
     test('writes an empty manifest when anchor resolves to a non-array value', async () => {
@@ -1186,8 +1232,6 @@ describe('executeIncludeAssetsStep', () => {
           },
         } as unknown as ExtensionInstance,
       }
-
-      vi.mocked(fs.fileExists).mockResolvedValue(false)
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -1360,9 +1404,7 @@ describe('executeIncludeAssetsStep', () => {
       )
     })
 
-    test('warns when a manifest entry contains an unresolved path because the source file was missing', async () => {
-      // Given — tools.json is referenced in config but does not exist on disk,
-      // so copyConfigKeyEntry skips it and it never enters pathMap.
+    test('throws when a referenced source file does not exist on disk', async () => {
       const contextWithConfig = {
         ...mockContext,
         extension: {
@@ -1373,9 +1415,7 @@ describe('executeIncludeAssetsStep', () => {
         } as unknown as ExtensionInstance,
       }
 
-      // Source file does not exist; output paths are free
       vi.mocked(fs.fileExists).mockResolvedValue(false)
-      vi.mocked(fs.glob).mockResolvedValue([])
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -1394,18 +1434,9 @@ describe('executeIncludeAssetsStep', () => {
         },
       }
 
-      // When
-      await executeIncludeAssetsStep(step, contextWithConfig)
-
-      // Then — raw './tools.json' appears in manifest (not copied → not resolved),
-      // and a diagnostic warning is logged so the user knows a file is missing.
-      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
-      const manifestContent = JSON.parse(writeFileCall[1] as string)
-      expect(manifestContent).toEqual({'admin.intent.link': {tools: './tools.json'}})
-      expect(mockStdout.write).toHaveBeenCalledWith(
-        expect.stringContaining("manifest entry 'admin.intent.link' contains unresolved paths"),
+      await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrow(
+        `Couldn't find /test/extension/tools.json\n  Please check the path './tools.json' in your configuration`,
       )
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("path './tools.json' does not exist"))
     })
   })
 })

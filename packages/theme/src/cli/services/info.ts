@@ -103,7 +103,7 @@ async function systemInfoSection(config: {cliVersion: string}): Promise<AlertCus
   return tabularSection('Tooling and System', [
     ['Shopify CLI', config.cliVersion],
     ['OS', `${platform}-${arch}`],
-    ['Shell', process.env.SHELL || 'unknown'],
+    ['Shell', process.env.SHELL ?? 'unknown'],
     ['Node version', process.version],
   ])
 }

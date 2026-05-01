@@ -12,7 +12,6 @@ const themeSpec = createExtensionSpecification({
   schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
-  buildConfig: {mode: 'theme'},
   clientSteps: [
     {
       lifecycle: 'deploy',

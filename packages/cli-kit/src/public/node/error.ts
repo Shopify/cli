@@ -1,9 +1,10 @@
-import {AlertCustomSection, renderFatalError} from './ui.js'
 import {normalizePath} from './path.js'
 import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 
 import {Errors} from '@oclif/core'
+
+import type {AlertCustomSection} from './ui.js'
 
 export {ExtendableError} from 'ts-error'
 
@@ -146,6 +147,7 @@ export async function handler(error: unknown): Promise<unknown> {
     }
   }
 
+  const {renderFatalError} = await import('./ui.js')
   renderFatalError(fatal)
   return Promise.resolve(error)
 }
@@ -234,6 +236,8 @@ function errorMessageImpliesEnvironmentIssue(message: string): boolean {
     'spawn EPERM',
     'socket hang up',
     'The user aborted a request.',
+    'write EPIPE',
+    'Unsupported platform',
   ]
   const anyMatches = environmentIssueMessages.some((issueMessage) => message.includes(issueMessage))
   return anyMatches

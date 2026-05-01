@@ -21,15 +21,18 @@ interface IncludeAssetsStep extends BaseStep {
   readonly config: IncludeAssetsConfig
 }
 
+/** Step with typed config specific to bundle_ui. */
+export interface BundleUIStep extends BaseStep {
+  readonly type: 'bundle_ui'
+  readonly config?: {
+    readonly generatesAssetsManifest?: boolean
+    readonly bundleFolder?: string
+  }
+}
+
 /** Steps that don't require any config yet. */
 interface NoConfigStep extends BaseStep {
-  readonly type:
-    | 'build_theme'
-    | 'bundle_theme'
-    | 'bundle_ui'
-    | 'copy_static_assets'
-    | 'build_function'
-    | 'create_tax_stub'
+  readonly type: 'build_theme' | 'bundle_theme' | 'build_function' | 'create_tax_stub'
   readonly config?: Record<string, never>
 }
 
@@ -40,7 +43,7 @@ interface NoConfigStep extends BaseStep {
  * This is a discriminated union on `type`: each step type carries its own
  * typed `config`, so TypeScript catches config typos at compile time.
  */
-export type LifecycleStep = IncludeAssetsStep | NoConfigStep
+export type LifecycleStep = IncludeAssetsStep | BundleUIStep | NoConfigStep
 
 /**
  * A group of steps scoped to a specific lifecycle phase.
@@ -109,6 +112,7 @@ export async function executeStep(step: LifecycleStep, context: BuildContext): P
       }
     }
 
-    throw new Error(`Build step "${step.name}" failed: ${stepError.message}`)
+    stepError.message = `Build step "${step.name}" failed: ${stepError.message}`
+    throw stepError
   }
 }

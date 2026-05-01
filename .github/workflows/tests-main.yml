@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - stable/3.*
+      - stable/*
     paths-ignore:
       - '**.md'
       - 'docs/**'

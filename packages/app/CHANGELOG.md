@@ -1,5 +1,32 @@
 # @shopify/app
 
+## 3.94.0
+
+### Minor Changes
+
+- 3d38f4a: Render footer links in `app dev` as hyperlinks, if supported by the terminal.
+- 66b41fd: Added a separate Dev Console link to the `app dev` output for non-embedded apps
+- dbcdf9f: report file size for extensions on build and dev
+
+### Patch Changes
+
+- 3e3c971: Bump Shopify/theme-tools packages
+  - @shopify/theme-check-node: 3.24.0 → 3.25.0
+  - @shopify/theme-language-server-node: 2.20.2 → 2.21.0
+
+  Includes ValidScopedCSSClass theme check, color_palette input support, and various fixes.
+
+- bb884b1: Avoid spurious config prompts:
+  - Skip TOML selection prompt when using --reset flag
+  - Use default shopify.app.toml without prompting when running `config link --client-id` with no existing TOML files
+- Updated dependencies [3e3c971]
+- Updated dependencies [b2fc8bc]
+- Updated dependencies [a95ee0f]
+- Updated dependencies [04b8492]
+  - @shopify/theme@3.94.0
+  - @shopify/cli-kit@3.94.0
+  - @shopify/plugin-cloudflare@3.94.0
+
 ## 3.93.0
 
 ### Minor Changes

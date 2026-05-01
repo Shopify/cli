@@ -1,18 +1,27 @@
-import {cliFixture} from './cli.js'
-import {executables} from './env.js'
+import {browserFixture} from './browser.js'
+import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
+import {globalLog, executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
 import {completeLogin} from '../helpers/browser-login.js'
-import {chromium, type Browser} from '@playwright/test'
 import {execa} from 'execa'
+import * as fs from 'fs'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const log = {log: (_ctx: any, msg: string) => globalLog('auth', msg)}
 
 /**
- * Worker-scoped fixture that performs OAuth login via browser automation.
- * Runs once per worker, stores the session in shared XDG dirs.
+ * Worker-scoped fixture that provides an authenticated CLI session.
+ *
+ * If globalSetup already ran auth (E2E_AUTH_CONFIG_DIR is set), copies the
+ * pre-authenticated session files into this worker's isolated XDG dirs.
+ * Otherwise falls back to running auth login directly (single-worker mode).
+ *
+ * Fixture chain: envFixture → cliFixture → browserFixture → authFixture
  */
-export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
+export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
   authLogin: [
-    async ({env}, use) => {
+    async ({env, browserPage}, use) => {
       const email = process.env.E2E_ACCOUNT_EMAIL
       const password = process.env.E2E_ACCOUNT_PASSWORD
 
@@ -21,21 +30,47 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         return
       }
 
-      // Clear any existing session
+      const authConfigDir = process.env.E2E_AUTH_CONFIG_DIR
+      const authDataDir = process.env.E2E_AUTH_DATA_DIR
+      const authStateDir = process.env.E2E_AUTH_STATE_DIR
+      const authCacheDir = process.env.E2E_AUTH_CACHE_DIR
+
+      if (authConfigDir && authDataDir && authStateDir && authCacheDir) {
+        // Copy pre-authenticated session from global setup
+        log.log(env, 'copying session from global setup')
+
+        if (
+          !fs.existsSync(authConfigDir) ||
+          !fs.existsSync(authDataDir) ||
+          !fs.existsSync(authStateDir) ||
+          !fs.existsSync(authCacheDir)
+        ) {
+          throw new Error('Global auth dirs missing — global setup may not have completed successfully')
+        }
+
+        fs.cpSync(authConfigDir, env.processEnv.XDG_CONFIG_HOME!, {recursive: true})
+        fs.cpSync(authDataDir, env.processEnv.XDG_DATA_HOME!, {recursive: true})
+        fs.cpSync(authStateDir, env.processEnv.XDG_STATE_HOME!, {recursive: true})
+        fs.cpSync(authCacheDir, env.processEnv.XDG_CACHE_HOME!, {recursive: true})
+
+        await use()
+        return
+      }
+
+      // Fallback: run auth login directly (single-worker / no global setup)
+      log.log(env, 'authenticating automatically')
+
       await execa('node', [executables.cli, 'auth', 'logout'], {
         env: env.processEnv,
         reject: false,
       })
 
-      // Spawn auth login via PTY (must not have CI=1)
       const nodePty = await import('node-pty')
       const spawnEnv: {[key: string]: string} = {}
       for (const [key, value] of Object.entries(env.processEnv)) {
         if (value !== undefined) spawnEnv[key] = value
       }
       spawnEnv.CI = ''
-      // Pretend we're in a cloud environment so the CLI prints the login URL
-      // directly instead of opening a system browser (BROWSER=none doesn't work on macOS)
       spawnEnv.CODESPACES = 'true'
 
       const ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {
@@ -51,7 +86,7 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         if (process.env.DEBUG === '1') process.stdout.write(data)
       })
 
-      await waitForText(() => output, 'Open this link to start the auth process', 30_000)
+      await waitForText(() => output, 'Open this link to start the auth process', CLI_TIMEOUT.short)
 
       const stripped = stripAnsi(output)
       const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
@@ -59,31 +94,15 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         throw new Error(`Could not find login URL in output:\n${stripped}`)
       }
 
-      let browser: Browser | undefined
-      try {
-        browser = await chromium.launch({headless: !process.env.E2E_HEADED})
-        const context = await browser.newContext({
-          extraHTTPHeaders: {
-            'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-          },
-        })
-        const page = await context.newPage()
-        await completeLogin(page, urlMatch[0], email, password)
-      } finally {
-        await browser?.close()
-      }
+      await completeLogin(browserPage, urlMatch[0], email, password)
 
-      await waitForText(() => output, 'Logged in', 60_000)
+      await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
       try {
         ptyProcess.kill()
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (_error) {
         // Process may already be dead
       }
-
-      // Remove the partners token so CLI uses the OAuth session
-      // instead of the token (which can't auth against Business Platform API)
-      delete env.processEnv.SHOPIFY_CLI_PARTNERS_TOKEN
 
       await use()
     },

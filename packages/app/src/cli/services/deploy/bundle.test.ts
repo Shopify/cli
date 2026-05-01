@@ -1,13 +1,21 @@
 import {bundleAndBuildExtensions} from './bundle.js'
-import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
-import {AppInterface, AppManifest} from '../../models/app/app.js'
+import {
+  testApp,
+  testAppConfigExtensions,
+  testFunctionExtension,
+  testThemeExtensions,
+  testUIExtension,
+} from '../../models/app/app.test-data.js'
+import {AppInterface, AppManifest, WebType} from '../../models/app/app.js'
 import * as bundle from '../bundle.js'
 import * as functionBuild from '../function/build.js'
+import * as webService from '../web.js'
 import {describe, expect, test, vi} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('../function/build.js')
+vi.mock('../web.js')
 
 describe('bundleAndBuildExtensions', () => {
   let app: AppInterface
@@ -254,6 +262,153 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
+  test('runs web build command concurrently with extensions when build command is defined', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      const mockBuildWeb = vi.mocked(webService.default)
+
+      const functionExtension = await testFunctionExtension()
+      const extensionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
+        file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
+      })
+      functionExtension.buildForBundle = extensionBuildMock
+
+      const app = testApp({
+        allExtensions: [functionExtension],
+        directory: tmpDir,
+        webs: [
+          {
+            directory: '/tmp/web',
+            configuration: {
+              roles: [WebType.Backend],
+              commands: {dev: 'npm run dev', build: 'npm run build'},
+            },
+          },
+        ],
+      })
+
+      const identifiers = {
+        app: 'app-id',
+        extensions: {[functionExtension.localIdentifier]: functionExtension.localIdentifier},
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
+
+      // When
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: false,
+        isDevDashboardApp: false,
+      })
+
+      // Then
+      expect(mockBuildWeb).toHaveBeenCalledWith('build', expect.objectContaining({web: app.webs[0]}))
+    })
+  })
+
+  test('skips web build for webs without a build command defined', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      const mockBuildWeb = vi.mocked(webService.default)
+
+      const functionExtension = await testFunctionExtension()
+      const extensionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
+        file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
+      })
+      functionExtension.buildForBundle = extensionBuildMock
+
+      const app = testApp({
+        allExtensions: [functionExtension],
+        directory: tmpDir,
+        webs: [
+          {
+            directory: '/tmp/web',
+            configuration: {
+              roles: [WebType.Backend],
+              commands: {dev: 'npm run dev'},
+            },
+          },
+        ],
+      })
+
+      const identifiers = {
+        app: 'app-id',
+        extensions: {[functionExtension.localIdentifier]: functionExtension.localIdentifier},
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
+
+      // When
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: false,
+        isDevDashboardApp: false,
+      })
+
+      // Then
+      expect(mockBuildWeb).not.toHaveBeenCalled()
+    })
+  })
+
+  test('skips web build command when skipBuild is true', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      const mockBuildWeb = vi.mocked(webService.default)
+
+      const functionExtension = await testFunctionExtension()
+      const extensionCopyMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
+        file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
+      })
+      functionExtension.copyIntoBundle = extensionCopyMock
+
+      const app = testApp({
+        allExtensions: [functionExtension],
+        directory: tmpDir,
+        webs: [
+          {
+            directory: '/tmp/web',
+            configuration: {
+              roles: [WebType.Backend],
+              commands: {dev: 'npm run dev', build: 'npm run build'},
+            },
+          },
+        ],
+      })
+
+      const identifiers = {
+        app: 'app-id',
+        extensions: {[functionExtension.localIdentifier]: functionExtension.localIdentifier},
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
+
+      // When
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: true,
+        isDevDashboardApp: false,
+      })
+
+      // Then
+      expect(mockBuildWeb).not.toHaveBeenCalled()
+    })
+  })
+
   test('handles multiple extension types together', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
@@ -326,6 +481,40 @@ describe('bundleAndBuildExtensions', () => {
       expect(uiCopyMock).toHaveBeenCalledTimes(1)
 
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
+    })
+  })
+
+  test('returns undefined and skips compression when no extension has deploy steps', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, '.shopify', 'deploy-bundle.zip')
+      const compressSpy = vi.spyOn(bundle, 'compressBundle').mockResolvedValue()
+
+      const configExtension = await testAppConfigExtensions()
+      const app = testApp({allExtensions: [configExtension], directory: tmpDir})
+
+      const identifiers = {
+        app: 'app-id',
+        extensions: {},
+        extensionIds: {},
+        extensionsNonUuidManaged: {[configExtension.localIdentifier]: configExtension.localIdentifier},
+      }
+      appManifest = await app.manifest(identifiers)
+
+      // When
+      const result = await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: false,
+        isDevDashboardApp: false,
+      })
+
+      // Then
+      expect(result).toBeUndefined()
+      expect(compressSpy).not.toHaveBeenCalled()
+      await expect(file.fileExists(bundlePath)).resolves.toBe(false)
     })
   })
 })

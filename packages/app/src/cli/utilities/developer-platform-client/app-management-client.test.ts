@@ -652,6 +652,140 @@ describe('createApp', () => {
     expect(result).toMatchObject(expectedApp)
   })
 
+  test('uses applicationUrl and redirectUrls from options when provided', async () => {
+    // Given
+    const client = AppManagementClient.getInstance()
+    const org = testOrganization()
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce({
+      publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
+    })
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appCreate: {
+        app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
+        userErrors: [],
+      },
+    })
+
+    // When
+    client.token = () => Promise.resolve('token')
+    await client.createApp(org, {
+      name: 'app-name',
+      isLaunchable: false,
+      applicationUrl: 'https://extensions.shopifycdn.com',
+      redirectUrls: ['https://shopify.dev/apps/default-app-home/api/auth'],
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      query: CreateApp,
+      token: 'token',
+      variables: {
+        organizationId: 'gid://shopify/Organization/1',
+        initialVersion: {
+          source: {
+            name: 'app-name',
+            modules: expect.arrayContaining([
+              {
+                type: 'app_home',
+                config: {
+                  app_url: 'https://extensions.shopifycdn.com',
+                  embedded: true,
+                },
+              },
+              {
+                type: 'app_access',
+                config: {
+                  redirect_url_allowlist: ['https://shopify.dev/apps/default-app-home/api/auth'],
+                },
+              },
+            ]),
+          },
+        },
+      },
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      },
+    })
+  })
+
+  test('includes admin module with static_root when staticRoot is provided', async () => {
+    // Given
+    const client = AppManagementClient.getInstance()
+    const org = testOrganization()
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce({
+      publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
+    })
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appCreate: {
+        app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
+        userErrors: [],
+      },
+    })
+
+    // When
+    client.token = () => Promise.resolve('token')
+    await client.createApp(org, {
+      name: 'app-name',
+      isLaunchable: false,
+      applicationUrl: 'https://extensions.shopifycdn.com',
+      staticRoot: './dist',
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: expect.objectContaining({
+          initialVersion: expect.objectContaining({
+            source: expect.objectContaining({
+              modules: expect.arrayContaining([
+                {
+                  type: 'admin',
+                  config: {admin: {static_root: './dist'}},
+                },
+              ]),
+            }),
+          }),
+        }),
+      }),
+    )
+  })
+
+  test('does not include admin module when staticRoot is not provided', async () => {
+    // Given
+    const client = AppManagementClient.getInstance()
+    const org = testOrganization()
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce({
+      publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
+    })
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appCreate: {
+        app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
+        userErrors: [],
+      },
+    })
+
+    // When
+    client.token = () => Promise.resolve('token')
+    await client.createApp(org, {
+      name: 'app-name',
+      isLaunchable: false,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: expect.objectContaining({
+          initialVersion: expect.objectContaining({
+            source: expect.objectContaining({
+              modules: expect.not.arrayContaining([expect.objectContaining({type: 'admin'})]),
+            }),
+          }),
+        }),
+      }),
+    )
+  })
+
   test('sets embedded to true in app home module', async () => {
     // Given
     const client = AppManagementClient.getInstance()
@@ -1252,6 +1386,64 @@ describe('AppManagementClient', () => {
 
       // Then
       expect(client.bundleFormat).toBe('br')
+    })
+  })
+
+  describe('appFromIdentifiers', () => {
+    test('returns undefined when the app is not found', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({app: null})
+
+      // When
+      const got = await client.appFromIdentifiers('non-existent-api-key')
+
+      // Then
+      expect(got).toBeUndefined()
+    })
+
+    test('returns the app when the app is found', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      const apiKey = 'existing-api-key'
+      const mockedResponse = {
+        app: {
+          id: 'gid://shopify/App/1',
+          key: apiKey,
+          organizationId: 'gid://shopify/Organization/2',
+          activeRoot: {
+            grantedShopifyApprovalScopes: ['read_products'],
+            clientCredentials: {secrets: [{key: 'secret-1'}]},
+          },
+          activeRelease: {
+            id: 'gid://shopify/Release/1',
+            version: {
+              name: 'My App',
+              appModules: [],
+            },
+          },
+        },
+      }
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedResponse)
+
+      // When
+      const got = await client.appFromIdentifiers(apiKey)
+
+      // Then
+      expect(got).toEqual({
+        id: 'gid://shopify/App/1',
+        title: 'My App',
+        apiKey,
+        apiSecretKeys: [{secret: 'secret-1'}],
+        organizationId: '2',
+        grantedScopes: ['read_products'],
+        applicationUrl: undefined,
+        embedded: undefined,
+        flags: [],
+        developerPlatformClient: client,
+      })
     })
   })
 })

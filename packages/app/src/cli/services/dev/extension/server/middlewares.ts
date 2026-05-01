@@ -3,9 +3,10 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
+import {resolveOutputDir} from '../../../build/steps/include-assets/generate-manifest.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
-import {joinPath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath, relativePath, isAbsolutePath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -31,17 +32,22 @@ export const redirectToDevConsoleMiddleware = defineEventHandler(async (event) =
 export async function fileServerMiddleware(event: H3Event, options: {filePath: string}) {
   let {filePath} = options
 
-  if (await isDirectory(filePath)) {
-    filePath += filePath.endsWith('/') ? `index.html` : '/index.html'
-  }
-
-  const exists = await fileExists(filePath)
-
-  if (!exists) {
+  if (!(await fileExists(filePath))) {
     return sendError(event, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
   }
 
-  const fileContent = await readFile(filePath)
+  if (await isDirectory(filePath)) {
+    filePath += filePath.endsWith('/') ? `index.html` : '/index.html'
+    if (!(await fileExists(filePath))) {
+      return sendError(event, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
+    }
+  }
+
+  // Pass `{}` to opt out of cli-kit's `{encoding: 'utf8'}` default — binary
+  // files (png, jpeg, pdf, wasm, …) must come back as a Buffer or their bytes
+  // get mangled into U+FFFD replacement chars by the UTF-8 decode. h3 sends
+  // Buffers as-is and the browser decodes per Content-Type for text types.
+  const fileContent = await readFile(filePath, {})
   const extensionToContent = {
     '.ico': 'image/x-icon',
     '.html': 'text/html',
@@ -66,7 +72,7 @@ export async function fileServerMiddleware(event: H3Event, options: {filePath: s
   return fileContent
 }
 
-export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
+export function getExtensionAssetMiddleware({getExtensions, payloadStore}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler(async (event) => {
     const {extensionId, assetPath = ''} = getRouterParams(event)
     const extension = getExtensions().find((ext) => ext.devUUID === extensionId)
@@ -78,14 +84,26 @@ export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExte
       })
     }
 
-    const bundlePath = devOptions.appWatcher.buildOutputPath
-    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
+    // Serve from the extension's bundle directory. The include_assets build step
+    // copies every configured static asset here, so the filesystem under
+    // outputDir is the effective allowlist for this route.
+    //
+    // URLs emitted by the payload are opaque (`<target>/<assetKey>`) and the
+    // resolver maps each to the actual (possibly uniqueBasename-renamed) file.
+    // Requests without a resolver entry fall through to direct outputDir serving
+    // — covers uncommon direct fetches of compiled artefacts by filename.
+    const resolver = payloadStore.getAssetResolver(extension.devUUID)
+    const filesystemPath = resolver?.get(assetPath) ?? assetPath
 
-    const buildDirectory = dirname(extensionOutputPath)
+    const resolvedOutputDir = resolvePath(resolveOutputDir(extension.outputPath))
+    const candidate = resolvePath(joinPath(resolvedOutputDir, filesystemPath))
+    const rel = relativePath(resolvedOutputDir, candidate)
 
-    return fileServerMiddleware(event, {
-      filePath: joinPath(buildDirectory, assetPath),
-    })
+    if (rel.startsWith('..') || isAbsolutePath(rel)) {
+      return sendError(event, {statusCode: 404, statusMessage: 'Not Found'})
+    }
+
+    return fileServerMiddleware(event, {filePath: candidate})
   })
 }
 
@@ -133,6 +151,25 @@ export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
     filePath: joinPath(rootDirectory, assetPath),
   })
 })
+
+export function getAppAssetsMiddleware(getAppAssets: () => Record<string, string> | undefined) {
+  return defineEventHandler(async (event) => {
+    const {assetKey = '', filePath = ''} = getRouterParams(event)
+    const appAssets = getAppAssets()
+    const directory = appAssets?.[assetKey]
+    if (!directory) {
+      return sendError(event, {statusCode: 404, statusMessage: `No app assets configured for key: ${assetKey}`})
+    }
+    const resolvedDirectory = resolvePath(directory)
+    const resolvedFilePath = resolvePath(directory, filePath)
+    if (!resolvedFilePath.startsWith(resolvedDirectory)) {
+      return sendError(event, {statusCode: 403, statusMessage: 'Path traversal is not allowed'})
+    }
+    return fileServerMiddleware(event, {
+      filePath: resolvedFilePath,
+    })
+  })
+}
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler((event) => {

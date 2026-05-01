@@ -1,6 +1,6 @@
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {DevSessionWatchConfig, ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {ExtensionBuildOptions, bundleFunctionExtension} from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
@@ -112,6 +112,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.identifier === 'editor_extension_collection'
   }
 
+  get hasDeploySteps(): boolean {
+    return (
+      this.specification.clientSteps?.some((group) => group.lifecycle === 'deploy' && group.steps.length > 0) ?? false
+    )
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
@@ -197,9 +203,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.preDeployValidation(this)
   }
 
-  buildValidation(): Promise<void> {
+  buildValidation({outputPath}: {outputPath: string}): Promise<void> {
     if (!this.specification.buildValidation) return Promise.resolve()
-    return this.specification.buildValidation(this)
+    return this.specification.buildValidation(this, outputPath)
   }
 
   async keepBuiltSourcemapsLocally(inputPath: string): Promise<void> {
@@ -277,20 +283,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return [this.entrySourceFilePath]
   }
 
-  // Custom paths to be watched in a dev session
-  // Return undefiend if there aren't custom configured paths (everything is watched)
-  // If there are, include some default paths.
-  get devSessionCustomWatchPaths() {
-    const config = this.configuration as unknown as FunctionConfigType
-    if (!config.build || !config.build.watch) return undefined
+  // Custom watch configuration for dev sessions
+  // Return undefined to watch everything (default for 'extension' experience)
+  // Return a config with empty paths to watch nothing (default for 'configuration' experience)
+  get devSessionWatchConfig(): DevSessionWatchConfig | undefined {
+    if (this.specification.devSessionWatchConfig) {
+      return this.specification.devSessionWatchConfig(this)
+    }
 
-    const watchPaths = [config.build.watch].flat().map((path) => joinPath(this.directory, path))
-
-    watchPaths.push(joinPath(this.directory, 'locales', '**.json'))
-    watchPaths.push(joinPath(this.directory, '**', '!(.)*.graphql'))
-    watchPaths.push(joinPath(this.directory, '**.toml'))
-
-    return watchPaths
+    return this.isAppConfigExtension ? {paths: []} : undefined
   }
 
   async watchConfigurationPaths() {
@@ -329,10 +330,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       // eslint-disable-next-line no-await-in-loop
       const result = await executeStep(step, context)
       context.stepResults.set(step.id, result)
-
-      if (!result.success && !step.continueOnError) {
-        throw new Error(`Build step "${step.name}" failed: ${result.error?.message}`)
-      }
     }
   }
 
@@ -349,16 +346,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.specification.buildConfig.mode
-
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
-    } else if (buildMode !== 'none') {
+    } else if (this.hasDeploySteps) {
       outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
       if (await fileExists(defaultOutputPath)) {
         await copyFile(defaultOutputPath, this.outputPath)
 
-        if (buildMode === 'function') {
+        if (this.isFunctionExtension) {
           await bundleFunctionExtension(this.outputPath, this.outputPath)
         }
       }
@@ -436,35 +431,36 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   watchedFiles(): string[] {
     const watchedFiles: string[] = []
 
-    // Add extension directory files based on devSessionCustomWatchPaths or all files
-    const patterns = this.devSessionCustomWatchPaths ?? ['**/*']
+    const defaultIgnore = [
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/*.test.*',
+      '**/dist/**',
+      '**/*.swp',
+      '**/generated/**',
+      '**/.gitignore',
+    ]
+    const watchConfig = this.devSessionWatchConfig
+
+    const patterns = watchConfig?.paths ?? ['**/*']
+    const ignore = watchConfig?.ignore ?? defaultIgnore
     const files = patterns.flatMap((pattern) =>
       globSync(pattern, {
         cwd: this.directory,
         absolute: true,
         followSymbolicLinks: false,
-        ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
+        ignore,
       }),
     )
     watchedFiles.push(...files.flat())
 
-    // Add imported files from outside the extension directory unless custom watch paths are defined
-    if (!this.devSessionCustomWatchPaths) {
+    // Add imported files from outside the extension directory unless custom watch config is defined
+    if (!watchConfig) {
       const importedFiles = this.scanImports()
       watchedFiles.push(...importedFiles)
     }
 
     return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
-  }
-
-  /**
-   * Copy static assets from the extension directory to the output path
-   * Used by both dev and deploy builds
-   */
-  async copyStaticAssets(outputPath?: string) {
-    if (this.specification.copyStaticAssets) {
-      return this.specification.copyStaticAssets(this.configuration, this.directory, outputPath ?? this.outputPath)
-    }
   }
 
   /**

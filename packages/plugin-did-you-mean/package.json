@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-did-you-mean",
-  "version": "3.93.0",
+  "version": "3.94.0",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "bugs": {
@@ -31,7 +31,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "NODE_ENV=production pnpm nx build && pnpm oclif manifest && cp ../../README.md README.md",
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@oclif/core": "4.5.3",
-    "@shopify/cli-kit": "3.93.0",
+    "@shopify/cli-kit": "3.94.0",
     "n-gram": "2.0.2"
   },
   "devDependencies": {

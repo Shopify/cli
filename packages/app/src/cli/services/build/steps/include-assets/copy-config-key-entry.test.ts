@@ -1,4 +1,5 @@
 import {copyConfigKeyEntry} from './copy-config-key-entry.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, writeFile, fileExists, mkdir, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -58,23 +59,25 @@ describe('copyConfigKeyEntry', () => {
     })
   })
 
-  test('renames output file to avoid collision when candidate path already exists', async () => {
+  test('renames output file to avoid collision when two sources share the same basename', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      await writeFile(joinPath(tmpDir, 'tools-a.json'), '{}')
-      await writeFile(joinPath(tmpDir, 'tools-b.json'), '{}')
+      const dirA = joinPath(tmpDir, 'a')
+      const dirB = joinPath(tmpDir, 'b')
+      await mkdir(dirA)
+      await mkdir(dirB)
+      await writeFile(joinPath(dirA, 'schema.json'), '{"a": true}')
+      await writeFile(joinPath(dirB, 'schema.json'), '{"b": true}')
 
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
-      // Pre-create the first candidate to force a rename
-      await writeFile(joinPath(outDir, 'tools-a.json'), 'existing')
 
-      const context = makeContext({files: ['tools-a.json', 'tools-b.json']}, mockStdout)
+      const context = makeContext({files: ['a/schema.json', 'b/schema.json']}, mockStdout)
       const result = await copyConfigKeyEntry({key: 'files', baseDir: tmpDir, outputDir: outDir, context})
 
       expect(result.filesCopied).toBe(2)
-      // tools-a.json was taken, so the copy lands as tools-a-1.json
-      await expect(fileExists(joinPath(outDir, 'tools-a-1.json'))).resolves.toBe(true)
-      await expect(fileExists(joinPath(outDir, 'tools-b.json'))).resolves.toBe(true)
+      // Both have basename schema.json — second one gets renamed
+      await expect(fileExists(joinPath(outDir, 'schema.json'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'schema-1.json'))).resolves.toBe(true)
     })
   })
 
@@ -91,20 +94,15 @@ describe('copyConfigKeyEntry', () => {
     })
   })
 
-  test('skips with warning when path resolved from config does not exist on disk', async () => {
+  test('throws when path resolved from config does not exist on disk', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-      // 'nonexistent' directory is NOT created, so fileExists returns false naturally
       const context = makeContext({assets_dir: 'nonexistent'}, mockStdout)
-      const result = await copyConfigKeyEntry({key: 'assets_dir', baseDir: tmpDir, outputDir: outDir, context})
-
-      expect(result.filesCopied).toBe(0)
-      expect(result.pathMap.size).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith(
-        expect.stringContaining("Warning: path 'nonexistent' does not exist"),
-      )
+      await expect(
+        copyConfigKeyEntry({key: 'assets_dir', baseDir: tmpDir, outputDir: outDir, context}),
+      ).rejects.toThrow(`Couldn't find`)
     })
   })
 
@@ -206,6 +204,93 @@ describe('copyConfigKeyEntry', () => {
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
+    })
+  })
+
+  describe('preserveFilePaths', () => {
+    test('throws when two directory sources produce the same output-relative file', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const dirA = joinPath(tmpDir, 'a-assets')
+        const dirB = joinPath(tmpDir, 'b-assets')
+        await mkdir(dirA)
+        await mkdir(dirB)
+        await writeFile(joinPath(dirA, 'logo.png'), 'a')
+        await writeFile(joinPath(dirB, 'logo.png'), 'b')
+
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+
+        const usedBasenames = new Set<string>()
+        const contextA = makeContext({dir: 'a-assets'}, mockStdout)
+        await copyConfigKeyEntry({
+          key: 'dir',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context: contextA,
+          usedBasenames,
+          preserveFilePaths: true,
+        })
+
+        const contextB = makeContext({dir: 'b-assets'}, mockStdout)
+        const promise = copyConfigKeyEntry({
+          key: 'dir',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context: contextB,
+          usedBasenames,
+          preserveFilePaths: true,
+        })
+        await expect(promise).rejects.toThrow(AbortError)
+        await expect(promise).rejects.toThrow(/File collision: 'logo\.png'/)
+      })
+    })
+
+    test('throws when two single-file sources share a basename (no renaming)', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const dirA = joinPath(tmpDir, 'a')
+        const dirB = joinPath(tmpDir, 'b')
+        await mkdir(dirA)
+        await mkdir(dirB)
+        await writeFile(joinPath(dirA, 'schema.json'), '{"a": true}')
+        await writeFile(joinPath(dirB, 'schema.json'), '{"b": true}')
+
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+
+        const context = makeContext({files: ['a/schema.json', 'b/schema.json']}, mockStdout)
+        const promise = copyConfigKeyEntry({
+          key: 'files',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          preserveFilePaths: true,
+        })
+        await expect(promise).rejects.toThrow(AbortError)
+        await expect(promise).rejects.toThrow(/File collision: 'schema\.json'/)
+      })
+    })
+
+    test('does not throw when the same directory source is referenced twice (deduped within one call)', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const srcDir = joinPath(tmpDir, 'assets')
+        await mkdir(srcDir)
+        await writeFile(joinPath(srcDir, 'foo.json'), '{}')
+
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+
+        const context = makeContext({extensions: [{targeting: [{assets: 'assets'}, {assets: 'assets'}]}]}, mockStdout)
+        const result = await copyConfigKeyEntry({
+          key: 'extensions[].targeting[].assets',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          preserveFilePaths: true,
+        })
+
+        expect(result.filesCopied).toBe(1)
+        await expect(fileExists(joinPath(outDir, 'foo.json'))).resolves.toBe(true)
+      })
     })
   })
 

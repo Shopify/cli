@@ -1,13 +1,7 @@
-import {postrun as deprecationsHook} from './deprecations.js'
-import {reportAnalyticsEvent} from '../analytics.js'
-import {outputDebug, outputWarn} from '../output.js'
-import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade, warnIfUpgradeAvailable} from '../upgrade.js'
-import {inferPackageManagerForGlobalCLI} from '../is-global.js'
-import BaseCommand from '../base-command.js'
-import * as metadata from '../metadata.js'
-import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
-import {CLI_KIT_VERSION} from '../../common/version.js'
-import {isMajorVersionChange} from '../version.js'
+/**
+ * Postrun hook — uses dynamic imports to avoid loading heavy modules (base-command, analytics)
+ * at module evaluation time. These are only needed after the command has already finished.
+ */
 import {Command, Hook} from '@oclif/core'
 
 let postRunHookCompleted = false
@@ -24,21 +18,19 @@ export function postRunHookHasCompleted(): boolean {
 // This hook is called after each successful command run. More info: https://oclif.io/docs/hooks
 export const hook: Hook.Postrun = async ({config, Command}) => {
   await detectStopCommand(Command as unknown as typeof Command)
+
+  const {reportAnalyticsEvent} = await import('../analytics.js')
   await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+  const {postrun: deprecationsHook} = await import('./deprecations.js')
   deprecationsHook(Command)
 
+  const {outputDebug} = await import('../output.js')
   const command = Command.id.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
   postRunHookCompleted = true
 
-  if (!Command.id?.includes('upgrade') && !Command.id?.startsWith('notifications')) {
-    try {
-      await autoUpgradeIfNeeded()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      outputDebug(`Auto-upgrade check failed: ${error}`)
-    }
-  }
+  if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
 }
 
 /**
@@ -48,6 +40,7 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
  * @returns Resolves when the upgrade attempt (or fallback warning) is complete.
  */
 export async function autoUpgradeIfNeeded(): Promise<void> {
+  const {versionToAutoUpgrade, warnIfUpgradeAvailable} = await import('../upgrade.js')
   const newerVersion = versionToAutoUpgrade()
   if (!newerVersion) {
     await warnIfUpgradeAvailable()
@@ -60,6 +53,7 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
   if (forced) {
     await performAutoUpgrade(newerVersion)
   } else {
+    const {runAtMinimumInterval} = await import('../../../private/node/conf-store.js')
     // Rate-limit the entire upgrade flow to once per day to avoid repeated attempts and major-version warnings.
     await runAtMinimumInterval('auto-upgrade', {days: 1}, async () => {
       await performAutoUpgrade(newerVersion)
@@ -68,19 +62,53 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
 }
 
 async function performAutoUpgrade(newerVersion: string): Promise<void> {
+  const [
+    {CLI_KIT_VERSION},
+    {isMajorVersionChange},
+    {outputWarn, outputDebug},
+    {getOutputUpdateCLIReminder, runCLIUpgrade, hasBlockingAutoUpgradeNotification},
+    metadata,
+  ] = await Promise.all([
+    import('../../common/version.js'),
+    import('../version.js'),
+    import('../output.js'),
+    import('../upgrade.js'),
+    import('../metadata.js'),
+  ])
+
   if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
-    return outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    outputWarn(getOutputUpdateCLIReminder(newerVersion, true))
+    await metadata.addPublicMetadata(() => ({
+      env_auto_upgrade_skipped_reason: 'major_version',
+    }))
+    return
+  }
+
+  // Notification kill switch: an `error`-type notification on the `autoupgrade` surface
+  // silently disables auto-upgrade. Checked last — after every other gate, including the
+  // daily rate limit and the major-version check — so the network fetch only happens when
+  // we're about to actually run the upgrade.
+  if (await hasBlockingAutoUpgradeNotification()) {
+    await metadata.addPublicMetadata(() => ({
+      env_auto_upgrade_skipped_reason: 'blocked_by_notification',
+    }))
+    return
   }
 
   try {
     await runCLIUpgrade()
+    await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: true}))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     const errorMessage = `Auto-upgrade failed: ${error}`
     outputDebug(errorMessage)
     outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: false}))
     // Report to Observe as a handled error without showing anything extra to the user
-    const {sendErrorToBugsnag} = await import('../error-handler.js')
+    const [{sendErrorToBugsnag}, {inferPackageManagerForGlobalCLI}] = await Promise.all([
+      import('../error-handler.js'),
+      import('../is-global.js'),
+    ])
     const enrichedError = Object.assign(new Error(errorMessage), {
       packageManager: inferPackageManagerForGlobalCLI(),
       platform: process.platform,
@@ -93,13 +121,20 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
 /**
  * Override the command name with the stop one for analytics purposes.
  *
- * @param commandClass - Oclif command class.
+ * @param commandClass - Command.Class.
  */
-async function detectStopCommand(commandClass: Command.Class | typeof BaseCommand): Promise<void> {
+async function detectStopCommand(commandClass: Command.Class): Promise<void> {
   const currentTime = new Date().getTime()
-  if (commandClass && Object.prototype.hasOwnProperty.call(commandClass, 'analyticsStopCommand')) {
-    const stopCommand = (commandClass as typeof BaseCommand).analyticsStopCommand()
+  // Check for analyticsStopCommand without importing BaseCommand
+  if (
+    commandClass &&
+    'analyticsStopCommand' in commandClass &&
+    typeof commandClass.analyticsStopCommand === 'function'
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stopCommand = (commandClass as any).analyticsStopCommand()
     if (stopCommand) {
+      const metadata = await import('../metadata.js')
       const {commandStartOptions} = metadata.getAllSensitiveMetadata()
       if (!commandStartOptions) return
       await metadata.addSensitiveMetadata(() => ({

@@ -6,25 +6,52 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-export async function writeAppConfigurationFile(
-  configuration: CurrentAppConfiguration,
-  schema: zod.ZodTypeAny,
-  configPath: string,
-) {
+export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, configPath: string) {
   outputDebug(`Writing app configuration to ${configPath}`)
 
   // we need to condense the compliance and non-compliance webhooks again
   // so compliance topics and topics with the same uri are under
   // the same [[webhooks.subscriptions]] in the TOML
-  const condensedWebhooksAppConfiguration = condenseComplianceAndNonComplianceWebhooks(configuration)
-
-  const sorted = rewriteConfiguration(schema, condensedWebhooksAppConfiguration) as JsonMapType
+  const condensed = condenseComplianceAndNonComplianceWebhooks(structuredClone(configuration))
+  const cleaned = stripEmptyObjects(condensed) as JsonMapType
 
   const file = new TomlFile(configPath, {})
-  await file.replace(sorted)
+  await file.replace(cleaned)
   await file.transformRaw(addDefaultCommentsToToml)
 }
 
+/**
+ * Recursively removes keys whose values are empty objects `{}`.
+ * Preserves empty arrays, null, undefined, and all other values.
+ */
+export function stripEmptyObjects(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj
+  if (Array.isArray(obj)) return obj.map(stripEmptyObjects)
+  if (typeof obj === 'object') {
+    const result: {[key: string]: unknown} = {}
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      const stripped = stripEmptyObjects(value)
+      if (
+        typeof stripped === 'object' &&
+        stripped !== null &&
+        !Array.isArray(stripped) &&
+        Object.keys(stripped).length === 0
+      ) {
+        continue
+      }
+      result[key] = stripped
+    }
+    return result
+  }
+  return obj
+}
+
+/**
+ * Rewrite a configuration object to match the structure of a Zod schema.
+ *
+ * Used by breakdown-extensions.ts to normalize configs before diffing.
+ * Not used by writeAppConfigurationFile — that function uses stripEmptyObjects instead.
+ */
 export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
   if (schema === null || schema === undefined) return null
   if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
@@ -91,7 +118,7 @@ function addDefaultCommentsToToml(fileString: string) {
  */
 function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfiguration) {
   const webhooksConfig = config.webhooks
-  if (webhooksConfig?.subscriptions?.length) {
+  if (Array.isArray(webhooksConfig?.subscriptions) && webhooksConfig.subscriptions.length) {
     const appUrl = removeTrailingSlash(config?.application_url) as string | undefined
     webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
     webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, ...subscription}) => ({

@@ -8,18 +8,58 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export interface E2EEnv {
-  /** Partners token for API auth (empty string if not set) */
-  partnersToken: string
-  /** Primary test app client ID (empty string if not set) */
-  clientId: string
   /** Dev store FQDN (e.g. cli-e2e-test.myshopify.com) */
   storeFqdn: string
-  /** Secondary app client ID for config link tests */
-  secondaryClientId: string
+  /** Dedicated e2e org ID for fresh-app tests (empty string if not set) */
+  orgId: string
   /** Environment variables to pass to CLI processes */
   processEnv: NodeJS.ProcessEnv
   /** Temporary directory root for this worker */
   tempDir: string
+  /** Playwright worker index (0-based) for debug logging */
+  workerIndex: number
+}
+
+/** Worker context for logging */
+interface LogCtx {
+  workerIndex: number
+}
+
+/**
+ * Create a tagged logger for a module.
+ * Usage: `const log = createLogger('browser')` → `[e2e][w0][browser] message`
+ */
+export function createLogger(tag: string) {
+  return {
+    log(ctx: LogCtx, msg: string): void {
+      if (process.env.DEBUG === '1') {
+        process.stdout.write(`[e2e][w${ctx.workerIndex}][${tag}] ${msg}\n`)
+      }
+    },
+    error(ctx: LogCtx, msg: string): void {
+      if (process.env.DEBUG === '1') {
+        process.stderr.write(`[e2e][w${ctx.workerIndex}][${tag}] ${msg}\n`)
+      }
+    },
+  }
+}
+
+/**
+ * Log a section header: `[e2e][w0] ----- Setup: store e2e-w0-123 -----`
+ */
+export function e2eSection(ctx: LogCtx, msg: string): void {
+  if (process.env.DEBUG === '1') {
+    process.stdout.write(`\n[e2e][w${ctx.workerIndex}] ----- ${msg} ----- \n`)
+  }
+}
+
+/**
+ * Log without worker context (for global setup before workers start).
+ */
+export function globalLog(tag: string, msg: string): void {
+  if (process.env.DEBUG === '1') {
+    process.stdout.write(`[e2e][${tag}] ${msg}\n`)
+  }
 }
 
 export const directories = {
@@ -62,19 +102,14 @@ export function createIsolatedEnv(baseDir: string): {tempDir: string; xdgEnv: {[
 
 /**
  * Asserts that a required environment variable is set.
- * Call this at the top of tests that need auth.
+ * Call this at the top of tests that need specific env vars.
  */
-export function requireEnv(
-  env: E2EEnv,
-  ...keys: (keyof Pick<E2EEnv, 'partnersToken' | 'clientId' | 'storeFqdn' | 'secondaryClientId'>)[]
-): void {
+export function requireEnv(env: E2EEnv, ...keys: (keyof Pick<E2EEnv, 'storeFqdn' | 'orgId'>)[]): void {
   for (const key of keys) {
     if (!env[key]) {
       const envVarNames: {[key: string]: string} = {
-        partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
-        clientId: 'SHOPIFY_FLAG_CLIENT_ID',
         storeFqdn: 'E2E_STORE_FQDN',
-        secondaryClientId: 'E2E_SECONDARY_CLIENT_ID',
+        orgId: 'E2E_ORG_ID',
       }
       throw new Error(`${envVarNames[key]} environment variable is required for this test`)
     }
@@ -82,17 +117,23 @@ export function requireEnv(
 }
 
 /**
- * Worker-scoped fixture providing auth tokens and environment configuration.
- * Auth tokens are optional — tests that need them should call requireEnv().
+ * Worker-scoped fixture providing environment configuration.
+ * Env vars are optional — tests that need them should call requireEnv().
  */
-export const envFixture = base.extend<{}, {env: E2EEnv}>({
+export const envFixture = base.extend<{testSection: void}, {env: E2EEnv}>({
+  // Auto-log TEST section header for every test
+  testSection: [
+    async ({env}, use, testInfo) => {
+      e2eSection(env, `TEST: ${testInfo.title}`)
+      await use()
+    },
+    {auto: true},
+  ],
   env: [
     // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
-      const partnersToken = process.env.SHOPIFY_CLI_PARTNERS_TOKEN ?? ''
-      const clientId = process.env.SHOPIFY_FLAG_CLIENT_ID ?? ''
+    async ({}, use, workerInfo) => {
       const storeFqdn = process.env.E2E_STORE_FQDN ?? ''
-      const secondaryClientId = process.env.E2E_SECONDARY_CLIENT_ID ?? ''
+      const orgId = process.env.E2E_ORG_ID ?? ''
 
       const tmpBase = process.env.E2E_TEMP_DIR ?? path.join(directories.root, '.e2e-tmp')
       fs.mkdirSync(tmpBase, {recursive: true})
@@ -104,32 +145,26 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
         ...xdgEnv,
         SHOPIFY_RUN_AS_USER: '0',
         NODE_OPTIONS: '',
-        // Prevent interactive prompts
         CI: '1',
+        SHOPIFY_CLI_1P_DEV: undefined,
+        SHOPIFY_FLAG_CLIENT_ID: undefined,
       }
 
-      if (partnersToken) {
-        processEnv.SHOPIFY_CLI_PARTNERS_TOKEN = partnersToken
-      }
-      if (clientId) {
-        processEnv.SHOPIFY_FLAG_CLIENT_ID = clientId
-      }
       if (storeFqdn) {
         processEnv.SHOPIFY_FLAG_STORE = storeFqdn
       }
 
       const env: E2EEnv = {
-        partnersToken,
-        clientId,
         storeFqdn,
-        secondaryClientId,
+        orgId,
         processEnv,
         tempDir,
+        workerIndex: workerInfo.parallelIndex,
       }
 
       await use(env)
 
-      // Cleanup: remove temp directory
+      // Cleanup
       fs.rmSync(tempDir, {recursive: true, force: true})
     },
     {scope: 'worker'},

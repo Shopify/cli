@@ -10,7 +10,7 @@
     "bundle-for-release": "nx run-many --target=bundle --all --skip-nx-cache",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-code-documentation && bin/update-cli-kit-version.js",
     "clean": "nx run-many --target=clean --all --skip-nx-cache && nx reset",
-    "create-app": "nx build create-app && node packages/create-app/bin/dev.js --package-manager npm",
+    "create-app": "nx build create-app && node packages/create-app/bin/dev.js --package-manager pnpm",
     "deploy-experimental": "node bin/deploy-experimental.js",
     "graph": "nx graph",
     "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
@@ -26,9 +26,13 @@
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
     "release": "./bin/release",
     "post-release": "./bin/post-release",
+    "update-observe": "node bin/update-observe.js",
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "test:e2e": "nx run-many --target=build --projects=cli,create-app --skip-nx-cache && pnpm --filter e2e exec playwright test",
+    "test:e2e-cleanup": "pnpm --filter e2e exec tsx scripts/cleanup-stores.ts; pnpm --filter e2e exec tsx scripts/cleanup-apps.ts",
+    "test:e2e-cleanup-stores": "pnpm --filter e2e exec tsx scripts/cleanup-stores.ts",
+    "test:e2e-cleanup-apps": "pnpm --filter e2e exec tsx scripts/cleanup-apps.ts",
     "test:regenerate-snapshots": "packages/e2e/scripts/regenerate-snapshots.sh",
     "test": "pnpm vitest run",
     "type-check:affected": "nx affected --target=type-check",
@@ -47,13 +51,13 @@
     "@nx/workspace": "22.0.2",
     "@octokit/rest": "22.0.0",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
-    "@shopify/generate-docs": "0.15.6",
+    "@shopify/generate-docs": "1.1.1",
     "@types/node": "18.19.70",
     "@typescript-eslint/parser": "8.56.1",
     "@vitest/coverage-istanbul": "^3.1.4",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
-    "esbuild": "0.27.4",
+    "esbuild": "0.28.0",
     "eslint-plugin-jsdoc": "50.7.1",
     "eslint": "^9.26.0",
     "execa": "^7.2.0",
@@ -67,7 +71,7 @@
     "knip": "5.59.1",
     "liquidjs": "10.25.0",
     "node-fetch": "^3.3.2",
-    "nx": "22.6.1",
+    "nx": "22.7.0",
     "oclif": "4.22.96",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
@@ -181,7 +185,8 @@
           "esbuild"
         ],
         "ignore": [
-          "configurations/vite.config.ts"
+          "configurations/vite.config.ts",
+          "packages/e2e/scripts/**"
         ]
       },
       "packages/app": {
@@ -207,7 +212,8 @@
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
           "**/bin/*.js!",
-          "**/index.ts!"
+          "**/index.ts!",
+          "**/bootstrap.ts!"
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [

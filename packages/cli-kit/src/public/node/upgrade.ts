@@ -1,3 +1,4 @@
+import {fetchNotifications, filterNotifications} from './notifications-system.js'
 import {isDevelopment} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from './is-global.js'
 import {
@@ -18,11 +19,13 @@ import {isPreReleaseVersion} from './version.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 
+export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
+
 /**
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
  *
- * @returns A string with the command to run.
+ * @returns A string with the command to run, or undefined if the package manager cannot be determined.
  */
 export function cliInstallCommand(): string | undefined {
   const packageManager = inferPackageManagerForGlobalCLI()
@@ -53,7 +56,7 @@ export async function runCLIUpgrade(): Promise<void> {
   const isGlobal = currentProcessIsGlobal()
 
   // Don't auto-upgrade for development mode
-  if (!isGlobal && isDevelopment()) {
+  if (isDevelopment()) {
     outputInfo('Skipping upgrade in development mode.')
     return
   }
@@ -111,6 +114,32 @@ export function versionToAutoUpgrade(): string | undefined {
 }
 
 /**
+ * Checks the freshly fetched notifications feed for a kill-switch notification that
+ * disables auto-upgrade. A blocking notification is one with `surface: "autoupgrade"`,
+ * `type: "error"`, and matching version/date ranges for the current CLI.
+ *
+ * Fails open: any error fetching or parsing the feed results in `false`, so a broken
+ * notifications endpoint never prevents users from auto-upgrading. Intentionally silent
+ * (no logs) — this is invoked on the auto-upgrade hot path.
+ *
+ * @returns `true` when an active blocking notification is found, `false` otherwise.
+ */
+export async function hasBlockingAutoUpgradeNotification(): Promise<boolean> {
+  try {
+    const {notifications} = await fetchNotifications()
+    // Reuse the standard notifications filtering for version/date/surface. The empty
+    // commandId disables the command filter; ['autoupgrade'] scopes to our surface.
+    // The frequency filter is a no-op here because we never render, so nothing gets
+    // written to the lastShown cache for these notifications.
+    const matching = filterNotifications(notifications, '', ['autoupgrade'])
+    return matching.some((notification) => notification.type === 'error')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+/**
  * Shows a daily upgrade-available warning for users who have not enabled auto-upgrade.
  * Skipped in CI and for pre-release versions. When auto-upgrade is enabled this is a no-op
  * because the postrun hook will handle the upgrade directly.
@@ -128,16 +157,28 @@ export async function warnIfUpgradeAvailable(): Promise<void> {
 
 /**
  * Generates a message to remind the user to update the CLI.
+ * For major version bumps, appends a link to the GitHub release notes so users
+ * can review breaking changes before deciding to upgrade.
  *
  * @param version - The version to update to.
+ * @param isMajor - Whether the version bump is a major version change.
  * @returns The message to remind the user to update the CLI.
  */
-export function getOutputUpdateCLIReminder(version: string): string {
+export function getOutputUpdateCLIReminder(version: string, isMajor = false): string {
   const installCommand = cliInstallCommand()
-  if (installCommand) {
-    return outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(installCommand)}`.value
+  const base = installCommand
+    ? outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(installCommand)}`.value
+    : outputContent`💡 Version ${version} available!`.value
+
+  if (isMajor) {
+    const releaseUrl = `https://github.com/Shopify/cli/releases/tag/${version}`
+    const majorNotice =
+      outputContent`⚠️  This is a major version — review breaking changes before upgrading:\n   ${outputToken.link(releaseUrl, releaseUrl)}`
+        .value
+    return `${base}\n\n${majorNotice}`
   }
-  return outputContent`💡 Version ${version} available!`.value
+
+  return base
 }
 
 /**
@@ -146,6 +187,9 @@ export function getOutputUpdateCLIReminder(version: string): string {
  * @returns Whether the user chose to enable auto-upgrade.
  */
 export async function promptAutoUpgrade(): Promise<boolean> {
+  const current = getAutoUpgradeEnabled()
+  if (current !== undefined) return current
+
   const enabled = await renderConfirmationPrompt({
     message: 'Enable automatic updates for Shopify CLI?',
     confirmationMessage: 'Yes, automatically update',

@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.93.0",
+  "version": "3.94.0",
   "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
@@ -47,24 +47,25 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "NODE_ENV=production node ../../bin/update-bugsnag cli && cp ../../README.md README.md",
+    "prepack": "NODE_ENV=production node ../../bin/update-bugsnag cli && pnpm oclif manifest && cp ../../README.md README.md",
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
-    "esbuild": "0.27.4",
+    "esbuild": "0.28.0",
     "global-agent": "3.0.0"
   },
   "devDependencies": {
     "@oclif/core": "4.5.3",
     "@oclif/plugin-commands": "4.1.33",
     "@oclif/plugin-plugins": "5.4.47",
-    "@shopify/app": "3.93.0",
-    "@shopify/cli-kit": "3.93.0",
-    "@shopify/plugin-cloudflare": "3.93.0",
-    "@shopify/plugin-did-you-mean": "3.93.0",
-    "@shopify/theme": "3.93.0",
+    "@shopify/app": "3.94.0",
+    "@shopify/store": "3.94.0",
+    "@shopify/cli-kit": "3.94.0",
+    "@shopify/plugin-cloudflare": "3.94.0",
+    "@shopify/plugin-did-you-mean": "3.94.0",
+    "@shopify/theme": "3.94.0",
     "@shopify/cli-hydrogen": "11.1.10",
     "@types/global-agent": "3.0.0",
     "@vitest/coverage-istanbul": "^3.1.4",
@@ -136,44 +137,20 @@
     ],
     "hooks": {
       "init": [
-        {
-          "target": "./dist/index.js",
-          "identifier": "AppInitHook"
-        },
-        {
-          "target": "./dist/index.js",
-          "identifier": "HydrogenInitHook"
-        }
+        "./dist/hooks/app-init.js",
+        "./dist/hooks/hydrogen-init.js"
       ],
       "prerun": "./dist/hooks/prerun.js",
       "postrun": "./dist/hooks/postrun.js",
-      "command_not_found": {
-        "target": "./dist/index.js",
-        "identifier": "DidYouMeanHook"
-      },
-      "tunnel_start": {
-        "target": "./dist/index.js",
-        "identifier": "TunnelStartHook"
-      },
-      "tunnel_provider": {
-        "target": "./dist/index.js",
-        "identifier": "TunnelProviderHook"
-      },
-      "update": {
-        "target": "./dist/index.js",
-        "identifier": "PluginHook"
-      },
+      "command_not_found": "./dist/hooks/did-you-mean.js",
+      "tunnel_start": "./dist/hooks/tunnel-start.js",
+      "tunnel_provider": "./dist/hooks/tunnel-provider.js",
+      "update": "./dist/hooks/plugin-plugins.js",
       "sensitive_command_metadata": [
-        {
-          "target": "./dist/index.js",
-          "identifier": "AppSensitiveMetadataHook"
-        }
+        "./dist/hooks/sensitive-metadata.js"
       ],
       "public_command_metadata": [
-        {
-          "target": "./dist/index.js",
-          "identifier": "AppPublicMetadataHook"
-        }
+        "./dist/hooks/public-metadata.js"
       ]
     }
   }
