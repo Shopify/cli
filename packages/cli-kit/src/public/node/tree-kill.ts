@@ -52,7 +52,7 @@ function adaptedTreeKill(
 ): void {
   const rootPid = typeof pid === 'number' ? pid.toString() : pid
 
-  if (Number.isNaN(rootPid)) {
+  if (!/^\d+$/.test(rootPid)) {
     if (callback) {
       callback(new Error('pid must be a number'))
       return
@@ -73,7 +73,19 @@ function adaptedTreeKill(
   switch (process.platform) {
     case 'win32':
       // @ts-ignore
-      exec(`taskkill /pid ${pid} /T /F`, callback)
+      spawn('taskkill', ['/pid', rootPid, '/T', '/F'])
+        .on('close', (code) => {
+          if (callback) {
+            if (code === 0) {
+              callback()
+            } else {
+              callback(new Error(`taskkill exited with code ${code}`))
+            }
+          }
+        })
+        .on('error', (err) => {
+          if (callback) callback(err)
+        })
       break
     case 'darwin':
       buildProcessTree(
