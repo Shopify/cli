@@ -17,7 +17,6 @@ import {
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
 import {minimatch} from 'minimatch'
-import fastGlobLib from 'fast-glob'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -594,11 +593,14 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
  * @returns An array of pathnames that match the given pattern.
  */
 export function globSync(pattern: Pattern | Pattern[], options?: GlobOptions): string[] {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const fastGlob = require('fast-glob')
   let overridenOptions = options
   if (options?.dot == null) {
     overridenOptions = {...options, dot: true}
   }
-  return fastGlobLib.sync(pattern, overridenOptions)
+  return fastGlob.sync(pattern, overridenOptions)
 }
 
 /**
@@ -728,15 +730,17 @@ export async function copyDirectoryContents(srcDir: string, destDir: string): Pr
   }
 
   // Get all files and directories in the source directory
-  const items = await glob(joinPath(srcDir, '**/*'))
+  // Optimization: Use cwd to get relative paths directly, which is more efficient
+  // and avoids manual string replacement for path normalization.
+  const items = await glob('**/*', {cwd: srcDir})
 
   const filesToCopy = []
 
-  for (const item of items) {
-    const relativePath = item.replace(srcDir, '').replace(/^[/\\]/, '')
+  for (const relativePath of items) {
+    const srcPath = joinPath(srcDir, relativePath)
     const destPath = joinPath(destDir, relativePath)
 
-    filesToCopy.push(copyFile(item, destPath))
+    filesToCopy.push(copyFile(srcPath, destPath))
   }
 
   await Promise.all(filesToCopy)

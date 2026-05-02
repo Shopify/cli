@@ -348,8 +348,9 @@ describe('detectEOL', () => {
 describe('copyDirectoryContents', () => {
   beforeEach(() => {
     // restore fast-glob to its original implementation for the tests
-    vi.doMock('fast-glob', async () => {
-      return vi.importActual('fast-glob')
+    vi.mocked(FastGlob).mockImplementation(async (pattern, options) => {
+      const actual = (await vi.importActual('fast-glob')) as any
+      return actual.default(pattern, options)
     })
   })
 
