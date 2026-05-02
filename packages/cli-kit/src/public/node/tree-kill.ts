@@ -52,7 +52,7 @@ function adaptedTreeKill(
 ): void {
   const rootPid = typeof pid === 'number' ? pid.toString() : pid
 
-  if (Number.isNaN(rootPid)) {
+  if (!/^\d+$/.test(rootPid)) {
     if (callback) {
       callback(new Error('pid must be a number'))
       return
