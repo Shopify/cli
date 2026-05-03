@@ -199,7 +199,6 @@
           "**/graphql/**/generated/*.ts"
         ],
         "ignoreDependencies": [
-          "@graphql-typed-document-node/core",
           "@shopify/plugin-cloudflare"
         ],
         "vite": {
@@ -292,9 +291,7 @@
         "ignoreBinaries": [
           "open"
         ],
-        "ignoreDependencies": [
-          "@graphql-typed-document-node/core"
-        ],
+        "ignoreDependencies": [],
         "vite": {
           "config": [
             "vite.config.ts"
