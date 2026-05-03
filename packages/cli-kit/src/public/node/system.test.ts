@@ -266,6 +266,17 @@ describe('execCommand', () => {
     // Then
     expect(execaCommand).toHaveBeenCalledWith('cat', expect.objectContaining({stdin: 'inherit'}))
   })
+
+  test('raises an error if the command to run is found in the current directory', async () => {
+    // Given
+    vi.mocked(which.sync).mockReturnValueOnce('/currentDirectory/command')
+
+    // When
+    const got = system.execCommand('command', {cwd: '/currentDirectory'})
+
+    // Then
+    await expect(got).rejects.toThrowError('Skipped run of unsecure binary command found in the current directory.')
+  })
 })
 
 describe('isStdinPiped', () => {

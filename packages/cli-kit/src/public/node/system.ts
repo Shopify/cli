@@ -206,6 +206,10 @@ export async function execCommand(command: string, options?: ExecOptions): Promi
     env.FORCE_COLOR = '1'
   }
   const executionCwd = options?.cwd ?? cwd()
+  const [cmd] = parseCommand(command)
+  if (cmd) {
+    checkCommandSafety(cmd, {cwd: executionCwd})
+  }
   try {
     await execaCommand(command, {
       env,
