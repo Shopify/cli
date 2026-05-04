@@ -1,1 +1,0 @@
-shopify hydrogen debug cpu [flags]
