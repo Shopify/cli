@@ -17,8 +17,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "/dist",
-    "/oclif.manifest.json"
+    "/dist"
   ],
   "exports": {
     ".": {
@@ -31,7 +30,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "NODE_ENV=production pnpm nx build && pnpm oclif manifest && cp ../../README.md README.md",
+    "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
