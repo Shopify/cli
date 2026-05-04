@@ -1,7 +1,7 @@
 import {fetchPublicApiVersions} from './admin-transport.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
-import {recordStoreCommandUserId} from '../metrics.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {StoredStoreAppSession} from '../auth/session-store.js'
 
@@ -38,7 +38,7 @@ export async function prepareAdminStoreGraphQLContext(input: {
   userSpecifiedVersion?: string
 }): Promise<AdminStoreGraphQLContext> {
   const session = await loadStoredStoreSession(input.store)
-  recordStoreCommandUserId(session.userId)
+  setLastSeenUserId(session.userId)
   const adminSession = {
     token: session.accessToken,
     storeFqdn: session.store,

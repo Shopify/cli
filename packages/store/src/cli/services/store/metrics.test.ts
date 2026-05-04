@@ -1,12 +1,10 @@
-import {recordStoreCommandUserId, recordStoreFqdnMetadata} from './metrics.js'
+import {recordStoreFqdnMetadata} from './metrics.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('@shopify/cli-kit/node/metadata')
-vi.mock('@shopify/cli-kit/node/session')
 
 describe('store command metrics', () => {
   beforeEach(() => {
@@ -22,9 +20,4 @@ describe('store command metrics', () => {
     expect(hashString).toHaveBeenCalledWith('shop.myshopify.com')
   })
 
-  test('sets the command analytics user id from store auth identity', () => {
-    recordStoreCommandUserId('42')
-
-    expect(setLastSeenUserId).toHaveBeenCalledWith('42')
-  })
 })
