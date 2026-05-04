@@ -11,9 +11,6 @@ export interface CommandData {
   commandName: string
   fileName: string
   interfaceName: string
-  hasTopic: boolean
-  topic: string | undefined
-  hasFlags: boolean
 }
 
 export default class DocsGenerate extends Command {
@@ -31,9 +28,9 @@ export default class DocsGenerate extends Command {
     const sortedCommands = commands
       .sort((ca, cb) => ca.id.length - cb.id.length)
       .filter((command) => !isHidden(command))
-    const promises = sortedCommands.flatMap((command) => {
+    const promises = sortedCommands.map((command) => {
       const commandData = extractCommandData(command)
-      return [writeCommandFlagInterface(command, commandData), writeCommandUsageExampleFile(command, commandData)]
+      return writeCommandFlagInterface(command, commandData)
     })
 
     await Promise.all(promises)
@@ -59,10 +56,7 @@ export function extractCommandData(command: CommandWithMarkdown) {
   const commandName = command.id.replace(/[:]/g, ' ')
   const fileName = command.id.replace(/[:]/g, '-')
   const interfaceName = command.id.replace(/[:-]/g, '')
-  const hasTopic = command.id.includes(':')
-  const topic = command.id.split(':')[0]
-  const hasFlags = command.flags && Object.keys(command.flags).length > 0
-  return {commandName, fileName, interfaceName, hasTopic, topic, hasFlags}
+  return {commandName, fileName, interfaceName}
 }
 
 // Generates an interface for the flags of a command and writes it to a file
@@ -104,23 +98,4 @@ ${flagsDetails}
 `
   await mkdir(`${docsPath}/interfaces`)
   await writeFile(`${docsPath}/interfaces/${fileName}.interface.ts`, commandContent)
-}
-
-// Generates a file with an example usage of a command
-export async function writeCommandUsageExampleFile(command: CommandWithMarkdown, {fileName, commandName}: CommandData) {
-  let usage = ''
-  const hasFlags = command.flags && Object.keys(command.flags).length > 0
-  if (typeof command.usage === 'string') {
-    usage = prependShopify(command.usage)
-  } else if (Array.isArray(command.usage)) {
-    usage = command.usage.map((usage) => prependShopify(usage)).join('\n\n')
-  } else {
-    usage = `${prependShopify(commandName)}${hasFlags ? ' [flags]' : ''}`
-  }
-  await mkdir(`${docsPath}/examples`)
-  await writeFile(`${docsPath}/examples/${fileName}.example.sh`, usage)
-}
-
-function prependShopify(command: string) {
-  return command.startsWith('shopify ') ? command : `shopify ${command}`
 }
