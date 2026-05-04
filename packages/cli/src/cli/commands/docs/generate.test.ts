@@ -1,10 +1,4 @@
-import {
-  CommandData,
-  CommandWithMarkdown,
-  extractCommandData,
-  writeCommandFlagInterface,
-  writeCommandUsageExampleFile,
-} from './generate.js'
+import {CommandData, CommandWithMarkdown, extractCommandData, writeCommandFlagInterface} from './generate.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {describe, test, vi, expect} from 'vitest'
 
@@ -42,9 +36,6 @@ const commandData: CommandData = {
   commandName: 'topic test-command',
   fileName: 'topic-test-command',
   interfaceName: 'topictestcommand',
-  hasTopic: true,
-  topic: 'topic',
-  hasFlags: true,
 }
 
 describe('extractCommandData', () => {
@@ -95,17 +86,6 @@ export interface topictestcommand {
 
 }
 `,
-    )
-  })
-})
-
-describe('writeCommandUsageExampleFile', () => {
-  test('calls writeFile with the correct content', async () => {
-    await writeCommandUsageExampleFile(testCommand, commandData)
-
-    expect(writeFile).toHaveBeenCalledWith(
-      expect.stringContaining('docs-shopify.dev/commands/examples/topic-test-command.example.sh'),
-      'shopify topic test-command [flags]',
     )
   })
 })
