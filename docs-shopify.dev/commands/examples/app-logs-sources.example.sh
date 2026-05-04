@@ -1,1 +1,0 @@
-shopify app logs sources [flags]

@@ -1,1 +1,0 @@
-shopify app generate extension [flags]

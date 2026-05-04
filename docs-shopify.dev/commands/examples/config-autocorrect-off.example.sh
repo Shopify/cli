@@ -1,1 +1,0 @@
-shopify config autocorrect off
