@@ -82,8 +82,6 @@ import {ListOrganizations} from '../../api/graphql/business-platform-destination
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
-import {AdminSpecIdentifier} from '../../models/extensions/specifications/admin.js'
-
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {
   DevSessionUpdate,
@@ -1225,7 +1223,7 @@ function createAppVars(
         {
           type: AppHomeSpecIdentifier,
           config: {
-            app_url: options.applicationUrl ?? defaultAppUrl,
+            app_url: defaultAppUrl,
             // Ext-only apps should be embedded = false, however we are hardcoding this to
             // match Partners behaviour for now
             // https://github.com/Shopify/develop-app-inner-loop/issues/2789
@@ -1243,18 +1241,10 @@ function createAppVars(
         {
           type: AppAccessSpecIdentifier,
           config: {
-            redirect_url_allowlist: options.redirectUrls ?? [defaultRedirectUrl],
+            redirect_url_allowlist: [defaultRedirectUrl],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
           },
         },
-        ...(options.staticRoot
-          ? [
-              {
-                type: AdminSpecIdentifier,
-                config: {admin: {static_root: options.staticRoot}},
-              },
-            ]
-          : []),
       ],
     },
   }

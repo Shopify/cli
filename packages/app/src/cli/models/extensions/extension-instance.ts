@@ -529,8 +529,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         } else {
           return nonRandomUUID(JSON.stringify(this.configuration))
         }
-      default:
-        return this.specification.identifier
     }
   }
 

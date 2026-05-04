@@ -1,12 +1,10 @@
-import init, {buildNoneTemplate, InitOptions, visibleTemplates} from './init.js'
+import init, {InitOptions, visibleTemplates} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
-import {isHostedAppsMode} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/is-global')
-vi.mock('@shopify/cli-kit/node/context/local')
 
 const globalCLIResult = {install: true, alreadyInstalled: false}
 
@@ -46,32 +44,6 @@ describe('init', () => {
 
     test('exposes only the templates that are still actively offered', () => {
       expect(visibleTemplates).toEqual(['reactRouter', 'none'])
-    })
-  })
-
-  describe('buildNoneTemplate', () => {
-    test('returns hosted app label and URL when HOSTED_APPS is enabled', () => {
-      // Given
-      vi.mocked(isHostedAppsMode).mockReturnValue(true)
-
-      // When
-      const got = buildNoneTemplate()
-
-      // Then
-      expect(got.label).toBe('Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)')
-      expect(got.url).toBe('https://github.com/Shopify/shopify-app-template-extension-only')
-    })
-
-    test('returns default label and URL when HOSTED_APPS is not set', () => {
-      // Given
-      vi.mocked(isHostedAppsMode).mockReturnValue(false)
-
-      // When
-      const got = buildNoneTemplate()
-
-      // Then
-      expect(got.label).toBe('Build an extension-only app')
-      expect(got.url).toBe('https://github.com/Shopify/shopify-app-template-none')
     })
   })
 

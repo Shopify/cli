@@ -37,8 +37,6 @@ describe('devUIExtensions()', () => {
       () =>
         ({
           mock: 'payload-store',
-          updateAdminConfigFromExtensionEvents: vi.fn(),
-          getAppAssets: vi.fn(),
         }) as unknown as store.ExtensionsPayloadStore,
     )
     vi.spyOn(server, 'setupHTTPServer').mockReturnValue({
@@ -77,7 +75,6 @@ describe('devUIExtensions()', () => {
       devOptions: {...options, websocketURL: 'wss://mock.url/extensions'},
       payloadStore: expect.objectContaining({mock: 'payload-store'}),
       getExtensions: expect.any(Function),
-      getAppAssets: expect.any(Function),
     })
   })
 

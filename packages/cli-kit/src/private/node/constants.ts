@@ -48,7 +48,6 @@ export const environmentVariables = {
   skipNetworkLevelRetry: 'SHOPIFY_CLI_SKIP_NETWORK_LEVEL_RETRY',
   maxRequestTimeForNetworkCalls: 'SHOPIFY_CLI_MAX_REQUEST_TIME_FOR_NETWORK_CALLS',
   disableImportScanning: 'SHOPIFY_CLI_DISABLE_IMPORT_SCANNING',
-  hostedApps: 'HOSTED_APPS',
 }
 
 export const defaultThemeKitAccessDomain = 'theme-kit-access.shopifyapps.com'
