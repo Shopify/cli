@@ -142,4 +142,38 @@ describe('Alert', async () => {
       "
     `)
   })
+
+  test("footnotes a long URL written as `[label](url)` in the body so it doesn't wrap inside the banner border", async () => {
+    // Regression: a 100-char URL embedded as plain text wraps across the
+    // banner border at ~78 cols, splitting the URL with │ characters and
+    // making it neither clickable nor copy-pasteable. Marking the URL up
+    // with `[label](url)` should place the label inline (with a `[N]`
+    // anchor) and emit the URL in the post-banner footnote block.
+    const longUrl =
+      'https://shopify.dev/docs/apps/build/sales-channels/channel-config-extension#specification-properties'
+    const options = {
+      body: `See specification requirements: [docs](${longUrl})`,
+    }
+
+    const {lastFrame} = render(<Alert type="error" {...options} />)
+    const frame = unstyled(lastFrame()!)
+
+    // The URL must not appear inside the bordered box.
+    const bodyLines = frame.split('\n').filter((line) => line.startsWith('│'))
+    bodyLines.forEach((line) => {
+      expect(line).not.toContain(longUrl)
+    })
+
+    // The footnote block (rendered after the closing `╰`) must list the
+    // URL. Ink wraps the long URL onto its own line when it exceeds terminal
+    // width, so we assert the `[1]` anchor and the URL show up *outside* the
+    // bordered box rather than as a single contiguous `[1] URL` substring.
+    const closingBorderIndex = frame.indexOf('╰')
+    expect(closingBorderIndex).toBeGreaterThanOrEqual(0)
+    const afterBox = frame.slice(closingBorderIndex)
+    expect(afterBox).toContain('[1]')
+    expect(afterBox).toContain(longUrl)
+    // And the body must reference the footnote.
+    expect(frame).toContain('docs [1]')
+  })
 })

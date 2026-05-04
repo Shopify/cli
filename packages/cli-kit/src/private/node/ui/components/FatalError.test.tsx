@@ -245,4 +245,37 @@ describe('FatalError', async () => {
       "
     `)
   })
+
+  test('routes a plain-string error.message through TokenizedText so opt-in `[label](url)` markdown renders as a footnote-backed link', async () => {
+    // Regression: previously a `FatalError` constructed with a plain string
+    // message bypassed `TokenizedText` and rendered as a bare `<Text>`,
+    // meaning any URL embedded in the message wrapped against the banner
+    // border. Wiring `error.message` through `TokenizedText` lets servers
+    // (or the CLI itself) opt in to the same footnote treatment via
+    // CommonMark `[label](url)` markdown.
+    const longUrl =
+      'https://shopify.dev/docs/apps/build/sales-channels/channel-config-extension#specification-properties'
+    const error = new AbortError(`See specification requirements: [docs](${longUrl})`)
+
+    const {lastFrame} = render(<FatalError error={error} />)
+    const frame = unstyled(lastFrame()!)
+
+    // The URL must not appear inside the bordered box.
+    const bodyLines = frame.split('\n').filter((line) => line.startsWith('│'))
+    bodyLines.forEach((line) => {
+      expect(line).not.toContain(longUrl)
+    })
+
+    // The footnote block must list the URL outside the box. Ink wraps the
+    // long URL onto its own line when it exceeds terminal width, so we
+    // assert the `[1]` anchor and the URL show up *after* the closing
+    // border rather than as a single contiguous `[1] URL` substring.
+    const closingBorderIndex = frame.indexOf('╰')
+    expect(closingBorderIndex).toBeGreaterThanOrEqual(0)
+    const afterBox = frame.slice(closingBorderIndex)
+    expect(afterBox).toContain('[1]')
+    expect(afterBox).toContain(longUrl)
+    // And the body must reference the footnote with the markdown label.
+    expect(frame).toContain('docs [1]')
+  })
 })
