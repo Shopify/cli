@@ -1,4 +1,5 @@
 import {reportAnalyticsEvent, recordTiming, recordError, recordRetry, recordEvent} from './analytics.js'
+import {startAgentConversation, endAgentConversation} from './agent.js'
 import * as os from './os.js'
 import {
   analyticsDisabled,
@@ -216,6 +217,50 @@ describe('event tracking', () => {
       expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
       expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
     })
+
+    process.env = originalEnv
+  })
+
+  test('expands SHOPIFY_CLI_AGENT_CONTEXT into sensitive analytics fields', async () => {
+    const originalEnv = {...process.env}
+    const conversation = await startAgentConversation({
+      conversationId: 'conv_existing',
+      agent: 'pi',
+      agentVersion: '0.70.2',
+      provider: 'shopify',
+      harness: 'pi',
+      model: 'gpt-5',
+    })
+
+    process.env.SHOPIFY_CLI_AGENT_CONTEXT = conversation.contextPath
+    process.env.SHOPIFY_CLI_AGENT_RUN_ID = 'run-123'
+
+    await inProjectWithFile('package.json', async (args) => {
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+      expect(shopifyVars).toMatchObject({
+        SHOPIFY_CLI_AGENT_CONTEXT: conversation.contextPath,
+        SHOPIFY_CLI_AGENT_SESSION_ID: 'conv_existing',
+        SHOPIFY_CLI_AGENT: 'pi',
+        SHOPIFY_CLI_AGENT_VERSION: '0.70.2',
+        SHOPIFY_CLI_AGENT_PROVIDER: 'shopify',
+        SHOPIFY_CLI_AGENT_HARNESS: 'pi',
+        SHOPIFY_CLI_AGENT_MODEL: 'gpt-5',
+        SHOPIFY_CLI_AGENT_RUN_ID: 'run-123',
+      })
+    })
+
+    await endAgentConversation({contextPath: conversation.contextPath})
+    process.env = originalEnv
   })
 
   test('does nothing when analytics are disabled', async () => {

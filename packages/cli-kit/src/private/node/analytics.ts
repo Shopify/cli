@@ -10,6 +10,7 @@ import {ciPlatform, cloudEnvironment, macAddress} from '../../public/node/contex
 import {cwd} from '../../public/node/path.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from '../../public/node/is-global.js'
 import {isWsl} from '../../public/node/system.js'
+import {resolveShopifyAgentEnvironmentVariables} from '../../public/node/agent.js'
 
 import {Command, Interfaces} from '@oclif/core'
 
@@ -103,18 +104,16 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
 export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   return {
     env_plugin_installed_all: JSON.stringify(getPluginNames(config)),
-    env_shopify_variables: JSON.stringify(getShopifyEnvironmentVariables()),
+    env_shopify_variables: JSON.stringify(await getShopifyEnvironmentVariables()),
   }
 }
 
-function getShopifyEnvironmentVariables() {
+async function getShopifyEnvironmentVariables() {
   // Agent callers can identify themselves today via SHOPIFY_* environment
-  // variables. The current contract is intentionally lightweight and is kept in
-  // the sensitive payload until we prove which dimensions deserve first-class
-  // Monorail fields, e.g. SHOPIFY_CLI_AGENT, SHOPIFY_CLI_AGENT_VERSION,
-  // SHOPIFY_CLI_AGENT_RUN_ID, SHOPIFY_CLI_AGENT_SESSION_ID, and
-  // SHOPIFY_CLI_AGENT_PROVIDER.
-  return Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
+  // variables. Shopify CLI also supports a conversation-scoped context file via
+  // SHOPIFY_CLI_AGENT_CONTEXT so callers can mint broader conversation metadata
+  // once and then reuse the handle across later commands.
+  return resolveShopifyAgentEnvironmentVariables(process.env)
 }
 
 function getPluginNames(config: Interfaces.Config) {
