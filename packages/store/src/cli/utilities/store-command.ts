@@ -1,3 +1,4 @@
+import {recordStoreFqdnMetadata} from '../services/store/metrics.js'
 import Command, {type ArgOutput, type FlagOutput} from '@shopify/cli-kit/node/base-command'
 import {addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 
@@ -21,6 +22,7 @@ export default abstract class StoreCommand extends Command {
     const storeFqdn = (result.flags as {store?: unknown}).store
     if (typeof storeFqdn === 'string' && storeFqdn.length > 0) {
       await addSensitiveMetadata(() => ({store_fqdn: storeFqdn}))
+      await recordStoreFqdnMetadata(storeFqdn)
     }
     return result
   }

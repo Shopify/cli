@@ -6,6 +6,7 @@ import {createPkceBootstrap} from './pkce.js'
 import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScopes} from './scopes.js'
 import {resolveExistingStoreAuthScopes, type ResolvedStoreAuthScopes} from './existing-scopes.js'
 import {createStoreAuthPresenter, type StoreAuthPresenter, type StoreAuthResult} from './result.js'
+import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -73,6 +74,7 @@ export async function authenticateStoreWithApp(
   if (!userId) {
     throw new AbortError('Shopify did not return associated user information for the online access token.')
   }
+  setLastSeenUserId(userId)
 
   const now = Date.now()
   const expiresAt = tokenResponse.expires_in ? new Date(now + tokenResponse.expires_in * 1000).toISOString() : undefined

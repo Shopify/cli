@@ -6,12 +6,13 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
+  setLastSeenUserId,
 } from './session.js'
 
 import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
-import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
@@ -30,9 +31,16 @@ const partnersToken: ApplicationToken = {
 
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
-vi.mock('../../private/node/session/store.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
+
+describe('store command analytics session helpers', () => {
+  test('sets last seen user id through the public session helper', () => {
+    setLastSeenUserId('store-user-id')
+
+    expect(setLastSeenUserIdAfterAuth).toHaveBeenCalledWith('store-user-id')
+  })
+})
 
 describe('ensureAuthenticatedStorefront', () => {
   test('returns only storefront token if success', async () => {
