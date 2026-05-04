@@ -728,15 +728,16 @@ export async function copyDirectoryContents(srcDir: string, destDir: string): Pr
   }
 
   // Get all files and directories in the source directory
-  const items = await glob(joinPath(srcDir, '**/*'))
+  // Optimization: Use `cwd` to get relative paths directly from glob.
+  // This avoids expensive absolute path manipulation and prefix stripping.
+  const items = await glob('**/*', {cwd: srcDir})
 
   const filesToCopy = []
 
   for (const item of items) {
-    const relativePath = item.replace(srcDir, '').replace(/^[/\\]/, '')
-    const destPath = joinPath(destDir, relativePath)
+    const destPath = joinPath(destDir, item)
 
-    filesToCopy.push(copyFile(item, destPath))
+    filesToCopy.push(copyFile(joinPath(srcDir, item), destPath))
   }
 
   await Promise.all(filesToCopy)
