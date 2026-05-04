@@ -149,7 +149,9 @@
     "ignoreBinaries": [
       "playwright"
     ],
-    "ignoreDependencies": [],
+    "ignoreDependencies": [
+      "@shopify/generate-docs"
+    ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli",
       "packages/e2e"
