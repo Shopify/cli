@@ -1,14 +1,18 @@
 import {Notifier} from './notifier.js'
-import {vi, describe, expect, test} from 'vitest'
+import {vi, describe, expect, test, beforeEach} from 'vitest'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {inTemporaryDirectory, readFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {stat} from 'node:fs/promises'
 
-import fs from 'fs/promises'
-
-vi.mock('fs/promises')
 vi.mock('@shopify/cli-kit/node/output')
 
 describe('Notifier', () => {
   let notifier: Notifier
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
 
   test('updates notifyPath via POST request when path is a URL', async () => {
     const mockFetch = vi.spyOn(global, 'fetch').mockResolvedValue(new Response())
@@ -26,13 +30,23 @@ describe('Notifier', () => {
   })
 
   test('updates file atime and mtime when path is not a URL', async () => {
-    const path = 'theme.update'
-    notifier = new Notifier(path)
-    const fileName = 'announcement.liquid'
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const path = joinPath(tmpDir, 'theme.update')
+      notifier = new Notifier(path)
+      const fileName = 'announcement.liquid'
+      const startTime = Date.now()
 
-    await notifier.notify(fileName)
+      // When
+      await notifier.notify(fileName)
 
-    expect(fs.writeFile).toHaveBeenCalledWith(path, fileName)
+      // Then
+      expect(await readFile(path)).toBe(fileName)
+      const stats = await stat(path)
+      // File system timestamps might have lower precision (seconds), so we subtract 1000ms to avoid flakiness
+      expect(stats.atime.getTime()).toBeGreaterThanOrEqual(startTime - 1000)
+      expect(stats.mtime.getTime()).toBeGreaterThanOrEqual(startTime - 1000)
+    })
   })
 
   test('does not update if path is empty', async () => {
@@ -43,7 +57,6 @@ describe('Notifier', () => {
     await notifier.notify(fileName)
 
     expect(fetchSpy).not.toHaveBeenCalled()
-    expect(fs.appendFile).not.toHaveBeenCalled()
   })
 
   test('does not notify file when path is URL', async () => {
@@ -55,7 +68,6 @@ describe('Notifier', () => {
     await notifier.notify(fileName)
 
     expect(mockFetch).toHaveBeenCalled()
-    expect(fs.appendFile).not.toHaveBeenCalled()
   })
 
   test('prints error if response is not successful', async () => {
@@ -85,15 +97,19 @@ describe('Notifier', () => {
   })
 
   test('outputs error if file update fails', async () => {
-    const invalidPath = 'dir/file:theme.update'
-    vi.spyOn(fs, 'writeFile').mockRejectedValue(new Error('No such file or directory'))
-    notifier = new Notifier(invalidPath)
-    const fileName = 'announcement.liquid'
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Create a directory where the file should be, to cause writeFile to fail
+      const path = joinPath(tmpDir, 'theme.update')
+      await mkdir(path)
 
-    await notifier.notify(fileName)
+      notifier = new Notifier(path)
+      const fileName = 'announcement.liquid'
 
-    expect(outputWarn).toHaveBeenCalledWith(
-      `Failed to notify filechange listener at ${invalidPath}: No such file or directory`,
-    )
+      await notifier.notify(fileName)
+
+      expect(outputWarn).toHaveBeenCalledWith(
+        expect.stringContaining(`Failed to notify filechange listener at ${path}`),
+      )
+    })
   })
 })
