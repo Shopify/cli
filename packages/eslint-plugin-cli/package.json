@@ -17,21 +17,21 @@
   "author": "Shopify Inc.",
   "dependencies": {
     "@shopify/eslint-plugin": "50.0.0",
-    "@typescript-eslint/eslint-plugin": "8.56.1",
-    "@typescript-eslint/parser": "8.56.1",
-    "eslint-config-prettier": "10.1.5",
+    "@typescript-eslint/eslint-plugin": "8.59.1",
+    "@typescript-eslint/parser": "8.59.1",
+    "eslint-config-prettier": "10.1.8",
     "eslint-plugin-no-catch-all": "1.1.0",
-    "eslint-plugin-prettier": "5.5.1",
+    "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "5.2.0",
-    "eslint-plugin-tsdoc": "0.4.0",
-    "eslint-plugin-unused-imports": "4.1.4",
-    "@vitest/eslint-plugin": "1.1.44",
-    "globals": "16.2.0",
+    "eslint-plugin-tsdoc": "0.5.2",
+    "eslint-plugin-unused-imports": "4.4.1",
+    "@vitest/eslint-plugin": "1.6.16",
+    "globals": "16.5.0",
     "execa": "7.2.0"
   },
   "devDependencies": {
-    "prettier": "3.8.1"
+    "prettier": "3.8.3"
   },
   "peerDependencies": {
     "eslint": "^9.0.0"
