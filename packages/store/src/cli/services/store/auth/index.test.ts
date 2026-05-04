@@ -1,10 +1,12 @@
 import {authenticateStoreWithApp} from './index.js'
 import {setStoredStoreAppSession} from './session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
+import {recordStoreCommandShopIdFromAdminApi} from '../metrics.js'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./session-store.js')
+vi.mock('../metrics.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
@@ -55,6 +57,7 @@ describe('store auth service', () => {
     )
     expect(presenter.success).toHaveBeenCalledWith(result)
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
+    expect(recordStoreCommandShopIdFromAdminApi).toHaveBeenCalledWith({store: 'shop.myshopify.com', accessToken: 'token'})
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
     expect(storedSession.store).toBe('shop.myshopify.com')
