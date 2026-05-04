@@ -12,6 +12,7 @@ import {
   addResolutionOrOverride,
   writePackageJSON,
   getPackageManager,
+  getPackageManagerForProjectRoot,
   packageManagerBinaryCommandForDirectory,
   installNPMDependenciesRecursively,
   addNPMDependencies,
@@ -784,6 +785,23 @@ describe('addResolutionOrOverride', () => {
     })
   })
 
+  test('when package.json has no lockfile then npm overrides are used by default', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      await writeFile(packageJsonPath, JSON.stringify({}))
+
+      // When
+      await addResolutionOrOverride(tmpDir, reactType)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+      expect(packageJsonContent.overrides).toEqual(reactType)
+      expect(packageJsonContent.resolutions).toBeUndefined()
+    })
+  })
+
   test('when package.json with existing resolution type and yarn manager then dependency version is overwritten', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -947,6 +965,43 @@ describe('getPackageManager', () => {
       const packageManager = await getPackageManager(tmpDir)
       // pnpm is used locally and in CI
       expect(packageManager).toEqual('pnpm')
+    })
+  })
+})
+
+describe('getPackageManagerForProjectRoot', () => {
+  test('detects the package manager from root markers without consulting the user agent', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+      vi.stubEnv('npm_config_user_agent', 'pnpm/9.0.0')
+
+      try {
+        await expect(getPackageManagerForProjectRoot(tmpDir)).resolves.toBe('yarn')
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test('defaults to npm when the project root has a package.json but no lockfile markers', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      vi.stubEnv('npm_config_user_agent', 'pnpm/9.0.0')
+
+      try {
+        await expect(getPackageManagerForProjectRoot(tmpDir)).resolves.toBe('npm')
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test('throws when the provided root does not contain a package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await expect(getPackageManagerForProjectRoot(tmpDir)).rejects.toThrow(
+        new PackageJsonNotFoundError(normalizePath(tmpDir)),
+      )
     })
   })
 })

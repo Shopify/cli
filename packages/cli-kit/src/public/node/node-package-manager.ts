@@ -53,7 +53,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
  */
 export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'homebrew', 'unknown'] as const
 export type PackageManager = (typeof packageManager)[number]
-type ProjectPackageManager = Extract<PackageManager, 'yarn' | 'npm' | 'pnpm' | 'bun'>
+export type ProjectPackageManager = Extract<PackageManager, 'yarn' | 'npm' | 'pnpm' | 'bun'>
 
 /**
  * Returns an abort error that's thrown when the package manager can't be determined.
@@ -141,6 +141,17 @@ function packageManagerBinaryCommand(
   }
 }
 
+function getProjectPackageManagerAtDirectory(directory: string): ProjectPackageManager | undefined {
+  if (fileExistsSync(joinPath(directory, yarnLockfile))) return 'yarn'
+  if (fileExistsSync(joinPath(directory, pnpmLockfile)) || fileExistsSync(joinPath(directory, pnpmWorkspaceFile))) {
+    return 'pnpm'
+  }
+  if (hasBunLockfileSync(directory)) return 'bun'
+  if (fileExistsSync(joinPath(directory, npmLockfile))) return 'npm'
+
+  return undefined
+}
+
 /**
  * Returns the dependency manager used in a directory.
  * Walks upward from `fromDirectory` so workspace packages (e.g. `extensions/my-fn/package.json`)
@@ -154,12 +165,9 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   let current = fromDirectory
   outputDebug(outputContent`Looking for a lockfile in ${outputToken.path(current)}...`)
   while (true) {
-    if (fileExistsSync(joinPath(current, yarnLockfile))) return 'yarn'
-    if (fileExistsSync(joinPath(current, pnpmLockfile)) || fileExistsSync(joinPath(current, pnpmWorkspaceFile))) {
-      return 'pnpm'
-    }
-    if (hasBunLockfileSync(current)) return 'bun'
-    if (fileExistsSync(joinPath(current, npmLockfile))) return 'npm'
+    const detectedPackageManager = getProjectPackageManagerAtDirectory(current)
+    if (detectedPackageManager) return detectedPackageManager
+
     const parent = dirname(current)
     if (parent === current) break
     current = parent
@@ -169,6 +177,25 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   if (pm !== 'unknown') return pm
 
   return 'npm'
+}
+
+/**
+ * Resolves the package manager for a directory already known to be the project root.
+ *
+ * Use this when the caller already knows the root directory and wants to inspect that root
+ * directly rather than walking upward from a child directory.
+ *
+ * @param rootDirectory - The known project root directory.
+ * @returns The package manager detected from root markers, defaulting to `npm` when no marker exists.
+ * @throws PackageJsonNotFoundError if the provided directory does not contain a package.json.
+ */
+export async function getPackageManagerForProjectRoot(rootDirectory: string): Promise<ProjectPackageManager> {
+  const packageJsonPath = joinPath(rootDirectory, 'package.json')
+  if (!(await fileExists(packageJsonPath))) {
+    throw new PackageJsonNotFoundError(rootDirectory)
+  }
+
+  return getProjectPackageManagerAtDirectory(rootDirectory) ?? 'npm'
 }
 
 /**
@@ -729,7 +756,7 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
 }
 
 export async function addResolutionOrOverride(directory: string, dependencies: Record<string, string>): Promise<void> {
-  const packageManager = await getPackageManager(directory)
+  const packageManager = await getPackageManagerForProjectRoot(directory)
   const packageJsonPath = joinPath(directory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
 
