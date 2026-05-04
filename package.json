@@ -71,7 +71,7 @@
     "knip": "5.59.1",
     "liquidjs": "10.25.0",
     "node-fetch": "^3.3.2",
-    "nx": "22.7.0",
+    "nx": "22.7.1",
     "oclif": "4.23.0",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
