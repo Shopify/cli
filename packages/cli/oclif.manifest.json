@@ -7979,6 +7979,71 @@
       "strict": true,
       "summary": "Renames an existing theme."
     },
+    "theme:sandbox-preview": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Starts an authless, one-shot sandbox preview using \"mock.shop\" (https://mock.shop/).\n\nThis prototype writes a local launcher page and opens it in your browser. The launcher then POSTs the override payload directly to the target storefront to render an initial preview.\n\n- No store authentication is required\n- No preview is persisted\n- Navigation after the first page load will not preserve overrides",
+      "descriptionWithMarkdown": "Starts an authless, one-shot sandbox preview using [mock.shop](https://mock.shop/).\n\nThis prototype writes a local launcher page and opens it in your browser. The launcher then POSTs the override payload directly to the target storefront to render an initial preview.\n\n- No store authentication is required\n- No preview is persisted\n- Navigation after the first page load will not preserve overrides",
+      "enableJsonFlag": false,
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-open": {
+          "allowNo": false,
+          "description": "Do not automatically launch the local storefront preview launcher in your default web browser.",
+          "env": "SHOPIFY_FLAG_NO_OPEN",
+          "name": "no-open",
+          "type": "boolean"
+        },
+        "overrides": {
+          "description": "Path to a JSON overrides file.",
+          "env": "SHOPIFY_FLAG_OVERRIDES",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "overrides",
+          "required": true,
+          "type": "option"
+        },
+        "storefront-url": {
+          "description": "Override the storefront preview target. Useful for local SFR testing.",
+          "env": "SHOPIFY_FLAG_STOREFRONT_URL",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "storefront-url",
+          "required": false,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:sandbox-preview",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Opens a one-shot authless mock.shop sandbox preview from a JSON overrides file.",
+      "usage": [
+        "theme sandbox-preview --overrides path/to/overrides.json"
+      ]
+    },
     "theme:serve": {
       "aliases": [
       ],

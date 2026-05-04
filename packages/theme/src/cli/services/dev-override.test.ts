@@ -2,6 +2,7 @@ import {devWithOverrideFile} from './dev-override.js'
 import {openURLSafely} from './dev.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {createThemePreview, updateThemePreview} from '../utilities/theme-previews/preview.js'
+import {startMockShopPreviewSession} from '../utilities/theme-previews/mock-shop.js'
 import {describe, expect, test, vi} from 'vitest'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {collectedLogs, clearCollectedLogs} from '@shopify/cli-kit/node/output'
@@ -9,6 +10,7 @@ import {fileExistsSync, readFile} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utilities/theme-environment/dev-server-session.js')
 vi.mock('../utilities/theme-previews/preview.js')
+vi.mock('../utilities/theme-previews/mock-shop.js')
 vi.mock('./dev.js', () => ({openURLSafely: vi.fn()}))
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/fs')
@@ -22,6 +24,9 @@ const mockSession = {
 }
 const expectedPreviewUrl = 'https://abc123.shopifypreview.com'
 const expectedPreviewId = 'abc123'
+const mockShopLauncherUrl = 'file:///tmp/mock-shop-preview.html'
+const mockShopTargetUrl = 'https://demostore.mock.shop/?theme_preview'
+const customMockShopTargetUrl = 'http://localhost:3000/?theme_preview'
 
 describe('devWithOverrideFile', () => {
   test('throws when override file does not exist', async () => {
@@ -207,5 +212,87 @@ describe('devWithOverrideFile', () => {
 
     // Then
     expect(renderSuccess).toHaveBeenCalled()
+  })
+
+  test('starts a one-shot mock.shop preview when mockShop is enabled', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(JSON.stringify({templates: {}})))
+    vi.mocked(startMockShopPreviewSession).mockResolvedValue({
+      launcherUrl: mockShopLauncherUrl,
+      targetUrl: mockShopTargetUrl,
+      completion: Promise.resolve(),
+    })
+
+    await devWithOverrideFile({adminSession, overrideJson: '/overrides.json', open: false, mockShop: true})
+
+    expect(startMockShopPreviewSession).toHaveBeenCalledWith(JSON.stringify({templates: {}}), {
+      storefrontUrl: undefined,
+    })
+    expect(fetchDevServerSession).not.toHaveBeenCalled()
+    expect(createThemePreview).not.toHaveBeenCalled()
+    expect(updateThemePreview).not.toHaveBeenCalled()
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: [
+          {
+            list: {
+              title: 'Mock.shop preview is ready',
+              items: [{link: {url: mockShopLauncherUrl}}, `Target: ${mockShopTargetUrl}`, 'This prototype opens an initial preview only.'],
+            },
+          },
+        ],
+      }),
+    )
+  })
+
+  test('opens the launcher URL for a mock.shop preview', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(JSON.stringify({templates: {}})))
+    vi.mocked(startMockShopPreviewSession).mockResolvedValue({
+      launcherUrl: mockShopLauncherUrl,
+      targetUrl: mockShopTargetUrl,
+      completion: Promise.resolve(),
+    })
+
+    await devWithOverrideFile({adminSession, overrideJson: '/overrides.json', open: true, mockShop: true})
+
+    expect(openURLSafely).toHaveBeenCalledWith(mockShopLauncherUrl, 'mock.shop preview')
+  })
+
+  test('passes through a custom storefront URL in mock.shop mode', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(JSON.stringify({templates: {}})))
+    vi.mocked(startMockShopPreviewSession).mockResolvedValue({
+      launcherUrl: mockShopLauncherUrl,
+      targetUrl: customMockShopTargetUrl,
+      completion: Promise.resolve(),
+    })
+
+    await devWithOverrideFile({
+      adminSession,
+      overrideJson: '/overrides.json',
+      open: false,
+      mockShop: true,
+      mockShopStorefrontUrl: 'http://localhost:3000',
+    })
+
+    expect(startMockShopPreviewSession).toHaveBeenCalledWith(JSON.stringify({templates: {}}), {
+      storefrontUrl: 'http://localhost:3000',
+    })
+  })
+
+  test('rejects preview IDs in mock.shop mode', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(JSON.stringify({templates: {}})))
+
+    await expect(
+      devWithOverrideFile({
+        adminSession,
+        overrideJson: '/overrides.json',
+        open: false,
+        mockShop: true,
+        previewIdentifier: 'abc123',
+      }),
+    ).rejects.toThrow('The --preview-id flag is not supported with --mock-shop.')
   })
 })
