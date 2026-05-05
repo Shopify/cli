@@ -23,6 +23,43 @@ describe('FatalError', async () => {
     `)
   })
 
+  test('auto-detects URLs in a plain-string error message and renders them as footnotes', async () => {
+    const error = new AbortError(
+      'See specification requirements: https://shopify.dev/docs/apps/build/sales-channels/channel-config-extension#specification-properties',
+    )
+
+    const {lastFrame} = render(<FatalError error={error} />)
+    const frame = unstyled(lastFrame()!)
+
+    expect(frame).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  See specification requirements: [1]                                         │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1]
+      https://shopify.dev/docs/apps/build/sales-channels/channel-config-extension#specification-properties
+      "
+    `)
+  })
+
+  test('does not linkify user-supplied invalid URLs or placeholder URLs in error/tryMessage', async () => {
+    const error = new AbortError(`Invalid tunnel URL: https://asda`, `Valid format: "https://my-tunnel-url:port"`)
+
+    const {lastFrame} = render(<FatalError error={error} />)
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Invalid tunnel URL: https://asda                                            │
+      │                                                                              │
+      │  Valid format: "https://my-tunnel-url:port"                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
   test('renders correctly with a formatted message', async () => {
     const error = new AbortError([
       'There has been an error creating your deployment:',
