@@ -1,4 +1,4 @@
-<img src="https://github.com/Shopify/shopify-cli/raw/main/assets/logo.png" alt="Shopify logo" width="150">
+<img src="https://github.com/Shopify/cli/raw/main/assets/logo.png" alt="Shopify logo" width="150">
 
 # Contributors documentation
 
