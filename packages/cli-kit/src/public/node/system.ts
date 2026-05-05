@@ -206,6 +206,11 @@ export async function execCommand(command: string, options?: ExecOptions): Promi
     env.FORCE_COLOR = '1'
   }
   const executionCwd = options?.cwd ?? cwd()
+  const [cmd] = parseCommand(command)
+  if (cmd) {
+    // Security: Prevent execution of binaries from the current working directory to avoid PATH hijacking.
+    checkCommandSafety(cmd, {cwd: executionCwd})
+  }
   try {
     await execaCommand(command, {
       env,
@@ -321,6 +326,14 @@ function buildExec(
   return commandProcess
 }
 
+/**
+ * Check if the command is safe to run.
+ * It prevents the execution of binaries found in the current working directory,
+ * which is a security risk (PATH hijacking).
+ *
+ * @param command - Command to check.
+ * @param _options - Options containing the current working directory.
+ */
 function checkCommandSafety(command: string, _options: {cwd: string}): void {
   const pathIncludingLocal = `${_options.cwd}${delimiter}${process.env.PATH}`
   const commandPath = which.sync(command, {
