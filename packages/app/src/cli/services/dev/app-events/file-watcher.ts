@@ -255,9 +255,44 @@ export class FileWatcher {
       const isUnknownExtension = affectedHandles === undefined || affectedHandles.size === 0
 
       if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {
-        // Ignore an event if it's not part of an existing extension
-        // Except if it is a toml file (either app config or extension config)
-        outputDebug(`🌀: File ${path} is not watched by any extension`, this.options.stdout)
+        // New files won't be in the watched-files snapshot yet, so fall back to
+        // matching the path against configured asset directories first, then the
+        // extension's root directory. This correctly handles extensions that share
+        // asset directories or reference paths outside their own folder.
+        const owningExtensions = this.app.realExtensions.filter((ext) => {
+          // Check configured asset paths from the extension's targeting config
+          const extensionPoints = (ext.configuration as {extension_points?: {assets?: string}[]})?.extension_points
+          if (extensionPoints) {
+            const matchesAssetDir = extensionPoints.some((ep) => {
+              if (!ep.assets) return false
+              const assetDir = normalizePath(joinPath(ext.directory, ep.assets))
+              return normalizedPath === assetDir || normalizedPath.startsWith(`${assetDir}/`)
+            })
+            if (matchesAssetDir) return true
+          }
+          // Fall back to directory containment
+          const extDir = normalizePath(ext.directory)
+          return normalizedPath === extDir || normalizedPath.startsWith(`${extDir}/`)
+        })
+        if (owningExtensions.length === 0) {
+          outputDebug(`🌀: File ${path} is not watched by any extension`, this.options.stdout)
+          return
+        }
+        // Register the file so future events use the fast affectedHandles lookup
+        const handlesSet = this.extensionWatchedFiles.get(normalizedPath) ?? new Set<string>()
+        for (const owningExtension of owningExtensions) {
+          handlesSet.add(owningExtension.handle)
+          this.handleEventForExtension(
+            event,
+            path,
+            normalizePath(owningExtension.directory),
+            startTime,
+            false,
+            owningExtension.handle,
+          )
+        }
+        this.extensionWatchedFiles.set(normalizedPath, handlesSet)
+        this.debouncedEmit()
         return
       }
 

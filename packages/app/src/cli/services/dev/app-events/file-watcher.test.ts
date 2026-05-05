@@ -844,4 +844,440 @@ describe('file-watcher events', () => {
       expect(watchedPaths[1]).toEqual(watchedPaths[0])
     })
   })
+
+  describe('new file directory containment fallback', () => {
+    test('new file under an existing extension dir triggers file_created with the correct extensionHandle', async () => {
+      // Given: extension started with no files in assets/ — the new path is not in the snapshot
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'asset_ext',
+        directory: '/extensions/asset_ext',
+      })
+      const newFilePath = '/extensions/asset_ext/assets/dog.jpg'
+      // At start(), no files are known. After the new file is added, watchedFiles() reflects it
+      // (representing the live globSync result picking up the new file on disk).
+      let watchedFilesResult: string[] = []
+      vi.spyOn(ext, 'watchedFiles').mockImplementation(() => watchedFilesResult)
+
+      const testApp = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // Now simulate the new file being on disk and chokidar firing `add`
+      watchedFilesResult = [newFilePath]
+      await eventHandler('add', newFilePath, undefined)
+      await sleep(0.15)
+
+      // Then
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+          expect(actualEvents).toBeDefined()
+          expect(actualEvents).toHaveLength(1)
+          expect(actualEvents[0].type).toBe('file_created')
+          expect(actualEvents[0].path).toBe(normalizePath(newFilePath))
+          expect(actualEvents[0].extensionHandle).toBe('asset_ext')
+          expect(actualEvents[0].extensionPath).toBe(normalizePath('/extensions/asset_ext'))
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+
+    test('new file outside any extension directory is still ignored', async () => {
+      // Given
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'asset_ext',
+        directory: '/extensions/asset_ext',
+      })
+      vi.spyOn(ext, 'watchedFiles').mockReturnValue([])
+
+      const testApp = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // When: a new file is added outside any extension directory
+      await eventHandler('add', '/some/unrelated/dir/foo.txt', undefined)
+      await sleep(0.15)
+
+      // Then: no event should be emitted
+      const hasNonEmptyCall = onChange.mock.calls.some((call) => call[0].length > 0)
+      expect(hasNonEmptyCall).toBe(false)
+    })
+
+    test('files under an extension dir but excluded by watchedFiles patterns remain filtered', async () => {
+      // Given: the extension's live watchedFiles() never includes the new path
+      // (representing a path excluded by devSessionWatchConfig.ignore or .gitignore).
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'asset_ext',
+        directory: '/extensions/asset_ext',
+      })
+      vi.spyOn(ext, 'watchedFiles').mockReturnValue([])
+
+      const testApp = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // When: a new file under the extension dir but not in watchedFiles() is added
+      await eventHandler('add', '/extensions/asset_ext/dist/built.js', undefined)
+      await sleep(0.15)
+
+      // Then: shouldIgnoreEvent must still drop it
+      const hasNonEmptyCall = onChange.mock.calls.some((call) => call[0].length > 0)
+      expect(hasNonEmptyCall).toBe(false)
+    })
+
+    test('new file in a configured assets directory matches the extension via config', async () => {
+      // Given: extension has an assets config pointing to ./assets
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'configured_assets_ext',
+        directory: '/extensions/configured_assets_ext',
+        configuration: {
+          name: 'configured_assets_ext',
+          type: 'ui_extension',
+          handle: 'configured_assets_ext',
+          metafields: [],
+          extension_points: [
+            {
+              target: 'admin.app.home.render',
+              module: './src/Home.jsx',
+              assets: './assets',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Home.jsx', filepath: '/configured_assets_ext.js'},
+                },
+              },
+            },
+          ],
+        },
+      })
+      const newFilePath = '/extensions/configured_assets_ext/assets/cat.png'
+      // watchedFiles returns the new file once it exists on disk (simulates glob picking it up)
+      let watchedFilesResult: string[] = []
+      vi.spyOn(ext, 'watchedFiles').mockImplementation(() => watchedFilesResult)
+
+      const testApp = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // When: a new file is added in the configured assets directory
+      watchedFilesResult = [newFilePath]
+      await eventHandler('add', newFilePath, undefined)
+      await sleep(0.15)
+
+      // Then
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+          expect(actualEvents).toBeDefined()
+          expect(actualEvents).toHaveLength(1)
+          expect(actualEvents[0].type).toBe('file_created')
+          expect(actualEvents[0].path).toBe(normalizePath(newFilePath))
+          expect(actualEvents[0].extensionHandle).toBe('configured_assets_ext')
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+
+    test('shared assets directory triggers events for all extensions that reference it', async () => {
+      // Given: two extensions share the same assets directory (../shared-assets)
+      const newFilePath = '/extensions/shared-assets/logo.png'
+      const ext1 = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'ext_one',
+        directory: '/extensions/ext_one',
+        configuration: {
+          name: 'ext_one',
+          type: 'ui_extension',
+          handle: 'ext_one',
+          metafields: [],
+          extension_points: [
+            {
+              target: 'admin.app.home.render',
+              module: './src/Home.jsx',
+              assets: '../shared-assets',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Home.jsx', filepath: '/ext_one.js'},
+                },
+              },
+            },
+          ],
+        },
+      })
+      const ext2 = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'ext_two',
+        directory: '/extensions/ext_two',
+        configuration: {
+          name: 'ext_two',
+          type: 'ui_extension',
+          handle: 'ext_two',
+          metafields: [],
+          extension_points: [
+            {
+              target: 'admin.product.render',
+              module: './src/Product.jsx',
+              assets: '../shared-assets',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Product.jsx', filepath: '/ext_two.js'},
+                },
+              },
+            },
+          ],
+        },
+      })
+      // watchedFiles returns the shared file once it's on disk
+      let ext1WatchedFiles: string[] = []
+      let ext2WatchedFiles: string[] = []
+      vi.spyOn(ext1, 'watchedFiles').mockImplementation(() => ext1WatchedFiles)
+      vi.spyOn(ext2, 'watchedFiles').mockImplementation(() => ext2WatchedFiles)
+
+      const testApp = testAppLinked({
+        allExtensions: [ext1, ext2],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // When: a new file is added in the shared assets directory
+      ext1WatchedFiles = [newFilePath]
+      ext2WatchedFiles = [newFilePath]
+      await eventHandler('add', newFilePath, undefined)
+      await sleep(0.15)
+
+      // Then: both extensions should be notified
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+          expect(actualEvents).toBeDefined()
+          expect(actualEvents).toHaveLength(2)
+          const handles = actualEvents.map((ev: WatcherEvent) => ev.extensionHandle).sort()
+          expect(handles).toEqual(['ext_one', 'ext_two'])
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+
+    test('subsequent change event for a previously-added file uses the fast path without losing existing entries', async () => {
+      // Given: extension with an existing watched file and a new asset file
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'fast_path_ext',
+        directory: '/extensions/fast_path_ext',
+      })
+      const existingFile = '/extensions/fast_path_ext/src/index.js'
+      const filePath = '/extensions/fast_path_ext/assets/image.png'
+      // Start with one existing watched file; the new file appears later
+      let watchedFilesResult: string[] = [existingFile]
+      vi.spyOn(ext, 'watchedFiles').mockImplementation(() => watchedFilesResult)
+
+      const testApp = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // First: trigger an 'add' event so the new file gets registered via the fallback
+      watchedFilesResult = [existingFile, filePath]
+      await eventHandler('add', filePath, undefined)
+      await sleep(0.15)
+
+      await vi.waitFor(
+        () => {
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+          expect(actualEvents).toBeDefined()
+          expect(actualEvents[0].type).toBe('file_created')
+        },
+        {timeout: 1000, interval: 50},
+      )
+
+      // Reset the onChange mock to isolate subsequent events
+      onChange.mockClear()
+
+      // When: a 'change' event fires for the NEW file (should use fast path)
+      await eventHandler('change', filePath, undefined)
+      await sleep(0.15)
+
+      // Then: it should emit correctly via the fast affectedHandles path
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+          expect(actualEvents).toBeDefined()
+          expect(actualEvents).toHaveLength(1)
+          expect(actualEvents[0].type).toBe('file_updated')
+          expect(actualEvents[0].path).toBe(normalizePath(filePath))
+          expect(actualEvents[0].extensionHandle).toBe('fast_path_ext')
+        },
+        {timeout: 1000, interval: 50},
+      )
+
+      // Reset again to test the existing file still works
+      onChange.mockClear()
+
+      // When: a 'change' event fires for the EXISTING file (was in the map from start)
+      await eventHandler('change', existingFile, undefined)
+      await sleep(0.15)
+
+      // Then: the existing file should still emit correctly (not clobbered)
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+          expect(actualEvents).toBeDefined()
+          expect(actualEvents).toHaveLength(1)
+          expect(actualEvents[0].type).toBe('file_updated')
+          expect(actualEvents[0].path).toBe(normalizePath(existingFile))
+          expect(actualEvents[0].extensionHandle).toBe('fast_path_ext')
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+  })
 })
