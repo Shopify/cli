@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.94.1
+
+### Patch Changes
+
+- e94c94e: Fix `shopify app build` intermittently failing with "Source and destination must not be the same" on UI extensions when the local esbuild output directory and the bundle output directory resolve to the same path but differ as strings (e.g. due to `.` segments, trailing slashes, or path joining quirks). The same-path guard now normalizes both paths via `resolvePath` before comparison.
+- 8a9c5a1: Display a friendly error message instead of a stack trace when running `shopify app config link --client-id=<id>` against a Dev Dashboard app and the client ID does not exist.
+- 6cb484f: Hide the deprecated `remix` template from `shopify app init --template` help text and validation messages. The React Router template has replaced Remix as the supported choice. Passing `--template remix` continues to work for backwards compatibility.
+- c70e536: The CLI-generated `shopify.d.ts` now types the `shopify` binding as `Api & ShopifyGlobal` (intersection) for UI extension targets whose `.d.ts` re-exports a `ShopifyGlobal` type. Existing consumers who access the target API via `shopify.*` are unaffected; new host-level APIs like `shopify.addEventListener` now type-check automatically for opt-in targets (e.g. POS background extensions). Targets that do not re-export `ShopifyGlobal` emit the same output as before.
+- d5028b5: Fix unhelpful error when extension locale file has invalid UTF-8
+  - @shopify/cli-kit@3.94.1
+  - @shopify/theme@3.94.1
+  - @shopify/plugin-cloudflare@3.94.1
+
 ## 3.94.0
 
 ### Minor Changes
