@@ -10,7 +10,7 @@ import {
   fileExists,
   matchGlob,
 } from './fs.js'
-import {joinPath, dirname, relativePath} from './path.js'
+import {joinPath, dirname} from './path.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import {Liquid} from 'liquidjs'
 
@@ -38,7 +38,8 @@ export function renderLiquidTemplate(templateContent: string, data: object): Pro
  */
 export async function recursiveLiquidTemplateCopy(from: string, to: string, data: object): Promise<void> {
   outputDebug(outputContent`Copying template from directory ${outputToken.path(from)} to ${outputToken.path(to)}`)
-  const templateFiles: string[] = await glob(joinPath(from, '**/*'), {dot: true})
+  // Optimization: Using cwd in glob is faster and avoids manual string replacement for relative paths.
+  const templateFilesRelative: string[] = await glob('**/*', {cwd: from, dot: true})
 
   const bypassPaths = joinPath(from, '.cli-liquid-bypass')
   let bypassPatterns: string[] = []
@@ -46,18 +47,19 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
     bypassPatterns = (await readFile(bypassPaths)).split('\n').filter((line) => line.trim().length > 0)
   }
 
-  const sortedTemplateFiles = templateFiles
+  const sortedTemplateFilesRelative = templateFilesRelative
     .map((path) => path.split('/'))
     .sort((lhs, rhs) => (lhs.length < rhs.length ? 1 : -1))
     .map((components) => components.join('/'))
+
   await Promise.all(
-    sortedTemplateFiles.map(async (templateItemPath) => {
-      const outputPath = await renderLiquidTemplate(joinPath(to, relativePath(from, templateItemPath)), data)
+    sortedTemplateFilesRelative.map(async (relativePath) => {
+      const templateItemPath = joinPath(from, relativePath)
+      const outputPath = await renderLiquidTemplate(joinPath(to, relativePath), data)
       const bypass = bypassPatterns.some((pattern) => {
-        const path = relativePath(from, templateItemPath)
         const cleanPattern = pattern.replace(/^\.\//, '')
 
-        return matchGlob(path, cleanPattern) || path.startsWith(cleanPattern)
+        return matchGlob(relativePath, cleanPattern) || relativePath.startsWith(cleanPattern)
       })
 
       if (await isDirectory(templateItemPath)) {
