@@ -5862,6 +5862,69 @@
       "strict": true,
       "summary": "Authenticate an app against a store for store commands."
     },
+    "store:create:dev": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Creates a new app development store in your organization.",
+      "descriptionWithMarkdown": "Creates a new app development store in your organization.",
+      "enableJsonFlag": false,
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "Name for the new development store.",
+          "env": "SHOPIFY_FLAG_STORE_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "required": true,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "organization": {
+          "description": "The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.",
+          "env": "SHOPIFY_FLAG_ORGANIZATION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "organization",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:create:dev",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Create a new development store."
+    },
     "store:execute": {
       "aliases": [
       ],

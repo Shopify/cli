@@ -645,12 +645,18 @@ importers:
 
   packages/store:
     dependencies:
+      '@graphql-typed-document-node/core':
+        specifier: 3.2.0
+        version: 3.2.0(graphql@16.10.0)
       '@oclif/core':
         specifier: 4.5.3
         version: 4.5.3
       '@shopify/cli-kit':
         specifier: 3.94.0
         version: link:../cli-kit
+      '@shopify/organizations':
+        specifier: 3.94.0
+        version: link:../organizations
     devDependencies:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
