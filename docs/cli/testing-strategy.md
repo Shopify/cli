@@ -26,7 +26,7 @@ test("loads the app", async () => {
   const got = await load()
 
   // Then
-  expect(app.name).toEqual("my-app")
+  expect(got.name).toEqual("my-app")
 })
 ```
 
@@ -59,7 +59,7 @@ test("writes", async () => {
 
 > :bulb: **Given/When/Then**
 >
-> We recommend grouping the test steps following [Gherkin](https://cucumber.io/docs/gherkin/reference/)'s blocks, given, when, and using code comments. That makes the code test easier to parse visually.
+> We recommend grouping the test steps following [Gherkin](https://cucumber.io/docs/gherkin/reference/)'s blocks — given, when, and then — using code comments. That makes the test code easier to parse visually.
 
 > :exclamation: **Tests and promises**
 >
@@ -77,8 +77,8 @@ test("writes", async () => {
 
 End-to-end tests live under `packages/e2e` and are implemented using [Playwright](https://playwright.dev/). They test full user journeys by invoking the CLI and verifying outputs. Run them with `pnpm test:e2e`.
 
-## Github Actions
-Before being able to marge a PR, it must pass all CI checks executed in Github Actions.
+## GitHub Actions
+Before being able to merge a PR, it must pass all CI checks executed in GitHub Actions.
 
 The jobs will detect what packages have changed in that PR and execute the tests only for those.
 If you want to execute all the tests for all the packages you can manually schedule a workflow through `Actions -> shopify-cli -> Run workflow`
