@@ -12,25 +12,6 @@ import {
 } from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
-export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
-  if (organizations.length === 1) {
-    return organizations[0]!
-  }
-
-  // Add ID suffix to disambiguate when duplicate names exist
-  const uniqueNames = new Set(organizations.map((org) => org.businessName))
-  const hasDuplicates = uniqueNames.size < organizations.length
-  const orgList = organizations.map((org) => ({
-    label: hasDuplicates ? `${org.businessName} (${org.id})` : org.businessName,
-    value: org.id,
-  }))
-  const id = await renderAutocompletePrompt({
-    message: `Which organization is this work for?`,
-    choices: orgList,
-  })
-  return organizations.find((org) => org.id === id)!
-}
-
 export async function selectAppPrompt(
   onSearchForAppsByName: (term: string) => Promise<{apps: MinimalOrganizationApp[]; hasMorePages: boolean}>,
   apps: MinimalOrganizationApp[],

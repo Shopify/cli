@@ -3,7 +3,6 @@ import {
   createAsNewAppPrompt,
   reloadStoreListPrompt,
   selectAppPrompt,
-  selectOrganizationPrompt,
   selectStorePrompt,
   updateURLsPrompt,
 } from './dev.js'
@@ -66,85 +65,6 @@ const STORE3: OrganizationStore = {
 
 beforeEach(() => {
   vi.mocked(getTomls).mockResolvedValue({})
-})
-
-describe('selectOrganization', () => {
-  test('request org selection if passing more than 1 org', async () => {
-    // Given
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
-
-    // When
-    const got = await selectOrganizationPrompt([ORG1, ORG2])
-
-    // Then
-    expect(got).toEqual(ORG1)
-    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
-      message: 'Which organization is this work for?',
-      choices: [
-        {label: 'org1', value: '1'},
-        {label: 'org2', value: '2'},
-      ],
-    })
-  })
-
-  test('returns directly if passing only 1 org', async () => {
-    // Given
-    const orgs = [ORG2]
-
-    // When
-    const got = await selectOrganizationPrompt(orgs)
-
-    // Then
-    expect(got).toEqual(ORG2)
-    expect(renderAutocompletePrompt).not.toBeCalled()
-  })
-
-  // Intentional: when ANY duplicates exist, ALL orgs get ID suffix for consistent formatting
-  test('appends ID to label when duplicate names exist', async () => {
-    // Given
-    const orgsWithDuplicates = [
-      {id: '1', businessName: 'My Org', source: OrganizationSource.BusinessPlatform},
-      {id: '2', businessName: 'My Org', source: OrganizationSource.BusinessPlatform},
-      {id: '3', businessName: 'Other Org', source: OrganizationSource.BusinessPlatform},
-    ]
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
-
-    // When
-    await selectOrganizationPrompt(orgsWithDuplicates)
-
-    // Then - note: Other Org also gets ID suffix for consistency
-    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
-      message: 'Which organization is this work for?',
-      choices: [
-        {label: 'My Org (1)', value: '1'},
-        {label: 'My Org (2)', value: '2'},
-        {label: 'Other Org (3)', value: '3'},
-      ],
-    })
-  })
-
-  test('appends ID to all labels when all names are identical', async () => {
-    // Given
-    const orgsAllSameName = [
-      {id: '1', businessName: 'Same Org', source: OrganizationSource.BusinessPlatform},
-      {id: '2', businessName: 'Same Org', source: OrganizationSource.BusinessPlatform},
-      {id: '3', businessName: 'Same Org', source: OrganizationSource.BusinessPlatform},
-    ]
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
-
-    // When
-    await selectOrganizationPrompt(orgsAllSameName)
-
-    // Then
-    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
-      message: 'Which organization is this work for?',
-      choices: [
-        {label: 'Same Org (1)', value: '1'},
-        {label: 'Same Org (2)', value: '2'},
-        {label: 'Same Org (3)', value: '3'},
-      ],
-    })
-  })
 })
 
 describe('selectApp', () => {

@@ -8,8 +8,6 @@
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "references": [
-    {"path": "../cli-kit"},
-    {"path": "../plugin-did-you-mean"},
-    {"path": "../store"}
+    {"path": "../cli-kit"}
   ]
 }
