@@ -1,5 +1,5 @@
 import {rmdir, glob, fileExistsSync, unlinkFile} from '@shopify/cli-kit/node/fs'
-import {lockfiles, lockfilesForPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {lockfiles, lockfilesByManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export default async function cleanup(webOutputDirectory: string, packageManager: PackageManager) {
@@ -23,7 +23,7 @@ export default async function cleanup(webOutputDirectory: string, packageManager
 
   const gitPathPromises = gitPaths.map((path) => rmdir(path, {force: true}))
 
-  const lockfilesToKeep = new Set(lockfilesForPackageManager(packageManager))
+  const lockfilesToKeep = new Set(lockfilesByManager[packageManager])
   const lockfilePromises = lockfiles
     .filter((lockfile) => !lockfilesToKeep.has(lockfile))
     .map((lockfile) => {
