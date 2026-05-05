@@ -166,6 +166,7 @@ You can run this command only in a directory that matches the [default Shopify t
 
     await dev({
       adminSession,
+      commandConfig: this.config,
       directory: flags.path,
       store: flags.store,
       password: flags.password,
