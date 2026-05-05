@@ -130,6 +130,109 @@ describe('install', () => {
       cwd: directory,
     })
   })
+
+  test('uses `install` when packages are provided for npm', async () => {
+    // Given
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager: 'npm',
+      packages: ['@shopify/hydrogen@2025.7.1'],
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith('npm', ['install', '@shopify/hydrogen@2025.7.1'], {
+      cwd: directory,
+    })
+  })
+
+  test('uses `add` when packages are provided for yarn', async () => {
+    // Given
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager: 'yarn',
+      packages: ['@shopify/hydrogen@2025.7.1'],
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', '@shopify/hydrogen@2025.7.1'], {
+      cwd: directory,
+    })
+  })
+
+  test('uses `add` when packages are provided for pnpm', async () => {
+    // Given
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager: 'pnpm',
+      packages: ['@shopify/hydrogen@2025.7.1'],
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', '@shopify/hydrogen@2025.7.1'], {
+      cwd: directory,
+    })
+  })
+
+  test('uses `add` when packages are provided for bun', async () => {
+    // Given
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager: 'bun',
+      packages: ['@shopify/hydrogen@2025.7.1'],
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith('bun', ['add', '@shopify/hydrogen@2025.7.1'], {
+      cwd: directory,
+    })
+  })
+
+  test('appends `args` after `packages` so flags follow the package specifiers', async () => {
+    // Given
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager: 'yarn',
+      packages: ['@shopify/hydrogen@2025.7.1'],
+      args: ['--exact'],
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', '@shopify/hydrogen@2025.7.1', '--exact'], {
+      cwd: directory,
+    })
+  })
+
+  test('uses `install` (unchanged) when no packages are provided, even for yarn', async () => {
+    // Given
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager: 'yarn',
+      args: ['--network-concurrency', '1'],
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith('yarn', ['install', '--network-concurrency', '1'], {
+      cwd: directory,
+    })
+  })
 })
 
 describe('getPackageName', () => {
