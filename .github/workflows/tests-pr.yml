@@ -87,7 +87,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Run knip
-        run: pnpm knip
+        run: node bin/run-knip-ci.js
 
   graphql-schema:
     if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
