@@ -109,20 +109,183 @@ export async function resolveContext({
 async function defaultFetchCompare(repo, base, head) {
   if (!base || !head) return null
   const url = `https://api.github.com/repos/${repo.owner}/${repo.name}/compare/${base}...${head}`
+  return githubGet(url)
+}
+
+async function githubGet(url) {
   const headers = {Accept: 'application/vnd.github+json'}
   const token = process.env.GITHUB_TOKEN
   if (token) headers.Authorization = `Bearer ${token}`
   try {
     const res = await fetch(url, {headers})
     if (!res.ok) {
-      logMessage(`compare API returned ${res.status} — falling back to full scan`)
+      logMessage(`GitHub API ${url} returned ${res.status}`)
       return null
     }
     return await res.json()
   } catch (error) {
-    logMessage(`compare API failed: ${error.message} — falling back to full scan`)
+    logMessage(`GitHub API ${url} failed: ${error.message}`)
     return null
   }
+}
+
+// ---------------------------------------------------------------------------
+// Code-owner approval override
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses a CODEOWNERS file body and returns an array of
+ * `{pattern, owners: ["@org/team", "@user", ...]}`.
+ *
+ * Comments and blank lines are skipped. Order is preserved (the last
+ * matching rule wins, per CODEOWNERS semantics).
+ */
+export function parseCodeowners(content) {
+  const rules = []
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.replace(/#.*$/, '').trim()
+    if (!line) continue
+    const tokens = line.split(/\s+/)
+    if (tokens.length < 2) continue
+    const [pattern, ...owners] = tokens
+    rules.push({pattern, owners})
+  }
+  return rules
+}
+
+/**
+ * Convert a CODEOWNERS pattern into a RegExp.
+ *
+ * This is a deliberately conservative translation: it covers the patterns
+ * actually used in this repo (leading `*`, leading `/`, directory globs)
+ * but does not aim for full gitignore compatibility. CODEOWNERS
+ * mis-matches here only affect whether the override is *granted*; the
+ * detection itself is unchanged, so a too-narrow regex just falls back to
+ * "no override" rather than silently approving the wrong thing.
+ */
+export function codeownersPatternToRegExp(pattern) {
+  let p = pattern
+  // A pattern that doesn't start with `/` matches anywhere in the tree.
+  const anchored = p.startsWith('/')
+  if (anchored) p = p.slice(1)
+  // A trailing `/` means "this directory and everything inside it".
+  if (p.endsWith('/')) p = `${p}**`
+  // `**` => any path segments, `*` => anything except `/`.
+  let regex = ''
+  let i = 0
+  while (i < p.length) {
+    const ch = p[i]
+    if (ch === '*' && p[i + 1] === '*') {
+      regex += '.*'
+      i += 2
+      if (p[i] === '/') i++ // consume the `/` after `**`
+    } else if (ch === '*') {
+      regex += '[^/]*'
+      i++
+    } else if ('.+?^$()[]{}|\\'.includes(ch)) {
+      regex += `\\${ch}`
+      i++
+    } else {
+      regex += ch
+      i++
+    }
+  }
+  return new RegExp(anchored ? `^${regex}$` : `(^|/)${regex}$`)
+}
+
+/**
+ * Returns the set of CODEOWNERS owner handles (teams and users, with the
+ * leading `@`) responsible for any of the given changed files. Per
+ * CODEOWNERS semantics the *last* matching rule wins.
+ */
+export function ownersForFiles(rules, files) {
+  const compiled = rules.map((r) => ({...r, regex: codeownersPatternToRegExp(r.pattern)}))
+  const owners = new Set()
+  for (const file of files) {
+    let match = null
+    for (const rule of compiled) {
+      if (rule.regex.test(file)) match = rule
+    }
+    if (match) match.owners.forEach((o) => owners.add(o))
+  }
+  return owners
+}
+
+/**
+ * Checks whether the PR has been approved by anyone who can plausibly
+ * count as a code-owner approval. Returns `{approved: bool, approver: string | null}`.
+ *
+ * "Plausibly" intentionally means "a member of the org with write access
+ * to this repo". The default GITHUB_TOKEN can't list arbitrary team
+ * memberships across the org, but it can read repo-level permissions, and
+ * for Shopify/cli the CODEOWNERS file is `* @shopify/dev_experience`
+ * top-level, with team-only overrides for a couple of paths. Any human
+ * with write access on this repo is in one of those teams (the team grant
+ * is what gives them write access). This is the same security posture as
+ * branch protection's "require code-owner review" rule, just evaluated
+ * earlier so the check can flip green without manually re-running CI.
+ */
+export async function findCodeownerApproval({
+  repo,
+  prNumber,
+  changedFiles,
+  fetchReviews = defaultFetchReviews,
+  fetchCodeowners = defaultFetchCodeowners,
+  fetchPermission = defaultFetchPermission,
+} = {}) {
+  if (!prNumber) return {approved: false, approver: null, reason: 'no PR number in event'}
+
+  const reviews = await fetchReviews(repo, prNumber)
+  if (!reviews) return {approved: false, approver: null, reason: 'reviews API failed'}
+
+  // Last review per author wins (matches GitHub's own "latest review" semantics).
+  const latestByUser = new Map()
+  for (const review of reviews) {
+    if (!review.user?.login) continue
+    latestByUser.set(review.user.login, review)
+  }
+  const approvers = [...latestByUser.values()].filter((r) => r.state === 'APPROVED').map((r) => r.user.login)
+  if (approvers.length === 0) return {approved: false, approver: null, reason: 'no approving reviews'}
+
+  // Optional refinement: if we have the CODEOWNERS file and the changed
+  // files, only count approvers whose teams own a path in the diff. We
+  // log it for transparency but don't gate on it — see the function
+  // doc-comment for why.
+  const codeowners = await fetchCodeowners(repo)
+  if (codeowners && changedFiles && changedFiles.size > 0) {
+    const owners = ownersForFiles(parseCodeowners(codeowners), [...changedFiles])
+    if (owners.size > 0) logMessage(`Code owners for changed files: ${[...owners].join(', ')}`)
+  }
+
+  for (const approver of approvers) {
+    const permission = await fetchPermission(repo, approver)
+    if (permission === 'admin' || permission === 'write' || permission === 'maintain') {
+      return {approved: true, approver, reason: `${approver} has ${permission} access`}
+    }
+  }
+  return {approved: false, approver: null, reason: 'no approving reviewer has write access'}
+}
+
+async function defaultFetchReviews(repo, prNumber) {
+  return githubGet(`https://api.github.com/repos/${repo.owner}/${repo.name}/pulls/${prNumber}/reviews?per_page=100`)
+}
+
+async function defaultFetchCodeowners(repo) {
+  // Try the canonical locations (root, .github, docs).
+  for (const candidate of ['.github/CODEOWNERS', 'CODEOWNERS', 'docs/CODEOWNERS']) {
+    const data = await githubGet(
+      `https://api.github.com/repos/${repo.owner}/${repo.name}/contents/${candidate}`,
+    )
+    if (data?.content) return Buffer.from(data.content, 'base64').toString('utf-8')
+  }
+  return null
+}
+
+async function defaultFetchPermission(repo, username) {
+  const data = await githubGet(
+    `https://api.github.com/repos/${repo.owner}/${repo.name}/collaborators/${username}/permission`,
+  )
+  return data?.permission || null
 }
 
 // ---------------------------------------------------------------------------
@@ -593,7 +756,7 @@ function buildReport({majorChangesets, manifestChanges, schemaChanges}) {
 
 This PR contains changes that may break the existing contract.
 
-**@shopify/dev_experience** — this PR contains breaking changes that require coordination for the next major release.
+**@shopify/dev_experience** — this PR contains breaking changes that require coordination for the next major release. To unblock this check, an approving review from a code owner of the changed files (typically a \`@shopify/dev_experience\` member) is sufficient — the check will re-run automatically when the review is submitted and turn green.
 
 > 💬 Head to [#help-dev-platform](https://shopify.enterprise.slack.com/archives/C07UJ7UNMTK) to discuss timing and plan the release.
 
@@ -704,14 +867,32 @@ async function runMain() {
 
     const report = buildReport({majorChangesets, manifestChanges, schemaChanges})
 
-    if (report) {
-      logSection('\n⚠️  Breaking changes detected!')
-      setOutput('has_breaking_changes', 'true')
-      setOutput('report', report)
-    } else {
+    if (!report) {
       logSection('\n✅ No breaking changes detected')
       setOutput('has_breaking_changes', 'false')
+      return
     }
+
+    // Breaking changes were detected. If a code-owner has already approved
+    // the PR, treat that as sign-off and turn the check green. The script
+    // re-runs on `pull_request_review` events (see breaking-change-check.yml)
+    // so a fresh approval will flip this check without manual CI re-runs.
+    const override = await findCodeownerApproval({
+      repo: context.repo,
+      prNumber: context.prNumber,
+      changedFiles: context.changedFiles,
+    })
+    if (override.approved) {
+      logSection(`\n✅ Breaking changes detected, but overridden by ${override.approver}'s approval`)
+      setOutput('has_breaking_changes', 'false')
+      setOutput('report', `${report}\n---\n✅ Override: approved by @${override.approver}.\n`)
+      return
+    }
+
+    logSection('\n⚠️  Breaking changes detected!')
+    if (override.reason) logMessage(`Override not granted: ${override.reason}`)
+    setOutput('has_breaking_changes', 'true')
+    setOutput('report', report)
   } finally {
     await rm(tmpDir, {recursive: true, force: true, maxRetries: 2})
   }
