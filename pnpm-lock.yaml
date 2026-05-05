@@ -412,8 +412,8 @@ importers:
         specifier: 10.25.0
         version: 10.25.0
       lodash:
-        specifier: 4.17.23
-        version: 4.17.23
+        specifier: 4.18.1
+        version: 4.18.1
       macaddress:
         specifier: 0.5.3
         version: 0.5.3
@@ -12297,7 +12297,7 @@ snapshots:
     dependencies:
       '@oclif/core': 4.5.3
       '@oclif/table': 0.4.14
-      lodash: 4.17.23
+      lodash: 4.18.1
       object-treeify: 4.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -16148,7 +16148,7 @@ snapshots:
       code-excerpt: 4.0.0
       indent-string: 5.0.0
       is-in-ci: 0.1.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       patch-console: 2.0.0
       react: 18.3.1
       react-reconciler: 0.29.2(react@18.3.1)
