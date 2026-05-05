@@ -12,16 +12,19 @@ interface LinkProps {
 
 function link(label: string | undefined, url: string, linksContext: LinksContextValue | null) {
   if (!supportsHyperlinks.stdout) {
-    if (url === (label ?? url)) {
-      return url
-    }
-
     if (linksContext === null) {
+      if (url === (label ?? url)) {
+        return url
+      }
       return label ? `${label} ${chalk.dim(`( ${url} )`)}` : url
     }
 
+    // Inside a LinksContext, register every link in the footnote table — even
+    // ones whose label equals the URL — so the visible label stays compact and
+    // the URL is rendered outside the bordered box where it can wrap without
+    // being interleaved with `│` characters.
     const linkId = linksContext.addLink(label, url)
-    return `${label ?? url} [${linkId}]`
+    return label ? `${label} [${linkId}]` : `[${linkId}]`
   }
 
   return ansiEscapes.link(label ?? url, url)
