@@ -1,4 +1,4 @@
-import {retryAwareRequest, isNetworkError, isTransientNetworkError} from './api.js'
+import {applyRetryJitterMs, retryAwareRequest, isNetworkError, isTransientNetworkError} from './api.js'
 import {recordRetry} from '../../public/node/analytics.js'
 import {ClientError} from 'graphql-request'
 import {describe, test, vi, expect, beforeEach, afterEach} from 'vitest'
@@ -7,13 +7,21 @@ vi.mock('../../public/node/analytics.js', () => ({
   recordRetry: vi.fn(),
 }))
 
+// Pins Math.random so jitter multiplies the base delay by exactly 1.0 (the midpoint of the ±20% band).
+// Individual tests that need a different multiplier spy on Math.random directly.
+const MIDPOINT_RANDOM_VALUE = 0.5
+
 describe('retryAwareRequest', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     vi.useFakeTimers()
+    randomSpy = vi.spyOn(Math, 'random').mockReturnValue(MIDPOINT_RANDOM_VALUE)
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    randomSpy.mockRestore()
   })
 
   test('handles retries', async () => {
@@ -88,7 +96,9 @@ describe('retryAwareRequest', () => {
 
     expect(mockRequestFn).toHaveBeenCalledTimes(4)
     expect(mockScheduleDelayFn).toHaveBeenCalledTimes(2)
-    expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(1, expect.anything(), 200)
+    // Retry-After: 200 seconds -> 200_000 ms; jitter pinned to midpoint (1.0x).
+    expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(1, expect.anything(), 200_000)
+    // defaultDelayMs: 500 ms; jitter pinned to midpoint (1.0x).
     expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(2, expect.anything(), 500)
   })
 
@@ -601,6 +611,171 @@ describe('retryAwareRequest', () => {
 
     expect(recordRetry).toHaveBeenCalledTimes(1)
     expect(recordRetry).toHaveBeenCalledWith('https://themes.example.com/auth', 'http-retry-1:can-retry:')
+  })
+
+  test('parses Retry-After header as seconds and converts to milliseconds', async () => {
+    const rateLimitedResponse = {
+      status: 200,
+      errors: [
+        {
+          extensions: {
+            code: '429',
+          },
+        } as any,
+      ],
+      headers: new Headers({'retry-after': '2'}),
+    }
+
+    const successResponse = {
+      status: 200,
+      data: {ok: true},
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementation(() => Promise.resolve(successResponse))
+
+    const mockScheduleDelayFn = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10_000,
+      },
+      undefined,
+      {scheduleDelay: mockScheduleDelayFn},
+    )
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toEqual(successResponse)
+
+    // Retry-After: 2 -> 2000 ms (not 2 ms). Jitter pinned to midpoint (1.0x) via Math.random mock.
+    expect(mockScheduleDelayFn).toHaveBeenCalledTimes(1)
+    expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(1, expect.anything(), 2000)
+  })
+
+  test('uses DEFAULT_RETRY_DELAY_MS when Retry-After header is absent and no caller default', async () => {
+    const rateLimitedResponse = {
+      status: 200,
+      errors: [{extensions: {code: '429'}} as any],
+      headers: new Headers(),
+    }
+
+    const successResponse = {
+      status: 200,
+      data: {ok: true},
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementation(() => Promise.resolve(successResponse))
+
+    const mockScheduleDelayFn = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10_000,
+      },
+      undefined,
+      {scheduleDelay: mockScheduleDelayFn},
+    )
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toEqual(successResponse)
+
+    // No Retry-After, no defaultDelayMs -> falls back to DEFAULT_RETRY_DELAY_MS (1000).
+    // Jitter pinned to midpoint (1.0x) via Math.random mock.
+    expect(mockScheduleDelayFn).toHaveBeenCalledTimes(1)
+    expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(1, expect.anything(), 1000)
+  })
+
+  test('applies jitter multiplier from Math.random to retry delay', async () => {
+    // Math.random() = 0.0 -> multiplier = 0.8 (lower bound).
+    randomSpy.mockReturnValue(0)
+
+    const rateLimitedResponse = {
+      status: 200,
+      errors: [{extensions: {code: '429'}} as any],
+      headers: new Headers(),
+    }
+
+    const successResponse = {
+      status: 200,
+      data: {ok: true},
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementation(() => Promise.resolve(successResponse))
+
+    const mockScheduleDelayFn = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10_000,
+      },
+      undefined,
+      {defaultDelayMs: 1000, scheduleDelay: mockScheduleDelayFn},
+    )
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toEqual(successResponse)
+
+    // 1000 * 0.8 = 800.
+    expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(1, expect.anything(), 800)
+  })
+})
+
+describe('applyRetryJitterMs', () => {
+  test('returns the lower bound (0.8x) when random() is 0', () => {
+    expect(applyRetryJitterMs(1000, () => 0)).toBe(800)
+  })
+
+  test('returns the upper bound (~1.2x) when random() approaches 1', () => {
+    // Math.random() returns [0, 1). Using 0.9999... exercises the top of the range.
+    const nearOne = 1 - Number.EPSILON
+    expect(applyRetryJitterMs(1000, () => nearOne)).toBeCloseTo(1200, 5)
+  })
+
+  test('returns the midpoint (1.0x) when random() is 0.5', () => {
+    expect(applyRetryJitterMs(1000, () => 0.5)).toBe(1000)
+  })
+
+  test('keeps output within [0.8x, 1.2x] across the random range', () => {
+    const baseDelayMs = 2500
+    const samples = [0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.9999]
+    for (const randomValue of samples) {
+      const jittered = applyRetryJitterMs(baseDelayMs, () => randomValue)
+      expect(jittered).toBeGreaterThanOrEqual(baseDelayMs * 0.8)
+      expect(jittered).toBeLessThanOrEqual(baseDelayMs * 1.2)
+    }
+  })
+
+  test('defaults to Math.random when no generator is passed', () => {
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    try {
+      expect(applyRetryJitterMs(1000)).toBe(1000)
+      expect(spy).toHaveBeenCalled()
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
 
