@@ -7,7 +7,19 @@
  * 2. OCLIF manifest changes: removed commands, removed flags, or removed flag env vars
  * 3. Zod schema changes: removed or renamed fields in app/extension config schemas
  *
- * Compares the current branch against the main branch baseline.
+ * Baseline selection:
+ *   - On `pull_request` events the baseline is the merge-base of the PR
+ *     head and the base branch. This avoids false positives when `main`
+ *     has progressed past the PR's branch point (a field added on `main`
+ *     after the PR opened would otherwise show up as "removed" by the PR).
+ *   - On `merge_group` events the baseline is `merge_group.base_sha`,
+ *     which is exactly the commit the merge queue is testing against.
+ *   - Otherwise, falls back to `main`'s current tip (legacy behavior).
+ *
+ * The schema scan and OCLIF manifest comparison are scoped to files that
+ * actually changed in the PR's diff so unrelated drift on `main` cannot
+ * trigger this check.
+ *
  * Outputs a GitHub Actions summary and sets a `has_breaking_changes` output.
  */
 
@@ -22,6 +34,96 @@ import {logMessage, logSection} from './utils/log.js'
 import fg from 'fast-glob'
 
 const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
+
+// ---------------------------------------------------------------------------
+// Event context: pick the right baseline and the right diff to scan
+// ---------------------------------------------------------------------------
+
+/**
+ * Reads `GITHUB_EVENT_PATH` and returns the baseline + diff context for the
+ * check. Works for `pull_request`, `pull_request_review`, and `merge_group`
+ * events; otherwise returns a legacy fallback that compares against `main`.
+ *
+ * Returned shape:
+ *   {
+ *     baselineRef: string,           // SHA or branch name to clone/checkout as baseline
+ *     headSha: string | null,        // PR head SHA, or null in fallback mode
+ *     repo: {owner, name},           // for GitHub API calls
+ *     prNumber: number | null,       // for review/codeowner lookups
+ *     changedFiles: Set<string> | null, // null = scan everything (fallback)
+ *   }
+ */
+export async function resolveContext({
+  eventName = process.env.GITHUB_EVENT_NAME,
+  eventPath = process.env.GITHUB_EVENT_PATH,
+  fetchCompare = defaultFetchCompare,
+} = {}) {
+  const repoSlug = process.env.GITHUB_REPOSITORY || 'Shopify/cli'
+  const [owner, name] = repoSlug.split('/')
+  const repo = {owner, name}
+
+  // No event payload => running locally or in an unsupported event. Fall
+  // back to legacy behavior so this script remains usable as a manual tool.
+  if (!eventPath) {
+    return {baselineRef: 'main', headSha: null, repo, prNumber: null, changedFiles: null}
+  }
+
+  let event
+  try {
+    event = JSON.parse(await fs.readFile(eventPath, 'utf-8'))
+  } catch {
+    return {baselineRef: 'main', headSha: null, repo, prNumber: null, changedFiles: null}
+  }
+
+  if ((eventName === 'pull_request' || eventName === 'pull_request_review') && event.pull_request) {
+    const headSha = event.pull_request.head.sha
+    const baseSha = event.pull_request.base.sha
+    const prNumber = event.pull_request.number
+    const compare = await fetchCompare(repo, baseSha, headSha)
+    const baselineRef = compare?.merge_base_commit?.sha || baseSha
+    // When the compare API fails we fall back to scanning everything
+    // (changedFiles=null). Narrowing to an empty set would silently
+    // suppress real breaking changes, which is unsafe.
+    const changedFiles = compare?.files ? new Set(compare.files.map((f) => f.filename)) : null
+    return {baselineRef, headSha, repo, prNumber, changedFiles}
+  }
+
+  if (eventName === 'merge_group' && event.merge_group) {
+    const headSha = event.merge_group.head_sha
+    const baselineRef = event.merge_group.base_sha
+    const compare = await fetchCompare(repo, baselineRef, headSha)
+    const changedFiles = compare?.files ? new Set(compare.files.map((f) => f.filename)) : null
+    return {baselineRef, headSha, repo, prNumber: null, changedFiles}
+  }
+
+  return {baselineRef: 'main', headSha: null, repo, prNumber: null, changedFiles: null}
+}
+
+/**
+ * Default GitHub compare-API fetcher. Uses the standard `GITHUB_TOKEN` so
+ * it works on first-party PRs; falls back to unauthenticated for forks
+ * (still works for public-repo compare). On any failure we return null and
+ * the caller falls back to scanning everything — i.e. degrades to legacy
+ * behavior, never silently ignores potential breaking changes.
+ */
+async function defaultFetchCompare(repo, base, head) {
+  if (!base || !head) return null
+  const url = `https://api.github.com/repos/${repo.owner}/${repo.name}/compare/${base}...${head}`
+  const headers = {Accept: 'application/vnd.github+json'}
+  const token = process.env.GITHUB_TOKEN
+  if (token) headers.Authorization = `Bearer ${token}`
+  try {
+    const res = await fetch(url, {headers})
+    if (!res.ok) {
+      logMessage(`compare API returned ${res.status} — falling back to full scan`)
+      return null
+    }
+    return await res.json()
+  } catch (error) {
+    logMessage(`compare API failed: ${error.message} — falling back to full scan`)
+    return null
+  }
+}
 
 // ---------------------------------------------------------------------------
 // 1. Check changesets for major bumps
@@ -107,8 +209,16 @@ function extractManifestSurface(manifest) {
   return surface
 }
 
-async function checkManifest(baselineDirectory) {
+async function checkManifest(baselineDirectory, {changedFiles} = {}) {
   logSection('Checking OCLIF manifest for removed commands/flags')
+
+  // The OCLIF manifest is a generated artifact — a removed command always
+  // shows up as a `oclif.manifest.json` change. If the file isn't in the
+  // PR diff there is by definition no surface change to detect.
+  if (changedFiles && !changedFiles.has('packages/cli/oclif.manifest.json')) {
+    logMessage('oclif.manifest.json unchanged in this PR, skipping')
+    return {removedCommands: [], removedFlags: [], removedEnvVars: []}
+  }
 
   const baselineManifest = await parseManifest(baselineDirectory)
   const currentManifest = await parseManifest(currentDirectory)
@@ -390,7 +500,7 @@ export function extractSchemaFields(content) {
   return fields
 }
 
-async function checkSchemas(baselineDirectory) {
+async function checkSchemas(baselineDirectory, {changedFiles} = {}) {
   logSection('Checking Zod schemas for removed fields')
 
   const schemaGlob = 'packages/app/src/cli/models/**/specifications/**/*.ts'
@@ -402,9 +512,22 @@ async function checkSchemas(baselineDirectory) {
     ignore: ignorePatterns,
   })
 
+  // When we know the PR's actual diff, only inspect schema files the PR
+  // touched. Without this, drift on `main` (e.g. a field added after the
+  // PR branched) is reported as a removal. With it, removals come strictly
+  // from this PR's own changes.
+  const filesToCheck = changedFiles
+    ? baselineSchemaFiles.filter((file) => changedFiles.has(file))
+    : baselineSchemaFiles
+
+  if (changedFiles && filesToCheck.length === 0) {
+    logMessage('No schema files changed in this PR, skipping')
+    return []
+  }
+
   const removedFields = []
 
-  for (const file of baselineSchemaFiles) {
+  for (const file of filesToCheck) {
     const baselinePath = path.join(baselineDirectory, file)
     const currentPath = path.join(currentDirectory, file)
 
@@ -547,29 +670,51 @@ The following Zod schema fields were removed or their files deleted:
 // Main
 // ---------------------------------------------------------------------------
 
-const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'major-change-check-'))
-
-try {
-  // This script consumes only git-tracked files (oclif.manifest.json + .ts
-  // sources). It does not need the baseline's node_modules or dist output,
-  // so we skip pnpm install and pnpm build to save ~5–10 minutes of CI
-  // per PR. type-diff.js (which diffs `dist/**/*.d.ts`) keeps the default.
-  const baselineDirectory = await cloneCLIRepository(tmpDir, {install: false, build: false})
-
-  const majorChangesets = await checkChangesets()
-  const manifestChanges = await checkManifest(baselineDirectory)
-  const schemaChanges = await checkSchemas(baselineDirectory)
-
-  const report = buildReport({majorChangesets, manifestChanges, schemaChanges})
-
-  if (report) {
-    logSection('\n⚠️  Breaking changes detected!')
-    setOutput('has_breaking_changes', 'true')
-    setOutput('report', report)
-  } else {
-    logSection('\n✅ No breaking changes detected')
-    setOutput('has_breaking_changes', 'false')
-  }
-} finally {
-  await rm(tmpDir, {recursive: true, force: true, maxRetries: 2})
+// `import.meta.main` is only true when this file is run directly. When the
+// test file imports it as a module, we don't want to spawn a baseline clone.
+if (process.argv[1] && url.fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  await runMain()
 }
+
+async function runMain() {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'major-change-check-'))
+
+  try {
+    const context = await resolveContext()
+    if (context.baselineRef !== 'main') {
+      logMessage(`Resolved baseline to ${context.baselineRef.slice(0, 7)} (merge-base or merge-queue base)`)
+    }
+    if (context.changedFiles) {
+      logMessage(`PR touched ${context.changedFiles.size} file(s); scoping schema/manifest scan to those`)
+    }
+
+    // This script consumes only git-tracked files (oclif.manifest.json + .ts
+    // sources). It does not need the baseline's node_modules or dist output,
+    // so we skip pnpm install and pnpm build to save ~5–10 minutes of CI
+    // per PR. type-diff.js (which diffs `dist/**/*.d.ts`) keeps the default.
+    const baselineDirectory = await cloneCLIRepository(tmpDir, {
+      install: false,
+      build: false,
+      ref: context.baselineRef,
+    })
+
+    const majorChangesets = await checkChangesets()
+    const manifestChanges = await checkManifest(baselineDirectory, {changedFiles: context.changedFiles})
+    const schemaChanges = await checkSchemas(baselineDirectory, {changedFiles: context.changedFiles})
+
+    const report = buildReport({majorChangesets, manifestChanges, schemaChanges})
+
+    if (report) {
+      logSection('\n⚠️  Breaking changes detected!')
+      setOutput('has_breaking_changes', 'true')
+      setOutput('report', report)
+    } else {
+      logSection('\n✅ No breaking changes detected')
+      setOutput('has_breaking_changes', 'false')
+    }
+  } finally {
+    await rm(tmpDir, {recursive: true, force: true, maxRetries: 2})
+  }
+}
+
+
