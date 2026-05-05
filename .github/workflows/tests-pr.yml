@@ -295,41 +295,6 @@ jobs:
           message: ${{ steps.type-diff.outputs.report }}
           recreate: true
 
-  major-change-check:
-    if: github.event.pull_request.head.repo.full_name == github.repository
-    name: 'Breaking change detection'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    outputs:
-      has_breaking_changes: ${{ steps.check.outputs.has_breaking_changes }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
-          fetch-depth: 1
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
-      - name: Check for breaking changes
-        id: check
-        run: node workspace/src/major-change-check.js
-      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
-        if: steps.check.outputs.has_breaking_changes == 'true'
-        with:
-          header: Breaking-change-detection
-          message: ${{ steps.check.outputs.report }}
-          recreate: true
-      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
-        if: steps.check.outputs.has_breaking_changes != 'true'
-        with:
-          header: Breaking-change-detection
-          delete: true
-      - name: Fail if breaking changes detected
-        if: steps.check.outputs.has_breaking_changes == 'true'
-        run: |
-          echo '::error::Breaking changes detected. See the sticky comment on the PR for details.'
-          exit 1
+  # The breaking-change check moved to .github/workflows/breaking-change-check.yml
+  # so it can re-run on `pull_request_review` events without re-triggering
+  # the rest of this workflow.

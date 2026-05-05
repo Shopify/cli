@@ -16,7 +16,15 @@ import {mkdtemp, writeFile, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
-import {extractSchemaFields, resolveContext, stripStringsAndComments} from './major-change-check.js'
+import {
+  codeownersPatternToRegExp,
+  extractSchemaFields,
+  findCodeownerApproval,
+  ownersForFiles,
+  parseCodeowners,
+  resolveContext,
+  stripStringsAndComments,
+} from './major-change-check.js'
 
 test('extracts top-level keys from a flat .object({...})', () => {
   const src = `
@@ -199,4 +207,119 @@ test('resolveContext: no event payload falls back to scanning main', async () =>
   const ctx = await resolveContext({eventName: undefined, eventPath: undefined})
   assert.equal(ctx.baselineRef, 'main')
   assert.equal(ctx.changedFiles, null)
+})
+
+// ---------------------------------------------------------------------------
+// CODEOWNERS parsing & matching
+// ---------------------------------------------------------------------------
+
+test('parseCodeowners strips comments and blank lines', () => {
+  const content = `
+# top of file
+* @shopify/dev_experience
+
+# section
+/.github/CODEOWNERS @shopify/developer-platforms @shopify/dev_experience
+packages/theme/** @shopify/theme  # inline comment
+`
+  const rules = parseCodeowners(content)
+  assert.deepEqual(rules, [
+    {pattern: '*', owners: ['@shopify/dev_experience']},
+    {pattern: '/.github/CODEOWNERS', owners: ['@shopify/developer-platforms', '@shopify/dev_experience']},
+    {pattern: 'packages/theme/**', owners: ['@shopify/theme']},
+  ])
+})
+
+test('codeownersPatternToRegExp matches like CODEOWNERS does', () => {
+  // `*` covers everything
+  assert.match('packages/app/foo.ts', codeownersPatternToRegExp('*'))
+
+  // Anchored path
+  const cliRule = codeownersPatternToRegExp('/.github/CODEOWNERS')
+  assert.match('.github/CODEOWNERS', cliRule)
+  assert.doesNotMatch('foo/.github/CODEOWNERS', cliRule)
+
+  // Directory glob
+  const themeRule = codeownersPatternToRegExp('packages/theme/**')
+  assert.match('packages/theme/index.ts', themeRule)
+  assert.match('packages/theme/sub/dir/file.ts', themeRule)
+  assert.doesNotMatch('packages/app/foo.ts', themeRule)
+})
+
+test('ownersForFiles: last matching rule wins (CODEOWNERS semantics)', () => {
+  const rules = parseCodeowners(`
+* @shopify/dev_experience
+packages/theme/** @shopify/theme
+`)
+  const themeOwners = ownersForFiles(rules, ['packages/theme/foo.ts'])
+  assert.deepEqual([...themeOwners], ['@shopify/theme'], 'theme rule overrides catch-all')
+
+  const appOwners = ownersForFiles(rules, ['packages/app/foo.ts'])
+  assert.deepEqual([...appOwners], ['@shopify/dev_experience'], 'falls through to catch-all')
+})
+
+// ---------------------------------------------------------------------------
+// findCodeownerApproval()
+// ---------------------------------------------------------------------------
+
+const fakeRepo = {owner: 'Shopify', name: 'cli'}
+
+test('findCodeownerApproval: approver with write access overrides', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 1,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [
+      {state: 'COMMENTED', user: {login: 'someone'}},
+      {state: 'APPROVED', user: {login: 'isaac'}},
+    ],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async (_repo, user) => (user === 'isaac' ? 'write' : 'read'),
+  })
+  assert.equal(result.approved, true)
+  assert.equal(result.approver, 'isaac')
+})
+
+test('findCodeownerApproval: latest review per author wins (changes_requested cancels earlier approval)', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 2,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [
+      {state: 'APPROVED', user: {login: 'isaac'}, submitted_at: '2025-01-01'},
+      {state: 'CHANGES_REQUESTED', user: {login: 'isaac'}, submitted_at: '2025-01-02'},
+    ],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async () => 'write',
+  })
+  assert.equal(result.approved, false, "withdrawn approval should not count")
+})
+
+test('findCodeownerApproval: no approving reviewer with write access => not approved', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 3,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [{state: 'APPROVED', user: {login: 'external'}}],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async () => 'read',
+  })
+  assert.equal(result.approved, false)
+  assert.equal(result.approver, null)
+})
+
+test('findCodeownerApproval: missing PR number bails immediately', async () => {
+  const result = await findCodeownerApproval({repo: fakeRepo, prNumber: null})
+  assert.equal(result.approved, false)
+  assert.match(result.reason, /no PR number/)
+})
+
+test('findCodeownerApproval: reviews API failure bails (does not auto-approve)', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 4,
+    changedFiles: new Set(['x']),
+    fetchReviews: async () => null,
+  })
+  assert.equal(result.approved, false, 'API failure must NOT silently grant override')
 })
