@@ -7,13 +7,15 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, readFile, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
 vi.mock('proper-lockfile')
 vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/node/output')
 
 describe('buildFunctionExtension', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -438,5 +440,57 @@ describe('buildFunctionExtension', () => {
     expect(fileExistsSync).toHaveBeenCalledWith(joinPath(extension.directory, 'dist/custom.wasm'))
     expect(touchFile).not.toHaveBeenCalled()
     expect(writeFile).not.toHaveBeenCalled()
+  })
+
+  describe('schema version mismatch warning', () => {
+    function mockSchemaFile(content: string) {
+      vi.mocked(readFile).mockResolvedValueOnce(content as any)
+    }
+
+    function mockSchemaNotFound() {
+      const err = new Error('ENOENT') as NodeJS.ErrnoException
+      err.code = 'ENOENT'
+      vi.mocked(readFile).mockRejectedValueOnce(err)
+    }
+
+    test('warns when schema version does not match toml version', async () => {
+      vi.mocked(outputWarn).mockReset()
+      mockSchemaFile('schema @apiVersion(version: "2025-01") {\n  query: QueryRoot\n}')
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(outputWarn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'schema.graphql was generated for API version 2025-01 but your extension targets 2022-07',
+        ),
+      )
+    })
+
+    test('does not warn when schema version matches toml version', async () => {
+      vi.mocked(outputWarn).mockReset()
+      mockSchemaFile('schema @apiVersion(version: "2022-07") {\n  query: QueryRoot\n}')
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(outputWarn).not.toHaveBeenCalled()
+    })
+
+    test('does not warn when schema has no apiVersion directive', async () => {
+      vi.mocked(outputWarn).mockReset()
+      mockSchemaFile('type Query { shop: Shop }')
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(outputWarn).not.toHaveBeenCalled()
+    })
+
+    test('does not warn when schema file does not exist', async () => {
+      vi.mocked(outputWarn).mockReset()
+      mockSchemaNotFound()
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(outputWarn).not.toHaveBeenCalled()
+    })
   })
 })
