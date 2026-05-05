@@ -78,6 +78,7 @@
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
 * [`shopify store create dev`](#shopify-store-create-dev)
+* [`shopify store delete`](#shopify-store-delete)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
@@ -2151,6 +2152,29 @@ DESCRIPTION
   Create a new development store.
 
   Creates a new app development store in your organization.
+```
+
+## `shopify store delete`
+
+Delete a development store.
+
+```
+USAGE
+  $ shopify store delete --store <value> [-j] [--no-color] [--organization <value>] [--verbose]
+
+FLAGS
+  -j, --json                  [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --no-color              [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --organization=<value>  [env: SHOPIFY_FLAG_ORGANIZATION] The organization that owns the store (numeric ID).
+                              Auto-selects if you belong to a single org.
+      --store=<value>         (required) [env: SHOPIFY_FLAG_STORE] The domain of the development store to delete (e.g.
+                              my-store.myshopify.com).
+      --verbose               [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Delete a development store.
+
+  Deletes an app development store from your organization.
 ```
 
 ## `shopify store execute`
