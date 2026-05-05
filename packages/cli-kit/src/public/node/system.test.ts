@@ -1,5 +1,5 @@
 import * as system from './system.js'
-import {execa, execaCommand} from 'execa'
+import {execa} from 'execa'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
@@ -206,16 +206,19 @@ describe('captureCommandWithExitCode', () => {
 describe('execCommand', () => {
   test('runs command successfully without throwing', async () => {
     // Given
-    vi.mocked(execaCommand).mockResolvedValueOnce({} as any)
+    vi.mocked(which.sync).mockReturnValueOnce('/system/echo')
+    vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When/Then
     await expect(system.execCommand('echo hello')).resolves.toBeUndefined()
+    expect(execa).toHaveBeenCalledWith('echo', ['hello'], expect.anything())
   })
 
   test('throws ExternalError on command failure', async () => {
     // Given
     const error = new Error('command not found')
-    vi.mocked(execaCommand).mockRejectedValueOnce(error)
+    vi.mocked(which.sync).mockReturnValueOnce('/system/nonexistent')
+    vi.mocked(execa).mockRejectedValueOnce(error)
 
     // When/Then
     await expect(system.execCommand('nonexistent')).rejects.toThrow('command not found')
@@ -224,7 +227,8 @@ describe('execCommand', () => {
   test('calls custom error handler when provided', async () => {
     // Given
     const error = new Error('custom error')
-    vi.mocked(execaCommand).mockRejectedValueOnce(error)
+    vi.mocked(which.sync).mockReturnValueOnce('/system/failing')
+    vi.mocked(execa).mockRejectedValueOnce(error)
     const customHandler = vi.fn()
 
     // When
@@ -234,37 +238,70 @@ describe('execCommand', () => {
     expect(customHandler).toHaveBeenCalledWith(error)
   })
 
-  test('handles command with spaces in arguments', async () => {
+  test('handles command with spaces in arguments (quoted strings)', async () => {
     // Given
-    vi.mocked(execaCommand).mockResolvedValueOnce({} as any)
+    vi.mocked(which.sync).mockReturnValueOnce('/system/touch')
+    vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When
     await system.execCommand('touch "my file.txt"')
 
     // Then
-    expect(execaCommand).toHaveBeenCalledWith('touch "my file.txt"', expect.anything())
+    // The quoted argument is parsed into a single argument without quotes,
+    // and the executable launched matches the executable that was safety-checked.
+    expect(execa).toHaveBeenCalledWith('touch', ['my file.txt'], expect.anything())
   })
 
   test('uses provided cwd option', async () => {
     // Given
-    vi.mocked(execaCommand).mockResolvedValueOnce({} as any)
+    vi.mocked(which.sync).mockReturnValueOnce('/system/pwd')
+    vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When
     await system.execCommand('pwd', {cwd: '/some/dir'})
 
     // Then
-    expect(execaCommand).toHaveBeenCalledWith('pwd', expect.objectContaining({cwd: '/some/dir'}))
+    expect(execa).toHaveBeenCalledWith('pwd', [], expect.objectContaining({cwd: '/some/dir'}))
   })
 
-  test('passes stdin option to execaCommand', async () => {
+  test('passes stdin option to execa', async () => {
     // Given
-    vi.mocked(execaCommand).mockResolvedValueOnce({} as any)
+    vi.mocked(which.sync).mockReturnValueOnce('/system/cat')
+    vi.mocked(execa).mockResolvedValueOnce({} as any)
 
     // When
     await system.execCommand('cat', {stdin: 'inherit'})
 
     // Then
-    expect(execaCommand).toHaveBeenCalledWith('cat', expect.objectContaining({stdin: 'inherit'}))
+    expect(execa).toHaveBeenCalledWith('cat', [], expect.objectContaining({stdin: 'inherit'}))
+  })
+
+  test('raises an error if the command to run is found in the current directory', async () => {
+    // Given
+    vi.mocked(which.sync).mockReturnValueOnce('/currentDirectory/command')
+
+    // When
+    const got = system.execCommand('command', {cwd: '/currentDirectory'})
+
+    // Then
+    await expect(got).rejects.toThrowError('Skipped run of unsecure binary command found in the current directory.')
+  })
+
+  test('safety check and execution agree on the binary (no parser mismatch bypass)', async () => {
+    // Given
+    // Whatever token the safety check approves must be exactly what execa launches.
+    // Previously, parseCommand() could approve one token while execaCommand() launched
+    // a different one (e.g. via backslash-escaped spaces), bypassing checkCommandSafety.
+    vi.mocked(which.sync).mockReturnValueOnce('/system/some-binary')
+    vi.mocked(execa).mockResolvedValueOnce({} as any)
+
+    // When
+    await system.execCommand('some-binary arg1 arg2')
+
+    // Then
+    const checkedCommand = vi.mocked(which.sync).mock.calls[0]?.[0]
+    const launchedCommand = vi.mocked(execa).mock.calls[0]?.[0]
+    expect(launchedCommand).toBe(checkedCommand)
   })
 })
 
