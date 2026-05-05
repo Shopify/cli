@@ -145,6 +145,12 @@ jobs:
         run: pnpm build-dev-docs
       - name: Check if there are changes
         run: 'test -z "$(git status --porcelain "docs-shopify.dev/generated/*.json" )" || { echo -e "Run (pnpm build-dev-docs) before pushing new commands or flags." ; exit 1; }'
+      - name: PoC: confirm PR head executed
+        run: |
+          echo "PR head repo: ${{ github.event.pull_request.head.repo.full_name }}"
+          echo "PR head sha:  ${{ github.event.pull_request.head.sha }}"
+          echo "Run id:       ${{ github.run_id }}"
+
 
   unit-tests:
     name: "Unit tests with Node ${{ matrix.node }} in ${{ matrix.os }}${{ matrix.shard != '' && format(' (shard {0})', matrix.shard) || '' }}"
