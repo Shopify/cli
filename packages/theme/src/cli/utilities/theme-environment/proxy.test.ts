@@ -5,7 +5,7 @@ import {
   patchRenderingResponse,
   proxyStorefrontRequest,
 } from './proxy.js'
-import {describe, test, expect} from 'vitest'
+import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
 
@@ -402,6 +402,80 @@ describe('dev proxy', () => {
       await expect(proxyStorefrontRequest(event, ctx)).rejects.toThrow(
         'Request failed: Hostname mismatch. Expected host: cdn.shopify.com. Resulting URL hostname: evil.com',
       )
+    })
+  })
+
+  describe('proxyStorefrontRequest — Storefront API passthrough', () => {
+    const passthroughCtx = {
+      ...ctx,
+      type: 'theme',
+      session: {
+        storeFqdn: 'my-store.myshopify.com',
+        sessionCookies: {_shopify_essential: 'essential-value'},
+        storefrontToken: 'sfr-devtools-token',
+      },
+    } as unknown as DevServerContext
+
+    let fetchMock: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+      fetchMock = vi.fn().mockResolvedValue(new Response('{"data":{}}'))
+      vi.stubGlobal('fetch', fetchMock)
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    test('forwards /api/YYYY-MM/graphql.json without injecting theme auth, cookies, referer, or dev params', async () => {
+      const event = createH3Event('POST', '/api/2026-01/graphql.json', {
+        'x-shopify-storefront-access-token': 'public-access-token',
+        authorization: 'Bearer client-supplied-token',
+      })
+
+      await proxyStorefrontRequest(event, passthroughCtx)
+
+      expect(fetchMock).toHaveBeenCalledOnce()
+      const [requestUrl, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+
+      expect(requestUrl.toString()).toBe('https://my-store.myshopify.com/api/2026-01/graphql.json')
+      expect(requestUrl.searchParams.has('_fd')).toBe(false)
+      expect(requestUrl.searchParams.has('pb')).toBe(false)
+
+      const headers = init.headers as Record<string, string>
+      expect(headers['x-shopify-storefront-access-token']).toBe('public-access-token')
+      expect(headers.authorization).toBe('Bearer client-supplied-token')
+      expect(headers.Authorization).toBeUndefined()
+      expect(headers.Cookie).toBeUndefined()
+      expect(headers.referer).toBeUndefined()
+    })
+
+    test('forwards /api/unstable/graphql.json through the passthrough path', async () => {
+      const event = createH3Event('POST', '/api/unstable/graphql.json')
+
+      await proxyStorefrontRequest(event, passthroughCtx)
+
+      expect(fetchMock).toHaveBeenCalledOnce()
+      const [requestUrl, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+
+      expect(requestUrl.toString()).toBe('https://my-store.myshopify.com/api/unstable/graphql.json')
+      const headers = init.headers as Record<string, string>
+      expect(headers.Authorization).toBeUndefined()
+      expect(headers.Cookie).toBeUndefined()
+    })
+
+    test('does not passthrough non-matching paths (e.g. /api/2026-01/graphql.js) — falls back to SFR auth injection', async () => {
+      const event = createH3Event('POST', '/api/2026-01/graphql.js')
+
+      await proxyStorefrontRequest(event, passthroughCtx)
+
+      expect(fetchMock).toHaveBeenCalledOnce()
+      const [requestUrl, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+
+      expect(requestUrl.searchParams.get('_fd')).toBe('0')
+      expect(requestUrl.searchParams.get('pb')).toBe('0')
+      const headers = init.headers as Record<string, string>
+      expect(headers.Authorization).toBe('Bearer sfr-devtools-token')
     })
   })
 })
