@@ -4,7 +4,13 @@ import git from 'simple-git'
 import {logMessage, logSection} from './log.js'
 
 /**
- * Clone the Shopify/cli `main` branch into `tmpDir/cli`.
+ * Clone the Shopify/cli repository into `tmpDir/cli` and check out `ref`.
+ *
+ * `ref` defaults to `main` to preserve historical behavior. Callers that
+ * want to diff against the merge-base of a PR (rather than against the
+ * current tip of `main`) should pass the merge-base SHA explicitly so the
+ * baseline reflects the actual fork point and not whatever has landed on
+ * `main` since the PR was opened.
  *
  * `install` and `build` default to `true` to preserve behavior for
  * `type-diff.js`, which diffs `dist/**\/*.d.ts` and therefore needs the
@@ -15,14 +21,21 @@ import {logMessage, logSection} from './log.js'
  * PR for those callers.
  *
  * @param {string} tmpDir
- * @param {{install?: boolean, build?: boolean}} [options]
+ * @param {{install?: boolean, build?: boolean, ref?: string}} [options]
  * @returns {Promise<string>} path to the cloned repository
  */
-export async function cloneCLIRepository(tmpDir, {install = true, build = true} = {}) {
-  logSection('Setting up baseline: main branch')
+export async function cloneCLIRepository(tmpDir, {install = true, build = true, ref = 'main'} = {}) {
+  logSection(`Setting up baseline: ${ref}`)
   const directory = path.join(tmpDir, 'cli')
   logMessage('Cloning repository')
+  // Full clone (no `--depth`) so any historical SHA passed as `ref` is
+  // reachable. Shopify/cli's history is small enough that this is fast
+  // and the clone is throwaway.
   await git().clone('https://github.com/Shopify/cli.git', directory)
+  if (ref !== 'main') {
+    logMessage(`Checking out ${ref}`)
+    await git(directory).checkout(ref)
+  }
   if (install) {
     logMessage('Installing dependencies')
     await execa('pnpm', ['install'], {cwd: directory})
@@ -33,3 +46,4 @@ export async function cloneCLIRepository(tmpDir, {install = true, build = true} 
   }
   return directory
 }
+

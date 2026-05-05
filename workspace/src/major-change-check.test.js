@@ -12,8 +12,11 @@
 
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
+import {mkdtemp, writeFile, rm} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
-import {extractSchemaFields, stripStringsAndComments} from './major-change-check.js'
+import {extractSchemaFields, resolveContext, stripStringsAndComments} from './major-change-check.js'
 
 test('extracts top-level keys from a flat .object({...})', () => {
   const src = `
@@ -134,4 +137,66 @@ test('stripStringsAndComments preserves length and newlines', () => {
   // The contents of strings and comments must be gone.
   assert.equal(stripped.includes('hello'), false)
   assert.equal(stripped.includes('trailing'), false)
+})
+
+// ---------------------------------------------------------------------------
+// resolveContext()
+// ---------------------------------------------------------------------------
+
+async function withEventFile(payload, fn) {
+  const dir = await mkdtemp(join(tmpdir(), 'major-change-evt-'))
+  const file = join(dir, 'event.json')
+  await writeFile(file, JSON.stringify(payload), 'utf-8')
+  try {
+    return await fn(file)
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
+}
+
+test('resolveContext: pull_request resolves baseline to the merge-base', async () => {
+  const payload = {pull_request: {number: 42, head: {sha: 'aaa'}, base: {sha: 'bbb'}}}
+  await withEventFile(payload, async (eventPath) => {
+    const fetchCompare = async (_repo, base, head) => {
+      assert.equal(base, 'bbb')
+      assert.equal(head, 'aaa')
+      return {merge_base_commit: {sha: 'mergebase123'}, files: [{filename: 'packages/app/foo.ts'}]}
+    }
+    const ctx = await resolveContext({eventName: 'pull_request', eventPath, fetchCompare})
+    assert.equal(ctx.baselineRef, 'mergebase123', 'uses merge-base, not base.sha')
+    assert.equal(ctx.headSha, 'aaa')
+    assert.equal(ctx.prNumber, 42)
+    assert.deepEqual([...ctx.changedFiles], ['packages/app/foo.ts'])
+  })
+})
+
+test('resolveContext: merge_group uses merge_group.base_sha as baseline', async () => {
+  const payload = {merge_group: {base_sha: 'qsbase', head_sha: 'qshead'}}
+  await withEventFile(payload, async (eventPath) => {
+    const fetchCompare = async () => ({files: [{filename: 'packages/cli/oclif.manifest.json'}]})
+    const ctx = await resolveContext({eventName: 'merge_group', eventPath, fetchCompare})
+    assert.equal(ctx.baselineRef, 'qsbase')
+    assert.equal(ctx.headSha, 'qshead')
+    assert.equal(ctx.prNumber, null)
+    assert.deepEqual([...ctx.changedFiles], ['packages/cli/oclif.manifest.json'])
+  })
+})
+
+test('resolveContext: compare API failure degrades to scanning everything', async () => {
+  const payload = {pull_request: {number: 1, head: {sha: 'h'}, base: {sha: 'b'}}}
+  await withEventFile(payload, async (eventPath) => {
+    const fetchCompare = async () => null
+    const ctx = await resolveContext({eventName: 'pull_request', eventPath, fetchCompare})
+    // Falls back to base.sha when merge_base_commit isn't available, and
+    // crucially leaves changedFiles=null so the scan widens rather than
+    // narrows — we'd rather over-flag than silently miss a real removal.
+    assert.equal(ctx.baselineRef, 'b')
+    assert.equal(ctx.changedFiles, null, 'compare failure must NOT collapse to an empty diff set')
+  })
+})
+
+test('resolveContext: no event payload falls back to scanning main', async () => {
+  const ctx = await resolveContext({eventName: undefined, eventPath: undefined})
+  assert.equal(ctx.baselineRef, 'main')
+  assert.equal(ctx.changedFiles, null)
 })
