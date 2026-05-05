@@ -9,10 +9,10 @@ import {createStoreAuthPresenter, type StoreAuthPresenter, type StoreAuthResult}
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {callingAgent} from '@shopify/cli-kit/node/context/agent'
+import {agentKeyFor, callingAgent} from '@shopify/cli-kit/node/context/agent'
 
 interface StoreAuthInput {
   store: string
@@ -45,7 +45,6 @@ export async function authenticateStoreWithApp(
   const requestedScopes = parseStoreAuthScopes(input.scopes)
   const existingScopeResolution = await resolvedDependencies.resolveExistingScopes(store)
   const scopes = mergeRequestedAndStoredScopes(requestedScopes, existingScopeResolution.scopes)
-  const validationScopes = existingScopeResolution.authoritative ? scopes : requestedScopes
 
   if (existingScopeResolution.scopes.length > 0) {
     outputDebug(
@@ -54,6 +53,7 @@ export async function authenticateStoreWithApp(
   }
 
   const agent = callingAgent()
+  const agentKey = agentKeyFor(agent)
   const bootstrap = createPkceBootstrap({
     store,
     scopes,
@@ -85,10 +85,11 @@ export async function authenticateStoreWithApp(
   const now = Date.now()
   const expiresAt = tokenResponse.expires_in ? new Date(now + tokenResponse.expires_in * 1000).toISOString() : undefined
 
+  const grantedScopes = resolveGrantedScopes(tokenResponse, scopes)
   const result: StoreAuthResult = {
     store,
     userId,
-    scopes: resolveGrantedScopes(tokenResponse, validationScopes),
+    scopes: grantedScopes,
     acquiredAt: new Date(now).toISOString(),
     expiresAt,
     refreshTokenExpiresAt: tokenResponse.refresh_token_expires_in
@@ -109,6 +110,7 @@ export async function authenticateStoreWithApp(
   setStoredStoreAppSession({
     store,
     clientId: STORE_AUTH_APP_CLIENT_ID,
+    agentKey,
     userId,
     accessToken: tokenResponse.access_token,
     refreshToken: tokenResponse.refresh_token,
@@ -120,7 +122,11 @@ export async function authenticateStoreWithApp(
   })
 
   outputDebug(
-    outputContent`Session persisted for ${outputToken.raw(store)} (user ${outputToken.raw(userId)}, expires ${outputToken.raw(expiresAt ?? 'unknown')})`,
+    outputContent`Session persisted for ${outputToken.raw(store)} (agent ${outputToken.raw(agentKey)}, user ${outputToken.raw(userId)}, expires ${outputToken.raw(expiresAt ?? 'unknown')})`,
+  )
+
+  outputInfo(
+    outputContent`Stored auth as ${outputToken.raw(agentKey)} for ${outputToken.raw(store)} (scopes: ${outputToken.raw(grantedScopes.join(', ') || 'none')})`,
   )
 
   resolvedDependencies.presenter.success(result)

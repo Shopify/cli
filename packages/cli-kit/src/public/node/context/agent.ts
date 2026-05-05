@@ -61,3 +61,19 @@ export function callingAgent(env: NodeJS.ProcessEnv = process.env): CallingAgent
 
   return 'UNKNOWN'
 }
+
+/**
+ * The bucket key under which a session is stored. UNKNOWN agents share a
+ * single `'default'` bucket; anything else is keyed by its enum value so
+ * different agents on the same machine each get their own token.
+ */
+export function agentKeyFor(agent: CallingAgent): string {
+  return agent === 'UNKNOWN' ? 'default' : agent
+}
+
+/**
+ * Convenience: resolves the calling agent and returns its bucket key.
+ */
+export function currentAgentKey(env: NodeJS.ProcessEnv = process.env): string {
+  return agentKeyFor(callingAgent(env))
+}

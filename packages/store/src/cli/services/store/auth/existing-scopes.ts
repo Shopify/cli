@@ -1,8 +1,9 @@
-import {getCurrentStoredStoreAppSession} from './session-store.js'
+import {getStoredStoreAppSession} from './session-store.js'
 import {loadStoredStoreSession} from './session-lifecycle.js'
 import {fetchCurrentStoreAuthScopes} from './token-client.js'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {currentAgentKey} from '@shopify/cli-kit/node/context/agent'
 
 export interface ResolvedStoreAuthScopes {
   scopes: string[]
@@ -30,7 +31,7 @@ function formatStoreScopeLookupError(error: unknown): string {
 
 export async function resolveExistingStoreAuthScopes(store: string): Promise<ResolvedStoreAuthScopes> {
   const normalizedStore = normalizeStoreFqdn(store)
-  const storedSession = getCurrentStoredStoreAppSession(normalizedStore)
+  const storedSession = getStoredStoreAppSession(normalizedStore, currentAgentKey())
   if (!storedSession) return {scopes: [], authoritative: true}
 
   try {
