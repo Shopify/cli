@@ -22,6 +22,8 @@ const THEME_EXT_DIRECTORY_PATTERNS = [
   'snippets/**/*.liquid',
 ]
 
+const THEME_EXT_FILE_EVENT_DEBOUNCE_TIME_IN_MS = 250
+
 export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileSystem {
   const files = new Map<string, ThemeAsset>()
   const unsyncedFileKeys = new Set<string>()
@@ -121,10 +123,33 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
         ignoreInitial: true,
       })
 
+      const pendingEvents = new Map<string, NodeJS.Timeout>()
+
+      const queueFsEvent = (eventName: 'add' | 'change' | 'unlink', filePath: string) => {
+        const fileKey = relativePath(root, filePath)
+        const eventKey = `${fileKey}:${eventName}`
+
+        const pending = pendingEvents.get(eventKey)
+        if (pending) {
+          clearTimeout(pending)
+        }
+
+        const timeout = setTimeout(() => {
+          pendingEvents.delete(eventKey)
+          if (eventName === 'unlink') {
+            handleFileDelete(filePath)
+          } else {
+            handleFileUpdate(eventName, filePath)
+          }
+        }, THEME_EXT_FILE_EVENT_DEBOUNCE_TIME_IN_MS)
+
+        pendingEvents.set(eventKey, timeout)
+      }
+
       watcher
-        .on('add', handleFileUpdate.bind(null, 'add'))
-        .on('change', handleFileUpdate.bind(null, 'change'))
-        .on('unlink', handleFileDelete.bind(null))
+        .on('add', queueFsEvent.bind(null, 'add'))
+        .on('change', queueFsEvent.bind(null, 'change'))
+        .on('unlink', queueFsEvent.bind(null, 'unlink'))
     },
   }
 }
