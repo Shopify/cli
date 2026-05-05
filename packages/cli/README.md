@@ -77,6 +77,7 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
+* [`shopify store create trial`](#shopify-store-create-trial)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
@@ -2137,6 +2138,36 @@ EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
+```
+
+## `shopify store create trial`
+
+Create a new Shopify trial store.
+
+```
+USAGE
+  $ shopify store create trial [-c <value>] [-j] [-n <value>] [--no-color] [--subdomain <value>] [--verbose]
+
+FLAGS
+  -c, --country=<value>    [default: US, env: SHOPIFY_FLAG_STORE_COUNTRY] The country code for the store (e.g., US, CA,
+                           GB).
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -n, --name=<value>       [env: SHOPIFY_FLAG_STORE_NAME] The name of the store.
+      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --subdomain=<value>  [env: SHOPIFY_FLAG_STORE_SUBDOMAIN] The custom myshopify.com subdomain for the store.
+      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Create a new Shopify trial store.
+
+  Creates a new Shopify trial store associated with your account.
+
+EXAMPLES
+  $ shopify store create trial
+
+  $ shopify store create trial --name "My Store" --country US
+
+  $ shopify store create trial --name "My Store" --json
 ```
 
 ## `shopify store execute`

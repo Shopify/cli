@@ -5862,6 +5862,83 @@
       "strict": true,
       "summary": "Authenticate an app against a store for store commands."
     },
+    "store:create:trial": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Creates a new Shopify trial store associated with your account.",
+      "descriptionWithMarkdown": "Creates a new Shopify trial store associated with your account.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --name \"My Store\" --country US",
+        "<%= config.bin %> <%= command.id %> --name \"My Store\" --json"
+      ],
+      "flags": {
+        "country": {
+          "char": "c",
+          "default": "US",
+          "description": "The country code for the store (e.g., US, CA, GB).",
+          "env": "SHOPIFY_FLAG_STORE_COUNTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "country",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "name": {
+          "char": "n",
+          "description": "The name of the store.",
+          "env": "SHOPIFY_FLAG_STORE_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "subdomain": {
+          "description": "The custom myshopify.com subdomain for the store.",
+          "env": "SHOPIFY_FLAG_STORE_SUBDOMAIN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "subdomain",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:create:trial",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Create a new Shopify trial store."
+    },
     "store:execute": {
       "aliases": [
       ],

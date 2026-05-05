@@ -4,6 +4,7 @@ import {
   ensureAuthenticatedAppManagementAndBusinessPlatform,
   ensureAuthenticatedBusinessPlatform,
   ensureAuthenticatedPartners,
+  ensureAuthenticatedSignups,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
   setLastSeenUserId,
@@ -225,6 +226,52 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
 
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
+  })
+})
+
+describe('ensureAuthenticatedSignups', () => {
+  test('returns the identity token and userId when success', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({identity: 'identity_token', userId: '1234-5678'})
+
+    // When
+    const got = await ensureAuthenticatedSignups()
+
+    // Then
+    expect(got).toEqual({token: 'identity_token', userId: '1234-5678'})
+  })
+
+  test('requests the default shop-create scope when no scopes are provided', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({identity: 'identity_token', userId: '1234-5678'})
+
+    // When
+    await ensureAuthenticatedSignups()
+
+    // Then
+    expect(ensureAuthenticated).toHaveBeenCalledWith({signupsApi: {scopes: ['shop-create']}}, expect.anything(), {})
+  })
+
+  test('passes through custom scopes when provided', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({identity: 'identity_token', userId: '1234-5678'})
+
+    // When
+    await ensureAuthenticatedSignups(['shop-create'])
+
+    // Then
+    expect(ensureAuthenticated).toHaveBeenCalledWith({signupsApi: {scopes: ['shop-create']}}, expect.anything(), {})
+  })
+
+  test('throws error if there is no identity token', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
+
+    // When
+    const got = ensureAuthenticatedSignups()
+
+    // Then
+    await expect(got).rejects.toThrow(`No identity token`)
   })
 })
 
