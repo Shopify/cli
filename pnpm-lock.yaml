@@ -53,8 +53,8 @@ importers:
         specifier: file:packages/eslint-plugin-cli
         version: file:packages/eslint-plugin-cli(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(prettier@3.8.1)(typescript@5.9.3)(vitest@3.2.4(@types/node@18.19.70)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@18.19.70)(typescript@5.9.3))(sass@1.97.3)(tsx@4.21.0)(yaml@2.8.3))
       '@shopify/generate-docs':
-        specifier: 1.1.1
-        version: 1.1.1
+        specifier: 1.2.0
+        version: 1.2.0
       '@types/node':
         specifier: 18.19.70
         version: 18.19.70
@@ -3695,8 +3695,8 @@ packages:
     peerDependencies:
       eslint: ^9.27.0
 
-  '@shopify/generate-docs@1.1.1':
-    resolution: {integrity: sha512-HbvKMoN7Yr8MAbmJEhBlL6G8rqACVhz7MW1H/GeG7aS9rlcaf4NqDF1SVj8RIq76R7dkQEneajKdo5wMfV0oKg==}
+  '@shopify/generate-docs@1.2.0':
+    resolution: {integrity: sha512-/+wkOWH0o9ZdXQhNbyYOqxTucHTisubVzHAHDhTqOzxcvDuPLfveShLzMEzTWgYx9x8ORwirOWI+dYBulVvs9w==}
     hasBin: true
 
   '@shopify/liquid-html-parser@2.9.2':
@@ -12925,7 +12925,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@shopify/generate-docs@1.1.1':
+  '@shopify/generate-docs@1.2.0':
     dependencies:
       '@types/react': 18.3.12
       globby: 11.1.0

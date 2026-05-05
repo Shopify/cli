@@ -1,1 +1,0 @@
-shopify app env pull [flags]

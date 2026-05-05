@@ -1,1 +1,0 @@
-shopify app env show [flags]

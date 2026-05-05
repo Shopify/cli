@@ -1,1 +1,0 @@
-shopify app function typegen [flags]
