@@ -90,7 +90,10 @@ jobs:
         run: pnpm knip
 
   graphql-schema:
-    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+    # Skip on dependabot PRs (no access to required secrets) and on PRs opened
+    # from forks (also no access to secrets), but always run on merge_group
+    # events since merge queue runs from the base repo.
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' && (github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository) }}
     name: 'Check graphql-codegen has been run'
     runs-on: macos-latest
     timeout-minutes: 30
