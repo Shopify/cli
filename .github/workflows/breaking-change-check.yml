@@ -1,0 +1,75 @@
+name: Breaking change check
+
+# Runs the breaking-change detector on PR opens, updates, AND on review
+# submissions. Re-running on review submissions lets the script flip from
+# red to green when a code-owner approves the PR — see the override logic
+# in workspace/src/major-change-check.js.
+#
+# Lives in a dedicated workflow so review events don't re-trigger the full
+# unit/e2e/type-diff suite.
+on:
+  pull_request:
+  pull_request_review:
+    types: [submitted, dismissed, edited]
+  merge_group:
+
+concurrency:
+  group: shopify-cli-breaking-change-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  DEBUG: '1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+  PNPM_VERSION: '10.11.1'
+  BUNDLE_WITHOUT: 'test:development'
+  GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
+  GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
+  DEFAULT_NODE_VERSION: '24.1.0'
+
+jobs:
+  major-change-check:
+    # Skip fork PRs — fork tokens are read-only and the codeowner-override
+    # API calls would fail.
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'merge_group'
+    name: 'Breaking change detection'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+      - name: Check for breaking changes
+        id: check
+        env:
+          # The default GITHUB_TOKEN can read PR reviews and the repo's
+          # CODEOWNERS file, which is all the override needs.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node workspace/src/major-change-check.js
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
+        if: steps.check.outputs.has_breaking_changes == 'true'
+        with:
+          header: Breaking-change-detection
+          message: ${{ steps.check.outputs.report }}
+          recreate: true
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
+        if: steps.check.outputs.has_breaking_changes != 'true'
+        with:
+          header: Breaking-change-detection
+          delete: true
+      - name: Fail if breaking changes detected
+        if: steps.check.outputs.has_breaking_changes == 'true'
+        run: |
+          echo '::error::Breaking changes detected. See the sticky comment on the PR for details. A code-owner approval on this PR will turn this check green.'
+          exit 1
