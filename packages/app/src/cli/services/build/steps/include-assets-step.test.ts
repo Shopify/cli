@@ -18,7 +18,8 @@ describe('executeIncludeAssetsStep', () => {
     mockExtension = {
       directory: '/test/extension',
       outputPath: '/test/output/extension.js',
-    } as ExtensionInstance
+      addWatchedPath: vi.fn(),
+    } as unknown as ExtensionInstance
 
     mockContext = {
       extension: mockExtension,
@@ -230,6 +231,72 @@ describe('executeIncludeAssetsStep', () => {
       // Then
       expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/public', '/test/output')
       expect(result.filesCopied).toBe(2)
+    })
+
+    test('registers directory source paths as watched paths on the extension', async () => {
+      // Given
+      const addWatchedPath = vi.fn()
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {static_root: 'public'},
+          addWatchedPath,
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['index.html', 'logo.png'])
+
+      const step: LifecycleStep = {
+        id: 'copy-static',
+        name: 'Copy Static',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', key: 'static_root'}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — directory source is registered as a watched path
+      expect(addWatchedPath).toHaveBeenCalledWith('/test/extension/public')
+    })
+
+    test('does not register file source paths as watched paths', async () => {
+      // Given
+      const addWatchedPath = vi.fn()
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {schema_path: 'src/schema.json'},
+          addWatchedPath,
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(false)
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: LifecycleStep = {
+        id: 'copy-schema',
+        name: 'Copy Schema',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', key: 'schema_path'}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — file sources are not registered as watched paths
+      expect(addWatchedPath).not.toHaveBeenCalled()
     })
 
     test('skips silently when configKey is absent from config', async () => {

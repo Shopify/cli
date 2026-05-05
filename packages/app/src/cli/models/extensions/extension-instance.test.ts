@@ -717,6 +717,81 @@ describe('watchedFiles', async () => {
       vi.mocked(extractImportPathsRecursively).mockReset()
     })
   })
+
+  test('includes additional watched paths registered via addWatchedPath', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionInstance = await testUIExtension({
+        directory: tmpDir,
+        entrySourceFilePath: joinPath(tmpDir, 'src', 'index.ts'),
+      })
+
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.ts'), 'code')
+
+      vi.mocked(extractImportPathsRecursively).mockImplementation((filePath) => [filePath])
+
+      const assetsDir = joinPath(tmpDir, 'assets')
+      await mkdir(assetsDir)
+      extensionInstance.addWatchedPath(assetsDir)
+
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      expect(watchedFiles).toContain(assetsDir)
+
+      vi.mocked(extractImportPathsRecursively).mockReset()
+    })
+  })
+
+  test('clearWatchedPaths removes all registered paths', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionInstance = await testUIExtension({
+        directory: tmpDir,
+        entrySourceFilePath: joinPath(tmpDir, 'src', 'index.ts'),
+      })
+
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.ts'), 'code')
+
+      vi.mocked(extractImportPathsRecursively).mockImplementation((filePath) => [filePath])
+
+      extensionInstance.addWatchedPath(joinPath(tmpDir, 'assets'))
+      extensionInstance.clearWatchedPaths()
+
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      expect(watchedFiles).not.toContain(joinPath(tmpDir, 'assets'))
+
+      vi.mocked(extractImportPathsRecursively).mockReset()
+    })
+  })
+
+  test('getWatchedPaths returns registered paths', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionInstance = await testUIExtension({directory: tmpDir})
+
+      const assetsDir = joinPath(tmpDir, 'assets')
+      extensionInstance.addWatchedPath(assetsDir)
+
+      const paths = extensionInstance.getWatchedPaths()
+
+      expect(paths.has(assetsDir)).toBe(true)
+      expect(paths.size).toBe(1)
+    })
+  })
+
+  test('addWatchedPath deduplicates identical paths', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionInstance = await testUIExtension({directory: tmpDir})
+
+      const assetsDir = joinPath(tmpDir, 'assets')
+      extensionInstance.addWatchedPath(assetsDir)
+      extensionInstance.addWatchedPath(assetsDir)
+
+      expect(extensionInstance.getWatchedPaths().size).toBe(1)
+    })
+  })
 })
 
 describe('rescanImports', async () => {

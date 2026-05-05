@@ -151,7 +151,12 @@ export async function executeIncludeAssetsStep(
       usedBasenames,
       preserveFilePaths: entry.preserveFilePaths,
     })
-    result.pathMap.forEach((val, key) => aggregatedPathMap.set(key, val))
+    result.pathMap.forEach((val, key) => {
+      aggregatedPathMap.set(key, val)
+      if (Array.isArray(val)) {
+        extension.addWatchedPath(joinPath(extension.directory, key))
+      }
+    })
     configKeyCount += result.filesCopied
   }
 

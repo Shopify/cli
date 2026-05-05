@@ -51,6 +51,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   specification: ExtensionSpecification
   uid: string
   private cachedImportPaths?: string[]
+  private readonly additionalWatchedPaths = new Set<string>()
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -460,7 +461,21 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       watchedFiles.push(...importedFiles)
     }
 
+    watchedFiles.push(...this.additionalWatchedPaths)
+
     return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
+  }
+
+  addWatchedPath(absolutePath: string): void {
+    this.additionalWatchedPaths.add(normalizePath(absolutePath))
+  }
+
+  getWatchedPaths(): ReadonlySet<string> {
+    return this.additionalWatchedPaths
+  }
+
+  clearWatchedPaths(): void {
+    this.additionalWatchedPaths.clear()
   }
 
   /**

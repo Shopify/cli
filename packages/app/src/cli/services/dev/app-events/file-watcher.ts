@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {configurationFileNames} from '../../../constants.js'
-import {dirname, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {basename, dirname, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -59,7 +59,7 @@ export class FileWatcher {
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
-  // Map of file paths to the extension handles that watch them
+  // Map of watched paths (files and directories) to the extension handles that own them
   private readonly extensionWatchedFiles = new Map<string, Set<string>>()
 
   constructor(
@@ -159,16 +159,32 @@ export class FileWatcher {
     for (const {extension, watchedFiles} of extensionResults) {
       for (const file of watchedFiles) {
         const normalizedPath = normalizePath(file)
-        allFiles.add(normalizedPath)
 
-        // Track which extension handles watch this file
+        // Track which extension handles watch this path
         const handlesSet = this.extensionWatchedFiles.get(normalizedPath) ?? new Set()
         handlesSet.add(extension.handle)
         this.extensionWatchedFiles.set(normalizedPath, handlesSet)
+
+        // Only pass files to chokidar — directories are already covered by
+        // extension directory watchers
+        if (basename(normalizedPath).includes('.')) {
+          allFiles.add(normalizedPath)
+        }
       }
     }
 
     return Array.from(allFiles)
+  }
+
+  private getExtensionHandlesForFilePath(normalizedPath: string): Set<string> | undefined {
+    const handles = this.extensionWatchedFiles.get(normalizedPath)
+    if (handles) return handles
+    for (const [watchedPath, pathHandles] of this.extensionWatchedFiles) {
+      if (normalizedPath.startsWith(`${watchedPath}/`)) {
+        return pathHandles
+      }
+    }
+    return undefined
   }
 
   /**
@@ -223,6 +239,11 @@ export class FileWatcher {
   private shouldIgnoreEvent(event: WatcherEvent) {
     if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
 
+    // For deleted files, skip the live watchPaths check — the file is already gone from disk
+    // so globSync won't find it. The file was already validated as belonging to the extension
+    // via the cached extensionWatchedFiles map earlier in the flow.
+    if (event.type === 'file_deleted') return false
+
     const extension = event.extensionHandle
       ? this.app.realExtensions.find((ext) => ext.handle === event.extensionHandle)
       : undefined
@@ -251,7 +272,7 @@ export class FileWatcher {
     if (isConfigAppPath) {
       this.handleEventForExtension(event, path, this.app.directory, startTime, false)
     } else {
-      const affectedHandles = this.extensionWatchedFiles.get(normalizedPath)
+      const affectedHandles = this.getExtensionHandlesForFilePath(normalizedPath)
       const isUnknownExtension = affectedHandles === undefined || affectedHandles.size === 0
 
       if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {

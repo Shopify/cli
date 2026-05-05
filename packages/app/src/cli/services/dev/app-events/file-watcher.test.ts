@@ -810,6 +810,100 @@ describe('file-watcher events', () => {
     })
   })
 
+  describe('directory watched path handle resolution', () => {
+    test('resolves extension handle for files inside a watched directory', async () => {
+      // Given — extension with a watched directory (e.g., assets/)
+      const assetsDir = '/extensions/ui_extension_1/assets'
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'my-ext',
+        directory: '/extensions/ui_extension_1',
+      })
+      // watchedFiles() returns individual files AND the directory path.
+      // shouldIgnoreEvent calls matchGlob against this list, so include
+      // a glob pattern for the directory so files inside it are not filtered out.
+      mockExtensionWatchedFiles(ext, ['/extensions/ui_extension_1/index.js', `${assetsDir}/**/*`, assetsDir])
+
+      const app = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const onChange = vi.fn()
+      const fileWatcher = new FileWatcher(app, outputOptions, 50)
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+
+      // When — a file inside the watched directory changes
+      await eventHandler('change', `${assetsDir}/logo.png`)
+      await sleep(0.15)
+
+      // Then — event is emitted with the correct extension handle
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const events = onChange.mock.calls.find((call) => call[0].length > 0)?.[0]
+          expect(events).toBeDefined()
+          expect(events[0].type).toBe('file_updated')
+          expect(events[0].extensionHandle).toBe('my-ext')
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+
+    test('does not pass watched directories to chokidar', async () => {
+      // Given — extension with both files and a directory in watchedFiles
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'my-ext',
+        directory: '/extensions/ui_extension_1',
+      })
+      mockExtensionWatchedFiles(ext, ['/extensions/ui_extension_1/index.js', '/extensions/ui_extension_1/assets'])
+
+      const app = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let watchedPaths: string[] = []
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
+        watchedPaths = paths as string[]
+        return {
+          on: vi.fn().mockReturnThis(),
+          close: vi.fn().mockResolvedValue(undefined),
+        } as any
+      })
+
+      // When
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // Then — files are passed to chokidar but directories are not
+      expect(watchedPaths).toContain('/extensions/ui_extension_1/index.js')
+      expect(watchedPaths).not.toContain('/extensions/ui_extension_1/assets')
+    })
+  })
+
   describe('refreshWatchedFiles', () => {
     test('closes and recreates the watcher with updated paths', async () => {
       // Given
@@ -842,6 +936,69 @@ describe('file-watcher events', () => {
       expect(watchCalls).toBe(2)
       // Should have same paths
       expect(watchedPaths[1]).toEqual(watchedPaths[0])
+    })
+  })
+
+  describe('file deletion events', () => {
+    test('file_deleted event is emitted even when the file is already gone from disk', async () => {
+      // Given: an extension with a watched file
+      const ext = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'del_ext',
+        directory: '/extensions/del_ext',
+      })
+      const filePath = '/extensions/del_ext/assets/image.png'
+      // Simulate real behavior: watchedFiles() returns the file at start,
+      // but after deletion it no longer appears in the glob results
+      let watchedFilesResult: string[] = [filePath]
+      vi.spyOn(ext, 'watchedFiles').mockImplementation(() => watchedFilesResult)
+
+      const testApp = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {
+          ...DEFAULT_CONFIG,
+          extension_directories: ['/extensions'],
+        } as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // Simulate the file being deleted from disk — watchedFiles() no longer returns it
+      watchedFilesResult = []
+      await eventHandler('unlink', filePath, undefined)
+      await sleep(0.15)
+
+      // Then: the file_deleted event should still be emitted
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+          expect(actualEvents).toBeDefined()
+          expect(actualEvents).toHaveLength(1)
+          expect(actualEvents[0].type).toBe('file_deleted')
+          expect(actualEvents[0].path).toBe(normalizePath(filePath))
+          expect(actualEvents[0].extensionHandle).toBe('del_ext')
+        },
+        {timeout: 1000, interval: 50},
+      )
     })
   })
 })

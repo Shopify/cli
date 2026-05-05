@@ -139,7 +139,13 @@ export class AppEventWatcher extends EventEmitter {
           const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
 
           // Build the created/updated extensions and update the extension events with the build result
+          const watchedPathsBefore = new Set(buildableEvents.flatMap((ev) => [...ev.extension.getWatchedPaths()]))
           await this.buildExtensions(buildableEvents)
+          const watchedPathsAfter = new Set(buildableEvents.flatMap((ev) => [...ev.extension.getWatchedPaths()]))
+          const watchedPathsChanged =
+            watchedPathsBefore.size !== watchedPathsAfter.size ||
+            [...watchedPathsAfter].some((watchedPath) => !watchedPathsBefore.has(watchedPath))
+          if (watchedPathsChanged) await this.fileWatcher?.start()
 
           // Generate the extension types after building the extensions so new imports are included
           // Skip if the app was reloaded, as generateExtensionTypes was already called during reload
