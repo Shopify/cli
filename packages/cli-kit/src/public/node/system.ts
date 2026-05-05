@@ -6,7 +6,7 @@ import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from './output.js'
-import {execa, execaCommand, ExecaChildProcess} from 'execa'
+import {execa, ExecaChildProcess} from 'execa'
 import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
 import {delimiter} from 'pathe'
@@ -206,12 +206,13 @@ export async function execCommand(command: string, options?: ExecOptions): Promi
     env.FORCE_COLOR = '1'
   }
   const executionCwd = options?.cwd ?? cwd()
-  const [cmd] = parseCommand(command)
-  if (cmd) {
-    checkCommandSafety(cmd, {cwd: executionCwd})
+  const [cmd, ...args] = parseCommand(command)
+  if (!cmd) {
+    throw new AbortError('Empty command')
   }
+  checkCommandSafety(cmd, {cwd: executionCwd})
   try {
-    await execaCommand(command, {
+    await execa(cmd, args, {
       env,
       cwd: executionCwd,
       stdin: options?.stdin,
