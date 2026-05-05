@@ -12,6 +12,7 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {callingAgent} from '@shopify/cli-kit/node/context/agent'
 
 interface StoreAuthInput {
   store: string
@@ -52,10 +53,12 @@ export async function authenticateStoreWithApp(
     )
   }
 
+  const agent = callingAgent()
   const bootstrap = createPkceBootstrap({
     store,
     scopes,
     exchangeCodeForToken: resolvedDependencies.exchangeStoreAuthCodeForToken,
+    connectionName: agent === 'UNKNOWN' ? undefined : agent,
   })
   const {
     authorization: {authorizationUrl},
