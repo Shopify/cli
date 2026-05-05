@@ -158,7 +158,7 @@ export default class Init extends AppLinkedCommand {
 async function getAppName(directory: string): Promise<string> {
   for (let i = 0; i < 3; i++) {
     // eslint-disable-next-line no-await-in-loop
-    const name = await generateRandomNameForSubdirectory({suffix: 'app', directory})
+    const name = await generateRandomNameForSubdirectory({suffix: 'app', directory, titleCase: true})
     if (isValidName(name)) return name
   }
   return ''

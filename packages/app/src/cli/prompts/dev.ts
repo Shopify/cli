@@ -11,6 +11,7 @@ import {
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
+import {hyphenate} from '@shopify/cli-kit/common/string'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -143,6 +144,10 @@ export async function appNamePrompt(currentName: string): Promise<string> {
   return renderTextPrompt({
     message: 'App name',
     defaultValue: currentName,
+    preview: (value) => {
+      const folderName = hyphenate(value || currentName)
+      return ['Folder name:', {userInput: folderName}]
+    },
     validate: (value) => {
       if (value.length === 0) {
         return "App name can't be empty"

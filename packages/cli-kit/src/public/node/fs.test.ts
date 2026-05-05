@@ -240,6 +240,42 @@ describe('makeDirectoryWithRandomName', () => {
       expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
     })
   })
+
+  test('returns a Title Case name when titleCase option is true', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('adaptive')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('vertical')
+
+      // When
+      const got = await generateRandomNameForSubdirectory({suffix: 'app', directory: tmpDir, titleCase: true})
+
+      // Then
+      expect(got).toEqual('Adaptive Vertical App')
+    })
+  })
+
+  test('checks hyphenated directory name for collisions when titleCase is true', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - create a directory with the hyphenated version of the first attempt
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('taken')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('name')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('free')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('name')
+
+      const content = 'test'
+      // The hyphenated form of "Taken Name App" is "taken-name-app"
+      const filePath = joinPath(tmpDir, 'taken-name-app')
+      await writeFile(filePath, content)
+
+      // When
+      const got = await generateRandomNameForSubdirectory({suffix: 'app', directory: tmpDir, titleCase: true})
+
+      // Then - should have rerolled and returned the second attempt
+      expect(got).toEqual('Free Name App')
+      expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
+    })
+  })
 })
 
 describe('readFileSync', () => {
