@@ -620,6 +620,34 @@ describe('AutocompletePrompt', async () => {
     `)
   })
 
+  test('searchDebounceMs: 0 invokes search on every keystroke without throttling', async () => {
+    const search = vi.fn(async (term: string) => ({
+      data: DATABASE.filter((item) => item.label.includes(term)),
+    }))
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={DATABASE}
+        onSubmit={() => {}}
+        search={search}
+        searchDebounceMs={0}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, 'f')
+    await sendInputAndWaitForChange(renderInstance, 'i')
+    await sendInputAndWaitForChange(renderInstance, 'r')
+
+    // With the default 400ms throttle, three rapid keystrokes coalesce to ~2 calls
+    // (leading + trailing edge). With searchDebounceMs=0, each keystroke fires.
+    expect(search).toHaveBeenCalledTimes(3)
+    expect(search).toHaveBeenNthCalledWith(1, 'f')
+    expect(search).toHaveBeenNthCalledWith(2, 'fi')
+    expect(search).toHaveBeenNthCalledWith(3, 'fir')
+  })
+
   test('displays an error message if the search fails', async () => {
     const search = (_term: string) => {
       return Promise.reject(new Error('Something went wrong'))
