@@ -87,7 +87,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Run knip
-        run: pnpm knip
+        run: node bin/run-knip-ci.js
 
   graphql-schema:
     # Skip on dependabot PRs (no access to required secrets) and on PRs opened
