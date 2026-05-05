@@ -68,6 +68,7 @@ describe('cleanup', () => {
       await writeFile(joinPath(tmpDir, 'package-lock.json'), '{}')
       await writeFile(joinPath(tmpDir, 'yarn.lock'), '{}')
       await writeFile(joinPath(tmpDir, 'pnpm-lock.yaml'), '{}')
+      await writeFile(joinPath(tmpDir, 'bun.lock'), '{}')
       await writeFile(joinPath(tmpDir, 'bun.lockb'), '{}')
 
       // When
@@ -77,6 +78,7 @@ describe('cleanup', () => {
       await expect(fileExists(joinPath(tmpDir, 'package-lock.json'))).resolves.toBe(packageManager === 'npm')
       await expect(fileExists(joinPath(tmpDir, 'yarn.lock'))).resolves.toBe(packageManager === 'yarn')
       await expect(fileExists(joinPath(tmpDir, 'pnpm-lock.yaml'))).resolves.toBe(packageManager === 'pnpm')
+      await expect(fileExists(joinPath(tmpDir, 'bun.lock'))).resolves.toBe(packageManager === 'bun')
       await expect(fileExists(joinPath(tmpDir, 'bun.lockb'))).resolves.toBe(packageManager === 'bun')
     })
   })
@@ -87,6 +89,7 @@ describe('cleanup', () => {
       await writeFile(joinPath(tmpDir, 'package-lock.json'), '{}')
       await writeFile(joinPath(tmpDir, 'yarn.lock'), '{}')
       await writeFile(joinPath(tmpDir, 'pnpm-lock.yaml'), '{}')
+      await writeFile(joinPath(tmpDir, 'bun.lock'), '{}')
       await writeFile(joinPath(tmpDir, 'bun.lockb'), '{}')
 
       // When
@@ -96,6 +99,7 @@ describe('cleanup', () => {
       await expect(fileExists(joinPath(tmpDir, 'package-lock.json'))).resolves.toBe(false)
       await expect(fileExists(joinPath(tmpDir, 'yarn.lock'))).resolves.toBe(false)
       await expect(fileExists(joinPath(tmpDir, 'pnpm-lock.yaml'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(tmpDir, 'bun.lock'))).resolves.toBe(false)
       await expect(fileExists(joinPath(tmpDir, 'bun.lockb'))).resolves.toBe(false)
     })
   })

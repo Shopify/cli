@@ -29,16 +29,16 @@ const modernBunLockfile = 'bun.lock'
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
 
 /** An array containing the lockfiles from all the package managers */
-export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile, bunLockfile]
-export const lockfilesByManager: Record<PackageManager, Lockfile | undefined> = {
-  yarn: yarnLockfile,
-  npm: npmLockfile,
-  pnpm: pnpmLockfile,
-  bun: bunLockfile,
-  homebrew: undefined,
-  unknown: undefined,
+export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile, bunLockfile, modernBunLockfile]
+export const lockfilesByManager: Record<PackageManager, Lockfile[]> = {
+  yarn: [yarnLockfile],
+  npm: [npmLockfile],
+  pnpm: [pnpmLockfile],
+  bun: [bunLockfile, modernBunLockfile],
+  homebrew: [],
+  unknown: [],
 }
-export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb'
+export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb' | 'bun.lock'
 
 /**
  * A union type that represents the type of dependencies in the package.json
