@@ -22,6 +22,7 @@ import {
   inferPackageManager,
   PackageManager,
   npmLockfile,
+  lockfilesByManager,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -129,6 +130,12 @@ describe('install', () => {
     expect(mockedExec).toHaveBeenCalledWith(packageManager, ['install', 'arg1'], {
       cwd: directory,
     })
+  })
+})
+
+describe('lockfilesByManager', () => {
+  test('maps Bun to both lockfile names', () => {
+    expect(lockfilesByManager.bun).toEqual(['bun.lockb', 'bun.lock'])
   })
 })
 
