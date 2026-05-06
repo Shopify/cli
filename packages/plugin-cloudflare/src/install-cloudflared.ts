@@ -10,11 +10,10 @@ import {
   unlinkFileSync,
   createFileWriteStream,
 } from '@shopify/cli-kit/node/fs'
+import {captureOutputWithExitCode, exec} from '@shopify/cli-kit/node/system'
 import {fileURLToPath} from 'url'
 import util from 'util'
 import {pipeline} from 'stream'
-// eslint-disable-next-line no-restricted-imports
-import {execSync, execFileSync} from 'child_process'
 
 export const CURRENT_CLOUDFLARE_VERSION = '2024.8.2'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CURRENT_CLOUDFLARE_VERSION}/`
@@ -82,7 +81,8 @@ export default async function install(env = process.env, platform = process.plat
   if (fileExistsSync(binTarget)) {
     // --version returns an string like "cloudflared version 2023.3.1 (built 2023-03-13-1444 UTC)"
     try {
-      const versionArray = execFileSync(binTarget, ['--version'], {encoding: 'utf8'}).split(' ')
+      const {stdout} = await captureOutputWithExitCode(binTarget, ['--version'])
+      const versionArray = stdout.split(' ')
       const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
       const needsUpdate = versionIsGreaterThan(CURRENT_CLOUDFLARE_VERSION, versionNumber!)
       if (!needsUpdate) {
@@ -132,7 +132,7 @@ async function installWindows(file: string, binTarget: string) {
 async function installMacos(file: string, binTarget: string) {
   await downloadFile(file, `${binTarget}.tgz`)
   const filename = basename(`${binTarget}.tgz`)
-  execSync(`tar -xzf ${filename}`, {cwd: dirname(binTarget)})
+  await exec('tar', ['-xzf', filename], {cwd: dirname(binTarget)})
   unlinkFileSync(`${binTarget}.tgz`)
   await renameFile(`${dirname(binTarget)}/cloudflared`, binTarget)
 }
