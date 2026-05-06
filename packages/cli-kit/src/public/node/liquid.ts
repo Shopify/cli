@@ -14,6 +14,18 @@ import {joinPath, dirname, relativePath} from './path.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import {Liquid} from 'liquidjs'
 
+let liquidEngine: Liquid | undefined
+
+/**
+ * Returns a shared instance of the Liquid template engine.
+ *
+ * @returns Shared Liquid instance.
+ */
+function getLiquidEngine(): Liquid {
+  liquidEngine ??= new Liquid()
+  return liquidEngine
+}
+
 /**
  * Renders a template using the Liquid template engine.
  *
@@ -21,8 +33,14 @@ import {Liquid} from 'liquidjs'
  * @param data - Data to feed the template engine.
  * @returns Rendered template.
  */
-export function renderLiquidTemplate(templateContent: string, data: object): Promise<string> {
-  const engine = new Liquid()
+export async function renderLiquidTemplate(templateContent: string, data: object): Promise<string> {
+  // Optimization: If the content doesn't contain any Liquid tags, we can return it as is.
+  // This avoids the overhead of parsing and rendering the template.
+  if (!templateContent.includes('{{') && !templateContent.includes('{%')) {
+    return templateContent
+  }
+
+  const engine = getLiquidEngine()
   return engine.render(engine.parse(templateContent), data)
 }
 
