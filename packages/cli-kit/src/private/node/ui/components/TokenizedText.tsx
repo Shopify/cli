@@ -4,7 +4,8 @@ import {List} from './List.js'
 import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
-import React, {FunctionComponent} from 'react'
+import {LinksContext} from '../contexts/LinksContext.js'
+import React, {FunctionComponent, useContext} from 'react'
 import {Box, Text} from 'ink'
 
 export interface LinkToken {
@@ -148,13 +149,74 @@ interface TokenizedTextProps {
   item: TokenItem
 }
 
+// Matches CommonMark inline links of the form `[label](url)` and autolinks of
+// the form `<url>`. We deliberately require an explicit `http://` or
+// `https://` scheme on the URL so callers can't accidentally trigger
+// linkification by typing square brackets or angle brackets in plain prose.
+//
+// The URL portion forbids whitespace, the closing delimiter (`)` or `>`), and
+// `<` to keep parsing predictable. URLs that legitimately contain those
+// characters (e.g. balanced parens) must be percent-encoded by the caller —
+// per CommonMark §6.3 / §6.4.
+const MARKDOWN_LINK_REGEX = /\[([^[\]]+)\]\((https?:\/\/[^()<>\s]+)\)|<(https?:\/\/[^<>\s]+)>/g
+
+/**
+ * Parses an opt-in CommonMark link or autolink from a plain string token and
+ * routes the result through the existing `<Link>` component.
+ *
+ * Why opt-in rather than auto-detection: server-returned error strings can
+ * legitimately contain URL-shaped substrings that are not meant to be
+ * clickable (e.g. a tunnel-URL validation error echoing back the user's bad
+ * input). Requiring the explicit `[label](url)` / `<url>` shape lets the
+ * source of the message (server or client) declare intent, and keeps prose
+ * with bare URLs untouched.
+ *
+ * Only invoked when a `LinksContext` is present (i.e. inside a Banner /
+ * Alert / FatalError); outside of that, the underlying `<Link>` would render
+ * the URL inline and we'd defeat the wrap-resistance the footnote mechanism
+ * provides.
+ */
+function renderStringWithMarkdownLinks(str: string): JSX.Element {
+  const matches = Array.from(str.matchAll(MARKDOWN_LINK_REGEX))
+  if (matches.length === 0) {
+    return <Text>{str}</Text>
+  }
+
+  const parts: JSX.Element[] = []
+  let cursor = 0
+  matches.forEach((match, index) => {
+    const start = match.index
+    if (start === undefined) {
+      return
+    }
+    const end = start + match[0].length
+    if (start > cursor) {
+      parts.push(<Text key={`t${index}`}>{str.slice(cursor, start)}</Text>)
+    }
+    // `[label](url)` captures label in group 1 and url in group 2;
+    // `<url>` autolinks capture only the url in group 3.
+    const label = match[1]
+    const url = match[2] ?? match[3]
+    if (url === undefined) {
+      return
+    }
+    parts.push(<Link key={`l${index}`} label={label} url={url} />)
+    cursor = end
+  })
+  if (cursor < str.length) {
+    parts.push(<Text key="tail">{str.slice(cursor)}</Text>)
+  }
+  return <Text>{parts}</Text>
+}
+
 /**
  * `TokenizedText` renders a text string with tokens that can be either strings,
  * links, and commands.
  */
 const TokenizedText: FunctionComponent<TokenizedTextProps> = ({item}) => {
+  const linksContext = useContext(LinksContext)
   if (typeof item === 'string') {
-    return <Text>{item}</Text>
+    return linksContext === null ? <Text>{item}</Text> : renderStringWithMarkdownLinks(item)
   } else if ('command' in item) {
     return <Command command={item.command} />
   } else if ('link' in item) {

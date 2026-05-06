@@ -48,7 +48,15 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
         </Text>
       ) : null}
 
-      {error.formattedMessage ? <TokenizedText item={error.formattedMessage} /> : <Text>{error.message}</Text>}
+      {error.formattedMessage ? (
+        <TokenizedText item={error.formattedMessage} />
+      ) : (
+        // Route plain-string error messages through TokenizedText so that any
+        // opt-in `[label](url)` / `<url>` markdown the server (or the caller)
+        // emits is rendered as a footnote-backed Link inside the FatalError
+        // banner.
+        <TokenizedText item={error.message} />
+      )}
 
       {error.tryMessage ? <TokenizedText item={error.tryMessage} /> : null}
 
