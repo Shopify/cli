@@ -30,14 +30,11 @@ interface Template {
 }
 
 export function buildNoneTemplate(): Template {
-  const hostedAppsEnabled = isHostedAppsMode()
   return {
-    url: hostedAppsEnabled
+    url: isHostedAppsMode()
       ? 'https://github.com/Shopify/shopify-app-template-extension-only'
       : 'https://github.com/Shopify/shopify-app-template-none',
-    label: hostedAppsEnabled
-      ? 'Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)'
-      : 'Build an extension-only app',
+    label: 'Build an extension-only app',
     visible: true,
   }
 }
