@@ -12,16 +12,15 @@ interface LinkProps {
 
 function link(label: string | undefined, url: string, linksContext: LinksContextValue | null) {
   if (!supportsHyperlinks.stdout) {
-    if (url === (label ?? url)) {
-      return url
-    }
-
     if (linksContext === null) {
+      if (url === (label ?? url)) {
+        return url
+      }
       return label ? `${label} ${chalk.dim(`( ${url} )`)}` : url
     }
 
     const linkId = linksContext.addLink(label, url)
-    return `${label ?? url} [${linkId}]`
+    return label ? `${label} [${linkId}]` : `[${linkId}]`
   }
 
   return ansiEscapes.link(label ?? url, url)
