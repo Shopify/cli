@@ -38,7 +38,6 @@ export async function prepareAdminStoreGraphQLContext(input: {
   store: string
   userSpecifiedVersion?: string
 }): Promise<AdminStoreGraphQLContext> {
-  await recordStoreFqdnMetadata(input.store, false)
   const session = await loadStoredStoreSession(input.store)
   await recordStoreFqdnMetadata(session.store, true)
   setLastSeenUserId(session.userId)

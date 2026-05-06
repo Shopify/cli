@@ -41,8 +41,8 @@ describe('prepareAdminStoreGraphQLContext', () => {
     const result = await prepareAdminStoreGraphQLContext({store})
 
     expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, store, false)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, store, true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
     expect(fetchPublicApiVersions).toHaveBeenCalledWith({
       adminSession: {token: 'token', storeFqdn: store},
@@ -84,8 +84,8 @@ describe('prepareAdminStoreGraphQLContext', () => {
     const result = await prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: 'unstable'})
 
     expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, store, false)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, store, true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
     expect(result).toEqual({
       adminSession: {token: 'token', storeFqdn: store},
       version: 'unstable',
@@ -98,16 +98,15 @@ describe('prepareAdminStoreGraphQLContext', () => {
     await expect(prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: '1999-01'})).rejects.toThrow(
       'Invalid API version',
     )
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, store, false)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, store, true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
   })
 
-  test('records the requested store before failing to load stored auth', async () => {
+  test('does not record validated store metadata when loading stored auth fails', async () => {
     vi.mocked(loadStoredStoreSession).mockRejectedValue(new AbortError('missing stored auth'))
 
     await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('missing stored auth')
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, false)
-    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith(store, true)
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
     expect(fetchPublicApiVersions).not.toHaveBeenCalled()
   })
 
@@ -116,15 +115,15 @@ describe('prepareAdminStoreGraphQLContext', () => {
 
     await prepareAdminStoreGraphQLContext({store})
 
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, store, false)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, 'permanent-shop.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('permanent-shop.myshopify.com', true)
   })
 
   test('rethrows whatever the transport raises (errors are owned by the transport)', async () => {
     vi.mocked(fetchPublicApiVersions).mockRejectedValue(new AbortError('upstream exploded'))
 
     await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('upstream exploded')
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, store, false)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, store, true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
   })
 })

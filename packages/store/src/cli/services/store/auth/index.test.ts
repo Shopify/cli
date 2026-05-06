@@ -272,6 +272,30 @@ describe('store auth service', () => {
     expect(presenter.success).toHaveBeenCalledWith(result)
   })
 
+  test('authenticateStoreWithApp records fqdn metadata before resolving existing scopes', async () => {
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products',
+        },
+        {
+          resolveExistingScopes: vi.fn().mockRejectedValue(new Error('scope lookup failed')),
+          presenter: {
+            openingBrowser: vi.fn(),
+            manualAuthUrl: vi.fn(),
+            success: vi.fn(),
+          },
+        },
+      ),
+    ).rejects.toThrow('scope lookup failed')
+
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith('shop.myshopify.com', true)
+    expect(setLastSeenUserId).not.toHaveBeenCalled()
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
   test('authenticateStoreWithApp records fqdn metadata before waiting for the auth callback', async () => {
     const waitForStoreAuthCodeMock = vi.fn().mockRejectedValue(new Error('callback failed'))
 
@@ -296,6 +320,72 @@ describe('store auth service', () => {
 
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
     expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith('shop.myshopify.com', true)
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
+  test('authenticateStoreWithApp does not mark the store validated when token exchange fails', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products',
+        },
+        {
+          openURL: vi.fn().mockResolvedValue(true),
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken: vi.fn().mockRejectedValue(new Error('token exchange failed')),
+          presenter: {
+            openingBrowser: vi.fn(),
+            manualAuthUrl: vi.fn(),
+            success: vi.fn(),
+          },
+        },
+      ),
+    ).rejects.toThrow('token exchange failed')
+
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith('shop.myshopify.com', true)
+    expect(setLastSeenUserId).not.toHaveBeenCalled()
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
+  test('authenticateStoreWithApp marks the store validated after token exchange but before rejecting missing associated user data', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products',
+        },
+        {
+          openURL: vi.fn().mockResolvedValue(true),
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+            access_token: 'token',
+            scope: 'read_products',
+            expires_in: 86400,
+          }),
+          presenter: {
+            openingBrowser: vi.fn(),
+            manualAuthUrl: vi.fn(),
+            success: vi.fn(),
+          },
+        },
+      ),
+    ).rejects.toThrow('Shopify did not return associated user information for the online access token.')
+
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, 'shop.myshopify.com', false)
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, 'shop.myshopify.com', true)
+    expect(setLastSeenUserId).not.toHaveBeenCalled()
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
 

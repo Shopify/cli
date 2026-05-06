@@ -40,6 +40,7 @@ export async function authenticateStoreWithApp(
 ): Promise<StoreAuthResult> {
   const resolvedDependencies: StoreAuthDependencies = {...defaultStoreAuthDependencies, ...dependencies}
   const store = normalizeStoreFqdn(input.store)
+  await recordStoreFqdnMetadata(store, false)
   const requestedScopes = parseStoreAuthScopes(input.scopes)
   const existingScopeResolution = await resolvedDependencies.resolveExistingScopes(store)
   const scopes = mergeRequestedAndStoredScopes(requestedScopes, existingScopeResolution.scopes)
@@ -60,7 +61,6 @@ export async function authenticateStoreWithApp(
     authorization: {authorizationUrl},
   } = bootstrap
 
-  await recordStoreFqdnMetadata(store, false)
   resolvedDependencies.presenter.openingBrowser()
 
   const code = await resolvedDependencies.waitForStoreAuthCode({
@@ -70,8 +70,8 @@ export async function authenticateStoreWithApp(
       if (!opened) resolvedDependencies.presenter.manualAuthUrl(authorizationUrl)
     },
   })
-  await recordStoreFqdnMetadata(store, true)
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
+  await recordStoreFqdnMetadata(store, true)
 
   const userId = tokenResponse.associated_user?.id?.toString()
   if (!userId) {
