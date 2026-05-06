@@ -2,4 +2,4 @@
 '@shopify/theme': patch
 ---
 
-Upload `config/settings_schema.json` before block, section, section-group, and template assets so dynamic-source defaults referencing newly declared theme-level settings validate correctly on the first push to a fresh dev theme.
+Upload `config/settings_schema.json` before any other theme file. Fixes `theme push` failing on the first push when blocks or sections reference a `color_palette` theme setting.
