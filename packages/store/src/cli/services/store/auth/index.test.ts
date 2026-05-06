@@ -1,7 +1,7 @@
 import {authenticateStoreWithApp} from './index.js'
 import {setStoredStoreAppSession} from './session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
-import {recordStoreCommandShopIdFromAdminApi} from '../metrics.js'
+import {recordStoreFqdnMetadata} from '../metrics.js'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -56,8 +56,8 @@ describe('store auth service', () => {
       }),
     )
     expect(presenter.success).toHaveBeenCalledWith(result)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com')
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
-    expect(recordStoreCommandShopIdFromAdminApi).toHaveBeenCalledWith({store: 'shop.myshopify.com', accessToken: 'token'})
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
     expect(storedSession.store).toBe('shop.myshopify.com')
@@ -269,6 +269,32 @@ describe('store auth service', () => {
       expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
     )
     expect(presenter.success).toHaveBeenCalledWith(result)
+  })
+
+  test('authenticateStoreWithApp records fqdn metadata before waiting for the auth callback', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockRejectedValue(new Error('callback failed'))
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products',
+        },
+        {
+          openURL: vi.fn().mockResolvedValue(true),
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken: vi.fn(),
+          presenter: {
+            openingBrowser: vi.fn(),
+            manualAuthUrl: vi.fn(),
+            success: vi.fn(),
+          },
+        },
+      ),
+    ).rejects.toThrow('callback failed')
+
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com')
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
   test('authenticateStoreWithApp rejects when Shopify grants fewer scopes than requested', async () => {
