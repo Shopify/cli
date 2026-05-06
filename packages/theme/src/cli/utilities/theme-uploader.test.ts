@@ -1,10 +1,12 @@
 import {renderTasksToStdErr} from './theme-ui.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {
+  ChecksumWithSize,
   MAX_BATCH_BYTESIZE,
   MAX_BATCH_FILE_COUNT,
   MAX_UPLOAD_RETRY_COUNT,
   MINIMUM_THEME_ASSETS,
+  orderFilesToBeUploaded,
   uploadTheme,
   updateUploadErrors,
 } from './theme-uploader.js'
@@ -319,17 +321,19 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(9)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(10)
     // Minimum theme files start first
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(1, remoteTheme.id, MINIMUM_THEME_ASSETS, adminSession)
-    // Dependent assets start second
+    // settings_schema.json is uploaded first among dependent files so block / section /
+    // section-group / template validators can resolve dynamic-source defaults that
+    // reference theme-level settings declared in the schema.
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       2,
       remoteTheme.id,
-      [{key: 'layout/theme.liquid'}],
+      [{key: 'config/settings_schema.json'}],
       adminSession,
     )
-    // Independent assets start right after dependent assets start
+    // Independent assets fan out concurrently with the dependent chain.
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       3,
       remoteTheme.id,
@@ -346,15 +350,21 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
-    // Dependent assets continue after the first batch of dependent assets ends
+    // Layout files come after the schema is in place.
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       4,
+      remoteTheme.id,
+      [{key: 'layout/theme.liquid'}],
+      adminSession,
+    )
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
+      5,
       remoteTheme.id,
       [{key: 'blocks/block.liquid'}],
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      5,
+      6,
       remoteTheme.id,
       [
         {
@@ -365,7 +375,7 @@ describe('theme-uploader', () => {
     )
 
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      6,
+      7,
       remoteTheme.id,
       [
         {
@@ -376,7 +386,7 @@ describe('theme-uploader', () => {
     )
 
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      7,
+      8,
       remoteTheme.id,
       [
         {
@@ -387,7 +397,7 @@ describe('theme-uploader', () => {
     )
 
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      8,
+      9,
       remoteTheme.id,
       [
         {
@@ -397,19 +407,54 @@ describe('theme-uploader', () => {
       adminSession,
     )
 
+    // settings_data.json must be last
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      9,
+      10,
       remoteTheme.id,
-      [
-        {
-          key: 'config/settings_data.json',
-        },
-        {
-          key: 'config/settings_schema.json',
-        },
-      ],
+      [{key: 'config/settings_data.json'}],
       adminSession,
     )
+  })
+
+  test('orders settings_schema.json first and settings_data.json last in the dependent chain, surrounding every validator-consumer asset', () => {
+    // Regression for the fresh-theme bootstrap bug: blocks, sections, section-group
+    // JSONs and template JSONs run server-side validators that resolve dynamic-source
+    // defaults of the form `{{ settings.<theme_setting>.* }}` against the theme's
+    // currently-stored settings_schema.json. If the user's new schema lands AFTER
+    // those assets, validators see an empty schema and the first push errors out.
+    // settings_data.json must then go LAST because its values are validated against
+    // the freshly-uploaded schema and may reference earlier-uploaded sections/templates.
+    const file = (key: string): ChecksumWithSize => ({key, checksum: '_', size: 0})
+    const files: ChecksumWithSize[] = [
+      file('config/settings_schema.json'),
+      file('config/settings_data.json'),
+      file('layout/theme.liquid'),
+      file('blocks/quantity.liquid'),
+      file('sections/header.liquid'),
+      file('sections/header-group.json'),
+      file('templates/product.json'),
+      file('templates/product.context.uk.json'),
+    ]
+
+    const {dependentFiles} = orderFilesToBeUploaded(files)
+    const flat = dependentFiles.flat().map((f) => f.key)
+
+    expect(flat.at(0)).toBe('config/settings_schema.json')
+    expect(flat.at(-1)).toBe('config/settings_data.json')
+
+    const validatorConsumers = [
+      'blocks/quantity.liquid',
+      'sections/header.liquid',
+      'sections/header-group.json',
+      'templates/product.json',
+      'templates/product.context.uk.json',
+    ]
+    for (const key of validatorConsumers) {
+      const index = flat.indexOf(key)
+      expect(index, `${key} missing from dependent chain`).not.toBe(-1)
+      expect(index, `${key} should be after settings_schema.json`).toBeGreaterThan(0)
+      expect(index, `${key} should be before settings_data.json`).toBeLessThan(flat.length - 1)
+    }
   })
 
   test('should create batches for files when bulk upload file count limit is reached', async () => {
