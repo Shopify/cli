@@ -47,7 +47,7 @@ describe('generateSchemaService', () => {
 
       // Then
       const outputFile = await readFile(joinPath(extension.directory, 'schema.graphql'))
-      expect(outputFile).toEqual('schema')
+      expect(outputFile).toEqual(`# api_version: ${extension.configuration.api_version}\n\nschema`)
     })
   })
 
@@ -72,7 +72,7 @@ describe('generateSchemaService', () => {
       })
 
       // Then
-      expect(mockOutput).toHaveBeenCalledWith('schema')
+      expect(mockOutput).toHaveBeenCalledWith(`# api_version: ${extension.configuration.api_version}\n\nschema`)
     })
   })
 

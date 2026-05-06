@@ -2,6 +2,7 @@ import {formatBundleSize} from './bundle-size.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
+import {validateSchemaApiVersion} from '../function/schema-version.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -156,11 +157,17 @@ export async function buildFunctionExtension(
   }
 
   try {
+    const functionConfiguration = (extension as ExtensionInstance<FunctionConfigType>).configuration
     const bundlePath = extension.outputPath
-    const relativeBuildPath =
-      (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.path ?? extension.outputRelativePath
+    const relativeBuildPath = functionConfiguration.build?.path ?? extension.outputRelativePath
 
     extension.outputPath = joinPath(extension.directory, relativeBuildPath)
+
+    await validateSchemaApiVersion({
+      directory: extension.directory,
+      localIdentifier: extension.localIdentifier,
+      apiVersion: functionConfiguration.api_version,
+    })
 
     if (extension.isJavaScript) {
       await runCommandOrBuildJSFunction(extension, options)
