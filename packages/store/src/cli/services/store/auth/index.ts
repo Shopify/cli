@@ -6,7 +6,7 @@ import {createPkceBootstrap} from './pkce.js'
 import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScopes} from './scopes.js'
 import {resolveExistingStoreAuthScopes, type ResolvedStoreAuthScopes} from './existing-scopes.js'
 import {createStoreAuthPresenter, type StoreAuthPresenter, type StoreAuthResult} from './result.js'
-import {recordStoreFqdnMetadata} from '../metrics.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
@@ -60,7 +60,7 @@ export async function authenticateStoreWithApp(
     authorization: {authorizationUrl},
   } = bootstrap
 
-  await recordStoreFqdnMetadata(store)
+  await recordStoreFqdnMetadata(store, false)
   resolvedDependencies.presenter.openingBrowser()
 
   const code = await resolvedDependencies.waitForStoreAuthCode({
@@ -70,6 +70,7 @@ export async function authenticateStoreWithApp(
       if (!opened) resolvedDependencies.presenter.manualAuthUrl(authorizationUrl)
     },
   })
+  await recordStoreFqdnMetadata(store, true)
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
 
   const userId = tokenResponse.associated_user?.id?.toString()

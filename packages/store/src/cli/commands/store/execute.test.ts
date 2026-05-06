@@ -5,7 +5,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/execute/index.js')
 vi.mock('../../services/store/execute/result.js')
-vi.mock('../../services/store/metrics.js')
+vi.mock('../../services/store/attribution.js')
 
 describe('store execute command', () => {
   beforeEach(() => {

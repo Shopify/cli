@@ -1,12 +1,12 @@
 import {authenticateStoreWithApp} from './index.js'
 import {setStoredStoreAppSession} from './session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
-import {recordStoreFqdnMetadata} from '../metrics.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./session-store.js')
-vi.mock('../metrics.js')
+vi.mock('../attribution.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
@@ -56,7 +56,8 @@ describe('store auth service', () => {
       }),
     )
     expect(presenter.success).toHaveBeenCalledWith(result)
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com')
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, 'shop.myshopify.com', false)
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, 'shop.myshopify.com', true)
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
@@ -293,7 +294,8 @@ describe('store auth service', () => {
       ),
     ).rejects.toThrow('callback failed')
 
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com')
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith('shop.myshopify.com', true)
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
 

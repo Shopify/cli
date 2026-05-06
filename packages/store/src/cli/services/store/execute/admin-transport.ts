@@ -1,6 +1,5 @@
 import {throwReauthenticateStoreAuthError} from '../auth/recovery.js'
 import {clearStoredStoreAppSession} from '../auth/session-store.js'
-import {recordStoreCommandShopIdFromAdminGid} from '../metrics.js'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -18,9 +17,6 @@ interface ApiVersion {
 
 interface PublicApiVersionsResponse {
   publicApiVersions: ApiVersion[]
-  shop?: {
-    id?: string
-  }
 }
 
 const PUBLIC_API_VERSIONS_QUERY = `
@@ -28,9 +24,6 @@ const PUBLIC_API_VERSIONS_QUERY = `
     publicApiVersions {
       handle
       supported
-    }
-    shop {
-      id
     }
   }
 `
@@ -52,7 +45,6 @@ export async function fetchPublicApiVersions(input: {
       token: input.adminSession.token,
       responseOptions: {handleErrors: false},
     })
-    await recordStoreCommandShopIdFromAdminGid(response.shop?.id)
     return response.publicApiVersions
   } catch (error) {
     const status = graphQLClientErrorStatus(error)
