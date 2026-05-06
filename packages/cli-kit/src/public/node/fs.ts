@@ -369,7 +369,7 @@ export function isDirectorySync(path: string): boolean {
  * @returns The size of the file in bytes.
  */
 export async function fileSize(path: string): Promise<number> {
-  outputDebug(outputContent`Getting the size of file file at ${outputToken.path(path)}...`)
+  outputDebug(outputContent`Getting the size of file at ${outputToken.path(path)}...`)
   return (await fsStat(path)).size
 }
 
@@ -380,7 +380,7 @@ export async function fileSize(path: string): Promise<number> {
  * @returns The size of the file in bytes.
  */
 export function fileSizeSync(path: string): number {
-  outputDebug(outputContent`Sync-getting the size of file file at ${outputToken.path(path)}...`)
+  outputDebug(outputContent`Sync-getting the size of file at ${outputToken.path(path)}...`)
   return fsStatSync(path).size
 }
 
