@@ -29,7 +29,7 @@ test.describe('TOML config regression', () => {
       // Overwrite with fully populated TOML fixture (injects the real client_id)
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
-      const result = await cli.exec(['app', 'deploy', '--path', appDir, '--force'], {
+      const result = await cli.exec(['app', 'deploy', '--path', appDir, '--allow-updates', '--allow-deletes'], {
         timeout: CLI_TIMEOUT.long,
       })
       const output = result.stdout + result.stderr

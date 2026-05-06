@@ -28,7 +28,7 @@ test.describe('TOML config invalid', () => {
           JSON.stringify({name: `invalid-${label}`, version: '1.0.0', private: true}),
         )
 
-        const result = await cli.exec(['app', 'deploy', '--path', appDir, '--force'], {
+        const result = await cli.exec(['app', 'deploy', '--path', appDir, '--allow-updates', '--allow-deletes'], {
           timeout: CLI_TIMEOUT.medium,
         })
         const output = result.stdout + result.stderr
