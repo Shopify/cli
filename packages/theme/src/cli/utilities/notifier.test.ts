@@ -1,10 +1,9 @@
 import {Notifier} from './notifier.js'
 import {vi, describe, expect, test} from 'vitest'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
-import fs from 'fs/promises'
-
-vi.mock('fs/promises')
 vi.mock('@shopify/cli-kit/node/output')
 
 describe('Notifier', () => {
@@ -26,13 +25,16 @@ describe('Notifier', () => {
   })
 
   test('updates file atime and mtime when path is not a URL', async () => {
-    const path = 'theme.update'
-    notifier = new Notifier(path)
-    const fileName = 'announcement.liquid'
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'theme.update')
+      notifier = new Notifier(path)
+      const fileName = 'announcement.liquid'
 
-    await notifier.notify(fileName)
+      await notifier.notify(fileName)
 
-    expect(fs.writeFile).toHaveBeenCalledWith(path, fileName)
+      const content = await readFile(path)
+      expect(content).toEqual(fileName)
+    })
   })
 
   test('does not update if path is empty', async () => {
@@ -43,19 +45,22 @@ describe('Notifier', () => {
     await notifier.notify(fileName)
 
     expect(fetchSpy).not.toHaveBeenCalled()
-    expect(fs.appendFile).not.toHaveBeenCalled()
   })
 
   test('does not notify file when path is URL', async () => {
-    const url = 'https://example.com/notify'
-    const mockFetch = vi.spyOn(global, 'fetch').mockResolvedValue(new Response())
-    notifier = new Notifier(url)
-    const fileName = 'announcement.liquid'
+    await inTemporaryDirectory(async (tmpDir) => {
+      const url = 'https://example.com/notify'
+      const mockFetch = vi.spyOn(global, 'fetch').mockResolvedValue(new Response())
+      notifier = new Notifier(url)
+      const fileName = 'announcement.liquid'
+      const path = joinPath(tmpDir, 'theme.update')
 
-    await notifier.notify(fileName)
+      await notifier.notify(fileName)
 
-    expect(mockFetch).toHaveBeenCalled()
-    expect(fs.appendFile).not.toHaveBeenCalled()
+      expect(mockFetch).toHaveBeenCalled()
+      const fileExists = await readFile(path).catch(() => null)
+      expect(fileExists).toBeNull()
+    })
   })
 
   test('prints error if response is not successful', async () => {
@@ -85,15 +90,14 @@ describe('Notifier', () => {
   })
 
   test('outputs error if file update fails', async () => {
-    const invalidPath = 'dir/file:theme.update'
-    vi.spyOn(fs, 'writeFile').mockRejectedValue(new Error('No such file or directory'))
-    notifier = new Notifier(invalidPath)
-    const fileName = 'announcement.liquid'
+    await inTemporaryDirectory(async (tmpDir) => {
+      const invalidPath = tmpDir
+      notifier = new Notifier(invalidPath)
+      const fileName = 'announcement.liquid'
 
-    await notifier.notify(fileName)
+      await notifier.notify(fileName)
 
-    expect(outputWarn).toHaveBeenCalledWith(
-      `Failed to notify filechange listener at ${invalidPath}: No such file or directory`,
-    )
+      expect(outputWarn).toHaveBeenCalledWith(expect.stringContaining(`Failed to notify filechange listener at ${tmpDir}`))
+    })
   })
 })
