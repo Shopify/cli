@@ -1,18 +1,19 @@
 import install, {CURRENT_CLOUDFLARE_VERSION, versionIsGreaterThan} from './install-cloudflared.js'
 import * as fsActions from '@shopify/cli-kit/node/fs'
 import * as http from '@shopify/cli-kit/node/http'
+import * as system from '@shopify/cli-kit/node/system'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import util from 'util'
 
 import {WriteStream} from 'fs'
-// eslint-disable-next-line no-restricted-imports
-import * as childProcess from 'child_process'
 
-vi.mock('child_process')
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('stream')
 
 describe('install-cloudflare', () => {
   beforeEach(() => {
+    vi.mocked(system.captureOutputWithExitCode).mockResolvedValue({stdout: '', stderr: '', exitCode: 0})
+    vi.mocked(system.exec).mockResolvedValue(undefined)
     vi.spyOn(util, 'promisify').mockReturnValue(vi.fn().mockReturnValue(Promise.resolve()))
     vi.spyOn(http, 'fetch').mockReturnValue(Promise.resolve({ok: true, body: {pipe: vi.fn()}} as any))
     vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(false)
@@ -46,6 +47,11 @@ describe('install-cloudflare', () => {
       'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-amd64.tgz',
       expect.anything(),
       'slow-request',
+    )
+    expect(system.exec).toHaveBeenCalledWith(
+      'tar',
+      ['-xzf', expect.stringMatching(/\.tgz$/)],
+      expect.objectContaining({cwd: expect.any(String)}),
     )
   })
 
@@ -98,28 +104,68 @@ describe('install-cloudflare', () => {
     // Given
     const env = {}
     vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(true)
-    vi.spyOn(childProcess, 'execFileSync').mockReturnValue(
-      `cloudflared version ${CURRENT_CLOUDFLARE_VERSION} (built 2023-03-13-1444 UTC)`,
-    )
+    vi.mocked(system.captureOutputWithExitCode).mockResolvedValue({
+      stdout: `cloudflared version ${CURRENT_CLOUDFLARE_VERSION} (built 2023-03-13-1444 UTC)`,
+      stderr: '',
+      exitCode: 0,
+    })
 
     // When
     await install(env, 'win32', 'x64')
 
     // Then
     expect(http.fetch).not.toHaveBeenCalled()
+    expect(system.captureOutputWithExitCode).toHaveBeenCalledWith(expect.any(String), ['--version'])
   })
 
   test('install works if bin exists and current version is not up to date', async () => {
     // Given
     const env = {}
     vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(true)
-    vi.spyOn(childProcess, 'execFileSync').mockReturnValue(`cloudflared version 2000.0.0 (built 2023-03-13-1444 UTC)`)
+    vi.mocked(system.captureOutputWithExitCode).mockResolvedValue({
+      stdout: `cloudflared version 2000.0.0 (built 2023-03-13-1444 UTC)`,
+      stderr: '',
+      exitCode: 0,
+    })
 
     // When
     await install(env, 'darwin', 'x64')
 
     // Then
     expect(http.fetch).toHaveBeenCalled()
+    expect(system.captureOutputWithExitCode).toHaveBeenCalledWith(expect.any(String), ['--version'])
+  })
+
+  test('install reinstalls if version check throws', async () => {
+    // Given
+    const env = {}
+    vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(true)
+    vi.mocked(system.captureOutputWithExitCode).mockRejectedValue(new Error('ENOENT'))
+
+    // When
+    await install(env, 'linux', 'x64')
+
+    // Then
+    expect(http.fetch).toHaveBeenCalled()
+    expect(system.captureOutputWithExitCode).toHaveBeenCalledWith(expect.any(String), ['--version'])
+  })
+
+  test('install reinstalls if version check exits with non-zero code', async () => {
+    // Given
+    const env = {}
+    vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(true)
+    vi.mocked(system.captureOutputWithExitCode).mockResolvedValue({
+      stdout: `cloudflared version ${CURRENT_CLOUDFLARE_VERSION} (built 2023-03-13-1444 UTC)`,
+      stderr: 'permission denied',
+      exitCode: 1,
+    })
+
+    // When
+    await install(env, 'linux', 'x64')
+
+    // Then
+    expect(http.fetch).toHaveBeenCalled()
+    expect(system.captureOutputWithExitCode).toHaveBeenCalledWith(expect.any(String), ['--version'])
   })
 
   test('install fails if unsupported platform', async () => {
