@@ -226,7 +226,12 @@ export class FileWatcher {
 
     // If this path is already tracked for this handle (either pre-registered or
     // discovered at runtime), accept without re-checking against the static list.
-    if (event.extensionHandle && this.extensionWatchedFiles.get(event.path)?.has(event.extensionHandle)) {
+    // The map is keyed by normalized paths, so normalize before the lookup —
+    // chokidar can emit backslash-separated paths on Windows.
+    if (
+      event.extensionHandle &&
+      this.extensionWatchedFiles.get(normalizePath(event.path))?.has(event.extensionHandle)
+    ) {
       return false
     }
 
@@ -387,6 +392,10 @@ export class FileWatcher {
             // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
             if (!this.extensionPaths.includes(extensionPath)) return
             this.pushEvent({type: 'file_deleted', path, extensionPath, extensionHandle, startTime})
+            // Drop the path from our ownership map so it doesn't leak across a
+            // long-running dev session. Subsequent timeouts for other handles
+            // are no-ops on the now-missing key.
+            this.extensionWatchedFiles.delete(normalizePath(path))
             // Force an emit because we are inside a timeout callback
             this.debouncedEmit()
           }, FILE_DELETE_TIMEOUT_IN_MS)
