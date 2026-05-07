@@ -307,7 +307,9 @@ jobs:
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
-          fetch-depth: 1
+          # Full history so `git merge-base origin/<base> HEAD` (used by
+          # major-change-check.js) can reach the divergence point.
+          fetch-depth: 0
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:

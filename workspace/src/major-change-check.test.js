@@ -13,7 +13,7 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 
-import {extractSchemaFields, stripStringsAndComments} from './major-change-check.js'
+import {extractSchemaFields, resolveContext, stripStringsAndComments} from './major-change-check.js'
 
 test('extracts top-level keys from a flat .object({...})', () => {
   const src = `
@@ -134,4 +134,65 @@ test('stripStringsAndComments preserves length and newlines', () => {
   // The contents of strings and comments must be gone.
   assert.equal(stripped.includes('hello'), false)
   assert.equal(stripped.includes('trailing'), false)
+})
+
+// ---------------------------------------------------------------------------
+// resolveContext()
+// ---------------------------------------------------------------------------
+
+test('resolveContext: derives baseline from `git merge-base origin/<base> HEAD`', async () => {
+  const calls = []
+  const runGit = async (args) => {
+    calls.push(args)
+    if (args[0] === 'merge-base') {
+      assert.deepEqual(args, ['merge-base', 'origin/main', 'HEAD'])
+      return 'mergebase123\n'
+    }
+    if (args[0] === 'diff') {
+      assert.deepEqual(args, ['diff', '--name-only', 'mergebase123...HEAD'])
+      return 'packages/app/foo.ts\npackages/cli/oclif.manifest.json\n'
+    }
+    throw new Error(`unexpected git call: ${args.join(' ')}`)
+  }
+  const ctx = await resolveContext({baseRef: 'main', runGit})
+  assert.equal(ctx.baselineRef, 'mergebase123', 'uses merge-base SHA, trimmed')
+  assert.deepEqual(
+    [...ctx.changedFiles].sort(),
+    ['packages/app/foo.ts', 'packages/cli/oclif.manifest.json'],
+  )
+  assert.equal(calls.length, 2, 'one merge-base + one diff call')
+})
+
+test('resolveContext: respects non-default base branches (e.g. release branches)', async () => {
+  const runGit = async (args) => {
+    if (args[0] === 'merge-base') {
+      assert.equal(args[1], 'origin/release/3.0', 'forwarded GITHUB_BASE_REF unchanged')
+      return 'releasebase\n'
+    }
+    return ''
+  }
+  const ctx = await resolveContext({baseRef: 'release/3.0', runGit})
+  assert.equal(ctx.baselineRef, 'releasebase')
+})
+
+test('resolveContext: git failure degrades to scanning everything against main', async () => {
+  const runGit = async () => {
+    throw new Error('fatal: Not a valid object name origin/main')
+  }
+  const ctx = await resolveContext({baseRef: 'main', runGit})
+  // We'd rather over-flag than silently miss a real removal.
+  assert.equal(ctx.baselineRef, 'main')
+  assert.equal(ctx.changedFiles, null, 'git failure must NOT collapse to an empty diff set')
+})
+
+test('resolveContext: no GITHUB_BASE_REF falls back to scanning main (local invocation)', async () => {
+  let called = false
+  const runGit = async () => {
+    called = true
+    return ''
+  }
+  const ctx = await resolveContext({baseRef: undefined, runGit})
+  assert.equal(ctx.baselineRef, 'main')
+  assert.equal(ctx.changedFiles, null)
+  assert.equal(called, false, 'must not shell out to git when no base ref is known')
 })
