@@ -17,6 +17,6 @@
   "devDependencies": {
     "@actions/core": "^1.10.0",
     "git-diff": "^2.0.6",
-    "simple-git": "3.32.3"
+    "simple-git": "3.36.0"
   }
 }
