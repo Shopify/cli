@@ -50,7 +50,7 @@ describe('init', () => {
   })
 
   describe('buildNoneTemplate', () => {
-    test('returns hosted app label and URL when HOSTED_APPS is enabled', () => {
+    test('returns extension-only template URL when HOSTED_APPS is enabled', () => {
       // Given
       vi.mocked(isHostedAppsMode).mockReturnValue(true)
 
@@ -58,11 +58,10 @@ describe('init', () => {
       const got = buildNoneTemplate()
 
       // Then
-      expect(got.label).toBe('Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)')
       expect(got.url).toBe('https://github.com/Shopify/shopify-app-template-extension-only')
     })
 
-    test('returns default label and URL when HOSTED_APPS is not set', () => {
+    test('returns default template URL when HOSTED_APPS is not set', () => {
       // Given
       vi.mocked(isHostedAppsMode).mockReturnValue(false)
 
@@ -70,7 +69,6 @@ describe('init', () => {
       const got = buildNoneTemplate()
 
       // Then
-      expect(got.label).toBe('Build an extension-only app')
       expect(got.url).toBe('https://github.com/Shopify/shopify-app-template-none')
     })
   })
