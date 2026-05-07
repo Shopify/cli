@@ -67,6 +67,63 @@ describe('addUidToTomlsIfNecessary', () => {
     })
   })
 
+  test('adds uid inside the [[extensions]] block for a single-entry array TOML (matching the app init template shape)', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given — a TOML using the modern `[[extensions]]` array-of-tables shape with a
+      // single extension. This is the shape produced by `shopify app init` templates.
+      const tomlPath = joinPath(tmpDir, 'shopify.extension.toml')
+      const tomlContent = `api_version = "2026-07"
+
+[[extensions]]
+# Change the merchant-facing name of the extension in locales/en.default.json
+name = "t:name"
+handle = "app-home"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/AppHome.jsx"
+target = "admin.app.home.render"
+
+[access_scopes]
+scopes = "write_metaobject_definitions,write_metaobjects,write_products"
+`
+      await writeFile(tomlPath, tomlContent)
+
+      const extension = {
+        configurationPath: tomlPath,
+        handle: 'app-home',
+        isUUIDStrategyExtension: true,
+        uid: 'abc-123',
+        configuration: {},
+      } as ExtensionInstance
+
+      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
+
+      // When
+      await addUidToTomlsIfNecessary([extension], client)
+
+      // Then — uid must be inside the [[extensions]] block (right after handle), not at
+      // the top level of the file.
+      const updatedContent = await readFile(tomlPath)
+      expect(updatedContent).toBe(`api_version = "2026-07"
+
+[[extensions]]
+# Change the merchant-facing name of the extension in locales/en.default.json
+name = "t:name"
+handle = "app-home"
+uid = "abc-123"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/AppHome.jsx"
+target = "admin.app.home.render"
+
+[access_scopes]
+scopes = "write_metaobject_definitions,write_metaobjects,write_products"
+`)
+    })
+  })
+
   test('adds uid to multi-extension TOML', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
