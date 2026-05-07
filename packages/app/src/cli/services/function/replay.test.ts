@@ -6,16 +6,13 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import {readFile} from '@shopify/cli-kit/node/fs'
-import {describe, expect, beforeAll, test, vi} from 'vitest'
+import {writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {describe, expect, beforeAll, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {getLogsDir} from '@shopify/cli-kit/node/logs'
+import {testWithTempDir} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 
-import {existsSync, readdirSync} from 'fs'
-
-vi.mock('fs')
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../generate-schema.js')
 vi.mock('../../prompts/function/replay.js')
 vi.mock('../dev/extension/bundler.js')
@@ -45,17 +42,19 @@ describe('replay', () => {
     extension = await testFunctionExtension({config: defaultConfig})
   })
 
-  test('runs selected function', async () => {
+  testWithTempDir('runs selected function', async ({tempDir}) => {
     // Given
-    const file1 = createFunctionRunFile({handle: extension.handle})
-    const file2 = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file1, file2])
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
+    const file1 = createFunctionRunFile({handle: extension.handle, index: 1})
+    const file2 = createFunctionRunFile({handle: extension.handle, index: 2})
+    await writeFunctionRunFiles(logsDir, [file1, file2])
 
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file1.run)
 
     // When
     await replay({
-      app: testAppLinked(),
+      app,
       extension,
       stdout: false,
       path: 'test-path',
@@ -64,20 +63,24 @@ describe('replay', () => {
     })
 
     // Then
-    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run, file2.run])
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file2.run, file1.run])
     expectFunctionRun(extension, file1.run.payload.input)
     expect(outputInfo).not.toHaveBeenCalled()
   })
 
-  test('only allows selection of the most recent 100 runs', async () => {
+  testWithTempDir('only allows selection of the most recent 100 runs', async ({tempDir}) => {
     // Given
-    const files = new Array(101).fill(undefined).map((_) => createFunctionRunFile({handle: extension.handle}))
-    mockFileOperations(files)
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
+    const files = new Array(101)
+      .fill(undefined)
+      .map((_, i) => createFunctionRunFile({handle: extension.handle, index: i}))
+    await writeFunctionRunFiles(logsDir, files)
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(files[100]!.run)
 
     // When
     await replay({
-      app: testAppLinked(),
+      app,
       extension,
       stdout: false,
       path: 'test-path',
@@ -86,20 +89,27 @@ describe('replay', () => {
     })
 
     // Then
-    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(files.map(({run}) => run).slice(0, 100))
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
+      files
+        .map(({run}) => run)
+        .reverse()
+        .slice(0, 100),
+    )
   })
 
-  test('does not allow selection of runs for other functions', async () => {
+  testWithTempDir('does not allow selection of runs for other functions', async ({tempDir}) => {
     // Given
-    const file1 = createFunctionRunFile({handle: extension.handle})
-    const file2 = createFunctionRunFile({handle: 'another-function-handle'})
-    mockFileOperations([file1, file2])
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
+    const file1 = createFunctionRunFile({handle: extension.handle, index: 1})
+    const file2 = createFunctionRunFile({handle: 'another-function-handle', index: 2})
+    await writeFunctionRunFiles(logsDir, [file1, file2])
 
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file1.run)
 
     // When
     await replay({
-      app: testAppLinked(),
+      app,
       extension,
       stdout: false,
       path: 'test-path',
@@ -111,51 +121,57 @@ describe('replay', () => {
     expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run])
   })
 
-  test('throws error if no logs available', async () => {
+  testWithTempDir('throws error if no logs available', async ({tempDir}) => {
     // Given
-    mockFileOperations([])
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
+    await mkdir(logsDir)
 
     // When/Then
     await expect(async () => {
       await replay({
-        app: testAppLinked(),
+        app,
         extension,
         stdout: false,
         path: 'test-path',
         json: true,
         watch: false,
       })
-    }).rejects.toThrow(new AbortError(`No logs found in ${getLogsDir()}`))
+    }).rejects.toThrow(new AbortError(`No logs found in ${logsDir}`))
   })
 
-  test('throws error if log directory does not exist', async () => {
+  testWithTempDir('throws error if log directory does not exist', async ({tempDir}) => {
     // Given
-    vi.mocked(existsSync).mockReturnValue(false)
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
+    // logsDir does not exist
 
     // When/Then
     await expect(async () => {
       await replay({
-        app: testAppLinked(),
+        app,
         extension,
         stdout: false,
         path: 'test-path',
         json: true,
         watch: false,
       })
-    }).rejects.toThrow(new AbortError(`No logs found in ${getLogsDir()}`))
+    }).rejects.toThrow(new AbortError(`No logs found in ${logsDir}`))
   })
 
-  test('delegates to renderReplay when watch is true', async () => {
+  testWithTempDir('delegates to renderReplay when watch is true', async ({tempDir}) => {
     // Given
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
     const file = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file])
+    await writeFunctionRunFiles(logsDir, [file])
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
 
     vi.mocked(renderReplay)
 
     // When
     await replay({
-      app: testAppLinked(),
+      app,
       extension,
       stdout: false,
       path: 'test-path',
@@ -166,10 +182,12 @@ describe('replay', () => {
     expect(renderReplay).toHaveBeenCalledOnce()
   })
 
-  test('aborts on error', async () => {
+  testWithTempDir('aborts on error', async ({tempDir}) => {
     // Given
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
     const file = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file])
+    await writeFunctionRunFiles(logsDir, [file])
 
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
     vi.mocked(renderReplay).mockRejectedValueOnce('failure')
@@ -177,7 +195,7 @@ describe('replay', () => {
     // When
     await expect(async () =>
       replay({
-        app: testAppLinked(),
+        app,
         extension,
         stdout: false,
         path: 'test-path',
@@ -192,18 +210,20 @@ describe('replay', () => {
     expect(abortSignal.aborted).toBeTruthy()
   })
 
-  test('runs the log specified by the --log flag for the current function', async () => {
+  testWithTempDir('runs the log specified by the --log flag for the current function', async ({tempDir}) => {
     // Given
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
     const identifier = '000000'
-    const file1 = createFunctionRunFile({handle: extension.handle})
-    const file2 = createFunctionRunFile({handle: extension.handle, identifier})
-    const file3 = createFunctionRunFile({handle: extension.handle})
-    const file4 = createFunctionRunFile({handle: 'another-extension', identifier})
-    mockFileOperations([file1, file2, file3, file4])
+    const file1 = createFunctionRunFile({handle: extension.handle, index: 1})
+    const file2 = createFunctionRunFile({handle: extension.handle, identifier, index: 2})
+    const file3 = createFunctionRunFile({handle: extension.handle, index: 3})
+    const file4 = createFunctionRunFile({handle: 'another-extension', identifier, index: 4})
+    await writeFunctionRunFiles(logsDir, [file1, file2, file3, file4])
 
     // When
     await replay({
-      app: testAppLinked(),
+      app,
       extension,
       stdout: false,
       path: 'test-path',
@@ -216,17 +236,19 @@ describe('replay', () => {
     expectFunctionRun(extension, file2.run.payload.input)
   })
 
-  test('throws error if the log specified by the --log flag is not found', async () => {
+  testWithTempDir('throws error if the log specified by the --log flag is not found', async ({tempDir}) => {
     // Given
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
     const identifier = '000000'
-    const file1 = createFunctionRunFile({handle: extension.handle})
-    const file2 = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file1, file2])
+    const file1 = createFunctionRunFile({handle: extension.handle, index: 1})
+    const file2 = createFunctionRunFile({handle: extension.handle, index: 2})
+    await writeFunctionRunFiles(logsDir, [file1, file2])
 
     // When
     await expect(async () =>
       replay({
-        app: testAppLinked(),
+        app,
         extension,
         stdout: false,
         path: 'test-path',
@@ -237,19 +259,25 @@ describe('replay', () => {
     ).rejects.toThrow()
   })
 
-  test('ignores runs with no input and keeps reading chunks until past the threshold', async () => {
+  testWithTempDir('ignores runs with no input and keeps reading chunks until past the threshold', async ({tempDir}) => {
     // Given
-    const filesWithInput = new Array(99).fill(undefined).map((_) => createFunctionRunFile({handle: extension.handle}))
-    const fileWithoutInput = createFunctionRunFile({handle: extension.handle, partialPayload: {input: null}})
-    const additionalFiles = new Array(199).fill(undefined).map((_) => createFunctionRunFile({handle: extension.handle}))
+    const app = testAppLinked({directory: tempDir})
+    const logsDir = app.getLogsDir()
+    const filesWithInput = new Array(99)
+      .fill(undefined)
+      .map((_, i) => createFunctionRunFile({handle: extension.handle, index: i}))
+    const fileWithoutInput = createFunctionRunFile({handle: extension.handle, partialPayload: {input: null}, index: 99})
+    const additionalFiles = new Array(199)
+      .fill(undefined)
+      .map((_, i) => createFunctionRunFile({handle: extension.handle, index: 100 + i}))
 
-    mockFileOperations([...filesWithInput, fileWithoutInput, ...additionalFiles])
+    await writeFunctionRunFiles(logsDir, [...filesWithInput, fileWithoutInput, ...additionalFiles])
 
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(filesWithInput[0]!.run)
 
     // When
     await replay({
-      app: testAppLinked(),
+      app,
       extension,
       stdout: false,
       path: 'test-path',
@@ -259,7 +287,7 @@ describe('replay', () => {
 
     // Then
     expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
-      [...filesWithInput, ...additionalFiles.slice(0, 100)].map(({run}) => run),
+      [...additionalFiles.reverse(), ...filesWithInput.reverse()].slice(0, 100).map(({run}) => run),
     )
   })
 })
@@ -268,12 +296,15 @@ interface FunctionRunFileOptions {
   handle: string
   identifier?: string
   partialPayload?: object
+  index?: number
 }
 function createFunctionRunFile(options: FunctionRunFileOptions) {
   const handle = options.handle
   const identifier = options.identifier ?? randomUUID().substring(0, 6)
   const partialPayload = options.partialPayload ?? {}
-  const path = `20240522_150641_827Z_extensions_${handle}_${identifier}.json`
+  const index = options.index ?? 0
+  const seconds = index.toString().padStart(6, '0')
+  const path = `20240522_00${seconds}_827Z_extensions_${handle}_${identifier}.json`
   const run: FunctionRunData = {
     identifier,
     shopId: 1,
@@ -304,14 +335,10 @@ function expectFunctionRun(functionExtension: ExtensionInstance<FunctionConfigTy
   expect(runFunction).toHaveBeenCalledWith({functionExtension, json: true, export: 'run', input: JSON.stringify(input)})
 }
 
-function mockFileOperations(data: {run: FunctionRunData; path: string}[]) {
-  vi.mocked(existsSync).mockReturnValue(true)
-  vi.mocked(readdirSync).mockReturnValue([...data].reverse().map(({path}) => path) as any)
-  vi.mocked(readFile).mockImplementation((path) => {
-    const run = data.find((file) => path.endsWith(file.path))
-    if (!run) {
-      throw new AbortError(`Mock file not found: ${path}`)
-    }
-    return Promise.resolve(Buffer.from(JSON.stringify(run.run), 'utf8'))
-  })
+async function writeFunctionRunFiles(logsDir: string, data: {run: FunctionRunData; path: string}[]) {
+  await mkdir(logsDir)
+  for (const file of data) {
+    // eslint-disable-next-line no-await-in-loop
+    await writeFile(joinPath(logsDir, file.path), JSON.stringify(file.run))
+  }
 }
