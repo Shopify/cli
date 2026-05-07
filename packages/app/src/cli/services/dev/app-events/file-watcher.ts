@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 import {AppLinkedInterface} from '../../../models/app/app.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {configurationFileNames} from '../../../constants.js'
 import {dirname, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
@@ -223,6 +224,12 @@ export class FileWatcher {
   private shouldIgnoreEvent(event: WatcherEvent) {
     if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
 
+    // If this path is already tracked for this handle (either pre-registered or
+    // discovered at runtime), accept without re-checking against the static list.
+    if (event.extensionHandle && this.extensionWatchedFiles.get(event.path)?.has(event.extensionHandle)) {
+      return false
+    }
+
     const extension = event.extensionHandle
       ? this.app.realExtensions.find((ext) => ext.handle === event.extensionHandle)
       : undefined
@@ -251,8 +258,20 @@ export class FileWatcher {
     if (isConfigAppPath) {
       this.handleEventForExtension(event, path, this.app.directory, startTime, false)
     } else {
-      const affectedHandles = this.extensionWatchedFiles.get(normalizedPath)
-      const isUnknownExtension = affectedHandles === undefined || affectedHandles.size === 0
+      let affectedHandles = this.extensionWatchedFiles.get(normalizedPath)
+      let isUnknownExtension = affectedHandles === undefined || affectedHandles.size === 0
+
+      // For 'add' events on paths we don't yet track, try to attribute them to an
+      // existing extension by directory containment + watch pattern matching. This
+      // is what allows files created during a running dev session to be picked up.
+      if (isUnknownExtension && event === 'add' && !isExtensionToml) {
+        const discovered = this.discoverFileOwners(normalizedPath)
+        if (discovered.size > 0) {
+          this.extensionWatchedFiles.set(normalizedPath, discovered)
+          affectedHandles = discovered
+          isUnknownExtension = false
+        }
+      }
 
       if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {
         // Ignore an event if it's not part of an existing extension
@@ -271,6 +290,35 @@ export class FileWatcher {
       }
     }
     this.debouncedEmit()
+  }
+
+  /**
+   * Returns the handles of every extension that should track the given path,
+   * based on directory containment and the extension's watch patterns.
+   * A path can be owned by multiple extensions when they share a directory.
+   */
+  private discoverFileOwners(normalizedPath: string): Set<string> {
+    const owners = new Set<string>()
+    for (const extension of this.app.realExtensions) {
+      const extensionDir = normalizePath(extension.directory)
+      if (extensionDir === this.app.directory) continue
+      if (!normalizedPath.startsWith(`${extensionDir}/`)) continue
+      if (this.pathMatchesWatchPatterns(normalizedPath, extension)) {
+        owners.add(extension.handle)
+      }
+    }
+    return owners
+  }
+
+  /**
+   * Tests a path against an extension's watch patterns (paths included, ignore
+   * excluded). Patterns are matched relative to the extension directory.
+   */
+  private pathMatchesWatchPatterns(normalizedPath: string, extension: ExtensionInstance): boolean {
+    const {paths, ignore: ignorePatterns} = extension.watchPatterns()
+    const relative = relativePath(normalizePath(extension.directory), normalizedPath)
+    if (ignorePatterns.some((pattern) => matchGlob(relative, pattern))) return false
+    return paths.some((pattern) => matchGlob(relative, pattern))
   }
 
   private handleEventForExtension(

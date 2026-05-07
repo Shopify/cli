@@ -27,6 +27,20 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {uniq} from '@shopify/cli-kit/common/array'
 
 /**
+ * Default ignore patterns for files watched in an extension directory. Used when
+ * the extension does not provide a custom devSessionWatchConfig.
+ */
+export const DEFAULT_WATCH_IGNORE = [
+  '**/node_modules/**',
+  '**/.git/**',
+  '**/*.test.*',
+  '**/dist/**',
+  '**/*.swp',
+  '**/generated/**',
+  '**/.gitignore',
+]
+
+/**
  * Class that represents an instance of a local extension
  * Before creating this class we've validated that:
  * - There is a spec for this type of extension
@@ -424,27 +438,27 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   /**
+   * Returns the raw watch patterns (paths + ignore) for this extension, without
+   * expanding globs against the file system. The file watcher uses this to decide
+   * whether a path created at runtime should be tracked by this extension.
+   */
+  watchPatterns(): {paths: string[]; ignore: string[]} {
+    const watchConfig = this.devSessionWatchConfig
+    return {
+      paths: watchConfig?.paths ?? ['**/*'],
+      ignore: watchConfig?.ignore ?? DEFAULT_WATCH_IGNORE,
+    }
+  }
+
+  /**
    * Returns all files that need to be watched for this extension
    * This includes files in the extension directory (respecting watch paths and gitignore)
    * as well as any imported files from outside the extension directory
    */
   watchedFiles(): string[] {
     const watchedFiles: string[] = []
-
-    const defaultIgnore = [
-      '**/node_modules/**',
-      '**/.git/**',
-      '**/*.test.*',
-      '**/dist/**',
-      '**/*.swp',
-      '**/generated/**',
-      '**/.gitignore',
-    ]
-    const watchConfig = this.devSessionWatchConfig
-
-    const patterns = watchConfig?.paths ?? ['**/*']
-    const ignore = watchConfig?.ignore ?? defaultIgnore
-    const files = patterns.flatMap((pattern) =>
+    const {paths, ignore} = this.watchPatterns()
+    const files = paths.flatMap((pattern) =>
       globSync(pattern, {
         cwd: this.directory,
         absolute: true,
@@ -455,7 +469,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     watchedFiles.push(...files.flat())
 
     // Add imported files from outside the extension directory unless custom watch config is defined
-    if (!watchConfig) {
+    if (!this.devSessionWatchConfig) {
       const importedFiles = this.scanImports()
       watchedFiles.push(...importedFiles)
     }
