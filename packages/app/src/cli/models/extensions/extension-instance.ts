@@ -30,7 +30,7 @@ import {uniq} from '@shopify/cli-kit/common/array'
  * Default ignore patterns for files watched in an extension directory. Used when
  * the extension does not provide a custom devSessionWatchConfig.
  */
-export const DEFAULT_WATCH_IGNORE = [
+const DEFAULT_WATCH_IGNORE = [
   '**/node_modules/**',
   '**/.git/**',
   '**/*.test.*',
