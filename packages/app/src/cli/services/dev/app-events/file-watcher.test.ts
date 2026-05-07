@@ -957,6 +957,122 @@ describe('file-watcher events', () => {
     })
   })
 
+  describe('external watch roots', () => {
+    test('adds the static prefix of external watch globs to chokidar', async () => {
+      const sharedExtension = await testFunctionExtension({dir: '/extensions/with-external'})
+      // Pretend this extension declares a watch path outside its directory
+      vi.spyOn(sharedExtension, 'devSessionWatchConfig', 'get').mockReturnValue({
+        paths: ['/shared/lib/**/*.ts'],
+      })
+      vi.spyOn(sharedExtension, 'watchPatterns').mockReturnValue({
+        paths: ['/shared/lib/**/*.ts'],
+        ignore: [],
+      })
+      mockExtensionWatchedFiles(sharedExtension, [])
+
+      const app = testAppLinked({
+        allExtensions: [sharedExtension],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {...DEFAULT_CONFIG, extension_directories: ['/extensions']} as any,
+      })
+
+      let watchedPaths: string[] = []
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
+        watchedPaths = paths as string[]
+        return {on: vi.fn().mockReturnThis(), close: vi.fn().mockResolvedValue(undefined)} as any
+      })
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      expect(watchedPaths).toContain('/shared/lib')
+    })
+
+    test('does not duplicate watch roots already covered by an extension directory', async () => {
+      const ext = await testFunctionExtension({dir: '/extensions/my-function'})
+      vi.spyOn(ext, 'devSessionWatchConfig', 'get').mockReturnValue({
+        paths: ['/extensions/my-function/src/**/*.rs'],
+      })
+      vi.spyOn(ext, 'watchPatterns').mockReturnValue({
+        paths: ['/extensions/my-function/src/**/*.rs'],
+        ignore: [],
+      })
+      mockExtensionWatchedFiles(ext, [])
+
+      const app = testAppLinked({
+        allExtensions: [ext],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {...DEFAULT_CONFIG, extension_directories: ['/extensions']} as any,
+      })
+
+      let watchedPaths: string[] = []
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
+        watchedPaths = paths as string[]
+        return {on: vi.fn().mockReturnThis(), close: vi.fn().mockResolvedValue(undefined)} as any
+      })
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // /extensions is already a chokidar watch root; the prefix /extensions/my-function/src
+      // is inside it and should not be added separately.
+      expect(watchedPaths).not.toContain('/extensions/my-function/src')
+    })
+
+    test('attributes runtime-added external files to extensions with explicit watch config', async () => {
+      const sharedExtension = await testFunctionExtension({dir: '/extensions/with-external'})
+      vi.spyOn(sharedExtension, 'devSessionWatchConfig', 'get').mockReturnValue({
+        paths: ['/shared/lib/**/*.ts'],
+      })
+      vi.spyOn(sharedExtension, 'watchPatterns').mockReturnValue({
+        paths: ['/shared/lib/**/*.ts'],
+        ignore: [],
+      })
+      mockExtensionWatchedFiles(sharedExtension, [])
+
+      const app = testAppLinked({
+        allExtensions: [sharedExtension],
+        directory: '/',
+        configPath: '/shopify.app.toml',
+        configuration: {...DEFAULT_CONFIG, extension_directories: ['/extensions']} as any,
+      })
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(app, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      await eventHandler('add', '/shared/lib/util.ts', undefined)
+      await sleep(0.15)
+
+      await vi.waitFor(
+        () => {
+          const events = onChange.mock.calls.find((call) => call[0].length > 0)?.[0]
+          if (!events) throw new Error('no events emitted')
+          expect(events).toHaveLength(1)
+          expect(events[0].type).toBe('file_created')
+          expect(events[0].path).toBe('/shared/lib/util.ts')
+          expect(events[0].extensionHandle).toBe(sharedExtension.handle)
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+  })
+
   describe('refreshWatchedFiles', () => {
     test('closes and recreates the watcher with updated paths', async () => {
       // Given

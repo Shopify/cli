@@ -17,6 +17,20 @@ const EXTENSION_CREATION_CHECK_INTERVAL_IN_MS = 200
 const FILE_DELETE_TIMEOUT_IN_MS = 500
 
 /**
+ * Returns the directory prefix of a glob pattern (the longest leading path with
+ * no wildcards), or the pattern itself if it has none. Patterns are expected to
+ * be absolute. An empty result means the pattern is too unrooted to be useful
+ * as a chokidar watch root.
+ */
+function staticGlobPrefix(pattern: string): string {
+  const match = /[*?[\](){}!]/.exec(pattern)
+  if (!match) return pattern
+  const head = pattern.slice(0, match.index)
+  const lastSlash = head.lastIndexOf('/')
+  return lastSlash <= 0 ? '' : head.slice(0, lastSlash)
+}
+
+/**
  * Event emitted by the file watcher
  *
  * Includes the type of the event, the path of the file that triggered the event and the extension handle that owns the file.
@@ -112,6 +126,11 @@ export class FileWatcher {
     const allWatchedFiles = this.getAllWatchedFiles()
     watchPaths.push(...allWatchedFiles)
 
+    // Watch the static prefix of every external watch glob so that NEW files
+    // created in those directories at runtime are surfaced by chokidar. Without
+    // this, chokidar would only see the specific files returned by globSync.
+    watchPaths.push(...this.getExternalWatchRoots(fullExtensionDirectories))
+
     this.close()
 
     // Create new watcher
@@ -138,6 +157,27 @@ export class FileWatcher {
   private addAbortListener() {
     this.options.signal.removeEventListener('abort', this.close)
     this.options.signal.addEventListener('abort', this.close)
+  }
+
+  /**
+   * Returns the static prefix of every extension watch glob that lives outside
+   * the directories chokidar already watches recursively. Used to surface NEW
+   * files created at runtime in externally-watched roots (e.g. an admin
+   * extension's `static_root` or a function's shared sources).
+   */
+  private getExternalWatchRoots(coveredDirectories: string[]): string[] {
+    const covered = coveredDirectories.map((dir) => normalizePath(dir.replace(/\/\*+$/, '')))
+    const roots = new Set<string>()
+    for (const extension of this.app.realExtensions) {
+      if (!extension.devSessionWatchConfig) continue
+      for (const pattern of extension.watchPatterns().paths) {
+        const prefix = staticGlobPrefix(pattern)
+        if (!prefix) continue
+        if (covered.some((dir) => prefix === dir || prefix.startsWith(`${dir}/`))) continue
+        roots.add(prefix)
+      }
+    }
+    return Array.from(roots)
   }
 
   /**
@@ -247,16 +287,26 @@ export class FileWatcher {
   }
 
   /**
-   * Returns the handles of every extension that should track the given path,
-   * based on directory containment and the extension's watch patterns.
-   * A path can be owned by multiple extensions when they share a directory.
+   * Returns the handles of every extension that should track the given path
+   * based on the extension's watch patterns. A path can match multiple
+   * extensions when they share a directory or watch patterns.
+   *
+   * Two attribution modes:
+   * - Inside the extension directory: default `**\/*` patterns apply.
+   * - Outside the extension directory: only extensions with explicit
+   *   `devSessionWatchConfig` (e.g. admin `static_root`, a function pointing at
+   *   shared sources) are eligible.
    */
   private discoverFileOwners(normalizedPath: string): Set<string> {
     const owners = new Set<string>()
     for (const extension of this.app.realExtensions) {
       const extensionDir = normalizePath(extension.directory)
-      if (extensionDir === this.app.directory) continue
-      if (!normalizedPath.startsWith(`${extensionDir}/`)) continue
+      const isInside = normalizedPath.startsWith(`${extensionDir}/`)
+      const hasExplicitConfig = extension.devSessionWatchConfig !== undefined
+
+      if (extensionDir === this.app.directory && !hasExplicitConfig) continue
+      if (!isInside && !hasExplicitConfig) continue
+
       if (this.pathMatchesWatchPatterns(normalizedPath, extension)) {
         owners.add(extension.handle)
       }
@@ -265,14 +315,16 @@ export class FileWatcher {
   }
 
   /**
-   * Tests a path against an extension's watch patterns (paths included, ignore
-   * excluded). Patterns are matched relative to the extension directory.
+   * Tests a path against an extension's watch patterns. Patterns may be either
+   * absolute (e.g. function specs join with `extension.directory`) or relative
+   * to the extension directory (e.g. the default `**\/*`), so we try both forms.
    */
   private pathMatchesWatchPatterns(normalizedPath: string, extension: ExtensionInstance): boolean {
     const {paths, ignore: ignorePatterns} = extension.watchPatterns()
     const relative = relativePath(normalizePath(extension.directory), normalizedPath)
-    if (ignorePatterns.some((pattern) => matchGlob(relative, pattern))) return false
-    return paths.some((pattern) => matchGlob(relative, pattern))
+    const matches = (pattern: string) => matchGlob(normalizedPath, pattern) || matchGlob(relative, pattern)
+    if (ignorePatterns.some(matches)) return false
+    return paths.some(matches)
   }
 
   private handleEventForExtension(
