@@ -12,6 +12,7 @@ import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
 import {isCI} from '../../../public/node/system.js'
+import {clearCollectedLogs, collectedLogs} from '../../../public/node/output.js'
 
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
@@ -24,6 +25,7 @@ vi.mock('./exchange.js')
 vi.mock('../../../public/node/system.js')
 
 beforeEach(() => {
+  clearCollectedLogs()
   vi.mocked(isTTY).mockReturnValue(true)
   vi.mocked(isCI).mockReturnValue(false)
 })
@@ -64,6 +66,30 @@ describe('requestDeviceAuthorization', () => {
       body: 'client_id=clientId&scope=scope1 scope2',
     })
     expect(got).toEqual(dataExpected)
+  })
+
+  test('redacts sensitive device authorization fields from debug output', async () => {
+    // Given
+    const sensitiveData = {
+      ...data,
+      device_code: 'secret-device-code',
+      user_code: 'secret-user-code',
+      verification_uri_complete: 'https://accounts.shopify.com/activate?user_code=secret-user-code',
+    }
+    const response = new Response(JSON.stringify(sensitiveData))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    const debugOutput = collectedLogs.debug?.join('\n') ?? ''
+    expect(debugOutput).toContain('Received device authorization response')
+    expect(debugOutput).toContain('****')
+    expect(debugOutput).not.toContain('secret-device-code')
+    expect(debugOutput).not.toContain('secret-user-code')
   })
 
   test('when the response is not valid JSON, throw an error with context', async () => {

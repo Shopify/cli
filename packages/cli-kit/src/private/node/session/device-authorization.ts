@@ -11,6 +11,8 @@ import {isTTY, keypress} from '../../../public/node/ui.js'
 
 import {Response} from 'node-fetch'
 
+const DEVICE_AUTHORIZATION_DEBUG_REDACTED_FIELDS = ['device_code', 'user_code', 'verification_uri_complete'] as const
+
 export interface DeviceAuthorizationResponse {
   deviceCode: string
   userCode: string
@@ -64,7 +66,9 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     throw new BugError(errorMessage)
   }
 
-  outputDebug(outputContent`Received device authorization code: ${outputToken.json(jsonResult)}`)
+  outputDebug(
+    outputContent`Received device authorization response: ${outputToken.json(redactDeviceAuthorizationResponse(jsonResult))}`,
+  )
   if (!jsonResult.device_code || !jsonResult.verification_uri_complete) {
     throw new BugError('Failed to start authorization process')
   }
@@ -106,6 +110,16 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     verificationUriComplete: jsonResult.verification_uri_complete,
     interval: jsonResult.interval,
   }
+}
+
+function redactDeviceAuthorizationResponse(jsonResult: Record<string, unknown>): Record<string, unknown> {
+  const redactedResult = {...jsonResult}
+
+  for (const field of DEVICE_AUTHORIZATION_DEBUG_REDACTED_FIELDS) {
+    if (redactedResult[field]) redactedResult[field] = '****'
+  }
+
+  return redactedResult
 }
 
 /**
