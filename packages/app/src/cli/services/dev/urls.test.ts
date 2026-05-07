@@ -410,6 +410,19 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingLocalhost: false})
   })
 
+  test('returns tunnelUrl when running in a codespace environment', async () => {
+    // Given
+    vi.mocked(codespaceURL).mockReturnValue('codespace.url.fqdn.com')
+    vi.mocked(codespacePortForwardingDomain).mockReturnValue('app.github.dev')
+    const options = {...defaultOptions, tunnelUrl: 'https://my-tunnel-provider.io:4242'}
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingLocalhost: false})
+  })
+
   test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is true', async () => {
     // Given
     const options: FrontendURLOptions = {

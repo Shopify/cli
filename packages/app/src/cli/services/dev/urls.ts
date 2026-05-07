@@ -47,10 +47,10 @@ interface FrontendURLResult {
 
 /**
  * The tunnel creation logic depends on 7 variables:
- * - If a Codespaces environment is detected, then the URL is built using the codespaces hostname. No need for tunnel
- * - If a Gitpod environment is detected, then the URL is built using the gitpod hostname. No need for tunnel
- *   No need for tunnel. In case problems with that configuration, the flags Tunnel or Custom Tunnel url could be used
  * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
+ * - If a Codespaces environment is detected, then the URL is built using the codespaces hostname. No need for tunnel
+ * - If a Gitpod environment is detected, then the URL is built using the gitpod hostname.
+ *   In case problems with that configuration, the Custom Tunnel URL flag could be used
  * - If noTunnel is true, that takes second preference and localhost is used
  * - Otherwise, a tunnel is created. (by default using cloudflare)
  *
@@ -69,17 +69,6 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let frontendUrl = ''
   const usingLocalhost = options.noTunnelUseLocalhost
 
-  if (codespaceURL()) {
-    frontendUrl = `https://${codespaceURL()}-${frontendPort}.${codespacePortForwardingDomain()}`
-    return {frontendUrl, frontendPort, usingLocalhost}
-  }
-
-  if (gitpodURL()) {
-    const defaultUrl = gitpodURL()?.replace('https://', '')
-    frontendUrl = `https://${frontendPort}-${defaultUrl}`
-    return {frontendUrl, frontendPort, usingLocalhost}
-  }
-
   if (options.tunnelUrl) {
     const matches = options.tunnelUrl.match(/(https:\/\/[^:]+):([0-9]+)/)
     if (!matches) {
@@ -88,6 +77,17 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     frontendPort = Number(matches[2])
 
     frontendUrl = matches[1]!
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (codespaceURL()) {
+    frontendUrl = `https://${codespaceURL()}-${frontendPort}.${codespacePortForwardingDomain()}`
+    return {frontendUrl, frontendPort, usingLocalhost}
+  }
+
+  if (gitpodURL()) {
+    const defaultUrl = gitpodURL()?.replace('https://', '')
+    frontendUrl = `https://${frontendPort}-${defaultUrl}`
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
