@@ -377,4 +377,19 @@ describe('readStdinString', () => {
     // Then
     expect(got).toBe('hello world')
   })
+
+  test('throws AbortError when stdin content exceeds the limit', async () => {
+    // Given
+    vi.mocked(fs.fstatSync).mockReturnValue({isFIFO: () => true, isFile: () => false} as fs.Stats)
+    // Create a chunk that is larger than 10MB
+    const largeChunk = 'a'.repeat(10 * 1024 * 1024 + 1)
+    const mockStdin = Readable.from([largeChunk])
+    vi.spyOn(process, 'stdin', 'get').mockReturnValue(mockStdin as unknown as typeof process.stdin)
+
+    // When
+    const got = system.readStdinString()
+
+    // Then
+    await expect(got).rejects.toThrow('Stdin input exceeded the maximum allowed size.')
+  })
 })

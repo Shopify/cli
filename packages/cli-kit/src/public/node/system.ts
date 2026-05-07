@@ -14,6 +14,13 @@ import {delimiter} from 'pathe'
 import {fstatSync} from 'fs'
 import type {Writable, Readable} from 'stream'
 
+/**
+ * The maximum size of data that can be read from stdin in bytes.
+ * This is to prevent memory exhaustion when reading from stdin.
+ * 10MB.
+ */
+const MAX_STDIN_SIZE = 10 * 1024 * 1024
+
 export interface ExecOptions {
   cwd?: string
   env?: Record<string, string | undefined>
@@ -425,9 +432,15 @@ export async function readStdinString(): Promise<string | undefined> {
   }
 
   let data = ''
+  let totalSize = 0
   process.stdin.setEncoding('utf8')
   for await (const chunk of process.stdin) {
-    data += String(chunk)
+    const chunkString = String(chunk)
+    totalSize += Buffer.byteLength(chunkString, 'utf8')
+    if (totalSize > MAX_STDIN_SIZE) {
+      throw new AbortError('Stdin input exceeded the maximum allowed size.')
+    }
+    data += chunkString
   }
   return data.trim()
 }
