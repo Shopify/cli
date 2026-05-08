@@ -62,10 +62,7 @@ export interface ExtensionBuildOptions {
  */
 export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<string> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
-  const env = options.app.dotenv?.variables ?? {}
-  if (options.appURL) {
-    env.APP_URL = options.appURL
-  }
+  const env = getUIExtensionBuildEnv(options)
 
   const buildDirectory = options.buildDirectory ?? ''
 
@@ -129,6 +126,16 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   const sizeInfo = await formatBundleSize(localOutputPath)
   options.stdout.write(`${extension.localIdentifier} successfully built in ${duration}ms${sizeInfo}`)
   return localOutputPath
+}
+
+function getUIExtensionBuildEnv(options: ExtensionBuildOptions): {[variable: string]: string} {
+  return {
+    ...(options.environment === 'production' && options.app.configuration.application_url
+      ? {APP_URL: options.app.configuration.application_url}
+      : {}),
+    ...(options.app.dotenv?.variables ?? {}),
+    ...(options.appURL ? {APP_URL: options.appURL} : {}),
+  }
 }
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions

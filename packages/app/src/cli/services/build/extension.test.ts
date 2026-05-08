@@ -1,6 +1,7 @@
-import {buildFunctionExtension} from './extension.js'
-import {testFunctionExtension} from '../../models/app/app.test-data.js'
+import {buildFunctionExtension, buildUIExtension} from './extension.js'
+import {testApp, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
 import {buildGraphqlTypes, buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
+import {bundleExtension} from '../extensions/bundle.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -12,8 +13,98 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
+vi.mock('../extensions/bundle.js')
 vi.mock('proper-lockfile')
 vi.mock('@shopify/cli-kit/node/fs')
+
+describe('buildUIExtension', () => {
+  let stdout: any
+  let stderr: any
+
+  beforeEach(() => {
+    stdout = {write: vi.fn()}
+    stderr = {write: vi.fn()}
+    vi.mocked(bundleExtension).mockResolvedValue(undefined)
+  })
+
+  test('defaults APP_URL to the configured application_url for production builds', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const app = testApp()
+
+    // When
+    await buildUIExtension(extension, {stdout, stderr, app, environment: 'production'})
+
+    // Then
+    expect(bundleExtension).toHaveBeenCalledWith(expect.objectContaining({env: {APP_URL: 'https://myapp.com'}}))
+  })
+
+  test('allows app dotenv variables to override the configured application_url', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const app = testApp({
+      dotenv: {
+        path: '/tmp/project/.env',
+        variables: {
+          APP_URL: 'https://env.example.com',
+          FOO: 'bar',
+        },
+      },
+    })
+
+    // When
+    await buildUIExtension(extension, {stdout, stderr, app, environment: 'production'})
+
+    // Then
+    expect(bundleExtension).toHaveBeenCalledWith(
+      expect.objectContaining({env: {APP_URL: 'https://env.example.com', FOO: 'bar'}}),
+    )
+  })
+
+  test('uses the development app URL when provided', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const app = testApp({
+      dotenv: {
+        path: '/tmp/project/.env',
+        variables: {APP_URL: 'https://env.example.com'},
+      },
+    })
+
+    // When
+    await buildUIExtension(extension, {
+      stdout,
+      stderr,
+      app,
+      environment: 'development',
+      appURL: 'https://dev-tunnel.example.com',
+    })
+
+    // Then
+    expect(bundleExtension).toHaveBeenCalledWith(
+      expect.objectContaining({env: {APP_URL: 'https://dev-tunnel.example.com'}}),
+    )
+  })
+
+  test('does not mutate dotenv variables when adding APP_URL', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const variables = {FOO: 'bar'}
+    const app = testApp({dotenv: {path: '/tmp/project/.env', variables}})
+
+    // When
+    await buildUIExtension(extension, {
+      stdout,
+      stderr,
+      app,
+      environment: 'development',
+      appURL: 'https://dev-tunnel.example.com',
+    })
+
+    // Then
+    expect(variables).toEqual({FOO: 'bar'})
+  })
+})
 
 describe('buildFunctionExtension', () => {
   let extension: ExtensionInstance<FunctionConfigType>
