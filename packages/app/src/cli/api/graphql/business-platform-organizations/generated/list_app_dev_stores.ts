@@ -62,22 +62,47 @@ export const ListAppDevStores = {
                       kind: 'Argument',
                       name: {kind: 'Name', value: 'filters'},
                       value: {
-                        kind: 'ObjectValue',
-                        fields: [
+                        kind: 'ListValue',
+                        values: [
                           {
-                            kind: 'ObjectField',
-                            name: {kind: 'Name', value: 'field'},
-                            value: {kind: 'EnumValue', value: 'STORE_TYPE'},
+                            kind: 'ObjectValue',
+                            fields: [
+                              {
+                                kind: 'ObjectField',
+                                name: {kind: 'Name', value: 'field'},
+                                value: {kind: 'EnumValue', value: 'STORE_TYPE'},
+                              },
+                              {
+                                kind: 'ObjectField',
+                                name: {kind: 'Name', value: 'operator'},
+                                value: {kind: 'EnumValue', value: 'EQUALS'},
+                              },
+                              {
+                                kind: 'ObjectField',
+                                name: {kind: 'Name', value: 'value'},
+                                value: {kind: 'StringValue', value: 'app_development', block: false},
+                              },
+                            ],
                           },
                           {
-                            kind: 'ObjectField',
-                            name: {kind: 'Name', value: 'operator'},
-                            value: {kind: 'EnumValue', value: 'EQUALS'},
-                          },
-                          {
-                            kind: 'ObjectField',
-                            name: {kind: 'Name', value: 'value'},
-                            value: {kind: 'StringValue', value: 'app_development', block: false},
+                            kind: 'ObjectValue',
+                            fields: [
+                              {
+                                kind: 'ObjectField',
+                                name: {kind: 'Name', value: 'field'},
+                                value: {kind: 'EnumValue', value: 'STORE_STATUS'},
+                              },
+                              {
+                                kind: 'ObjectField',
+                                name: {kind: 'Name', value: 'operator'},
+                                value: {kind: 'EnumValue', value: 'EQUALS'},
+                              },
+                              {
+                                kind: 'ObjectField',
+                                name: {kind: 'Name', value: 'value'},
+                                value: {kind: 'StringValue', value: 'ACTIVE', block: false},
+                              },
+                            ],
                           },
                         ],
                       },

@@ -2,7 +2,13 @@ query ListAppDevStores($searchTerm: String) {
   organization {
     id
     name
-    accessibleShops(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, search: $searchTerm) {
+    accessibleShops(
+      filters: [
+        {field: STORE_TYPE, operator: EQUALS, value: "app_development"}
+        {field: STORE_STATUS, operator: EQUALS, value: "ACTIVE"}
+      ]
+      search: $searchTerm
+    ) {
       edges {
         node {
           id

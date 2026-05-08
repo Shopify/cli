@@ -19,6 +19,10 @@ import {
 } from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
+import {
+  ListAppDevStores,
+  ListAppDevStoresQuery,
+} from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {PublicApiVersionsQuery} from '../../api/graphql/webhooks/generated/public-api-versions.js'
 import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
@@ -2050,5 +2054,119 @@ describe('uidStrategyFromTypename', () => {
 
   test('returns uuid as default for unknown typename', () => {
     expect(uidStrategyFromTypename('UnknownStrategy')).toBe('uuid')
+  })
+})
+
+describe('devStoresForOrg', () => {
+  test('queries Business Platform with both STORE_TYPE and STORE_STATUS=ACTIVE filters', async () => {
+    // Given
+    const orgGid = 'gid://shopify/Organization/123'
+    const searchTerm = 'my-store'
+    const mockedResponse: ListAppDevStoresQuery = {
+      organization: {
+        id: orgGid,
+        name: 'Org 123',
+        accessibleShops: {
+          edges: [
+            {
+              node: {
+                id: 'gid://BusinessPlatform/Shop/1',
+                externalId: encodedGidFromShopId('1'),
+                name: 'My Active Store',
+                storeType: 'APP_DEVELOPMENT',
+                primaryDomain: 'my-active-store.myshopify.com',
+                shortName: 'my-active-store',
+                url: 'https://my-active-store.myshopify.com',
+              },
+            },
+          ],
+          pageInfo: {hasNextPage: false},
+        },
+        currentUser: {organizationPermissions: ['ondemand_access_to_stores']},
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const result = await client.devStoresForOrg(orgGid, searchTerm)
+
+    // Then
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).toHaveBeenCalledWith({
+      query: ListAppDevStores,
+      token: 'business-platform-token',
+      organizationId: '123',
+      variables: {searchTerm},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
+
+    // The deployed query AST must include both filters with the right shape so
+    // BP doesn't return inactive/cancelled/deleted stores. Mirrors the filter
+    // pattern already in production for the Dev Dashboard dev-stores list.
+    const accessibleShopsField = (
+      ListAppDevStores as unknown as {
+        definitions: {selectionSet: {selections: {selectionSet: {selections: any[]}}[]}}[]
+      }
+    ).definitions[0]!.selectionSet.selections[0]!.selectionSet.selections.find(
+      (selection: any) => selection.name?.value === 'accessibleShops',
+    )
+    const filtersArg = accessibleShopsField.arguments.find((arg: any) => arg.name.value === 'filters')
+    expect(filtersArg.value.kind).toBe('ListValue')
+    const filters = filtersArg.value.values.map((value: any) => {
+      const output: Record<string, string> = {}
+      for (const field of value.fields) output[field.name.value] = field.value.value
+      return output
+    })
+    expect(filters).toEqual([
+      {field: 'STORE_TYPE', operator: 'EQUALS', value: 'app_development'},
+      {field: 'STORE_STATUS', operator: 'EQUALS', value: 'ACTIVE'},
+    ])
+
+    expect(result.hasMorePages).toBe(false)
+    expect(result.stores).toHaveLength(1)
+    expect(result.stores[0]).toMatchObject({
+      shopName: 'My Active Store',
+      shopDomain: 'my-active-store.myshopify.com',
+      provisionable: true,
+      storeType: 'APP_DEVELOPMENT',
+    })
+  })
+
+  test('throws when the organization is not found', async () => {
+    // Given
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({organization: null})
+
+    // When
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    // Then
+    await expect(client.devStoresForOrg('gid://shopify/Organization/123')).rejects.toThrow('No organization found')
+  })
+
+  test('returns an empty list when no accessible stores match the filters', async () => {
+    // Given a deleted/inactive store would be filtered out by STORE_STATUS=ACTIVE,
+    // so BP returns an empty edges list to the CLI.
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
+      organization: {
+        id: 'gid://shopify/Organization/123',
+        name: 'Org 123',
+        accessibleShops: {edges: [], pageInfo: {hasNextPage: false}},
+        currentUser: {organizationPermissions: []},
+      },
+    })
+
+    // When
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const result = await client.devStoresForOrg('gid://shopify/Organization/123')
+
+    // Then
+    expect(result.stores).toEqual([])
+    expect(result.hasMorePages).toBe(false)
   })
 })
