@@ -412,14 +412,14 @@ describe('getUIExtensionPayload', () => {
           assets: {
             assets: {
               name: 'assets',
-              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/assets/',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/CUSTOM_EXTENSION_POINT/',
               lastUpdated: expect.any(Number),
             },
           },
         },
       ])
-      expect(resolver.get('CUSTOM_EXTENSION_POINT/assets/foo.json')).toBe('foo.json')
-      expect(resolver.get('CUSTOM_EXTENSION_POINT/assets/subdir/bar.png')).toBe('subdir/bar.png')
+      expect(resolver.get('CUSTOM_EXTENSION_POINT/foo.json')).toBe('foo.json')
+      expect(resolver.get('CUSTOM_EXTENSION_POINT/subdir/bar.png')).toBe('subdir/bar.png')
     })
   })
 
@@ -465,16 +465,16 @@ describe('getUIExtensionPayload', () => {
       expect(got.extensionPoints).toMatchObject([
         {
           target: 'TARGET_A',
-          assets: {assets: {url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_A/assets/'}},
+          assets: {assets: {url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_A/'}},
         },
         {
           target: 'TARGET_B',
-          assets: {assets: {url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_B/assets/'}},
+          assets: {assets: {url: 'http://tunnel-url.com/extensions/devUUID/assets/TARGET_B/'}},
         },
       ])
       // Both targets' resolver entries point at the same output-relative file.
-      expect(resolver.get('TARGET_A/assets/foo.json')).toBe('foo.json')
-      expect(resolver.get('TARGET_B/assets/foo.json')).toBe('foo.json')
+      expect(resolver.get('TARGET_A/foo.json')).toBe('foo.json')
+      expect(resolver.get('TARGET_B/foo.json')).toBe('foo.json')
     })
   })
 
