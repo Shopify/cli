@@ -202,7 +202,6 @@ function getRemoteFilesToBeDeleted(remoteChecksums: Checksum[], themeFileSystem:
 }
 
 // Contextual Json Files -> Json Files -> Liquid Files -> Config Files -> Static Asset Files
-// Config file consideration: Inverse of the upload order: data first (consumes schema), then schema.
 function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
   const fileSets = partitionThemeFiles(files)
   return [
@@ -317,7 +316,7 @@ function selectUploadableFiles(themeFileSystem: ThemeFileSystem, remoteChecksums
  * 1. config/settings_schema.json must be uploaded FIRST. It declares the
  *    theme-level settings that block / section / section-group / template
  *    validators resolve dynamic-source defaults against (e.g. defaults of
- *    the form {{ settings.<theme_setting>.<property> }}).
+ *    the form `{{ settings.<theme_setting>.<property> }}`).
  * 2. Layout files don't necessarily need to be the first, but they must be
  *    uploaded before templates.
  * 3. Liquid blocks need to be uploaded before sections
@@ -392,7 +391,7 @@ function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): Checksu
   localThemeFileSystem.files.forEach((file, key) => {
     // Text files: use UTF-8 byte count
     // Binary files: use base64 length
-    const size = file.value ? Buffer.byteLength(file.value, 'utf8') : file.attachment?.length ?? 0
+    const size = file.value ? Buffer.byteLength(file.value, 'utf8') : (file.attachment?.length ?? 0)
 
     checksums.push({
       key,
