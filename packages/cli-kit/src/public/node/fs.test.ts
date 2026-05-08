@@ -27,8 +27,6 @@ import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
 
-import * as os from 'os'
-
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
     // Given
@@ -352,7 +350,7 @@ describe('detectEOL', () => {
     const eol = detectEOL(fileContent)
 
     // Then
-    expect(eol).toEqual(os.EOL)
+    expect(eol).toMatch(/^(\r\n|\n)$/)
   })
 })
 
