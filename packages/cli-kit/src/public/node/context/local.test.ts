@@ -183,6 +183,31 @@ describe('analitycsDisabled', () => {
     expect(got).toBe(true)
   })
 
+  test('returns true when OPT_OUT_INSTRUMENTATION is truthy', () => {
+    // Given
+    const env = {OPT_OUT_INSTRUMENTATION: 'true'}
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns true when either opt-out env var is truthy', () => {
+    // Given
+    const env = {
+      SHOPIFY_CLI_NO_ANALYTICS: '1',
+      OPT_OUT_INSTRUMENTATION: 'true',
+    }
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
   test('returns true when in development', () => {
     // Given
     const env = {SHOPIFY_CLI_ENV: 'development'}
