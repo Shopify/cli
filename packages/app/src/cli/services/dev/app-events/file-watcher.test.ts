@@ -810,6 +810,153 @@ describe('file-watcher events', () => {
     })
   })
 
+  describe('runtime file discovery', () => {
+    test('files added at runtime inside an existing extension trigger file_created', async () => {
+      // Given: extension knows about index.js but NOT runtime-added.js
+      mockExtensionWatchedFiles(extension1, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension1B, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension2, [])
+      mockExtensionWatchedFiles(functionExtension, [])
+      mockExtensionWatchedFiles(posExtension, [])
+      mockExtensionWatchedFiles(appAccessExtension, [])
+
+      const testApp = {
+        ...defaultApp,
+        allExtensions: defaultApp.allExtensions,
+        nonConfigExtensions: defaultApp.allExtensions.filter((ext) => !ext.isAppConfigExtension),
+        realExtensions: defaultApp.allExtensions,
+      }
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // When: a file the extension didn't pre-register is created on disk
+      await eventHandler('add', '/extensions/ui_extension_1/runtime-added.js', undefined)
+      await sleep(0.15)
+
+      // Then: it's attributed to the owning extensions and emitted
+      await vi.waitFor(
+        () => {
+          const events = onChange.mock.calls.find((call) => call[0].length > 0)?.[0]
+          if (!events) throw new Error('no events emitted')
+          expect(events).toHaveLength(2)
+          for (const event of events) {
+            expect(event.type).toBe('file_created')
+            expect(event.path).toBe('/extensions/ui_extension_1/runtime-added.js')
+            expect(event.extensionPath).toBe('/extensions/ui_extension_1')
+          }
+          const handles = events.map((event: WatcherEvent) => event.extensionHandle).sort()
+          expect(handles).toEqual(['h1', 'h2'])
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+
+    test('files added at runtime outside any extension are ignored', async () => {
+      mockExtensionWatchedFiles(extension1, [])
+      mockExtensionWatchedFiles(extension1B, [])
+      mockExtensionWatchedFiles(extension2, [])
+      mockExtensionWatchedFiles(functionExtension, [])
+      mockExtensionWatchedFiles(posExtension, [])
+      mockExtensionWatchedFiles(appAccessExtension, [])
+
+      const testApp = {
+        ...defaultApp,
+        allExtensions: defaultApp.allExtensions,
+        nonConfigExtensions: defaultApp.allExtensions.filter((ext) => !ext.isAppConfigExtension),
+        realExtensions: defaultApp.allExtensions,
+      }
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      await eventHandler('add', '/some/random/path/file.js', undefined)
+      await sleep(0.15)
+
+      const hasNonEmptyCall = onChange.mock.calls.some((call) => call[0].length > 0)
+      expect(hasNonEmptyCall).toBe(false)
+    })
+
+    test('subsequent change/unlink on a runtime-discovered file are not dropped', async () => {
+      mockExtensionWatchedFiles(extension1, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension1B, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension2, [])
+      mockExtensionWatchedFiles(functionExtension, [])
+      mockExtensionWatchedFiles(posExtension, [])
+      mockExtensionWatchedFiles(appAccessExtension, [])
+
+      const testApp = {
+        ...defaultApp,
+        allExtensions: defaultApp.allExtensions,
+        nonConfigExtensions: defaultApp.allExtensions.filter((ext) => !ext.isAppConfigExtension),
+        realExtensions: defaultApp.allExtensions,
+      }
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // Discover the file via 'add'
+      await eventHandler('add', '/extensions/ui_extension_1/runtime-added.js', undefined)
+      await sleep(0.1)
+
+      // Now fire a 'change' on the same path; should produce a file_updated event
+      onChange.mockClear()
+      await eventHandler('change', '/extensions/ui_extension_1/runtime-added.js', undefined)
+      await sleep(0.1)
+
+      await vi.waitFor(
+        () => {
+          const events = onChange.mock.calls.find((call) => call[0].length > 0)?.[0]
+          if (!events) throw new Error('no change events emitted')
+          expect(events.some((event: WatcherEvent) => event.type === 'file_updated')).toBe(true)
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+  })
+
   describe('refreshWatchedFiles', () => {
     test('closes and recreates the watcher with updated paths', async () => {
       // Given
