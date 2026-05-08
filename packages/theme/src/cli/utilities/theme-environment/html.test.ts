@@ -78,6 +78,29 @@ describe('getHtmlHandler', async () => {
     expect(ctx.lastRequestedPath).toStrictEqual('/previous-page')
   })
 
+  test('renders storefront requests with the development theme id', async () => {
+    const handler = getHtmlHandler(theme, ctx)
+    const event = createH3Event('GET', '/products/test?color=blue', {'sec-fetch-mode': 'navigate'})
+
+    vi.mocked(render).mockResolvedValueOnce(
+      new Response('', {
+        status: 200,
+        headers: {'x-request-id': 'test-request-id'},
+      }),
+    )
+
+    await handler(event)
+
+    expect(render).toHaveBeenCalledWith(
+      ctx.session,
+      expect.objectContaining({
+        path: '/products/test',
+        query: [['color', 'blue']],
+        themeId: '123',
+      }),
+    )
+  })
+
   test('the development server session recovers when a theme id mismatch occurs', async () => {
     // Given
     const handler = getHtmlHandler(theme, ctx)
@@ -106,6 +129,29 @@ describe('getHtmlHandler', async () => {
     expect(firstResponse.status).toBe(302)
     expect(firstResponse.headers.get('Location')).toBe('/?_ab=0&_fd=0&_sc=1')
     expect(ctx.session.refresh).toHaveBeenCalled()
+  })
+
+  test('the mismatch retry redirect drops a stale preview_theme_id from the browser', async () => {
+    const handler = getHtmlHandler(theme, ctx)
+    const event = createH3Event('GET', '/?preview_theme_id=999&color=blue')
+
+    vi.mocked(render).mockResolvedValueOnce(
+      new Response(
+        `<script>
+          var Shopify = Shopify || {};
+          Shopify.theme = {"name":"Live","id":456,"role":"main"};
+        </script>`,
+        {
+          status: 200,
+          headers: {'x-request-id': 'test-request-id'},
+        },
+      ),
+    )
+
+    const response = await handler(event)
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('Location')).toBe('/?color=blue')
   })
 
   test('the development server aborts when max theme id mismatch retries is reached', async () => {

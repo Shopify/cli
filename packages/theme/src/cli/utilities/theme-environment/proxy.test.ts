@@ -269,6 +269,20 @@ describe('dev proxy', () => {
       expect(result.headers.get('etag')).toBe('"abc123"')
       expect(result.body).toBeNull()
     })
+
+    test('patches redirect locations and removes internal rendering params', async () => {
+      const redirectResponse = new Response(null, {
+        status: 302,
+        headers: {
+          Location: 'https://my-store.myshopify.com/products/test?_fd=0&pb=0&preview_theme_id=123&variant=1',
+        },
+      })
+
+      const result = await patchRenderingResponse(ctx, redirectResponse)
+
+      expect(result.status).toBe(302)
+      expect(result.headers.get('Location')).toBe('/products/test?variant=1')
+    })
   })
 
   describe('getProxyStorefrontHeaders', () => {
