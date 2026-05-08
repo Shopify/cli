@@ -473,7 +473,8 @@ describe('theme-fs', () => {
         otherLiquidFiles,
         templateJsonFiles,
         otherJsonFiles,
-        configFiles,
+        configSchemaFile,
+        configDataFile,
         staticAssetFiles,
         contextualizedJsonFiles,
         blockLiquidFiles,
@@ -489,10 +490,8 @@ describe('theme-fs', () => {
       ])
       expect(otherJsonFiles).toEqual([{key: 'locales/en.default.json', checksum: '6'}])
       expect(templateJsonFiles).toEqual([{key: 'templates/404.json', checksum: '7'}])
-      expect(configFiles).toEqual([
-        {key: 'config/settings_schema.json', checksum: '8'},
-        {key: 'config/settings_data.json', checksum: '9'},
-      ])
+      expect(configSchemaFile).toEqual([{key: 'config/settings_schema.json', checksum: '8'}])
+      expect(configDataFile).toEqual([{key: 'config/settings_data.json', checksum: '9'}])
       expect(staticAssetFiles).toEqual([
         {key: 'assets/base.css', checksum: '1'},
         {key: 'assets/sparkle.gif', checksum: '3'},
@@ -511,15 +510,23 @@ describe('theme-fs', () => {
       const files: Checksum[] = []
 
       // When
-      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
-        partitionThemeFiles(files)
+      const {
+        sectionLiquidFiles,
+        otherLiquidFiles,
+        templateJsonFiles,
+        otherJsonFiles,
+        configSchemaFile,
+        configDataFile,
+        staticAssetFiles,
+      } = partitionThemeFiles(files)
 
       // Then
       expect(sectionLiquidFiles).toEqual([])
       expect(otherLiquidFiles).toEqual([])
       expect(templateJsonFiles).toEqual([])
       expect(otherJsonFiles).toEqual([])
-      expect(configFiles).toEqual([])
+      expect(configSchemaFile).toEqual([])
+      expect(configDataFile).toEqual([])
       expect(staticAssetFiles).toEqual([])
     })
   })
