@@ -3,7 +3,7 @@
 /* eslint-disable no-restricted-imports */
 
 import {outputDebug} from './output.js'
-import {exec, spawn} from 'child_process'
+import {spawn} from 'child_process'
 
 type ProcessTree = Record<string, string[]>
 
@@ -52,7 +52,8 @@ function adaptedTreeKill(
 ): void {
   const rootPid = typeof pid === 'number' ? pid.toString() : pid
 
-  if (Number.isNaN(rootPid)) {
+  // Security: Validate that the PID is a number to prevent command injection
+  if (!/^\d+$/.test(rootPid)) {
     if (callback) {
       callback(new Error('pid must be a number'))
       return
@@ -71,10 +72,20 @@ function adaptedTreeKill(
 
   // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check -- default handles all Unix-like platforms
   switch (process.platform) {
-    case 'win32':
-      // @ts-ignore
-      exec(`taskkill /pid ${pid} /T /F`, callback)
+    case 'win32': {
+      // Security: Use spawn instead of exec to avoid shell injection when killing processes on Windows
+      const taskkill = spawn('taskkill', ['/pid', rootPid, '/T', '/F'])
+      taskkill.on('close', (code: number) => {
+        if (callback) {
+          if (code === 0) {
+            callback()
+          } else {
+            callback(new Error(`taskkill exited with code ${code}`))
+          }
+        }
+      })
       break
+    }
     case 'darwin':
       buildProcessTree(
         rootPid,
