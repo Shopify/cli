@@ -1,4 +1,4 @@
-import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath, extname, resolvePath, isSubpath} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -58,6 +58,22 @@ export async function copyConfigKeyEntry(config: {
   // Deduplicate: the same source path shared across multiple targets
   // should only be copied once; the pathMap entry is reused for all references.
   const uniquePaths = [...new Set(paths)]
+
+  // Validate up-front so a bad value fails fast before any copying happens.
+  // Use the leaf segment of `key` as the user-facing field name (e.g.
+  // `extension_points[].assets` → `assets`) so error messages match the
+  // developer's TOML rather than internal config paths.
+  const fieldName = key.split('.').pop()?.replace(/\[\]$/, '') ?? key
+  for (const sourcePath of uniquePaths) {
+    const trimmed = sourcePath.trim()
+    if (trimmed === '') {
+      throw new Error(`'${fieldName}' can't be empty.`)
+    }
+    const resolved = resolvePath(baseDir, trimmed)
+    if (resolved === baseDir || !isSubpath(baseDir, resolved)) {
+      throw new Error(`'${fieldName}' is not a valid path: '${sourcePath}'`)
+    }
+  }
 
   // Process sequentially to avoid filesystem race conditions on shared output paths.
   const pathMap = new Map<string, string | string[]>()

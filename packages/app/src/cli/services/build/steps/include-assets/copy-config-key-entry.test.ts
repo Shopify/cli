@@ -316,4 +316,132 @@ describe('copyConfigKeyEntry', () => {
       await expect(fileExists(joinPath(outDir, 'tools.json'))).resolves.toBe(true)
     })
   })
+
+  describe('value guard', () => {
+    test('throws when value is an empty string', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: ''})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' can't be empty.`,
+        )
+      })
+    })
+
+    test('throws when value is whitespace-only', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: '   '})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' can't be empty.`,
+        )
+      })
+    })
+
+    test(`throws when value is '.'`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: '.'})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' is not a valid path: '.'`,
+        )
+      })
+    })
+
+    test(`throws when value is './'`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: './'})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' is not a valid path: './'`,
+        )
+      })
+    })
+
+    test(`throws when value is './' with surrounding whitespace`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: '  ./  '})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' is not a valid path: '  ./  '`,
+        )
+      })
+    })
+
+    test(`throws when one path in an array is invalid`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({roots: ['./public', '.']})
+        await expect(copyConfigKeyEntry({key: 'roots', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'roots' is not a valid path: '.'`,
+        )
+      })
+    })
+
+    test(`throws when value is '../foo' (escapes via single parent)`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: '../foo'})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' is not a valid path: '../foo'`,
+        )
+      })
+    })
+
+    test(`throws when value is '../../../foo' (escapes via deep parent chain)`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: '../../../foo'})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' is not a valid path: '../../../foo'`,
+        )
+      })
+    })
+
+    test(`throws when value escapes via interior '..' segments`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: 'public/../../bad'})
+        await expect(copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})).rejects.toThrow(
+          `'assets' is not a valid path: 'public/../../bad'`,
+        )
+      })
+    })
+
+    test(`does not throw when interior '..' resolves back inside`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const pubDir = joinPath(tmpDir, 'public')
+        await mkdir(pubDir)
+        await writeFile(joinPath(pubDir, 'index.html'), '<html/>')
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+
+        const context = makeContext({assets: 'public/../public'})
+        const result = await copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})
+
+        expect(result.filesCopied).toBe(1)
+        await expect(fileExists(joinPath(outDir, 'index.html'))).resolves.toBe(true)
+      })
+    })
+
+    test(`uses leaf segment of dotted configKey for the error message`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({extension_points: [{assets: ''}]})
+        await expect(
+          copyConfigKeyEntry({key: 'extension_points[].assets', baseDir: tmpDir, outputDir: outDir, context}),
+        ).rejects.toThrow(`'assets' can't be empty.`)
+      })
+    })
+  })
 })

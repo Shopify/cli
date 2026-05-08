@@ -138,6 +138,7 @@ export async function executeIncludeAssetsStep(
   let configKeyCount = 0
   for (const entry of config.inclusions) {
     if (entry.type !== 'configKey') continue
+
     const warn = (msg: string) => options.stdout.write(msg)
     const rawDest = entry.destination ? sanitizeRelativePath(entry.destination, warn) : undefined
     const sanitizedDest = rawDest === '' ? undefined : rawDest
