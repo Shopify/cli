@@ -3,7 +3,7 @@
 /* eslint-disable no-restricted-imports */
 
 import {outputDebug} from './output.js'
-import {exec, spawn} from 'child_process'
+import {execFile, spawn} from 'child_process'
 
 type ProcessTree = Record<string, string[]>
 
@@ -52,7 +52,7 @@ function adaptedTreeKill(
 ): void {
   const rootPid = typeof pid === 'number' ? pid.toString() : pid
 
-  if (Number.isNaN(rootPid)) {
+  if (!/^\d+$/.test(rootPid)) {
     if (callback) {
       callback(new Error('pid must be a number'))
       return
@@ -73,7 +73,7 @@ function adaptedTreeKill(
   switch (process.platform) {
     case 'win32':
       // @ts-ignore
-      exec(`taskkill /pid ${pid} /T /F`, callback)
+      execFile('taskkill', ['/pid', rootPid, '/T', '/F'], callback)
       break
     case 'darwin':
       buildProcessTree(
