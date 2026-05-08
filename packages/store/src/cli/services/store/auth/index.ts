@@ -6,7 +6,7 @@ import {createPkceBootstrap} from './pkce.js'
 import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScopes} from './scopes.js'
 import {resolveExistingStoreAuthScopes, type ResolvedStoreAuthScopes} from './existing-scopes.js'
 import {createStoreAuthPresenter, type StoreAuthPresenter, type StoreAuthResult} from './result.js'
-import {recordStoreCommandShopIdFromAdminApi} from '../metrics.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
@@ -40,6 +40,7 @@ export async function authenticateStoreWithApp(
 ): Promise<StoreAuthResult> {
   const resolvedDependencies: StoreAuthDependencies = {...defaultStoreAuthDependencies, ...dependencies}
   const store = normalizeStoreFqdn(input.store)
+  await recordStoreFqdnMetadata(store, false)
   const requestedScopes = parseStoreAuthScopes(input.scopes)
   const existingScopeResolution = await resolvedDependencies.resolveExistingScopes(store)
   const scopes = mergeRequestedAndStoredScopes(requestedScopes, existingScopeResolution.scopes)
@@ -70,13 +71,13 @@ export async function authenticateStoreWithApp(
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
+  await recordStoreFqdnMetadata(store, true)
 
   const userId = tokenResponse.associated_user?.id?.toString()
   if (!userId) {
     throw new AbortError('Shopify did not return associated user information for the online access token.')
   }
   setLastSeenUserId(userId)
-  await recordStoreCommandShopIdFromAdminApi({store, accessToken: tokenResponse.access_token})
 
   const now = Date.now()
   const expiresAt = tokenResponse.expires_in ? new Date(now + tokenResponse.expires_in * 1000).toISOString() : undefined

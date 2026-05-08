@@ -1,12 +1,14 @@
 import {executeStoreOperation} from './index.js'
 import {prepareStoreExecuteRequest} from './request.js'
 import {getStoreGraphQLTarget} from './targets.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('./request.js')
 vi.mock('./targets.js')
+vi.mock('../attribution.js')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('executeStoreOperation', () => {
@@ -45,6 +47,7 @@ describe('executeStoreOperation', () => {
       }),
     ).resolves.toEqual(result)
 
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
     expect(getStoreGraphQLTarget).toHaveBeenCalledWith('admin')
     expect(prepareStoreExecuteRequest).toHaveBeenCalledWith({
       query: 'query { shop { name } }',
@@ -68,5 +71,19 @@ describe('executeStoreOperation', () => {
     })
 
     expect(getStoreGraphQLTarget).toHaveBeenCalledWith('admin')
+  })
+
+  test('records the requested store before request validation fails', async () => {
+    vi.mocked(prepareStoreExecuteRequest).mockRejectedValue(new Error('Query should have a value'))
+
+    await expect(
+      executeStoreOperation({
+        store: 'shop.myshopify.com',
+      }),
+    ).rejects.toThrow('Query should have a value')
+
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
+    expect(target.prepareContext).not.toHaveBeenCalled()
+    expect(target.execute).not.toHaveBeenCalled()
   })
 })
