@@ -3,6 +3,7 @@ import {
   ensureAuthenticatedAdminAsApp,
   ensureAuthenticatedAppManagementAndBusinessPlatform,
   ensureAuthenticatedBusinessPlatform,
+  ensureAuthenticatedIdentity,
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
@@ -40,6 +41,29 @@ describe('store command analytics session helpers', () => {
     setLastSeenUserId('store-user-id')
 
     expect(setLastSeenUserIdAfterAuth).toHaveBeenCalledWith('store-user-id')
+  })
+})
+
+describe('ensureAuthenticatedIdentity', () => {
+  test('returns the identity token when success', async () => {
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({identity: 'identity_token', userId: '1234-5678'})
+
+    const got = await ensureAuthenticatedIdentity(['https://api.shopify.com/auth/example.scope'])
+
+    expect(got).toEqual({token: 'identity_token', userId: '1234-5678'})
+    expect(ensureAuthenticated).toHaveBeenCalledWith(
+      {identityApi: {scopes: ['https://api.shopify.com/auth/example.scope']}},
+      process.env,
+      {},
+    )
+  })
+
+  test('throws error if there is no identity token', async () => {
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({userId: '1234-5678'})
+
+    const got = ensureAuthenticatedIdentity(['https://api.shopify.com/auth/example.scope'])
+
+    await expect(got).rejects.toThrow(`No identity token`)
   })
 })
 

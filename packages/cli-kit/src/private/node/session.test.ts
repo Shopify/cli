@@ -313,6 +313,46 @@ describe('when existing session is valid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
+  test('returns identity token when identity auth is requested', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    const identityScope = 'https://api.shopify.com/auth/example.scope'
+
+    // When
+    const got = await ensureAuthenticated({
+      identityApi: {scopes: [identityScope]},
+    })
+
+    // Then
+    expect(got).toEqual({identity: 'access_token', userId})
+    expect(validateSession).toHaveBeenCalledWith(
+      [identityScope],
+      {identityApi: {scopes: [identityScope]}},
+      validSessions[fqdn]![userId],
+    )
+  })
+
+  test('does not exchange application tokens for identity-only auth', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    const identityScope = 'https://api.shopify.com/auth/example.scope'
+
+    // When
+    const got = await ensureAuthenticated({
+      identityApi: {scopes: [identityScope]},
+    })
+
+    // Then
+    expect(exchangeAccessForApplicationTokens).not.toHaveBeenCalled()
+    expect(businessPlatformRequest).not.toHaveBeenCalled()
+    expect(got).toEqual({identity: 'access_token', userId})
+
+    const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
+    expect(storedSession[fqdn]![userId]!.applications).toEqual({})
+  })
+
   test('overwrites partners token if provided with a custom CLI token', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
@@ -369,6 +409,23 @@ describe('when existing session is expired', () => {
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
+  })
+
+  test('does not exchange application tokens when refreshing identity-only auth', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    const identityScope = 'https://api.shopify.com/auth/example.scope'
+
+    // When
+    const got = await ensureAuthenticated({
+      identityApi: {scopes: [identityScope]},
+    })
+
+    // Then
+    expect(refreshAccessToken).toHaveBeenCalled()
+    expect(exchangeAccessForApplicationTokens).not.toHaveBeenCalled()
+    expect(got).toEqual({identity: 'access_token', userId})
   })
 
   test('attempts to refresh the token and executes a complete flow if identity returns an invalid grant error', async () => {

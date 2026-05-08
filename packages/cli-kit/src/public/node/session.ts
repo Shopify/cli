@@ -14,6 +14,7 @@ import {
   AppManagementAPIScope,
   BusinessPlatformScope,
   EnsureAuthenticatedAdditionalOptions,
+  IdentityScope,
   PartnersAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
@@ -99,6 +100,32 @@ export async function ensureAuthenticatedUser(
   outputDebug(outputContent`Ensuring that the user is authenticated with no particular scopes`)
   const tokens = await ensureAuthenticated({}, env, options)
   return {userId: tokens.userId}
+}
+
+/**
+ * Ensure that we have a valid Identity access token with the requested scopes.
+ *
+ * Use this when a first-party Shopify service validates the CLI caller directly
+ * with Identity rather than with an exchanged application token.
+ *
+ * @param scopes - Identity scopes to authenticate with.
+ * @param env - Optional environment variables to use.
+ * @param options - Optional extra options to use.
+ * @returns The Identity access token and user ID.
+ */
+export async function ensureAuthenticatedIdentity(
+  scopes: IdentityScope[] = [],
+  env = process.env,
+  options: EnsureAuthenticatedAdditionalOptions = {},
+): Promise<{token: string; userId: string}> {
+  outputDebug(outputContent`Ensuring that the user is authenticated with Identity scopes:
+${outputToken.json(scopes)}
+`)
+  const tokens = await ensureAuthenticated({identityApi: {scopes}}, env, options)
+  if (!tokens.identity) {
+    throw new BugError('No identity token found after ensuring authenticated')
+  }
+  return {token: tokens.identity, userId: tokens.userId}
 }
 
 /**

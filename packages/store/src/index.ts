@@ -1,4 +1,5 @@
 import StoreAuthList from './cli/commands/store/auth/list.js'
+import FlowToolCall from './cli/commands/flow/tool/call.js'
 import StoreAuth from './cli/commands/store/auth.js'
 import StoreCreateDev from './cli/commands/store/create/dev.js'
 import StoreCreatePreview from './cli/commands/store/create/preview.js'
@@ -8,6 +9,7 @@ import StoreList from './cli/commands/store/list.js'
 
 const COMMANDS = {
   'store:auth:list': StoreAuthList,
+  'flow:tool:call': FlowToolCall,
   'store:auth': StoreAuth,
   'store:create:dev': StoreCreateDev,
   'store:create:preview': StoreCreatePreview,

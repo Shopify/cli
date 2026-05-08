@@ -3662,6 +3662,95 @@
       "pluginType": "core",
       "strict": true
     },
+    "flow:tool:call": {
+      "aliases": [
+      ],
+      "args": {
+        "tool": {
+          "description": "The Flow tool name to call.",
+          "name": "tool",
+          "required": true
+        }
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Calls a Shopify Flow tool for the specified store.\n\nThe CLI owns authentication and backend routing. Agents and scripts should use this command rather than calling Flow or Sidekick endpoints directly.",
+      "descriptionWithMarkdown": "Calls a Shopify Flow tool for the specified store.\n\nThe CLI owns authentication and backend routing. Agents and scripts should use this command rather than calling Flow or Sidekick endpoints directly.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %> flow_app_agent_template_search --store shop.myshopify.com --arguments '{\"search_queries\":[\"fraud prevention\"]}' --json",
+        "<%= config.bin %> <%= command.id %> flow_app_agent_create_or_update_workflow_from_json --store shop.myshopify.com --arguments-file ./workflow.json --json"
+      ],
+      "flags": {
+        "arguments": {
+          "description": "The JSON object arguments for the tool.",
+          "env": "SHOPIFY_FLAG_FLOW_TOOL_ARGUMENTS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "arguments",
+          "type": "option"
+        },
+        "arguments-file": {
+          "description": "Path to a file containing the tool arguments as JSON. Can't be used with --arguments.",
+          "env": "SHOPIFY_FLAG_FLOW_TOOL_ARGUMENTS_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "arguments-file",
+          "type": "option"
+        },
+        "endpoint": {
+          "description": "Override the Flow tool gateway endpoint. Intended for local development.",
+          "env": "SHOPIFY_FLOW_TOOL_CALL_ENDPOINT",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "endpoint",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store to execute against.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "flow:tool:call",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Call a Shopify Flow tool."
+    },
     "help": {
       "aliases": [
       ],
