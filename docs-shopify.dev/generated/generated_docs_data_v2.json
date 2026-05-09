@@ -1,13 +1,4 @@
 {
-  "DataGeneratedType": {
-    "docs-shopify.dev/commands/app-build.doc.ts": {
-      "filePath": "docs-shopify.dev/commands/app-build.doc.ts",
-      "name": "DataGeneratedType",
-      "description": "Template schema for reference entity documentation pages.",
-      "isPublicDocs": true,
-      "value": "data: ReferenceEntityTemplateSchema = {\n  name: 'app build',\n  description: `This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](/docs/apps/online-store/theme-app-extensions), then running the \\`build\\` command runs [Theme Check](/docs/themes/tools/theme-check) against your extension to ensure that it's valid.`,\n  overviewPreviewDescription: `Build the app, including extensions.`,\n  type: 'command',\n  isVisualComponent: false,\n  defaultExample: {\n    codeblock: {\n      tabs: [\n        {\n          title: 'app build',\n          code: './examples/app-build.example.sh',\n          language: 'bash',\n        },\n      ],\n      title: 'app build',\n    },\n  },\n  definitions: [\n  {\n    title: 'Flags',\n    description: 'The following flags are available for the `app build` command:',\n    type: 'appbuild',\n  },\n  ],\n  category: 'app',\n  related: [\n  ],\n}"
-    }
-  },
   "appbuild": {
     "docs-shopify.dev/commands/interfaces/app-build.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
@@ -2755,6 +2746,36 @@
       "isPublicDocs": true,
       "members": [],
       "value": "export interface configautocorrectstatus {\n\n}"
+    }
+  },
+  "configautoupgradeoff": {
+    "docs-shopify.dev/commands/interfaces/config-autoupgrade-off.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-autoupgrade-off.interface.ts",
+      "name": "configautoupgradeoff",
+      "description": "The following flags are available for the `config autoupgrade off` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configautoupgradeoff {\n\n}"
+    }
+  },
+  "configautoupgradeon": {
+    "docs-shopify.dev/commands/interfaces/config-autoupgrade-on.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-autoupgrade-on.interface.ts",
+      "name": "configautoupgradeon",
+      "description": "The following flags are available for the `config autoupgrade on` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configautoupgradeon {\n\n}"
+    }
+  },
+  "configautoupgradestatus": {
+    "docs-shopify.dev/commands/interfaces/config-autoupgrade-status.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-autoupgrade-status.interface.ts",
+      "name": "configautoupgradestatus",
+      "description": "The following flags are available for the `config autoupgrade status` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configautoupgradestatus {\n\n}"
     }
   },
   "help": {

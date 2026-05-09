@@ -1,1 +1,0 @@
-shopify auth login [flags]

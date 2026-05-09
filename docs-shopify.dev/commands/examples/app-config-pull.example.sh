@@ -1,1 +1,0 @@
-shopify app config pull [flags]
