@@ -179,26 +179,11 @@ function parseCommand(command: string): string[] {
  * ```
  */
 export async function captureCommandWithExitCode(command: string, options?: ExecOptions): Promise<CaptureOutputResult> {
-  const env = options?.env ?? process.env
-  if (shouldDisplayColors()) {
-    env.FORCE_COLOR = '1'
-  }
-  const executionCwd = options?.cwd ?? cwd()
   const [cmd, ...args] = parseCommand(command)
   if (!cmd) {
     return {stdout: '', stderr: 'Empty command', exitCode: 1}
   }
-  checkCommandSafety(cmd, {cwd: executionCwd})
-  const result = await execa(cmd, args, {
-    env,
-    cwd: executionCwd,
-    reject: false,
-  })
-  return {
-    stdout: result.stdout,
-    stderr: result.stderr,
-    exitCode: result.exitCode ?? 0,
-  }
+  return captureOutputWithExitCode(cmd, args, options)
 }
 
 /**
@@ -208,34 +193,11 @@ export async function captureCommandWithExitCode(command: string, options?: Exec
  * @param options - Optional settings for how to run the command.
  */
 export async function execCommand(command: string, options?: ExecOptions): Promise<void> {
-  const env = options?.env ?? process.env
-  if (shouldDisplayColors()) {
-    env.FORCE_COLOR = '1'
-  }
-  const executionCwd = options?.cwd ?? cwd()
   const [cmd, ...args] = parseCommand(command)
   if (!cmd) {
     throw new AbortError('Empty command')
   }
-  checkCommandSafety(cmd, {cwd: executionCwd})
-  try {
-    await execa(cmd, args, {
-      env,
-      cwd: executionCwd,
-      stdin: options?.stdin,
-      stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
-      stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
-    })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (processError: any) {
-    if (options?.externalErrorHandler) {
-      await options.externalErrorHandler(processError)
-    } else {
-      const abortError = new ExternalError(processError.message, command, [])
-      abortError.stack = processError.stack
-      throw abortError
-    }
-  }
+  await exec(cmd, args, options)
 }
 
 /**
