@@ -856,7 +856,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           organizationId: String(numberFromGid(orgId)),
           variables: {
             domain: shopDomain,
-            filters: [{field: 'STORE_TYPE' as const, operator: 'EQUALS' as const, value: storeType.toLowerCase()}],
+            filters: storeByDomainFilters(storeType),
           },
         }),
       ),
@@ -1484,6 +1484,13 @@ function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErro
     details.push({extension_id: extensionId})
   }
   return {...err, details}
+}
+
+// Keep explicit domain lookup broader than ListAppDevStores for now.
+// If APP_DEVELOPMENT lookups also need to exclude deleted/inactive stores here,
+// add STORE_STATUS=ACTIVE only for that store type and cover mixed storeTypes callers.
+function storeByDomainFilters(storeType: Store) {
+  return [{field: 'STORE_TYPE' as const, operator: 'EQUALS' as const, value: storeType.toLowerCase()}]
 }
 
 function isStoreProvisionable(permissions: string[]) {
