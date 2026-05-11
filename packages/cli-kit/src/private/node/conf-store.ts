@@ -268,11 +268,12 @@ export async function runWithRateLimit(options: RunWithRateLimitOptions, config 
 
 /**
  * Get auto-upgrade preference.
+ * Defaults to true if the preference has never been explicitly set.
  *
- * @returns Whether auto-upgrade is enabled, or undefined if never set.
+ * @returns Whether auto-upgrade is enabled.
  */
-export function getAutoUpgradeEnabled(config: LocalStorage<ConfSchema> = cliKitStore()): boolean | undefined {
-  return config.get('autoUpgradeEnabled')
+export function getAutoUpgradeEnabled(config: LocalStorage<ConfSchema> = cliKitStore()): boolean {
+  return config.get('autoUpgradeEnabled') ?? true
 }
 
 /**
