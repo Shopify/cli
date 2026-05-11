@@ -3693,6 +3693,72 @@
     "related": []
   },
   {
+    "name": "config autoupgrade off",
+    "description": "Disable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n",
+    "overviewPreviewDescription": "Disable automatic upgrades for Shopify CLI.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "config autoupgrade off",
+            "code": "shopify config autoupgrade off",
+            "language": "bash"
+          }
+        ],
+        "title": "config autoupgrade off"
+      }
+    },
+    "definitions": [],
+    "category": "general commands",
+    "related": []
+  },
+  {
+    "name": "config autoupgrade on",
+    "description": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
+    "overviewPreviewDescription": "Enable automatic upgrades for Shopify CLI.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "config autoupgrade on",
+            "code": "shopify config autoupgrade on",
+            "language": "bash"
+          }
+        ],
+        "title": "config autoupgrade on"
+      }
+    },
+    "definitions": [],
+    "category": "general commands",
+    "related": []
+  },
+  {
+    "name": "config autoupgrade status",
+    "description": "Check whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n",
+    "overviewPreviewDescription": "Check whether auto-upgrade is enabled, disabled, or not yet configured.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "config autoupgrade status",
+            "code": "shopify config autoupgrade status",
+            "language": "bash"
+          }
+        ],
+        "title": "config autoupgrade status"
+      }
+    },
+    "definitions": [],
+    "category": "general commands",
+    "related": []
+  },
+  {
     "name": "help",
     "description": "Display help for Shopify CLI",
     "overviewPreviewDescription": "Display help for Shopify CLI",
