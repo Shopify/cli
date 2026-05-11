@@ -97,6 +97,25 @@ describe('common API methods', () => {
        - Content-Type: application/json"
     `)
   })
+
+  test('sanitizedHeadersOutput removes the headers that include cookies', () => {
+    // Given
+    const headers = {
+      'User-Agent': 'useragent',
+      Cookie: 'session=abc',
+      'Set-Cookie': 'session=def',
+      'Content-Type': 'application/json',
+    }
+
+    // When
+    const got = sanitizedHeadersOutput(headers)
+
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      " - User-Agent: useragent
+       - Content-Type: application/json"
+    `)
+  })
 })
 
 describe('GraphQLClientError', () => {
