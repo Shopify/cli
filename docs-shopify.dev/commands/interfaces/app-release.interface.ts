@@ -29,12 +29,6 @@ export interface apprelease {
   '-c, --config <value>'?: string
 
   /**
-   * [Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.
-   * @environment SHOPIFY_FLAG_FORCE
-   */
-  '-f, --force'?: ''
-
-  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */

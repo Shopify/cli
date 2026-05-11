@@ -2863,15 +2863,6 @@
           "name": "config",
           "type": "option"
         },
-        "force": {
-          "allowNo": false,
-          "char": "f",
-          "description": "[Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.",
-          "env": "SHOPIFY_FLAG_FORCE",
-          "hidden": false,
-          "name": "force",
-          "type": "boolean"
-        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
