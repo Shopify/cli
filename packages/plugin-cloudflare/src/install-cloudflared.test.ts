@@ -1,152 +1,200 @@
 import install, {CURRENT_CLOUDFLARE_VERSION, versionIsGreaterThan} from './install-cloudflared.js'
-import * as fsActions from '@shopify/cli-kit/node/fs'
 import * as http from '@shopify/cli-kit/node/http'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-import util from 'util'
-
-import {WriteStream} from 'fs'
+import {inTemporaryDirectory, readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {describe, expect, test, vi} from 'vitest'
+import {Readable} from 'stream'
+import {writeFileSync} from 'fs'
 // eslint-disable-next-line no-restricted-imports
 import * as childProcess from 'child_process'
 
+vi.mock('@shopify/cli-kit/node/http')
+
 vi.mock('child_process')
-vi.mock('stream')
 
 describe('install-cloudflare', () => {
-  beforeEach(() => {
-    vi.spyOn(util, 'promisify').mockReturnValue(vi.fn().mockReturnValue(Promise.resolve()))
-    vi.spyOn(http, 'fetch').mockReturnValue(Promise.resolve({ok: true, body: {pipe: vi.fn()}} as any))
-    vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(false)
-    vi.spyOn(fsActions, 'mkdirSync').mockImplementation(() => vi.fn())
-    vi.spyOn(fsActions, 'unlinkFileSync').mockImplementation(() => vi.fn())
-    vi.spyOn(fsActions, 'renameFile').mockImplementation(() => Promise.resolve())
-    vi.spyOn(fsActions, 'chmod').mockImplementation(() => Promise.resolve())
-    vi.spyOn(fsActions, 'createFileWriteStream').mockReturnValue({pipe: vi.fn()} as unknown as WriteStream)
-  })
+  const mockFetch = (ok = true) => {
+    vi.mocked(http.fetch).mockResolvedValue({
+      ok,
+      status: ok ? 200 : 404,
+      statusText: ok ? 'OK' : 'Not Found',
+      body: Readable.from(['cloudflared content']),
+    } as any)
+  }
 
   test('install is ignored if SHOPIFY_CLI_IGNORE_CLOUDFLARED is present', async () => {
-    // Given
-    const env = {SHOPIFY_CLI_IGNORE_CLOUDFLARED: 'true'}
+    await inTemporaryDirectory(async (_tmpDir) => {
+      // Given
+      const env = {SHOPIFY_CLI_IGNORE_CLOUDFLARED: 'true'}
+      mockFetch()
 
-    // When
-    await install(env)
+      // When
+      await install(env)
 
-    // Then
-    expect(http.fetch).not.toHaveBeenCalled()
+      // Then
+      expect(http.fetch).not.toHaveBeenCalled()
+    })
   })
 
-  test('install works when system is mac and x64', async () => {
-    // Given
-    const env = {}
+  test('downloads the correct binary for macOS x64', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const binPath = joinPath(tmpDir, 'cloudflared')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      mockFetch()
+      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
+        // Simulate tar extracting the file
+        const cwd = options?.cwd as string
+        writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+        return Buffer.from('')
+      })
 
-    // When
-    await install(env, 'darwin', 'x64')
+      // When
+      await install(env, 'darwin', 'x64')
 
-    // Then
-    expect(http.fetch).toHaveBeenCalledWith(
-      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-amd64.tgz',
-      expect.anything(),
-      'slow-request',
-    )
+      // Then
+      expect(http.fetch).toHaveBeenCalledWith(
+        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-amd64.tgz',
+        expect.anything(),
+        'slow-request',
+      )
+      await expect(fileExists(binPath)).resolves.toBe(true)
+      await expect(readFile(binPath)).resolves.toBe('extracted binary')
+    })
   })
 
-  test('install works when system is mac and arm64', async () => {
-    // Given
-    const env = {}
+  test('downloads the correct binary for macOS arm64', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const binPath = joinPath(tmpDir, 'cloudflared')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      mockFetch()
+      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
+        const cwd = options?.cwd as string
+        writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+        return Buffer.from('')
+      })
 
-    // When
-    await install(env, 'darwin', 'arm64')
+      // When
+      await install(env, 'darwin', 'arm64')
 
-    // Then
-    expect(http.fetch).toHaveBeenCalledWith(
-      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-arm64.tgz',
-      expect.anything(),
-      'slow-request',
-    )
+      // Then
+      expect(http.fetch).toHaveBeenCalledWith(
+        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-arm64.tgz',
+        expect.anything(),
+        'slow-request',
+      )
+      await expect(fileExists(binPath)).resolves.toBe(true)
+    })
   })
 
-  test('install works when system is linux', async () => {
-    // Given
-    const env = {}
+  test('downloads the correct binary for linux', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const binPath = joinPath(tmpDir, 'cloudflared')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      mockFetch()
 
-    // When
-    await install(env, 'linux', 'x64')
+      // When
+      await install(env, 'linux', 'x64')
 
-    // Then
-    expect(http.fetch).toHaveBeenCalledWith(
-      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-linux-amd64',
-      expect.anything(),
-      'slow-request',
-    )
+      // Then
+      expect(http.fetch).toHaveBeenCalledWith(
+        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-linux-amd64',
+        expect.anything(),
+        'slow-request',
+      )
+      await expect(fileExists(binPath)).resolves.toBe(true)
+      await expect(readFile(binPath)).resolves.toBe('cloudflared content')
+    })
   })
 
-  test('install works when system is windows', async () => {
-    // Given
-    const env = {}
+  test('downloads the correct binary for windows', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const binPath = joinPath(tmpDir, 'cloudflared.exe')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      mockFetch()
 
-    // When
-    await install(env, 'win32', 'x64')
+      // When
+      await install(env, 'win32', 'x64')
 
-    // Then
-    expect(http.fetch).toHaveBeenCalledWith(
-      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-windows-amd64.exe',
-      expect.anything(),
-      'slow-request',
-    )
+      // Then
+      expect(http.fetch).toHaveBeenCalledWith(
+        'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-windows-amd64.exe',
+        expect.anything(),
+        'slow-request',
+      )
+      await expect(fileExists(binPath)).resolves.toBe(true)
+    })
   })
 
-  test('install ignored if bin exists but current version is up to date', async () => {
-    // Given
-    const env = {}
-    vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(true)
-    vi.spyOn(childProcess, 'execFileSync').mockReturnValue(
-      `cloudflared version ${CURRENT_CLOUDFLARE_VERSION} (built 2023-03-13-1444 UTC)`,
-    )
+  test('skips install if bin exists and current version is up to date', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const binPath = joinPath(tmpDir, 'cloudflared')
+      await writeFile(binPath, 'existing binary')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      vi.mocked(childProcess.execFileSync).mockReturnValue(
+        `cloudflared version ${CURRENT_CLOUDFLARE_VERSION} (built 2023-03-13-1444 UTC)`,
+      )
+      mockFetch()
 
-    // When
-    await install(env, 'win32', 'x64')
+      // When
+      await install(env, 'linux', 'x64')
 
-    // Then
-    expect(http.fetch).not.toHaveBeenCalled()
+      // Then
+      expect(http.fetch).not.toHaveBeenCalled()
+    })
   })
 
-  test('install works if bin exists and current version is not up to date', async () => {
-    // Given
-    const env = {}
-    vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(true)
-    vi.spyOn(childProcess, 'execFileSync').mockReturnValue(`cloudflared version 2000.0.0 (built 2023-03-13-1444 UTC)`)
+  test('updates install if bin exists but current version is not up to date', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const binPath = joinPath(tmpDir, 'cloudflared')
+      await writeFile(binPath, 'old binary')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      vi.mocked(childProcess.execFileSync).mockReturnValue(`cloudflared version 2000.0.0 (built 2023-03-13-1444 UTC)`)
+      mockFetch()
 
-    // When
-    await install(env, 'darwin', 'x64')
+      // When
+      await install(env, 'linux', 'x64')
 
-    // Then
-    expect(http.fetch).toHaveBeenCalled()
+      // Then
+      expect(http.fetch).toHaveBeenCalled()
+      await expect(readFile(binPath)).resolves.toBe('cloudflared content')
+    })
   })
 
-  test('install fails if unsupported platform', async () => {
-    // Given
-    const env = {}
+  test('throws an error if the platform is unsupported', async () => {
+    await inTemporaryDirectory(async (_tmpDir) => {
+      // Given
+      const env = {}
 
-    // When
-    const res = install(env, 'freebsd', 'x64')
+      // When
+      const res = install(env, 'freebsd', 'x64')
 
-    // Then
-    await expect(res).rejects.toThrow('Unsupported system platform: freebsd')
+      // Then
+      await expect(res).rejects.toThrow('Unsupported system platform: freebsd')
+    })
   })
 
-  test('install fails if unsupported arch', async () => {
-    // Given
-    const env = {}
+  test('throws an error if the architecture is unsupported', async () => {
+    await inTemporaryDirectory(async (_tmpDir) => {
+      // Given
+      const env = {}
 
-    // When
-    const res = install(env, 'darwin', 'mips')
+      // When
+      const res = install(env, 'darwin', 'mips')
 
-    // Then
-    await expect(res).rejects.toThrow('Unsupported system arch: mips')
+      // Then
+      await expect(res).rejects.toThrow('Unsupported system arch: mips')
+    })
   })
 })
 
 describe('version-compare', () => {
-  test('versionIsGreaterThan', () => {
+  test('versionIsGreaterThan correctly compares versions', () => {
     expect(versionIsGreaterThan('1.0.0', '0.9.0')).toBe(true)
     expect(versionIsGreaterThan('0.9.0', '1.0.0')).toBe(false)
     expect(versionIsGreaterThan('1.0.0', '1.0.0')).toBe(false)
