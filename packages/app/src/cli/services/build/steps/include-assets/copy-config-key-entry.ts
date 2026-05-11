@@ -62,6 +62,13 @@ export async function copyConfigKeyEntry(config: {
   // should only be copied once; the pathMap entry is reused for all references.
   const uniquePaths = [...new Set(paths)]
 
+  const fieldName = key.split('.').pop()?.replace(/\[\]$/, '') ?? key
+  for (const sourcePath of uniquePaths) {
+    if (sourcePath.trim() === '') {
+      throw new AbortError(`'${fieldName}' can't be empty.`)
+    }
+  }
+
   // Process sequentially to avoid filesystem race conditions on shared output paths.
   const pathMap = new Map<string, string | string[]>()
   let filesCopied = 0
