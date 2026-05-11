@@ -977,7 +977,7 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 USAGE
   $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-id <value> | -c <value>]
     [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>] [--reset |
-    ] [--shared-secret <value>] [--topic <value>]
+    ] [--topic <value>]
 
 FLAGS
   -c, --config=<value>
@@ -1015,9 +1015,6 @@ FLAGS
 
   --reset
       [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-
-  --shared-secret=<value>
-      [env: SHOPIFY_FLAG_SHARED_SECRET] Deprecated. Please use client-secret.
 
   --topic=<value>
       [env: SHOPIFY_FLAG_TOPIC] The requested webhook topic.

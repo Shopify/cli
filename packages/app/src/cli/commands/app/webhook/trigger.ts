@@ -5,7 +5,6 @@ import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class WebhookTrigger extends AppLinkedCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
@@ -56,12 +55,6 @@ export default class WebhookTrigger extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_DELIVERY_METHOD',
       description: `Method chosen to deliver the topic payload. If not passed, it's inferred from the address.`,
     }),
-    'shared-secret': Flags.string({
-      required: false,
-      hidden: false,
-      env: 'SHOPIFY_FLAG_SHARED_SECRET',
-      description: `Deprecated. Please use client-secret.`,
-    }),
     'client-secret': Flags.string({
       required: false,
       hidden: false,
@@ -83,15 +76,6 @@ export default class WebhookTrigger extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(WebhookTrigger)
 
-    if (flags['shared-secret']) {
-      renderWarning({
-        headline: [
-          'The flag shared-secret has been deprecated in favor of client-secret and will eventually be deleted.',
-        ],
-        body: ['Please use --client-secret instead.'],
-      })
-    }
-
     const appContextResult = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
@@ -106,7 +90,7 @@ export default class WebhookTrigger extends AppLinkedCommand {
       deliveryMethod: flags['delivery-method'],
       address: flags.address,
       clientId: flags['client-id'],
-      clientSecret: flags['client-secret'] || flags['shared-secret'], // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty flag should try next
+      clientSecret: flags['client-secret'],
       path: flags.path,
       config: flags.config,
       organizationId: appContextResult.organization.id,

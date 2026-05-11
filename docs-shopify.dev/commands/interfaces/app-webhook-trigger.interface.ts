@@ -64,12 +64,6 @@ export interface appwebhooktrigger {
   '--reset'?: ''
 
   /**
-   * Deprecated. Please use client-secret.
-   * @environment SHOPIFY_FLAG_SHARED_SECRET
-   */
-  '--shared-secret <value>'?: string
-
-  /**
    * The requested webhook topic.
    * @environment SHOPIFY_FLAG_TOPIC
    */
