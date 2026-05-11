@@ -53,12 +53,6 @@ export interface appgenerateextension {
   '-t, --template <value>'?: string
 
   /**
-   * Deprecated. Please use --template
-   * @environment SHOPIFY_FLAG_EXTENSION_TYPE
-   */
-  '-t, --type <value>'?: string
-
-  /**
    * Increase the verbosity of the output.
    * @environment SHOPIFY_FLAG_VERBOSE
    */

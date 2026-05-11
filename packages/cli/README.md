@@ -722,13 +722,12 @@ Generate a new app Extension.
 USAGE
   $ shopify app generate extension [--client-id <value> | -c <value>] [--flavor
     vanilla-js|react|typescript|typescript-react|wasm|rust] [-n <value>] [--no-color] [--path <value>] [--reset | ] [-t
-    <value>] [-t <value>] [--verbose]
+    <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
   -n, --name=<value>       [env: SHOPIFY_FLAG_NAME] name of your Extension
   -t, --template=<value>   [env: SHOPIFY_FLAG_EXTENSION_TEMPLATE] Extension template
-  -t, --type=<value>       [env: SHOPIFY_FLAG_EXTENSION_TYPE] Deprecated. Please use --template
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --flavor=<option>    [env: SHOPIFY_FLAG_FLAVOR] Choose a starting template for your extension, where applicable
                            <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
