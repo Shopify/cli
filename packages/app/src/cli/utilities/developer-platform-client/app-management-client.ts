@@ -1486,11 +1486,11 @@ function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErro
   return {...err, details}
 }
 
-// Keep explicit domain lookup broader than ListAppDevStores for now.
-// If APP_DEVELOPMENT lookups also need to exclude deleted/inactive stores here,
-// add STORE_STATUS=ACTIVE only for that store type and cover mixed storeTypes callers.
 function storeByDomainFilters(storeType: Store) {
-  return [{field: 'STORE_TYPE' as const, operator: 'EQUALS' as const, value: storeType.toLowerCase()}]
+  return [
+    {field: 'STORE_TYPE' as const, operator: 'EQUALS' as const, value: storeType.toLowerCase()},
+    {field: 'STORE_STATUS' as const, operator: 'EQUALS' as const, value: 'ACTIVE'},
+  ]
 }
 
 function isStoreProvisionable(permissions: string[]) {
