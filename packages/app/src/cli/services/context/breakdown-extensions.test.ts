@@ -727,6 +727,77 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
       })
     })
+
+    test('and there is an active version with target changes, extension should be returned as toUpdate with target change details', async () => {
+      // Given
+      const MODULE_CLI_A_WITH_TARGETS: AppModuleVersion = {
+        registrationId: 'A',
+        registrationUuid: 'UUID_A',
+        registrationTitle: 'Checkout post purchase',
+        type: 'checkout_post_purchase',
+        config: {
+          extension_points: ['purchase.checkout.block.render', 'purchase.checkout.header.render'],
+        },
+        specification: {
+          identifier: 'checkout_post_purchase',
+          name: 'Post purchase UI extension',
+          experience: 'extension',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+
+      // Create a local extension with only one target (removing purchase.checkout.header.render)
+      const localExtWithTargetChange = await testUIExtension({
+        directory: '/EXTENSION_A_TARGETS',
+        configuration: {
+          name: 'EXTENSION A',
+          type: 'checkout_ui_extension',
+          extension_points: ['purchase.checkout.block.render'],
+          metafields: [],
+        },
+        entrySourceFilePath: '',
+        devUUID: 'devUUID',
+      })
+      const localExtensions = [localExtWithTargetChange, EXTENSION_A_2]
+
+      const extensionsToConfirm = {
+        validMatches: {[localExtWithTargetChange.localIdentifier]: 'UUID_A'},
+        dashboardOnlyExtensions: [] as RemoteSource[],
+        extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
+      }
+      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
+      const remoteExtensionRegistrations = {
+        app: {
+          extensionRegistrations: [REGISTRATION_A],
+          configurationRegistrations: [],
+          dashboardManagedExtensionRegistrations: [],
+        },
+      }
+      const activeAppVersion = {
+        appModuleVersions: [MODULE_CONFIG_A, MODULE_CLI_A_WITH_TARGETS],
+      }
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeAppVersion),
+      })
+
+      // When
+      const result = await extensionsIdentifiersDeployBreakdown(
+        await options({uiExtensions: localExtensions, developerPlatformClient, activeAppVersion}),
+      )
+
+      // Then
+      const updatedExtensions = result.extensionIdentifiersBreakdown.toUpdate
+      expect(updatedExtensions.length).toBeGreaterThanOrEqual(1)
+      const extensionWithTargetChange = updatedExtensions.find(
+        (ext) => ext.removedTargets && ext.removedTargets.length > 0,
+      )
+      expect(extensionWithTargetChange).toBeDefined()
+      expect(extensionWithTargetChange!.removedTargets).toEqual(['purchase.checkout.header.render'])
+    })
   })
 })
 

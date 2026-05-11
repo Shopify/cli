@@ -350,6 +350,75 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       )
       expect(result).toBe(true)
     })
+
+    test('and no force with removed targets should display the dangerous confirmation prompt with target change details', async () => {
+      // Given
+      const breakdownInfo = buildEmptyBreakdownInfo()
+      breakdownInfo.extensionIdentifiersBreakdown.toUpdate.push(
+        buildExtensionBreakdownInfo('checkout-ui', undefined, {
+          removedTargets: ['purchase.checkout.block.render'],
+        }),
+      )
+      breakdownInfo.extensionIdentifiersBreakdown.unchanged.push(
+        buildExtensionBreakdownInfo('unchanged extension', undefined),
+      )
+
+      const renderDangerousConfirmationPromptSpyOn = vi
+        .spyOn(ui, 'renderDangerousConfirmationPrompt')
+        .mockResolvedValue(true)
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      const appTitle = 'app title'
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle,
+        release: true,
+        force: false,
+      })
+
+      // Then
+      expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Release a new version of app title?',
+          confirmation: appTitle,
+          infoTable: expect.arrayContaining([
+            expect.objectContaining({
+              header: 'Extensions:',
+              helperText:
+                'Removing extension targets can break the experience for merchants who have this extension activated at those targets. Consider removing the extension and creating a new one instead.',
+            }),
+          ]),
+        }),
+      )
+      expect(result).toBe(true)
+    })
+
+    test('and no force with added targets should show updated extensions without dangerous prompt', async () => {
+      // Given
+      const breakdownInfo = buildEmptyBreakdownInfo()
+      breakdownInfo.extensionIdentifiersBreakdown.toUpdate.push(
+        buildExtensionBreakdownInfo('checkout-ui', undefined, {
+          addedTargets: ['purchase.checkout.footer.render'],
+        }),
+      )
+
+      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      const appTitle = 'app title'
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle,
+        release: true,
+        force: false,
+      })
+
+      // Then
+      expect(renderConfirmationPromptSpyOn).toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
   })
 
   describe('when no release', () => {

@@ -21,6 +21,7 @@ interface DeployConfirmationPromptOptions {
   extensionsContentPrompt: {
     extensionsInfoTable?: InfoTableSection
     hasDeletedExtensions: boolean
+    hasRemovedTargets: boolean
   }
   configContentPrompt?: {
     configInfoTable: InfoTableSection
@@ -50,7 +51,7 @@ export async function deployOrReleaseConfirmationPrompt({
 
 async function deployConfirmationPrompt({
   appTitle,
-  extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
+  extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions, hasRemovedTargets},
   configContentPrompt,
   release,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
@@ -65,13 +66,13 @@ async function deployConfirmationPrompt({
         : configContentPrompt.configInfoTable,
     )
   }
-  const isDangerous = appTitle !== undefined && hasDeletedExtensions
+  const isDangerous = appTitle !== undefined && (hasDeletedExtensions || hasRemovedTargets)
   if (extensionsInfoTable) {
-    infoTable.push(
-      isDangerous
-        ? {...extensionsInfoTable, helperText: 'Removing extensions can permanently delete app user data'}
-        : extensionsInfoTable,
-    )
+    if (isDangerous && hasDeletedExtensions) {
+      infoTable.push({...extensionsInfoTable, helperText: 'Removing extensions can permanently delete app user data'})
+    } else {
+      infoTable.push(extensionsInfoTable)
+    }
   } else {
     infoTable.push({header: 'Extensions:', emptyItemsText: 'None', items: []})
   }
@@ -109,12 +110,17 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
     switch (extension.experience) {
       case 'dashboard':
         return [extension.title, {subdued: `(${preffix}from Partner Dashboard)`}]
-      case 'extension':
-        if (extension.uid && extension.uid.length > 0) {
-          return `${extension.title} (uid: ${extension.uid})`
-        } else {
-          return extension.title
+      case 'extension': {
+        const label =
+          extension.uid && extension.uid.length > 0 ? `${extension.title} (uid: ${extension.uid})` : extension.title
+
+        // Append target change details if present
+        const targetDetails = buildTargetChangeDetails(extension)
+        if (targetDetails) {
+          return [label, {subdued: targetDetails}]
         }
+        return label
+      }
     }
   }
   let extensionsInfoTable
@@ -127,10 +133,17 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
   const extensionsInfo = buildDeployReleaseInfoTableSection(section)
 
   const hasDeletedExtensions = onlyRemote.length > 0
+  const hasRemovedTargets = toUpdate.some((ext) => ext.removedTargets && ext.removedTargets.length > 0)
   if (extensionsInfo.length > 0) {
     extensionsInfoTable = {
       header: 'Extensions:',
       items: extensionsInfo,
+      ...(hasRemovedTargets
+        ? {
+            helperText:
+              'Removing extension targets can break the experience for merchants who have this extension activated at those targets. Consider removing the extension and creating a new one instead.',
+          }
+        : {}),
     }
   }
 
@@ -140,7 +153,18 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
     cmd_deploy_confirm_removed_registrations: onlyRemote.length,
   }))
 
-  return {extensionsInfoTable, hasDeletedExtensions}
+  return {extensionsInfoTable, hasDeletedExtensions, hasRemovedTargets}
+}
+
+function buildTargetChangeDetails(extension: ExtensionIdentifierBreakdownInfo): string | undefined {
+  const parts: string[] = []
+  if (extension.removedTargets && extension.removedTargets.length > 0) {
+    parts.push(`removing: ${extension.removedTargets.join(', ')}`)
+  }
+  if (extension.addedTargets && extension.addedTargets.length > 0) {
+    parts.push(`adding: ${extension.addedTargets.join(', ')}`)
+  }
+  return parts.length > 0 ? `(${parts.join('; ')})` : undefined
 }
 
 async function buildConfigContentPrompt(

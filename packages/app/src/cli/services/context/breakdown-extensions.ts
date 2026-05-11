@@ -36,10 +36,22 @@ export interface ExtensionIdentifierBreakdownInfo {
   title: string
   uid: string | undefined
   experience: 'extension' | 'dashboard'
+  removedTargets?: string[]
+  addedTargets?: string[]
 }
 
-export function buildExtensionBreakdownInfo(title: string, uid: string | undefined): ExtensionIdentifierBreakdownInfo {
-  return {title, uid, experience: 'extension'}
+export function buildExtensionBreakdownInfo(
+  title: string,
+  uid: string | undefined,
+  targetChanges?: {removedTargets?: string[]; addedTargets?: string[]},
+): ExtensionIdentifierBreakdownInfo {
+  return {
+    title,
+    uid,
+    experience: 'extension',
+    ...(targetChanges?.removedTargets?.length ? {removedTargets: targetChanges.removedTargets} : {}),
+    ...(targetChanges?.addedTargets?.length ? {addedTargets: targetChanges.addedTargets} : {}),
+  }
 }
 
 export function buildDashboardBreakdownInfo(title: string): ExtensionIdentifierBreakdownInfo {
@@ -95,6 +107,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
         extensionsToConfirm.dashboardOnlyExtensions,
         options.app.specifications ?? [],
         options.activeAppVersion,
+        options.app.allExtensions,
       )) ?? extensionIdentifiersBreakdown
   }
   return {
@@ -368,6 +381,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   dashboardOnly: RemoteSource[],
   specs: ExtensionSpecification[],
   activeAppVersion?: AppVersion,
+  localExtensions?: {localIdentifier: string; configuration?: object}[],
 ): Promise<ExtensionIdentifiersBreakdown | undefined> {
   const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
   if (!version) return
@@ -378,6 +392,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
     toCreate,
     specs,
     developerPlatformClient,
+    localExtensions,
   )
 
   const dashboardOnlyFinal = dashboardOnly.filter(
@@ -401,6 +416,7 @@ function loadExtensionsIdentifiersBreakdown(
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
   developerPlatformClient: DeveloperPlatformClient,
+  localExtensions?: {localIdentifier: string; configuration?: object}[],
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter(
     (ext) => extensionTypeStrategy(specs, ext.specification?.identifier) === 'uuid',
@@ -435,6 +451,23 @@ function loadExtensionsIdentifiersBreakdown(
       !extensionsBeingMigratedToDevDash.some((module) => module.registrationUuid === validMatches[identifier]),
   )
 
+  // Compute target changes for existing extensions
+  const targetChangesMap = computeExtensionTargetChanges(
+    allExistingExtensions,
+    validMatches,
+    extensionModules,
+    localExtensions ?? [],
+    moduleHasUUIDorUID,
+  )
+
+  // Move extensions with target changes from unchanged to toUpdate
+  const extensionsWithTargetChanges = unchangedExtensions.filter(
+    (identifier) => targetChangesMap.has(identifier),
+  )
+  const trulyUnchangedExtensions = unchangedExtensions.filter(
+    (identifier) => !targetChangesMap.has(identifier),
+  )
+
   const extensionsToCreate = Object.entries(validMatches)
     .filter(([_identifier, uuid]) => !extensionModules.some((module) => moduleHasUUIDorUID(module, uuid)))
     .map(([identifier, uuid]) => ({title: identifier, uid: uuid}))
@@ -456,9 +489,88 @@ function loadExtensionsIdentifiersBreakdown(
   return {
     onlyRemote: extensionsOnlyRemote.map(({title, uid}) => buildExtensionBreakdownInfo(title, uid)),
     toCreate: extensionsToCreate.map(({title, uid}) => buildExtensionBreakdownInfo(title, uid)),
-    toUpdate: extensionsToUpdate.map((title) => buildExtensionBreakdownInfo(title, undefined)),
-    unchanged: unchangedExtensions.map((title) => buildExtensionBreakdownInfo(title, undefined)),
+    toUpdate: [
+      ...extensionsToUpdate.map((title) => buildExtensionBreakdownInfo(title, undefined, targetChangesMap.get(title))),
+      ...extensionsWithTargetChanges.map((title) =>
+        buildExtensionBreakdownInfo(title, undefined, targetChangesMap.get(title)),
+      ),
+    ],
+    unchanged: trulyUnchangedExtensions.map((title) => buildExtensionBreakdownInfo(title, undefined)),
   }
+}
+
+/**
+ * Extracts extension point targets from an extension's configuration.
+ * Handles both `extension_points` (array of strings or objects with target) and `targeting` (array of objects).
+ */
+function extractTargetsFromConfig(config?: object): string[] {
+  if (!config || typeof config !== 'object') return []
+
+  const configRecord = config as Record<string, unknown>
+
+  // Handle extension_points: can be array of strings (checkout_ui_extension) or array of objects with target
+  const extensionPoints = configRecord.extension_points as unknown[] | undefined
+  if (extensionPoints && Array.isArray(extensionPoints)) {
+    return extensionPoints
+      .map((ep) => {
+        if (typeof ep === 'string') return ep
+        if (ep && typeof ep === 'object' && 'target' in ep) return (ep as {target: string}).target
+        return undefined
+      })
+      .filter((t): t is string => t !== undefined)
+      .sort()
+  }
+
+  // Handle targeting: array of objects with target (e.g., payments extensions)
+  const targeting = configRecord.targeting as {target: string}[] | undefined
+  if (targeting && Array.isArray(targeting)) {
+    return targeting.map((t) => t.target).filter(Boolean).sort()
+  }
+
+  return []
+}
+
+/**
+ * Computes target changes between local extensions and their remote counterparts.
+ * Returns a map of extension identifier -> {removedTargets, addedTargets} for extensions that have target changes.
+ */
+function computeExtensionTargetChanges(
+  existingExtensions: string[],
+  validMatches: IdentifiersExtensions,
+  remoteModules: AppModuleVersion[],
+  localExtensions: {localIdentifier: string; configuration?: object}[],
+  moduleHasUUIDorUID: (module: AppModuleVersion, identifier: string) => boolean,
+): Map<string, {removedTargets?: string[]; addedTargets?: string[]}> {
+  const targetChanges = new Map<string, {removedTargets?: string[]; addedTargets?: string[]}>()
+
+  for (const identifier of existingExtensions) {
+    const localExtension = localExtensions.find((ext) => ext.localIdentifier === identifier)
+    if (!localExtension) continue
+
+    const remoteUuid = validMatches[identifier]
+    if (!remoteUuid) continue
+
+    const remoteModule = remoteModules.find((module) => moduleHasUUIDorUID(module, remoteUuid))
+    if (!remoteModule) continue
+
+    const localTargets = extractTargetsFromConfig(localExtension.configuration)
+    const remoteTargets = extractTargetsFromConfig(remoteModule.config as object | undefined)
+
+    // Skip if neither side has targets (not a targeted extension)
+    if (localTargets.length === 0 && remoteTargets.length === 0) continue
+
+    const removedTargets = remoteTargets.filter((target) => !localTargets.includes(target))
+    const addedTargets = localTargets.filter((target) => !remoteTargets.includes(target))
+
+    if (removedTargets.length > 0 || addedTargets.length > 0) {
+      targetChanges.set(identifier, {
+        ...(removedTargets.length > 0 ? {removedTargets} : {}),
+        ...(addedTargets.length > 0 ? {addedTargets} : {}),
+      })
+    }
+  }
+
+  return targetChanges
 }
 
 function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: AppVersion) {
