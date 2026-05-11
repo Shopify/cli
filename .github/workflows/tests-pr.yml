@@ -156,21 +156,15 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '20.14.0', '22.2.0', '24.1.0' ]
+        node: [ '22.12.0', '24.1.0' ]
         shard: [ '' ]
         include:
           # Add sharding for Windows jobs to reduce wall-clock time
           - os: windows-latest
-            node: '20.14.0'
+            node: '22.12.0'
             shard: '1/2'
           - os: windows-latest
-            node: '20.14.0'
-            shard: '2/2'
-          - os: windows-latest
-            node: '22.2.0'
-            shard: '1/2'
-          - os: windows-latest
-            node: '22.2.0'
+            node: '22.12.0'
             shard: '2/2'
           - os: windows-latest
             node: '24.1.0'
@@ -181,10 +175,7 @@ jobs:
         exclude:
           # Exclude the non-sharded Windows entries (replaced by sharded ones above)
           - os: windows-latest
-            node: '20.14.0'
-            shard: ''
-          - os: windows-latest
-            node: '22.2.0'
+            node: '22.12.0'
             shard: ''
           - os: windows-latest
             node: '24.1.0'
