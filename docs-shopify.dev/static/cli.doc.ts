@@ -97,7 +97,7 @@ Or, run the \`help\` command to get this information right in your terminal.
       type: 'Generic',
       anchorLink: 'reporting',
       title: 'Usage reporting',
-      sectionContent: `Anonymous usage statistics are collected by default. To opt out, you can use the environment variable \`SHOPIFY_CLI_NO_ANALYTICS=1\`.`,
+      sectionContent: `Anonymous usage statistics are collected by default. To opt out, you can use either \`SHOPIFY_CLI_NO_ANALYTICS=1\` or \`OPT_OUT_INSTRUMENTATION=true\`.`,
     },
     {
       type: 'Generic',
