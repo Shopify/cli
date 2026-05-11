@@ -58,7 +58,7 @@ function shouldSkipConfirmationPrompt({
   extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
   configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown
 }): boolean {
-  // --force is equivalent to --allow-updates --allow-deletes
+  // --no-release (which sets force=true internally) is equivalent to --allow-updates --allow-deletes
   if (force || (allowUpdates && allowDeletes)) return true
 
   const hasDeletedExtensions = extensionIdentifiersBreakdown.onlyRemote.length > 0

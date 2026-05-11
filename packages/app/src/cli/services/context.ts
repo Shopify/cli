@@ -220,7 +220,15 @@ async function checkIncludeConfigOnDeploy({
       {command: 'include_config_on_deploy'},
       'in your TOML file. Including configuration will be required very soon.',
     ]
-    const nextSteps = ['Run', {command: 'shopify app deploy'}, 'interactively, without', {command: '--force'}, '.']
+    const nextSteps = [
+      'Run',
+      {command: 'shopify app deploy'},
+      'interactively, without',
+      {command: '--allow-updates'},
+      'or',
+      {command: '--allow-deletes'},
+      '.',
+    ]
     throw new AbortError(message, nextSteps)
   }
 
