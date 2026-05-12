@@ -361,7 +361,13 @@ describe('copyConfigKeyEntry', () => {
         const outDir = joinPath(tmpDir, 'out')
         await mkdir(outDir)
         const context = makeContext({assets: ''})
-        const promise = copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})
+        const promise = copyConfigKeyEntry({
+          key: 'assets',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          appDirectory: tmpDir,
+        })
         await expect(promise).rejects.toThrow(AbortError)
         await expect(promise).rejects.toThrow(`'assets' can't be empty.`)
       })
@@ -372,13 +378,19 @@ describe('copyConfigKeyEntry', () => {
         const outDir = joinPath(tmpDir, 'out')
         await mkdir(outDir)
         const context = makeContext({assets: '   '})
-        const promise = copyConfigKeyEntry({key: 'assets', baseDir: tmpDir, outputDir: outDir, context})
+        const promise = copyConfigKeyEntry({
+          key: 'assets',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          appDirectory: tmpDir,
+        })
         await expect(promise).rejects.toThrow(AbortError)
         await expect(promise).rejects.toThrow(`'assets' can't be empty.`)
       })
     })
 
-    test('throws with the field name only, not the full configKey, when the key is nested', async () => {
+    test('throws with the full configKey when the key is nested', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const outDir = joinPath(tmpDir, 'out')
         await mkdir(outDir)
@@ -388,9 +400,10 @@ describe('copyConfigKeyEntry', () => {
           baseDir: tmpDir,
           outputDir: outDir,
           context,
+          appDirectory: tmpDir,
         })
         await expect(promise).rejects.toThrow(AbortError)
-        await expect(promise).rejects.toThrow(`'assets' can't be empty.`)
+        await expect(promise).rejects.toThrow(`'extension_points[].assets' can't be empty.`)
       })
     })
   })
