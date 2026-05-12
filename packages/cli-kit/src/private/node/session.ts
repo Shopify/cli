@@ -9,7 +9,7 @@ import {
   InvalidGrantError,
   InvalidRequestError,
 } from './session/exchange.js'
-import {IdentityToken, Session, Sessions} from './session/schema.js'
+import {ApplicationToken, IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {isThemeAccessSession} from './api/rest.js'
@@ -92,6 +92,12 @@ interface BusinessPlatformAPIOAuthOptions {
   scopes: BusinessPlatformScope[]
 }
 
+export type IdentityScope = string
+interface IdentityOAuthOptions {
+  /** List of Identity scopes to request permissions for. */
+  scopes: IdentityScope[]
+}
+
 /**
  * It represents the authentication requirements and
  * is the input necessary to trigger the authentication
@@ -103,6 +109,7 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
   businessPlatformApi?: BusinessPlatformAPIOAuthOptions
   appManagementApi?: AppManagementAPIOauthOptions
+  identityApi?: IdentityOAuthOptions
 }
 
 export interface OAuthSession {
@@ -111,6 +118,7 @@ export interface OAuthSession {
   storefront?: string
   businessPlatform?: string
   appManagement?: string
+  identity?: string
   userId: string
 }
 
@@ -294,7 +302,6 @@ The CLI is currently unable to prompt for reauthentication.`,
  */
 async function executeCompleteFlow(applications: OAuthApplications, existingAlias?: string): Promise<Session> {
   const scopes = getFlattenScopes(applications)
-  const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
   if (firstPartyDev()) {
     outputDebug(outputContent`Authenticating as Shopify Employee...`)
@@ -315,9 +322,12 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
   }
 
-  // Exchange identity token for application tokens
-  outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
-  const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
+  let result: Record<string, ApplicationToken> = {}
+  if (requiresApplicationTokenExchange(applications)) {
+    // Exchange identity token for application tokens
+    outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
+    result = await exchangeAccessForApplicationTokens(identityToken, getExchangeScopes(applications), store)
+  }
 
   // Preserve existing alias if available, otherwise try fetching email
   const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
@@ -344,18 +354,28 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
 async function refreshTokens(session: Session, applications: OAuthApplications): Promise<Session> {
   // Refresh Identity Token
   const identityToken = await refreshAccessToken(session.identity)
-  // Exchange new identity token for application tokens
-  const exchangeScopes = getExchangeScopes(applications)
-  const applicationTokens = await exchangeAccessForApplicationTokens(
-    identityToken,
-    exchangeScopes,
-    applications.adminApi?.storeFqdn,
-  )
+  const applicationTokens = requiresApplicationTokenExchange(applications)
+    ? await exchangeAccessForApplicationTokens(
+        identityToken,
+        getExchangeScopes(applications),
+        applications.adminApi?.storeFqdn,
+      )
+    : {}
 
   return {
     identity: {...identityToken, alias: session.identity.alias},
     applications: applicationTokens,
   }
+}
+
+function requiresApplicationTokenExchange(apps: OAuthApplications): boolean {
+  return [
+    apps.adminApi,
+    apps.storefrontRendererApi,
+    apps.partnersApi,
+    apps.businessPlatformApi,
+    apps.appManagementApi,
+  ].some((app) => app !== undefined)
 }
 
 /**
@@ -399,6 +419,10 @@ async function tokensFor(applications: OAuthApplications, session: Session): Pro
     tokens.appManagement = session.applications[appId]?.accessToken
   }
 
+  if (applications.identityApi) {
+    tokens.identity = session.identity.accessToken
+  }
+
   return tokens
 }
 
@@ -415,7 +439,8 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const storefront = apps.storefrontRendererApi?.scopes ?? []
   const businessPlatform = apps.businessPlatformApi?.scopes ?? []
   const appManagement = apps.appManagementApi?.scopes ?? []
-  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement]
+  const identity = apps.identityApi?.scopes ?? []
+  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement, ...identity]
   return allDefaultScopes(requestedScopes)
 }
 
