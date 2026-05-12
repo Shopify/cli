@@ -13,7 +13,11 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 
-import {extractSchemaFields, resolveContext, stripStringsAndComments} from './major-change-check.js'
+import {mkdtemp, rm, writeFile, mkdir} from 'node:fs/promises'
+import os from 'node:os'
+import * as path from 'pathe'
+
+import {checkChangesets, extractSchemaFields, resolveContext, stripStringsAndComments} from './major-change-check.js'
 
 test('extracts top-level keys from a flat .object({...})', () => {
   const src = `
@@ -183,6 +187,76 @@ test('resolveContext: git failure degrades to scanning everything against main',
   // We'd rather over-flag than silently miss a real removal.
   assert.equal(ctx.baselineRef, 'main')
   assert.equal(ctx.changedFiles, null, 'git failure must NOT collapse to an empty diff set')
+})
+
+// ---------------------------------------------------------------------------
+// checkChangesets() — only flag changesets the PR actually touched
+// ---------------------------------------------------------------------------
+
+test('checkChangesets: ignores major changesets that were not added by this PR', async () => {
+  // Stand up a fake repo containing two changesets on disk — one already
+  // on main (not in the PR diff) and one introduced by this PR. Only the
+  // latter should be reported. This is the regression for PR #7532, where
+  // an in-flight major changeset (`thin-webs-notice.md`) on `main` was
+  // failing the breaking-change check on every unrelated PR.
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'changeset-scope-'))
+  try {
+    await mkdir(path.join(tmp, '.changeset'), {recursive: true})
+    await writeFile(
+      path.join(tmp, '.changeset', 'preexisting-major.md'),
+      `---\n'@shopify/cli': major\n---\n\nStaged for next major.\n`,
+    )
+    await writeFile(
+      path.join(tmp, '.changeset', 'pr-introduced-major.md'),
+      `---\n'@shopify/app': major\n---\n\nIntroduced by this PR.\n`,
+    )
+
+    const result = await checkChangesets({
+      cwd: tmp,
+      changedFiles: new Set(['.changeset/pr-introduced-major.md']),
+    })
+    assert.equal(result.length, 1, 'only the PR-introduced changeset is flagged')
+    assert.equal(result[0].file, 'pr-introduced-major.md')
+  } finally {
+    await rm(tmp, {recursive: true, force: true})
+  }
+})
+
+test('checkChangesets: with no changedFiles set, scans every changeset (legacy local mode)', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'changeset-scope-'))
+  try {
+    await mkdir(path.join(tmp, '.changeset'), {recursive: true})
+    await writeFile(
+      path.join(tmp, '.changeset', 'a.md'),
+      `---\n'@shopify/cli': major\n---\n`,
+    )
+    await writeFile(
+      path.join(tmp, '.changeset', 'b.md'),
+      `---\n'@shopify/app': major\n---\n`,
+    )
+    const result = await checkChangesets({cwd: tmp})
+    assert.equal(result.length, 2)
+  } finally {
+    await rm(tmp, {recursive: true, force: true})
+  }
+})
+
+test('checkChangesets: returns empty when none of the changesets were touched by the PR', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'changeset-scope-'))
+  try {
+    await mkdir(path.join(tmp, '.changeset'), {recursive: true})
+    await writeFile(
+      path.join(tmp, '.changeset', 'preexisting.md'),
+      `---\n'@shopify/cli': major\n---\n`,
+    )
+    const result = await checkChangesets({
+      cwd: tmp,
+      changedFiles: new Set(['packages/app/src/foo.ts']),
+    })
+    assert.equal(result.length, 0)
+  } finally {
+    await rm(tmp, {recursive: true, force: true})
+  }
 })
 
 test('resolveContext: no GITHUB_BASE_REF falls back to scanning main (local invocation)', async () => {
