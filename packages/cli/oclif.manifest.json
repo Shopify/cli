@@ -3113,16 +3113,6 @@
           "name": "reset",
           "type": "boolean"
         },
-        "shared-secret": {
-          "description": "Deprecated. Please use client-secret.",
-          "env": "SHOPIFY_FLAG_SHARED_SECRET",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "shared-secret",
-          "required": false,
-          "type": "option"
-        },
         "topic": {
           "description": "The requested webhook topic.",
           "env": "SHOPIFY_FLAG_TOPIC",
@@ -8409,16 +8399,6 @@
           "hidden": false,
           "name": "reset",
           "type": "boolean"
-        },
-        "shared-secret": {
-          "description": "Deprecated. Please use client-secret.",
-          "env": "SHOPIFY_FLAG_SHARED_SECRET",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "shared-secret",
-          "required": false,
-          "type": "option"
         },
         "topic": {
           "description": "The requested webhook topic.",
