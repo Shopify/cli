@@ -80,7 +80,6 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
   // and produce noisy diffs; explicit `shopify upgrade` invocations still upgrade the
   // local project.
   if (options.autoupgrade && !isGlobal) {
-    outputDebug('Auto-upgrade: Skipping project-local upgrade triggered by the postrun hook.')
     return
   }
 
