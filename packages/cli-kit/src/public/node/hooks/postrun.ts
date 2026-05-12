@@ -96,7 +96,7 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
   }
 
   try {
-    await runCLIUpgrade()
+    await runCLIUpgrade({autoupgrade: true})
     await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: true}))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
