@@ -32,6 +32,7 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import * as loader from '../../../models/app/loader.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
@@ -39,6 +40,9 @@ import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {Writable} from 'stream'
+import net from 'net'
+import http from 'http'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -735,5 +739,46 @@ describe('setup-dev-processes', () => {
         proxyUrl: 'https://example.com/proxy',
       },
     })
+  })
+})
+
+describe('startProxyServer', () => {
+  const sinkStream = () =>
+    new Writable({
+      write(_chunk, _encoding, next) {
+        next()
+      },
+    })
+
+  test('rejects with the bind error when the port is already in use', async () => {
+    // Hold a port so the proxy bind fails with EADDRINUSE.
+    const blocker = http.createServer()
+    await new Promise<void>((resolve) => blocker.listen(0, 'localhost', resolve))
+    const port = (blocker.address() as net.AddressInfo).port
+
+    const abortController = new AbortController()
+    try {
+      await expect(
+        startProxyServer(
+          {abortSignal: abortController.signal, stdout: sinkStream(), stderr: sinkStream()},
+          {port, rules: {default: 'http://localhost:1'}},
+        ),
+      ).rejects.toThrow(/EADDRINUSE/)
+    } finally {
+      abortController.abort()
+      await new Promise<void>((resolve) => blocker.close(() => resolve()))
+    }
+  })
+
+  test('resolves once the server is actually listening', async () => {
+    const abortController = new AbortController()
+    try {
+      await startProxyServer(
+        {abortSignal: abortController.signal, stdout: sinkStream(), stderr: sinkStream()},
+        {port: 0, rules: {default: 'http://localhost:1'}},
+      )
+    } finally {
+      abortController.abort()
+    }
   })
 })

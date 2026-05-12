@@ -34,6 +34,14 @@ export async function getProxyingWebServer(
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', getProxyServerWebsocketUpgradeListener(rules, proxy, stdout))
 
+  // Forward runtime errors from the underlying server (post-listen) to the proxy
+  // output instead of letting them bubble up as uncaught exceptions.
+  server.on('error', (err) => {
+    useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
+      outputWarn(`Proxy server error: ${err.message}`, stdout)
+    })
+  })
+
   abortSignal.addEventListener('abort', () => {
     outputDebug('Closing reverse HTTP proxy')
     server.close()
@@ -58,6 +66,9 @@ function getProxyServerWebsocketUpgradeListener(
         })
       })
     }
+    useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
+      outputWarn(`No matching websocket rule for "${req.url ?? ''}", closing connection`, stdout)
+    })
     socket.destroy()
   }
 }
@@ -80,6 +91,9 @@ function getProxyServerRequestListener(
       })
     }
 
+    useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
+      outputWarn(`No matching rule for "${req.url ?? ''}", returning 500`, stdout)
+    })
     outputDebug(outputContent`
 Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}
 These are the allowed paths:

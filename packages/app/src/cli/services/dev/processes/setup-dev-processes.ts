@@ -295,9 +295,27 @@ export const startProxyServer: DevProcessFunction<{
   localhostCert?: LocalhostCert
 }> = async ({abortSignal, stdout}, {port, rules, localhostCert}) => {
   const {server} = await getProxyingWebServer(rules, abortSignal, localhostCert, stdout)
+
+  // `server.listen` is event-based and returns the Server synchronously, so awaiting it
+  // does not actually wait for the socket to bind. Wrap it in a promise that resolves on
+  // 'listening' and rejects on 'error' (e.g. EADDRINUSE) so a failed bind surfaces to the
+  // dev runner instead of crashing Node via an uncaught 'error' event.
+  await new Promise<void>((resolve, reject) => {
+    const onError = (err: Error) => {
+      server.off('listening', onListening)
+      reject(err)
+    }
+    const onListening = () => {
+      server.off('error', onError)
+      resolve()
+    }
+    server.once('error', onError)
+    server.once('listening', onListening)
+    server.listen(port, 'localhost')
+  })
+
   outputInfo(
-    `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
+    `Proxy server started on port ${port}${localhostCert ? ` with certificate ${localhostCert.certPath}` : ''}`,
     stdout,
   )
-  await server.listen(port, 'localhost')
 }

@@ -69,6 +69,56 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
   })
 })
 
+describe.sequential('http-reverse-proxy without a default rule', () => {
+  test('returns 500 for unmatched HTTP paths', {retry: 2}, async () => {
+    const abortController = new AbortController()
+    const targetServer = http.createServer((_req, res) => {
+      res.writeHead(200)
+      res.end('ok')
+    })
+    await new Promise<void>((resolve) => targetServer.listen(0, 'localhost', resolve))
+    const targetPort = (targetServer.address() as net.AddressInfo).port
+
+    const {server} = await getProxyingWebServer({'/known': `http://localhost:${targetPort}`}, abortController.signal)
+    await new Promise<void>((resolve) => server.listen(0, 'localhost', resolve))
+    const proxyPort = (server.address() as net.AddressInfo).port
+
+    try {
+      const response = await fetch(`http://localhost:${proxyPort}/unknown`, {
+        agent: new http.Agent({keepAlive: false}),
+      })
+      expect(response.status).toBe(500)
+      await expect(response.text()).resolves.toContain('Invalid path')
+    } finally {
+      server.closeAllConnections()
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+      targetServer.closeAllConnections()
+      await new Promise<void>((resolve) => targetServer.close(() => resolve()))
+    }
+  })
+
+  test('destroys websocket connections that do not match any rule', {retry: 2}, async () => {
+    const abortController = new AbortController()
+    const {server} = await getProxyingWebServer({'/known': 'http://localhost:1'}, abortController.signal)
+    await new Promise<void>((resolve) => server.listen(0, 'localhost', resolve))
+    const proxyPort = (server.address() as net.AddressInfo).port
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const ws = new WebSocket(`ws://localhost:${proxyPort}/unmatched`, {
+          agent: new http.Agent({keepAlive: false}),
+        })
+        ws.on('open', () => reject(new Error('connection should not have opened')))
+        ws.on('error', () => resolve())
+        ws.on('unexpected-response', () => resolve())
+      })
+    } finally {
+      server.closeAllConnections()
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+    }
+  })
+})
+
 function getTestReverseProxy(protocol: 'http' | 'https') {
   return test.extend<{
     setup: {
