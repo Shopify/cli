@@ -18,6 +18,9 @@ import ClearCache from './cli/commands/cache/clear.js'
 import AutoupgradeOff from './cli/commands/config/autoupgrade/off.js'
 import AutoupgradeOn from './cli/commands/config/autoupgrade/on.js'
 import AutoupgradeStatus from './cli/commands/config/autoupgrade/status.js'
+import PreviewStoreCreate from './cli/commands/preview/create.js'
+import PreviewStoreClaim from './cli/commands/preview/claim.js'
+import PreviewStoreExecute from './cli/commands/preview/execute.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import StoreCommands from '@shopify/store'
 import ThemeCommands from '@shopify/theme'
@@ -164,6 +167,9 @@ export const COMMANDS: any = {
   'config:autoupgrade:off': AutoupgradeOff,
   'config:autoupgrade:on': AutoupgradeOn,
   'config:autoupgrade:status': AutoupgradeStatus,
+  'preview:create': PreviewStoreCreate,
+  'preview:claim': PreviewStoreClaim,
+  'preview:execute': PreviewStoreExecute,
 }
 
 export default runShopifyCLI

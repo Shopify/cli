@@ -106,6 +106,9 @@
       "store": {
         "description": "Work directly with Shopify stores."
       },
+      "preview": {
+        "description": "Spin up and claim Preview Stores backed by a placeholder identity (prototype)."
+      },
       "app:config": {
         "description": "Manage app configuration."
       },
