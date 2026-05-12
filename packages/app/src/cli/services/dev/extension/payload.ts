@@ -250,9 +250,8 @@ async function staticAssetsMapper(
   files: string[],
 ): Promise<Partial<DevNewExtensionPointSchema>> {
   if (files.length === 0) return {}
-  const urlSubpath = `${target}/${identifier}`
   for (const file of files) {
-    resolver?.set(`${urlSubpath}/${file}`, file)
+    resolver?.set(`${target}/${file}`, file)
   }
   const updatedTimestamps = await Promise.all(
     files.map(async (file) => (await fileLastUpdatedTimestamp(joinPath(buildDirectory, file))) ?? 0),
@@ -261,7 +260,7 @@ async function staticAssetsMapper(
     assets: {
       [identifier]: {
         name: identifier,
-        url: `${url}/assets/${urlSubpath}/`,
+        url: `${url}/assets/${target}/`,
         lastUpdated: Math.max(...updatedTimestamps),
       },
     },
