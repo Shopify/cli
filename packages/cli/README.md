@@ -342,15 +342,12 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-build] [--no-color]
+  $ shopify app deploy [--client-id <value> | -c <value>] [--message <value>] [--no-build] [--no-color]
     [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ] [--source-control-url <value>]
     [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -f, --force                       [env: SHOPIFY_FLAG_FORCE] [Deprecated] Deploy without asking for confirmation.
-                                    Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD
-                                    environments instead.
       --allow-deletes               [env: SHOPIFY_FLAG_ALLOW_DELETES] Allows removing extensions and configuration
                                     without requiring user confirmation. For CI/CD environments, the recommended flag is
                                     --allow-updates.

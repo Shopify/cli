@@ -6,7 +6,9 @@ export function throwUidMappingError() {
     'You must first map IDs to your existing extensions by running',
     {command: 'shopify app deploy'},
     'interactively, without',
-    {command: '--force'},
+    {command: '--allow-updates'},
+    'or',
+    {command: '--allow-deletes'},
     ', to finish the migration.',
   ]
   const customSection = {

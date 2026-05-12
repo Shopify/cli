@@ -793,15 +793,6 @@
           "name": "config",
           "type": "option"
         },
-        "force": {
-          "allowNo": false,
-          "char": "f",
-          "description": "[Deprecated] Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.",
-          "env": "SHOPIFY_FLAG_FORCE",
-          "hidden": false,
-          "name": "force",
-          "type": "boolean"
-        },
         "message": {
           "description": "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
           "env": "SHOPIFY_FLAG_MESSAGE",

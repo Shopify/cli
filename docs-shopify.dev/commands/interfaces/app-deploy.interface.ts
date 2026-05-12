@@ -29,12 +29,6 @@ export interface appdeploy {
   '-c, --config <value>'?: string
 
   /**
-   * [Deprecated] Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.
-   * @environment SHOPIFY_FLAG_FORCE
-   */
-  '-f, --force'?: ''
-
-  /**
    * Optional message that will be associated with this version. This is for internal use only and won't be available externally.
    * @environment SHOPIFY_FLAG_MESSAGE
    */
