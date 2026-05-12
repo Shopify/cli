@@ -93,18 +93,32 @@ async function defaultRunGit(args) {
 // 1. Check changesets for major bumps
 // ---------------------------------------------------------------------------
 
-async function checkChangesets() {
+export async function checkChangesets({changedFiles, cwd = currentDirectory} = {}) {
   logSection('Checking changesets for major bumps')
 
   const changesetFiles = await fg('.changeset/*.md', {
-    cwd: currentDirectory,
+    cwd,
     absolute: true,
     ignore: ['**/README.md'],
   })
 
+  // Scope to changesets the PR actually touched. Without this, an
+  // in-flight major changeset already merged to `main` (e.g. staged for
+  // the next major release) re-flags every unrelated PR opened against
+  // `main`. Mirrors the same scoping applied to the manifest and schema
+  // scans below.
+  const filesToCheck = changedFiles
+    ? changesetFiles.filter((file) => changedFiles.has(path.relative(cwd, file)))
+    : changesetFiles
+
+  if (changedFiles && filesToCheck.length === 0) {
+    logMessage('No changeset files changed in this PR, skipping')
+    return []
+  }
+
   const majorChangesets = []
 
-  for (const file of changesetFiles) {
+  for (const file of filesToCheck) {
     const content = (await fs.readFile(file, 'utf-8')).trim()
     // Changeset format: YAML frontmatter between --- markers, with 'package: major'
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
@@ -662,7 +676,7 @@ async function runMain() {
       ref: context.baselineRef,
     })
 
-    const majorChangesets = await checkChangesets()
+    const majorChangesets = await checkChangesets({changedFiles: context.changedFiles})
     const manifestChanges = await checkManifest(baselineDirectory, {changedFiles: context.changedFiles})
     const schemaChanges = await checkSchemas(baselineDirectory, {changedFiles: context.changedFiles})
 
