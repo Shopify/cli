@@ -770,15 +770,22 @@ describe('startProxyServer', () => {
     }
   })
 
-  test('resolves once the server is actually listening', async () => {
+  test('stays alive after bind and resolves cleanly when the abort signal fires', async () => {
     const abortController = new AbortController()
-    try {
-      await startProxyServer(
-        {abortSignal: abortController.signal, stdout: sinkStream(), stderr: sinkStream()},
-        {port: 0, rules: {default: 'http://localhost:1'}},
-      )
-    } finally {
-      abortController.abort()
-    }
+    let resolved = false
+    const proxyPromise = startProxyServer(
+      {abortSignal: abortController.signal, stdout: sinkStream(), stderr: sinkStream()},
+      {port: 0, rules: {default: 'http://localhost:1'}},
+    ).then(() => {
+      resolved = true
+    })
+
+    // Give the proxy enough time to bind and enter its long-running wait.
+    await new Promise<void>((resolve) => setTimeout(resolve, 50))
+    expect(resolved).toBe(false)
+
+    abortController.abort()
+    await expect(proxyPromise).resolves.toBeUndefined()
+    expect(resolved).toBe(true)
   })
 })

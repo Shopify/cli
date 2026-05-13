@@ -34,14 +34,6 @@ export async function getProxyingWebServer(
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', getProxyServerWebsocketUpgradeListener(rules, proxy, stdout))
 
-  // Forward runtime errors from the underlying server (post-listen) to the proxy
-  // output instead of letting them bubble up as uncaught exceptions.
-  server.on('error', (err) => {
-    useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-      outputWarn(`Proxy server error: ${err.message}`, stdout)
-    })
-  })
-
   abortSignal.addEventListener('abort', () => {
     outputDebug('Closing reverse HTTP proxy')
     server.close()

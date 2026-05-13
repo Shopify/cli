@@ -25,7 +25,8 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ProxyServerProcess extends BaseProcess<{
@@ -318,4 +319,28 @@ export const startProxyServer: DevProcessFunction<{
     `Proxy server started on port ${port}${localhostCert ? ` with certificate ${localhostCert.certPath}` : ''}`,
     stdout,
   )
+
+  // Stay alive for the lifetime of the dev session. Resolve cleanly when the abort signal
+  // fires; reject if the server emits a post-bind 'error' so a dead proxy tears down the
+  // dev session instead of leaving the user with one warning line and silently broken
+  // request forwarding for the rest of the session.
+  await new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      abortSignal.removeEventListener('abort', onAbort)
+      server.off('error', onError)
+    }
+    const onAbort = () => {
+      cleanup()
+      resolve()
+    }
+    const onError = (err: Error) => {
+      cleanup()
+      useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
+        outputWarn(`Proxy server error: ${err.message}`, stdout)
+      })
+      reject(err)
+    }
+    server.on('error', onError)
+    abortSignal.addEventListener('abort', onAbort, {once: true})
+  })
 }
