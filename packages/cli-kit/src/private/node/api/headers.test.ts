@@ -85,6 +85,8 @@ describe('common API methods', () => {
       authorization: 'token',
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'token',
+      Cookie: 'session=abc',
+      'Set-Cookie': 'session=abc',
     }
 
     // When
