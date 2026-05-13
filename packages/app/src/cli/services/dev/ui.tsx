@@ -21,12 +21,14 @@ export async function renderDev({
   appName,
   organizationName,
   configPath,
+  localURL,
 }: DevProps & {
   devSessionStatusManager: DevSessionStatusManager
   appURL?: string
   appName?: string
   organizationName?: string
   configPath?: string
+  localURL?: string
 }) {
   if (!terminalSupportsPrompting()) {
     await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
@@ -41,6 +43,7 @@ export async function renderDev({
         appName={appName}
         organizationName={organizationName}
         configPath={configPath}
+        localURL={localURL}
         onAbort={async () => {
           await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
         }}

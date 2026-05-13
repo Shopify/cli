@@ -37,6 +37,7 @@ interface DevSesionUIProps {
   appName?: string
   organizationName?: string
   configPath?: string
+  localURL?: string
   onAbort: () => Promise<void>
 }
 
@@ -49,6 +50,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   appName,
   organizationName,
   configPath,
+  localURL,
   onAbort,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
@@ -230,6 +232,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
             tabularData={[
               ['App:', appName ?? ''],
               ['App URL:', appURL ?? ''],
+              ['Local URL:', appURL ? '' : (localURL ?? '')],
               ['Config:', configPath?.split('/').pop() ?? ''],
               ['Org:', organizationName ?? ''],
             ].filter(([, value]) => value)}

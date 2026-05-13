@@ -439,6 +439,7 @@ async function launchDevProcesses({
     appName: config.remoteApp.title,
     organizationName: config.commandOptions.organization.businessName,
     configPath: config.localApp.configPath,
+    localURL: config.network.proxyUrl,
   })
 }
 

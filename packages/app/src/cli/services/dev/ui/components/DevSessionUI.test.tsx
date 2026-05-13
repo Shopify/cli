@@ -554,6 +554,64 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
+  test('hides Local URL in app info when an app URL is available', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        localURL="http://localhost:3000"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When
+    await sendInputAndWait(renderInstance, 10, 'a')
+
+    // Then - only App URL is shown, Local URL is hidden
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('App URL:')
+    expect(output).toContain('https://my-app.ngrok.io')
+    expect(output).not.toContain('Local URL:')
+    expect(output).not.toContain('http://localhost:3000')
+
+    renderInstance.unmount()
+  })
+
+  test('shows Local URL in app info when no app URL is available', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        localURL="http://localhost:3000"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When
+    await sendInputAndWait(renderInstance, 10, 'a')
+
+    // Then - Local URL is shown in place of App URL
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('Local URL:')
+    expect(output).toContain('http://localhost:3000')
+    expect(output).not.toContain('App URL:')
+
+    renderInstance.unmount()
+  })
+
   test('hides URL list when terminal supports hyperlinks', async () => {
     // Given
     mocks.terminalSupportsHyperlinks.mockReturnValue(true)
