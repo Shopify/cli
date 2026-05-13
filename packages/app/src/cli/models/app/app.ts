@@ -405,7 +405,7 @@ export class App<
       }
     }
 
-    await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
+    await Promise.all(this.allExtensions.map((ext) => ext.preDeployValidation()))
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
