@@ -851,3 +851,21 @@ function createPackageJson(tmpDir: string, type: string, version: string) {
   const dirPath = joinPath(tmpDir, 'node_modules', '@shopify', type)
   return mkdir(dirPath).then(() => writeFile(packagePath, JSON.stringify(packageJson)))
 }
+
+describe('preDeployValidation awaiting', () => {
+  test('awaits extension validation and catches rejections', async () => {
+    // Given
+    const extension = await testUIExtension()
+    vi.spyOn(extension, 'preDeployValidation').mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      throw new Error('Validation failed')
+    })
+
+    const app = testApp({
+      allExtensions: [extension],
+    })
+
+    // When / Then
+    await expect(app.preDeployValidation()).rejects.toThrow('Validation failed')
+  })
+})
