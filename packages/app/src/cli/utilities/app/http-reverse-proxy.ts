@@ -54,17 +54,14 @@ function getProxyServerWebsocketUpgradeListener(
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
           outputWarn(
-            `Couldn't reach ${target} for websocket ${req.url ?? ''}: ${error.message}. Is the process running?`,
+            `Error: local proxy couldn't reach websocket ${target} for ${req.url ?? ''} (${error.message})`,
             stdout,
           )
         })
       })
     }
     useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-      outputWarn(
-        `Got a websocket connection for ${req.url ?? ''} but nothing in your app handles that path. Closing.`,
-        stdout,
-      )
+      outputWarn(`Error: local proxy has no handler for websocket ${req.url ?? ''}`, stdout)
     })
     socket.destroy()
   }
@@ -82,16 +79,13 @@ function getProxyServerRequestListener(
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
-          outputWarn(`Couldn't reach ${target} for ${req.url ?? ''}: ${error.message}. Is the process running?`, stdout)
+          outputWarn(`Error: local proxy couldn't reach ${target} for ${req.url ?? ''} (${error.message})`, stdout)
         })
       })
     }
 
     useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-      outputWarn(
-        `Got a request for ${req.url ?? ''} but nothing in your app handles that path. Returning a 500.`,
-        stdout,
-      )
+      outputWarn(`Error: local proxy has no handler for ${req.url ?? ''}`, stdout)
     })
     outputDebug(outputContent`
 Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}
@@ -100,7 +94,7 @@ ${outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500
-    res.end(`No process in your app is configured to serve ${req.url}.`)
+    res.end(`No handler for ${req.url}`)
   }
 }
 

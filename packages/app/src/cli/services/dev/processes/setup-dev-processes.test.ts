@@ -763,7 +763,7 @@ describe('startProxyServer', () => {
           {abortSignal: abortController.signal, stdout: sinkStream(), stderr: sinkStream()},
           {port, rules: {default: 'http://localhost:1'}},
         ),
-      ).rejects.toThrow(`Port ${port} is already in use`)
+      ).rejects.toThrow(`Error: local proxy port ${port} is already in use`)
     } finally {
       abortController.abort()
       await new Promise<void>((resolve) => blocker.close(() => resolve()))
