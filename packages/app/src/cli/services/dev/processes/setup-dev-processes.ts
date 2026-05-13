@@ -336,7 +336,7 @@ export const startProxyServer: DevProcessFunction<{
     const onError = (err: Error) => {
       cleanup()
       useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-        outputWarn(`Error: local proxy stopped (${err.message})`, stdout)
+        outputWarn(`Reverse HTTP proxy error - Server stopped: ${err.message}`, stdout)
       })
       reject(err)
     }
@@ -346,7 +346,7 @@ export const startProxyServer: DevProcessFunction<{
 }
 
 function translateBindError(err: NodeJS.ErrnoException, port: number): Error {
-  if (err.code === 'EADDRINUSE') return new Error(`Error: local proxy port ${port} is already in use`)
-  if (err.code === 'EACCES') return new Error(`Error: local proxy can't bind port ${port} (permission denied)`)
-  return new Error(`Error: local proxy couldn't start on port ${port} (${err.message})`)
+  if (err.code === 'EADDRINUSE') return new Error(`Reverse HTTP proxy error - Port ${port} is already in use`)
+  if (err.code === 'EACCES') return new Error(`Reverse HTTP proxy error - Permission denied binding port ${port}`)
+  return new Error(`Reverse HTTP proxy error - Couldn't start on port ${port}: ${err.message}`)
 }

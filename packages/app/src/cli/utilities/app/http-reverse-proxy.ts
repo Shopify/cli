@@ -59,7 +59,7 @@ function getProxyServerWebsocketUpgradeListener(
       })
     }
     useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-      outputWarn(`Error: local proxy has no handler for websocket ${req.url ?? ''}`, stdout)
+      outputWarn(`Reverse HTTP proxy error - Invalid websocket path: ${req.url ?? ''}`, stdout)
     })
     socket.destroy()
   }
@@ -84,7 +84,7 @@ function getProxyServerRequestListener(
     }
 
     useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-      outputWarn(`Error: local proxy has no handler for ${req.url ?? ''}`, stdout)
+      outputWarn(`Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}`, stdout)
     })
     outputDebug(outputContent`
 Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}
