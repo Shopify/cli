@@ -315,7 +315,10 @@ export const startProxyServer: DevProcessFunction<{
     server.listen(port, 'localhost')
   })
 
-  outputInfo(`Listening on port ${port}${localhostCert ? ` (HTTPS)` : ''}`, stdout)
+  outputInfo(
+    `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
+    stdout,
+  )
 
   // Stay alive for the lifetime of the dev session. Resolve cleanly when the abort signal
   // fires; reject if the server emits a post-bind 'error' so a dead proxy tears down the
