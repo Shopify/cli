@@ -42,12 +42,26 @@ export function cliInstallCommand(): string | undefined {
 }
 
 /**
+ * Options for {@link runCLIUpgrade}.
+ */
+export interface RunCLIUpgradeOptions {
+  /**
+   * `true` when the upgrade is being triggered by the automatic postrun hook.
+   * In that case we skip project-local upgrades — those should only happen when the
+   * user explicitly runs `shopify upgrade` so we don't surprise them by mutating
+   * their `package.json` / lockfile in the background.
+   */
+  autoupgrade?: boolean
+}
+
+/**
  * Runs the CLI upgrade using the appropriate package manager.
  * Determines the install command and executes it.
  *
+ * @param options - See {@link RunCLIUpgradeOptions}.
  * @throws AbortError if the package manager or command cannot be determined.
  */
-export async function runCLIUpgrade(): Promise<void> {
+export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise<void> {
   // Path where the current project is (app/hydrogen)
   const path = sniffForPath() ?? cwd()
   const projectDir = getProjectDir(path)
@@ -58,6 +72,14 @@ export async function runCLIUpgrade(): Promise<void> {
   // Don't auto-upgrade for development mode
   if (isDevelopment()) {
     outputInfo('Skipping upgrade in development mode.')
+    return
+  }
+
+  // When triggered by the automatic postrun hook, skip project-local upgrades.
+  // Bumping `package.json` / lockfile silently in the background would surprise users
+  // and produce noisy diffs; explicit `shopify upgrade` invocations still upgrade the
+  // local project.
+  if (options.autoupgrade && !isGlobal) {
     return
   }
 

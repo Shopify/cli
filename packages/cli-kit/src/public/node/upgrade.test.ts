@@ -208,6 +208,17 @@ describe('runCLIUpgrade', () => {
     // Then
     expect(exec).not.toHaveBeenCalled()
   })
+
+  test('skips project-local upgrade when called from the auto-upgrade postrun hook', async () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+
+    // When
+    await runCLIUpgrade({autoupgrade: true})
+
+    // Then
+    expect(exec).not.toHaveBeenCalled()
+  })
 })
 
 describe('versionToAutoUpgrade', () => {
