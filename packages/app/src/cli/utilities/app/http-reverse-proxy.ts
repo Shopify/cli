@@ -53,10 +53,8 @@ function getProxyServerWebsocketUpgradeListener(
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
-          outputWarn(
-            `Error: local proxy couldn't reach websocket ${target} for ${req.url ?? ''} (${error.message})`,
-            stdout,
-          )
+          outputWarn(`Error forwarding websocket request: ${error.message}`, stdout)
+          outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
         })
       })
     }
@@ -79,7 +77,8 @@ function getProxyServerRequestListener(
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
-          outputWarn(`Error: local proxy couldn't reach ${target} for ${req.url ?? ''} (${error.message})`, stdout)
+          outputWarn(`Error forwarding web request: ${error.message}`, stdout)
+          outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
         })
       })
     }
@@ -94,7 +93,7 @@ ${outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500
-    res.end(`No handler for ${req.url}`)
+    res.end(`Invalid path ${req.url}`)
   }
 }
 
