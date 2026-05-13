@@ -1,3 +1,4 @@
+import {assertPathWithinAppDir} from './assert-path-within-app.js'
 import {joinPath, dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, mkdir} from '@shopify/cli-kit/node/fs'
 
@@ -10,10 +11,13 @@ export async function copyByPattern(
     outputDir: string
     patterns: string[]
     ignore: string[]
+    appDirectory: string
+    sourceDirConfigValue: string
   },
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number; outputPaths: string[]}> {
-  const {sourceDir, outputDir, patterns, ignore} = config
+  const {sourceDir, outputDir, patterns, ignore, appDirectory, sourceDirConfigValue} = config
+  assertPathWithinAppDir(sourceDir, appDirectory, sourceDirConfigValue)
   const files = await glob(patterns, {
     absolute: true,
     cwd: sourceDir,

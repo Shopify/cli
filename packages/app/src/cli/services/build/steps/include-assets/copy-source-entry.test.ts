@@ -23,6 +23,7 @@ describe('copySourceEntry', () => {
           destination: undefined,
           baseDir: '/ext',
           outputDir: '/out',
+          appDirectory: '/ext',
         },
         {stdout: mockStdout},
       ),
@@ -43,6 +44,7 @@ describe('copySourceEntry', () => {
         destination: 'assets/icon.png',
         baseDir: '/ext',
         outputDir: '/out',
+        appDirectory: '/ext',
       },
       {stdout: mockStdout},
     )
@@ -63,7 +65,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'dist', destination: undefined, baseDir: '/ext', outputDir: '/out'},
+      {source: 'dist', destination: undefined, baseDir: '/ext', outputDir: '/out', appDirectory: '/ext'},
       {stdout: mockStdout},
     )
 
@@ -83,7 +85,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'README.md', destination: undefined, baseDir: '/ext', outputDir: '/out'},
+      {source: 'README.md', destination: undefined, baseDir: '/ext', outputDir: '/out', appDirectory: '/ext'},
       {stdout: mockStdout},
     )
 
@@ -103,7 +105,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'dist', destination: 'vendor/dist', baseDir: '/ext', outputDir: '/out'},
+      {source: 'dist', destination: 'vendor/dist', baseDir: '/ext', outputDir: '/out', appDirectory: '/ext'},
       {stdout: mockStdout},
     )
 
@@ -124,7 +126,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'theme', destination: undefined, baseDir: '/ext', outputDir: '/out'},
+      {source: 'theme', destination: undefined, baseDir: '/ext', outputDir: '/out', appDirectory: '/ext'},
       {stdout: mockStdout},
     )
 
@@ -147,6 +149,7 @@ describe('copySourceEntry', () => {
         destination: 'assets/icons/icon.png',
         baseDir: '/ext',
         outputDir: '/out',
+        appDirectory: '/ext',
       },
       {stdout: mockStdout},
     )

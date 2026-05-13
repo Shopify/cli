@@ -25,7 +25,7 @@ describe('executeIncludeAssetsStep', () => {
       options: {
         stdout: mockStdout,
         stderr: mockStderr,
-        app: {} as any,
+        app: {directory: '/test'} as any,
         environment: 'production',
       },
       stepResults: new Map(),

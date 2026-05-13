@@ -1,3 +1,4 @@
+import {assertPathWithinAppDir} from './assert-path-within-app.js'
 import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
@@ -24,6 +25,7 @@ export async function copyConfigKeyEntry(config: {
   baseDir: string
   outputDir: string
   context: BuildContext
+  appDirectory: string
   destination?: string
   usedBasenames?: Set<string>
   preserveFilePaths?: boolean
@@ -33,6 +35,7 @@ export async function copyConfigKeyEntry(config: {
     baseDir,
     outputDir,
     context,
+    appDirectory,
     destination,
     usedBasenames = new Set<string>(),
     preserveFilePaths = false,
@@ -66,6 +69,7 @@ export async function copyConfigKeyEntry(config: {
   /* eslint-disable no-await-in-loop */
   for (const sourcePath of uniquePaths) {
     const fullPath = joinPath(baseDir, sourcePath)
+    assertPathWithinAppDir(fullPath, appDirectory, sourcePath)
     const exists = await fileExists(fullPath)
     if (!exists) {
       throw new Error(
