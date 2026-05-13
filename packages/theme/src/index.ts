@@ -16,7 +16,6 @@ import Preview from './cli/commands/theme/preview.js'
 import Pull from './cli/commands/theme/pull.js'
 import Push from './cli/commands/theme/push.js'
 import Rename from './cli/commands/theme/rename.js'
-import Serve from './cli/commands/theme/serve.js'
 import Share from './cli/commands/theme/share.js'
 
 const COMMANDS = {
@@ -38,7 +37,6 @@ const COMMANDS = {
   'theme:pull': Pull,
   'theme:push': Push,
   'theme:rename': Rename,
-  'theme:serve': Serve,
   'theme:share': Share,
 }
 
