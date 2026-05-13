@@ -88,7 +88,7 @@ describe.sequential('http-reverse-proxy without a default rule', () => {
         agent: new http.Agent({keepAlive: false}),
       })
       expect(response.status).toBe(500)
-      await expect(response.text()).resolves.toContain('Invalid path')
+      await expect(response.text()).resolves.toContain('No process in your app is configured to serve')
     } finally {
       server.closeAllConnections()
       await new Promise<void>((resolve) => server.close(() => resolve()))

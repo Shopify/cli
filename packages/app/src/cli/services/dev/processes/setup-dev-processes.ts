@@ -302,9 +302,9 @@ export const startProxyServer: DevProcessFunction<{
   // 'listening' and rejects on 'error' (e.g. EADDRINUSE) so a failed bind surfaces to the
   // dev runner instead of crashing Node via an uncaught 'error' event.
   await new Promise<void>((resolve, reject) => {
-    const onError = (err: Error) => {
+    const onError = (err: NodeJS.ErrnoException) => {
       server.off('listening', onListening)
-      reject(err)
+      reject(translateBindError(err, port))
     }
     const onListening = () => {
       server.off('error', onError)
@@ -315,10 +315,7 @@ export const startProxyServer: DevProcessFunction<{
     server.listen(port, 'localhost')
   })
 
-  outputInfo(
-    `Proxy server started on port ${port}${localhostCert ? ` with certificate ${localhostCert.certPath}` : ''}`,
-    stdout,
-  )
+  outputInfo(`Listening on port ${port}${localhostCert ? ` (HTTPS)` : ''}`, stdout)
 
   // Stay alive for the lifetime of the dev session. Resolve cleanly when the abort signal
   // fires; reject if the server emits a post-bind 'error' so a dead proxy tears down the
@@ -336,11 +333,25 @@ export const startProxyServer: DevProcessFunction<{
     const onError = (err: Error) => {
       cleanup()
       useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-        outputWarn(`Proxy server error: ${err.message}`, stdout)
+        outputWarn(`Stopped unexpectedly: ${err.message}. Ending dev.`, stdout)
       })
       reject(err)
     }
     server.on('error', onError)
     abortSignal.addEventListener('abort', onAbort, {once: true})
   })
+}
+
+function translateBindError(err: NodeJS.ErrnoException, port: number): Error {
+  if (err.code === 'EADDRINUSE') {
+    return new Error(
+      `Port ${port} is already in use. Stop the other process listening on that port, or restart dev to pick a different one.`,
+    )
+  }
+  if (err.code === 'EACCES') {
+    return new Error(
+      `Permission denied binding port ${port}. Use a port above 1024, or run with the required permissions.`,
+    )
+  }
+  return new Error(`Couldn't start on port ${port}: ${err.message}`)
 }

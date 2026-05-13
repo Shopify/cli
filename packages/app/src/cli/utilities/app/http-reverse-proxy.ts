@@ -53,13 +53,18 @@ function getProxyServerWebsocketUpgradeListener(
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
-          outputWarn(`Error forwarding websocket request: ${error.message}`, stdout)
-          outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
+          outputWarn(
+            `Couldn't reach ${target} for websocket ${req.url ?? ''}: ${error.message}. Is the process running?`,
+            stdout,
+          )
         })
       })
     }
     useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-      outputWarn(`No matching websocket rule for "${req.url ?? ''}", closing connection`, stdout)
+      outputWarn(
+        `Got a websocket connection for ${req.url ?? ''} but nothing in your app handles that path. Closing.`,
+        stdout,
+      )
     })
     socket.destroy()
   }
@@ -77,14 +82,16 @@ function getProxyServerRequestListener(
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
-          outputWarn(`Error forwarding web request: ${error.message}`, stdout)
-          outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
+          outputWarn(`Couldn't reach ${target} for ${req.url ?? ''}: ${error.message}. Is the process running?`, stdout)
         })
       })
     }
 
     useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-      outputWarn(`No matching rule for "${req.url ?? ''}", returning 500`, stdout)
+      outputWarn(
+        `Got a request for ${req.url ?? ''} but nothing in your app handles that path. Returning a 500.`,
+        stdout,
+      )
     })
     outputDebug(outputContent`
 Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}
@@ -93,7 +100,7 @@ ${outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500
-    res.end(`Invalid path ${req.url}`)
+    res.end(`No process in your app is configured to serve ${req.url}.`)
   }
 }
 

@@ -750,7 +750,7 @@ describe('startProxyServer', () => {
       },
     })
 
-  test('rejects with the bind error when the port is already in use', async () => {
+  test('rejects with a user-friendly EADDRINUSE message when the port is already in use', async () => {
     // Hold a port so the proxy bind fails with EADDRINUSE.
     const blocker = http.createServer()
     await new Promise<void>((resolve) => blocker.listen(0, 'localhost', resolve))
@@ -763,7 +763,7 @@ describe('startProxyServer', () => {
           {abortSignal: abortController.signal, stdout: sinkStream(), stderr: sinkStream()},
           {port, rules: {default: 'http://localhost:1'}},
         ),
-      ).rejects.toThrow(/EADDRINUSE/)
+      ).rejects.toThrow(`Port ${port} is already in use`)
     } finally {
       abortController.abort()
       await new Promise<void>((resolve) => blocker.close(() => resolve()))
