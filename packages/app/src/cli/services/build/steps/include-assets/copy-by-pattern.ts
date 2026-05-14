@@ -17,7 +17,6 @@ export async function copyByPattern(
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number; outputPaths: string[]}> {
   const {sourceDir, outputDir, patterns, ignore, appDirectory, sourceDirConfigValue} = config
-  assertPathWithinAppDir(sourceDir, appDirectory, sourceDirConfigValue)
   const files = await glob(patterns, {
     absolute: true,
     cwd: sourceDir,
@@ -27,6 +26,9 @@ export async function copyByPattern(
   if (files.length === 0) {
     return {filesCopied: 0, outputPaths: []}
   }
+  // Realpath on sourceDir would throw on a missing dir; we only get here when
+  // glob found files, so sourceDir exists.
+  await assertPathWithinAppDir(sourceDir, appDirectory, sourceDirConfigValue)
 
   await mkdir(outputDir)
 

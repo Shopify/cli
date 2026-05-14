@@ -69,7 +69,6 @@ export async function copyConfigKeyEntry(config: {
   /* eslint-disable no-await-in-loop */
   for (const sourcePath of uniquePaths) {
     const fullPath = joinPath(baseDir, sourcePath)
-    assertPathWithinAppDir(fullPath, appDirectory, sourcePath)
     const exists = await fileExists(fullPath)
     if (!exists) {
       throw new Error(
@@ -77,6 +76,7 @@ export async function copyConfigKeyEntry(config: {
           .value,
       )
     }
+    await assertPathWithinAppDir(fullPath, appDirectory, sourcePath)
 
     const sourceIsDir = await isDirectory(fullPath)
 

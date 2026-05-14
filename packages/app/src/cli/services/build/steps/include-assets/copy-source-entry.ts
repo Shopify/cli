@@ -20,10 +20,10 @@ export async function copySourceEntry(
 ): Promise<{filesCopied: number; outputPaths: string[]}> {
   const {source, destination, baseDir, outputDir, appDirectory} = config
   const sourcePath = joinPath(baseDir, source)
-  assertPathWithinAppDir(sourcePath, appDirectory, source)
   if (!(await fileExists(sourcePath))) {
     throw new Error(`Source does not exist: ${sourcePath}`)
   }
+  await assertPathWithinAppDir(sourcePath, appDirectory, source)
 
   const sourceIsDir = await isDirectory(sourcePath)
 
