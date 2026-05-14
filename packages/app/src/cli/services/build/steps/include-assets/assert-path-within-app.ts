@@ -24,7 +24,11 @@ export async function assertPathWithinAppDir(
 ): Promise<void> {
   const [realSource, realAppDir] = await Promise.all([fileRealPath(resolvedPath), fileRealPath(appDirectory)])
   const relative = relativePath(realAppDir, realSource)
-  if (relative.startsWith('..') || isAbsolutePath(relative)) {
+  // Check `..` as a path segment, not just a prefix. A sibling-style name like
+  // `..cache` is a valid in-app entry whose relative path begins with `..` but
+  // does not escape.
+  const firstSegment = relative.split(/[/\\]/, 1)[0]
+  if (firstSegment === '..' || isAbsolutePath(relative)) {
     throw new AbortError(
       `Asset path '${configValue}' resolves outside the app directory.`,
       `Asset sources must be inside the app folder. Resolved to: ${realSource}`,

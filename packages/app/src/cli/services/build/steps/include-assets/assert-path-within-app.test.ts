@@ -78,6 +78,17 @@ describe('assertPathWithinAppDir', () => {
     })
   })
 
+  test('allows a sibling whose name starts with two dots (e.g. ..cache)', async () => {
+    await inTemporaryDirectory(async (appDir) => {
+      const dotdotDir = joinPath(appDir, '..cache')
+      await mkdir(dotdotDir)
+      await writeFile(joinPath(dotdotDir, 'file.txt'), 'x')
+      await expect(
+        assertPathWithinAppDir(joinPath(dotdotDir, 'file.txt'), appDir, '..cache/file.txt'),
+      ).resolves.toBeUndefined()
+    })
+  })
+
   test('includes the original config value in the error for debuggability', async () => {
     await inTemporaryDirectory(async (parent) => {
       const appDir = joinPath(parent, 'app')

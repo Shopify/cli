@@ -9,6 +9,7 @@ describe('copyByPattern', () => {
 
   beforeEach(() => {
     mockStdout = {write: vi.fn()}
+    vi.mocked(fs.fileExists).mockResolvedValue(true)
   })
 
   test('copies matched files preserving relative paths', async () => {

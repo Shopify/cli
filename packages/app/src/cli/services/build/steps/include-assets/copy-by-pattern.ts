@@ -1,6 +1,6 @@
 import {assertPathWithinAppDir} from './assert-path-within-app.js'
 import {joinPath, dirname, relativePath} from '@shopify/cli-kit/node/path'
-import {glob, copyFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {glob, copyFile, mkdir, fileExists} from '@shopify/cli-kit/node/fs'
 
 /**
  * Pattern strategy: glob-based file selection.
@@ -17,6 +17,15 @@ export async function copyByPattern(
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number; outputPaths: string[]}> {
   const {sourceDir, outputDir, patterns, ignore, appDirectory, sourceDirConfigValue} = config
+
+  // Validate the boundary up front, before touching the filesystem. Realpath
+  // would throw on a missing sourceDir, so preserve the existing "missing dir
+  // = no files" behavior by short-circuiting first.
+  if (!(await fileExists(sourceDir))) {
+    return {filesCopied: 0, outputPaths: []}
+  }
+  await assertPathWithinAppDir(sourceDir, appDirectory, sourceDirConfigValue)
+
   const files = await glob(patterns, {
     absolute: true,
     cwd: sourceDir,
@@ -26,9 +35,6 @@ export async function copyByPattern(
   if (files.length === 0) {
     return {filesCopied: 0, outputPaths: []}
   }
-  // Realpath on sourceDir would throw on a missing dir; we only get here when
-  // glob found files, so sourceDir exists.
-  await assertPathWithinAppDir(sourceDir, appDirectory, sourceDirConfigValue)
 
   await mkdir(outputDir)
 

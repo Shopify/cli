@@ -37,7 +37,8 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
 export async function uploadToGCS(signedURL: string, filePath: string) {
   const size = await fileSize(filePath)
   if (size > MAX_BUNDLE_SIZE_BYTES) {
-    const humanSize = `${(size / MEGABYTE).toFixed(2)} MB`
+    // Round up so a size that barely exceeds the cap never displays as the cap.
+    const humanSize = `${(Math.ceil((size / MEGABYTE) * 100) / 100).toFixed(2)} MB`
     throw new AbortError(
       `Your app bundle exceeds the ${MAX_BUNDLE_SIZE_MB} MB upload limit (it is ${humanSize}).`,
       `Check the asset paths in your extension configuration — a misconfigured source can pull in much more than intended. Exclude large files or directories from your bundle, then try again.`,
