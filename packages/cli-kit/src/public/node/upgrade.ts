@@ -105,10 +105,8 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
     )
     await exec(command, args, {stdio: 'inherit'})
     renderSuccess({
-      headline: 'Shopify CLI upgraded',
-      body: newerVersion
-        ? `You're now on version ${newerVersion}.`
-        : "You're now on the latest version.",
+      headline: 'Shopify CLI upgraded.',
+      body: newerVersion ? `You're now on version ${newerVersion}.` : "You're now on the latest version.",
     })
   } else if (projectDir) {
     await upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
