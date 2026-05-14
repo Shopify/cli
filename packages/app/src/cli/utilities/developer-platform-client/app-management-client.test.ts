@@ -20,6 +20,10 @@ import {
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {
+  FetchStoreByDomain,
+  FetchStoreByDomainQuery,
+} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
+import {
   ListAppDevStores,
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
@@ -1448,6 +1452,133 @@ describe('AppManagementClient', () => {
         flags: [],
         developerPlatformClient: client,
       })
+    })
+  })
+})
+
+describe('storeByDomain', () => {
+  test('queries Business Platform with STORE_STATUS=ACTIVE for each requested store type', async () => {
+    // Given
+    const orgGid = 'gid://shopify/Organization/123'
+    const shopDomain = 'my-production-store.myshopify.com'
+    const token = 'business-platform-token'
+    const emptyResponse: FetchStoreByDomainQuery = {
+      organization: {
+        id: orgGid,
+        name: 'Org 123',
+        accessibleShops: {edges: []},
+        currentUser: {organizationPermissions: []},
+      },
+    }
+    const productionResponse: FetchStoreByDomainQuery = {
+      organization: {
+        id: orgGid,
+        name: 'Org 123',
+        accessibleShops: {
+          edges: [
+            {
+              node: {
+                id: 'gid://BusinessPlatform/Shop/2',
+                externalId: encodedGidFromShopId('2'),
+                name: 'My Production Store',
+                storeType: 'PRODUCTION',
+                primaryDomain: shopDomain,
+                shortName: 'my-production-store',
+                url: `https://${shopDomain}`,
+              },
+            },
+          ],
+        },
+        currentUser: {organizationPermissions: ['ondemand_access_to_stores']},
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(emptyResponse)
+      .mockResolvedValueOnce(productionResponse)
+
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve(token)
+
+    // When
+    const result = await client.storeByDomain(orgGid, shopDomain, ['APP_DEVELOPMENT', 'PRODUCTION'])
+
+    // Then
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).toHaveBeenNthCalledWith(1, {
+      query: FetchStoreByDomain,
+      token,
+      organizationId: '123',
+      variables: {
+        domain: shopDomain,
+        filters: [
+          {field: 'STORE_TYPE', operator: 'EQUALS', value: 'app_development'},
+          {field: 'STORE_STATUS', operator: 'EQUALS', value: 'ACTIVE'},
+        ],
+      },
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).toHaveBeenNthCalledWith(2, {
+      query: FetchStoreByDomain,
+      token,
+      organizationId: '123',
+      variables: {
+        domain: shopDomain,
+        filters: [
+          {field: 'STORE_TYPE', operator: 'EQUALS', value: 'production'},
+          {field: 'STORE_STATUS', operator: 'EQUALS', value: 'ACTIVE'},
+        ],
+      },
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
+    expect(result).toMatchObject({
+      shopDomain,
+      shopName: 'My Production Store',
+      provisionable: true,
+      storeType: 'PRODUCTION',
+    })
+  })
+
+  test('returns undefined when no active stores match the requested filters', async () => {
+    // Given
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
+      organization: {
+        id: 'gid://shopify/Organization/123',
+        name: 'Org 123',
+        accessibleShops: {edges: []},
+        currentUser: {organizationPermissions: []},
+      },
+    })
+
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    // When
+    const result = await client.storeByDomain('gid://shopify/Organization/123', 'missing-store.myshopify.com', [
+      'APP_DEVELOPMENT',
+    ])
+
+    // Then
+    expect(result).toBeUndefined()
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).toHaveBeenCalledWith({
+      query: FetchStoreByDomain,
+      token: 'business-platform-token',
+      organizationId: '123',
+      variables: {
+        domain: 'missing-store.myshopify.com',
+        filters: [
+          {field: 'STORE_TYPE', operator: 'EQUALS', value: 'app_development'},
+          {field: 'STORE_STATUS', operator: 'EQUALS', value: 'ACTIVE'},
+        ],
+      },
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
     })
   })
 })
