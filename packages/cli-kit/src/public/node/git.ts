@@ -233,8 +233,7 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
 }
 
 async function getLatestTagFromDirectory(directory: string, repoUrl: string): Promise<string> {
-  const stdout = await gitCommand(['describe', '--tags', '--abbrev=0'], directory)
-  const tag = stdout.trim()
+  const tag = await getLatestTag(directory)
 
   if (!tag) {
     throw new AbortError(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
