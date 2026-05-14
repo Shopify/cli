@@ -573,8 +573,6 @@ This PR contains changes that may break the existing contract.
 
 **@shopify/dev_experience** — this PR contains breaking changes that require coordination for the next major release.
 
-> 💬 Head to [#help-dev-platform](https://shopify.enterprise.slack.com/archives/C07UJ7UNMTK) to discuss timing and plan the release.
-
 `
 
   if (majorChangesets.length > 0) {
