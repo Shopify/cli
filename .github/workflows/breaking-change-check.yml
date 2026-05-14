@@ -43,7 +43,12 @@ jobs:
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
-          fetch-depth: 1
+          # Full history so `git merge-base origin/<base> HEAD` (used by
+          # major-change-check.js to scope the diff to PR-only changes) can
+          # reach the divergence point. With fetch-depth: 1 the merge-base
+          # call fails and the script falls back to scanning everything,
+          # surfacing every pre-existing major changeset as "new".
+          fetch-depth: 0
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
