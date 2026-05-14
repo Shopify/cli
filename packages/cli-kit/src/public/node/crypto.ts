@@ -71,16 +71,6 @@ export function randomUUID(): string {
 }
 
 /**
- * Internal helper to get the fixed namespace buffer for non-random UUIDs.
- * Hoisted to a lazy-initialized variable to avoid redundant allocations.
- */
-let _uuidNamespaceBuffer: Buffer | undefined
-function getUUIDNamespaceBuffer(): Buffer {
-  _uuidNamespaceBuffer ??= Buffer.from('6ba7b8109dad11d180b400c04fd430c8', 'hex')
-  return _uuidNamespaceBuffer
-}
-
-/**
  * Generate a non-random UUID string.
  * Useful for generating an identifier from a string that is consistent
  * across different runs of the CLI.
@@ -89,8 +79,11 @@ function getUUIDNamespaceBuffer(): Buffer {
  * @returns A non-random UUID string.
  */
 export function nonRandomUUID(subject: string): string {
-  // Optimization: Pre-calculating the namespace buffer and using direct hex digest avoids redundant allocations.
-  const hash = crypto.createHash('sha1').update(getUUIDNamespaceBuffer()).update(subject).digest('hex')
+  // A fixed namespace UUID (6ba7b810-9dad-11d1-80b4-00c04fd430c8)
+  const namespace = '6ba7b8109dad11d180b400c04fd430c8'
+
+  // Optimization: Direct hex digest avoids redundant Buffer to string conversion.
+  const hash = crypto.createHash('sha1').update(Buffer.from(namespace, 'hex')).update(subject).digest('hex')
 
   // Optimization: String slicing is ~2x faster than regex replacement for formatting.
   // The original regex replaced the first 32 chars and appended the remaining 8.
