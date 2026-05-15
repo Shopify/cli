@@ -1156,6 +1156,30 @@ describe('addNPMDependencies', () => {
     })
   })
 
+  test('writes a space-separated install message to stdout', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const stdout = {write: vi.fn()}
+
+      // When
+      await addNPMDependencies(
+        [
+          {name: 'first', version: '0.0.1'},
+          {name: 'second', version: '0.0.2'},
+        ],
+        {
+          type: 'prod',
+          packageManager: 'npm',
+          directory: tmpDir,
+          stdout: stdout as any,
+        },
+      )
+
+      // Then
+      expect(stdout.write).toHaveBeenCalledWith('Installing first@0.0.1 second@0.0.2 with npm')
+    })
+  })
+
   test('when the package manager is unknown an error is thrown', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
