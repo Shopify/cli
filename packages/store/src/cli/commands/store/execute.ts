@@ -54,7 +54,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
     }),
     store: Flags.string({
       char: 's',
-      description: 'The myshopify.com domain of the store to execute against.',
+      description: 'The myshopify.com domain of the store to execute against. Local preview-store *.my.shop.dev domains are also accepted and routed automatically.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => previewStoreApiHost(normalizeStoreFqdn(input)),
       required: true,

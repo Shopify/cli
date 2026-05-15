@@ -6,7 +6,7 @@ import {Flags} from '@oclif/core'
 export default class PreviewStoreExecute extends Command {
   static summary = 'Run an Admin GraphQL operation against a Preview Store using its shop-scoped token.'
 
-  static description = `Reads the shop domain and admin API token straight from \`preview create --json\` output (or accepts them as flags). Calls the Admin GraphQL endpoint at the requested API version. Mutations are blocked unless --allow-mutations is set.`
+  static description = `Reads the shop domain and admin API token straight from \`preview create --json\` output (or accepts them as flags). For local preview stores, the human-facing \`*.my.shop.dev\` domain is accepted and routed to the Admin API host automatically. Mutations are blocked unless --allow-mutations is set.`
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --from-file /tmp/preview.json --query "{ shop { name } }"',

@@ -5,6 +5,12 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {OperationDefinitionNode, parse} from 'graphql'
 
+interface PreviewCreateJson {
+  shop_permanent_domain?: unknown
+  admin_api_token?: unknown
+  store_auth_bootstrap?: {shop_domain?: unknown}
+}
+
 export interface ExecutePreviewStoreInput {
   domain?: string
   token?: string
@@ -42,28 +48,23 @@ async function resolveAuth(input: ExecutePreviewStoreInput): Promise<{domain: st
       throw new AbortError(`File not found: ${input.fromFile}`)
     }
     const raw = await readFile(input.fromFile, {encoding: 'utf8'})
-    let parsed: {shop_permanent_domain?: unknown; admin_api_token?: unknown}
+    let parsed: PreviewCreateJson
     try {
       parsed = JSON.parse(raw)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       throw new AbortError(`Invalid JSON in ${input.fromFile}: ${message}`)
     }
-    const bootstrapDomain =
-      parsed &&
-      typeof parsed === 'object' &&
-      'store_auth_bootstrap' in parsed &&
-      parsed.store_auth_bootstrap &&
-      typeof parsed.store_auth_bootstrap === 'object' &&
-      'shop_domain' in parsed.store_auth_bootstrap &&
-      typeof parsed.store_auth_bootstrap.shop_domain === 'string'
-        ? parsed.store_auth_bootstrap.shop_domain
-        : undefined
+    // Prefer the backend-provided API host when present; otherwise fall back
+    // to the human-facing permanent domain from older `preview create` output.
+    const bootstrapDomain = typeof parsed.store_auth_bootstrap?.shop_domain === 'string'
+      ? parsed.store_auth_bootstrap.shop_domain
+      : undefined
     const domain = bootstrapDomain ?? (typeof parsed.shop_permanent_domain === 'string' ? parsed.shop_permanent_domain : undefined)
     const token = typeof parsed.admin_api_token === 'string' ? parsed.admin_api_token : undefined
     if (!domain || !token) {
       throw new AbortError(
-        `File ${input.fromFile} is missing shop_permanent_domain or admin_api_token.`,
+        `File ${input.fromFile} is missing a shop domain or admin_api_token.`,
         'Re-run `shopify preview create --json` and tee the output to this file.',
       )
     }

@@ -37,6 +37,10 @@ export async function importPreviewStoreBootstrap(
   }
 
   if (storeAuthBootstrap) {
+    // Keep the stored auth keyed to the backend-provided API host for this
+    // prototype. Human-facing preview-store domains are mapped at the command
+    // boundary (`previewStoreApiHost`) so the working transport shape stays
+    // explicit in persisted store auth.
     importStoreAuthBootstrap({
       userId,
       bootstrap: {

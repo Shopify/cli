@@ -24,7 +24,7 @@ Re-run this command if the stored token is missing, expires, or no longer has th
     ...jsonFlag,
     store: Flags.string({
       char: 's',
-      description: 'The myshopify.com domain of the store to authenticate against.',
+      description: 'The myshopify.com domain of the store to authenticate against. Local preview-store *.my.shop.dev domains are also accepted and routed automatically.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => previewStoreApiHost(normalizeStoreFqdn(input)),
       required: true,
