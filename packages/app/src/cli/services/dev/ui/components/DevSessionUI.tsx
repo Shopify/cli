@@ -17,9 +17,7 @@ import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL, terminalSupportsHyperlinks} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {treeKill} from '@shopify/cli-kit/node/tree-kill'
-import {postRunHookHasCompleted} from '@shopify/cli-kit/node/hooks/postrun'
+import {waitForPostRunHookAndExit} from '@shopify/cli-kit/node/hooks/postrun'
 import {Writable} from 'stream'
 
 interface DevStatusShortcut extends TabShortcut {
@@ -70,18 +68,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       setIsShuttingDownMessage('Shutting down dev ...')
       await onAbort()
     }
-    if (isUnitTest()) return
-
-    // Wait for the post run hook to complete or timeout after 5 seconds.
-    let totalTime = 0
-    setInterval(() => {
-      if (postRunHookHasCompleted() || totalTime > 5000) {
-        treeKill(process.pid, 'SIGINT', false, () => {
-          process.exit(0)
-        })
-      }
-      totalTime += 100
-    }, 100)
+    waitForPostRunHookAndExit()
   })
 
   const errorHandledProcesses = useMemo(() => {

@@ -2,6 +2,7 @@
  * Postrun hook — uses dynamic imports to avoid loading heavy modules (base-command, analytics)
  * at module evaluation time. These are only needed after the command has already finished.
  */
+import {treeKill} from '../tree-kill.js'
 import {Command, Hook} from '@oclif/core'
 
 let postRunHookCompleted = false
@@ -13,6 +14,42 @@ let postRunHookCompleted = false
  */
 export function postRunHookHasCompleted(): boolean {
   return postRunHookCompleted
+}
+
+/**
+ * Wait for the postrun hook to finish (so auto-upgrade has a chance to run) and then
+ * tree-kill the current process tree before exiting.
+ *
+ * Long-running interactive commands like `app dev` need this when the user terminates
+ * the command via `q` or Ctrl+C. The dev sub-processes such as servers and watchers keep
+ * the event loop alive, so even after oclif's postrun hook completes the node process
+ * won't exit on its own and we have to `treeKill` the process tree. We must not do that
+ * before the postrun hook has actually finished running auto-upgrade, otherwise we would
+ * kill the upgrade mid-way while `npm install` is still running.
+ *
+ * The flag `postRunHookCompleted` is flipped at the very end of the hook after
+ * `autoUpgradeIfNeeded` resolves, so polling it here is safe.
+ */
+export function waitForPostRunHookAndExit(): void {
+  const pollIntervalMs = 100
+  // Auto-upgrade can take a while (npm/pnpm/yarn install). Cap the wait generously so
+  // a stuck upgrade still terminates the process eventually.
+  const maxWaitMs = 120000
+
+  let elapsed = 0
+  let terminating = false
+  const handle = setInterval(() => {
+    if (terminating) return
+    if (postRunHookHasCompleted() || elapsed >= maxWaitMs) {
+      terminating = true
+      clearInterval(handle)
+      treeKill(process.pid, 'SIGINT', false, () => {
+        process.exit(0)
+      })
+      return
+    }
+    elapsed += pollIntervalMs
+  }, pollIntervalMs)
 }
 
 // This hook is called after each successful command run. More info: https://oclif.io/docs/hooks
@@ -28,9 +65,9 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   const {outputDebug} = await import('../output.js')
   const command = Command.id.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
-  postRunHookCompleted = true
 
   if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
+  postRunHookCompleted = true
 }
 
 /**

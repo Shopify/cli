@@ -10,8 +10,7 @@ import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {treeKill} from '@shopify/cli-kit/node/tree-kill'
+import {waitForPostRunHookAndExit} from '@shopify/cli-kit/node/hooks/postrun'
 import {Writable} from 'stream'
 
 export interface DeveloperPreviewController {
@@ -74,12 +73,7 @@ const Dev: FunctionComponent<DevProps> = ({
       setIsShuttingDownMessage('Shutting down dev because of an error ...')
     } else {
       setIsShuttingDownMessage('Shutting down dev ...')
-      setTimeout(() => {
-        if (isUnitTest()) return
-        treeKill(process.pid, 'SIGINT', false, () => {
-          process.exit(0)
-        })
-      }, 2000)
+      waitForPostRunHookAndExit()
     }
     clearInterval(pollingInterval.current)
     await developerPreview.disable()
