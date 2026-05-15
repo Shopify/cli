@@ -108,12 +108,57 @@ describe('sanitizeRelativePath', () => {
     expect(warn).not.toHaveBeenCalled()
   })
 
-  test('strips traversal and absolute path segments and warns', () => {
+  test('strips traversal segments and warns', () => {
     const warn = vi.fn()
     expect(sanitizeRelativePath('some/../path', warn)).toBe('path')
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('insecure'))
+  })
+
+  test('strips leading slash from absolute Unix path and warns', () => {
+    const warn = vi.fn()
     expect(sanitizeRelativePath('/etc/passwd', warn)).toBe('etc/passwd')
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('etc/passwd'))
+  })
+
+  test('normalizes backslashes and strips leading separator', () => {
+    const warn = vi.fn()
     expect(sanitizeRelativePath('\\some\\path', warn)).toBe('some/path')
+    expect(warn).toHaveBeenCalledOnce()
+  })
+
+  test('strips Windows drive letter and warns', () => {
+    const warn = vi.fn()
     expect(sanitizeRelativePath('C:\\Windows', warn)).toBe('Windows')
-    expect(warn).toHaveBeenCalledTimes(4)
+    expect(warn).toHaveBeenCalledOnce()
+  })
+
+  test('handles drive-relative paths without separator', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('C:..', warn)).toBe('')
+    expect(sanitizeRelativePath('C:foo', warn)).toBe('foo')
+    expect(warn).toHaveBeenCalledTimes(2)
+  })
+
+  test('handles canonical traversal attacks', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('../../etc/passwd', warn)).toBe('etc/passwd')
+    expect(sanitizeRelativePath('a/b/../../../etc', warn)).toBe('etc')
+    expect(warn).toHaveBeenCalledTimes(2)
+  })
+
+  test('returns empty string when all segments are stripped', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('/', warn)).toBe('')
+    expect(sanitizeRelativePath('..', warn)).toBe('')
+    expect(warn).toHaveBeenCalledTimes(2)
+    expect(warn).toHaveBeenLastCalledWith(expect.stringContaining("(empty)'"))
+  })
+
+  test('does not warn for dot-relative paths', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('./relative', warn)).toBe('relative')
+    expect(warn).not.toHaveBeenCalled()
   })
 })
