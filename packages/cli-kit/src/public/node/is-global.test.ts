@@ -81,6 +81,23 @@ describe('currentProcessIsGlobal', () => {
     // Then
     expect(got).toBeFalsy()
   })
+
+  test('returns false on Windows when argv uses backslashes and projectDir uses forward slashes', () => {
+    // Given - mimic the exact Windows shape:
+    //   projectDir comes from pathe -> normalized forward slashes
+    //   argv[1] is OS-native -> backslash separated
+    const winProjectDir = 'C:/Users/me/project'
+    const winArgv1 = 'C:\\Users\\me\\project\\node_modules\\@shopify\\cli\\bin\\run.js'
+    vi.mocked(findPathUpSync).mockReturnValue(`${winProjectDir}/shopify.app.toml`)
+    const argv = ['node', winArgv1, 'shopify']
+
+    // When
+    const got = currentProcessIsGlobal(argv)
+
+    // Then - regression test for the path-separator bug that misclassified
+    // Windows local installs as global, triggering an unwanted `npm install -g`.
+    expect(got).toBeFalsy()
+  })
 })
 
 describe('inferPackageManagerForGlobalCLI', () => {

@@ -1,4 +1,4 @@
-import {cwd, dirname, joinPath, sniffForPath} from './path.js'
+import {cwd, dirname, isSubpath, joinPath, sniffForPath} from './path.js'
 import {isUnitTest} from './context/local.js'
 import {findPathUpSync, globSync} from './fs.js'
 import {realpathSync} from 'fs'
@@ -27,9 +27,17 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 
     // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
     const binDir = argv[1] ?? ''
+    if (!binDir) {
+      return true
+    }
 
-    // If binDir starts with projectDir, then we are running a local CLI
-    const isLocal = binDir.startsWith(projectDir.trim())
+    // If binDir lives inside projectDir, we are running a local CLI.
+    // Use isSubpath (pathe.relative under the hood) instead of a raw
+    // string startsWith: projectDir flows through normalizePath and is
+    // forward-slash on every platform, while argv[1] is OS-native, so on
+    // Windows it arrives backslash-separated and a naive startsWith would
+    // misclassify a local install as global.
+    const isLocal = isSubpath(projectDir.trim(), binDir)
 
     _isGlobal = !isLocal
     return _isGlobal
