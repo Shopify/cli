@@ -47,10 +47,6 @@ export default class AppGenerateExtension extends AppLinkedCommand {
     }),
   }
 
-  public static analyticsNameOverride(): string | undefined {
-    return 'app scaffold extension'
-  }
-
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppGenerateExtension)
 
