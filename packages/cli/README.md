@@ -77,6 +77,7 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
+* [`shopify store create preview`](#shopify-store-create-preview)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
@@ -2128,6 +2129,51 @@ EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
+```
+
+## `shopify store create preview`
+
+Create a Preview Store backed by a placeholder identity.
+
+```
+USAGE
+  $ shopify store create preview [--cli-secret <value>] [--cli-username <value>] [--core-url <value>] [--country <value>]
+    [--email <value>] [-j] [--no-color] [-n <value>] [--verbose]
+
+FLAGS
+  -j, --json                  [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -n, --shop-name=<value>     [env: SHOPIFY_FLAG_PREVIEW_STORE_SHOP_NAME] Subdomain prefix for the new preview store.
+                              Auto-generated if omitted.
+      --cli-secret=<value>    [env: SHOPIFY_FLAG_PREVIEW_STORE_CLI_SECRET] Basic-auth secret for the Core endpoint.
+                              Defaults to the development rig value.
+      --cli-username=<value>  [env: SHOPIFY_FLAG_PREVIEW_STORE_CLI_USERNAME] Basic-auth username for the Core endpoint.
+                              Defaults to the development rig value.
+      --core-url=<value>      [env: SHOPIFY_FLAG_PREVIEW_STORE_CORE_URL] Base URL of the Core preview-stores
+                              orchestrator. Defaults to the local development rig.
+      --country=<value>       [env: SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY] ISO country code for the new store. Defaults to
+                              "US".
+      --email=<value>         [env: SHOPIFY_FLAG_PREVIEW_STORE_EMAIL] Email to associate with the placeholder identity.
+                              Defaults to a generated `@previewstore.invalid` address chosen by Core.
+      --no-color              [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose               [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Create a Preview Store backed by a placeholder identity.
+
+  Creates a Preview Store via the Core preview-stores orchestrator. The returned admin API token is persisted locally as
+  a stored store-auth session, so the new store can be used immediately as a target for `shopify store execute --store
+  <permanent-domain>` without any further login.
+
+  The orchestrator endpoint, basic-auth username, and basic-auth secret default to the local development rig values used
+  by the M1 prototype. Override them with `--core-url`, `--cli-username`, and `--cli-secret` (or the corresponding
+  `SHOPIFY_FLAG_*` environment variables) when targeting a non-default environment.
+
+EXAMPLES
+  $ shopify store create preview --shop-name my-preview
+
+  $ shopify store create preview --shop-name my-preview --email demo@previewstore.invalid
+
+  $ shopify store create preview --shop-name my-preview --json
 ```
 
 ## `shopify store execute`
