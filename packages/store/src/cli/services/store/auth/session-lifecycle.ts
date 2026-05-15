@@ -1,6 +1,11 @@
 import {maskToken} from './config.js'
-import {throwStoredStoreAuthError, throwReauthenticateStoreAuthError} from './recovery.js'
-import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
+import {throwStoredStoreAuthError, throwReauthenticateForSession} from './recovery.js'
+import {
+  clearStoredStoreAppSession,
+  getCurrentStoredStoreAppSession,
+  isPreviewStoreSession,
+  setStoredStoreAppSession,
+} from './session-store.js'
 import {refreshStoreAccessToken} from './token-client.js'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -56,12 +61,16 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
     return session
   }
 
+  // Preview-store sessions can never enter the PKCE refresh flow: they're issued by Core's
+  // preview-stores orchestrator against a placeholder identity, not by the OAuth token
+  // endpoint. If a preview session is somehow expired or missing a refresh token, surface
+  // the preview-specific recovery error directly.
+  if (isPreviewStoreSession(session)) {
+    throwReauthenticateForSession(`Preview store session for ${session.store} is no longer valid.`, session)
+  }
+
   if (!session.refreshToken) {
-    throwReauthenticateStoreAuthError(
-      `No refresh token stored for ${session.store}.`,
-      session.store,
-      session.scopes.join(','),
-    )
+    throwReauthenticateForSession(`No refresh token stored for ${session.store}.`, session)
   }
 
   outputDebug(
@@ -80,14 +89,14 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
     clearStoredStoreAppSession(session.store, session.userId)
 
     if (error instanceof AbortError && error.message.startsWith(`Token refresh failed for ${session.store} (HTTP `)) {
-      throwReauthenticateStoreAuthError(error.message, session.store, session.scopes.join(','))
+      throwReauthenticateForSession(error.message, session)
     }
 
     if (
       error instanceof AbortError &&
       error.message === `Token refresh returned an invalid response for ${session.store}.`
     ) {
-      throwReauthenticateStoreAuthError(error.message, session.store, session.scopes.join(','))
+      throwReauthenticateForSession(error.message, session)
     }
 
     if (error instanceof AbortError && error.message === 'Received an invalid refresh response from Shopify.') {
