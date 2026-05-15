@@ -246,6 +246,25 @@ describe('inferPackageManagerForGlobalCLI', () => {
     expect(got).toBe('homebrew')
   })
 
+  test('returns bun when symlink under ~/.bun/bin resolves out of the bun install dir', async () => {
+    // Given: `bun add -g @shopify/cli` creates ~/.bun/bin/shopify as a symlink to
+    // ../../node_modules/@shopify/cli/bin/run.js, which on most setups resolves to
+    // <home>/node_modules/@shopify/cli/bin/run.js — a path that does NOT contain "bun".
+    // Without inspecting the original symlink path we'd fall through to npm and the
+    // autoupgrade flow would shell out to `npm install -g` instead of `bun add -g`.
+    const symlinkPath = '/users/fonso/.bun/bin/shopify'
+    const realBunPath = '/users/fonso/node_modules/@shopify/cli/bin/run.js'
+    const argv = ['node', symlinkPath, 'shopify']
+
+    vi.mocked(realpathSync).mockImplementationOnce(() => realBunPath)
+
+    // When
+    const got = inferPackageManagerForGlobalCLI(argv)
+
+    // Then
+    expect(got).toBe('bun')
+  })
+
   test('defaults to npm if realpath fails and no other indicator is present', async () => {
     // Given: A path that realpathSync cannot resolve
     const nonExistentPath = '/opt/homebrew/bin/shopify'
