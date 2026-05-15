@@ -12,7 +12,6 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
  * Stored sessions written before this discriminator existed have no `kind` field and are
  * read back as 'standard'.
  */
-// Kept internal for now; re-exported when the `shopify store create preview` command lands.
 type StoredStoreSessionKind = 'standard' | 'preview'
 
 /**
@@ -58,9 +57,6 @@ export interface StoredStoreAppSession {
 /**
  * A stored session that has been narrowed to a preview-store session. The `preview`
  * metadata is guaranteed to be present.
- *
- * Kept internal for now; re-exported when the `shopify store create preview` command
- * lands and external callers need to construct or pass them around.
  */
 type StoredPreviewStoreSession = StoredStoreAppSession & {
   kind: 'preview'
