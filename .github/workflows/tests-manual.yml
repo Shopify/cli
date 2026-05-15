@@ -44,6 +44,9 @@ env:
   DEFAULT_NODE_VERSION: '26.1.0'
   DEFAULT_OS: 'ubuntu-latest'
 
+permissions:
+  contents: read
+
 jobs:
   manually-triggered:
     name: '[Manual] Test with Node ${{ inputs.node-version }} in ${{ inputs.os }}'
