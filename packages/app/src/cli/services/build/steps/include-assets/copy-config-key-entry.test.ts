@@ -354,4 +354,57 @@ describe('copyConfigKeyEntry', () => {
       await expect(fileExists(joinPath(outDir, 'tools.json'))).resolves.toBe(true)
     })
   })
+
+  describe('value guard', () => {
+    test('throws when value is an empty string', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: ''})
+        const promise = copyConfigKeyEntry({
+          key: 'assets',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          appDirectory: tmpDir,
+        })
+        await expect(promise).rejects.toThrow(AbortError)
+        await expect(promise).rejects.toThrow(`'assets' can't be empty.`)
+      })
+    })
+
+    test('throws when value is whitespace-only', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({assets: '   '})
+        const promise = copyConfigKeyEntry({
+          key: 'assets',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          appDirectory: tmpDir,
+        })
+        await expect(promise).rejects.toThrow(AbortError)
+        await expect(promise).rejects.toThrow(`'assets' can't be empty.`)
+      })
+    })
+
+    test('throws with the full configKey when the key is nested', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outDir = joinPath(tmpDir, 'out')
+        await mkdir(outDir)
+        const context = makeContext({extension_points: [{assets: ''}]})
+        const promise = copyConfigKeyEntry({
+          key: 'extension_points[].assets',
+          baseDir: tmpDir,
+          outputDir: outDir,
+          context,
+          appDirectory: tmpDir,
+        })
+        await expect(promise).rejects.toThrow(AbortError)
+        await expect(promise).rejects.toThrow(`'extension_points[].assets' can't be empty.`)
+      })
+    })
+  })
 })

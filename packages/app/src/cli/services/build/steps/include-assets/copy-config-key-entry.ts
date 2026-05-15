@@ -51,6 +51,12 @@ export async function copyConfigKeyEntry(config: {
     paths = []
   }
 
+  for (const sourcePath of paths) {
+    if (sourcePath.trim() === '') {
+      throw new AbortError(`'${key}' can't be empty.`)
+    }
+  }
+
   if (paths.length === 0) {
     outputDebug(`No value for configKey '${key}', skipping\n`, stdout)
     return {filesCopied: 0, pathMap: new Map()}
