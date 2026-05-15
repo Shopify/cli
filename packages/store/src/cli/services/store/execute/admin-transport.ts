@@ -1,4 +1,4 @@
-import {throwReauthenticateStoreAuthError} from '../auth/recovery.js'
+import {throwReauthenticateForSession} from '../auth/recovery.js'
 import {clearStoredStoreAppSession} from '../auth/session-store.js'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -50,10 +50,9 @@ export async function fetchPublicApiVersions(input: {
     const status = graphQLClientErrorStatus(error)
     if (status === 401 || status === 404) {
       clearStoredStoreAppSession(input.session.store, input.session.userId)
-      throwReauthenticateStoreAuthError(
+      throwReauthenticateForSession(
         `Stored app authentication for ${input.session.store} is no longer valid.`,
-        input.session.store,
-        input.session.scopes.join(','),
+        input.session,
       )
     }
 
@@ -86,10 +85,9 @@ export async function runAdminStoreGraphQLOperation(input: {
   } catch (error) {
     if (isGraphQLClientErrorLike(error) && error.response.status === 401) {
       clearStoredStoreAppSession(input.context.session.store, input.context.session.userId)
-      throwReauthenticateStoreAuthError(
+      throwReauthenticateForSession(
         `Stored app authentication for ${input.context.session.store} is no longer valid.`,
-        input.context.session.store,
-        input.context.session.scopes.join(','),
+        input.context.session,
       )
     }
 
