@@ -6,6 +6,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
+  importIdentitySession,
   setLastSeenUserId,
 } from './session.js'
 
@@ -39,6 +40,31 @@ describe('store command analytics session helpers', () => {
     setLastSeenUserId('store-user-id')
 
     expect(setLastSeenUserIdAfterAuth).toHaveBeenCalledWith('store-user-id')
+  })
+})
+
+describe('importIdentitySession', () => {
+  test('routes preview bootstrap through ensureAuthenticated with env bootstrap variables', async () => {
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({userId: 'placeholder-user-id'})
+
+    const result = await importIdentitySession({
+      accessToken: 'identity-token',
+      refreshToken: 'refresh-token',
+      expiresAt: new Date('2026-05-14T12:00:00.000Z'),
+      userId: 'placeholder-user-id',
+    })
+
+    expect(result).toEqual({userId: 'placeholder-user-id'})
+    expect(ensureAuthenticated).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        SHOPIFY_CLI_IDENTITY_TOKEN: 'identity-token',
+        SHOPIFY_CLI_REFRESH_TOKEN: 'refresh-token',
+        SHOPIFY_CLI_IDENTITY_USER_ID: 'placeholder-user-id',
+        SHOPIFY_CLI_IDENTITY_TOKEN_EXPIRES_AT: '2026-05-14T12:00:00.000Z',
+      }),
+      {noPrompt: true},
+    )
   })
 })
 

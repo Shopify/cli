@@ -1,4 +1,5 @@
 import {executePreviewStoreAdminQuery} from './client.js'
+import {previewStoreApiHost} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -48,7 +49,17 @@ async function resolveAuth(input: ExecutePreviewStoreInput): Promise<{domain: st
       const message = error instanceof Error ? error.message : 'Unknown error'
       throw new AbortError(`Invalid JSON in ${input.fromFile}: ${message}`)
     }
-    const domain = typeof parsed.shop_permanent_domain === 'string' ? parsed.shop_permanent_domain : undefined
+    const bootstrapDomain =
+      parsed &&
+      typeof parsed === 'object' &&
+      'store_auth_bootstrap' in parsed &&
+      parsed.store_auth_bootstrap &&
+      typeof parsed.store_auth_bootstrap === 'object' &&
+      'shop_domain' in parsed.store_auth_bootstrap &&
+      typeof parsed.store_auth_bootstrap.shop_domain === 'string'
+        ? parsed.store_auth_bootstrap.shop_domain
+        : undefined
+    const domain = bootstrapDomain ?? (typeof parsed.shop_permanent_domain === 'string' ? parsed.shop_permanent_domain : undefined)
     const token = typeof parsed.admin_api_token === 'string' ? parsed.admin_api_token : undefined
     if (!domain || !token) {
       throw new AbortError(
@@ -56,7 +67,7 @@ async function resolveAuth(input: ExecutePreviewStoreInput): Promise<{domain: st
         'Re-run `shopify preview create --json` and tee the output to this file.',
       )
     }
-    return {domain, token}
+    return {domain: previewStoreApiHost(domain), token}
   }
 
   if (!input.domain || !input.token) {
@@ -64,7 +75,7 @@ async function resolveAuth(input: ExecutePreviewStoreInput): Promise<{domain: st
       'Provide --from-file (JSON output from `preview create`) or both --domain and --token.',
     )
   }
-  return {domain: input.domain, token: input.token}
+  return {domain: previewStoreApiHost(input.domain), token: input.token}
 }
 
 async function readQuery(input: ExecutePreviewStoreInput): Promise<string> {

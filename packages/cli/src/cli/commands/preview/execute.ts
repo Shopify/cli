@@ -11,7 +11,7 @@ export default class PreviewStoreExecute extends Command {
   static examples = [
     '<%= config.bin %> <%= command.id %> --from-file /tmp/preview.json --query "{ shop { name } }"',
     '<%= config.bin %> <%= command.id %> --from-file /tmp/preview.json --query-file ./query.graphql',
-    '<%= config.bin %> <%= command.id %> --domain shop.myshopify.io --token shpat_... --query "..."',
+    '<%= config.bin %> <%= command.id %> --domain preview-123.my.shop.dev --token shpat_... --query "..."',
     '<%= config.bin %> <%= command.id %> --from-file /tmp/preview.json --allow-mutations --query-file ./mutation.graphql',
   ]
 
@@ -25,7 +25,7 @@ export default class PreviewStoreExecute extends Command {
       exclusive: ['domain', 'token'],
     }),
     domain: Flags.string({
-      description: 'Permanent shop domain (e.g. preview-123.myshopify.io). Required if --from-file is omitted.',
+      description: 'Shop domain to use for Admin API requests. For local preview stores, the permanent *.my.shop.dev domain is accepted and routed automatically. Required if --from-file is omitted.',
       env: 'SHOPIFY_FLAG_PREVIEW_STORE_DOMAIN',
       required: false,
       dependsOn: ['token'],

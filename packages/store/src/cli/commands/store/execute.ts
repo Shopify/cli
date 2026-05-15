@@ -2,7 +2,7 @@ import {executeStoreOperation} from '../../services/store/execute/index.js'
 import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {normalizeStoreFqdn, previewStoreApiHost} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
 
@@ -56,7 +56,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
       char: 's',
       description: 'The myshopify.com domain of the store to execute against.',
       env: 'SHOPIFY_FLAG_STORE',
-      parse: async (input) => normalizeStoreFqdn(input),
+      parse: async (input) => previewStoreApiHost(normalizeStoreFqdn(input)),
       required: true,
     }),
     version: Flags.string({

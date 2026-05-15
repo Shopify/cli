@@ -24,7 +24,7 @@ import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
-import {getAppAutomationToken} from '../../public/node/environment.js'
+import {getAppAutomationToken, getIdentityTokenInformation} from '../../public/node/environment.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {terminalSupportsPrompting} from '../../public/node/system.js'
 
@@ -175,6 +175,39 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
+  })
+
+  test('imports identity bootstrap from the provided env with explicit user id and expiry', async () => {
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue({})
+
+    const bootstrapEnv = {
+      SHOPIFY_CLI_IDENTITY_TOKEN: 'identity-token',
+      SHOPIFY_CLI_REFRESH_TOKEN: 'refresh-token',
+      SHOPIFY_CLI_IDENTITY_USER_ID: 'placeholder-user-id',
+      SHOPIFY_CLI_IDENTITY_TOKEN_EXPIRES_AT: '2026-05-14T12:00:00.000Z',
+    }
+
+    vi.mocked(getIdentityTokenInformation).mockReturnValue({
+      accessToken: 'identity-token',
+      refreshToken: 'refresh-token',
+      userId: 'placeholder-user-id',
+      expiresAt: new Date('2026-05-14T12:00:00.000Z'),
+    })
+
+    const got = await ensureAuthenticated({}, bootstrapEnv)
+
+    expect(got).toEqual({userId: 'placeholder-user-id'})
+    expect(getIdentityTokenInformation).toHaveBeenCalledWith(bootstrapEnv)
+    expect(requestDeviceAuthorization).not.toHaveBeenCalled()
+    expect(pollForDeviceAuthorization).not.toHaveBeenCalled()
+
+    const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
+    expect(storedSession[fqdn]!['placeholder-user-id']!.identity.userId).toBe('placeholder-user-id')
+    expect(storedSession[fqdn]!['placeholder-user-id']!.identity.expiresAt).toEqual(
+      new Date('2026-05-14T12:00:00.000Z'),
+    )
   })
 
   test('throws an error and logs out if there is no session and prompting is disabled,', async () => {

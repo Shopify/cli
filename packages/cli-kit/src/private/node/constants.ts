@@ -41,6 +41,8 @@ export const environmentVariables = {
   spinAppHost: 'SPIN_APP_HOST',
   organization: 'SHOPIFY_CLI_ORGANIZATION',
   identityToken: 'SHOPIFY_CLI_IDENTITY_TOKEN',
+  identityTokenUserId: 'SHOPIFY_CLI_IDENTITY_USER_ID',
+  identityTokenExpiresAt: 'SHOPIFY_CLI_IDENTITY_TOKEN_EXPIRES_AT',
   refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
   otelURL: 'SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT',
   themeKitAccessDomain: 'SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN',

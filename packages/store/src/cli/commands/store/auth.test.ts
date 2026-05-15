@@ -36,6 +36,17 @@ describe('store auth command', () => {
     )
   })
 
+  test('maps preview-store permanent domains to the api host before calling the auth service', async () => {
+    await StoreAuth.run(['--store', 'preview-shop.my.shop.dev', '--scopes', 'read_products'])
+
+    expect(authenticateStoreWithApp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'preview-shop.dev-api.shop.dev',
+      }),
+      expect.anything(),
+    )
+  })
+
   test('defines the expected flags', () => {
     expect(StoreAuth.flags.store).toBeDefined()
     expect(StoreAuth.flags.scopes).toBeDefined()
