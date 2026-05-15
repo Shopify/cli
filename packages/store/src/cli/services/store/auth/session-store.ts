@@ -12,7 +12,6 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
  * Stored sessions written before this discriminator existed have no `kind` field and are
  * read back as 'standard'.
  */
-// Kept internal for now; re-exported when the `shopify store create preview` command lands.
 type StoredStoreSessionKind = 'standard' | 'preview'
 
 /**
@@ -23,6 +22,8 @@ export interface StoredPreviewStoreMetadata {
   placeholderAccountUuid: string
   /** Base URL of the Core orchestrator that minted this session. */
   coreUrl: string
+  /** Canonical storefront / Online Store domain returned as `shop_permanent_domain`. */
+  storefrontDomain?: string
   /** One-time-use admin entry URL. Short-lived (~30 min). */
   magicLinkUrl?: string
   /** ISO timestamp at which `magicLinkUrl` is expected to stop working. */
@@ -58,9 +59,6 @@ export interface StoredStoreAppSession {
 /**
  * A stored session that has been narrowed to a preview-store session. The `preview`
  * metadata is guaranteed to be present.
- *
- * Kept internal for now; re-exported when the `shopify store create preview` command
- * lands and external callers need to construct or pass them around.
  */
 type StoredPreviewStoreSession = StoredStoreAppSession & {
   kind: 'preview'
@@ -121,6 +119,7 @@ function sanitizePreviewMetadata(value: unknown): StoredPreviewStoreMetadata | u
   return {
     placeholderAccountUuid: metadata.placeholderAccountUuid,
     coreUrl: metadata.coreUrl,
+    ...(isString(metadata.storefrontDomain) ? {storefrontDomain: metadata.storefrontDomain} : {}),
     ...(isString(metadata.magicLinkUrl) ? {magicLinkUrl: metadata.magicLinkUrl} : {}),
     ...(isString(metadata.magicLinkExpiresAt) ? {magicLinkExpiresAt: metadata.magicLinkExpiresAt} : {}),
   }
