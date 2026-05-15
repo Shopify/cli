@@ -28,7 +28,13 @@ describe('copyConfigKeyEntry', () => {
       await mkdir(outDir)
 
       const context = makeContext({static_root: 'public'}, mockStdout)
-      const result = await copyConfigKeyEntry({key: 'static_root', baseDir: tmpDir, outputDir: outDir, context})
+      const result = await copyConfigKeyEntry({
+        key: 'static_root',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+        appDirectory: tmpDir,
+      })
 
       expect(result.filesCopied).toBe(2)
       await expect(fileExists(joinPath(outDir, 'index.html'))).resolves.toBe(true)
@@ -48,7 +54,13 @@ describe('copyConfigKeyEntry', () => {
       await mkdir(outDir)
 
       const context = makeContext({schema_path: 'src/schema.json'}, mockStdout)
-      const result = await copyConfigKeyEntry({key: 'schema_path', baseDir: tmpDir, outputDir: outDir, context})
+      const result = await copyConfigKeyEntry({
+        key: 'schema_path',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+        appDirectory: tmpDir,
+      })
 
       expect(result.filesCopied).toBe(1)
       await expect(fileExists(joinPath(outDir, 'schema.json'))).resolves.toBe(true)
@@ -72,7 +84,13 @@ describe('copyConfigKeyEntry', () => {
       await mkdir(outDir)
 
       const context = makeContext({files: ['a/schema.json', 'b/schema.json']}, mockStdout)
-      const result = await copyConfigKeyEntry({key: 'files', baseDir: tmpDir, outputDir: outDir, context})
+      const result = await copyConfigKeyEntry({
+        key: 'files',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+        appDirectory: tmpDir,
+      })
 
       expect(result.filesCopied).toBe(2)
       // Both have basename schema.json — second one gets renamed
@@ -87,7 +105,13 @@ describe('copyConfigKeyEntry', () => {
       await mkdir(outDir)
 
       const context = makeContext({}, mockStdout)
-      const result = await copyConfigKeyEntry({key: 'static_root', baseDir: tmpDir, outputDir: outDir, context})
+      const result = await copyConfigKeyEntry({
+        key: 'static_root',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+        appDirectory: tmpDir,
+      })
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
@@ -101,7 +125,7 @@ describe('copyConfigKeyEntry', () => {
 
       const context = makeContext({assets_dir: 'nonexistent'}, mockStdout)
       await expect(
-        copyConfigKeyEntry({key: 'assets_dir', baseDir: tmpDir, outputDir: outDir, context}),
+        copyConfigKeyEntry({key: 'assets_dir', baseDir: tmpDir, outputDir: outDir, context, appDirectory: tmpDir}),
       ).rejects.toThrow(`Couldn't find`)
     })
   })
@@ -121,7 +145,13 @@ describe('copyConfigKeyEntry', () => {
       await mkdir(outDir)
 
       const context = makeContext({roots: ['public', 'assets']}, mockStdout)
-      const result = await copyConfigKeyEntry({key: 'roots', baseDir: tmpDir, outputDir: outDir, context})
+      const result = await copyConfigKeyEntry({
+        key: 'roots',
+        baseDir: tmpDir,
+        outputDir: outDir,
+        context,
+        appDirectory: tmpDir,
+      })
 
       // Promise.all runs copies sequentially; glob on the shared outDir may see files
       // from the other copy, so the total count is at least 3 (one per real file).
@@ -147,6 +177,7 @@ describe('copyConfigKeyEntry', () => {
         baseDir: tmpDir,
         outputDir: outDir,
         context,
+        appDirectory: tmpDir,
         destination: 'static/icons',
       })
 
@@ -174,6 +205,7 @@ describe('copyConfigKeyEntry', () => {
         baseDir: tmpDir,
         outputDir: outDir,
         context,
+        appDirectory: tmpDir,
       })
 
       expect(result.filesCopied).toBe(3)
@@ -200,6 +232,7 @@ describe('copyConfigKeyEntry', () => {
         baseDir: tmpDir,
         outputDir: outDir,
         context,
+        appDirectory: tmpDir,
       })
 
       expect(result.filesCopied).toBe(0)
@@ -227,6 +260,7 @@ describe('copyConfigKeyEntry', () => {
           baseDir: tmpDir,
           outputDir: outDir,
           context: contextA,
+          appDirectory: tmpDir,
           usedBasenames,
           preserveFilePaths: true,
         })
@@ -237,6 +271,7 @@ describe('copyConfigKeyEntry', () => {
           baseDir: tmpDir,
           outputDir: outDir,
           context: contextB,
+          appDirectory: tmpDir,
           usedBasenames,
           preserveFilePaths: true,
         })
@@ -263,6 +298,7 @@ describe('copyConfigKeyEntry', () => {
           baseDir: tmpDir,
           outputDir: outDir,
           context,
+          appDirectory: tmpDir,
           preserveFilePaths: true,
         })
         await expect(promise).rejects.toThrow(AbortError)
@@ -285,6 +321,7 @@ describe('copyConfigKeyEntry', () => {
           baseDir: tmpDir,
           outputDir: outDir,
           context,
+          appDirectory: tmpDir,
           preserveFilePaths: true,
         })
 
@@ -310,6 +347,7 @@ describe('copyConfigKeyEntry', () => {
         baseDir: tmpDir,
         outputDir: outDir,
         context,
+        appDirectory: tmpDir,
       })
 
       expect(result.filesCopied).toBe(1)

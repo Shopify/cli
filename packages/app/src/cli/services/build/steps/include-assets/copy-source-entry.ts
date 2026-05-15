@@ -1,3 +1,4 @@
+import {assertPathWithinAppDir} from './assert-path-within-app.js'
 import {joinPath, dirname, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 
@@ -13,14 +14,16 @@ export async function copySourceEntry(
     destination: string | undefined
     baseDir: string
     outputDir: string
+    appDirectory: string
   },
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number; outputPaths: string[]}> {
-  const {source, destination, baseDir, outputDir} = config
+  const {source, destination, baseDir, outputDir, appDirectory} = config
   const sourcePath = joinPath(baseDir, source)
   if (!(await fileExists(sourcePath))) {
     throw new Error(`Source does not exist: ${sourcePath}`)
   }
+  await assertPathWithinAppDir(sourcePath, appDirectory, source)
 
   const sourceIsDir = await isDirectory(sourcePath)
 

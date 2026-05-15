@@ -5,9 +5,13 @@ import {MinimalAppIdentifiers} from '../models/organization.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
-import {readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileSize, readFileSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {writeFile} from 'fs/promises'
+
+const MEGABYTE = 1024 * 1024
+const MAX_BUNDLE_SIZE_MB = 100
+const MAX_BUNDLE_SIZE_BYTES = MAX_BUNDLE_SIZE_MB * MEGABYTE
 
 export async function writeManifestToBundle(appManifest: AppManifest, bundlePath: string) {
   const manifestPath = joinPath(bundlePath, 'manifest.json')
@@ -31,6 +35,15 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
  * @param filePath - The path to the file
  */
 export async function uploadToGCS(signedURL: string, filePath: string) {
+  const size = await fileSize(filePath)
+  if (size > MAX_BUNDLE_SIZE_BYTES) {
+    // Round up so a size that barely exceeds the cap never displays as the cap.
+    const humanSize = `${(Math.ceil((size / MEGABYTE) * 100) / 100).toFixed(2)} MB`
+    throw new AbortError(
+      `Your app bundle exceeds the ${MAX_BUNDLE_SIZE_MB} MB upload limit (it is ${humanSize}).`,
+      `Check the asset paths in your extension configuration — a misconfigured source can pull in much more than intended. Exclude large files or directories from your bundle, then try again.`,
+    )
+  }
   const form = formData()
   const buffer = readFileSync(filePath)
   form.append('my_upload', buffer)

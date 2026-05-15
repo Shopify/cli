@@ -9,6 +9,7 @@ describe('copyByPattern', () => {
 
   beforeEach(() => {
     mockStdout = {write: vi.fn()}
+    vi.mocked(fs.fileExists).mockResolvedValue(true)
   })
 
   test('copies matched files preserving relative paths', async () => {
@@ -24,6 +25,8 @@ describe('copyByPattern', () => {
         outputDir: '/out',
         patterns: ['**/*.ts', '**/*.tsx'],
         ignore: [],
+        appDirectory: '/src',
+        sourceDirConfigValue: '.',
       },
       {stdout: mockStdout},
     )
@@ -47,6 +50,8 @@ describe('copyByPattern', () => {
         outputDir: '/out',
         patterns: ['**/*.png'],
         ignore: [],
+        appDirectory: '/src',
+        sourceDirConfigValue: '.',
       },
       {stdout: mockStdout},
     )
@@ -72,6 +77,8 @@ describe('copyByPattern', () => {
         outputDir: '/out/sub',
         patterns: ['**/*'],
         ignore: [],
+        appDirectory: '/out',
+        sourceDirConfigValue: 'sub',
       },
       {stdout: mockStdout},
     )
@@ -96,6 +103,8 @@ describe('copyByPattern', () => {
         outputDir: '/out',
         patterns: ['*.png'],
         ignore: [],
+        appDirectory: '/out',
+        sourceDirConfigValue: '.',
       },
       {stdout: mockStdout},
     )
@@ -120,6 +129,8 @@ describe('copyByPattern', () => {
         outputDir: '/out/dist',
         patterns: ['*.js'],
         ignore: [],
+        appDirectory: '/src',
+        sourceDirConfigValue: '.',
       },
       {stdout: mockStdout},
     )
@@ -139,6 +150,8 @@ describe('copyByPattern', () => {
         outputDir: '/out',
         patterns: ['**/*'],
         ignore: ['**/*.test.ts', 'node_modules/**'],
+        appDirectory: '/src',
+        sourceDirConfigValue: '.',
       },
       {stdout: mockStdout},
     )

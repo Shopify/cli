@@ -405,6 +405,7 @@ describe('getExtensionAssetMiddleware()', () => {
         baseDir: extDir,
         outputDir,
         context: {extension, options: {stdout: {write: vi.fn()}}} as any,
+        appDirectory: tmpDir,
       })
 
       const flattened = buildResult.pathMap.get('../tools.json') as string

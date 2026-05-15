@@ -1,15 +1,27 @@
-import {writeManifestToBundle, compressBundle, BUNDLE_EXCLUSION_PATTERNS} from './bundle.js'
+import {writeManifestToBundle, compressBundle, uploadToGCS, BUNDLE_EXCLUSION_PATTERNS} from './bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {describe, test, expect, vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile, readFile, fileSize} from '@shopify/cli-kit/node/fs'
 import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {fetch} from '@shopify/cli-kit/node/http'
 
 vi.mock('@shopify/cli-kit/node/archiver', () => {
   return {
     brotliCompress: vi.fn(),
     zip: vi.fn(),
   }
+})
+
+vi.mock('@shopify/cli-kit/node/http', async (importActual) => {
+  const actual: any = await importActual()
+  return {...actual, fetch: vi.fn()}
+})
+
+vi.mock('@shopify/cli-kit/node/fs', async (importActual) => {
+  const actual: any = await importActual()
+  return {...actual, fileSize: vi.fn(actual.fileSize)}
 })
 
 describe('writeManifestToBundle', () => {
@@ -190,5 +202,44 @@ describe('compressBundle', () => {
         outputPath: brOutput,
       }),
     )
+  })
+})
+
+describe('uploadToGCS', () => {
+  test('uploads the bundle when it is under the size limit', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      await writeFile(bundlePath, 'small contents')
+      vi.mocked(fetch).mockResolvedValue({} as never)
+
+      // When
+      await uploadToGCS('https://signed.example/upload', bundlePath)
+
+      // Then
+      expect(fetch).toHaveBeenCalledWith(
+        'https://signed.example/upload',
+        expect.objectContaining({method: 'put'}),
+        'slow-request',
+      )
+    })
+  })
+
+  test('aborts with a helpful error when the bundle exceeds the 100 MB upload limit', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given — mock the reported size so CI doesn't have to allocate 101 MB on disk.
+      const bundlePath = joinPath(tmpDir, 'huge.zip')
+      await writeFile(bundlePath, 'placeholder')
+      const oneHundredOneMb = 101 * 1024 * 1024
+      vi.mocked(fileSize).mockResolvedValueOnce(oneHundredOneMb).mockResolvedValueOnce(oneHundredOneMb)
+      vi.mocked(fetch).mockResolvedValue({} as never)
+
+      // When / Then
+      await expect(uploadToGCS('https://signed.example/upload', bundlePath)).rejects.toThrow(AbortError)
+      await expect(uploadToGCS('https://signed.example/upload', bundlePath)).rejects.toThrow(
+        /exceeds the 100 MB upload limit/,
+      )
+      expect(fetch).not.toHaveBeenCalled()
+    })
   })
 })

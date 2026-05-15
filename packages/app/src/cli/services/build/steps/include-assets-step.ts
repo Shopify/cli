@@ -125,6 +125,7 @@ export async function executeIncludeAssetsStep(
   const config = IncludeAssetsConfigSchema.parse(step.config)
   const {extension, options} = context
   const outputDir = resolveOutputDir(extension.outputPath)
+  const appDirectory = options.app.directory
 
   const aggregatedPathMap = new Map<string, string | string[]>()
   // Track basenames written across all configKey entries in this build. In
@@ -147,6 +148,7 @@ export async function executeIncludeAssetsStep(
       baseDir: extension.directory,
       outputDir,
       context,
+      appDirectory,
       destination: sanitizedDest,
       usedBasenames,
       preserveFilePaths: entry.preserveFilePaths,
@@ -172,6 +174,8 @@ export async function executeIncludeAssetsStep(
               outputDir: destinationDir,
               patterns: entry.include,
               ignore: entry.ignore ?? [],
+              appDirectory,
+              sourceDirConfigValue: entry.baseDir ?? '.',
             },
             options,
           )
@@ -189,6 +193,7 @@ export async function executeIncludeAssetsStep(
               destination: sanitizedDest,
               baseDir: extension.directory,
               outputDir,
+              appDirectory,
             },
             options,
           )
