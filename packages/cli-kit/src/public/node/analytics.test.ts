@@ -164,12 +164,21 @@ describe('event tracking', () => {
     })
   })
 
-  test('does not send passwords to Monorail', async () => {
+  test('does not send any shopify tokens to Monorail', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app'}
-      const argsWithPassword = args.concat(['--password', 'shptka_abc123'])
-      await startAnalytics({commandContent, args: argsWithPassword, currentTime: currentDate.getTime() - 100})
+      const argsWithTokens = args.concat([
+        '--password',
+        'shptka_abc123',
+        '--token',
+        'shpat_abc123',
+        '--user-token',
+        'shpua_abc123',
+        '--custom-token',
+        'shpca_abc123',
+      ])
+      await startAnalytics({commandContent, args: argsWithTokens, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -180,11 +189,18 @@ describe('event tracking', () => {
 
       // Then
       const expectedPayloadSensitive = {
-        args: expect.stringMatching(/.*password \*\*\*\*\*/),
+        args: expect.stringMatching(
+          /.*password \*\*\*\*\*.*token \*\*\*\*\*.*user-token \*\*\*\*\*.*custom-token \*\*\*\*\*/,
+        ),
         metadata: expect.anything(),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
       expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
+      const sensitivePayload = JSON.stringify(publishEventMock.mock.calls[0]![2])
+      expect(sensitivePayload).not.toContain('shptka_abc123')
+      expect(sensitivePayload).not.toContain('shpat_abc123')
+      expect(sensitivePayload).not.toContain('shpua_abc123')
+      expect(sensitivePayload).not.toContain('shpca_abc123')
     })
   })
 
