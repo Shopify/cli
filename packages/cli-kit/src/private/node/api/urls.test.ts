@@ -56,6 +56,11 @@ describe('sanitizeURL', () => {
     'client_secret',
     'code',
     'token',
+    'password',
+    'code_verifier',
+    'client_assertion',
+    'assertion',
+    'auth_token',
   ])('sanitizes %s query parameter', (param) => {
     // Given
     const url = `https://example.com?${param}=secret-value`
@@ -78,5 +83,27 @@ describe('sanitizeURL', () => {
     expect(sanitizedUrl).toBe(
       'https://example.com/?access_token=****&refresh_token=****&device_code=****&subject_token=****&other=keep',
     )
+  })
+
+  test('redacts password from URL authority', () => {
+    // Given
+    const url = 'https://user:password123@example.com/path'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://user:****@example.com/path')
+  })
+
+  test('redacts both password and sensitive query parameters', () => {
+    // Given
+    const url = 'https://user:secret@example.com/path?access_token=tok&other=keep'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://user:****@example.com/path?access_token=****&other=keep')
   })
 })
