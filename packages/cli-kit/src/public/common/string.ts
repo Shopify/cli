@@ -1,4 +1,4 @@
-import {takeRandomFromArray} from './array.js'
+import {takeRandomFromArray, uniq} from './array.js'
 import {unstyled} from '../node/output.js'
 import {Token, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 
@@ -419,12 +419,14 @@ export function pascalize(str: string): string {
 export function normalizeDelimitedString(delimitedString?: string, delimiter = ','): string | undefined {
   if (!delimitedString) return
 
-  const items = delimitedString.split(delimiter).map((value) => value.trim())
-  const nonEmptyItems = items.filter((value) => value !== '')
-  const sortedItems = nonEmptyItems.sort()
-  const uniqueSortedItems = [...new Set(sortedItems)]
-
-  return uniqueSortedItems.join(delimiter)
+  return uniq(
+    delimitedString
+      .split(delimiter)
+      .map((item) => item.trim())
+      .filter((item) => item !== ''),
+  )
+    .sort()
+    .join(delimiter)
 }
 
 /**
