@@ -12,6 +12,11 @@ const SENSITIVE_QUERY_PARAMS = [
   'client_secret',
   'code',
   'token',
+  'password',
+  'code_verifier',
+  'client_assertion',
+  'assertion',
+  'auth_token',
 ]
 
 /**
@@ -25,6 +30,9 @@ export function sanitizeURL(url: string): string {
     if (parsedUrl.searchParams.has(param)) {
       parsedUrl.searchParams.set(param, '****')
     }
+  }
+  if (parsedUrl.password) {
+    parsedUrl.password = '****'
   }
   return parsedUrl.toString()
 }
