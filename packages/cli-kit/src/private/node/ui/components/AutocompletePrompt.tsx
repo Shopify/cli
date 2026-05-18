@@ -28,9 +28,17 @@ export interface AutocompletePromptProps<T> {
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
   groupOrder?: string[]
+  /**
+   * Throttle window in milliseconds applied to the search callback. Defaults to 400ms,
+   * which is appropriate for remote/paginated backends. In-memory consumers (where the
+   * search callback resolves synchronously) can pass 0 for instant filtering on every
+   * keystroke.
+   */
+  searchDebounceMs?: number
 }
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
+const DEFAULT_SEARCH_DEBOUNCE_MS = 400
 
 function AutocompletePrompt<T>({
   message,
@@ -42,6 +50,7 @@ function AutocompletePrompt<T>({
   abortSignal,
   infoMessage,
   groupOrder,
+  searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const complete = useComplete()
   const [searchTerm, setSearchTerm] = useState('')
@@ -121,10 +130,10 @@ function AutocompletePrompt<T>({
               clearTimeout(setLoadingWhenSlow.current)
             })
         },
-        400,
+        searchDebounceMs,
         {leading: true, trailing: true},
       ),
-    [paginatedSearch, setPromptState],
+    [paginatedSearch, setPromptState, searchDebounceMs],
   )
 
   return (
