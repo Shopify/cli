@@ -35,6 +35,15 @@ export function homeDirectory(): string {
 }
 
 /**
+ * Memoized values for environment checks.
+ * These are only used when the functions are called with `process.env` to ensure
+ * consistency and performance in hot paths (like logging) while maintaining
+ * test isolation when custom environment objects are provided.
+ */
+let memoizedIsVerbose: boolean | undefined
+let memoizedIsUnitTest: boolean | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -51,6 +60,11 @@ export function isDevelopment(env = process.env): boolean {
  * @returns True if SHOPIFY_FLAG_VERBOSE is truthy or the flag --verbose has been passed.
  */
 export function isVerbose(env = process.env): boolean {
+  if (env === process.env) {
+    // Memoize the result to avoid repeated scans of process.argv and env lookups
+    // in high-frequency paths like outputDebug.
+    return (memoizedIsVerbose ??= isTruthy(env[environmentVariables.verbose]) || process.argv.includes('--verbose'))
+  }
   return isTruthy(env[environmentVariables.verbose]) || process.argv.includes('--verbose')
 }
 
@@ -88,6 +102,11 @@ export async function isShopify(env = process.env): Promise<boolean> {
  * @returns True if the SHOPIFY_UNIT_TEST environment variable is truthy.
  */
 export function isUnitTest(env = process.env): boolean {
+  if (env === process.env) {
+    // Memoize the result as SHOPIFY_UNIT_TEST is static during execution
+    // and checked frequently to suppress output.
+    return (memoizedIsUnitTest ??= isTruthy(env[environmentVariables.unitTest]))
+  }
   return isTruthy(env[environmentVariables.unitTest])
 }
 
