@@ -4,8 +4,8 @@ import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, glob, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
 import {
   getDependencies,
-  getPackageManager,
-  PackageManager,
+  getPackageManagerForProjectRoot,
+  ProjectPackageManager,
   usesWorkspaces as detectUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
@@ -76,7 +76,7 @@ export class Project {
     // Project metadata
     const packageJSONPath = joinPath(directory, 'package.json')
     const hasPackageJson = await fileExists(packageJSONPath)
-    const packageManager = hasPackageJson ? await getPackageManager(directory) : 'unknown'
+    const packageManager = hasPackageJson ? await getPackageManagerForProjectRoot(directory) : 'unknown'
     const nodeDependencies = hasPackageJson ? await getDependencies(packageJSONPath) : {}
     const usesWorkspaces = hasPackageJson ? await detectUsesWorkspaces(directory) : false
 
@@ -101,7 +101,7 @@ export class Project {
   }
 
   readonly directory: string
-  readonly packageManager: PackageManager
+  readonly packageManager: ProjectPackageManager | 'unknown'
   readonly nodeDependencies: Record<string, string>
   readonly usesWorkspaces: boolean
   readonly appConfigFiles: TomlFile[]
@@ -119,7 +119,7 @@ export class Project {
 
   private constructor(options: {
     directory: string
-    packageManager: PackageManager
+    packageManager: ProjectPackageManager | 'unknown'
     nodeDependencies: Record<string, string>
     usesWorkspaces: boolean
     appConfigFiles: TomlFile[]

@@ -9,7 +9,7 @@ import {
   DependencyType,
   usesWorkspaces,
   addNPMDependencies,
-  getPackageManager,
+  getPackageManagerForProjectRoot,
 } from './node-package-manager.js'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
 import {renderSuccess} from './ui.js'
@@ -259,7 +259,7 @@ async function installJsonDependencies(
 
   if (packagesToUpdate.length > 0) {
     await addNPMDependencies(packagesToUpdate, {
-      packageManager: await getPackageManager(directory),
+      packageManager: await getPackageManagerForProjectRoot(directory),
       type: depsEnv,
       directory,
       stdout: process.stdout,
