@@ -111,7 +111,7 @@ describe('when there are locale files', () => {
     })
     vi.useRealTimers()
   })
-  test('returns the last succesful locale built when there are JSON errors', async () => {
+  test('returns the last successful locale built when there are JSON errors', async () => {
     const timestamp = 0
     vi.setSystemTime(new Date(timestamp))
 

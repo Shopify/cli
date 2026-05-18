@@ -233,7 +233,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
     // we start by assuming only the union error itself is useful, and not the errors from the candidate schemas
     let simplifiedUnionRelatedErrors: AjvError[] = [unionError]
 
-    // get the schema list from where the union issue occured
+    // get the schema list from where the union issue occurred
     const dottedSchemaPath = unionError.schemaPath.replace('#/', '').replace(/\//g, '.')
     const unionSchemas = getPathValue<SchemaObject[]>(schema, dottedSchemaPath)
     // and the slice of the subject that caused the issue

@@ -264,7 +264,7 @@ describe('cloudEnvironment', () => {
     expect(got.platform).toBe('gitpod')
   })
 
-  test('returns localhost when no cloud enviroment varible exist', () => {
+  test('returns localhost when no cloud environment variable exists', () => {
     // Given
     const env = {}
 

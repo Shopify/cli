@@ -47,7 +47,7 @@ describe('evaluate', () => {
     })
   })
 
-  test('should add succesful assignments to the session', async () => {
+  test('should add successful assignments to the session', async () => {
     const mockResponse = createMockResponse({
       status: 200,
       text: '<div id="shopify-section-announcement-bar" class="shopify-section">\n[{ "type": "context", "value": "assign x = 1" }]</div>',
