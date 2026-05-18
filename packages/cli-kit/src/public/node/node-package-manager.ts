@@ -238,7 +238,20 @@ export async function installNPMDependenciesRecursively(
 
 interface InstallNodeModulesOptions {
   directory: string
+  /**
+   * Additional flags passed to the package manager after the subcommand and
+   * any `packages`. Use this for things like `--network-concurrency 1`.
+   */
   args?: string[]
+  /**
+   * Specific package specifiers (e.g. `['@shopify/hydrogen@2025.7.1']`) to
+   * add to the project. When provided, `yarn`, `pnpm`, and `bun` use their
+   * `add` subcommand instead of `install`, since those package managers'
+   * `install` subcommand installs from the lockfile rather than adding new
+   * packages. When omitted, the function runs `<pm> install` to install
+   * dependencies from the lockfile (the existing behaviour).
+   */
+  packages?: string[]
   packageManager: PackageManager
   stdout?: Writable
   stderr?: Writable
@@ -253,7 +266,16 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
     stderr: options.stderr,
     signal: options.signal,
   }
-  let args = ['install']
+  const hasPackages = Boolean(options.packages?.length)
+  const usesAddSubcommand =
+    hasPackages &&
+    (options.packageManager === 'yarn' ||
+      options.packageManager === 'pnpm' ||
+      options.packageManager === 'bun')
+  let args = [usesAddSubcommand ? 'add' : 'install']
+  if (options.packages) {
+    args = args.concat(options.packages)
+  }
   if (options.args) {
     args = args.concat(options.args)
   }
