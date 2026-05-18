@@ -4,7 +4,7 @@ import {OrganizationApp, OrganizationSource, OrganizationStore} from '../models/
 import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ClientError} from 'graphql-request'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
@@ -12,7 +12,6 @@ import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 vi.mock('./graphql/common.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/admin')
-vi.mock('@shopify/cli-kit/node/fs')
 
 describe('executeOperation', () => {
   const mockOrganization = {
@@ -219,7 +218,6 @@ describe('executeOperation', () => {
 
     const expectedOutput = JSON.stringify(mockResult, null, 2)
     expect(mockOutput.info()).toContain(expectedOutput)
-    expect(writeFile).not.toHaveBeenCalled()
   })
 
   test('writes results to file when outputFile is provided', async () => {
@@ -238,7 +236,7 @@ describe('executeOperation', () => {
       })
 
       const expectedContent = JSON.stringify(mockResult, null, 2)
-      expect(writeFile).toHaveBeenCalledWith(outputFile, expectedContent)
+      await expect(readFile(outputFile)).resolves.toBe(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith(
         expect.objectContaining({
           body: expect.stringContaining(outputFile),
