@@ -97,6 +97,28 @@ describe('common API methods', () => {
        - Content-Type: application/json"
     `)
   })
+
+  test('sanitizedHeadersOutput redacts AUTHORIZATION even when toLocaleLowerCase returns dotless i (Turkish locale simulation)', () => {
+    // Given
+    const headers = {
+      AUTHORIZATION: 'secret-token',
+    }
+
+    // Simulate Turkish locale where 'I' becomes 'ı' (dotless i)
+    // 'AUTHORIZATION'.toLocaleLowerCase() -> 'authorızatıon'
+    const toLocaleLowerCaseSpy = vi.spyOn(String.prototype, 'toLocaleLowerCase').mockReturnValue('authorızatıon')
+
+    try {
+      // When
+      const got = sanitizedHeadersOutput(headers)
+
+      // Then
+      expect(got).not.toContain('AUTHORIZATION: secret-token')
+      expect(got).not.toContain('secret-token')
+    } finally {
+      toLocaleLowerCaseSpy.mockRestore()
+    }
+  })
 })
 
 describe('GraphQLClientError', () => {

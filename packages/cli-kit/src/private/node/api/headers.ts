@@ -35,7 +35,7 @@ export function sanitizedHeadersOutput(headers: Record<string, string>): string 
   const sanitized: Record<string, string> = {}
   const keywords = ['token', 'authorization', 'subject_token']
   Object.keys(headers).forEach((header) => {
-    if (keywords.find((keyword) => header.toLocaleLowerCase().includes(keyword)) === undefined) {
+    if (keywords.find((keyword) => header.toLowerCase().includes(keyword)) === undefined) {
       sanitized[header] = headers[header]!
     }
   })
