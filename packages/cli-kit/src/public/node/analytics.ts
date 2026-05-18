@@ -200,8 +200,8 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
 
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
-  // Remove Theme Access passwords from the payload
-  const sanitizedPayloadString = payloadString.replace(/shptka_\w*/g, '*****')
+  // Remove Shopify tokens from the payload
+  const sanitizedPayloadString = payloadString.replace(/shp[a-z0-9]{1,6}_\w*/g, '*****')
   return JSON.parse(sanitizedPayloadString)
 }
 
