@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 4.0.0
+
+### Major Changes
+
+- 0c35553: Drop support for Node 20
+
+### Patch Changes
+
+- 67745ee: Make the autocomplete prompt feel instant when filtering against in-memory choices.
+- a7d448b: Handle modern Bun `bun.lock` files when cleaning up app templates so non-Bun projects do not keep stale Bun lockfiles or `.gitignore` entries.
+- 2cb5f44: Also treat `OPT_OUT_INSTRUMENTATION=true` as an analytics opt-out, in addition to the existing `SHOPIFY_CLI_NO_ANALYTICS=1` environment variable.
+
 ## 3.94.0
 
 ### Patch Changes
