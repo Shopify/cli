@@ -46,7 +46,7 @@ describe('render', () => {
     expect(response.headers.get('Content-Type')).toEqual('application/json')
     expect(response.headers.get('something')).toEqual('else')
     expect(fetch).toHaveBeenCalledWith(
-      'https://store.myshopify.com/products/1?_fd=0&pb=0',
+      'https://store.myshopify.com/products/1?_fd=0&pb=0&preview_theme_id=123',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -104,7 +104,7 @@ describe('render', () => {
     expect(response.headers.get('Content-Type')).toEqual('application/json')
     expect(response.headers.get('something')).toEqual('else')
     expect(fetch).toHaveBeenCalledWith(
-      'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0',
+      'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0&preview_theme_id=123',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -116,7 +116,7 @@ describe('render', () => {
       }),
     )
     expect(fetch).toHaveBeenCalledWith(
-      'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0',
+      'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0&preview_theme_id=123',
       expect.objectContaining({
         method: 'GET',
         headers: expect.not.objectContaining({
@@ -139,7 +139,7 @@ describe('render', () => {
     // Then
     expect(response.status).toEqual(200)
     expect(fetch).toHaveBeenCalledWith(
-      'https://store.myshopify.com/products/1?_fd=0&pb=0&section_id=sections--1__announcement-bar',
+      'https://store.myshopify.com/products/1?_fd=0&pb=0&preview_theme_id=123&section_id=sections--1__announcement-bar',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -165,7 +165,7 @@ describe('render', () => {
     // Then
     expect(response.status).toEqual(200)
     expect(fetch).toHaveBeenCalledWith(
-      'https://store.myshopify.com/products/1?_fd=0&pb=0&app_block_id=00001111222233334444',
+      'https://store.myshopify.com/products/1?_fd=0&pb=0&preview_theme_id=123&app_block_id=00001111222233334444',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -192,7 +192,7 @@ describe('render', () => {
     // Then
     expect(response.status).toEqual(200)
     expect(fetch).toHaveBeenCalledWith(
-      'https://store.myshopify.com/products/1?_fd=0&pb=0&section_id=sections--1__announcement-bar',
+      'https://store.myshopify.com/products/1?_fd=0&pb=0&preview_theme_id=123&section_id=sections--1__announcement-bar',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -221,7 +221,36 @@ describe('render', () => {
     // Then
     expect(response.status).toEqual(200)
     expect(fetch).toHaveBeenCalledWith(
-      'https://store.myshopify.com/products/1?_fd=0&pb=0&value=A&value=B',
+      'https://store.myshopify.com/products/1?_fd=0&pb=0&value=A&value=B&preview_theme_id=123',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer token_111222333',
+          Cookie: 'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',
+          'Content-Length': '100',
+          'X-Special-Header': '200',
+        }),
+      }),
+    )
+  })
+
+  test('preserves preview_theme_id from query parameters', async () => {
+    // Given
+    vi.mocked(fetch).mockResolvedValue(new Response())
+
+    // When
+    const response = await render(session, {
+      ...context,
+      query: [
+        ['preview_theme_id', '456'],
+        ['value', 'A'],
+      ],
+    })
+
+    // Then
+    expect(response.status).toEqual(200)
+    expect(fetch).toHaveBeenCalledWith(
+      'https://store.myshopify.com/products/1?_fd=0&pb=0&preview_theme_id=456&value=A',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({

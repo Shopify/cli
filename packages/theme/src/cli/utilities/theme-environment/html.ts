@@ -101,10 +101,14 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
 
             /**
              * Filtering out __sfr params to avoid infinite redirects, when in
-             * development mode.
+             * development mode. Also drop preview_theme_id so a stale value
+             * carried over from the browser cannot pin retries to the wrong
+             * theme; the dev server will re-inject the correct id.
              */
             const searchParams = new URLSearchParams(browserSearch)
-            const filteredParams = new URLSearchParams([...searchParams].filter(([key]) => !key.startsWith('__sfr')))
+            const filteredParams = new URLSearchParams(
+              [...searchParams].filter(([key]) => !key.startsWith('__sfr') && key !== 'preview_theme_id'),
+            )
             const location = browserPathname + (filteredParams.toString() ? `?${filteredParams}` : '')
 
             return new Response(null, {
