@@ -1,5 +1,23 @@
 # @shopify/theme
 
+## 4.0.0
+
+### Major Changes
+
+- a960ee9: Remove the deprecated `shopify theme serve` command. Use `shopify theme dev` instead.
+- 0c35553: Drop support for Node 20
+
+### Patch Changes
+
+- 1e8963e: Upload `config/settings_schema.json` before any other theme file. Fixes `theme push` failing on the first push when blocks or sections reference a `color_palette` theme setting.
+- c6a114d: [internal] Fix `theme dev` analytics being dropped on Ctrl+C.
+- 8f4e546: Fix theme dev proxy to support SFAPI requests.
+- Updated dependencies [67745ee]
+- Updated dependencies [a7d448b]
+- Updated dependencies [2cb5f44]
+- Updated dependencies [0c35553]
+  - @shopify/cli-kit@4.0.0
+
 ## 3.94.0
 
 ### Patch Changes

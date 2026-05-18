@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 4.0.0
+
+### Major Changes
+
+- 0c35553: Drop support for Node 20
+
+### Patch Changes
+
+- dc70080: Fix dev and build command for web_pixel extensions
+
 ## 3.94.0
 
 ## 3.93.0
