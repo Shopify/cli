@@ -25,7 +25,8 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ProxyServerProcess extends BaseProcess<{
@@ -295,9 +296,57 @@ export const startProxyServer: DevProcessFunction<{
   localhostCert?: LocalhostCert
 }> = async ({abortSignal, stdout}, {port, rules, localhostCert}) => {
   const {server} = await getProxyingWebServer(rules, abortSignal, localhostCert, stdout)
+
+  // `server.listen` is event-based and returns the Server synchronously, so awaiting it
+  // does not actually wait for the socket to bind. Wrap it in a promise that resolves on
+  // 'listening' and rejects on 'error' (e.g. EADDRINUSE) so a failed bind surfaces to the
+  // dev runner instead of crashing Node via an uncaught 'error' event.
+  await new Promise<void>((resolve, reject) => {
+    const onError = (err: NodeJS.ErrnoException) => {
+      server.off('listening', onListening)
+      reject(translateBindError(err, port))
+    }
+    const onListening = () => {
+      server.off('error', onError)
+      resolve()
+    }
+    server.once('error', onError)
+    server.once('listening', onListening)
+    server.listen(port, 'localhost')
+  })
+
   outputInfo(
     `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
     stdout,
   )
-  await server.listen(port, 'localhost')
+
+  // Stay alive for the lifetime of the dev session. Resolve cleanly when the abort signal
+  // fires; reject if the server emits a post-bind 'error' so a dead proxy tears down the
+  // dev session instead of leaving the user with one warning line and silently broken
+  // request forwarding for the rest of the session.
+  await new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      abortSignal.removeEventListener('abort', onAbort)
+      server.off('error', onError)
+    }
+    const onAbort = () => {
+      cleanup()
+      resolve()
+    }
+    const onError = (err: Error) => {
+      cleanup()
+      useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
+        outputWarn(`Reverse HTTP proxy error - Server stopped: ${err.message}`, stdout)
+      })
+      reject(err)
+    }
+    server.on('error', onError)
+    abortSignal.addEventListener('abort', onAbort, {once: true})
+  })
+}
+
+function translateBindError(err: NodeJS.ErrnoException, port: number): Error {
+  if (err.code === 'EADDRINUSE') return new Error(`Reverse HTTP proxy error - Port ${port} is already in use`)
+  if (err.code === 'EACCES') return new Error(`Reverse HTTP proxy error - Permission denied binding port ${port}`)
+  return new Error(`Reverse HTTP proxy error - Couldn't start on port ${port}: ${err.message}`)
 }
