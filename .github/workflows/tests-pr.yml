@@ -18,6 +18,9 @@ env:
   GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
   DEFAULT_NODE_VERSION: '26.1.0'
 
+permissions:
+  contents: read
+
 jobs:
   type-check:
     name: 'Type check'
