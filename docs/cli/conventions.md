@@ -131,7 +131,7 @@ export default class Dev extends Command {
 
 ##### Naming and directory conventions
 
-Services live under the `services` directory inside `cli`. For services that represent a command's business logic, the name must match the name of the command represent.
+Services live under the `services` directory inside `cli`. For services that represent a command's business logic, the name must match the name of the command it represents.
 
 ```
 app/
@@ -174,7 +174,7 @@ app/
 Some additional patterns have emerged over time and that don't fit any of the MCS groups:
 
 - **Prompts:** Prompts are a particular type of service that prompts the user, collects, and returns the responses as a Javascript object. We recommend creating them under the `prompts/` directory.
-- **Utilities:** Utilities represent a sub-domain of responsibilities. For example, we can have a `server` utility that spins up an server to handle HTTP requests.
+- **Utilities:** Utilities represent a sub-domain of responsibilities. For example, we can have a `server` utility that spins up a server to handle HTTP requests.
 
 ## 3 - @shopify/cli-kit
 
@@ -183,7 +183,7 @@ Some additional patterns have emerged over time and that don't fit any of the MC
 **Public** modules must live in the `src/public` directory in any of the following sub-directories:
 
 - `node`: For modules that are dependent on the Node runtime.
-- `browser` For the modules that are dependent on the browser runtime.
+- `browser`: For modules that are dependent on the browser runtime.
 - `common`: For modules that are runtime-agnostic.
 
 The sub-organization helps clarify the runtime the functions exported by the module can run. For example, if we provide utilities for manipulating arrays, we'd create them in a `src/public/common/array.ts` module, and the consumers of the `@shopify/cli-kit` package would import them as:

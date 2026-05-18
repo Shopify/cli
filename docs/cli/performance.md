@@ -31,12 +31,12 @@ We **strongly recommend** reading [this series of blog posts](https://marvinh.de
 
 ### Dependencies will most likely have a cost
 
-When NPM dependencies are used in SPAs, they are tree-shaken through bundling tools like ESBuild, Webpack, or Rollup. Because of it, many of them are designed with the implicit assumption that they'll be tree-shaken and exported as a single module (e.g., index.js) that loads the entire graph, **including the modules you are not using**. We could have a similar tooling in the CLI project, but we decided to keep the tooling stack as lean as possible and thus prevent issues that might arise due to the tooling indirection (e.g., invalid source maps or code that don't map 1-to-1 to the source and complicates debugging). Therefore we recommend that:
+When NPM dependencies are used in SPAs, they are tree-shaken through bundling tools like ESBuild, Webpack, or Rollup. Because of it, many of them are designed with the implicit assumption that they'll be tree-shaken and exported as a single module (e.g., index.js) that loads the entire graph, **including the modules you are not using**. We could have a similar tooling in the CLI project, but we decided to keep the tooling stack as lean as possible and thus prevent issues that might arise due to the tooling indirection (e.g., invalid source maps or code that doesn't map 1-to-1 to the source and complicates debugging). Therefore we recommend that:
 
 - You avoid dependencies unless they are strictly necessary. Bring it up to the team in case of doubt.
 - When deciding on a dependency, their interface must be modular (many exports over a single one). In other words, avoid monolithic dependencies.
 - If the dependency is large and uses ESM, use dynamic imports to import it. Note that it'll make the dependent modules' APIs asynchronous, but it'll be improved once this [TC39 proposal](https://github.com/tc39/proposal-defer-import-eval) lands.
-- As a **last resource**, if a dependency is a bottleneck, you can use its CJS version or dynamically import it when needed using `await import("my-dependency")`.
+- As a **last resort**, if a dependency is a bottleneck, you can use its CJS version or dynamically import it when needed using `await import("my-dependency")`.
 
 ### Use concurrency whenever possible
 

@@ -37,7 +37,7 @@ But it doesn't work for us, looks like there is some bug that won't let us mock 
 The correct (and cleaner!) approach would be:
 
 ```typescript
-const import {functionA} from 'my-module'
+import {functionA} from 'my-module'
 
 // This will mock all functions with vi.fn() by default
 vi.mock('my-module')
