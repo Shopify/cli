@@ -2757,6 +2757,36 @@
       "value": "export interface configautocorrectstatus {\n\n}"
     }
   },
+  "configautoupgradeoff": {
+    "docs-shopify.dev/commands/interfaces/config-autoupgrade-off.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-autoupgrade-off.interface.ts",
+      "name": "configautoupgradeoff",
+      "description": "The following flags are available for the `config autoupgrade off` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configautoupgradeoff {\n\n}"
+    }
+  },
+  "configautoupgradeon": {
+    "docs-shopify.dev/commands/interfaces/config-autoupgrade-on.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-autoupgrade-on.interface.ts",
+      "name": "configautoupgradeon",
+      "description": "The following flags are available for the `config autoupgrade on` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configautoupgradeon {\n\n}"
+    }
+  },
+  "configautoupgradestatus": {
+    "docs-shopify.dev/commands/interfaces/config-autoupgrade-status.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-autoupgrade-status.interface.ts",
+      "name": "configautoupgradestatus",
+      "description": "The following flags are available for the `config autoupgrade status` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configautoupgradestatus {\n\n}"
+    }
+  },
   "help": {
     "docs-shopify.dev/commands/interfaces/help.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
