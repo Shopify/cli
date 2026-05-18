@@ -17,7 +17,7 @@ import {
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
 import {minimatch} from 'minimatch'
-import fastGlobLib from 'fast-glob'
+import {createRequire} from 'module'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -57,6 +57,8 @@ import {pathToFileURL as pathToFile} from 'url'
 import * as os from 'os'
 
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
+
+const require = createRequire(import.meta.url)
 
 /**
  * Strip the first `strip` parts of the path.
@@ -598,7 +600,7 @@ export function globSync(pattern: Pattern | Pattern[], options?: GlobOptions): s
   if (options?.dot == null) {
     overridenOptions = {...options, dot: true}
   }
-  return fastGlobLib.sync(pattern, overridenOptions)
+  return require('fast-glob').sync(pattern, overridenOptions)
 }
 
 /**
