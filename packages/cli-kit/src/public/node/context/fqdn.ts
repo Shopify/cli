@@ -103,6 +103,22 @@ export async function businessPlatformFqdn(): Promise<string> {
 }
 
 /**
+ * It returns the Signups API service we should interact with.
+ *
+ * @returns Fully-qualified domain of the Signups service we should interact with.
+ */
+export async function signupsFqdn(): Promise<string> {
+  const environment = serviceEnvironment()
+  const productionFqdn = 'shopify.com'
+  switch (environment) {
+    case 'local':
+      return new DevServerCore().host('shopify')
+    default:
+      return productionFqdn
+  }
+}
+
+/**
  * It returns the Identity service we should interact with.
  *
  * @returns Fully-qualified domain of the Identity service we should interact with.

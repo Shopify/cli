@@ -94,6 +94,8 @@
 ├─ search
 ├─ store
 │  ├─ auth
+│  ├─ create
+│  │  └─ trial
 │  └─ execute
 ├─ theme
 │  ├─ check

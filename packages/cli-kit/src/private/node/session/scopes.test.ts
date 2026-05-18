@@ -26,6 +26,12 @@ describe('allDefaultScopes', () => {
     ])
   })
 
+  test('transforms shop-create scope to full URI', async () => {
+    const got = allDefaultScopes(['shop-create'])
+
+    expect(got).toContain('https://api.shopify.com/auth/shop.create')
+  })
+
   test('includes App Management and Store Management', async () => {
     // When
     const got = allDefaultScopes([])
