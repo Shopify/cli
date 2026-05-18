@@ -1,4 +1,4 @@
-import {difference, uniq, uniqBy} from './array.js'
+import {difference, getArrayContainsDuplicates, uniq, uniqBy} from './array.js'
 import {describe, test, expect} from 'vitest'
 
 describe('uniqBy', () => {
@@ -60,5 +60,40 @@ describe('difference', () => {
 
     // Then
     expect(got).toEqual([1])
+  })
+})
+
+describe('getArrayContainsDuplicates', () => {
+  test('returns true if the array contains duplicates', () => {
+    // Given
+    const array = [1, 2, 2, 3]
+
+    // When
+    const got = getArrayContainsDuplicates(array)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false if the array does not contain duplicates', () => {
+    // Given
+    const array = [1, 2, 3]
+
+    // When
+    const got = getArrayContainsDuplicates(array)
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  test('returns false for an empty array', () => {
+    // Given
+    const array: number[] = []
+
+    // When
+    const got = getArrayContainsDuplicates(array)
+
+    // Then
+    expect(got).toBe(false)
   })
 })

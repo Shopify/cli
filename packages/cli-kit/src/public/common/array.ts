@@ -25,11 +25,22 @@ export function getArrayRejectingUndefined<T>(array: (T | undefined)[]): T[] {
 /**
  * Returns true if an array contains duplicates.
  *
+ * This implementation is optimized to exit early as soon as the first duplicate
+ * is found, avoiding unnecessary processing of the rest of the array.
+ * Time complexity: O(k) where k is the index of the first duplicate, O(n) otherwise.
+ *
  * @param array - The array to check against.
  * @returns True if the array contains duplicates.
  */
 export function getArrayContainsDuplicates<T>(array: T[]): boolean {
-  return array.length !== new Set(array).size
+  const seen = new Set<T>()
+  for (const item of array) {
+    if (seen.has(item)) {
+      return true
+    }
+    seen.add(item)
+  }
+  return false
 }
 
 /**
