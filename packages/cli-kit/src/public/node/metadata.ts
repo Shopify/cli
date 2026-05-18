@@ -182,6 +182,7 @@ type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_all_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_create_app_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_theme_'> &
   PickByPrefix<MonorailEventPublic, 'store_'> &
+  Pick<MonorailEventPublic, 'shop_domain'> &
   PickByPrefix<MonorailEventPublic, 'env_auto_upgrade_'>
 
 const coreData = createRuntimeMetadataContainer<

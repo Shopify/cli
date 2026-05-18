@@ -174,6 +174,7 @@ describe('storeContext', () => {
       expect(meta).toEqual(
         expect.objectContaining({
           store_fqdn_hash: hashString(mockStore.shopDomain),
+          shop_domain: mockStore.shopDomain,
         }),
       )
 
@@ -181,6 +182,31 @@ describe('storeContext', () => {
       expect(sensitiveMeta).toEqual(
         expect.objectContaining({
           store_fqdn: mockStore.shopDomain,
+        }),
+      )
+    })
+  })
+
+  test('normalizes the selected store before logging metadata', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      const unnormalizedStore = testOrganizationStore({shopId: 'store1', shopDomain: 'test-store'})
+      vi.mocked(fetchStore).mockResolvedValue(unnormalizedStore)
+      await prepareAppFolder(mockApp, dir)
+
+      await storeContext({appContextResult, forceReselectStore: false})
+
+      const meta = metadata.getAllPublicMetadata()
+      expect(meta).toEqual(
+        expect.objectContaining({
+          store_fqdn_hash: hashString('test-store.myshopify.com'),
+          shop_domain: 'test-store.myshopify.com',
+        }),
+      )
+
+      const sensitiveMeta = metadata.getAllSensitiveMetadata()
+      expect(sensitiveMeta).toEqual(
+        expect.objectContaining({
+          store_fqdn: 'test-store.myshopify.com',
         }),
       )
     })
