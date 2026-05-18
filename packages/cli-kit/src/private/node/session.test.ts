@@ -12,6 +12,7 @@ import {
   exchangeCustomPartnerToken,
   refreshAccessToken,
   InvalidGrantError,
+  InvalidTargetError,
 } from './session/exchange.js'
 import {allDefaultScopes} from './session/scopes.js'
 import {store as storeSessions, fetch as fetchSessions, remove as secureRemove} from './session/store.js'
@@ -27,6 +28,7 @@ import {businessPlatformRequest} from '../../public/node/api/business-platform.j
 import {getAppAutomationToken} from '../../public/node/environment.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {terminalSupportsPrompting} from '../../public/node/system.js'
+import {promptSessionSelect} from '../../public/node/session-prompt.js'
 
 import {vi, describe, expect, test, beforeEach} from 'vitest'
 
@@ -119,6 +121,7 @@ vi.mock('../../public/node/environment.js')
 vi.mock('./session/device-authorization')
 vi.mock('./conf-store')
 vi.mock('../../public/node/system.js')
+vi.mock('../../public/node/session-prompt')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
@@ -733,5 +736,88 @@ describe('ensureAuthenticated email fetch functionality', () => {
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
     expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
     expect(got).toEqual(validTokens)
+  })
+})
+
+describe('when auth fails with InvalidTargetError', () => {
+  test('prompts account selection and retries on InvalidTargetError during full auth', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(exchangeAccessForApplicationTokens)
+      .mockRejectedValueOnce(
+        new InvalidTargetError('You are not authorized to use the CLI to develop in the provided store: my-store'),
+      )
+      .mockResolvedValueOnce(appTokens)
+    vi.mocked(promptSessionSelect).mockResolvedValue('other-account')
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications)
+
+    // Then
+    expect(promptSessionSelect).toHaveBeenCalledOnce()
+    expect(got).toEqual(validTokens)
+  })
+
+  test('prompts account selection and retries on InvalidTargetError during refresh', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValue('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
+    vi.mocked(exchangeAccessForApplicationTokens)
+      .mockRejectedValueOnce(
+        new InvalidTargetError('You are not authorized to use the CLI to develop in the provided store: my-store'),
+      )
+      .mockResolvedValueOnce(appTokens)
+    vi.mocked(promptSessionSelect).mockResolvedValue('other-account')
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications)
+
+    // Then
+    expect(promptSessionSelect).toHaveBeenCalledOnce()
+    expect(got).toEqual(validTokens)
+  })
+
+  test('throws InvalidTargetError without prompt when noPrompt is true', async () => {
+    // Given — use needs_refresh because needs_full_auth triggers throwOnNoPrompt before token exchange
+    vi.mocked(validateSession).mockResolvedValue('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
+    vi.mocked(exchangeAccessForApplicationTokens).mockRejectedValueOnce(
+      new InvalidTargetError('You are not authorized to use the CLI to develop in the provided store: my-store'),
+    )
+
+    // When/Then
+    await expect(ensureAuthenticated(defaultApplications, process.env, {noPrompt: true})).rejects.toThrow()
+    expect(promptSessionSelect).not.toHaveBeenCalled()
+  })
+
+  test('throws InvalidTargetError without prompt in non-interactive terminal', async () => {
+    // Given
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(exchangeAccessForApplicationTokens).mockRejectedValueOnce(
+      new InvalidTargetError('You are not authorized to use the CLI to develop in the provided store: my-store'),
+    )
+
+    // When/Then
+    await expect(ensureAuthenticated(defaultApplications)).rejects.toThrow()
+    expect(promptSessionSelect).not.toHaveBeenCalled()
+  })
+
+  test('throws on second consecutive InvalidTargetError after retry', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(exchangeAccessForApplicationTokens).mockRejectedValue(
+      new InvalidTargetError('You are not authorized to use the CLI to develop in the provided store: my-store'),
+    )
+    vi.mocked(promptSessionSelect).mockResolvedValue('other-account')
+
+    // When/Then
+    await expect(ensureAuthenticated(defaultApplications)).rejects.toThrow()
+    expect(promptSessionSelect).toHaveBeenCalledOnce()
   })
 })

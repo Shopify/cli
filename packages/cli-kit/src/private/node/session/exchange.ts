@@ -13,7 +13,7 @@ import * as jose from 'jose'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
-class InvalidTargetError extends AbortError {}
+export class InvalidTargetError extends AbortError {}
 
 export interface ExchangeScopes {
   admin: string[]
