@@ -7,9 +7,8 @@ import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
-import {fileExistsSync, matchGlob, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, matchGlob, mkdir} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
-import ignore from 'ignore'
 import {Writable} from 'stream'
 
 const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
@@ -59,7 +58,6 @@ export class FileWatcher {
   private onChangeCallback?: (events: WatcherEvent[]) => void
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
-  private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
   // Map of file paths to the extension handles that watch them
   private readonly extensionWatchedFiles = new Map<string, Set<string>>()
 
@@ -135,9 +133,6 @@ export class FileWatcher {
     this.extensionPaths = this.app.nonConfigExtensions
       .map((ext) => normalizePath(ext.directory))
       .filter((dir) => dir !== this.app.directory)
-    this.extensionPaths.forEach((path) => {
-      this.ignored[path] ??= this.createIgnoreInstance(path)
-    })
   }
 
   private addAbortListener() {
@@ -191,15 +186,8 @@ export class FileWatcher {
    * @param event - The event to be added
    */
   private pushEvent(event: WatcherEvent) {
-    if (this.shouldIgnoreEvent(event)) return
-
-    // If the event is for a new extension folder, create a new ignore instance
-    if (event.type === 'extension_folder_created') {
-      this.ignored[event.path] = this.createIgnoreInstance(event.path)
-    }
-
-    // If the event is already in the list, don't push it again
-    // Check path, type, AND extensionHandle to properly handle shared files
+    // If the event is already in the list, don't push it again.
+    // Check path, type, AND extensionHandle to properly handle shared files.
     if (
       this.currentEvents.some(
         (extEvent) =>
@@ -211,45 +199,6 @@ export class FileWatcher {
       return
 
     this.currentEvents.push(event)
-  }
-
-  /**
-   * Whether an event should be ignored or not based on the extension's watch paths and gitignore file.
-   * Never ignores extension create/delete events.
-   *
-   * If the affected extension defines custom watch paths, ignore the event if the path is not in the list
-   * ELSE, if the extension has a custom gitignore file, ignore the event if the path matches the patterns
-   * Explicit watch paths have priority over custom gitignore files
-   */
-  private shouldIgnoreEvent(event: WatcherEvent) {
-    if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
-
-    // If this path is already tracked for this handle (either pre-registered or
-    // discovered at runtime), accept without re-checking against the static list.
-    // The map is keyed by normalized paths, so normalize before the lookup —
-    // chokidar can emit backslash-separated paths on Windows.
-    if (
-      event.extensionHandle &&
-      this.extensionWatchedFiles.get(normalizePath(event.path))?.has(event.extensionHandle)
-    ) {
-      return false
-    }
-
-    const extension = event.extensionHandle
-      ? this.app.realExtensions.find((ext) => ext.handle === event.extensionHandle)
-      : undefined
-    const watchPaths = extension?.watchedFiles()
-    const ignoreInstance = this.ignored[event.extensionPath]
-
-    if (watchPaths) {
-      const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
-      return !isAValidWatchedPath
-    } else if (ignoreInstance) {
-      const relative = relativePath(event.extensionPath, event.path)
-      return ignoreInstance.ignores(relative)
-    }
-
-    return false
   }
 
   private readonly handleFileEvent = (event: string, path: string) => {
@@ -416,17 +365,5 @@ export class FileWatcher {
       .close()
       .then(() => outputDebug(`File watching closed`, this.options.stdout))
       .catch((error: Error) => outputDebug(`File watching failed to close: ${error.message}`, this.options.stderr))
-  }
-
-  // Creates an "Ignore" instance for the given path if a .gitignore file exists, otherwise undefined
-  private createIgnoreInstance(path: string): ignore.Ignore | undefined {
-    const gitIgnorePath = joinPath(path, '.gitignore')
-    if (!fileExistsSync(gitIgnorePath)) return undefined
-    const gitIgnoreContent = readFileSync(gitIgnorePath)
-      .toString()
-      .split('\n')
-      .map((pattern) => pattern.trim())
-      .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
-    return ignore.default().add(gitIgnoreContent)
   }
 }
