@@ -337,8 +337,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
       ...defaultHeaders(),
       referer: url.origin,
       Cookie: buildCookies(ctx.session, {headers}),
-      // Only include Authorization for theme dev, not theme-extensions
-      ...(ctx.type === 'theme' ? {Authorization: `Bearer ${ctx.session.storefrontToken}`} : {}),
+      Authorization: `Bearer ${ctx.session.storefrontToken}`,
     })
   }
 
