@@ -15,6 +15,20 @@ export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'busi
 
 const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_RETRY_LIMIT = 10
+const MS_PER_SECOND = 1000
+const RETRY_JITTER_LOWER_BOUND = 0.8
+const RETRY_JITTER_UPPER_BOUND = 1.2
+
+/**
+ * Applies uniform random jitter in the range [RETRY_JITTER_LOWER_BOUND, RETRY_JITTER_UPPER_BOUND]
+ * to a retry delay. Breaks up lockstep retries from parallel requests that would otherwise
+ * produce a thundering herd against the same upstream throttle window.
+ */
+export function applyRetryJitterMs(delayMs: number, random: () => number = Math.random): number {
+  const jitterRange = RETRY_JITTER_UPPER_BOUND - RETRY_JITTER_LOWER_BOUND
+  const multiplier = RETRY_JITTER_LOWER_BOUND + random() * jitterRange
+  return delayMs * multiplier
+}
 
 export type NetworkRetryBehaviour =
   | {
@@ -197,7 +211,11 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
         let delayMs: number | undefined
 
         try {
-          delayMs = responseHeaders['retry-after'] ? Number.parseInt(responseHeaders['retry-after'], 10) : undefined
+          // The HTTP Retry-After header is expressed in seconds; setTimeout takes milliseconds.
+          const retryAfterSeconds = responseHeaders['retry-after']
+            ? Number.parseInt(responseHeaders['retry-after'], 10)
+            : undefined
+          delayMs = retryAfterSeconds === undefined ? undefined : retryAfterSeconds * MS_PER_SECOND
           // eslint-disable-next-line no-catch-all/no-catch-all
         } catch {
           // ignore errors in extracting retry-after header
@@ -388,14 +406,16 @@ ${result.sanitizedHeaders}
     }
 
     // prefer to wait based on a header if given; the caller's preference if not; and a default if neither.
-    const retryDelayMs = result.delayMs ?? retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS
-    outputDebug(`Scheduling retry request #${retriesUsed} to ${result.sanitizedUrl} in ${retryDelayMs} ms`)
+    const baseRetryDelayMs = result.delayMs ?? retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS
+    // Jitter prevents parallel retries from synchronising on the same upstream throttle window.
+    const jitteredRetryDelayMs = applyRetryJitterMs(baseRetryDelayMs)
+    outputDebug(`Scheduling retry request #${retriesUsed} to ${result.sanitizedUrl} in ${jitteredRetryDelayMs} ms`)
 
     // eslint-disable-next-line no-await-in-loop
     result = await new Promise<VerboseResponse<T>>((resolve) => {
       retryOptions.scheduleDelay(() => {
         resolve(makeVerboseRequest(requestOptions))
-      }, retryDelayMs)
+      }, jitteredRetryDelayMs)
     })
   }
 }
