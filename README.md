@@ -15,7 +15,7 @@ Learn more in the [commands docs](./packages/cli/README.md#commands).
 
 ## Before you begin
 
-Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/getting-started) (or another package manager of your choice).
+Install the latest version of [Node.js](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/getting-started) (or another package manager of your choice).
 
 <p>&nbsp;</p>
 
@@ -39,13 +39,13 @@ To work with themes, the CLI needs to be installed globally with:
 
 - `npm install -g @shopify/cli`
 
-You can also use do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
+You can also do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
 
 Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/storefronts/themes/tools/cli)
 
 <p>&nbsp;</p>
 
-## Developing Hydrogen custom storefronts with Shopify CLI ##
+## Developing Hydrogen custom storefronts with Shopify CLI
 
 The Hydrogen code lives here: https://github.com/Shopify/hydrogen/tree/main/packages/cli
 
