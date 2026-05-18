@@ -178,8 +178,8 @@ function getAppVars(org: Organization, options: CreateAppOptions): CreateAppQuer
   return {
     org: parseInt(org.id, 10),
     title: name,
-    appUrl: options.applicationUrl ?? defaultAppUrl,
-    redir: options.redirectUrls ?? [defaultRedirectUrl],
+    appUrl: defaultAppUrl,
+    redir: [defaultRedirectUrl],
     requestedAccessScopes: scopesArray ?? [],
     type: 'undecided',
   }
