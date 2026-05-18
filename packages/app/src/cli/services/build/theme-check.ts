@@ -1,4 +1,5 @@
-import {readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFileSync} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {itemToString} from '@shopify/cli-kit/node/output'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {Severity, type Offense, check, path as pathUtils} from '@shopify/theme-check-node'
@@ -60,7 +61,11 @@ function formatOffenses(offenses: Offense[]): TokenItem {
 }
 
 export async function runThemeCheck(directory: string): Promise<string> {
-  const configPath = 'theme-check:theme-app-extension'
+  // Respect a user's `.theme-check.yml` in the extension root when present.
+  // Falling through to `undefined` lets theme-check-node auto-discover the
+  // user config; otherwise use the bundled theme-app-extension defaults.
+  const hasUserConfig = await fileExists(joinPath(directory, '.theme-check.yml'))
+  const configPath = hasUserConfig ? undefined : 'theme-check:theme-app-extension'
   const offenses = await check(directory, configPath)
   const formattedOffenses = formatOffenses(offenses)
   return itemToString(formattedOffenses)
