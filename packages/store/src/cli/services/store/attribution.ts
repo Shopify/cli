@@ -3,5 +3,9 @@ import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/met
 
 export async function recordStoreFqdnMetadata(storeFqdn: string, validated: boolean): Promise<void> {
   await addSensitiveMetadata(() => ({store_fqdn: storeFqdn}))
-  await addPublicMetadata(() => ({store_fqdn_hash: hashString(storeFqdn), store_fqdn_validated: validated}))
+  await addPublicMetadata(() => ({
+    store_fqdn_hash: hashString(storeFqdn),
+    store_fqdn_validated: validated,
+    shop_domain: storeFqdn,
+  }))
 }

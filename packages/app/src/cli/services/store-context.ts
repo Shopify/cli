@@ -64,8 +64,8 @@ export async function storeContext({
     selectedStore = await selectStore(allStores, organization, developerPlatformClient)
   }
 
-  await logMetadata(selectedStore, forceReselectStore)
   selectedStore.shopDomain = normalizeStoreFqdn(selectedStore.shopDomain)
+  await logMetadata(selectedStore, forceReselectStore)
 
   // Save the selected store in the hidden config file
   if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {
@@ -82,6 +82,7 @@ async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean)
   await metadata.addPublicMetadata(() => ({
     cmd_app_reset_used: resetUsed,
     store_fqdn_hash: hashString(selectedStore.shopDomain),
+    shop_domain: selectedStore.shopDomain,
   }))
 
   await metadata.addSensitiveMetadata(() => ({

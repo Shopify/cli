@@ -10,7 +10,8 @@ type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_extensions_'
   PickByPrefix<MonorailEventPublic, 'cmd_release_'> &
   PickByPrefix<MonorailEventPublic, 'app_'> &
   PickByPrefix<MonorailEventPublic, 'env_'> &
-  PickByPrefix<MonorailEventPublic, 'store_'>
+  PickByPrefix<MonorailEventPublic, 'store_'> &
+  Pick<MonorailEventPublic, 'shop_domain'>
 
 type CmdSensitiveFieldsFromMonorail = PickByPrefix<MonorailEventSensitive, 'app_'> &
   PickByPrefix<MonorailEventSensitive, 'cmd_dev_'> &
