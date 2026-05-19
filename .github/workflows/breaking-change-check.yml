@@ -68,8 +68,19 @@ jobs:
           header: Breaking-change-detection
           message: ${{ steps.check.outputs.report }}
           recreate: true
+      # Override granted: breaking changes were detected but a code-owner
+      # approved, so we keep the sticky comment up to record the override
+      # footer ("✅ Override: approved by @user") emitted by the script.
       - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
-        if: steps.check.outputs.has_breaking_changes != 'true'
+        if: steps.check.outputs.has_breaking_changes != 'true' && steps.check.outputs.report != ''
+        with:
+          header: Breaking-change-detection
+          message: ${{ steps.check.outputs.report }}
+          recreate: true
+      # No breaking changes at all: delete any stale sticky comment from a
+      # previous push.
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
+        if: steps.check.outputs.has_breaking_changes != 'true' && steps.check.outputs.report == ''
         with:
           header: Breaking-change-detection
           delete: true

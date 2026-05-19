@@ -366,6 +366,26 @@ test('findCodeownerApproval: latest review per author wins (changes_requested ca
   assert.equal(result.approved, false, "withdrawn approval should not count")
 })
 
+test('findCodeownerApproval: later COMMENTED review does not overwrite an earlier APPROVED', async () => {
+  // Common workflow: approve a PR, then leave an inline review comment.
+  // GitHub records the comment as a `COMMENTED` review entry. We must
+  // ignore non-actionable states when computing "latest review per author",
+  // otherwise the approval is silently lost.
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 5,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [
+      {state: 'APPROVED', user: {login: 'isaac'}, submitted_at: '2025-01-01'},
+      {state: 'COMMENTED', user: {login: 'isaac'}, submitted_at: '2025-01-02'},
+    ],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async () => 'write',
+  })
+  assert.equal(result.approved, true, 'a later COMMENTED entry must not cancel an APPROVED review')
+  assert.equal(result.approver, 'isaac')
+})
+
 test('findCodeownerApproval: no approving reviewer with write access => not approved', async () => {
   const result = await findCodeownerApproval({
     repo: fakeRepo,
