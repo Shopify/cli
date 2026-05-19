@@ -45,6 +45,14 @@ describe('store execute command', () => {
     expect(writeOrOutputStoreExecuteResult).toHaveBeenCalledWith({data: {shop: {name: 'Test shop'}}}, undefined, 'json')
   })
 
+  test('maps preview-store permanent domains to the api host before calling the execute service', async () => {
+    await StoreExecute.run(['--store', 'preview-shop.my.shop.dev', '--query', 'query { shop { name } }'])
+
+    expect(executeStoreOperation).toHaveBeenCalledWith(expect.objectContaining({
+      store: 'preview-shop.dev-api.shop.dev',
+    }))
+  })
+
   test('defines the expected flags', () => {
     expect(StoreExecute.flags.store).toBeDefined()
     expect(StoreExecute.flags.query).toBeDefined()

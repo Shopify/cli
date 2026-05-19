@@ -157,3 +157,18 @@ export function storeAdminUrl(storeFqdn: string): string {
   }
   return storeFqdn
 }
+
+/**
+ * Maps a preview-store permanent domain to the local Admin API host.
+ * Leaves all non-preview-store domains unchanged.
+ *
+ * @param storeFqdn - Normalized store FQDN.
+ * @returns Store API host for preview stores, otherwise the original FQDN.
+ */
+export function previewStoreApiHost(storeFqdn: string): string {
+  if (storeFqdn.endsWith('.my.shop.dev')) {
+    return storeFqdn.replace('.my.shop.dev', '.dev-api.shop.dev')
+  }
+
+  return storeFqdn
+}

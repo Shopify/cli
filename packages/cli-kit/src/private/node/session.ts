@@ -199,6 +199,7 @@ export async function ensureAuthenticated(
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
+  const canAuthenticateWithoutPrompt = canAuthenticateWithoutPromptFromEnvironment(_env)
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
   if (previousStoreFqdn) {
@@ -230,17 +231,21 @@ ${outputToken.json(applications)}
   let newSession = {}
 
   if (validationResult === 'needs_full_auth') {
-    await throwOnNoPrompt(noPrompt)
+    if (!canAuthenticateWithoutPrompt) {
+      await throwOnNoPrompt(noPrompt)
+    }
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
+    newSession = await executeCompleteFlow(applications, _env, currentSession?.identity.alias)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(currentSession!, applications)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
-        await throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
+        if (!canAuthenticateWithoutPrompt) {
+          await throwOnNoPrompt(noPrompt)
+        }
+        newSession = await executeCompleteFlow(applications, _env, currentSession?.identity.alias)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
         throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
@@ -265,7 +270,7 @@ ${outputToken.json(applications)}
 
   const tokens = await tokensFor(applications, completeSession)
 
-  const envToken = getAppAutomationToken()
+  const envToken = getAppAutomationToken(_env)
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
@@ -273,6 +278,10 @@ ${outputToken.json(applications)}
   setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
+}
+
+function canAuthenticateWithoutPromptFromEnvironment(env?: NodeJS.ProcessEnv): boolean {
+  return Boolean(getIdentityTokenInformation(env) || getAppAutomationToken(env))
 }
 
 async function throwOnNoPrompt(noPrompt: boolean) {
@@ -292,7 +301,11 @@ The CLI is currently unable to prompt for reauthentication.`,
  * @param applications - An object containing the applications we need to be authenticated with.
  * @param existingAlias - Optional alias from a previous session to preserve if the email fetch fails.
  */
-async function executeCompleteFlow(applications: OAuthApplications, existingAlias?: string): Promise<Session> {
+async function executeCompleteFlow(
+  applications: OAuthApplications,
+  env: NodeJS.ProcessEnv | undefined,
+  existingAlias?: string,
+): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -302,7 +315,7 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
   }
 
   let identityToken: IdentityToken
-  const identityTokenInformation = getIdentityTokenInformation()
+  const identityTokenInformation = getIdentityTokenInformation(env)
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
   } else {
@@ -442,11 +455,11 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
 
 function buildIdentityTokenFromEnv(
   scopes: string[],
-  identityTokenInformation: {accessToken: string; refreshToken: string; userId: string},
+  identityTokenInformation: {accessToken: string; refreshToken: string; userId: string; expiresAt?: Date},
 ) {
   return {
     ...identityTokenInformation,
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    expiresAt: identityTokenInformation.expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     scopes,
     alias: undefined,
   }

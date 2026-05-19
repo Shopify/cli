@@ -23,9 +23,8 @@ export function getEnvironmentVariables(): NodeJS.ProcessEnv {
  *
  * @returns The app automation token value, or undefined if neither env var is set.
  */
-export function getAppAutomationToken(): string | undefined {
-  const env = getEnvironmentVariables()
-  return env[environmentVariables.appAutomationToken] ?? env[environmentVariables.partnersToken]
+export function getAppAutomationToken(environment = getEnvironmentVariables()): string | undefined {
+  return environment[environmentVariables.appAutomationToken] ?? environment[environmentVariables.partnersToken]
 }
 
 /**
@@ -55,14 +54,21 @@ export function getBackendPort(): number | undefined {
  *
  * @returns The identity token information in case it exists.
  */
-export function getIdentityTokenInformation(): {accessToken: string; refreshToken: string; userId: string} | undefined {
-  const identityToken = getEnvironmentVariables()[environmentVariables.identityToken]
-  const refreshToken = getEnvironmentVariables()[environmentVariables.refreshToken]
+export function getIdentityTokenInformation(
+  environment = getEnvironmentVariables(),
+): {accessToken: string; refreshToken: string; userId: string; expiresAt?: Date} | undefined {
+  const identityToken = environment[environmentVariables.identityToken]
+  const refreshToken = environment[environmentVariables.refreshToken]
   if (!identityToken || !refreshToken) return undefined
+
+  const expiresAtValue = environment[environmentVariables.identityTokenExpiresAt]
+  const expiresAt = expiresAtValue ? new Date(expiresAtValue) : undefined
+
   return {
     accessToken: identityToken,
     refreshToken,
-    userId: nonRandomUUID(identityToken),
+    userId: environment[environmentVariables.identityTokenUserId] ?? nonRandomUUID(identityToken),
+    ...(expiresAt && !Number.isNaN(expiresAt.getTime()) ? {expiresAt} : {}),
   }
 }
 

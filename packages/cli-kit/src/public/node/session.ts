@@ -9,6 +9,7 @@ import {
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import {
   AdminAPIScope,
   AppManagementAPIScope,
@@ -49,6 +50,28 @@ export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountI
  */
 export function setLastSeenUserId(userId: string): void {
   setLastSeenUserIdAfterAuth(userId)
+}
+
+export interface IdentitySessionBootstrap {
+  accessToken: string
+  refreshToken: string
+  expiresAt: Date
+  userId?: string
+}
+
+export async function importIdentitySession(
+  bootstrap: IdentitySessionBootstrap,
+  env = process.env,
+): Promise<{userId: string}> {
+  const bootstrapEnv = {
+    ...env,
+    [environmentVariables.identityToken]: bootstrap.accessToken,
+    [environmentVariables.refreshToken]: bootstrap.refreshToken,
+    [environmentVariables.identityTokenExpiresAt]: bootstrap.expiresAt.toISOString(),
+    ...(bootstrap.userId ? {[environmentVariables.identityTokenUserId]: bootstrap.userId} : {}),
+  }
+
+  return ensureAuthenticatedUser(bootstrapEnv, {noPrompt: true, forceNewSession: true})
 }
 
 interface UserAccountInfo {

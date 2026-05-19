@@ -4,6 +4,7 @@ import {
   createPreviewStore,
   defaultClientOptions,
 } from './client.js'
+import {importPreviewStoreBootstrap} from './bootstrap.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
@@ -25,6 +26,8 @@ export async function createPreviewStoreCommand(input: CreatePreviewStoreInput):
     },
     options,
   )
+
+  await importPreviewStoreBootstrap(response)
 
   if (input.json) {
     outputResult(JSON.stringify(response, null, 2))

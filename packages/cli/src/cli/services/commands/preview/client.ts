@@ -3,12 +3,28 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 
+export interface PreviewCliIdentityBootstrap {
+  access_token: string
+  refresh_token: string
+  expires_in: number
+  user_id?: string
+}
+
+export interface PreviewStoreAuthBootstrap {
+  access_token: string
+  scopes: string[]
+  api_key: string
+  shop_domain: string
+}
+
 export interface PreviewStoreCreateResponse {
   shop_id: number
   shop_permanent_domain: string
   placeholder_account_uuid: string
   admin_api_token: string
   magic_link_url: string
+  cli_identity_bootstrap?: PreviewCliIdentityBootstrap
+  store_auth_bootstrap?: PreviewStoreAuthBootstrap
 }
 
 export interface PreviewStoreClaimResponse {

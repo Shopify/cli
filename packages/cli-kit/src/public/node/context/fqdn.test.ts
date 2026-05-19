@@ -6,6 +6,7 @@ import {
   businessPlatformFqdn,
   appDevFqdn,
   adminFqdn,
+  previewStoreApiHost,
 } from './fqdn.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {expect, describe, test, vi} from 'vitest'
@@ -216,5 +217,15 @@ describe('normalizeStore', () => {
 
     // Then
     expect(got).toEqual('example.myshopify.com')
+  })
+})
+
+describe('previewStoreApiHost', () => {
+  test('maps preview-store permanent domains to the local api host', () => {
+    expect(previewStoreApiHost('preview-shop.my.shop.dev')).toEqual('preview-shop.dev-api.shop.dev')
+  })
+
+  test('leaves non-preview-store domains unchanged', () => {
+    expect(previewStoreApiHost('shop.myshopify.com')).toEqual('shop.myshopify.com')
   })
 })
