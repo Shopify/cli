@@ -2403,6 +2403,18 @@ type CreateAppDevelopmentStoreResult {
   userErrors: [UserError!]
 }
 
+type DeleteAppDevelopmentStorePayload {
+  """
+  Whether the store deletion was successfully enqueued.
+  """
+  success: Boolean!
+
+  """
+  The collection of errors.
+  """
+  userErrors: [UserError!]!
+}
+
 input CreateCliTokenOrganizationUserInput {
   """
   Organization-wide access conditions to apply to the user.
@@ -10428,6 +10440,16 @@ type Mutation {
   Convert users to SAML users.
   """
   convertUsersToSaml(convertUsersToSamlInput: ConvertUsersToSamlInput!): ConvertUsersToSamlResult!
+
+  """
+  Delete an App Development Store.
+  """
+  deleteAppDevelopmentStore(
+    """
+    The fully-qualified domain name of the store to delete.
+    """
+    storeFqdn: String!
+  ): DeleteAppDevelopmentStorePayload
 
   """
   Create an App Development Store.

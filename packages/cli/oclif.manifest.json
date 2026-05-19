@@ -5800,6 +5800,75 @@
       "strict": true,
       "summary": "Create a new development store."
     },
+    "store:delete": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Deletes an app development store from your organization.",
+      "descriptionWithMarkdown": "Deletes an app development store from your organization.",
+      "enableJsonFlag": false,
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "organization": {
+          "aliases": [
+            "organization-id"
+          ],
+          "description": "The organization that owns the store (numeric ID). Auto-selects if you belong to a single org.",
+          "env": "SHOPIFY_FLAG_ORGANIZATION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "organization",
+          "type": "option"
+        },
+        "store": {
+          "aliases": [
+            "name"
+          ],
+          "description": "The domain of the development store to delete (e.g. my-store.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:delete",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Delete a development store."
+    },
     "store:execute": {
       "aliases": [
       ],
