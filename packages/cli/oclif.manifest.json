@@ -5967,6 +5967,69 @@
       "strict": true,
       "summary": "Execute GraphQL queries and mutations on a store."
     },
+    "store:list": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Lists every store that has a locally stored auth session, including both standard PKCE-authenticated stores (via `shopify store auth`) and preview stores (via `shopify store create preview`).\n\nUse `--kind` to filter by session type, or `--json` to emit a machine-readable list for agent consumption.",
+      "descriptionWithMarkdown": "Lists every store that has a locally stored auth session, including both standard PKCE-authenticated stores (via `shopify store auth`) and preview stores (via `shopify store create preview`).\n\nUse `--kind` to filter by session type, or `--json` to emit a machine-readable list for agent consumption.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --kind preview",
+        "<%= config.bin %> <%= command.id %> --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "kind": {
+          "description": "Filter results to a single session kind.",
+          "env": "SHOPIFY_FLAG_STORE_LIST_KIND",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "kind",
+          "options": [
+            "standard",
+            "preview"
+          ],
+          "required": false,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:list",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "List stored store-auth sessions."
+    },
     "theme:check": {
       "aliases": [
       ],

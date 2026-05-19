@@ -3,6 +3,7 @@ import {
   clearStoredStoreAppSession,
   getCurrentStoredStoreAppSession,
   isPreviewStoreSession,
+  listStoredStoreAppSessions,
   sessionKind,
   setStoredStoreAppSession,
   type StoredStoreAppSession,
@@ -23,6 +24,9 @@ function inMemoryStorage() {
     },
     delete(key: string) {
       values.delete(key)
+    },
+    entries() {
+      return Array.from(values.entries()) as [string, unknown][]
     },
   } as LocalStorage<Record<string, unknown>>
 }
@@ -338,5 +342,126 @@ describe('preview-store discriminator', () => {
 
     // The most recently written session becomes the current one.
     expect(getCurrentStoredStoreAppSession(standard.store, storage as any)).toEqual(preview)
+  })
+})
+
+describe('listStoredStoreAppSessions', () => {
+  test('returns an empty array when no sessions are stored', () => {
+    expect(listStoredStoreAppSessions(inMemoryStorage() as any)).toEqual([])
+  })
+
+  test('returns the current session for every shop with a stored bucket', () => {
+    const storage = inMemoryStorage()
+    const first = buildSession({store: 'a.myshopify.com'})
+    const second = buildSession({store: 'b.myshopify.com', userId: '84'})
+    const preview = buildPreviewSession({store: 'c.myshopify.io'})
+
+    setStoredStoreAppSession(first, storage as any)
+    setStoredStoreAppSession(second, storage as any)
+    setStoredStoreAppSession(preview, storage as any)
+
+    const listed = listStoredStoreAppSessions(storage as any)
+    expect(listed).toHaveLength(3)
+    expect(listed.map((session) => session.store).sort()).toEqual([
+      'a.myshopify.com',
+      'b.myshopify.com',
+      'c.myshopify.io',
+    ])
+  })
+
+  test('returns only the bucket\u2019s current-user session, not every stored user', () => {
+    const storage = inMemoryStorage()
+    const firstUser = buildSession({userId: '42', accessToken: 'token-old'})
+    const secondUser = buildSession({userId: '84', accessToken: 'token-new'})
+
+    setStoredStoreAppSession(firstUser, storage as any)
+    setStoredStoreAppSession(secondUser, storage as any)
+
+    const listed = listStoredStoreAppSessions(storage as any)
+    expect(listed).toHaveLength(1)
+    expect(listed[0]!.userId).toBe('84')
+  })
+
+  test('skips buckets that belong to a different client id', () => {
+    const storage = inMemoryStorage()
+    setStoredStoreAppSession(buildSession(), storage as any)
+    storage.set('some-other-client::shop.myshopify.com', {
+      currentUserId: '42',
+      sessionsByUserId: {'42': buildSession({clientId: 'some-other-client'})},
+    })
+
+    const listed = listStoredStoreAppSessions(storage as any)
+    expect(listed).toHaveLength(1)
+    expect(listed[0]!.clientId).toBe(STORE_AUTH_APP_CLIENT_ID)
+  })
+
+  test('silently skips malformed buckets and sessions that fail sanitization', () => {
+    const storage = inMemoryStorage()
+    setStoredStoreAppSession(buildSession(), storage as any)
+
+    storage.set(storeAuthSessionKey('malformed-bucket.myshopify.com'), {
+      currentUserId: 42,
+      sessionsByUserId: null,
+    })
+    storage.set(storeAuthSessionKey('missing-current.myshopify.com'), {
+      currentUserId: '999',
+      sessionsByUserId: {'42': buildSession()},
+    })
+    storage.set(storeAuthSessionKey('malformed-session.myshopify.com'), {
+      currentUserId: '42',
+      sessionsByUserId: {'42': {userId: '42'}},
+    })
+
+    const listed = listStoredStoreAppSessions(storage as any)
+    expect(listed).toHaveLength(1)
+    expect(listed[0]!.store).toBe('shop.myshopify.com')
+  })
+
+  // The underlying `conf` library treats `.` in keys as a path separator, so a shop
+  // domain like `preview-1.my.shop.dev` is persisted as a nested object tree rather
+  // than a single top-level key. `entries()` therefore returns only the outermost
+  // segment, and listStoredStoreAppSessions has to walk down into the tree to find
+  // the bucket. The in-memory test storage doesn't reproduce that nesting, so we
+  // simulate it directly here.
+  test('finds buckets stored under a dotted shop domain (conf dot-notation expansion)', () => {
+    const storage = inMemoryStorage()
+    const dottedDomainSession = buildSession({store: 'preview-1.my.shop.dev', userId: '7'})
+    storage.set(`${STORE_AUTH_APP_CLIENT_ID}::preview-1`, {
+      my: {
+        shop: {
+          dev: {
+            currentUserId: '7',
+            sessionsByUserId: {'7': dottedDomainSession},
+          },
+        },
+      },
+    })
+
+    const listed = listStoredStoreAppSessions(storage as any)
+    expect(listed).toHaveLength(1)
+    expect(listed[0]!.store).toBe('preview-1.my.shop.dev')
+  })
+
+  test('finds buckets at multiple depths under the same top-level key', () => {
+    const storage = inMemoryStorage()
+    const shallow = buildSession({store: 'shop-a.myshopify.com', userId: '1'})
+    const deep = buildSession({store: 'shop-a.my.shop.dev', userId: '2'})
+
+    storage.set(`${STORE_AUTH_APP_CLIENT_ID}::shop-a`, {
+      myshopify: {
+        com: {currentUserId: '1', sessionsByUserId: {'1': shallow}},
+      },
+      my: {
+        shop: {
+          dev: {currentUserId: '2', sessionsByUserId: {'2': deep}},
+        },
+      },
+    })
+
+    const listed = listStoredStoreAppSessions(storage as any)
+    expect(listed.map((session) => session.store).sort()).toEqual([
+      'shop-a.my.shop.dev',
+      'shop-a.myshopify.com',
+    ])
   })
 })

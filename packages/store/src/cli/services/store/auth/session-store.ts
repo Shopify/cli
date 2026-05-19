@@ -1,4 +1,4 @@
-import {storeAuthSessionKey} from './config.js'
+import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './config.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 /**
@@ -208,6 +208,61 @@ function readStoredStoreAppSessionBucket(
   return {
     currentUserId,
     sessionsByUserId: sanitizedSessionsByUserId,
+  }
+}
+
+/**
+ * Returns the current session for every shop that has one stored, across all known buckets.
+ *
+ * Mirrors {@link getCurrentStoredStoreAppSession}: only the bucket's `currentUserId`
+ * session is returned per shop, since that is the one the rest of the CLI acts on. The
+ * result order is unspecified — callers that need a stable order should sort.
+ *
+ * Buckets whose stored shape is malformed, or whose current session is missing or fails
+ * sanitization, are silently skipped (they are cleaned up the next time their shop is
+ * looked up by key via {@link getCurrentStoredStoreAppSession}).
+ *
+ * Implementation note: the underlying `conf` library treats `.` in keys as a path
+ * separator, so a key like `<clientId>::shop.myshopify.com` is persisted as a nested
+ * object `{ <clientId>::shop: { myshopify: { com: <bucket> } } }`. `get`/`set` round-
+ * trip through that nesting symmetrically, but the top-level enumerator only sees the
+ * outermost segment. To find every bucket regardless of how many dots the shop domain
+ * contains, this function walks the value tree under each prefix-matching top-level key
+ * and recognizes buckets by shape (`currentUserId` + `sessionsByUserId`).
+ */
+export function listStoredStoreAppSessions(
+  storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
+): StoredStoreAppSession[] {
+  const sessions: StoredStoreAppSession[] = []
+  const keyPrefix = `${STORE_AUTH_APP_CLIENT_ID}::`
+
+  for (const [key, value] of storage.entries()) {
+    if (typeof key !== 'string' || !key.startsWith(keyPrefix)) continue
+    collectBucketsFromSubtree(value, sessions)
+  }
+
+  return sessions
+}
+
+function collectBucketsFromSubtree(value: unknown, sessions: StoredStoreAppSession[]): void {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return
+
+  const bucketCandidate = value as Partial<StoredStoreAppSessionBucket>
+  if (
+    typeof bucketCandidate.currentUserId === 'string' &&
+    bucketCandidate.sessionsByUserId &&
+    typeof bucketCandidate.sessionsByUserId === 'object' &&
+    !Array.isArray(bucketCandidate.sessionsByUserId)
+  ) {
+    const session = sanitizeStoredStoreAppSession(
+      bucketCandidate.sessionsByUserId[bucketCandidate.currentUserId],
+    )
+    if (session) sessions.push(session)
+    return
+  }
+
+  for (const child of Object.values(value as Record<string, unknown>)) {
+    collectBucketsFromSubtree(child, sessions)
   }
 }
 

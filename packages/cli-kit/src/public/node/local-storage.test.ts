@@ -62,6 +62,30 @@ describe('storage', () => {
       expect(got2).toEqual(undefined)
     })
   })
+
+  test('entries returns every stored key/value pair', async () => {
+    await inTemporaryDirectory((cwd) => {
+      const storage = new LocalStorage<TestSchema>({cwd})
+
+      storage.set('testValue', 'first')
+      storage.set('anotherKey' as keyof TestSchema, 'second' as TestSchema[keyof TestSchema])
+
+      const entries = storage.entries()
+
+      expect(entries).toHaveLength(2)
+      expect(Object.fromEntries(entries)).toEqual({
+        testValue: 'first',
+        anotherKey: 'second',
+      })
+    })
+  })
+
+  test('entries returns an empty array when nothing has been stored', async () => {
+    await inTemporaryDirectory((cwd) => {
+      const storage = new LocalStorage<TestSchema>({cwd})
+      expect(storage.entries()).toEqual([])
+    })
+  })
 })
 
 describe('error handling', () => {
