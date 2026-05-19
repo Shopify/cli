@@ -71,7 +71,7 @@ export async function importIdentitySession(
     ...(bootstrap.userId ? {[environmentVariables.identityTokenUserId]: bootstrap.userId} : {}),
   }
 
-  return ensureAuthenticatedUser(bootstrapEnv, {noPrompt: true})
+  return ensureAuthenticatedUser(bootstrapEnv, {noPrompt: true, forceNewSession: true})
 }
 
 interface UserAccountInfo {

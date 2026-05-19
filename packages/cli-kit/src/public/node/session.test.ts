@@ -63,7 +63,7 @@ describe('importIdentitySession', () => {
         SHOPIFY_CLI_IDENTITY_USER_ID: 'placeholder-user-id',
         SHOPIFY_CLI_IDENTITY_TOKEN_EXPIRES_AT: '2026-05-14T12:00:00.000Z',
       }),
-      {noPrompt: true},
+      {noPrompt: true, forceNewSession: true},
     )
   })
 })

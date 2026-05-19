@@ -210,6 +210,34 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     )
   })
 
+  test('imports identity bootstrap from the provided env when prompting is disabled', async () => {
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue({})
+    vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
+
+    const bootstrapEnv = {
+      SHOPIFY_CLI_IDENTITY_TOKEN: 'identity-token',
+      SHOPIFY_CLI_REFRESH_TOKEN: 'refresh-token',
+      SHOPIFY_CLI_IDENTITY_USER_ID: 'placeholder-user-id',
+      SHOPIFY_CLI_IDENTITY_TOKEN_EXPIRES_AT: '2026-05-14T12:00:00.000Z',
+    }
+
+    vi.mocked(getIdentityTokenInformation).mockReturnValue({
+      accessToken: 'identity-token',
+      refreshToken: 'refresh-token',
+      userId: 'placeholder-user-id',
+      expiresAt: new Date('2026-05-14T12:00:00.000Z'),
+    })
+
+    const got = await ensureAuthenticated({}, bootstrapEnv, {noPrompt: true})
+
+    expect(got).toEqual({userId: 'placeholder-user-id'})
+    expect(secureRemove).not.toHaveBeenCalled()
+    expect(requestDeviceAuthorization).not.toHaveBeenCalled()
+    expect(pollForDeviceAuthorization).not.toHaveBeenCalled()
+  })
+
   test('throws an error and logs out if there is no session and prompting is disabled,', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')

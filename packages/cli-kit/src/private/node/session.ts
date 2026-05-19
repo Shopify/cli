@@ -199,6 +199,7 @@ export async function ensureAuthenticated(
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
+  const canAuthenticateWithoutPrompt = canAuthenticateWithoutPromptFromEnvironment(_env)
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
   if (previousStoreFqdn) {
@@ -230,7 +231,9 @@ ${outputToken.json(applications)}
   let newSession = {}
 
   if (validationResult === 'needs_full_auth') {
-    await throwOnNoPrompt(noPrompt)
+    if (!canAuthenticateWithoutPrompt) {
+      await throwOnNoPrompt(noPrompt)
+    }
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, _env, currentSession?.identity.alias)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
@@ -239,7 +242,9 @@ ${outputToken.json(applications)}
       newSession = await refreshTokens(currentSession!, applications)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
-        await throwOnNoPrompt(noPrompt)
+        if (!canAuthenticateWithoutPrompt) {
+          await throwOnNoPrompt(noPrompt)
+        }
         newSession = await executeCompleteFlow(applications, _env, currentSession?.identity.alias)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
@@ -273,6 +278,10 @@ ${outputToken.json(applications)}
   setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
+}
+
+function canAuthenticateWithoutPromptFromEnvironment(env?: NodeJS.ProcessEnv): boolean {
+  return Boolean(getIdentityTokenInformation(env) || getAppAutomationToken(env))
 }
 
 async function throwOnNoPrompt(noPrompt: boolean) {
