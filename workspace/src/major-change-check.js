@@ -228,10 +228,16 @@ export async function findCodeownerApproval({
   const reviews = await fetchReviews(repo, prNumber)
   if (!reviews) return {approved: false, approver: null, reason: 'reviews API failed'}
 
-  // Last review per author wins (matches GitHub's own "latest review" semantics).
+  // Last *actionable* review per author wins (matches GitHub's own
+  // branch-protection semantics). GitHub returns a `COMMENTED` entry for
+  // every inline review comment, so without this filter a reviewer who
+  // approves and then leaves a line comment would have their `APPROVED`
+  // silently overwritten by the later `COMMENTED` entry.
+  const ACTIONABLE_REVIEW_STATES = new Set(['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'])
   const latestByUser = new Map()
   for (const review of reviews) {
     if (!review.user?.login) continue
+    if (!ACTIONABLE_REVIEW_STATES.has(review.state)) continue
     latestByUser.set(review.user.login, review)
   }
   const approvers = [...latestByUser.values()].filter((r) => r.state === 'APPROVED').map((r) => r.user.login)
