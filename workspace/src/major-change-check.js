@@ -54,7 +54,16 @@ const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.ur
  *   {
  *     baselineRef: string,                // SHA (or 'main' in fallback)
  *     changedFiles: Set<string> | null,   // null = scan everything (fallback)
+ *     repo: {owner, name} | null,         // null = couldn't parse GITHUB_REPOSITORY
+ *     prNumber: number | null,            // null = no PR context (merge_group / local)
  *   }
+ *
+ * `repo` / `prNumber` are needed by the code-owner approval override
+ * (see `findCodeownerApproval`). They're populated from the standard
+ * GitHub Actions env vars (`GITHUB_REPOSITORY`, `GITHUB_EVENT_PATH`).
+ * On `merge_group` events the payload doesn't carry a PR number, and
+ * locally there's no event file at all — in both cases `prNumber` is
+ * `null` and the override check short-circuits cleanly.
  *
  * On any git failure we degrade *open*: `changedFiles=null` so the scan
  * widens rather than silently skipping potential removals. We never want
@@ -62,26 +71,59 @@ const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.ur
  */
 export async function resolveContext({
   baseRef = process.env.GITHUB_BASE_REF,
+  repository = process.env.GITHUB_REPOSITORY,
+  eventPath = process.env.GITHUB_EVENT_PATH,
+  readEvent = defaultReadEvent,
   runGit = defaultRunGit,
 } = {}) {
+  const repo = parseRepository(repository)
+  const prNumber = await resolvePrNumber(eventPath, readEvent)
+
   // No base ref => running locally or in an unsupported event. Fall back
   // to legacy behavior so this script remains usable as a manual tool.
   if (!baseRef) {
-    return {baselineRef: 'main', changedFiles: null}
+    return {baselineRef: 'main', changedFiles: null, repo, prNumber}
   }
 
   try {
     const baselineRef = (await runGit(['merge-base', `origin/${baseRef}`, 'HEAD'])).trim()
     if (!baselineRef) {
-      return {baselineRef: 'main', changedFiles: null}
+      return {baselineRef: 'main', changedFiles: null, repo, prNumber}
     }
     const diff = await runGit(['diff', '--name-only', `${baselineRef}...HEAD`])
     const changedFiles = new Set(diff.split('\n').filter(Boolean))
-    return {baselineRef, changedFiles}
+    return {baselineRef, changedFiles, repo, prNumber}
   } catch (error) {
     logMessage(`git merge-base/diff failed: ${error.message} — falling back to full scan against main`)
-    return {baselineRef: 'main', changedFiles: null}
+    return {baselineRef: 'main', changedFiles: null, repo, prNumber}
   }
+}
+
+function parseRepository(repository) {
+  if (!repository) return null
+  const [owner, name] = repository.split('/')
+  if (!owner || !name) return null
+  return {owner, name}
+}
+
+async function resolvePrNumber(eventPath, readEvent) {
+  if (!eventPath) return null
+  try {
+    const event = await readEvent(eventPath)
+    if (!event) return null
+    // `pull_request` event => event.pull_request.number
+    // `pull_request_review` event => event.pull_request.number (same shape)
+    // `merge_group` event => no PR number, returns null
+    return event.pull_request?.number ?? event.number ?? null
+  } catch (error) {
+    logMessage(`Failed to read GITHUB_EVENT_PATH (${eventPath}): ${error.message}`)
+    return null
+  }
+}
+
+async function defaultReadEvent(eventPath) {
+  const raw = await fs.readFile(eventPath, 'utf-8')
+  return JSON.parse(raw)
 }
 
 async function defaultRunGit(args) {
@@ -857,6 +899,11 @@ async function runMain() {
     }
     if (context.changedFiles) {
       logMessage(`PR touched ${context.changedFiles.size} file(s); scoping schema/manifest scan to those`)
+    }
+    if (context.repo && context.prNumber) {
+      logMessage(`PR context: ${context.repo.owner}/${context.repo.name}#${context.prNumber} (override eligible)`)
+    } else {
+      logMessage(`PR context unavailable (repo=${Boolean(context.repo)}, prNumber=${context.prNumber ?? 'null'}); override check will be skipped`)
     }
 
     // This script consumes only git-tracked files (oclif.manifest.json + .ts

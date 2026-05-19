@@ -198,6 +198,87 @@ test('resolveContext: git failure degrades to scanning everything against main',
   assert.equal(ctx.changedFiles, null, 'git failure must NOT collapse to an empty diff set')
 })
 
+test('resolveContext: populates repo + prNumber from GITHUB_REPOSITORY and the event payload', async () => {
+  // Integration-shaped test: this is exactly the path that ships in CI.
+  // Without this, `runMain` calls findCodeownerApproval with undefined
+  // repo/prNumber and the override silently no-ops.
+  const runGit = async (args) => (args[0] === 'merge-base' ? 'abc123\n' : '')
+  const ctx = await resolveContext({
+    baseRef: 'main',
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => ({pull_request: {number: 7469}}),
+    runGit,
+  })
+  assert.deepEqual(ctx.repo, {owner: 'Shopify', name: 'cli'})
+  assert.equal(ctx.prNumber, 7469)
+})
+
+test('resolveContext: pull_request_review event also yields a PR number', async () => {
+  // The whole reason this workflow exists is to re-run on review events,
+  // so this shape must work.
+  const ctx = await resolveContext({
+    baseRef: 'main',
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => ({
+      action: 'submitted',
+      pull_request: {number: 7469},
+      review: {state: 'approved', user: {login: 'isaac'}},
+    }),
+    runGit: async () => '',
+  })
+  assert.equal(ctx.prNumber, 7469)
+})
+
+test('resolveContext: merge_group event has no PR number, repo still resolves', async () => {
+  const ctx = await resolveContext({
+    baseRef: 'main',
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => ({merge_group: {head_sha: 'deadbeef'}}),
+    runGit: async () => '',
+  })
+  assert.deepEqual(ctx.repo, {owner: 'Shopify', name: 'cli'})
+  assert.equal(ctx.prNumber, null, 'merge_group has no PR number; override is skipped cleanly')
+})
+
+test('resolveContext: missing env vars degrade to null (local invocation)', async () => {
+  const ctx = await resolveContext({
+    baseRef: undefined,
+    repository: undefined,
+    eventPath: undefined,
+    runGit: async () => '',
+  })
+  assert.equal(ctx.repo, null)
+  assert.equal(ctx.prNumber, null)
+  assert.equal(ctx.baselineRef, 'main')
+  assert.equal(ctx.changedFiles, null)
+})
+
+test('resolveContext: malformed GITHUB_REPOSITORY returns null repo', async () => {
+  const ctx = await resolveContext({
+    baseRef: undefined,
+    repository: 'not-a-valid-slug',
+    runGit: async () => '',
+  })
+  assert.equal(ctx.repo, null, 'a repository slug without a slash must not produce undefined-named URLs')
+})
+
+test('resolveContext: unreadable event file degrades to null prNumber (does not throw)', async () => {
+  const ctx = await resolveContext({
+    baseRef: undefined,
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => {
+      throw new Error('ENOENT: no such file or directory')
+    },
+    runGit: async () => '',
+  })
+  assert.deepEqual(ctx.repo, {owner: 'Shopify', name: 'cli'})
+  assert.equal(ctx.prNumber, null)
+})
+
 // ---------------------------------------------------------------------------
 // checkChangesets() — only flag changesets the PR actually touched
 // ---------------------------------------------------------------------------
