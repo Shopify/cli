@@ -1,165 +1,197 @@
 import {copyByPattern} from './copy-by-pattern.js'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
-import * as fs from '@shopify/cli-kit/node/fs'
-
-vi.mock('@shopify/cli-kit/node/fs')
+import {describe, expect, test, vi} from 'vitest'
+import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('copyByPattern', () => {
-  let mockStdout: any
-
-  beforeEach(() => {
-    mockStdout = {write: vi.fn()}
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-  })
-
   test('copies matched files preserving relative paths', async () => {
-    // Given
-    vi.mocked(fs.glob).mockResolvedValue(['/src/components/Button.tsx', '/src/utils/helpers.ts'])
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const sourceDir = joinPath(tmpDir, 'src')
+      const outputDir = joinPath(tmpDir, 'out')
+      const appDirectory = tmpDir
+      await mkdir(sourceDir)
+      await writeFile(joinPath(sourceDir, 'Button.tsx'), 'button')
+      await mkdir(joinPath(sourceDir, 'utils'))
+      await writeFile(joinPath(sourceDir, 'utils', 'helpers.ts'), 'helpers')
 
-    // When
-    const result = await copyByPattern(
-      {
-        sourceDir: '/src',
-        outputDir: '/out',
-        patterns: ['**/*.ts', '**/*.tsx'],
-        ignore: [],
-        appDirectory: '/src',
-        sourceDirConfigValue: '.',
-      },
-      {stdout: mockStdout},
-    )
+      const mockStdout = {write: vi.fn()}
 
-    // Then
-    expect(fs.copyFile).toHaveBeenCalledWith('/src/components/Button.tsx', '/out/components/Button.tsx')
-    expect(fs.copyFile).toHaveBeenCalledWith('/src/utils/helpers.ts', '/out/utils/helpers.ts')
-    expect(result.filesCopied).toBe(2)
-    expect(result.outputPaths).toEqual(expect.arrayContaining(['components/Button.tsx', 'utils/helpers.ts']))
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 2 file(s)'))
+      // When
+      const result = await copyByPattern(
+        {
+          sourceDir,
+          outputDir,
+          patterns: ['**/*.ts', '**/*.tsx'],
+          ignore: [],
+          appDirectory,
+          sourceDirConfigValue: 'src',
+        },
+        {stdout: mockStdout as any},
+      )
+
+      // Then
+      await expect(fileExists(joinPath(outputDir, 'Button.tsx'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outputDir, 'utils/helpers.ts'))).resolves.toBe(true)
+      expect(result.filesCopied).toBe(2)
+      expect(result.outputPaths).toEqual(expect.arrayContaining(['Button.tsx', 'utils/helpers.ts']))
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 2 file(s)'))
+    })
   })
 
   test('returns 0 when no files match patterns', async () => {
-    // Given
-    vi.mocked(fs.glob).mockResolvedValue([])
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const sourceDir = joinPath(tmpDir, 'src')
+      const outputDir = joinPath(tmpDir, 'out')
+      const appDirectory = tmpDir
+      await mkdir(sourceDir)
 
-    // When
-    const result = await copyByPattern(
-      {
-        sourceDir: '/src',
-        outputDir: '/out',
-        patterns: ['**/*.png'],
-        ignore: [],
-        appDirectory: '/src',
-        sourceDirConfigValue: '.',
-      },
-      {stdout: mockStdout},
-    )
+      const mockStdout = {write: vi.fn()}
 
-    // Then
-    expect(result.filesCopied).toBe(0)
-    expect(result.outputPaths).toEqual([])
-    expect(fs.mkdir).not.toHaveBeenCalled()
-    expect(fs.copyFile).not.toHaveBeenCalled()
+      // When
+      const result = await copyByPattern(
+        {
+          sourceDir,
+          outputDir,
+          patterns: ['**/*.png'],
+          ignore: [],
+          appDirectory,
+          sourceDirConfigValue: 'src',
+        },
+        {stdout: mockStdout as any},
+      )
+
+      // Then
+      expect(result.filesCopied).toBe(0)
+      expect(result.outputPaths).toEqual([])
+      await expect(fileExists(outputDir)).resolves.toBe(false)
+    })
   })
 
   test('skips file and warns when resolved destination escapes the output directory', async () => {
-    // Given — sourceDir is /out/sub, so a file from /out/sub/../../evil resolves outside /out/sub
-    // Simulate by providing a glob result whose relative path traverses upward
-    vi.mocked(fs.glob).mockResolvedValue(['/out/sub/../../evil.js'])
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const appDirectory = tmpDir
+      const sourceDir = joinPath(tmpDir, 'src/sub')
+      const outputDir = joinPath(tmpDir, 'out')
+      await mkdir(joinPath(tmpDir, 'src'))
+      await mkdir(sourceDir)
+      // File at tmpDir/src/evil.js, which is ../evil.js relative to sourceDir
+      await writeFile(joinPath(tmpDir, 'src/evil.js'), 'evil')
 
-    // When
-    const result = await copyByPattern(
-      {
-        sourceDir: '/out/sub',
-        outputDir: '/out/sub',
-        patterns: ['**/*'],
-        ignore: [],
-        appDirectory: '/out',
-        sourceDirConfigValue: 'sub',
-      },
-      {stdout: mockStdout},
-    )
+      const mockStdout = {write: vi.fn()}
 
-    // Then
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('skipping'))
-    expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(result.filesCopied).toBe(0)
-    expect(result.outputPaths).toEqual([])
+      // When
+      const result = await copyByPattern(
+        {
+          sourceDir,
+          outputDir,
+          patterns: ['../evil.js'],
+          ignore: [],
+          appDirectory,
+          sourceDirConfigValue: 'src/sub',
+        },
+        {stdout: mockStdout as any},
+      )
+
+      // Then
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('skipping'))
+      expect(result.filesCopied).toBe(0)
+      expect(result.outputPaths).toEqual([])
+    })
   })
 
   test('returns 0 without copying when filepath equals computed destPath', async () => {
-    // Given — file already lives at the exact destination path
-    vi.mocked(fs.glob).mockResolvedValue(['/out/logo.png'])
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const sourceDir = tmpDir
+      const outputDir = tmpDir
+      const appDirectory = tmpDir
+      await writeFile(joinPath(tmpDir, 'logo.png'), 'logo')
 
-    // When — sourceDir is /out so relPath=relativePath('/out','/out/logo.png')='logo.png', destPath='/out/logo.png'==filepath
-    const result = await copyByPattern(
-      {
-        sourceDir: '/out',
-        outputDir: '/out',
-        patterns: ['*.png'],
-        ignore: [],
-        appDirectory: '/out',
-        sourceDirConfigValue: '.',
-      },
-      {stdout: mockStdout},
-    )
+      const mockStdout = {write: vi.fn()}
 
-    // Then
-    expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(result.filesCopied).toBe(0)
-    expect(result.outputPaths).toEqual([])
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 0 file(s)'))
+      // When
+      const result = await copyByPattern(
+        {
+          sourceDir,
+          outputDir,
+          patterns: ['*.png'],
+          ignore: [],
+          appDirectory,
+          sourceDirConfigValue: '.',
+        },
+        {stdout: mockStdout as any},
+      )
+
+      // Then
+      expect(result.filesCopied).toBe(0)
+      expect(result.outputPaths).toEqual([])
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 0 file(s)'))
+    })
   })
 
   test('calls mkdir(outputDir) before copying when files are matched', async () => {
-    // Given
-    vi.mocked(fs.glob).mockResolvedValue(['/src/app.js'])
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const sourceDir = joinPath(tmpDir, 'src')
+      const outputDir = joinPath(tmpDir, 'out/dist')
+      const appDirectory = tmpDir
+      await mkdir(sourceDir)
+      await writeFile(joinPath(sourceDir, 'app.js'), 'app')
 
-    // When
-    await copyByPattern(
-      {
-        sourceDir: '/src',
-        outputDir: '/out/dist',
-        patterns: ['*.js'],
-        ignore: [],
-        appDirectory: '/src',
-        sourceDirConfigValue: '.',
-      },
-      {stdout: mockStdout},
-    )
+      const mockStdout = {write: vi.fn()}
 
-    // Then — outputDir created before copying
-    expect(fs.mkdir).toHaveBeenCalledWith('/out/dist')
+      // When
+      await copyByPattern(
+        {
+          sourceDir,
+          outputDir,
+          patterns: ['*.js'],
+          ignore: [],
+          appDirectory,
+          sourceDirConfigValue: 'src',
+        },
+        {stdout: mockStdout as any},
+      )
+
+      // Then
+      await expect(fileExists(outputDir)).resolves.toBe(true)
+      await expect(fileExists(joinPath(outputDir, 'app.js'))).resolves.toBe(true)
+    })
   })
 
   test('passes ignore patterns to glob', async () => {
-    // Given
-    vi.mocked(fs.glob).mockResolvedValue([])
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const sourceDir = joinPath(tmpDir, 'src')
+      const outputDir = joinPath(tmpDir, 'out')
+      const appDirectory = tmpDir
+      await mkdir(sourceDir)
+      await writeFile(joinPath(sourceDir, 'app.js'), 'app')
+      await writeFile(joinPath(sourceDir, 'app.test.ts'), 'test')
 
-    // When
-    await copyByPattern(
-      {
-        sourceDir: '/src',
-        outputDir: '/out',
-        patterns: ['**/*'],
-        ignore: ['**/*.test.ts', 'node_modules/**'],
-        appDirectory: '/src',
-        sourceDirConfigValue: '.',
-      },
-      {stdout: mockStdout},
-    )
+      const mockStdout = {write: vi.fn()}
 
-    // Then
-    expect(fs.glob).toHaveBeenCalledWith(
-      ['**/*'],
-      expect.objectContaining({ignore: ['**/*.test.ts', 'node_modules/**']}),
-    )
+      // When
+      const result = await copyByPattern(
+        {
+          sourceDir,
+          outputDir,
+          patterns: ['**/*'],
+          ignore: ['**/*.test.ts'],
+          appDirectory,
+          sourceDirConfigValue: 'src',
+        },
+        {stdout: mockStdout as any},
+      )
+
+      // Then
+      expect(result.filesCopied).toBe(1)
+      expect(result.outputPaths).toEqual(['app.js'])
+      await expect(fileExists(joinPath(outputDir, 'app.js'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outputDir, 'app.test.ts'))).resolves.toBe(false)
+    })
   })
 })
