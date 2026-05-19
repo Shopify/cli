@@ -20,6 +20,7 @@ import * as store from '../../private/node/analytics/storage.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {startAgentSession, clearAgentSession} from './agent.js'
 
 import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
@@ -189,12 +190,51 @@ describe('event tracking', () => {
   })
 
   test('sends SHOPIFY_ environment variables in sensitive payload', async () => {
-    const originalEnv = {...process.env}
     process.env.SHOPIFY_TEST_VAR = 'test_value'
     process.env.SHOPIFY_ANOTHER_VAR = 'another_value'
     process.env.NOT_SHOPIFY_VAR = 'should_not_appear'
 
+    try {
+      await inProjectWithFile('package.json', async (args) => {
+        const commandContent = {command: 'dev', topic: 'app'}
+        await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+        // When
+        const config = {
+          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+          plugins: [],
+        } as any
+        await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+        // Then
+        const sensitivePayload = publishEventMock.mock.calls[0]![2]
+        expect(publishEventMock).toHaveBeenCalledOnce()
+        expect(sensitivePayload).toHaveProperty('env_shopify_variables')
+        expect(sensitivePayload.env_shopify_variables).toBeDefined()
+
+        const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+        expect(shopifyVars).toHaveProperty('SHOPIFY_TEST_VAR', 'test_value')
+        expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
+        expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+      })
+    } finally {
+      delete process.env.SHOPIFY_TEST_VAR
+      delete process.env.SHOPIFY_ANOTHER_VAR
+      delete process.env.NOT_SHOPIFY_VAR
+    }
+  })
+
+  test('synthesizes agent env vars from persisted session when explicit env vars are absent', async () => {
     await inProjectWithFile('package.json', async (args) => {
+      // Given - start an agent session
+      startAgentSession({
+        sessionId: 'test-session-123',
+        agentName: 'river',
+        agentVersion: '1.2.3',
+        agentProvider: 'shopify',
+        metricsMode: 'on',
+      })
+
       const commandContent = {command: 'dev', topic: 'app'}
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
@@ -209,16 +249,135 @@ describe('event tracking', () => {
       const sensitivePayload = publishEventMock.mock.calls[0]![2]
       expect(publishEventMock).toHaveBeenCalledOnce()
       expect(sensitivePayload).toHaveProperty('env_shopify_variables')
-      expect(sensitivePayload.env_shopify_variables).toBeDefined()
 
       const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
-      expect(shopifyVars).toHaveProperty('SHOPIFY_TEST_VAR', 'test_value')
-      expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
-      expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+      expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT_INFO', 'n:river|v:1.2.3|p:shopify')
+      expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT_IDS', 's:test-session-123')
+
+      // Cleanup
+      clearAgentSession()
     })
   })
 
-  test('does nothing when analytics are disabled', async () => {
+  test('explicit process.env agent attribution wins over persisted session state', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given - both explicit env vars and a persisted session
+      process.env.SHOPIFY_CLI_AGENT_INFO = 'n:explicit|v:9.9.9|p:explicit-provider'
+      process.env.SHOPIFY_CLI_AGENT_IDS = 's:explicit-session-id'
+
+      startAgentSession({
+        sessionId: 'session-should-be-ignored',
+        agentName: 'session-agent',
+        agentVersion: '1.0.0',
+        agentProvider: 'session-provider',
+        metricsMode: 'on',
+      })
+
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then - explicit env vars should win
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(sensitivePayload).toHaveProperty('env_shopify_variables')
+
+      const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+      expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT_INFO', 'n:explicit|v:9.9.9|p:explicit-provider')
+      expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT_IDS', 's:explicit-session-id')
+
+      // Cleanup
+      delete process.env.SHOPIFY_CLI_AGENT_INFO
+      delete process.env.SHOPIFY_CLI_AGENT_IDS
+      clearAgentSession()
+    })
+  })
+
+  test('skips analytics when agent session metricsMode is off', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given - agent session with metrics off
+      startAgentSession({
+        sessionId: 'test-session-metrics-off',
+        agentName: 'river',
+        agentVersion: '1.0.0',
+        agentProvider: 'shopify',
+        metricsMode: 'off',
+      })
+
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then - should not send to Monorail
+      expect(publishEventMock).not.toHaveBeenCalled()
+
+      // Cleanup
+      clearAgentSession()
+    })
+  })
+
+  test('allows analytics when agent session metricsMode is on', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given - agent session with metrics on
+      startAgentSession({
+        sessionId: 'test-session-metrics-on',
+        agentName: 'river',
+        agentVersion: '1.0.0',
+        agentProvider: 'shopify',
+        metricsMode: 'on',
+      })
+
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then - should send to Monorail
+      expect(publishEventMock).toHaveBeenCalledOnce()
+
+      // Cleanup
+      clearAgentSession()
+    })
+  })
+
+  test('allows analytics when no agent session exists', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given - no agent session
+      clearAgentSession()
+
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then - should send to Monorail
+      expect(publishEventMock).toHaveBeenCalledOnce()
+    })
+  })
+
+  test('does nothing when analytics are disabled via analyticsDisabled()', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       vi.mocked(analyticsDisabled).mockReturnValueOnce(true)

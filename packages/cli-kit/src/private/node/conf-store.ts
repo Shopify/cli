@@ -26,11 +26,24 @@ interface Cache {
   [rateLimitKey: RateLimitKey]: CacheValue<number[]>
 }
 
+export interface AgentSession {
+  sessionId: string
+  startedAt: string
+  agentName: string
+  agentVersion: string
+  agentProvider: string
+  // Controls whether command analytics should be emitted for this agent session.
+  metricsMode: 'on' | 'off'
+  defaultNonInteractive: boolean
+}
+
 export interface ConfSchema {
   sessionStore: string
   currentSessionId?: string
   devSessionStore?: string
   currentDevSessionId?: string
+  currentAgentSession?: AgentSession
+  devAgentSession?: AgentSession
   cache?: Cache
   autoUpgradeEnabled?: boolean
 }
@@ -53,6 +66,10 @@ function sessionStoreKey(): 'devSessionStore' | 'sessionStore' {
 
 function currentSessionIdKey(): 'currentDevSessionId' | 'currentSessionId' {
   return isLocalEnvironment() ? 'currentDevSessionId' : 'currentSessionId'
+}
+
+function agentSessionKey(): 'devAgentSession' | 'currentAgentSession' {
+  return isLocalEnvironment() ? 'devAgentSession' : 'currentAgentSession'
 }
 
 /**
@@ -268,7 +285,8 @@ export async function runWithRateLimit(options: RunWithRateLimitOptions, config 
 
 /**
  * Get auto-upgrade preference.
- * Defaults to true if the preference has never been explicitly set.
+ *
+ * Auto-upgrade is enabled by default when the preference has never been set.
  *
  * @returns Whether auto-upgrade is enabled.
  */
@@ -307,4 +325,32 @@ export function setCachedPartnerAccountStatus(partnersToken: string) {
   const store = getConfigStoreForPartnerStatus()
 
   store.set(partnersToken, {status: true, checkedAt: new Date().toISOString()})
+}
+
+/**
+ * Get current agent session.
+ *
+ * @returns Current agent session.
+ */
+export function getAgentSession(config: LocalStorage<ConfSchema> = cliKitStore()): AgentSession | undefined {
+  outputDebug(outputContent`Getting agent session...`)
+  return config.get(agentSessionKey())
+}
+
+/**
+ * Set current agent session.
+ *
+ * @param session - Agent session.
+ */
+export function setAgentSession(session: AgentSession, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Setting agent session...`)
+  config.set(agentSessionKey(), session)
+}
+
+/**
+ * Remove current agent session.
+ */
+export function removeAgentSession(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Removing agent session...`)
+  config.delete(agentSessionKey())
 }
