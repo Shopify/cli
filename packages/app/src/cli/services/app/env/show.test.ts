@@ -1,15 +1,15 @@
 import {showEnv} from './show.js'
 import {fetchOrganizations} from '../../dev/fetch.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../../models/organization.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {describe, expect, vi, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 vi.mock('../../dev/fetch.js')
-vi.mock('../../../prompts/dev.js')
+vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('env show', () => {
