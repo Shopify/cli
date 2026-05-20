@@ -120,7 +120,7 @@ describe('downloadRepository()', async () => {
     await git.downloadGitRepository({repoUrl, destination, latestTag})
 
     expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', '--', repoUrl, destination])
-    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', '1.2.3'], {cwd: destination})
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', '--', '1.2.3'], {cwd: destination})
   })
 
   test('throws when destination exists as a file', async () => {

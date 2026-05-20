@@ -218,7 +218,7 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
 
       if (latestTag) {
         const tag = await getLatestTagFromDirectory(destination, repoUrl)
-        await gitCommand(['checkout', tag], destination)
+        await gitCommand(['checkout', '--', tag], destination)
       }
     } catch (err) {
       if (err instanceof AbortError) {
