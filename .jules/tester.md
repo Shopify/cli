@@ -1,4 +1,4 @@
-## 2026-05-20 - False passes from filesystem mocks
-**Gap:** Tests using `inTemporaryDirectory` were passing even with failing assertions inside the callback because the filesystem was mocked.
-**Learning:** In Vitest, automocking a function that takes a callback (like `inTemporaryDirectory`) often results in the callback never being executed, leading to "false pass" tests that verify nothing.
-**Action:** Always prefer real temporary directories over filesystem mocks, especially for functions that manage lifecycle through callbacks.
+## 2025-02-12 - Callback false-passes from fs mocks
+**Gap:** In `execute-operation.test.ts`, the filesystem was globally mocked via `vi.mock('@shopify/cli-kit/node/fs')`.
+**Learning:** Functions that take callbacks (like `inTemporaryDirectory`) are often used to wrap logic that interacts with the disk. If these functions are automocked, Vitest provides a mock that does nothing and returns `undefined`, meaning the callback (which contains the actual test logic) is never executed. This results in "false passes" where the test appears to succeed but verifies nothing.
+**Action:** Never mock `@shopify/cli-kit/node/fs` globally. Use real temporary directories and check the physical disk state to verify behavior.

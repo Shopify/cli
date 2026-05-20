@@ -236,7 +236,8 @@ describe('executeOperation', () => {
       })
 
       const expectedContent = JSON.stringify(mockResult, null, 2)
-      await expect(readFile(outputFile)).resolves.toEqual(expectedContent)
+      const actualContent = await readFile(outputFile)
+      expect(actualContent).toBe(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith(
         expect.objectContaining({
           body: expect.stringContaining(outputFile),
