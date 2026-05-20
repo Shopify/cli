@@ -336,8 +336,7 @@ export async function rmdir(path: string, options: RmDirOptions = {}): Promise<v
  */
 export async function mkTmpDir(): Promise<string> {
   outputDebug(outputContent`Creating a temporary directory...`)
-  const directory = await fsMkdtemp(joinPath(os.tmpdir(), 'tmp-'))
-  return directory
+  return fsMkdtemp(joinPath(systemTempDir, 'tmp-'))
 }
 
 /**
