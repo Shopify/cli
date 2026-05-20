@@ -161,7 +161,7 @@ const SAFE_RANDOM_CREATIVE_NOUNS = [
 
 export type RandomNameFamily = 'business' | 'creative'
 
-const NAME_FAMILIES = {
+const NAME_FAMILIES: Record<RandomNameFamily, {adjectives: string[]; nouns: string[]}> = {
   business: {
     adjectives: SAFE_RANDOM_BUSINESS_ADJECTIVES,
     nouns: SAFE_RANDOM_BUSINESS_NOUNS,
