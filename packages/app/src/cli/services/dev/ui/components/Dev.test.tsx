@@ -27,13 +27,6 @@ vi.mock('@shopify/cli-kit/node/system', async () => {
 vi.mock('../../../context.js')
 vi.mock('../../fetch.js')
 vi.mock('../../processes/dev-session.js')
-vi.mock('@shopify/cli-kit/node/hooks/postrun', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/hooks/postrun')
-  return {
-    ...actual,
-    waitForPostRunHookAndExit: vi.fn(),
-  }
-})
 
 const developerPlatformClient = testDeveloperPlatformClient()
 

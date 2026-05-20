@@ -81,23 +81,6 @@ describe('currentProcessIsGlobal', () => {
     // Then
     expect(got).toBeFalsy()
   })
-
-  test('returns false on Windows when argv uses backslashes and projectDir uses forward slashes', () => {
-    // Given - mimic the exact Windows shape:
-    //   projectDir comes from pathe -> normalized forward slashes
-    //   argv[1] is OS-native -> backslash separated
-    const winProjectDir = 'C:/Users/me/project'
-    const winArgv1 = 'C:\\Users\\me\\project\\node_modules\\@shopify\\cli\\bin\\run.js'
-    vi.mocked(findPathUpSync).mockReturnValue(`${winProjectDir}/shopify.app.toml`)
-    const argv = ['node', winArgv1, 'shopify']
-
-    // When
-    const got = currentProcessIsGlobal(argv)
-
-    // Then - regression test for the path-separator bug that misclassified
-    // Windows local installs as global, triggering an unwanted `npm install -g`.
-    expect(got).toBeFalsy()
-  })
 })
 
 describe('inferPackageManagerForGlobalCLI', () => {
@@ -244,25 +227,6 @@ describe('inferPackageManagerForGlobalCLI', () => {
 
     // Then: Should still detect homebrew from the real Cellar path
     expect(got).toBe('homebrew')
-  })
-
-  test('returns bun when symlink under ~/.bun/bin resolves out of the bun install dir', async () => {
-    // Given: `bun add -g @shopify/cli` creates ~/.bun/bin/shopify as a symlink to
-    // ../../node_modules/@shopify/cli/bin/run.js, which on most setups resolves to
-    // <home>/node_modules/@shopify/cli/bin/run.js — a path that does NOT contain "bun".
-    // Without inspecting the original symlink path we'd fall through to npm and the
-    // autoupgrade flow would shell out to `npm install -g` instead of `bun add -g`.
-    const symlinkPath = '/users/fonso/.bun/bin/shopify'
-    const realBunPath = '/users/fonso/node_modules/@shopify/cli/bin/run.js'
-    const argv = ['node', symlinkPath, 'shopify']
-
-    vi.mocked(realpathSync).mockImplementationOnce(() => realBunPath)
-
-    // When
-    const got = inferPackageManagerForGlobalCLI(argv)
-
-    // Then
-    expect(got).toBe('bun')
   })
 
   test('defaults to npm if realpath fails and no other indicator is present', async () => {

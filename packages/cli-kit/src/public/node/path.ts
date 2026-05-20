@@ -217,12 +217,12 @@ export function sniffForJson(argv = process.argv): boolean {
  * @returns The sanitized path (may be an empty string if all segments were traversal).
  */
 export function sanitizeRelativePath(input: string, warn: (msg: string) => void): string {
-  const normalized = input.replace(/\\/g, '/').replace(/^[a-zA-Z]:/, '')
+  const normalized = input.replace(/\\/g, '/')
   const segments = normalized.split('/')
   const stack: string[] = []
   let stripped = false
 
-  if (input.replace(/\\/g, '/').startsWith('/') || /^[a-zA-Z]:/.test(input)) {
+  if (normalized.startsWith('/') || /^[a-zA-Z]:/.test(normalized)) {
     stripped = true
   }
 
@@ -230,13 +230,15 @@ export function sanitizeRelativePath(input: string, warn: (msg: string) => void)
     if (seg === '..') {
       stripped = true
       stack.pop()
-    } else if (seg !== '.' && seg !== '') {
+    } else if (seg !== '.' && seg !== '' && !/^[a-zA-Z]:$/.test(seg)) {
       stack.push(seg)
     }
   }
   const result = stack.join('/')
   if (stripped) {
-    warn(`Warning: path '${input}' is insecure (contains '..' or is absolute) — sanitized to '${result || '(empty)'}'\n`)
+    warn(
+      `Warning: path '${input}' is insecure (contains '..' or is absolute) — sanitized to '${result || '(empty)'}'\n`,
+    )
   }
   return result
 }

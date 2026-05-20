@@ -25,7 +25,7 @@ describe('executeIncludeAssetsStep', () => {
       options: {
         stdout: mockStdout,
         stderr: mockStderr,
-        app: {directory: '/test'} as any,
+        app: {} as any,
         environment: 'production',
       },
       stepResults: new Map(),
@@ -552,11 +552,6 @@ describe('executeIncludeAssetsStep', () => {
   })
 
   describe('pattern entries', () => {
-    beforeEach(() => {
-      // copyByPattern now short-circuits if sourceDir doesn't exist; default true here.
-      vi.mocked(fs.fileExists).mockResolvedValue(true)
-    })
-
     test('copies files matching include patterns', async () => {
       // Given
       vi.mocked(fs.glob).mockResolvedValue(['/test/extension/public/logo.png', '/test/extension/public/style.css'])
@@ -948,13 +943,11 @@ describe('executeIncludeAssetsStep', () => {
     })
 
     test('writes manifest.json with files array when generatesAssetsManifest is true and only pattern inclusions exist', async () => {
-      // Given — pattern entries contribute output paths to the manifest "files" array.
-      // sourceDir must exist for copyByPattern's pre-glob fileExists check to pass;
-      // everything else can read false (the parent beforeEach default).
+      // Given — pattern entries contribute output paths to the manifest "files" array
       vi.mocked(fs.glob).mockResolvedValue(['/test/extension/public/logo.png'])
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
-      vi.mocked(fs.fileExists).mockImplementation(async (path) => String(path) === '/test/extension/public')
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
       vi.mocked(fs.writeFile).mockResolvedValue()
 
       const step: LifecycleStep = {
