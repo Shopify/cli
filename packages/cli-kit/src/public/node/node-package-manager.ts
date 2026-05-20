@@ -544,7 +544,7 @@ export async function addNPMDependencies(
   const dependenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })
-  options.stdout?.write(`Installing ${[dependenciesWithVersion].join(' ')} with ${options.packageManager}`)
+  options.stdout?.write(`Installing ${dependenciesWithVersion.join(' ')} with ${options.packageManager}`)
   switch (options.packageManager) {
     case 'npm':
       // npm isn't too smart when resolving the dependency tree. For example, admin ui extensions include react as
