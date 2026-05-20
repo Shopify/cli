@@ -246,16 +246,34 @@ export function tryParseInt(maybeInt: string | undefined): number | undefined {
  * @returns A string with the columns aligned.
  */
 export function linesToColumns(lines: string[][]): string {
-  const widths: number[] = []
-  for (let i = 0; lines[0] && i < lines[0].length; i++) {
-    const columnRows = lines.map((line) => line[i]!)
-    widths.push(Math.max(...columnRows.map((row) => unstyled(row).length)))
-  }
+  if (lines.length === 0) return ''
+
+  const numColumns = lines[0]!.length
+  const widths: number[] = new Array(numColumns).fill(0)
+
+  // unstyled() is regex-based and expensive; cache its results to avoid calling it twice per cell.
+  // This reduces regex-based 'unstyled' calls by 50% and avoids redundant O(Cols * Rows) array mapping.
+  const unstyledLengths = lines.map((line) => {
+    const lineLengths = new Array<number>(line.length)
+    for (let i = 0; i < line.length; i++) {
+      const length = unstyled(line[i]!).length
+      lineLengths[i] = length
+      if (i < numColumns && length > widths[i]!) {
+        widths[i] = length
+      }
+    }
+    return lineLengths
+  })
+
   const paddedLines = lines
-    .map((line) => {
+    .map((line, rowIndex) => {
+      const rowLengths = unstyledLengths[rowIndex]!
       return line
-        .map((col, index) => {
-          return `${col}${' '.repeat(widths[index]! - unstyled(col).length)}`
+        .map((col, colIndex) => {
+          const cellWidth = rowLengths[colIndex]!
+          const columnWidth = widths[colIndex] ?? cellWidth
+          const padding = ' '.repeat(columnWidth - cellWidth)
+          return `${col}${padding}`
         })
         .join('   ')
         .trimEnd()
