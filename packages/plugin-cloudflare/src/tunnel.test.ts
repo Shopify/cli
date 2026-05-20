@@ -119,26 +119,31 @@ describe('hookStart', () => {
 
   test('cleans errors coming from the log', async () => {
     // Given
-    vi.mocked(exec).mockImplementation(async (command, args, options) => {
-      const writable = options?.stdout as Writable
-      writable.write(
-        Buffer.from(
-          `2023-10-11T13:32:45Z ERR Failed to serve quic connection error="Application error 0x0 (remote)" connIndex=0 event=0 ip=123.123.123.123`,
-        ),
-      )
-    })
-    // When
-    const tunnelClient = (await hookStart(port)).valueOrAbort()
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    const result = tunnelClient.getTunnelStatus()
+    vi.useFakeTimers()
+    try {
+      vi.mocked(exec).mockImplementation(async (command, args, options) => {
+        const writable = options?.stdout as Writable
+        writable.write(
+          Buffer.from(
+            `2023-10-11T13:32:45Z ERR Failed to serve quic connection error="Application error 0x0 (remote)" connIndex=0 event=0 ip=123.123.123.123`,
+          ),
+        )
+      })
+      // When
+      const tunnelClient = (await hookStart(port)).valueOrAbort()
+      await vi.advanceTimersByTimeAsync(250)
+      const result = tunnelClient.getTunnelStatus()
 
-    // Then
-    expect(result).toEqual({
-      status: 'error',
-      message:
-        'Could not start Cloudflare tunnel: Failed to serve quic connection error="Application error 0x0 (remote)" ',
-      tryMessage: expect.anything(),
-    })
+      // Then
+      expect(result).toEqual({
+        status: 'error',
+        message:
+          'Could not start Cloudflare tunnel: Failed to serve quic connection error="Application error 0x0 (remote)" ',
+        tryMessage: expect.anything(),
+      })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   test('returns error if it fails to install cloudflared', async () => {
