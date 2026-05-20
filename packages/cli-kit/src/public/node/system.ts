@@ -53,6 +53,16 @@ interface BuildExecOptions {
 export async function openURL(url: string): Promise<boolean> {
   const externalOpen = await import('open')
   try {
+    const parsed = new URL(url)
+    const allowedProtocols = ['http:', 'https:', 'file:']
+
+    // Security: Validate protocol to prevent execution of dangerous protocols
+    // (e.g. javascript:, data:, etc.) via the system opener.
+    if (!allowedProtocols.includes(parsed.protocol)) {
+      outputDebug(`Skipped opening URL with unsecure protocol: ${parsed.protocol}`)
+      return false
+    }
+
     await externalOpen.default(url)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all

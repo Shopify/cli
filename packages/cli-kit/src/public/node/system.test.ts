@@ -2,10 +2,12 @@ import * as system from './system.js'
 import {execa} from 'execa'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
+import open from 'open'
 import {Readable} from 'stream'
 
 import * as fs from 'fs'
 
+vi.mock('open')
 vi.mock('which')
 vi.mock('execa')
 vi.mock('fs', async (importOriginal) => {
@@ -14,6 +16,80 @@ vi.mock('fs', async (importOriginal) => {
     ...actual,
     fstatSync: vi.fn(),
   }
+})
+
+describe('openURL', () => {
+  test('opens http URLs', async () => {
+    // Given
+    const url = 'http://shopify.com'
+
+    // When
+    const got = await system.openURL(url)
+
+    // Then
+    expect(got).toBe(true)
+    expect(open).toHaveBeenCalledWith(url)
+  })
+
+  test('opens https URLs', async () => {
+    // Given
+    const url = 'https://shopify.com'
+
+    // When
+    const got = await system.openURL(url)
+
+    // Then
+    expect(got).toBe(true)
+    expect(open).toHaveBeenCalledWith(url)
+  })
+
+  test('opens file URLs', async () => {
+    // Given
+    const url = 'file:///path/to/file.html'
+
+    // When
+    const got = await system.openURL(url)
+
+    // Then
+    expect(got).toBe(true)
+    expect(open).toHaveBeenCalledWith(url)
+  })
+
+  test('blocks javascript URLs', async () => {
+    // Given
+    const url = 'javascript:alert("hello")'
+
+    // When
+    const got = await system.openURL(url)
+
+    // Then
+    expect(got).toBe(false)
+    expect(open).not.toHaveBeenCalled()
+  })
+
+  test('blocks data URLs', async () => {
+    // Given
+    const url = 'data:text/html,<html><body>hi</body></html>'
+
+    // When
+    const got = await system.openURL(url)
+
+    // Then
+    expect(got).toBe(false)
+    expect(open).not.toHaveBeenCalled()
+  })
+
+  test('returns false for invalid URLs', async () => {
+    // Given
+    const url = 'not-a-url'
+
+    // When
+    const got = await system.openURL(url)
+
+    // Then
+    expect(got).toBe(false)
+    expect(open).not.toHaveBeenCalled()
+  })
 })
 
 describe('captureOutput', () => {
