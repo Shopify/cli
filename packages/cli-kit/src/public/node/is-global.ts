@@ -1,4 +1,4 @@
-import {cwd, dirname, isSubpath, joinPath, sniffForPath} from './path.js'
+import {cwd, dirname, joinPath, sniffForPath} from './path.js'
 import {isUnitTest} from './context/local.js'
 import {findPathUpSync, globSync} from './fs.js'
 import {realpathSync} from 'fs'
@@ -27,17 +27,9 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 
     // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
     const binDir = argv[1] ?? ''
-    if (!binDir) {
-      return true
-    }
 
-    // If binDir lives inside projectDir, we are running a local CLI.
-    // Use isSubpath (pathe.relative under the hood) instead of a raw
-    // string startsWith: projectDir flows through normalizePath and is
-    // forward-slash on every platform, while argv[1] is OS-native, so on
-    // Windows it arrives backslash-separated and a naive startsWith would
-    // misclassify a local install as global.
-    const isLocal = isSubpath(projectDir.trim(), binDir)
+    // If binDir starts with projectDir, then we are running a local CLI
+    const isLocal = binDir.startsWith(projectDir.trim())
 
     _isGlobal = !isLocal
     return _isGlobal
@@ -105,10 +97,9 @@ export function inferPackageManagerForGlobalCLI(argv = process.argv, env = proce
   }
 
   const processArgv = argv[1] ?? ''
-  const symlinkPath = processArgv.toLowerCase()
 
   // Resolve symlinks to get the real path of the binary.
-  let realPath = symlinkPath
+  let realPath = processArgv.toLowerCase()
   try {
     realPath = realpathSync(processArgv).toLowerCase()
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -116,16 +107,9 @@ export function inferPackageManagerForGlobalCLI(argv = process.argv, env = proce
     // fall back to using the original path for detection
   }
 
-  // Inspect both the (unresolved) symlink path and the resolved real path. Some
-  // package managers — notably bun (`~/.bun/bin/<name>`) — install global binaries
-  // as symlinks pointing into a generic `node_modules` directory whose real path
-  // no longer contains the package manager name. The original symlink under the
-  // PM's bin dir is the most reliable signal in that case.
-  const matches = (needle: string) => realPath.includes(needle) || symlinkPath.includes(needle)
-
-  if (matches('yarn')) return 'yarn'
-  if (matches('pnpm')) return 'pnpm'
-  if (matches('bun')) return 'bun'
+  if (realPath.includes('yarn')) return 'yarn'
+  if (realPath.includes('pnpm')) return 'pnpm'
+  if (realPath.includes('bun')) return 'bun'
 
   // Check for Homebrew via Cellar path (resolved symlink)
   if (realPath.includes('/cellar/')) return 'homebrew'

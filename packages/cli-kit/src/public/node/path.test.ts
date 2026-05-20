@@ -1,5 +1,5 @@
-import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory} from './path.js'
-import {describe, test, expect} from 'vitest'
+import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory, sanitizeRelativePath} from './path.js'
+import {describe, test, expect, vi} from 'vitest'
 
 describe('relativize', () => {
   test('relativizes the path', () => {
@@ -91,5 +91,29 @@ describe('sniffForPath', () => {
 
     // Then
     expect(path).toStrictEqual('/path/to/project')
+  })
+})
+
+describe('sanitizeRelativePath', () => {
+  test('returns the path if it is relative and has no traversal', () => {
+    // Given
+    const path = 'some/path'
+    const warn = vi.fn()
+
+    // When
+    const got = sanitizeRelativePath(path, warn)
+
+    // Then
+    expect(got).toBe('some/path')
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test('strips traversal and absolute path segments and warns', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('some/../path', warn)).toBe('path')
+    expect(sanitizeRelativePath('/etc/passwd', warn)).toBe('etc/passwd')
+    expect(sanitizeRelativePath('\\some\\path', warn)).toBe('some/path')
+    expect(sanitizeRelativePath('C:\\Windows', warn)).toBe('Windows')
+    expect(warn).toHaveBeenCalledTimes(4)
   })
 })

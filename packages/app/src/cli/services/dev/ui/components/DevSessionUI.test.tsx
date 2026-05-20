@@ -24,13 +24,6 @@ vi.mock('@shopify/cli-kit/node/system', async () => {
 })
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/tree-kill')
-vi.mock('@shopify/cli-kit/node/hooks/postrun', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/hooks/postrun')
-  return {
-    ...actual,
-    waitForPostRunHookAndExit: vi.fn(),
-  }
-})
 
 const mocks = vi.hoisted(() => {
   return {
