@@ -236,9 +236,8 @@ export function sanitizeRelativePath(input: string, warn: (msg: string) => void)
   }
   const result = stack.join('/')
   if (stripped) {
-    warn(
-      `Warning: path '${input}' is insecure (contains '..' or is absolute) — sanitized to '${result || '(empty)'}'\n`,
-    )
+    const sanitizedPath = result || '(empty)'
+    warn(`Warning: path '${input}' is insecure (contains '..' or is absolute) — sanitized to '${sanitizedPath}'\n`)
   }
   return result
 }
