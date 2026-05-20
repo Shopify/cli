@@ -234,14 +234,9 @@ export function pluralize<
  * @returns The int if it was able to convert, otherwise undefined.
  */
 export function tryParseInt(maybeInt: string | undefined): number | undefined {
-  let asInt: number | undefined
-  if (maybeInt !== undefined) {
-    asInt = parseInt(maybeInt, 10)
-    if (isNaN(asInt)) {
-      asInt = undefined
-    }
-  }
-  return asInt
+  if (maybeInt === undefined) return undefined
+  const asInt = Number.parseInt(maybeInt, 10)
+  return Number.isNaN(asInt) ? undefined : asInt
 }
 
 /**
