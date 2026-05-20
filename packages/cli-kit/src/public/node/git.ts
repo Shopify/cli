@@ -218,7 +218,8 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
 
       if (latestTag) {
         const tag = await getLatestTagFromDirectory(destination, repoUrl)
-        await gitCommand(['checkout', '--', tag], destination)
+        // Security: Use refs/tags/ prefix to ensure the tag is treated as a revision and not a flag
+        await gitCommand(['checkout', `refs/tags/${tag}`], destination)
       }
     } catch (err) {
       if (err instanceof AbortError) {

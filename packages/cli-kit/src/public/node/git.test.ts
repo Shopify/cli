@@ -120,7 +120,26 @@ describe('downloadRepository()', async () => {
     await git.downloadGitRepository({repoUrl, destination, latestTag})
 
     expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', '--', repoUrl, destination])
-    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', '--', '1.2.3'], {cwd: destination})
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', 'refs/tags/1.2.3'], {cwd: destination})
+  })
+
+  test('clones and checks out a flag-like tag', async () => {
+    mockGitCommandSequence([
+      // clone
+      {stdout: ''},
+      // describe --tags --abbrev=0
+      {stdout: '--flag-like-tag'},
+      // checkout
+      {stdout: ''},
+    ])
+
+    const repoUrl = 'http://repoUrl'
+    const destination = 'destination'
+    const latestTag = true
+
+    await git.downloadGitRepository({repoUrl, destination, latestTag})
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', 'refs/tags/--flag-like-tag'], {cwd: destination})
   })
 
   test('throws when destination exists as a file', async () => {

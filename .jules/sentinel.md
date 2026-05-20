@@ -1,0 +1,4 @@
+## 2025-01-24 - [Security] Prevent flag injection in Git commands
+**Vulnerability:** User-controlled strings (like repository URLs, file paths, or tag names) passed to Git commands can be interpreted as flags if they start with a dash.
+**Learning:** Even when using structured arguments (execa), Git commands like `clone` and `check-ignore` require the `--` delimiter to explicitly separate options from positional arguments. For `checkout`, using `--` treats the argument as a pathspec, so using the `refs/tags/` prefix is a safer way to force the argument to be treated as a revision.
+**Prevention:** Use the `--` separator before positional arguments in Git commands like `clone` and `check-ignore`. For revisions in commands like `checkout`, use explicit prefixes like `refs/tags/` or `refs/heads/`.
