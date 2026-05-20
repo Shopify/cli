@@ -76,7 +76,7 @@ describe('common API methods', () => {
     },
   )
 
-  test('sanitizedHeadersOutput removes the headers that include the token', () => {
+  test('sanitizedHeadersOutput removes sensitive headers', () => {
     // Given
     const headers = {
       'User-Agent': 'useragent',
@@ -85,6 +85,8 @@ describe('common API methods', () => {
       authorization: 'token',
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'token',
+      Cookie: 'session=123',
+      'Set-Cookie': 'session=456',
     }
 
     // When
