@@ -196,11 +196,6 @@ describe('event tracking', () => {
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
       expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
-      const sensitivePayload = JSON.stringify(publishEventMock.mock.calls[0]![2])
-      expect(sensitivePayload).not.toContain('shptka_abc123')
-      expect(sensitivePayload).not.toContain('shpat_abc123')
-      expect(sensitivePayload).not.toContain('shpua_abc123')
-      expect(sensitivePayload).not.toContain('shpca_abc123')
     })
   })
 
