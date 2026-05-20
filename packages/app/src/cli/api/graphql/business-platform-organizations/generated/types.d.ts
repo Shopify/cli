@@ -22,6 +22,8 @@ export type Scalars = {
   ActionAuditID: { input: any; output: any; }
   /** The ID for a Address. */
   AddressID: { input: any; output: any; }
+  /** The ID for a Attestation. */
+  AttestationID: { input: any; output: any; }
   /** The ID for a BulkDataOperation. */
   BulkDataOperationID: { input: any; output: any; }
   /** The ID for a BusinessUser. */
