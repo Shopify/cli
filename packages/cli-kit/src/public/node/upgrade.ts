@@ -12,7 +12,6 @@ import {
   getPackageManager,
 } from './node-package-manager.js'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
-import {renderSuccess} from './ui.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
 import {isPreReleaseVersion} from './version.js'
@@ -93,21 +92,8 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
     if (!command) {
       throw new Error('Could not determine the command to run')
     }
-    // Cache lookup — already populated by versionToAutoUpgrade() upstream, so this
-    // is just a synchronous cache read, no extra network call.
-    const newerVersion = checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)
-    const headline = newerVersion
-      ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
-      : '✨ New version of Shopify CLI available!'
-    outputInfo(
-      outputContent`${headline}
-   Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
-    )
+    outputInfo(outputContent`Upgrading Shopify CLI by running: ${outputToken.genericShellCommand(installCommand)}...`)
     await exec(command, args, {stdio: 'inherit'})
-    renderSuccess({
-      headline: 'Shopify CLI upgraded.',
-      body: newerVersion ? `You're now on version ${newerVersion}.` : "You're now on the latest version.",
-    })
   } else if (projectDir) {
     await upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
   } else {

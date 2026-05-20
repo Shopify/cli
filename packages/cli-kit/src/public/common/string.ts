@@ -256,10 +256,10 @@ export function linesToColumns(lines: string[][]): string {
   const numColumns = lines[0]!.length
   const widths: number[] = new Array(numColumns).fill(0)
 
-  // unstyled() is regex-based and expensive; cache its results to avoid calling it twice per cell.
+  // Optimization: Calculate max widths for all columns while caching unstyled lengths.
   // This reduces regex-based 'unstyled' calls by 50% and avoids redundant O(Cols * Rows) array mapping.
   const unstyledLengths = lines.map((line) => {
-    const lineLengths = new Array<number>(line.length)
+    const lineLengths = new Array(line.length)
     for (let i = 0; i < line.length; i++) {
       const length = unstyled(line[i]!).length
       lineLengths[i] = length
