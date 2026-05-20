@@ -601,7 +601,7 @@ export function globSync(pattern: Pattern | Pattern[], options?: GlobOptions): s
   if (options?.dot == null) {
     overridenOptions = {...options, dot: true}
   }
-  return require('fast-glob').sync(pattern, overridenOptions)
+  return (require('fast-glob') as typeof import('fast-glob')).sync(pattern, overridenOptions)
 }
 
 /**
