@@ -1,7 +1,6 @@
 import {AppInterface, AppManifest} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
-import buildWeb from '../web.js'
 import {compressBundle, writeManifestToBundle} from '../bundle.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {mkdir, rmdir} from '@shopify/cli-kit/node/fs'
@@ -37,18 +36,6 @@ export async function bundleAndBuildExtensions(options: BundleOptions): Promise<
     await installJavy(options.app)
   }
 
-  const webBuildProcesses = options.skipBuild
-    ? []
-    : options.app.webs
-        .filter((web) => web.configuration.commands.build)
-        .map((web) => ({
-          prefix: ['web', ...web.configuration.roles].join('-'),
-          action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-            if (options.skipBuild) return
-            await buildWeb('build', {web, stdout, stderr, signal})
-          },
-        }))
-
   const extensionBuildProcesses = options.app.allExtensions.map((extension) => ({
     prefix: extension.localIdentifier,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
@@ -75,7 +62,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions): Promise<
   }))
 
   await renderConcurrent({
-    processes: [webBuildProcesses, extensionBuildProcesses].flat(),
+    processes: extensionBuildProcesses,
     showTimestamps: false,
   })
 
