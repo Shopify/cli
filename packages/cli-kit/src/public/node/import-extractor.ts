@@ -1,5 +1,6 @@
 import {fileExistsSync, isDirectorySync} from './fs.js'
 import {dirname, joinPath} from './path.js'
+import {uniq} from '../common/array.js'
 import {openSync, readSync, closeSync} from 'fs'
 
 // Only read the first 128KB of each file for import scanning. This covers
@@ -125,7 +126,7 @@ export function extractImportPathsRecursively(filePath: string, visited: Set<str
     }
   }
 
-  return [...new Set(allImports)]
+  return uniq(allImports)
 }
 
 /**
@@ -183,7 +184,7 @@ function extractJSLikeImports(content: string, filePath: string): string[] {
     }
   }
 
-  return [...new Set(imports)]
+  return uniq(imports)
 }
 
 function extractRustImports(content: string, filePath: string): string[] {
@@ -215,7 +216,7 @@ function extractRustImports(content: string, filePath: string): string[] {
     }
   }
 
-  return [...new Set(imports)]
+  return uniq(imports)
 }
 
 function resolveJSImport(importPath: string, fromFile: string): string | null {
