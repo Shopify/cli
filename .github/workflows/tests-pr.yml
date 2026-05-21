@@ -17,6 +17,7 @@ env:
   GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
   GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
   DEFAULT_NODE_VERSION: '26.1.0'
+  PLAYWRIGHT_NODE_VERSION: '24.1.0'
 
 jobs:
   type-check:
@@ -237,7 +238,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+          node-version: ${{ env.PLAYWRIGHT_NODE_VERSION }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Install Playwright Chromium
