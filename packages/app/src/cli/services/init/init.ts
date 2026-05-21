@@ -170,32 +170,40 @@ async function init(options: InitOptions) {
       })
     }
 
+    // Move the scaffolded template into its final directory BEFORE installing
+    // dependencies. pnpm (and other package managers) create absolute-path
+    // junctions/symlinks on Windows, so installing in the temp dir and then
+    // moving the tree orphans every link under node_modules/.pnpm/*.
+    tasks.push({
+      title: 'Preparing project directory',
+      task: async () => {
+        await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
+        await moveFile(templateScaffoldDir, outputDirectory)
+      },
+    })
+
     tasks.push(
       {
         title: `Installing dependencies with ${packageManager}`,
         task: async () => {
-          await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
+          await getDeepInstallNPMTasks({from: outputDirectory, packageManager})
         },
       },
       {
         title: 'Cleaning up',
         task: async () => {
-          await cleanup(templateScaffoldDir, packageManager)
+          await cleanup(outputDirectory, packageManager)
         },
       },
       {
         title: 'Initializing a Git repository...',
         task: async () => {
-          await initializeGitRepository(templateScaffoldDir)
+          await initializeGitRepository(outputDirectory)
         },
       },
     )
 
     await renderTasks(tasks)
-
-    // Ensure the app directory is available before moving the template scaffold
-    await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
-    await moveFile(templateScaffoldDir, outputDirectory)
   })
 
   let app: OrganizationApp
