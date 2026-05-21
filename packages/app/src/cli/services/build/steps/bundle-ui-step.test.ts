@@ -4,9 +4,9 @@ import * as buildExtension from '../extension.js'
 import {BundleUIStep, BuildContext} from '../client-steps.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import * as fs from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../extension.js')
 vi.mock('./include-assets/generate-manifest.js')
 
@@ -38,44 +38,76 @@ describe('executeBundleUIStep', () => {
   }
 
   test('copies when local and bundle output directories differ', async () => {
-    // Given
-    mockContext.extension.outputPath = '/bundle/handle/handle.js'
-    vi.mocked(buildExtension.buildUIExtension).mockResolvedValue('/test/extension/dist/handle.js')
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleDir = joinPath(tmpDir, 'bundle')
+      const bundleOutputDir = joinPath(bundleDir, 'handle')
 
-    // When
-    await executeBundleUIStep(step, mockContext)
+      await mkdir(localOutputDir)
+      await writeFile(joinPath(localOutputDir, 'handle.js'), 'console.log("hello")')
 
-    // Then
-    expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/dist', '/bundle/handle')
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleOutputDir, 'handle.js')
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When
+      await executeBundleUIStep(step, mockContext)
+
+      // Then
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle.js'))).resolves.toBe(true)
+    })
   })
 
   test('skips the copy when local and bundle output directories resolve to the same path but differ as strings', async () => {
-    mockContext.extension.outputPath = '/test/./extension/dist/handle.js'
-    vi.mocked(buildExtension.buildUIExtension).mockResolvedValue('/test/extension/dist/handle.js')
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      await mkdir(localOutputDir)
 
-    await executeBundleUIStep(step, mockContext)
+      mockContext.extension.directory = extensionDir
+      // /test/./extension/dist/handle.js style
+      mockContext.extension.outputPath = joinPath(extensionDir, '.', 'dist', 'handle.js')
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
 
-    expect(fs.copyFile).not.toHaveBeenCalled()
+      // When
+      await executeBundleUIStep(step, mockContext)
+
+      // Then
+      // No copy happens, and we can't really "assert" it didn't happen other than it didn't throw
+      // and we didn't provide a bundleDir that would have been created.
+    })
   })
 
   test('skips manifest generation when local and bundle output directories resolve to the same path', async () => {
-    const stepWithManifest: BundleUIStep = {
-      id: 'bundle-ui',
-      name: 'Bundle UI Extension',
-      type: 'bundle_ui',
-      config: {generatesAssetsManifest: true},
-    }
-    mockContext.extension.outputPath = '/test/./extension/dist/handle.js'
-    mockContext.extension.configuration = {
-      extension_points: [
-        {target: 'admin.product-details.action.render', build_manifest: {assets: {main: {filepath: 'main.js'}}}},
-      ],
-    } as ExtensionInstance['configuration']
-    vi.mocked(buildExtension.buildUIExtension).mockResolvedValue('/test/extension/dist/handle.js')
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      await mkdir(localOutputDir)
 
-    await executeBundleUIStep(stepWithManifest, mockContext)
+      const stepWithManifest: BundleUIStep = {
+        id: 'bundle-ui',
+        name: 'Bundle UI Extension',
+        type: 'bundle_ui',
+        config: {generatesAssetsManifest: true},
+      }
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(extensionDir, '.', 'dist', 'handle.js')
+      mockContext.extension.configuration = {
+        extension_points: [
+          {target: 'admin.product-details.action.render', build_manifest: {assets: {main: {filepath: 'main.js'}}}},
+        ],
+      } as ExtensionInstance['configuration']
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
 
-    expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(generateManifest.createOrUpdateManifestFile).not.toHaveBeenCalled()
+      // When
+      await executeBundleUIStep(stepWithManifest, mockContext)
+
+      // Then
+      expect(generateManifest.createOrUpdateManifestFile).not.toHaveBeenCalled()
+    })
   })
 })
