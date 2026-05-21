@@ -1,5 +1,43 @@
 # @shopify/app
 
+## 4.0.0
+
+### Major Changes
+
+- 96281e6: Remove the deprecated `--force` (`-f`) flag and `SHOPIFY_FLAG_FORCE` environment variable from `shopify app deploy`. Use `--allow-updates` for CI/CD environments, or `--allow-updates --allow-deletes` if you also want to allow removals. The `--no-release` flag continues to work and implicitly allows updates and deletes.
+- ad69d29: Remove the deprecated `--type` (`-t`) flag and `SHOPIFY_FLAG_EXTENSION_TYPE` environment variable from `shopify app generate extension`. Use `--template` (`SHOPIFY_FLAG_EXTENSION_TEMPLATE`) instead.
+- f23fe6c: Remove the deprecated `shopify app generate schema` command. Use `shopify app function schema` instead.
+- c36d5c2: Remove the deprecated `--force` (`-f`) flag and `SHOPIFY_FLAG_FORCE` environment variable from `shopify app release`. Use `--allow-updates` for CI/CD environments, or `--allow-updates --allow-deletes` if you also want to allow removals. Passing both `--allow-updates` and `--allow-deletes` skips the confirmation prompt (matching the previous `--force` behavior).
+- ec867ef: Remove the deprecated `shopify app scaffold extension` command. Use `shopify app generate extension` instead. (The command was already unregistered from the CLI command map but the file remained on disk; this change deletes the orphaned source file.)
+- 60d2697: Remove the deprecated top-level `shopify webhook trigger` alias. Use `shopify app webhook trigger` instead.
+- 38ce793: Remove the deprecated `--shared-secret` flag and `SHOPIFY_FLAG_SHARED_SECRET` environment variable from `shopify app webhook trigger`. Use `--client-secret` (`SHOPIFY_FLAG_CLIENT_SECRET`) instead.
+- 0c35553: Drop support for Node 20
+
+### Patch Changes
+
+- 2520541: Fix Spawn ETXTBSY bug with multiple Functions using trampoline binaries
+- e4ec92b: Show Local URL in dev info when no App URL is available
+- f8eabc1: Detect files added during a running dev session
+- a7d448b: Handle modern Bun `bun.lock` files when cleaning up app templates so non-Bun projects do not keep stale Bun lockfiles or `.gitignore` entries.
+- e94c94e: Fix `shopify app build` intermittently failing with "Source and destination must not be the same" on UI extensions when the local esbuild output directory and the bundle output directory resolve to the same path but differ as strings (e.g. due to `.` segments, trailing slashes, or path joining quirks). The same-path guard now normalizes both paths via `resolvePath` before comparison.
+- 1bf342d: Fix `uid` being written outside the `[[extensions]]` block in single-entry array-of-tables TOMLs (the shape produced by `shopify app init` templates).
+- 926db8b: Guard app bundle uploads against oversized bundles and asset paths resolving outside the app directory
+- 8a9c5a1: Display a friendly error message instead of a stack trace when running `shopify app config link --client-id=<id>` against a Dev Dashboard app and the client ID does not exist.
+- 6cb484f: Hide the deprecated `remix` template from `shopify app init --template` help text and validation messages. The React Router template has replaced Remix as the supported choice. Passing `--template remix` continues to work for backwards compatibility.
+- c70e536: The CLI-generated `shopify.d.ts` now types the `shopify` binding as `Api & ShopifyGlobal` (intersection) for UI extension targets whose `.d.ts` re-exports a `ShopifyGlobal` type. Existing consumers who access the target API via `shopify.*` are unaffected; new host-level APIs like `shopify.addEventListener` now type-check automatically for opt-in targets (e.g. POS background extensions). Targets that do not re-export `ShopifyGlobal` emit the same output as before.
+- d5028b5: Fix unhelpful error when extension locale file has invalid UTF-8
+- Updated dependencies [67745ee]
+- Updated dependencies [a7d448b]
+- Updated dependencies [1e8963e]
+- Updated dependencies [c6a114d]
+- Updated dependencies [8f4e546]
+- Updated dependencies [2cb5f44]
+- Updated dependencies [a960ee9]
+- Updated dependencies [0c35553]
+  - @shopify/cli-kit@4.0.0
+  - @shopify/theme@4.0.0
+  - @shopify/plugin-cloudflare@4.0.0
+
 ## 3.94.0
 
 ### Minor Changes
