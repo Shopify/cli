@@ -81,7 +81,7 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
 
     Object.entries(confObj)
       .filter(([key]) => !blockedKeys.includes(key))
-      .sort(([key, _value]) => key.localeCompare(key))
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
       .forEach(([key, value]) => {
         if (!entries.map(([key]) => key).includes(key)) {
           result = {...result, [key]: value}
