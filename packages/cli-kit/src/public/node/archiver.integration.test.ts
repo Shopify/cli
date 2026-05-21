@@ -58,6 +58,30 @@ describe('zip', () => {
       expect(expectedEntries.sort()).toEqual(archiveEntries.sort())
     })
   })
+
+  test('prevents zipping files outside the input directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const zipPath = joinPath(tmpDir, 'output.zip')
+      const inputDirectory = joinPath(tmpDir, 'input')
+      const outsideFile = joinPath(tmpDir, 'outside.txt')
+      await mkdir(inputDirectory)
+      await touchFile(outsideFile)
+      fs.writeFileSync(outsideFile, 'outside content')
+
+      // When
+      await zip({
+        inputDirectory,
+        outputZipPath: zipPath,
+        matchFilePattern: '../outside.txt',
+      })
+
+      // Then
+      const archiveEntries = await readArchiveFiles(zipPath)
+      expect(archiveEntries).not.toContain('../outside.txt')
+      expect(archiveEntries).not.toContain('outside.txt')
+    })
+  })
 })
 
 describe('brotliCompress', () => {
