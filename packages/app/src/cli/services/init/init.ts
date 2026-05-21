@@ -117,8 +117,7 @@ async function init(options: InitOptions) {
               packageJSON.workspaces = workspacesFolders
               break
             case 'pnpm': {
-              const workspacesContent = workspacesFolders.map((folder) => ` - '${folder}'`).join(`\n`)
-              await writeFile(joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'), `packages:\n${workspacesContent}`)
+              await ensurePnpmWorkspaceFile(templateScaffoldDir, workspacesFolders)
               // Ensure that the installation of dependencies doesn't fail when using
               // pnpm due to missing peerDependencies.
               await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
@@ -271,6 +270,15 @@ async function clearCache(directory: string) {
 
 function detectAdditionalWorkspacesFolders(directory: string) {
   return ['web', 'web/frontend'].filter((folder) => fileExistsSync(joinPath(directory, folder)))
+}
+
+export async function ensurePnpmWorkspaceFile(directory: string, workspacesFolders: string[]) {
+  const pnpmWorkspacePath = joinPath(directory, 'pnpm-workspace.yaml')
+  if (await fileExists(pnpmWorkspacePath)) {
+    return
+  }
+  const workspacesContent = workspacesFolders.map((folder) => ` - '${folder}'`).join(`\n`)
+  await writeFile(pnpmWorkspacePath, `packages:\n${workspacesContent}`)
 }
 
 export default init
