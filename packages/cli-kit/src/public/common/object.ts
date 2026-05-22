@@ -19,7 +19,7 @@ import lodashIsEmpty from 'lodash/isEmpty.js'
  * @param rhs - Another object to be merged.
  * @param arrayMergeStrategy - Strategy used to merge the array typed fields. Union strategy is used by default to avoid
  * duplicated elements.
- * @returns A Javascrip tobject with th emerged objects.
+ * @returns A JavaScript object with the merged objects.
  */
 export function deepMergeObjects<T1, T2>(
   lhs: Partial<T1>,
@@ -93,7 +93,7 @@ export function getPathValue<T = object>(object: object, path: PropertyPath): T 
 }
 
 /**
- * Sets the value at path of object. If a portion of path doesn't exist, it's create.
+ * Sets the value at path of object. If a portion of path doesn't exist, it's created.
  *
  * @param object - The object to modify.
  * @param path - The path of the property to set.
