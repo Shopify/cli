@@ -1,1 +1,0 @@
-shopify app webhook trigger [flags]

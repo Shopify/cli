@@ -1,1 +1,0 @@
-shopify hydrogen preview [flags]
