@@ -55,6 +55,11 @@ export function isVerbose(env = process.env): boolean {
 }
 
 /**
+ * Memoized value for the Shopify environment check.
+ */
+let memoizedIsShopify: Promise<boolean> | undefined
+
+/**
  * Returns true if the environment in which the CLI is running is either
  * a local environment (where dev is present).
  *
@@ -62,11 +67,23 @@ export function isVerbose(env = process.env): boolean {
  * @returns True if the CLI is used in a Shopify environment.
  */
 export async function isShopify(env = process.env): Promise<boolean> {
-  if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
-    return !isTruthy(env[environmentVariables.runAsUser])
+  if (env === process.env && memoizedIsShopify !== undefined && !isUnitTest()) {
+    return memoizedIsShopify
   }
-  const devInstalled = await lazyFileExists(pathConstants.executables.dev)
-  return devInstalled
+
+  const resultPromise = (async () => {
+    if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
+      return !isTruthy(env[environmentVariables.runAsUser])
+    }
+    const devInstalled = await lazyFileExists(pathConstants.executables.dev)
+    return devInstalled
+  })()
+
+  if (env === process.env && !isUnitTest()) {
+    memoizedIsShopify = resultPromise
+  }
+
+  return resultPromise
 }
 
 /**
