@@ -1,5 +1,5 @@
-import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory} from './path.js'
-import {describe, test, expect} from 'vitest'
+import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory, sanitizeRelativePath} from './path.js'
+import {describe, test, expect, vi} from 'vitest'
 
 describe('relativize', () => {
   test('relativizes the path', () => {
@@ -91,5 +91,55 @@ describe('sniffForPath', () => {
 
     // Then
     expect(path).toStrictEqual('/path/to/project')
+  })
+})
+
+describe('sanitizeRelativePath', () => {
+  test('strips traversal segments', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('a/../../b', warn)).toBe('b')
+    expect(warn).toHaveBeenCalled()
+  })
+
+  test('strips leading slashes (absolute Unix paths)', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('/etc/passwd', warn)).toBe('etc/passwd')
+    expect(warn).toHaveBeenCalled()
+  })
+
+  test('strips multiple leading slashes', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('//etc/passwd', warn)).toBe('etc/passwd')
+    expect(warn).toHaveBeenCalled()
+  })
+
+  test('strips Windows drive letters', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('C:/Windows/System32', warn)).toBe('Windows/System32')
+    expect(warn).toHaveBeenCalled()
+  })
+
+  test('handles Windows backslashes', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('C:\\Windows\\System32', warn)).toBe('Windows/System32')
+    expect(warn).toHaveBeenCalled()
+  })
+
+  test('collapses internal current directory markers', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('a/./b', warn)).toBe('a/b')
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test('returns empty string for empty result', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('..', warn)).toBe('')
+    expect(warn).toHaveBeenCalled()
+  })
+
+  test('returns empty string for single slash', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('/', warn)).toBe('')
+    expect(warn).toHaveBeenCalled()
   })
 })
