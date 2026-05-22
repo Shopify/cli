@@ -313,6 +313,8 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  */
 export function outputDebug(content: OutputMessage, logger: Logger = consoleWarn): void {
   if (isUnitTest()) collectLog('debug', content)
+  if (!shouldOutput('debug')) return
+
   const message = colors.gray(stringifyMessage(content))
   outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
 }
