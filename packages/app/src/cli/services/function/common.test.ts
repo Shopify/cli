@@ -16,14 +16,13 @@ import {describe, vi, expect, beforeEach, test} from 'vitest'
 import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
-import {fileExists} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import type {Project} from '../../models/project/project.js'
 import type {ActiveConfig} from '../../models/project/active-config.js'
 
 vi.mock('../app-context.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../generate-schema.js')
 
 let app: AppLinkedInterface
@@ -47,48 +46,52 @@ beforeEach(async () => {
 })
 
 describe('getOrGenerateSchemaPath', () => {
-  let extension: ExtensionInstance<FunctionConfigType>
   let app: AppLinkedInterface
   let developerPlatformClient: DeveloperPlatformClient
   beforeEach(() => {
-    extension = {
-      directory: '/path/to/function',
-      configuration: {},
-    } as ExtensionInstance<FunctionConfigType>
-
     app = testAppLinked()
     developerPlatformClient = testDeveloperPlatformClient()
   })
 
   test('returns the path if the schema file exists', async () => {
-    // Given
-    const expectedPath = joinPath(extension.directory, 'schema.graphql')
-    vi.mocked(fileExists).mockResolvedValue(true)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extension = {
+        directory: tmpDir,
+        configuration: {},
+      } as ExtensionInstance<FunctionConfigType>
+      const expectedPath = joinPath(extension.directory, 'schema.graphql')
+      await writeFile(expectedPath, '')
 
-    // When
-    // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
-    const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
+      // When
+      // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
+      const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
 
-    // Then
-    expect(result).toBe(expectedPath)
-    expect(fileExists).toHaveBeenCalledWith(expectedPath)
+      // Then
+      expect(result).toBe(expectedPath)
+    })
   })
 
   test('generates the schema file if it does not exist', async () => {
-    // Given
-    const expectedPath = joinPath(extension.directory, 'schema.graphql')
-    vi.mocked(fileExists).mockResolvedValueOnce(false)
-    vi.mocked(fileExists).mockResolvedValueOnce(true)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extension = {
+        directory: tmpDir,
+        configuration: {},
+      } as ExtensionInstance<FunctionConfigType>
+      const expectedPath = joinPath(extension.directory, 'schema.graphql')
 
-    vi.mocked(generateSchemaService).mockResolvedValueOnce()
+      vi.mocked(generateSchemaService).mockImplementation(async ({extension}) => {
+        await writeFile(joinPath(extension.directory, 'schema.graphql'), '')
+      })
 
-    // When
-    // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
-    const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
+      // When
+      // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
+      const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
 
-    // Then
-    expect(result).toBe(expectedPath)
-    expect(fileExists).toHaveBeenCalledWith(expectedPath)
+      // Then
+      expect(result).toBe(expectedPath)
+    })
   })
 })
 
