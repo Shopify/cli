@@ -1,4 +1,11 @@
-import {reportAnalyticsEvent, recordTiming, recordError, recordRetry, recordEvent} from './analytics.js'
+import {
+  reportAnalyticsEvent,
+  sendAnalyticsEventFromFile,
+  recordTiming,
+  recordError,
+  recordRetry,
+  recordEvent,
+} from './analytics.js'
 import * as os from './os.js'
 import {
   analyticsDisabled,
@@ -16,6 +23,7 @@ import {mockAndCaptureOutput} from './testing/output.js'
 import {addPublicMetadata} from './metadata.js'
 import {sendErrorToBugsnag} from './error-handler.js'
 import {hashString} from './crypto.js'
+import {exec} from './system.js'
 import * as store from '../../private/node/analytics/storage.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -32,10 +40,12 @@ vi.mock('../../version.js')
 vi.mock('./monorail.js')
 vi.mock('./cli.js')
 vi.mock('./error-handler.js')
+vi.mock('./system.js')
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
   let publishEventMock: MockedFunction<typeof publishMonorailEvent>
+  let execMock: MockedFunction<typeof exec>
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
@@ -49,6 +59,7 @@ describe('event tracking', () => {
     vi.mocked(cloudEnvironment).mockReturnValue({platform: 'localhost', editor: false})
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishMonorailEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
+    execMock = vi.mocked(exec).mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -62,6 +73,19 @@ describe('event tracking', () => {
       await touchFile(packageJsonPath)
       await execute(['--path', tmpDir])
     })
+  }
+
+  async function sendReportedAnalyticsPayload(): Promise<void> {
+    expect(execMock).toHaveBeenCalledOnce()
+    const execArgs = execMock.mock.calls[0]![1]
+    expect(execArgs.slice(1, 3)).toEqual(['send-analytics', '--payload-file'])
+
+    const payloadFile = execArgs[3]
+    if (!payloadFile) {
+      throw new Error('Expected send-analytics to receive a payload file')
+    }
+
+    await sendAnalyticsEventFromFile(payloadFile)
   }
 
   test('sends the expected data to Monorail with cached app info', async () => {
@@ -87,6 +111,7 @@ describe('event tracking', () => {
         plugins: pluginsMap,
       } as any
       await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
       // Then
       const version = CLI_KIT_VERSION
       const expectedPayloadPublic = {
@@ -137,6 +162,7 @@ describe('event tracking', () => {
         plugins: [],
       } as any
       await reportAnalyticsEvent({config, errorMessage: 'Permission denied', exitMode: 'unexpected_error'})
+      await sendReportedAnalyticsPayload()
 
       // Then
       const version = CLI_KIT_VERSION
@@ -177,6 +203,7 @@ describe('event tracking', () => {
         plugins: [],
       } as any
       await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
 
       // Then
       const expectedPayloadSensitive = {
@@ -204,6 +231,7 @@ describe('event tracking', () => {
         plugins: [],
       } as any
       await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
 
       // Then
       const sensitivePayload = publishEventMock.mock.calls[0]![2]
