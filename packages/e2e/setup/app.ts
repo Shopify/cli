@@ -147,7 +147,8 @@ export async function deployApp(
     version?: string
     message?: string
     config?: string
-    force?: boolean
+    allowUpdates?: boolean
+    allowDeletes?: boolean
     noBuild?: boolean
   },
 ): Promise<ExecResult> {
@@ -155,7 +156,8 @@ export async function deployApp(
   if (ctx.version) args.push('--version', ctx.version)
   if (ctx.message) args.push('--message', ctx.message)
   if (ctx.config) args.push('--config', ctx.config)
-  if (ctx.force ?? true) args.push('--force')
+  if (ctx.allowUpdates ?? true) args.push('--allow-updates')
+  if (ctx.allowDeletes) args.push('--allow-deletes')
   if (ctx.noBuild) args.push('--no-build')
   args.push('--path', ctx.appDir)
   return ctx.cli.exec(args, {timeout: CLI_TIMEOUT.long})

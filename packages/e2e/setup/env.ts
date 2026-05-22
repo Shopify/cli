@@ -139,10 +139,16 @@ export const envFixture = base.extend<{testSection: void}, {env: E2EEnv}>({
       fs.mkdirSync(tmpBase, {recursive: true})
 
       const {tempDir, xdgEnv} = createIsolatedEnv(tmpBase)
+      const cloudflaredPath = path.join(
+        tempDir,
+        'cloudflared',
+        process.platform === 'win32' ? 'cloudflared.exe' : 'cloudflared',
+      )
 
       const processEnv: NodeJS.ProcessEnv = {
         ...process.env,
         ...xdgEnv,
+        SHOPIFY_CLI_CLOUDFLARED_PATH: cloudflaredPath,
         SHOPIFY_RUN_AS_USER: '0',
         NODE_OPTIONS: '',
         CI: '1',
