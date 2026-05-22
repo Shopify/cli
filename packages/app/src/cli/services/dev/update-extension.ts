@@ -8,6 +8,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {dirname, isAbsolutePath, isSubpath, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -21,6 +22,84 @@ interface UpdateExtensionDraftOptions {
   bundlePath: string
 }
 
+async function getSerializedScriptOutputPath(extension: ExtensionInstance, bundlePath: string) {
+  const fallbackOutputPath = extension.getOutputPathForDirectory(bundlePath)
+  if (extension.type !== 'ui_extension') return fallbackOutputPath
+
+  const buildDirectory = dirname(fallbackOutputPath)
+  const manifestMainPath = await getManifestMainPath(extension, buildDirectory)
+
+  const manifestOutputPath = manifestMainPath
+    ? getSafeManifestOutputPath(buildDirectory, manifestMainPath)
+    : undefined
+
+  return manifestOutputPath ?? fallbackOutputPath
+}
+
+async function getManifestMainPath(extension: ExtensionInstance, buildDirectory: string): Promise<string | undefined> {
+  const manifest = await readBundleManifest(buildDirectory)
+  if (!manifest) return undefined
+
+  const singleTarget = getSingleConfiguredTarget(extension.configuration as Record<string, unknown>)
+  if (singleTarget) {
+    const targetMainPath = getManifestEntryMainPath(manifest[singleTarget])
+    if (targetMainPath) return targetMainPath
+  }
+
+  const mainPaths = Object.keys(manifest)
+    .sort()
+    .map((target) => getManifestEntryMainPath(manifest[target]))
+    .filter((mainPath): mainPath is string => mainPath !== undefined)
+
+  return mainPaths[0]
+}
+
+async function readBundleManifest(buildDirectory: string): Promise<Record<string, unknown> | undefined> {
+  try {
+    const content = await readFile(joinPath(buildDirectory, 'manifest.json'))
+    const parsedManifest = JSON.parse(content)
+    return isRecord(parsedManifest) ? parsedManifest : undefined
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
+}
+
+function getSingleConfiguredTarget(configuration: Record<string, unknown>) {
+  const targets = [...getTargets(configuration.extension_points), ...getTargets(configuration.targeting)]
+  const uniqueTargets = [...new Set(targets)]
+
+  return uniqueTargets.length === 1 ? uniqueTargets[0] : undefined
+}
+
+function getTargets(targeting: unknown) {
+  if (!Array.isArray(targeting)) return []
+
+  return targeting.flatMap((target) => {
+    if (!isRecord(target) || typeof target.target !== 'string') return []
+    return target.target
+  })
+}
+
+function getManifestEntryMainPath(entry: unknown) {
+  if (!isRecord(entry) || typeof entry.main !== 'string' || entry.main.length === 0) return undefined
+  return entry.main
+}
+
+function getSafeManifestOutputPath(buildDirectory: string, manifestMainPath: string) {
+  if (isAbsolutePath(manifestMainPath)) return undefined
+
+  const outputPath = joinPath(buildDirectory, manifestMainPath)
+  const resolvedBuildDirectory = resolvePath(buildDirectory)
+  const resolvedOutputPath = resolvePath(outputPath)
+
+  return isSubpath(resolvedBuildDirectory, resolvedOutputPath) ? outputPath : undefined
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 export async function updateExtensionDraft({
   extension,
   developerPlatformClient,
@@ -32,8 +111,8 @@ export async function updateExtensionDraft({
   bundlePath,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
-  const outputPath = extension.getOutputPathForDirectory(bundlePath)
   if (extension.features.includes('esbuild')) {
+    const outputPath = await getSerializedScriptOutputPath(extension, bundlePath)
     const content = await readFile(outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')

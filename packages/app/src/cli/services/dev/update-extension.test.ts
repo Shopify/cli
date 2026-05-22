@@ -75,6 +75,158 @@ describe('updateExtensionDraft()', () => {
     })
   })
 
+  test('uses manifest main path for generic UI extension serialized script', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const target = 'purchase.checkout.block.render'
+      const configuration = {
+        name: 'test-ui-extension',
+        type: 'ui_extension',
+        handle,
+        uid: 'uid1',
+        extension_points: [
+          {
+            target,
+            module: 'src/index.js',
+            build_manifest: {
+              assets: {
+                main: {
+                  module: 'src/index.js',
+                  filepath: `${handle}.js`,
+                },
+              },
+            },
+          },
+        ],
+      } as any
+
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        configuration,
+        directory: tmpDir,
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      await writeFile(
+        joinPath(tmpDir, 'uid1', 'manifest.json'),
+        JSON.stringify({[target]: {main: `dist/${handle}.js`}}),
+      )
+      await writeFile(joinPath(tmpDir, 'uid1', 'dist', `${handle}.js`), 'manifest content')
+      await writeFile(mockExtension.getOutputPathForDirectory(tmpDir), 'fallback content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      const updateCall = vi.mocked(developerPlatformClient.updateExtension).mock.calls[0]![0]
+      const config = JSON.parse(updateCall.config)
+      expect(config.serialized_script).toBe(Buffer.from('manifest content').toString('base64'))
+    })
+  })
+
+  test('falls back to output path when generic UI extension manifest is missing', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configuration = {
+        name: 'test-ui-extension',
+        type: 'ui_extension',
+        handle,
+        uid: 'uid1',
+        extension_points: [
+          {
+            target: 'purchase.checkout.block.render',
+            module: 'src/index.js',
+            build_manifest: {
+              assets: {
+                main: {
+                  module: 'src/index.js',
+                  filepath: `${handle}.js`,
+                },
+              },
+            },
+          },
+        ],
+      } as any
+
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        configuration,
+        directory: tmpDir,
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1'))
+      await writeFile(mockExtension.getOutputPathForDirectory(tmpDir), 'fallback content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      const updateCall = vi.mocked(developerPlatformClient.updateExtension).mock.calls[0]![0]
+      const config = JSON.parse(updateCall.config)
+      expect(config.serialized_script).toBe(Buffer.from('fallback content').toString('base64'))
+    })
+  })
+
+  test('continues to use output path for checkout UI extension serialized script', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const target = 'purchase.checkout.block.render'
+      const configuration = {
+        name: 'test-checkout-extension',
+        type: 'checkout_ui_extension',
+        handle,
+        uid: 'uid1',
+        extension_points: [target],
+      } as any
+
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        configuration,
+        directory: tmpDir,
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      await writeFile(
+        joinPath(tmpDir, 'uid1', 'manifest.json'),
+        JSON.stringify({[target]: {main: `dist/${handle}-from-manifest.js`}}),
+      )
+      await writeFile(joinPath(tmpDir, 'uid1', 'dist', `${handle}-from-manifest.js`), 'manifest content')
+      await writeFile(mockExtension.getOutputPathForDirectory(tmpDir), 'checkout content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      const updateCall = vi.mocked(developerPlatformClient.updateExtension).mock.calls[0]![0]
+      const config = JSON.parse(updateCall.config)
+      expect(config.serialized_script).toBe(Buffer.from('checkout content').toString('base64'))
+    })
+  })
+
   test('updates draft successfully with context for extension with target', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const mockExtension = await testPaymentExtensions()
