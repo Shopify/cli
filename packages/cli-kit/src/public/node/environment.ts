@@ -55,14 +55,24 @@ export function getBackendPort(): number | undefined {
  *
  * @returns The identity token information in case it exists.
  */
-export function getIdentityTokenInformation(): {accessToken: string; refreshToken: string; userId: string} | undefined {
-  const identityToken = getEnvironmentVariables()[environmentVariables.identityToken]
-  const refreshToken = getEnvironmentVariables()[environmentVariables.refreshToken]
+export function getIdentityTokenInformation(
+  env: NodeJS.ProcessEnv = getEnvironmentVariables(),
+): {accessToken: string; refreshToken: string; userId: string; expiresAt?: Date} | undefined {
+  const identityToken = env[environmentVariables.identityToken]
+  const refreshToken = env[environmentVariables.refreshToken]
   if (!identityToken || !refreshToken) return undefined
+
+  const explicitUserId = env[environmentVariables.identityTokenUserId]
+  const explicitExpiresAtIso = env[environmentVariables.identityTokenExpiresAt]
+  const parsedExpiresAt = explicitExpiresAtIso ? new Date(explicitExpiresAtIso) : undefined
+  const validExpiresAt =
+    parsedExpiresAt && !Number.isNaN(parsedExpiresAt.getTime()) ? parsedExpiresAt : undefined
+
   return {
     accessToken: identityToken,
     refreshToken,
-    userId: nonRandomUUID(identityToken),
+    userId: explicitUserId ?? nonRandomUUID(identityToken),
+    ...(validExpiresAt ? {expiresAt: validExpiresAt} : {}),
   }
 }
 

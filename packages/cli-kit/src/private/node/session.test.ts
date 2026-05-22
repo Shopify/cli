@@ -177,7 +177,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
-  test('throws an error and logs out if there is no session and prompting is disabled,', async () => {
+  test('throws an error when there is no session and prompting is disabled, without wiping the Sessions store', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
@@ -189,13 +189,12 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
 The CLI is currently unable to prompt for reauthentication.`,
     )
-    expect(secureRemove).toHaveBeenCalled()
-
-    // Then
-    await expect(getLastSeenAuthMethod()).resolves.toEqual('none')
-
-    // If there never was an auth event, the userId is 'unknown'
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('unknown')
+    // `throwOnNoPrompt` intentionally does NOT call `logout()` anymore: wiping the
+    // full Sessions store on every noPrompt failure is destructive for callers that
+    // rely on a backend-issued session (e.g. preview-store placeholders) that can't
+    // be reconstructed without re-creating a shop. Users who explicitly want to
+    // clear sessions can run `shopify auth logout`.
+    expect(secureRemove).not.toHaveBeenCalled()
   })
 
   test('executes complete auth flow if session is for a different fqdn', async () => {

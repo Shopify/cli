@@ -135,6 +135,36 @@ describe('exchange identity token for application tokens', () => {
     }
     expect(got).toEqual(expected)
   })
+
+  test('tolerates per-audience invalid_request rejections and returns the subset of tokens that did mint', async () => {
+    // Simulates the preview-store / placeholder case: the Identity token is
+    // bound to a single OAuth application, so the exchanges for the audiences
+    // that aren't authorized come back with `invalid_request`, while the ones
+    // that are authorized mint normally.
+    const okBody = new Response(JSON.stringify(data))
+    const invalidRequest = () => new Response(JSON.stringify({error: 'invalid_request'}), {status: 400})
+    vi.mocked(shopifyFetch)
+      .mockResolvedValueOnce(invalidRequest()) // partners
+      .mockResolvedValueOnce(invalidRequest()) // storefront-renderer
+      .mockResolvedValueOnce(okBody.clone()) // business-platform
+      .mockResolvedValueOnce(okBody.clone()) // admin (we pass a store)
+      .mockResolvedValueOnce(invalidRequest()) // app-management
+
+    const got = await exchangeAccessForApplicationTokens(identityToken, scopes, 'storeFQDN')
+
+    expect(Object.keys(got).sort()).toEqual(['business-platform', 'storeFQDN-admin'])
+    expect(got['business-platform']?.accessToken).toBe('access_token')
+    expect(got['storeFQDN-admin']?.accessToken).toBe('access_token')
+  })
+
+  test('re-throws InvalidRequestError when every exchange fails so the outer flow prompts for re-auth', async () => {
+    const invalidRequest = () => new Response(JSON.stringify({error: 'invalid_request'}), {status: 400})
+    vi.mocked(shopifyFetch).mockImplementation(async () => invalidRequest())
+
+    await expect(
+      exchangeAccessForApplicationTokens(identityToken, scopes, 'storeFQDN'),
+    ).rejects.toBeInstanceOf(InvalidRequestError)
+  })
 })
 
 describe('refresh access tokens', () => {

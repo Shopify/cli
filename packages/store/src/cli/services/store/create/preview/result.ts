@@ -25,6 +25,11 @@ function serializeAsJson(result: CreatePreviewStoreResult): string {
       magicLinkUrl: result.magicLinkUrl,
       magicLinkExpiresAt: result.magicLinkExpiresAt,
       userId: result.userId,
+      // True when the orchestrator returned a `cli_identity_bootstrap` and the CLI
+      // imported it as an active Identity session. False signals the legacy
+      // (synthetic `placeholder:<uuid>` userId) fallback path — typically because
+      // the backend isn't yet on the bootstrap-emitting branch.
+      identityImported: result.identityImported,
     },
     null,
     2,
@@ -50,6 +55,12 @@ function renderTextResult(result: CreatePreviewStoreResult): void {
       {
         title: 'Magic link (one-time-use, expires in ~30 minutes)',
         body: result.magicLinkUrl,
+      },
+      {
+        title: 'CLI identity',
+        body: result.identityImported
+          ? `Logged in as placeholder ${result.placeholderAccountUuid}. Run shopify-authed commands (e.g. \`shopify organization list\`) without an extra login.`
+          : `Stored under synthetic user id \`${result.userId}\`. The orchestrator did not return a CLI identity bootstrap, so no Identity-backed session was imported.`,
       },
     ],
     nextSteps: [
