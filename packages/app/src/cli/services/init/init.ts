@@ -27,6 +27,7 @@ import {
   mkdir,
   moveFile,
   readFile,
+  rmdir,
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
@@ -174,10 +175,12 @@ async function init(options: InitOptions) {
     // dependencies. pnpm (and other package managers) create absolute-path
     // junctions/symlinks on Windows, so installing in the temp dir and then
     // moving the tree orphans every link under node_modules/.pnpm/*.
+    let outputDirectoryCreated = false
     tasks.push({
       title: 'Preparing project directory',
       task: async () => {
         await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
+        outputDirectoryCreated = true
         await moveFile(templateScaffoldDir, outputDirectory)
       },
     })
@@ -203,7 +206,17 @@ async function init(options: InitOptions) {
       },
     )
 
-    await renderTasks(tasks)
+    try {
+      await renderTasks(tasks)
+    } catch (error) {
+      // If a task failed after the project was moved to its final directory,
+      // remove the partial project so the user isn't left with a half-baked
+      // scaffold (no node_modules, no cleanup, no git init).
+      if (outputDirectoryCreated) {
+        await rmdir(outputDirectory).catch(() => {})
+      }
+      throw error
+    }
   })
 
   let app: OrganizationApp
