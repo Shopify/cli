@@ -74,11 +74,11 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   const command = Command.id.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
 
-  if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
+  if (!command.includes('notifications') && !command.includes('upgrade') && !command.includes('send-analytics'))
+    await autoUpgradeIfNeeded()
 
   const {reportAnalyticsEvent} = await import('../analytics.js')
   await reportAnalyticsEvent({config, exitMode: 'ok'})
-
   postRunHookCompleted = true
 }
 
