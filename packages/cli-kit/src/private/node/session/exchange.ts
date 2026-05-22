@@ -6,6 +6,7 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
+import {outputContent, outputDebug, outputToken} from '../../../public/node/output.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
 
@@ -24,10 +25,26 @@ export interface ExchangeScopes {
 }
 
 /**
- * Given an identity token, request an application token.
+ * Given an identity token, request an application token for each Shopify API
+ * (partners / storefront-renderer / business-platform / admin / app-management).
+ *
+ * Per-API failures are tolerated: a token exchange that returns `invalid_request`
+ * or other non-fatal errors for one audience is logged at debug level and skipped,
+ * while the successful exchanges are merged into the returned record. Callers
+ * already validate that the specific API token they need is present (see the
+ * `No <api> token found after ensuring authenticated` BugError throws in
+ * `public/node/session.ts`), so partial success surfaces a clear, scoped error at
+ * the call site rather than a confusing `invalid_request` mid-Promise.all.
+ *
+ * The motivating case is server-issued Identity bootstraps (e.g. preview-store
+ * `cli_identity_bootstrap`) whose Identity token is bound to a single OAuth
+ * application and therefore can only be exchanged for a subset of audiences. For
+ * normal device-auth logins all five exchanges still succeed exactly as before.
+ *
  * @param identityToken - access token obtained in a previous step
+ * @param scopes - per-API scope sets to request
  * @param store - the store to use, only needed for admin API
- * @returns An array with the application access tokens.
+ * @returns A merged record of every application token that was successfully minted.
  */
 export async function exchangeAccessForApplicationTokens(
   identityToken: IdentityToken,
@@ -36,21 +53,49 @@ export async function exchangeAccessForApplicationTokens(
 ): Promise<Record<string, ApplicationToken>> {
   const token = identityToken.accessToken
 
-  const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
+  const settled = await Promise.allSettled([
     requestAppToken('partners', token, scopes.partners),
     requestAppToken('storefront-renderer', token, scopes.storefront),
     requestAppToken('business-platform', token, scopes.businessPlatform),
-    store ? requestAppToken('admin', token, scopes.admin, store) : {},
+    store ? requestAppToken('admin', token, scopes.admin, store) : Promise.resolve({}),
     requestAppToken('app-management', token, scopes.appManagement),
   ])
 
-  return {
-    ...partners,
-    ...storefront,
-    ...businessPlatform,
-    ...admin,
-    ...appManagement,
+  const apiOrder = ['partners', 'storefront-renderer', 'business-platform', 'admin', 'app-management'] as const
+  const result: Record<string, ApplicationToken> = {}
+  const rejections: unknown[] = []
+
+  for (const [index, outcome] of settled.entries()) {
+    if (outcome.status === 'fulfilled') {
+      Object.assign(result, outcome.value)
+      continue
+    }
+    rejections.push(outcome.reason)
+    outputDebug(
+      outputContent`Application-token exchange skipped for ${outputToken.raw(
+        apiOrder[index] ?? 'unknown',
+      )}: ${outputToken.raw(
+        outcome.reason instanceof Error ? outcome.reason.message : String(outcome.reason),
+      )}`,
+    )
   }
+
+  // If at least one exchange succeeded the identity token is intact and the
+  // remaining failures are per-audience authorization issues we tolerate. If
+  // *every* exchange failed and the failures are identity-level (InvalidGrant /
+  // InvalidRequest), surface the first one so the outer flow can prompt for
+  // re-auth as before. Any non-identity-level failure (e.g. InvalidTargetError)
+  // is also surfaced verbatim so users see the actionable message.
+  if (Object.keys(result).length === 0 && rejections.length > 0) {
+    const fatal =
+      rejections.find((reason) => reason instanceof InvalidGrantError) ??
+      rejections.find((reason) => reason instanceof InvalidRequestError) ??
+      rejections.find((reason) => !(reason instanceof InvalidGrantError || reason instanceof InvalidRequestError)) ??
+      rejections[0]
+    throw fatal
+  }
+
+  return result
 }
 
 /**

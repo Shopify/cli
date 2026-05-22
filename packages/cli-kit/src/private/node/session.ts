@@ -228,22 +228,39 @@ ${outputToken.json(applications)}
   const validationResult = await validateSession(scopes, applications, currentSession)
 
   let newSession = {}
+  const canAuthenticateWithoutPrompt = canAuthenticateWithoutPromptFromEnvironment(_env)
 
   if (validationResult === 'needs_full_auth') {
-    await throwOnNoPrompt(noPrompt)
+    if (!canAuthenticateWithoutPrompt) {
+      await throwOnNoPrompt(noPrompt)
+    }
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
+    newSession = await executeCompleteFlow(applications, _env, currentSession?.identity.alias)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(currentSession!, applications)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
-        await throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
+        if (!canAuthenticateWithoutPrompt) {
+          await throwOnNoPrompt(noPrompt)
+        }
+        newSession = await executeCompleteFlow(applications, _env, currentSession?.identity.alias)
       } else if (error instanceof InvalidRequestError) {
-        await sessionStore.remove()
-        throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
+        // Surface the error scoped to the failed refresh; do NOT wipe the entire
+        // Sessions store. The previous behavior (`sessionStore.remove()`) was
+        // destructive when called against backend-issued sessions (preview-store
+        // placeholders): a single Identity-side refresh rejection — e.g. because
+        // a downstream command called `ensureAuthenticatedAdmin` without a
+        // `storeFqdn` and validation tried to refresh a non-existent application
+        // token — wiped the imported placeholder session that can't be
+        // reconstructed without re-creating the shop. Now the error message tells
+        // the user how to recover (`shopify auth logout` if they actually want
+        // to clear) without doing the wipe automatically.
+        throw new AbortError(
+          '\nError validating auth session',
+          "The active session couldn't be refreshed. If you need to clear it, run `shopify auth logout` and try again.",
+        )
       } else {
         throw error
       }
@@ -275,14 +292,25 @@ ${outputToken.json(applications)}
   return tokens
 }
 
+function canAuthenticateWithoutPromptFromEnvironment(env?: NodeJS.ProcessEnv): boolean {
+  return Boolean(getIdentityTokenInformation(env) ?? getAppAutomationToken())
+}
+
 async function throwOnNoPrompt(noPrompt: boolean) {
   if (!noPrompt) return
-  await logout()
+  // Intentionally NOT calling `logout()` here. The original behavior was to wipe the
+  // entire Sessions store on every noPrompt failure, but that's destructive when the
+  // caller is in a 401-retry cascade (e.g. an `unauthorizedHandler` calling
+  // `unsafeRefreshToken({noPrompt: true})` after a single API rejects the token).
+  // For backend-issued / imported sessions (preview-store placeholders, app-automation
+  // tokens), the cached session is the only source of truth on disk and we'd rather
+  // surface a clear error than silently destroy state the user can't reconstruct.
+  // Users who explicitly want to clear sessions can run `shopify auth logout`.
   throw new AbortError(
     `The currently available CLI credentials are invalid.
 
 The CLI is currently unable to prompt for reauthentication.`,
-    'Restart the CLI process you were running. If in an interactive terminal, you will be prompted to reauthenticate. If in a non-interactive terminal, ensure the correct credentials are available in the program environment.',
+    'Restart the CLI process you were running. If in an interactive terminal, you will be prompted to reauthenticate. If in a non-interactive terminal, ensure the correct credentials are available in the program environment. If you imported a backend-issued session (e.g. via `store create preview`), run `shopify auth logout` to clear it before retrying.',
   )
 }
 
@@ -292,7 +320,11 @@ The CLI is currently unable to prompt for reauthentication.`,
  * @param applications - An object containing the applications we need to be authenticated with.
  * @param existingAlias - Optional alias from a previous session to preserve if the email fetch fails.
  */
-async function executeCompleteFlow(applications: OAuthApplications, existingAlias?: string): Promise<Session> {
+async function executeCompleteFlow(
+  applications: OAuthApplications,
+  _env?: NodeJS.ProcessEnv,
+  existingAlias?: string,
+): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -302,7 +334,7 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
   }
 
   let identityToken: IdentityToken
-  const identityTokenInformation = getIdentityTokenInformation()
+  const identityTokenInformation = getIdentityTokenInformation(_env)
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
   } else {
@@ -442,11 +474,12 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
 
 function buildIdentityTokenFromEnv(
   scopes: string[],
-  identityTokenInformation: {accessToken: string; refreshToken: string; userId: string},
+  identityTokenInformation: {accessToken: string; refreshToken: string; userId: string; expiresAt?: Date},
 ) {
+  const {expiresAt, ...rest} = identityTokenInformation
   return {
-    ...identityTokenInformation,
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    ...rest,
+    expiresAt: expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     scopes,
     alias: undefined,
   }
