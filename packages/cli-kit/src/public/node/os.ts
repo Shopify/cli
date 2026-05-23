@@ -46,6 +46,12 @@ export async function username(platform: typeof process.platform = process.platf
 
 type PlatformArch = Exclude<typeof process.arch, 'x64' | 'ia32'> | 'amd64' | '386'
 type PlatformStrings = Exclude<typeof process.platform, 'win32'> | 'windows'
+
+/**
+ * Memoized value for the platform and architecture.
+ */
+let memoizedPlatformAndArch: {platform: PlatformStrings; arch: PlatformArch} | undefined
+
 /**
  * Returns the platform and architecture.
  * @returns Returns the current platform and architecture.
@@ -57,6 +63,10 @@ export function platformAndArch(
   platform: PlatformStrings
   arch: PlatformArch
 } {
+  if (platform === process.platform && arch === process.arch && memoizedPlatformAndArch) {
+    return memoizedPlatformAndArch
+  }
+
   let archString: PlatformArch
   if (arch === 'x64') {
     archString = 'amd64'
@@ -65,8 +75,13 @@ export function platformAndArch(
   } else {
     archString = arch
   }
-  const platformString = (platform.match(/^win.+/) ? 'windows' : platform) as PlatformStrings
-  return {platform: platformString, arch: archString}
+  const platformString = (platform.startsWith('win') ? 'windows' : platform) as PlatformStrings
+
+  const result = {platform: platformString, arch: archString}
+  if (platform === process.platform && arch === process.arch) {
+    memoizedPlatformAndArch = result
+  }
+  return result
 }
 
 function getEnvironmentVariable() {
