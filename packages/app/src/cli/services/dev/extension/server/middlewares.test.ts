@@ -6,6 +6,7 @@ import {
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
   getExtensionPointMiddleware,
+  devConsoleAssetsMiddleware,
 } from './middlewares.js'
 import * as utilities from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
@@ -16,7 +17,7 @@ import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {copyConfigKeyEntry} from '../../../build/steps/include-assets/copy-config-key-entry.js'
 import {describe, expect, vi, test} from 'vitest'
-import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import * as fs from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -112,10 +113,10 @@ describe('redirectToDevConsoleMiddleware()', () => {
 
 describe('fileServerMiddleware()', async () => {
   test('returns 404 if file does not exist', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
-      await mkdir(joinPath(tmpDir, 'foo'))
+      await fs.mkdir(joinPath(tmpDir, 'foo'))
 
       const filePath = joinPath(tmpDir, 'foo', 'missing.file')
       const event = getMockEvent()
@@ -130,10 +131,10 @@ describe('fileServerMiddleware()', async () => {
   })
 
   test('returns an index.html for folder paths', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
-      await mkdir(joinPath(tmpDir, 'foo'))
-      await touchFile(joinPath(tmpDir, 'foo', 'index.html'))
-      await writeFile(joinPath(tmpDir, 'foo', 'index.html'), '<html></html>')
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
+      await fs.mkdir(joinPath(tmpDir, 'foo'))
+      await fs.touchFile(joinPath(tmpDir, 'foo', 'index.html'))
+      await fs.writeFile(joinPath(tmpDir, 'foo', 'index.html'), '<html></html>')
 
       const event = getMockEvent()
 
@@ -160,13 +161,13 @@ describe('fileServerMiddleware()', async () => {
     ['.pdf', 'application/pdf'],
     ['.doc', 'application/msword'],
   ])('returns %s with ContentType: %s string', async (extension, contentType) => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       const fileName = `bar.${extension}`
       const fileContent = `Content for ${fileName}`
 
-      await mkdir(joinPath(tmpDir, 'foo'))
-      await touchFile(joinPath(tmpDir, 'foo', fileName))
-      await writeFile(joinPath(tmpDir, 'foo', fileName), fileContent)
+      await fs.mkdir(joinPath(tmpDir, 'foo'))
+      await fs.touchFile(joinPath(tmpDir, 'foo', fileName))
+      await fs.writeFile(joinPath(tmpDir, 'foo', fileName), fileContent)
 
       const event = getMockEvent()
 
@@ -180,13 +181,13 @@ describe('fileServerMiddleware()', async () => {
   })
 
   test('serves binary files as a Buffer without UTF-8 corruption', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       // Bytes that are invalid as UTF-8 input (0x89, 0xFF, 0xFE) — if the
       // middleware decoded these as UTF-8 they'd collapse to U+FFFD and the
       // image would be corrupt. Includes the real PNG magic header.
       const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe, 0x00, 0x42])
-      await mkdir(joinPath(tmpDir, 'img'))
-      await writeFile(joinPath(tmpDir, 'img', 'logo.png'), pngBytes)
+      await fs.mkdir(joinPath(tmpDir, 'img'))
+      await fs.writeFile(joinPath(tmpDir, 'img', 'logo.png'), pngBytes)
 
       const event = getMockEvent()
       const result = await fileServerMiddleware(event, {filePath: joinPath(tmpDir, 'img', 'logo.png')})
@@ -197,10 +198,10 @@ describe('fileServerMiddleware()', async () => {
   })
 
   test('sets Content-Type to text/plain if it does not understand the file extension', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
-      await mkdir(joinPath(tmpDir, 'foo'))
-      await touchFile(joinPath(tmpDir, 'foo', 'bar.foo'))
-      await writeFile(joinPath(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
+      await fs.mkdir(joinPath(tmpDir, 'foo'))
+      await fs.touchFile(joinPath(tmpDir, 'foo', 'bar.foo'))
+      await fs.writeFile(joinPath(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
 
       const event = getMockEvent()
 
@@ -214,9 +215,36 @@ describe('fileServerMiddleware()', async () => {
   })
 })
 
+describe('devConsoleAssetsMiddleware()', () => {
+  test('returns 404 for path traversal attempts', async () => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
+      const rootDirectory = joinPath(tmpDir, 'assets')
+      await fs.mkdir(rootDirectory)
+
+      vi.spyOn(fs, 'findPathUp').mockResolvedValue(rootDirectory)
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+
+      const event = getMockEvent({
+        params: {
+          assetPath: '../secret.txt',
+        },
+      })
+
+      await devConsoleAssetsMiddleware(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+      })
+
+      vi.restoreAllMocks()
+    })
+  })
+})
+
 describe('getExtensionAssetMiddleware()', () => {
   test('returns a 404 if the extensionID is not found', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
       const options = getOptions({
@@ -247,7 +275,7 @@ describe('getExtensionAssetMiddleware()', () => {
   })
 
   test('returns built asset from extension build output directory', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       const extension = await testUIExtension({directory: tmpDir})
 
       const options = getOptions({
@@ -258,10 +286,10 @@ describe('getExtensionAssetMiddleware()', () => {
 
       // Create the built output file in dist/ (e.g. dist/handle.js)
       const outputDir = joinPath(tmpDir, 'dist')
-      await mkdir(outputDir)
+      await fs.mkdir(outputDir)
       const outputFile = joinPath(outputDir, extension.outputFileName)
-      await touchFile(outputFile)
-      await writeFile(outputFile, 'compiled bundle content')
+      await fs.touchFile(outputFile)
+      await fs.writeFile(outputFile, 'compiled bundle content')
 
       const event = getMockEvent({
         params: {
@@ -281,7 +309,7 @@ describe('getExtensionAssetMiddleware()', () => {
     // Simulates admin_link/ui_extension: include_assets copies `targeting[].tools`
     // (possibly from outside the extension directory) into outputDir via uniqueBasename.
     // The dev server serves whatever lives there, keyed by the manifest's output-relative name.
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       const extension = await testUIExtension({directory: tmpDir})
 
       const options = getOptions({
@@ -291,9 +319,9 @@ describe('getExtensionAssetMiddleware()', () => {
       })
 
       const outputDir = joinPath(tmpDir, 'dist')
-      await mkdir(outputDir)
+      await fs.mkdir(outputDir)
       const fileName = 'tools.json'
-      await writeFile(joinPath(outputDir, fileName), '{"tools": []}')
+      await fs.writeFile(joinPath(outputDir, fileName), '{"tools": []}')
 
       const event = getMockEvent({
         params: {
@@ -310,7 +338,7 @@ describe('getExtensionAssetMiddleware()', () => {
   })
 
   test('returns 404 when the requested file is not present in the output directory', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
       const extension = await testUIExtension({directory: tmpDir})
 
@@ -321,7 +349,7 @@ describe('getExtensionAssetMiddleware()', () => {
       })
 
       const outputDir = joinPath(tmpDir, 'dist')
-      await mkdir(outputDir)
+      await fs.mkdir(outputDir)
 
       const event = getMockEvent({
         params: {
@@ -337,7 +365,7 @@ describe('getExtensionAssetMiddleware()', () => {
   })
 
   test('returns 404 for path traversal attempts', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
       const extension = await testUIExtension({directory: tmpDir})
 
@@ -348,7 +376,7 @@ describe('getExtensionAssetMiddleware()', () => {
       })
 
       // A file outside outputDir that we want to ensure can't be reached.
-      await writeFile(joinPath(tmpDir, 'secret.txt'), 'secret')
+      await fs.writeFile(joinPath(tmpDir, 'secret.txt'), 'secret')
 
       const event = getMockEvent({
         params: {
@@ -375,14 +403,14 @@ describe('getExtensionAssetMiddleware()', () => {
     //      resolver entry mapping that URL to the flattened filename.
     //   3. The dev server middleware resolves the request against the resolver
     //      and serves the correct file.
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       const extDir = joinPath(tmpDir, 'ext')
-      await mkdir(extDir)
+      await fs.mkdir(extDir)
 
       // Source file lives OUTSIDE the extension directory — addressable from
       // the extension as `../tools.json`.
       const toolsContent = '{"tools":["outside-source"]}'
-      await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
+      await fs.writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
 
       // product_subscription's outputRelativePath is `dist/${handle}.js`, so
       // outputDir resolves to `<extDir>/dist`.
@@ -397,7 +425,7 @@ describe('getExtensionAssetMiddleware()', () => {
         } as any,
       })
       const outputDir = joinPath(extDir, 'dist')
-      await mkdir(outputDir)
+      await fs.mkdir(outputDir)
 
       // Simulate the real include_assets step running against the config.
       const buildResult = await copyConfigKeyEntry({
@@ -443,12 +471,12 @@ describe('getExtensionAssetMiddleware()', () => {
     // (`tools.json` + `tools-1.json`), and the resolver maps each target's
     // opaque URL to its own file. Requests against `<target>/tools` serve
     // distinct content per target even though the URL shape is uniform.
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       const extension = await testUIExtension({directory: tmpDir})
       const outputDir = joinPath(tmpDir, 'dist')
-      await mkdir(outputDir)
-      await writeFile(joinPath(outputDir, 'tools.json'), '{"source":"outside"}')
-      await writeFile(joinPath(outputDir, 'tools-1.json'), '{"source":"inside"}')
+      await fs.mkdir(outputDir)
+      await fs.writeFile(joinPath(outputDir, 'tools.json'), '{"source":"outside"}')
+      await fs.writeFile(joinPath(outputDir, 'tools-1.json'), '{"source":"inside"}')
 
       const resolvers = new Map<string, Map<string, string>>()
       resolvers.set(
@@ -475,12 +503,12 @@ describe('getExtensionAssetMiddleware()', () => {
     // Covers `assets = "./assets"` — include_assets copies each file into the
     // bundle, the payload emits a directory-prefix URL, and the resolver has
     // one entry per file so the middleware serves individual fetches.
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       const extension = await testUIExtension({directory: tmpDir})
       const outputDir = joinPath(tmpDir, 'dist')
-      await mkdir(joinPath(outputDir, 'subdir'))
-      await writeFile(joinPath(outputDir, 'foo.json'), '{"ok":true}')
-      await writeFile(joinPath(outputDir, 'subdir/bar.png'), 'nested')
+      await fs.mkdir(joinPath(outputDir, 'subdir'))
+      await fs.writeFile(joinPath(outputDir, 'foo.json'), '{"ok":true}')
+      await fs.writeFile(joinPath(outputDir, 'subdir/bar.png'), 'nested')
 
       const resolvers = new Map<string, Map<string, string>>()
       resolvers.set(
@@ -508,10 +536,10 @@ describe('getExtensionAssetMiddleware()', () => {
     // A defensive check: even if the resolver somehow produced a malicious
     // value (traversal string, absolute path), the traversal guard still
     // blocks it before any file read.
-    await inTemporaryDirectory(async (tmpDir: string) => {
+    await fs.inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
       const extension = await testUIExtension({directory: tmpDir})
-      await writeFile(joinPath(tmpDir, 'secret.txt'), 'secret')
+      await fs.writeFile(joinPath(tmpDir, 'secret.txt'), 'secret')
 
       const resolvers = new Map<string, Map<string, string>>()
       resolvers.set(extension.devUUID, new Map([['evil/tools', '../secret.txt']]))
