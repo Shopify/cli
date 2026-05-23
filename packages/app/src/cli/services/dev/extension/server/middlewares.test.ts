@@ -236,8 +236,6 @@ describe('devConsoleAssetsMiddleware()', () => {
         statusCode: 404,
         statusMessage: 'Not Found',
       })
-
-      vi.restoreAllMocks()
     })
   })
 })
