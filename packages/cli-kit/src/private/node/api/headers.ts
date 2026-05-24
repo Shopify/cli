@@ -1,5 +1,5 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
-import {firstPartyDev} from '../../../public/node/context/local.js'
+import {firstPartyDev, isUnitTest, isVerbose} from '../../../public/node/context/local.js'
 import {AbortError} from '../../../public/node/error.js'
 import https from 'https'
 
@@ -26,16 +26,21 @@ export class GraphQLClientError extends RequestClientError {
   }
 }
 
+const SENSITIVE_HEADERS = ['token', 'authorization', 'subject_token', 'cookie']
+
 /**
  * Removes the sensitive data from the headers and outputs them as a string.
  * @param headers - HTTP headers.
  * @returns A sanitized version of the headers as a string.
  */
 export function sanitizedHeadersOutput(headers: Record<string, string>): string {
+  if (!isVerbose() && !isUnitTest()) {
+    return ''
+  }
+
   const sanitized: Record<string, string> = {}
-  const keywords = ['token', 'authorization', 'subject_token', 'cookie']
   Object.keys(headers).forEach((header) => {
-    if (keywords.find((keyword) => header.toLowerCase().includes(keyword)) === undefined) {
+    if (SENSITIVE_HEADERS.find((keyword) => header.toLowerCase().includes(keyword)) === undefined) {
       sanitized[header] = headers[header]!
     }
   })
