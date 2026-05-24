@@ -1,5 +1,6 @@
 import lodashUniqBy from 'lodash/uniqBy.js'
 import lodashDifference from 'lodash/difference.js'
+import {randomInt} from 'node:crypto'
 import type {List, ValueIteratee} from 'lodash'
 
 /**
@@ -9,7 +10,8 @@ import type {List, ValueIteratee} from 'lodash'
  * @returns A random element from the array.
  */
 export function takeRandomFromArray<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)]!
+  if (array.length === 0) return undefined as unknown as T
+  return array[randomInt(array.length)]!
 }
 
 /**
