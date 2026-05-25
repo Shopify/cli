@@ -56,7 +56,10 @@ export default class Validate extends AppLinkedCommand {
     // Stage 2: Select active config and check for TOML parse errors scoped to it
     let activeConfig
     try {
-      activeConfig = await selectActiveConfig(project, flags.config)
+      activeConfig = await selectActiveConfig(project, flags.config, {
+        clientId: flags['client-id'],
+        skipPrompts: Boolean(flags['client-id']),
+      })
     } catch (err) {
       if (err instanceof AbortError && flags.json) {
         await recordValidationFailure(1, 1)

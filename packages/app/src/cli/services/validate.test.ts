@@ -118,7 +118,7 @@ describe('validateApp', () => {
   test('renders success when there are no errors', async () => {
     const app = testAppLinked()
     await validateApp(app)
-    expect(renderSuccess).toHaveBeenCalledWith({headline: 'App configuration is valid.'})
+    expect(renderSuccess).toHaveBeenCalledWith({headline: "App configuration 'shopify.app.toml' is valid."})
     expect(renderError).not.toHaveBeenCalled()
     expect(outputResult).not.toHaveBeenCalled()
     await expectLastValidationMetadata({
@@ -197,7 +197,7 @@ describe('validateApp', () => {
     const app = testAppLinked()
     app.errors = errors
     await validateApp(app)
-    expect(renderSuccess).toHaveBeenCalledWith({headline: 'App configuration is valid.'})
+    expect(renderSuccess).toHaveBeenCalledWith({headline: "App configuration 'shopify.app.toml' is valid."})
     expect(outputResult).not.toHaveBeenCalled()
   })
 
