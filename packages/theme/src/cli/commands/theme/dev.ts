@@ -12,7 +12,7 @@ import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
 
-import type {ErrorOverlayMode, LiveReload} from '../../utilities/theme-environment/types.js'
+import type {ErrorOverlayMode, LiveReload, ReconciliationStrategy} from '../../utilities/theme-environment/types.js'
 
 type DevFlags = InferredFlags<typeof Dev.flags>
 
@@ -81,6 +81,12 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Inject the standard events inspector into storefront HTML.',
       env: 'SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR',
       default: false,
+    }),
+    'reconciliation-strategy': Flags.string({
+      description:
+        'How to resolve JSON conflicts when --theme-editor-sync is enabled. Use keep-local to keep local files, keep-remote to keep remote files, or abort to fail instead of prompting.',
+      options: ['keep-local', 'keep-remote', 'abort'],
+      env: 'SHOPIFY_FLAG_RECONCILIATION_STRATEGY',
     }),
     port: portFlag({
       description: 'Local port to serve theme preview from.',
@@ -186,6 +192,7 @@ You can run this command only in a directory that matches the [default Shopify t
       open: flags.open,
       'theme-editor-sync': flags['theme-editor-sync'],
       'standard-events-inspector': flags['standard-events-inspector'],
+      reconciliationStrategy: flags['reconciliation-strategy'] as ReconciliationStrategy | undefined,
       noDelete: flags.nodelete,
       ignore,
       only,

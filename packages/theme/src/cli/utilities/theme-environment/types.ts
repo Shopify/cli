@@ -57,6 +57,11 @@ export type LiveReload = 'hot-reload' | 'full-page' | 'off'
 export type ErrorOverlayMode = 'silent' | 'default'
 
 /**
+ * Controls how theme editor JSON conflicts are resolved without prompting.
+ */
+export type ReconciliationStrategy = 'keep-local' | 'keep-remote' | 'abort'
+
+/**
  * Maintains the state of local and remote assets in theme development server.
  */
 export interface DevServerContext {
@@ -114,6 +119,11 @@ export interface DevServerContext {
      * Glob patterns allow-list for file reconciliation and synchronization.
      */
     only: string[]
+
+    /**
+     * Strategy to apply when JSON files need reconciliation.
+     */
+    reconciliationStrategy?: ReconciliationStrategy
 
     /**
      * Network interface to bind the development server to.
