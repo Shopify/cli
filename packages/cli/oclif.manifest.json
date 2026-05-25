@@ -3081,6 +3081,39 @@
       "pluginType": "core",
       "strict": true
     },
+    "auth:status": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Shows whether Shopify CLI has a usable Shopify account session.\n\nUse `--json` for stable machine-readable output. Agents should check this command before starting workflows that need Shopify account authentication.",
+      "descriptionWithMarkdown": "Shows whether Shopify CLI has a usable Shopify account session.\n\nUse `--json` for stable machine-readable output. Agents should check this command before starting workflows that need Shopify account authentication.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "auth:status",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Show Shopify account authentication status."
+    },
     "cache:clear": {
       "aliases": [
       ],

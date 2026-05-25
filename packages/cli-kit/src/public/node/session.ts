@@ -1,9 +1,13 @@
 import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
+import {identityFqdn} from './context/fqdn.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
+import {getCurrentSessionId} from '../../private/node/conf-store.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {allDefaultScopes} from '../../private/node/session/scopes.js'
+import {validateSession} from '../../private/node/session/validate.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
@@ -65,6 +69,23 @@ interface UnknownAccountInfo {
   type: 'UnknownAccount'
 }
 
+export type AuthStatusName = 'authenticated' | 'needs_refresh' | 'not_authenticated' | 'invalid'
+
+export interface AuthStatus {
+  status: AuthStatusName
+  authenticated: boolean
+  account?: {
+    userId: string
+    alias?: string
+  }
+  identityFqdn?: string
+  expiresAt?: string
+  agentGuidance: {
+    instruction: string
+    nextCommand?: string
+  }
+}
+
 /**
  * Type guard to check if an account is a UserAccount.
  *
@@ -83,6 +104,72 @@ export function isUserAccount(account: AccountInfo): account is UserAccountInfo 
  */
 export function isServiceAccount(account: AccountInfo): account is ServiceAccountInfo {
   return account.type === 'ServiceAccount'
+}
+
+function authStatusGuidance(status: AuthStatusName): AuthStatus['agentGuidance'] {
+  if (status === 'authenticated') {
+    return {instruction: 'A Shopify CLI session is available. Continue with the requested Shopify CLI command.'}
+  }
+
+  if (status === 'needs_refresh') {
+    return {
+      instruction:
+        'A Shopify CLI session is available, but it may refresh before the next command. Continue with the requested Shopify CLI command.',
+    }
+  }
+
+  return {
+    instruction:
+      'No usable Shopify CLI session is available. Run `shopify auth login`, show the verification URL and user code to the user, and keep the command running until authentication completes.',
+    nextCommand: 'shopify auth login',
+  }
+}
+
+/**
+ * Returns the current Shopify CLI authentication status without starting a login flow.
+ *
+ * @returns The current authentication status.
+ */
+export async function getAuthStatus(): Promise<AuthStatus> {
+  const fqdn = await identityFqdn()
+  const sessions = await sessionStore.fetch()
+  const fqdnSessions = sessions?.[fqdn] ?? {}
+  const currentSessionId = getCurrentSessionId()
+  const sessionId = currentSessionId ?? Object.keys(fqdnSessions)[0]
+
+  if (!sessionId) {
+    return {
+      status: 'not_authenticated',
+      authenticated: false,
+      identityFqdn: fqdn,
+      agentGuidance: authStatusGuidance('not_authenticated'),
+    }
+  }
+
+  const session = fqdnSessions[sessionId]
+  if (!session) {
+    return {
+      status: 'invalid',
+      authenticated: false,
+      identityFqdn: fqdn,
+      agentGuidance: authStatusGuidance('invalid'),
+    }
+  }
+
+  const validationResult = await validateSession(allDefaultScopes(), {}, session)
+  const status = validationResult === 'ok' ? 'authenticated' : validationResult === 'needs_refresh' ? 'needs_refresh' : 'invalid'
+
+  return {
+    status,
+    authenticated: status !== 'invalid',
+    account: {
+      userId: session.identity.userId,
+      alias: session.identity.alias,
+    },
+    identityFqdn: fqdn,
+    expiresAt: session.identity.expiresAt.toISOString(),
+    agentGuidance: authStatusGuidance(status),
+  }
 }
 
 /**

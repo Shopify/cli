@@ -32,6 +32,7 @@
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth login`](#shopify-auth-login)
 * [`shopify auth logout`](#shopify-auth-logout)
+* [`shopify auth status`](#shopify-auth-status)
 * [`shopify commands`](#shopify-commands)
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
@@ -1070,6 +1071,31 @@ USAGE
 
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
+```
+
+## `shopify auth status`
+
+Show Shopify account authentication status.
+
+```
+USAGE
+  $ shopify auth status [-j]
+
+FLAGS
+  -j, --json  [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+
+DESCRIPTION
+  Show Shopify account authentication status.
+
+  Shows whether Shopify CLI has a usable Shopify account session.
+
+  Use `--json` for stable machine-readable output. Agents should check this command before starting workflows that need
+  Shopify account authentication.
+
+EXAMPLES
+  $ shopify auth status
+
+  $ shopify auth status --json
 ```
 
 ## `shopify commands`
