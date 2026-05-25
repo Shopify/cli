@@ -110,15 +110,38 @@ describe('profile', () => {
     await expect(result).rejects.toThrow('Bad response: 404: {"error":"Some error message"}')
   })
 
-  test('throws error when a password is used', async () => {
+  test('uses Theme Access tokens when a password is provided', async () => {
+    // Given
+    vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('shptka_hello')
+
+    // When
+    await profile(mockAdminSession, themeId, urlPath, true, 'shptka_hello', undefined)
+
+    // Then
+    expect(render).toHaveBeenCalledWith(
+      expect.objectContaining({
+        storefrontToken: 'shptka_hello',
+      }),
+      expect.any(Object),
+    )
+  })
+
+  test('throws error when an Admin API token is used', async () => {
     // When
     const result = profile(mockAdminSession, themeId, urlPath, true, 'shpat_hello', undefined)
 
     // Then
     await expect(result).rejects.toThrow(
       new AbortError(
-        'Unable to use Admin API or Theme Access tokens with the profile command',
-        'You must authenticate manually by not passing the --password flag.',
+        'Unable to use Admin API tokens with the profile command',
+        `To use this command with the --password flag you must:
+
+1. Install the Theme Access app on your shop
+2. Generate a new password
+
+Alternatively, you can authenticate normally by not passing the --password flag.
+
+Learn more: https://shopify.dev/docs/storefronts/themes/tools/theme-access`,
       ),
     )
   })
