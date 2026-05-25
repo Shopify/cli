@@ -23,6 +23,19 @@ export default class ConfigLink extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
       exclusive: ['client-id'],
     }),
+    'file-name': Flags.string({
+      hidden: false,
+      description: 'The name of the app configuration file to create or overwrite.',
+      env: 'SHOPIFY_FLAG_APP_CONFIG_FILE_NAME',
+      exclusive: ['config'],
+    }),
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Overwrite an existing configuration file without prompting.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      default: false,
+      dependsOn: ['file-name'],
+    }),
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
@@ -33,6 +46,8 @@ export default class ConfigLink extends AppLinkedCommand {
       apiKey: flags['client-id'],
       organizationId: flags['organization-id'],
       configName: flags.config,
+      fileName: flags['file-name'],
+      force: flags.force,
     }
 
     const result = await link(options)
