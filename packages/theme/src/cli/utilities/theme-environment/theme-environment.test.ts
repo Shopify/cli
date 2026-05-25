@@ -160,7 +160,7 @@ describe('setupDevServer', () => {
       context.session,
       [],
       context.localThemeFileSystem,
-      {noDelete: true, ...filters},
+      {noDelete: true, ...filters, reconciliationStrategy: undefined},
       expect.anything(),
     )
     // This is the best way I could think of verifying the rejectBackgroundJob

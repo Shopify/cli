@@ -2305,8 +2305,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 USAGE
   $ shopify theme dev [-a] [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...]
     [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...]
-    [--open] [--password <value>] [--path <value>] [--port <value>] [-s <value>] [--store-password <value>] [-t <value>]
-    [--theme-editor-sync] [--verbose]
+    [--open] [--password <value>] [--path <value>] [--port <value>] [--reconciliation-strategy
+    keep-local|keep-remote|abort] [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -2374,6 +2374,11 @@ FLAGS
 
   --port=<value>
       [env: SHOPIFY_FLAG_PORT] Local port to serve theme preview from.
+
+  --reconciliation-strategy=<option>
+      [env: SHOPIFY_FLAG_RECONCILIATION_STRATEGY] How to resolve JSON conflicts when --theme-editor-sync is enabled. Use
+      keep-local to keep local files, keep-remote to keep remote files, or abort to fail instead of prompting.
+      <options: keep-local|keep-remote|abort>
 
   --store-password=<value>
       [env: SHOPIFY_FLAG_STORE_PASSWORD] The password for storefronts with password protection.

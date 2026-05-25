@@ -101,6 +101,12 @@ export interface themedev {
   '--port <value>'?: string
 
   /**
+   * How to resolve JSON conflicts when --theme-editor-sync is enabled. Use keep-local to keep local files, keep-remote to keep remote files, or abort to fail instead of prompting.
+   * @environment SHOPIFY_FLAG_RECONCILIATION_STRATEGY
+   */
+  '--reconciliation-strategy <value>'?: string
+
+  /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
    * @environment SHOPIFY_FLAG_STORE
    */
