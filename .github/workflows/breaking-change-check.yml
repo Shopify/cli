@@ -10,7 +10,9 @@ name: Breaking change check
 on:
   pull_request:
   pull_request_review:
-    types: [submitted, dismissed, edited]
+    # Only state-changing actions are interesting: `edited` fires when a
+    # review's body text is mutated, which doesn't affect approval state.
+    types: [submitted, dismissed]
   merge_group:
 
 concurrency:
@@ -25,7 +27,7 @@ env:
   BUNDLE_WITHOUT: 'test:development'
   GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
   GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
-  DEFAULT_NODE_VERSION: '24.1.0'
+  DEFAULT_NODE_VERSION: '26.1.0'
 
 jobs:
   major-change-check:

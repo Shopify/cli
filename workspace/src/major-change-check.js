@@ -131,19 +131,6 @@ async function defaultRunGit(args) {
   return stdout
 }
 
-/**
- * Default GitHub compare-API fetcher. Uses the standard `GITHUB_TOKEN` so
- * it works on first-party PRs; falls back to unauthenticated for forks
- * (still works for public-repo compare). On any failure we return null and
- * the caller falls back to scanning everything — i.e. degrades to legacy
- * behavior, never silently ignores potential breaking changes.
- */
-async function defaultFetchCompare(repo, base, head) {
-  if (!base || !head) return null
-  const url = `https://api.github.com/repos/${repo.owner}/${repo.name}/compare/${base}...${head}`
-  return githubGet(url)
-}
-
 async function githubGet(url) {
   const headers = {Accept: 'application/vnd.github+json'}
   const token = process.env.GITHUB_TOKEN
@@ -163,6 +150,20 @@ async function githubGet(url) {
 
 // ---------------------------------------------------------------------------
 // Code-owner approval override
+//
+// The override decision is gated on *write access*, not on CODEOWNERS
+// membership: `findCodeownerApproval` accepts an approval from anyone the
+// repo's collaborators API reports as having `admin`/`maintain`/`write`.
+// The CODEOWNERS file is read and the matching owners are logged for
+// transparency, but the parsing helpers below (`parseCodeowners`,
+// `codeownersPatternToRegExp`, `ownersForFiles`) are *informational only*
+// — they do not gate the override. They live as exported primitives so
+// they can be unit-tested in isolation and so a future iteration (e.g.
+// once a GitHub App token that can resolve org-team membership is
+// available) can promote them into the gating path without restructuring.
+//
+// See the doc-comment on `findCodeownerApproval` for the rationale on
+// using repo permission instead of team membership.
 // ---------------------------------------------------------------------------
 
 /**
@@ -171,6 +172,9 @@ async function githubGet(url) {
  *
  * Comments and blank lines are skipped. Order is preserved (the last
  * matching rule wins, per CODEOWNERS semantics).
+ *
+ * Informational-only: the result is logged but never gates approval.
+ * See the module-level comment above for context.
  */
 export function parseCodeowners(content) {
   const rules = []
@@ -265,6 +269,7 @@ export async function findCodeownerApproval({
   fetchCodeowners = defaultFetchCodeowners,
   fetchPermission = defaultFetchPermission,
 } = {}) {
+  if (!repo) return {approved: false, approver: null, reason: 'no repo context'}
   if (!prNumber) return {approved: false, approver: null, reason: 'no PR number in event'}
 
   const reviews = await fetchReviews(repo, prNumber)

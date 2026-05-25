@@ -486,6 +486,27 @@ test('findCodeownerApproval: missing PR number bails immediately', async () => {
   assert.match(result.reason, /no PR number/)
 })
 
+test('findCodeownerApproval: missing repo bails before any URL is constructed', async () => {
+  // Without this guard, `defaultFetchReviews(null, prNumber)` would throw
+  // `TypeError: Cannot read properties of null (reading 'owner')`. The
+  // crash is accidentally fail-safe (non-zero exit keeps the check red)
+  // but the error message is gibberish. Triggered in practice by
+  // resolveContext returning repo=null when GITHUB_REPOSITORY is unset or
+  // malformed (local invocation).
+  let fetchCalled = false
+  const result = await findCodeownerApproval({
+    repo: null,
+    prNumber: 42,
+    fetchReviews: async () => {
+      fetchCalled = true
+      return null
+    },
+  })
+  assert.equal(result.approved, false)
+  assert.match(result.reason, /no repo context/)
+  assert.equal(fetchCalled, false, 'must bail before any GitHub API URL is constructed')
+})
+
 test('findCodeownerApproval: reviews API failure bails (does not auto-approve)', async () => {
   const result = await findCodeownerApproval({
     repo: fakeRepo,
