@@ -1048,7 +1048,7 @@ DESCRIPTION
 
 ## `shopify auth login`
 
-Logs you in to your Shopify account.
+Log in to a Shopify account.
 
 ```
 USAGE
@@ -1058,7 +1058,20 @@ FLAGS
   --alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the session you want to login to.
 
 DESCRIPTION
-  Logs you in to your Shopify account.
+  Log in to a Shopify account.
+
+  Logs in to a Shopify account using a browser-based device authentication flow.
+
+  If Shopify CLI prints a verification URL and user code, open the URL in a browser, complete login, and keep the
+  command running. The command continues automatically after authentication succeeds.
+
+  When running from an agent, show the verification URL and user code to the user, ask them to complete login in the
+  browser, and wait for the command to finish.
+
+EXAMPLES
+  $ shopify auth login
+
+  $ shopify auth login --alias my-account
 ```
 
 ## `shopify auth logout`

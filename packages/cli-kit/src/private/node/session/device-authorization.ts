@@ -81,20 +81,29 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
   const linkToken = outputToken.link(jsonResult.verification_uri_complete)
 
-  const cloudMessage = () => {
+  const waitingMessage = () => {
+    outputInfo('Waiting for authentication to complete. Keep this command running.')
+    outputInfo(
+      'If you are an agent, show the URL and code to the user, ask them to complete login, then continue after this command finishes.',
+    )
+  }
+
+  const manualLoginMessage = () => {
     outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
+    waitingMessage()
   }
 
   if (isCloudEnvironment() || !isTTY()) {
-    cloudMessage()
+    manualLoginMessage()
   } else {
     outputInfo('👉 Press any key to open the login page on your browser')
     await keypress()
     const opened = await openURL(jsonResult.verification_uri_complete)
     if (opened) {
       outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
+      waitingMessage()
     } else {
-      cloudMessage()
+      manualLoginMessage()
     }
   }
 

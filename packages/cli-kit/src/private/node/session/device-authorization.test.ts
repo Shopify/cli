@@ -12,6 +12,7 @@ import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
 import {isCI} from '../../../public/node/system.js'
+import {mockAndCaptureOutput} from '../../../public/node/testing/output.js'
 
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
@@ -64,6 +65,27 @@ describe('requestDeviceAuthorization', () => {
       body: 'client_id=clientId&scope=scope1 scope2',
     })
     expect(got).toEqual(dataExpected)
+  })
+
+  test('prints explicit guidance for agents when the browser is not opened automatically', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+    vi.mocked(isTTY).mockReturnValue(false)
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    expect(outputMock.output()).toContain('User verification code: user_code')
+    expect(outputMock.output()).toContain('Open this link to start the auth process: verification_uri_complete')
+    expect(outputMock.output()).toContain('Waiting for authentication to complete. Keep this command running.')
+    expect(outputMock.output()).toContain(
+      'If you are an agent, show the URL and code to the user, ask them to complete login, then continue after this command finishes.',
+    )
   })
 
   test('when the response is not valid JSON, throw an error with context', async () => {

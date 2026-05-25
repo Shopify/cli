@@ -3042,8 +3042,13 @@
       ],
       "args": {
       },
-      "description": "Logs you in to your Shopify account.",
+      "description": "Logs in to a Shopify account using a browser-based device authentication flow.\n\nIf Shopify CLI prints a verification URL and user code, open the URL in a browser, complete login, and keep the command running. The command continues automatically after authentication succeeds.\n\nWhen running from an agent, show the verification URL and user code to the user, ask them to complete login in the browser, and wait for the command to finish.",
+      "descriptionWithMarkdown": "Logs in to a Shopify account using a browser-based device authentication flow.\n\nIf Shopify CLI prints a verification URL and user code, open the URL in a browser, complete login, and keep the command running. The command continues automatically after authentication succeeds.\n\nWhen running from an agent, show the verification URL and user code to the user, ask them to complete login in the browser, and wait for the command to finish.",
       "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --alias my-account"
+      ],
       "flags": {
         "alias": {
           "description": "Alias of the session you want to login to.",
@@ -3061,7 +3066,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true
+      "strict": true,
+      "summary": "Log in to a Shopify account."
     },
     "auth:logout": {
       "aliases": [
