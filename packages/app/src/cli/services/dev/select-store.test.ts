@@ -117,6 +117,26 @@ describe('selectStore', async () => {
     expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
   })
 
+  test('converts store without prompting when conversion mode is always', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.Partners})
+    const convertToTransferDisabledStore = vi.spyOn(developerPlatformClient, 'convertToTransferDisabledStore')
+
+    // When
+    const got = await selectStore(
+      {stores: [STORE1, STORE2], hasMorePages: false},
+      ORG1,
+      developerPlatformClient,
+      'always',
+    )
+
+    // Then
+    expect(got).toEqual(STORE2)
+    expect(confirmConversionToTransferDisabledStorePrompt).not.toHaveBeenCalled()
+    expect(convertToTransferDisabledStore).toHaveBeenCalled()
+  })
+
   test('choosing not to convert to transfer-disabled forces another prompt', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)

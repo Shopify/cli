@@ -407,7 +407,7 @@ function buildOptionsForGeneratedConfigFile(options: {
   } = options
   const buildOptions = {
     ...(linkedAppWasNewlyCreated ? {include_config_on_deploy: true} : {}),
-    ...(defaultToUpdateUrlsOnDev && linkedAppWasNewlyCreated ? {automatically_update_urls_on_dev: true} : {}),
+    ...(defaultToUpdateUrlsOnDev ? {automatically_update_urls_on_dev: true} : {}),
     ...(linkedAppAndClientIdFromFileAreInSync ? existingBuildOptions : {}),
   }
   if (isEmpty(buildOptions)) {

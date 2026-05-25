@@ -216,6 +216,41 @@ describe('mkcert', () => {
       expect(downloadGitHubRelease).not.toHaveBeenCalled()
     })
 
+    testWithTempDir('generates a certificate without prompting when install is true', async ({tempDir}) => {
+      const appDirectory = tempDir
+      vi.mocked(generateCertificatePrompt).mockClear()
+      vi.mocked(exec).mockClear()
+
+      vi.mocked(exec).mockImplementation(async () => {
+        await mkdir(joinPath(appDirectory, '.shopify'))
+        await writeFile(joinPath(appDirectory, '.shopify', 'localhost-key.pem'), 'key')
+        await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
+      })
+
+      await generateCertificate({
+        appDirectory,
+        install: true,
+        platform: 'linux',
+      })
+
+      expect(generateCertificatePrompt).not.toHaveBeenCalled()
+      expect(exec).toHaveBeenCalled()
+    })
+
+    testWithTempDir('fails without prompting when install is false and certificates are missing', async ({tempDir}) => {
+      vi.mocked(generateCertificatePrompt).mockClear()
+      vi.mocked(exec).mockClear()
+      const generatePromise = generateCertificate({
+        appDirectory: tempDir,
+        install: false,
+        platform: 'linux',
+      })
+
+      await expect(generatePromise).rejects.toThrow(AbortError)
+      expect(generateCertificatePrompt).not.toHaveBeenCalled()
+      expect(exec).not.toHaveBeenCalled()
+    })
+
     testWithTempDir('skips certificate generation if the certificate already exists', async ({tempDir}) => {
       const appDirectory = tempDir
       await mkdir(joinPath(appDirectory, '.shopify'))

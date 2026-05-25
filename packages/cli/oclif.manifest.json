@@ -959,6 +959,13 @@
           "name": "config",
           "type": "option"
         },
+        "convert-transfer-disabled-store": {
+          "allowNo": false,
+          "description": "Convert the selected development store to a transfer-disabled store without prompting.",
+          "env": "SHOPIFY_FLAG_CONVERT_TRANSFER_DISABLED_STORE",
+          "name": "convert-transfer-disabled-store",
+          "type": "boolean"
+        },
         "graphiql-key": {
           "description": "Key used to authenticate GraphiQL requests. By default, a key is automatically derived from the app secret. Use this flag to override with a custom key.",
           "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
@@ -976,6 +983,13 @@
           "multiple": false,
           "name": "graphiql-port",
           "type": "option"
+        },
+        "install-mkcert": {
+          "allowNo": false,
+          "description": "Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.",
+          "env": "SHOPIFY_FLAG_INSTALL_MKCERT",
+          "name": "install-mkcert",
+          "type": "boolean"
         },
         "localhost-port": {
           "description": "Port to use for localhost. Must be between 1 and 65535.",
@@ -1042,6 +1056,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
           "type": "option"
         },
         "subscription-product-url": {
