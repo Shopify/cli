@@ -9,7 +9,6 @@ vi.mock('@shopify/cli-kit/node/session')
 describe('authStatusService', () => {
   beforeEach(() => {
     mockAndCaptureOutput().clear()
-    vi.clearAllMocks()
     process.exitCode = undefined
   })
 

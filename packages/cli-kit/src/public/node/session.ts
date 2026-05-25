@@ -125,6 +125,12 @@ function authStatusGuidance(status: AuthStatusName): AuthStatus['agentGuidance']
   }
 }
 
+function validationResultToAuthStatus(validationResult: Awaited<ReturnType<typeof validateSession>>): AuthStatusName {
+  if (validationResult === 'ok') return 'authenticated'
+  if (validationResult === 'needs_refresh') return 'needs_refresh'
+  return 'invalid'
+}
+
 /**
  * Returns the current Shopify CLI authentication status without starting a login flow.
  *
@@ -157,7 +163,7 @@ export async function getAuthStatus(): Promise<AuthStatus> {
   }
 
   const validationResult = await validateSession(allDefaultScopes(), {}, session)
-  const status = validationResult === 'ok' ? 'authenticated' : validationResult === 'needs_refresh' ? 'needs_refresh' : 'invalid'
+  const status = validationResultToAuthStatus(validationResult)
 
   return {
     status,

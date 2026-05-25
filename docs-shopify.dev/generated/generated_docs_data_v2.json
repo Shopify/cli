@@ -2607,6 +2607,26 @@
       "value": "export interface authlogout {\n\n}"
     }
   },
+  "authstatus": {
+    "docs-shopify.dev/commands/interfaces/auth-status.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/auth-status.interface.ts",
+      "name": "authstatus",
+      "description": "The following flags are available for the `auth status` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/auth-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface authstatus {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n}"
+    }
+  },
   "commands": {
     "docs-shopify.dev/commands/interfaces/commands.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
