@@ -6,15 +6,17 @@ import {
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
   getExtensionPointMiddleware,
+  devConsoleAssetsMiddleware,
 } from './middlewares.js'
 import * as utilities from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
+import {copyConfigKeyEntry} from '../../../build/steps/include-assets/copy-config-key-entry.js'
 import * as templates from '../templates.js'
 import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
-import {copyConfigKeyEntry} from '../../../build/steps/include-assets/copy-config-key-entry.js'
+import * as path from '@shopify/cli-kit/node/path'
 import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
@@ -844,5 +846,49 @@ describe('getExtensionPointMiddleware()', () => {
     await getExtensionPayloadMiddleware(options)(event)
 
     expect(h3.sendRedirect).toHaveBeenCalledWith(event, 'http://www.mock.com/redirect/url', 307)
+  })
+})
+
+describe('devConsoleAssetsMiddleware()', () => {
+  test('returns the file content when the asset is within the root directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const assetsDir = joinPath(tmpDir, 'assets/dev-console/extensions/dev-console/assets')
+      await mkdir(assetsDir)
+      const assetPath = 'style.css'
+      const filePath = joinPath(assetsDir, assetPath)
+      const content = 'body { color: red; }'
+      await writeFile(filePath, content)
+
+      vi.spyOn(path, 'moduleDirectory').mockReturnValue(tmpDir)
+      vi.spyOn(h3, 'getRouterParams').mockReturnValue({assetPath})
+
+      const event = getMockEvent()
+      const result = await devConsoleAssetsMiddleware(event)
+
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/css')
+      expect(String(result)).toBe(content)
+    })
+  })
+
+  test('returns 404 when the asset is outside the root directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const assetsDir = joinPath(tmpDir, 'assets/dev-console/extensions/dev-console/assets')
+      await mkdir(assetsDir)
+
+      const secretPath = joinPath(tmpDir, 'secret.txt')
+      await writeFile(secretPath, 'secret content')
+
+      vi.spyOn(path, 'moduleDirectory').mockReturnValue(tmpDir)
+      vi.spyOn(h3, 'getRouterParams').mockReturnValue({assetPath: '../../../../secret.txt'})
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+
+      const event = getMockEvent()
+      await devConsoleAssetsMiddleware(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+      })
+    })
   })
 })
