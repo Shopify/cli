@@ -945,6 +945,13 @@
           "name": "config",
           "type": "option"
         },
+        "convert-transfer-disabled-store": {
+          "allowNo": true,
+          "description": "Convert the selected development store to a transfer-disabled store without prompting. Use --no-convert-transfer-disabled-store to fail instead of prompting.",
+          "env": "SHOPIFY_FLAG_CONVERT_TRANSFER_DISABLED_STORE",
+          "name": "convert-transfer-disabled-store",
+          "type": "boolean"
+        },
         "graphiql-key": {
           "description": "Key used to authenticate GraphiQL requests. By default, a key is automatically derived from the app secret. Use this flag to override with a custom key.",
           "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
@@ -962,6 +969,13 @@
           "multiple": false,
           "name": "graphiql-port",
           "type": "option"
+        },
+        "install-mkcert": {
+          "allowNo": true,
+          "description": "Install and use mkcert to generate localhost certificates when --use-localhost is enabled. Use --no-install-mkcert to fail instead of prompting when certificates are missing.",
+          "env": "SHOPIFY_FLAG_INSTALL_MKCERT",
+          "name": "install-mkcert",
+          "type": "boolean"
         },
         "localhost-port": {
           "description": "Port to use for localhost.",
