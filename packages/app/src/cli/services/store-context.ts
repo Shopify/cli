@@ -1,5 +1,9 @@
 import {fetchStore} from './dev/fetch.js'
-import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
+import {
+  convertToTransferDisabledStoreIfNeeded,
+  selectStore,
+  type TransferDisabledStoreConversionMode,
+} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
 import {Store} from '../utilities/developer-platform-client.js'
@@ -20,6 +24,7 @@ interface StoreContextOptions {
   forceReselectStore: boolean
   storeFqdn?: string
   storeTypes?: Store[]
+  transferDisabledStoreConversion?: boolean
 }
 
 /**
@@ -34,6 +39,7 @@ export async function storeContext({
   storeFqdn,
   forceReselectStore,
   storeTypes = ['APP_DEVELOPMENT'],
+  transferDisabledStoreConversion,
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
@@ -51,17 +57,23 @@ export async function storeContext({
 
   // Check if we're filtering to dev stores only
   const isDevStoresOnly = storeTypes.length === 1 && storeTypes[0] === 'APP_DEVELOPMENT'
+  const conversionMode = transferDisabledStoreConversionMode(transferDisabledStoreConversion, Boolean(storeFqdnToUse))
 
   if (storeFqdnToUse) {
     selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient, storeTypes)
-    // never automatically convert a store provided via the command line
+    // Explicit stores keep the previous fail-fast behavior unless conversion is also explicit.
     if (isDevStoresOnly) {
-      await convertToTransferDisabledStoreIfNeeded(selectedStore, organization.id, developerPlatformClient, 'never')
+      await convertToTransferDisabledStoreIfNeeded(
+        selectedStore,
+        organization.id,
+        developerPlatformClient,
+        conversionMode,
+      )
     }
   } else {
     // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
     const allStores = await developerPlatformClient.devStoresForOrg(organization.id)
-    selectedStore = await selectStore(allStores, organization, developerPlatformClient)
+    selectedStore = await selectStore(allStores, organization, developerPlatformClient, conversionMode)
   }
 
   selectedStore.shopDomain = normalizeStoreFqdn(selectedStore.shopDomain)
@@ -76,6 +88,15 @@ export async function storeContext({
   await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
 
   return selectedStore
+}
+
+function transferDisabledStoreConversionMode(
+  transferDisabledStoreConversion: boolean | undefined,
+  storeFqdnToUse: boolean,
+): TransferDisabledStoreConversionMode {
+  if (transferDisabledStoreConversion === true) return 'always'
+  if (transferDisabledStoreConversion === false || storeFqdnToUse) return 'never'
+  return 'prompt-first'
 }
 
 async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean) {

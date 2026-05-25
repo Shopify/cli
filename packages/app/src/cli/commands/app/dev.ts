@@ -57,6 +57,12 @@ export default class Dev extends AppLinkedCommand {
       default: false,
       exclusive: ['tunnel-url'],
     }),
+    'install-mkcert': Flags.boolean({
+      description:
+        'Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.',
+      env: 'SHOPIFY_FLAG_INSTALL_MKCERT',
+      default: false,
+    }),
     'localhost-port': portFlag({
       description: 'Port to use for localhost.',
       env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
@@ -70,10 +76,19 @@ export default class Dev extends AppLinkedCommand {
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
+    'store-password': Flags.string({
+      description: 'The password for storefronts with password protection.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
+    }),
     notify: Flags.string({
       description:
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
+    }),
+    'convert-transfer-disabled-store': Flags.boolean({
+      description: 'Convert the selected development store to a transfer-disabled store without prompting.',
+      env: 'SHOPIFY_FLAG_CONVERT_TRANSFER_DISABLED_STORE',
+      default: false,
     }),
     'graphiql-port': portFlag({
       hidden: true,
@@ -121,6 +136,7 @@ export default class Dev extends AppLinkedCommand {
       appContextResult,
       storeFqdn: flags.store,
       forceReselectStore: flags.reset,
+      transferDisabledStoreConversion: flags['convert-transfer-disabled-store'],
     })
 
     const devOptions: DevOptions = {
@@ -134,9 +150,11 @@ export default class Dev extends AppLinkedCommand {
       checkoutCartUrl: flags['checkout-cart-url'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      storePassword: flags['store-password'],
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
+      installMkcert: flags['install-mkcert'],
       tunnel: tunnelMode,
     }
 

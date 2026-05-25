@@ -198,7 +198,10 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
   // Remove Theme Access passwords from the payload
-  const sanitizedPayloadString = payloadString.replace(/shptka_\w*/g, '*****')
+  const sanitizedPayloadString = payloadString
+    .replace(/shptka_\w*/g, '*****')
+    .replace(/(--store-password(?:=|\s+))(?:"[^"]*"|'[^']*'|[^\s"]+)/g, '$1*****')
+    .replace(/((?:store-password|SHOPIFY_FLAG_STORE_PASSWORD)\\?":\\?")[^"\\]*/g, '$1*****')
   return JSON.parse(sanitizedPayloadString)
 }
 

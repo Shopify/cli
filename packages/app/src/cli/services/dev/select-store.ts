@@ -14,6 +14,8 @@ import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputSuccess} from '@shopify/cli-kit/node/output'
 
+export type TransferDisabledStoreConversionMode = 'prompt-first' | 'always' | 'never'
+
 /**
  * Select store from list or
  * If a cachedStoreName is provided, we check if it is valid and return it. If it's not valid, ignore it.
@@ -28,6 +30,7 @@ export async function selectStore(
   storesSearch: Paginateable<{stores: OrganizationStore[]}>,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
+  conversionMode: TransferDisabledStoreConversionMode = 'prompt-first',
 ): Promise<OrganizationStore> {
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
   const onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
@@ -57,7 +60,7 @@ export async function selectStore(
     store,
     org.id,
     developerPlatformClient,
-    'prompt-first',
+    conversionMode,
   )
   while (!storeIsValid) {
     // eslint-disable-next-line no-await-in-loop
@@ -66,7 +69,7 @@ export async function selectStore(
       throw new CancelExecution()
     }
     // eslint-disable-next-line no-await-in-loop
-    storeIsValid = await convertToTransferDisabledStoreIfNeeded(store, org.id, developerPlatformClient, 'prompt-first')
+    storeIsValid = await convertToTransferDisabledStoreIfNeeded(store, org.id, developerPlatformClient, conversionMode)
   }
 
   return store
@@ -124,7 +127,7 @@ export async function convertToTransferDisabledStoreIfNeeded(
   store: OrganizationStore,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
-  conversionMode: 'prompt-first' | 'never',
+  conversionMode: TransferDisabledStoreConversionMode,
 ): Promise<boolean> {
   if (store.transferDisabled) return true
 
@@ -142,6 +145,10 @@ export async function convertToTransferDisabledStoreIfNeeded(
         // tell caller the store is invalid and not converted. they may re-prompt etc.
         return false
       }
+      await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
+      return true
+    }
+    case 'always': {
       await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
       return true
     }
