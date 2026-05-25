@@ -3,6 +3,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {Flags} from '@oclif/core'
 
 export default class ConfigLink extends AppLinkedCommand {
   static summary = 'Fetch your app configuration from the Developer Dashboard.'
@@ -17,6 +18,18 @@ export default class ConfigLink extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    'file-name': Flags.string({
+      hidden: false,
+      description: 'The name of the app configuration file to create or overwrite.',
+      env: 'SHOPIFY_FLAG_APP_CONFIG_FILE_NAME',
+      exclusive: ['config'],
+    }),
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Overwrite an existing configuration file without prompting.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      default: false,
+    }),
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
@@ -26,6 +39,8 @@ export default class ConfigLink extends AppLinkedCommand {
       directory: flags.path,
       apiKey: flags['client-id'],
       configName: flags.config,
+      fileName: flags['file-name'],
+      force: flags.force,
     }
 
     const result = await link(options)

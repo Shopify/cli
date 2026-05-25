@@ -26,6 +26,7 @@ import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -36,6 +37,8 @@ export interface LinkOptions {
   appId?: string
   organizationId?: string
   configName?: string
+  fileName?: string
+  force?: boolean
   developerPlatformClient?: DeveloperPlatformClient
   isNewApp?: boolean
 }
@@ -293,6 +296,18 @@ async function loadConfigurationFileName(
     appDirectory?: string
   },
 ): Promise<AppConfigurationFileName> {
+  if (options.fileName) {
+    const fileName = getAppConfigurationFileName(options.fileName)
+    const appDirectory = localAppInfo.appDirectory ?? options.directory
+    if (!options.force && (await fileExists(joinPath(appDirectory, fileName)))) {
+      throw new AbortError(
+        `Configuration file ${fileName} already exists.`,
+        'Run the command with --force to overwrite it.',
+      )
+    }
+    return fileName
+  }
+
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
