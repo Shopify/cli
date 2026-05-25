@@ -194,12 +194,12 @@ export async function patchRenderingResponse(
   rawResponse: Response,
   patchCallback?: (html: string) => string | undefined,
 ): Promise<Response> {
-  // 3xx responses should be returned
-  if (rawResponse.status >= 300 && rawResponse.status < 400) {
-    return rawResponse
-  }
-
   const response = patchProxiedResponseHeaders(ctx, rawResponse)
+
+  // 3xx responses should be returned
+  if (response.status >= 300 && response.status < 400) {
+    return response
+  }
 
   // Only set HTML content-type for actual HTML responses, preserve JSON content-type:
   const originalContentType = rawResponse.headers.get('content-type')

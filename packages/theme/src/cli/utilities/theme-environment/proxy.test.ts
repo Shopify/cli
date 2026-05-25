@@ -250,6 +250,67 @@ describe('dev proxy', () => {
       expect(ctx.session.sessionCookies).toHaveProperty('_shopify_essential', ':AZFbAlZ..yAAH:')
     })
 
+    test('captures _shopify_essential from Set-Cookie into session on 3xx responses', async () => {
+      const localCtx = {
+        ...ctx,
+        session: {storeFqdn: 'my-store.myshopify.com', sessionCookies: {}},
+      } as unknown as DevServerContext
+
+      const redirectResponse = new Response('should-not-be-read', {
+        status: 302,
+        headers: {
+          Location: 'https://my-store.myshopify.com/foo?bar=1',
+          'Set-Cookie':
+            '_shopify_essential=ABC123; Domain=my-store.myshopify.com; Path=/; Max-Age=31536000; secure; HttpOnly; SameSite=Lax',
+        },
+      })
+
+      const patchedResponse = await patchRenderingResponse(localCtx, redirectResponse)
+
+      expect(patchedResponse.status).toBe(302)
+      expect(localCtx.session.sessionCookies).toHaveProperty('_shopify_essential', 'ABC123')
+    })
+
+    test('rewrites Location header from store domain to local path on 3xx responses', async () => {
+      const localCtx = {
+        ...ctx,
+        session: {storeFqdn: 'my-store.myshopify.com', sessionCookies: {}},
+      } as unknown as DevServerContext
+
+      const redirectResponse = new Response('should-not-be-read', {
+        status: 302,
+        headers: {
+          Location: 'https://my-store.myshopify.com/foo?bar=1',
+        },
+      })
+
+      const patchedResponse = await patchRenderingResponse(localCtx, redirectResponse)
+
+      expect(patchedResponse.status).toBe(302)
+      expect(patchedResponse.headers.get('Location')).toBe('/foo?bar=1')
+    })
+
+    test('returns 3xx responses without reading or patching the body', async () => {
+      const localCtx = {
+        ...ctx,
+        session: {storeFqdn: 'my-store.myshopify.com', sessionCookies: {}},
+      } as unknown as DevServerContext
+
+      const body = '<a href="https://my-store.myshopify.com/cdn/path/to/assets/file1">link</a>'
+      const redirectResponse = new Response(body, {
+        status: 301,
+        headers: {
+          Location: 'https://my-store.myshopify.com/foo',
+        },
+      })
+
+      const patchedResponse = await patchRenderingResponse(localCtx, redirectResponse)
+
+      expect(patchedResponse.status).toBe(301)
+      // CDN injection would rewrite the href; body should be passed through unchanged.
+      await expect(patchedResponse.text()).resolves.toBe(body)
+    })
+
     test('handles 304 Not Modified responses without crashing', async () => {
       // Create 304 response with no body as per HTTP spec
       const notModifiedResponse = new Response(null, {
