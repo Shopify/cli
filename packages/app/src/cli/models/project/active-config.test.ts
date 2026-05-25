@@ -55,6 +55,28 @@ describe('selectActiveConfig', () => {
     })
   })
 
+  test('selects config by client ID when cached config is stale and prompts are skipped', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.2.toml'), 'client_id = "matching-client-id"')
+      await writeFile(joinPath(dir, 'shopify.app.3.toml'), 'client_id = "other-client-id"')
+      const project = await Project.load(dir)
+
+      vi.mocked(getCachedAppInfo).mockReturnValue({
+        directory: dir,
+        configFile: 'shopify.app.toml',
+      })
+
+      const config = await selectActiveConfig(project, undefined, {
+        clientId: 'matching-client-id',
+        skipPrompts: true,
+      })
+
+      expect(basename(config.file.path)).toBe('shopify.app.2.toml')
+      expect(config.file.content.client_id).toBe('matching-client-id')
+      expect(config.source).toBe('flag')
+    })
+  })
+
   test('falls back to default shopify.app.toml when no flag or cache', async () => {
     await inTemporaryDirectory(async (dir) => {
       await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "default-id"')
