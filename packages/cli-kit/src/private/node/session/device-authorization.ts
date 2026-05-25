@@ -80,12 +80,15 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
 
   outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
   const linkToken = outputToken.link(jsonResult.verification_uri_complete)
+  const tty = isTTY()
 
   const waitingMessage = () => {
     outputInfo('Waiting for authentication to complete. Keep this command running.')
-    outputInfo(
-      'If you are an agent, show the URL and code to the user, ask them to complete login, then continue after this command finishes.',
-    )
+    if (!tty) {
+      outputInfo(
+        'If you are an agent, show the URL and code to the user, ask them to complete login, then continue after this command finishes.',
+      )
+    }
   }
 
   const manualLoginMessage = () => {
@@ -93,7 +96,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     waitingMessage()
   }
 
-  if (isCloudEnvironment() || !isTTY()) {
+  if (isCloudEnvironment() || !tty) {
     manualLoginMessage()
   } else {
     outputInfo('👉 Press any key to open the login page on your browser')

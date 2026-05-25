@@ -25,6 +25,7 @@ vi.mock('./exchange.js')
 vi.mock('../../../public/node/system.js')
 
 beforeEach(() => {
+  mockAndCaptureOutput().clear()
   vi.mocked(isTTY).mockReturnValue(true)
   vi.mocked(isCI).mockReturnValue(false)
 })
@@ -84,6 +85,25 @@ describe('requestDeviceAuthorization', () => {
     expect(outputMock.output()).toContain('Open this link to start the auth process: verification_uri_complete')
     expect(outputMock.output()).toContain('Waiting for authentication to complete. Keep this command running.')
     expect(outputMock.output()).toContain(
+      'If you are an agent, show the URL and code to the user, ask them to complete login, then continue after this command finishes.',
+    )
+  })
+
+  test('does not print explicit guidance for agents when TTY is enabled', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+    vi.mocked(isTTY).mockReturnValue(true)
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    expect(outputMock.output()).toContain('Waiting for authentication to complete. Keep this command running.')
+    expect(outputMock.output()).not.toContain(
       'If you are an agent, show the URL and code to the user, ask them to complete login, then continue after this command finishes.',
     )
   })
