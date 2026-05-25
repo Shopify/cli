@@ -36,6 +36,10 @@ function mockHealthyProject() {
 }
 
 describe('app config validate command', () => {
+  test('keeps --client-id mutually exclusive with --config', () => {
+    expect(Validate.flags['client-id']?.exclusive).toEqual(['config'])
+  })
+
   test('calls validateApp with json: false by default', async () => {
     const app = testAppLinked()
     mockHealthyProject()
@@ -70,6 +74,39 @@ describe('app config validate command', () => {
 
     expect(validateApp).toHaveBeenCalledWith(app, {json: true})
     await expectValidationMetadataCalls({cmd_app_validate_json: true})
+  })
+
+  test('skips active config prompts when --client-id is passed', async () => {
+    const app = testAppLinked()
+    mockHealthyProject()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockResolvedValue()
+
+    await Validate.run(['--client-id', 'api-key'], import.meta.url)
+
+    expect(selectActiveConfig).toHaveBeenCalledWith(expect.anything(), undefined, {skipPrompts: true})
+    expect(linkedAppContext).toHaveBeenCalledWith({
+      directory: expect.any(String),
+      clientId: 'api-key',
+      forceRelink: false,
+      userProvidedConfigName: undefined,
+      unsafeTolerateErrors: true,
+    })
+    expect(validateApp).toHaveBeenCalledWith(app, {json: false})
+    await expectValidationMetadataCalls({cmd_app_validate_json: false})
+  })
+
+  test('keeps active config prompts enabled when --client-id is not passed', async () => {
+    const app = testAppLinked()
+    mockHealthyProject()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockResolvedValue()
+
+    await Validate.run([], import.meta.url)
+
+    expect(selectActiveConfig).toHaveBeenCalledWith(expect.anything(), undefined, {skipPrompts: false})
+    expect(validateApp).toHaveBeenCalledWith(app, {json: false})
+    await expectValidationMetadataCalls({cmd_app_validate_json: false})
   })
 
   test('outputs JSON issues when active config has TOML parse errors', async () => {
