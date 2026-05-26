@@ -1,18 +1,14 @@
 import {stageFile} from './stage-file.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {readFile, fileSize} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/http')
 
 describe('stageFile', () => {
   const mockSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}
-  const mockFileContents = '{"id":"gid://shopify/Product/123","title":"Test"}'
-  const mockFileSize = 52
   const mockUploadUrl = 'https://storage.googleapis.com/test-bucket/test-file'
   const mockResourceUrl = 'tmp/staged-uploads/test-resource.jsonl'
 
@@ -35,8 +31,6 @@ describe('stageFile', () => {
   let formDataAppendSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    vi.mocked(readFile).mockResolvedValue(Buffer.from(mockFileContents))
-    vi.mocked(fileSize).mockResolvedValue(mockFileSize)
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue(''),
