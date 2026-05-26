@@ -9,4 +9,16 @@ export interface authlogin {
    * @environment SHOPIFY_FLAG_AUTH_ALIAS
    */
   '--alias <value>'?: string
+
+  /**
+   * Log in with a new account instead of choosing from existing sessions.
+   * @environment SHOPIFY_FLAG_AUTH_NEW
+   */
+  '--new'?: ''
+
+  /**
+   * Resume a pending non-interactive login flow.
+   * @environment SHOPIFY_FLAG_AUTH_RESUME
+   */
+  '--resume'?: ''
 }

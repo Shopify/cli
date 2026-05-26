@@ -24,6 +24,7 @@ import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
+import {terminalSupportsPrompting} from '../../public/node/system.js'
 
 /**
  * Fetches the user's email from the Business Platform API
@@ -293,19 +294,21 @@ The CLI is currently unable to prompt for reauthentication.`,
  * @param existingAlias - Optional alias from a previous session to preserve if the email fetch fails.
  */
 async function executeCompleteFlow(applications: OAuthApplications, existingAlias?: string): Promise<Session> {
-  const scopes = getFlattenScopes(applications)
-  const exchangeScopes = getExchangeScopes(applications)
-  const store = applications.adminApi?.storeFqdn
-  if (firstPartyDev()) {
-    outputDebug(outputContent`Authenticating as Shopify Employee...`)
-    scopes.push('employee')
-  }
+  const scopes = getDeviceAuthScopes(applications)
 
   let identityToken: IdentityToken
   const identityTokenInformation = getIdentityTokenInformation()
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
   } else {
+    if (!terminalSupportsPrompting()) {
+      throw new AbortError('Authentication required', [
+        'Run',
+        {command: 'shopify auth login'},
+        'first or use a valid authentication token',
+      ])
+    }
+
     // Request a device code to authorize without a browser redirect.
     outputDebug(outputContent`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
@@ -314,6 +317,28 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
     outputDebug(outputContent`Starting polling for the identity token...`)
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
   }
+
+  const session = await completeAuthFlow(identityToken, applications, existingAlias)
+  outputCompleted(`Logged in.`)
+  return session
+}
+
+/**
+ * Given an identity token, exchange it for application tokens and build a complete session.
+ * Shared between the interactive login flow and the resumable non-interactive flow.
+ *
+ * @param identityToken - Identity token returned by the OAuth device code flow.
+ * @param applications - Applications to exchange access tokens for.
+ * @param existingAlias - Optional alias from a previous session to preserve if the email fetch fails.
+ * @returns A complete session with identity and application tokens.
+ */
+export async function completeAuthFlow(
+  identityToken: IdentityToken,
+  applications: OAuthApplications,
+  existingAlias?: string,
+): Promise<Session> {
+  const exchangeScopes = getExchangeScopes(applications)
+  const store = applications.adminApi?.storeFqdn
 
   // Exchange identity token for application tokens
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
@@ -330,9 +355,6 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
     },
     applications: result,
   }
-
-  outputCompleted(`Logged in.`)
-
   return session
 }
 
@@ -417,6 +439,15 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const appManagement = apps.appManagementApi?.scopes ?? []
   const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement]
   return allDefaultScopes(requestedScopes)
+}
+
+function getDeviceAuthScopes(applications: OAuthApplications): string[] {
+  const scopes = getFlattenScopes(applications)
+  if (firstPartyDev()) {
+    outputDebug(outputContent`Authenticating as Shopify Employee...`)
+    scopes.push('employee')
+  }
+  return scopes
 }
 
 /**

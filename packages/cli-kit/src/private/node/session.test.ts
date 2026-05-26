@@ -198,6 +198,22 @@ The CLI is currently unable to prompt for reauthentication.`,
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('unknown')
   })
 
+  test('throws an authentication required error if the terminal cannot prompt', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+
+    // When
+    await expect(ensureAuthenticated(defaultApplications)).rejects.toThrow('Authentication required')
+
+    // Then
+    expect(requestDeviceAuthorization).not.toHaveBeenCalled()
+    expect(pollForDeviceAuthorization).not.toHaveBeenCalled()
+    expect(exchangeAccessForApplicationTokens).not.toHaveBeenCalled()
+    expect(storeSessions).not.toHaveBeenCalled()
+  })
+
   test('executes complete auth flow if session is for a different fqdn', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')

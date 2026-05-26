@@ -13,6 +13,9 @@ import {
   getCachedPartnerAccountStatus,
   setCachedPartnerAccountStatus,
   runWithRateLimit,
+  clearPendingDeviceAuth,
+  getPendingDeviceAuth,
+  setPendingDeviceAuth,
 } from './conf-store.js'
 import {isLocalEnvironment} from './context/service.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
@@ -190,6 +193,34 @@ describe('removeCurrentSessionId', () => {
 
       // Then
       expect(config.get('currentDevSessionId')).toBeUndefined()
+    })
+  })
+})
+
+describe('pending device auth', () => {
+  test('stores, reads, and clears pending device auth', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      const pendingDeviceAuth = {
+        deviceCode: 'device-code',
+        userCode: 'user-code',
+        verificationUriComplete: 'https://accounts.shopify.com/activate?user_code=user-code',
+        interval: 5,
+        expiresAt: 1893456000000,
+      }
+
+      // When
+      setPendingDeviceAuth(pendingDeviceAuth, config)
+
+      // Then
+      expect(getPendingDeviceAuth(config)).toEqual(pendingDeviceAuth)
+
+      // When
+      clearPendingDeviceAuth(config)
+
+      // Then
+      expect(getPendingDeviceAuth(config)).toBeUndefined()
     })
   })
 })

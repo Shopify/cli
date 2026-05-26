@@ -2592,9 +2592,27 @@
           "description": "Alias of the session you want to login to.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_AUTH_ALIAS"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--new",
+          "value": "''",
+          "description": "Log in with a new account instead of choosing from existing sessions.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_AUTH_NEW"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--resume",
+          "value": "''",
+          "description": "Resume a pending non-interactive login flow.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_AUTH_RESUME"
         }
       ],
-      "value": "export interface authlogin {\n  /**\n   * Alias of the session you want to login to.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--alias <value>'?: string\n}"
+      "value": "export interface authlogin {\n  /**\n   * Alias of the session you want to login to.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--alias <value>'?: string\n\n  /**\n   * Log in with a new account instead of choosing from existing sessions.\n   * @environment SHOPIFY_FLAG_AUTH_NEW\n   */\n  '--new'?: ''\n\n  /**\n   * Resume a pending non-interactive login flow.\n   * @environment SHOPIFY_FLAG_AUTH_RESUME\n   */\n  '--resume'?: ''\n}"
     }
   },
   "authlogout": {

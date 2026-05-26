@@ -97,7 +97,7 @@ describe('getAuthStatus', () => {
       identityFqdn: 'accounts.shopify.com',
       agentGuidance: {
         instruction:
-          'No usable Shopify CLI session is available. Run `shopify auth login`, show the verification URL and user code to the user, and keep the command running until authentication completes.',
+          'No usable Shopify CLI session is available. Run `shopify auth login`, show the verification URL and user code to the user, and then run `shopify auth login --resume` after the user authorizes.',
         nextCommand: 'shopify auth login',
       },
     })
