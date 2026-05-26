@@ -1,5 +1,6 @@
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
+import {uniq} from '@shopify/cli-kit/common/array'
 import type {StoreTokenResponse} from './token-client.js'
 
 export function parseStoreAuthScopes(input: string): string[] {
@@ -9,7 +10,7 @@ export function parseStoreAuthScopes(input: string): string[] {
     throw new AbortError('At least one scope is required.', 'Pass --scopes as a comma-separated list.')
   }
 
-  return [...new Set(scopes)]
+  return uniq(scopes)
 }
 
 function expandImpliedStoreScopes(scopes: string[]): Set<string> {
