@@ -1,12 +1,10 @@
-import init, {buildNoneTemplate, InitOptions, visibleTemplates} from './init.js'
+import init, {InitOptions, visibleTemplates} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
-import {isHostedAppsMode} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/is-global')
-vi.mock('@shopify/cli-kit/node/context/local')
 
 const globalCLIResult = {install: true, alreadyInstalled: false}
 
@@ -17,7 +15,7 @@ describe('init', () => {
 
   test('it renders the label for the template options', async () => {
     const answers = {
-      template: 'https://github.com/Shopify/shopify-app-template-none',
+      template: 'https://github.com/Shopify/shopify-app-template-extension-only',
     }
     const options: InitOptions = {}
 
@@ -49,30 +47,6 @@ describe('init', () => {
     })
   })
 
-  describe('buildNoneTemplate', () => {
-    test('returns extension-only template URL when HOSTED_APPS is enabled', () => {
-      // Given
-      vi.mocked(isHostedAppsMode).mockReturnValue(true)
-
-      // When
-      const got = buildNoneTemplate()
-
-      // Then
-      expect(got.url).toBe('https://github.com/Shopify/shopify-app-template-extension-only')
-    })
-
-    test('returns default template URL when HOSTED_APPS is not set', () => {
-      // Given
-      vi.mocked(isHostedAppsMode).mockReturnValue(false)
-
-      // When
-      const got = buildNoneTemplate()
-
-      // Then
-      expect(got.url).toBe('https://github.com/Shopify/shopify-app-template-none')
-    })
-  })
-
   test('it renders branches for templates that have them', async () => {
     const answers = {
       template: 'https://github.com/Shopify/shopify-app-template-react-router#javascript-cli',
@@ -90,7 +64,10 @@ describe('init', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
         {label: 'Build a React Router app (recommended)', value: 'reactRouter'},
-        {label: 'Build an extension-only app', value: 'none'},
+        {
+          label: 'Build an extension-only app',
+          value: 'none',
+        },
       ],
       message: 'Get started building your app:',
       defaultValue: 'reactRouter',

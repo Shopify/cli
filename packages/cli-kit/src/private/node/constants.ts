@@ -20,7 +20,6 @@ export const environmentVariables = {
   enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
   env: 'SHOPIFY_CLI_ENV',
   firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
-  hostedApps: 'HOSTED_APPS',
   noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
   optOutInstrumentation: 'OPT_OUT_INSTRUMENTATION',
   appAutomationToken: 'SHOPIFY_APP_AUTOMATION_TOKEN',
