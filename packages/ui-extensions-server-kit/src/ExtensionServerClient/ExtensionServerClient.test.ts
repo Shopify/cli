@@ -163,6 +163,12 @@ describe('ExtensionServerClient', () => {
   })
 
   describe('initialization', () => {
+    test('generates a random UUID as id', () => {
+      const client = new ExtensionServerClient(defaultOptions)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      expect(client.id).toMatch(uuidRegex)
+    })
+
     test('connects to the target websocket', async () => {
       // Create client
       const client = new ExtensionServerClient(defaultOptions)
