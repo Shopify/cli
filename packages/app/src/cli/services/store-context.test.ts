@@ -174,7 +174,7 @@ describe('storeContext', () => {
       expect(meta).toEqual(
         expect.objectContaining({
           store_fqdn_hash: hashString(mockStore.shopDomain),
-          shop_domain: mockStore.shopDomain,
+          store_shop_domain: mockStore.shopDomain,
         }),
       )
 
@@ -199,7 +199,7 @@ describe('storeContext', () => {
       expect(meta).toEqual(
         expect.objectContaining({
           store_fqdn_hash: hashString('test-store.myshopify.com'),
-          shop_domain: 'test-store.myshopify.com',
+          store_shop_domain: 'test-store.myshopify.com',
         }),
       )
 

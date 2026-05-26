@@ -21,7 +21,7 @@ describe('store command attribution', () => {
     expect(vi.mocked(addPublicMetadata).mock.calls[0]![0]()).toEqual({
       store_fqdn_hash: 'hashed-store',
       store_fqdn_validated: true,
-      shop_domain: 'shop.myshopify.com',
+      store_shop_domain: 'shop.myshopify.com',
     })
     expect(hashString).toHaveBeenCalledWith('shop.myshopify.com')
   })

@@ -46,7 +46,7 @@ export interface Schemas {
       is_employee: boolean
       store_fqdn_hash?: Optional<string>
       store_fqdn_validated?: Optional<boolean>
-      shop_domain?: Optional<string>
+      store_shop_domain?: Optional<string>
       user_id: string
 
       // Any and all commands

@@ -387,7 +387,7 @@ export default abstract class ThemeCommand extends Command {
     const data = compileData()
     await addPublicMetadata(() => ({
       store_fqdn_hash: hashString(session.storeFqdn),
-      shop_domain: session.storeFqdn,
+      store_shop_domain: session.storeFqdn,
 
       cmd_theme_timings: JSON.stringify(data.timings),
       cmd_theme_errors: JSON.stringify(data.errors),
