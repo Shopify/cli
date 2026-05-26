@@ -101,7 +101,6 @@ export function isUnitTest(env = process.env): boolean {
   return isTruthy(env[environmentVariables.unitTest])
 }
 
-
 /**
  * Returns true if reporting analytics is enabled.
  *
