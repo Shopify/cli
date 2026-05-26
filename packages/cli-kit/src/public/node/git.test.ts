@@ -311,6 +311,16 @@ describe('ensurePresentOrAbort()', () => {
 })
 
 describe('ensureInsideGitDirectory()', () => {
+  test('throws a friendly error if git is not present', async () => {
+    // Given
+    vi.mocked(hasGit).mockResolvedValue(false)
+
+    // Then
+    await expect(() => git.ensureInsideGitDirectory()).rejects.toThrowError(
+      /Git is necessary in the environment to continue/,
+    )
+  })
+
   test('throws an error if not inside a git directory', async () => {
     const error = Object.assign(new Error('not a git repo'), {exitCode: 128})
     mockedExeca.mockRejectedValue(error)
@@ -326,6 +336,15 @@ describe('ensureInsideGitDirectory()', () => {
 })
 
 describe('insideGitDirectory()', () => {
+  test('returns false if git is not present', async () => {
+    // Given
+    vi.mocked(hasGit).mockResolvedValue(false)
+
+    // Then
+    await expect(git.insideGitDirectory()).resolves.toBe(false)
+    expect(mockedExeca).not.toHaveBeenCalled()
+  })
+
   test('returns true if inside a git directory', async () => {
     mockGitCommand('.git')
 
