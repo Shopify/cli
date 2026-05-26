@@ -1,5 +1,5 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
-import {firstPartyDev} from '../../../public/node/context/local.js'
+import {firstPartyDev, isUnitTest, isVerbose} from '../../../public/node/context/local.js'
 import {AbortError} from '../../../public/node/error.js'
 import https from 'https'
 
@@ -26,24 +26,26 @@ export class GraphQLClientError extends RequestClientError {
   }
 }
 
+const SENSITIVE_HEADERS = ['token', 'authorization', 'subject_token', 'cookie']
+
 /**
  * Removes the sensitive data from the headers and outputs them as a string.
  * @param headers - HTTP headers.
  * @returns A sanitized version of the headers as a string.
  */
 export function sanitizedHeadersOutput(headers: Record<string, string>): string {
-  const sanitized: Record<string, string> = {}
-  const keywords = ['token', 'authorization', 'subject_token', 'cookie']
-  Object.keys(headers).forEach((header) => {
-    if (keywords.find((keyword) => header.toLowerCase().includes(keyword)) === undefined) {
-      sanitized[header] = headers[header]!
+  // Performance: This function is called for every network request. We skip
+  // the overhead of sanitization when debug logging is disabled.
+  if (!isVerbose() && !isUnitTest()) return ''
+
+  const sanitized: string[] = []
+  Object.entries(headers).forEach(([header, value]) => {
+    const lowerHeader = header.toLowerCase()
+    if (!SENSITIVE_HEADERS.some((keyword) => lowerHeader.includes(keyword))) {
+      sanitized.push(` - ${header}: ${value}`)
     }
   })
-  return Object.keys(sanitized)
-    .map((header) => {
-      return ` - ${header}: ${sanitized[header]}`
-    })
-    .join('\n')
+  return sanitized.join('\n')
 }
 
 export function buildHeaders(token?: string): Record<string, string> {
