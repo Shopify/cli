@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 4.1.0
+
+### Minor Changes
+
+- 8943b19: Update extension-only template to include app home by default
+
+### Patch Changes
+
+- 45b1884: Fix `shopify app init` leaving dangling `node_modules` symlinks on Windows when using `pnpm` (and similarly affected package managers). The scaffolded project is now moved to its final directory before dependencies are installed, so package-manager-managed symlinks/junctions resolve to the final location instead of the temporary scaffold path.
+- Updated dependencies [8943b19]
+- Updated dependencies [5156580]
+  - @shopify/cli-kit@4.1.0
+  - @shopify/plugin-cloudflare@4.1.0
+  - @shopify/theme@4.1.0
+
 ## 4.0.0
 
 ### Major Changes

@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 4.1.0
+
+### Minor Changes
+
+- 8943b19: Update extension-only template to include app home by default
+
+### Patch Changes
+
+- 5156580: Fix error reporting of cli-kit methods that try to run git when git is unavailable
+
 ## 4.0.0
 
 ### Major Changes
