@@ -92,6 +92,21 @@ describe('promptSessionSelect', () => {
     expect(result).toEqual('custom-alias')
   })
 
+  test('creates a new session directly when forceNewSession is true', async () => {
+    // Given
+    vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
+
+    // When
+    const result = await promptSessionSelect(undefined, {forceNewSession: true})
+
+    // Then
+    expect(renderSelectPrompt).not.toHaveBeenCalled()
+    expect(sessionStore.findSessionByAlias).not.toHaveBeenCalled()
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
+    expect(result).toEqual('new-alias')
+  })
+
   test('shows existing sessions and allows selection', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)

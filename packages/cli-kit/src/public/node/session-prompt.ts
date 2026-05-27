@@ -12,6 +12,10 @@ interface SessionChoice {
   value: string
 }
 
+interface PromptSessionSelectOptions {
+  forceNewSession?: boolean
+}
+
 /**
  * Builds the choices array from existing sessions.
  *
@@ -87,9 +91,14 @@ async function getAllChoices(): Promise<SessionChoice[]> {
  * - Otherwise, shows a prompt with all available sessions and the option to log in with a different account.
  *
  * @param alias - Optional alias of the account to switch to.
+ * @param options - Optional prompt behavior.
  * @returns Promise with the alias of the chosen session.
  */
-export async function promptSessionSelect(alias?: string): Promise<string> {
+export async function promptSessionSelect(alias?: string, options: PromptSessionSelectOptions = {}): Promise<string> {
+  if (options.forceNewSession) {
+    return handleNewLogin()
+  }
+
   if (alias) {
     const userId = await sessionStore.findSessionByAlias(alias)
     if (userId) {

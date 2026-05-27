@@ -2,13 +2,21 @@ import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
 import {identityFqdn} from './context/fqdn.js'
+import {firstPartyDev} from './context/local.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
-import {getCurrentSessionId} from '../../private/node/conf-store.js'
+import {
+  clearPendingDeviceAuth,
+  getCurrentSessionId,
+  getPendingDeviceAuth,
+  setCurrentSessionId,
+  setPendingDeviceAuth,
+} from '../../private/node/conf-store.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {allDefaultScopes} from '../../private/node/session/scopes.js'
 import {validateSession} from '../../private/node/session/validate.js'
 import {
+  exchangeDeviceCodeForAccessToken,
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
@@ -17,6 +25,7 @@ import {
   AdminAPIScope,
   AppManagementAPIScope,
   BusinessPlatformScope,
+  completeAuthFlow,
   EnsureAuthenticatedAdditionalOptions,
   PartnersAPIScope,
   StorefrontRendererScope,
@@ -24,6 +33,7 @@ import {
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
+import {requestDeviceAuthorization} from '../../private/node/session/device-authorization.js'
 import {isThemeAccessSession} from '../../private/node/api/rest.js'
 
 /**
@@ -120,7 +130,7 @@ function authStatusGuidance(status: AuthStatusName): AuthStatus['agentGuidance']
 
   return {
     instruction:
-      'No usable Shopify CLI session is available. Run `shopify auth login`, show the verification URL and user code to the user, and keep the command running until authentication completes.',
+      'No usable Shopify CLI session is available. Run `shopify auth login`, show the verification URL and user code to the user, and then run `shopify auth login --resume` after the user authorizes.',
     nextCommand: 'shopify auth login',
   }
 }
@@ -383,6 +393,95 @@ ${outputToken.json(scopes)}
  */
 export function logout(): Promise<void> {
   return sessionStore.remove()
+}
+
+export interface StartDeviceAuthLoginResult {
+  verificationUriComplete: string
+  userCode: string
+  expiresAt: string
+}
+
+/**
+ * Start a resumable device authorization flow for non-interactive `shopify auth login`.
+ *
+ * @returns Instructions needed to authorize the device code and resume login.
+ */
+export async function startDeviceAuthLogin(): Promise<StartDeviceAuthLoginResult> {
+  const scopes = allDefaultScopes()
+  if (firstPartyDev()) {
+    scopes.push('employee')
+  }
+  const deviceAuth = await requestDeviceAuthorization(scopes, {noPrompt: true})
+  const verificationUriComplete = deviceAuth.verificationUriComplete ?? deviceAuth.verificationUri
+  const expiresAt = Date.now() + deviceAuth.expiresIn * 1000
+
+  setPendingDeviceAuth({
+    deviceCode: deviceAuth.deviceCode,
+    userCode: deviceAuth.userCode,
+    verificationUriComplete,
+    interval: deviceAuth.interval ?? 5,
+    expiresAt,
+  })
+
+  return {verificationUriComplete, userCode: deviceAuth.userCode, expiresAt: new Date(expiresAt).toISOString()}
+}
+
+export type ResumeDeviceAuthLoginResult =
+  | {status: 'success'; alias: string}
+  | {status: 'pending'; verificationUriComplete: string; userCode: string}
+  | {status: 'expired'; message: string}
+  | {status: 'denied'; message: string}
+  | {status: 'no_pending'; message: string}
+
+/**
+ * Resume a previously started non-interactive device authorization flow.
+ *
+ * @returns The result of exchanging the stashed device code.
+ */
+export async function resumeDeviceAuthLogin(): Promise<ResumeDeviceAuthLoginResult> {
+  const pending = getPendingDeviceAuth()
+
+  if (!pending) {
+    return {status: 'no_pending', message: 'No pending login flow. Run `shopify auth login` first.'}
+  }
+
+  if (Date.now() > pending.expiresAt) {
+    clearPendingDeviceAuth()
+    return {status: 'expired', message: 'The login flow has expired. Run `shopify auth login` again.'}
+  }
+
+  const result = await exchangeDeviceCodeForAccessToken(pending.deviceCode)
+
+  if (result.isErr()) {
+    const error = result.error
+    if (error === 'authorization_pending' || error === 'slow_down') {
+      return {
+        status: 'pending',
+        verificationUriComplete: pending.verificationUriComplete,
+        userCode: pending.userCode,
+      }
+    }
+    if (error === 'expired_token') {
+      clearPendingDeviceAuth()
+      return {status: 'expired', message: 'The login flow has expired. Run `shopify auth login` again.'}
+    }
+
+    clearPendingDeviceAuth()
+    return {status: 'denied', message: `Authorization failed: ${error}. Run \`shopify auth login\` to try again.`}
+  }
+
+  const session = await completeAuthFlow(result.value, {})
+  const fqdn = await identityFqdn()
+  const sessions = (await sessionStore.fetch()) ?? {}
+  const sessionId = session.identity.userId
+  await sessionStore.store({
+    ...sessions,
+    [fqdn]: {...sessions[fqdn], [sessionId]: session},
+  })
+  setCurrentSessionId(sessionId)
+  clearPendingDeviceAuth()
+
+  return {status: 'success', alias: session.identity.alias ?? sessionId}
 }
 
 /**

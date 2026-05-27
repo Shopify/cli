@@ -8,10 +8,11 @@ import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
-import {isTTY} from '../../../public/node/ui.js'
+import {isTTY, keypress} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
-import {isCI} from '../../../public/node/system.js'
+import {isCI, openURL} from '../../../public/node/system.js'
+import {mockAndCaptureOutput} from '../../../public/node/testing/output.js'
 
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
@@ -64,6 +65,26 @@ describe('requestDeviceAuthorization', () => {
       body: 'client_id=clientId&scope=scope1 scope2',
     })
     expect(got).toEqual(dataExpected)
+  })
+
+  test('can request a device auth code without prompting or polling', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+    vi.mocked(isCI).mockReturnValue(true)
+
+    // When
+    const got = await requestDeviceAuthorization(['scope1', 'scope2'], {noPrompt: true})
+
+    // Then
+    expect(got).toEqual(dataExpected)
+    expect(keypress).not.toHaveBeenCalled()
+    expect(openURL).not.toHaveBeenCalled()
+    expect(outputMock.info()).toContain('User verification code: user_code')
+    expect(outputMock.info()).toContain('verification_uri_complete')
   })
 
   test('when the response is not valid JSON, throw an error with context', async () => {

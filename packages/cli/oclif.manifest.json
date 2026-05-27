@@ -3042,8 +3042,15 @@
       ],
       "args": {
       },
-      "description": "Logs you in to your Shopify account.",
+      "description": "Logs in to a Shopify account using a browser-based device authentication flow.\n\nIn an interactive terminal, Shopify CLI opens or prints a verification URL and waits for authentication to complete.\n\nIn a non-TTY environment, Shopify CLI first returns the current account if a usable session already exists. If no session exists, it starts device authorization, prints the verification URL and user code, and exits without waiting. After the user authorizes in a browser, run `shopify auth login --resume` to exchange the pending device code and store the session.\n\nUse `--new` to start a new login instead of reusing an existing session or choosing from saved accounts.",
+      "descriptionWithMarkdown": "Logs in to a Shopify account using a browser-based device authentication flow.\n\nIn an interactive terminal, Shopify CLI opens or prints a verification URL and waits for authentication to complete.\n\nIn a non-TTY environment, Shopify CLI first returns the current account if a usable session already exists. If no session exists, it starts device authorization, prints the verification URL and user code, and exits without waiting. After the user authorizes in a browser, run `shopify auth login --resume` to exchange the pending device code and store the session.\n\nUse `--new` to start a new login instead of reusing an existing session or choosing from saved accounts.",
       "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --new",
+        "<%= config.bin %> <%= command.id %> --resume",
+        "<%= config.bin %> <%= command.id %> --alias my-account"
+      ],
       "flags": {
         "alias": {
           "description": "Alias of the session you want to login to.",
@@ -3052,6 +3059,20 @@
           "multiple": false,
           "name": "alias",
           "type": "option"
+        },
+        "new": {
+          "allowNo": false,
+          "description": "Log in with a new account instead of choosing from existing sessions.",
+          "env": "SHOPIFY_FLAG_AUTH_NEW",
+          "name": "new",
+          "type": "boolean"
+        },
+        "resume": {
+          "allowNo": false,
+          "description": "Resume a pending non-interactive login flow.",
+          "env": "SHOPIFY_FLAG_AUTH_RESUME",
+          "name": "resume",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -3061,7 +3082,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true
+      "strict": true,
+      "summary": "Log in to a Shopify account."
     },
     "auth:logout": {
       "aliases": [
@@ -3086,8 +3108,8 @@
       ],
       "args": {
       },
-      "description": "Shows whether Shopify CLI has a usable Shopify account session.\n\nUse `--json` for stable machine-readable output. Agents should check this command before starting workflows that need Shopify account authentication.",
-      "descriptionWithMarkdown": "Shows whether Shopify CLI has a usable Shopify account session.\n\nUse `--json` for stable machine-readable output. Agents should check this command before starting workflows that need Shopify account authentication.",
+      "description": "Shows whether Shopify CLI has a usable Shopify account session.\n\nUse `--json` for stable machine-readable output. Agents should check this command before starting workflows that need Shopify account authentication.\n\nWhen this command reports that no usable session exists, run `shopify auth login`. In a non-TTY environment, show the verification URL and code to the user, then run `shopify auth login --resume` after the user authorizes.",
+      "descriptionWithMarkdown": "Shows whether Shopify CLI has a usable Shopify account session.\n\nUse `--json` for stable machine-readable output. Agents should check this command before starting workflows that need Shopify account authentication.\n\nWhen this command reports that no usable session exists, run `shopify auth login`. In a non-TTY environment, show the verification URL and code to the user, then run `shopify auth login --resume` after the user authorizes.",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %>",

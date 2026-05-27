@@ -1048,17 +1048,39 @@ DESCRIPTION
 
 ## `shopify auth login`
 
-Logs you in to your Shopify account.
+Log in to a Shopify account.
 
 ```
 USAGE
-  $ shopify auth login [--alias <value>]
+  $ shopify auth login [--alias <value>] [--new] [--resume]
 
 FLAGS
   --alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the session you want to login to.
+  --new            [env: SHOPIFY_FLAG_AUTH_NEW] Log in with a new account instead of choosing from existing sessions.
+  --resume         [env: SHOPIFY_FLAG_AUTH_RESUME] Resume a pending non-interactive login flow.
 
 DESCRIPTION
-  Logs you in to your Shopify account.
+  Log in to a Shopify account.
+
+  Logs in to a Shopify account using a browser-based device authentication flow.
+
+  In an interactive terminal, Shopify CLI opens or prints a verification URL and waits for authentication to complete.
+
+  In a non-TTY environment, Shopify CLI first returns the current account if a usable session already exists. If no
+  session exists, it starts device authorization, prints the verification URL and user code, and exits without waiting.
+  After the user authorizes in a browser, run `shopify auth login --resume` to exchange the pending device code and
+  store the session.
+
+  Use `--new` to start a new login instead of reusing an existing session or choosing from saved accounts.
+
+EXAMPLES
+  $ shopify auth login
+
+  $ shopify auth login --new
+
+  $ shopify auth login --resume
+
+  $ shopify auth login --alias my-account
 ```
 
 ## `shopify auth logout`
@@ -1091,6 +1113,9 @@ DESCRIPTION
 
   Use `--json` for stable machine-readable output. Agents should check this command before starting workflows that need
   Shopify account authentication.
+
+  When this command reports that no usable session exists, run `shopify auth login`. In a non-TTY environment, show the
+  verification URL and code to the user, then run `shopify auth login --resume` after the user authorizes.
 
 EXAMPLES
   $ shopify auth status

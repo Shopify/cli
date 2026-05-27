@@ -26,6 +26,14 @@ interface Cache {
   [rateLimitKey: RateLimitKey]: CacheValue<number[]>
 }
 
+export interface PendingDeviceAuth {
+  deviceCode: string
+  userCode: string
+  verificationUriComplete: string
+  interval: number
+  expiresAt: number
+}
+
 export interface ConfSchema {
   sessionStore: string
   currentSessionId?: string
@@ -33,6 +41,7 @@ export interface ConfSchema {
   currentDevSessionId?: string
   cache?: Cache
   autoUpgradeEnabled?: boolean
+  pendingDeviceAuth?: PendingDeviceAuth
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -109,6 +118,31 @@ export function setCurrentSessionId(sessionId: string, config: LocalStorage<Conf
 export function removeCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing current session ID...`)
   config.delete(currentSessionIdKey())
+}
+
+/**
+ * Get pending device auth state for a resumable non-interactive login flow.
+ *
+ * @returns Pending device auth state, if present.
+ */
+export function getPendingDeviceAuth(config: LocalStorage<ConfSchema> = cliKitStore()): PendingDeviceAuth | undefined {
+  return config.get('pendingDeviceAuth')
+}
+
+/**
+ * Stash pending device auth state for a later `shopify auth login --resume`.
+ *
+ * @param auth - Pending device auth state.
+ */
+export function setPendingDeviceAuth(auth: PendingDeviceAuth, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.set('pendingDeviceAuth', auth)
+}
+
+/**
+ * Clear pending device auth state after completion or expiry.
+ */
+export function clearPendingDeviceAuth(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.delete('pendingDeviceAuth')
 }
 
 type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['value']

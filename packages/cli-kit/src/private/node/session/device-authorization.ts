@@ -28,9 +28,13 @@ export interface DeviceAuthorizationResponse {
  * Also returns a `deviceCode` used for polling the token endpoint in the next step.
  *
  * @param scopes - The scopes to request
+ * @param options - Optional settings for presenting the device authorization instructions.
  * @returns An object with the device authorization response.
  */
-export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
+export async function requestDeviceAuthorization(
+  scopes: string[],
+  {noPrompt = false}: {noPrompt?: boolean} = {},
+): Promise<DeviceAuthorizationResponse> {
   const fqdn = await identityFqdn()
   const identityClientId = clientId()
   const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
@@ -69,32 +73,39 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     throw new BugError('Failed to start authorization process')
   }
 
-  outputInfo('\nTo run this command, log in to Shopify.')
-
-  if (isCI()) {
-    throw new AbortError(
-      'Authorization is required to continue, but the current environment does not support interactive prompts.',
-      'To resolve this, specify credentials in your environment, or run the command in an interactive environment such as your local terminal.',
-    )
-  }
-
-  outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
   const linkToken = outputToken.link(jsonResult.verification_uri_complete)
 
   const cloudMessage = () => {
     outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
   }
 
-  if (isCloudEnvironment() || !isTTY()) {
+  if (noPrompt) {
+    outputInfo('\nTo log in to Shopify, open the following URL and enter the verification code.')
+    outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
     cloudMessage()
   } else {
-    outputInfo('👉 Press any key to open the login page on your browser')
-    await keypress()
-    const opened = await openURL(jsonResult.verification_uri_complete)
-    if (opened) {
-      outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
-    } else {
+    outputInfo('\nTo run this command, log in to Shopify.')
+
+    if (isCI()) {
+      throw new AbortError(
+        'Authorization is required to continue, but the current environment does not support interactive prompts.',
+        'To resolve this, specify credentials in your environment, or run the command in an interactive environment such as your local terminal.',
+      )
+    }
+
+    outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
+
+    if (isCloudEnvironment() || !isTTY()) {
       cloudMessage()
+    } else {
+      outputInfo('👉 Press any key to open the login page on your browser')
+      await keypress()
+      const opened = await openURL(jsonResult.verification_uri_complete)
+      if (opened) {
+        outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
+      } else {
+        cloudMessage()
+      }
     }
   }
 
