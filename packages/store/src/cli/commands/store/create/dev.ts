@@ -6,6 +6,8 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 
 export default class StoreCreateDev extends Command {
+  static hidden = true
+
   static summary = 'Create a new development store.'
 
   static descriptionWithMarkdown = 'Creates a new app development store in your organization.'
@@ -21,8 +23,7 @@ export default class StoreCreateDev extends Command {
       env: 'SHOPIFY_FLAG_STORE_NAME',
     }),
     organization: Flags.string({
-      description:
-        'The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.',
+      description: 'The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.',
       env: 'SHOPIFY_FLAG_ORGANIZATION',
     }),
   }
