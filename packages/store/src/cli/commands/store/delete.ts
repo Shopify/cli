@@ -6,6 +6,8 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 
 export default class StoreDelete extends Command {
+  static hidden = true
+
   static summary = 'Delete a development store.'
 
   static descriptionWithMarkdown = 'Deletes an app development store from your organization.'
@@ -22,8 +24,7 @@ export default class StoreDelete extends Command {
       env: 'SHOPIFY_FLAG_STORE',
     }),
     organization: Flags.string({
-      description:
-        'The organization that owns the store (numeric ID). Auto-selects if you belong to a single org.',
+      description: 'The organization that owns the store (numeric ID). Auto-selects if you belong to a single org.',
       aliases: ['organization-id'],
       env: 'SHOPIFY_FLAG_ORGANIZATION',
     }),

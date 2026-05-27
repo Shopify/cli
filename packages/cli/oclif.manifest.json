@@ -5861,6 +5861,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:delete",
