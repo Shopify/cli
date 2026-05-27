@@ -6,7 +6,7 @@ import {getWebSocketUrl} from '../../extension.js'
 import {resolveOutputDir} from '../../../build/steps/include-assets/generate-manifest.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
-import {joinPath, resolvePath, relativePath, isAbsolutePath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath, isSubpath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -97,9 +97,8 @@ export function getExtensionAssetMiddleware({getExtensions, payloadStore}: GetEx
 
     const resolvedOutputDir = resolvePath(resolveOutputDir(extension.outputPath))
     const candidate = resolvePath(joinPath(resolvedOutputDir, filesystemPath))
-    const rel = relativePath(resolvedOutputDir, candidate)
 
-    if (rel.startsWith('..') || isAbsolutePath(rel)) {
+    if (!isSubpath(resolvedOutputDir, candidate)) {
       return sendError(event, {statusCode: 404, statusMessage: 'Not Found'})
     }
 
