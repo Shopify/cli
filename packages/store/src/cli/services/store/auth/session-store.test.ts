@@ -166,4 +166,5 @@ describe('store session storage', () => {
     expect(() => clearStoredStoreAppSession('shop.myshopify.com', '42', storage as any)).not.toThrow()
     expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
+
 })
