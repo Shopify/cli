@@ -247,16 +247,29 @@ export function tryParseInt(maybeInt: string | undefined): number | undefined {
  * @returns A string with the columns aligned.
  */
 export function linesToColumns(lines: string[][]): string {
+  if (lines.length === 0 || !lines[0]) return ''
+
   const widths: number[] = []
-  for (let i = 0; lines[0] && i < lines[0].length; i++) {
-    const columnRows = lines.map((line) => line[i]!)
-    widths.push(Math.max(...columnRows.map((row) => unstyled(row).length)))
+  const unstyledLengths: number[][] = []
+
+  // Pre-calculate unstyled lengths and column widths in a single pass
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!
+    unstyledLengths[i] = []
+    for (let j = 0; j < line.length; j++) {
+      const cell = line[j]!
+      const length = unstyled(cell).length
+      unstyledLengths[i]![j] = length
+      widths[j] = Math.max(widths[j] ?? 0, length)
+    }
   }
+
   const paddedLines = lines
-    .map((line) => {
+    .map((line, rowIndex) => {
       return line
-        .map((col, index) => {
-          return `${col}${' '.repeat(widths[index]! - unstyled(col).length)}`
+        .map((cell, colIndex) => {
+          const padding = ' '.repeat(widths[colIndex]! - unstyledLengths[rowIndex]![colIndex]!)
+          return `${cell}${padding}`
         })
         .join('   ')
         .trimEnd()
