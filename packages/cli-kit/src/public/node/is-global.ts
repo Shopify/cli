@@ -1,6 +1,6 @@
 import {cwd, dirname, isSubpath, joinPath, sniffForPath} from './path.js'
 import {isUnitTest} from './context/local.js'
-import {findPathUpSync, globSync, fileExistsSync} from './fs.js'
+import {findPathUpSync, globSync} from './fs.js'
 import {realpathSync} from 'fs'
 import type {PackageManager} from './node-package-manager.js'
 
@@ -140,17 +140,9 @@ export function inferPackageManagerForGlobalCLI(argv = process.argv, env = proce
  * @returns The project root directory, or undefined if not found.
  */
 export function getProjectDir(directory: string): string | undefined {
-  // Performance: Check for the most common config files first using fileExistsSync (fast-path)
-  // to avoid the overhead of globbing/directory scanning in the common case.
-  const configFiles = ['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts']
+  const configFiles = ['shopify.app{,.*}.toml', 'hydrogen.config.js', 'hydrogen.config.ts']
   const existsConfigFile = (directory: string) => {
-    for (const file of configFiles) {
-      const configPath = joinPath(directory, file)
-      if (fileExistsSync(configPath)) return configPath
-    }
-
-    // Fallback to glob for custom app config files or if fast-path files were not found.
-    const configPaths = globSync(joinPath(directory, 'shopify.app.*.toml'))
+    const configPaths = globSync(configFiles.map((file) => joinPath(directory, file)))
     return configPaths.length > 0 ? configPaths[0] : undefined
   }
   try {

@@ -18,7 +18,6 @@ import {
   generateRandomNameForSubdirectory,
   readFileSync,
   glob,
-  globSync,
   detectEOL,
   copyDirectoryContents,
   symlink,
@@ -316,40 +315,6 @@ describe('glob', () => {
       // Then
       expect(got.map((path) => normalizePath(path))).toContain(normalizePath(filePath))
       expect(got.map((path) => normalizePath(path))).not.toContain(normalizePath(dotFilePath))
-    })
-  })
-})
-
-describe('globSync', () => {
-  test('returns matches for the given pattern, including dotfiles by default (dot:true)', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const visiblePath = joinPath(tmpDir, 'visible.toml')
-      const hiddenPath = joinPath(tmpDir, '.hidden.toml')
-      await writeFile(visiblePath, '')
-      await writeFile(hiddenPath, '')
-
-      // When
-      const matches = globSync(joinPath(tmpDir, '*.toml')).map(normalizePath).sort()
-
-      // Then
-      expect(matches).toEqual([normalizePath(hiddenPath), normalizePath(visiblePath)].sort())
-    })
-  })
-
-  test('honors an explicit dot:false option, excluding dotfiles', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const visiblePath = joinPath(tmpDir, 'visible.toml')
-      const hiddenPath = joinPath(tmpDir, '.hidden.toml')
-      await writeFile(visiblePath, '')
-      await writeFile(hiddenPath, '')
-
-      // When
-      const matches = globSync(joinPath(tmpDir, '*.toml'), {dot: false}).map(normalizePath)
-
-      // Then
-      expect(matches).toEqual([normalizePath(visiblePath)])
     })
   })
 })
