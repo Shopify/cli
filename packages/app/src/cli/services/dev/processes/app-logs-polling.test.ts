@@ -9,11 +9,10 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import * as appLogsUtils from '../../app-logs/utils.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {mkdir} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../app-logs/dev/poll-app-logs.js')
 
@@ -78,7 +77,6 @@ describe('app-logs-polling', () => {
     let stdout: any
     let stderr: any
     let abortSignal: AbortSignal
-    let localApp: any
     let appWatcher: any
 
     beforeEach(async () => {
@@ -87,14 +85,6 @@ describe('app-logs-polling', () => {
       abortSignal = new AbortSignal()
       subscribeToAppLogs = vi.fn()
 
-      // Create function extension
-      localApp = testAppWithConfig({
-        config: {},
-        app: {
-          allExtensions: [await testFunctionExtension({config: DEFAULT_FUNCTION_CONFIG})],
-        },
-      })
-
       appWatcher = {
         onEvent: vi.fn().mockReturnThis(),
         onStart: vi.fn().mockReturnThis(),
@@ -102,100 +92,117 @@ describe('app-logs-polling', () => {
 
       developerPlatformClient = testDeveloperPlatformClient({subscribeToAppLogs})
 
-      vi.mocked(mkdir).mockResolvedValue()
       vi.mocked(pollAppLogs).mockResolvedValue()
       vi.spyOn(appLogsUtils, 'subscribeToAppLogs').mockResolvedValue(JWT_TOKEN)
     })
 
     test('sets up app log polling', async () => {
-      // Given
-      subscribeToAppLogs.mockResolvedValue({appLogsSubscribe: {jwtToken: JWT_TOKEN, success: true}})
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        subscribeToAppLogs.mockResolvedValue({appLogsSubscribe: {jwtToken: JWT_TOKEN, success: true}})
+        const localApp = testAppWithConfig({
+          config: {},
+          app: {
+            directory: tmpDir,
+            allExtensions: [await testFunctionExtension({config: DEFAULT_FUNCTION_CONFIG})],
+          },
+        })
 
-      // When
-      await subscribeAndStartPolling(
-        {stdout, stderr, abortSignal},
-        {
+        // When
+        await subscribeAndStartPolling(
+          {stdout, stderr, abortSignal},
+          {
+            developerPlatformClient,
+            appLogsSubscribeVariables,
+            storeName: 'storeName',
+            organizationId: 'organizationId',
+            localApp,
+            appWatcher,
+          },
+        )
+
+        expect(appWatcher.onStart).toHaveBeenCalledOnce()
+        expect(appWatcher.onEvent).toHaveBeenCalledOnce()
+
+        const startCallback = appWatcher.onStart.mock.calls[0][0]
+        const appEvent = {
+          app: localApp,
+          extensionEvents: [],
+          startTime: [0, 0],
+          path: '',
+        }
+        await startCallback(appEvent)
+
+        // Then
+        expect(outputDebug).toHaveBeenCalledWith('Function extensions detected, starting logs polling')
+        expect(appLogsUtils.subscribeToAppLogs).toHaveBeenCalledWith(
           developerPlatformClient,
           appLogsSubscribeVariables,
-          storeName: 'storeName',
-          organizationId: 'organizationId',
-          localApp,
-          appWatcher,
-        },
-      )
+          'organizationId',
+          stdout,
+        )
+        expect(fileExistsSync(localApp.getLogsDir())).toBe(true)
+        expect(pollAppLogs).toHaveBeenCalledOnce()
+        expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
+          stdout,
+          appLogsFetchInput: {jwtToken: JWT_TOKEN},
+          logsDir: localApp.getLogsDir(),
+        })
 
-      expect(appWatcher.onStart).toHaveBeenCalledOnce()
-      expect(appWatcher.onEvent).toHaveBeenCalledOnce()
-
-      const startCallback = appWatcher.onStart.mock.calls[0][0]
-      const appEvent = {
-        app: localApp,
-        extensionEvents: [],
-        startTime: [0, 0],
-        path: '',
-      }
-      await startCallback(appEvent)
-
-      // Then
-      expect(outputDebug).toHaveBeenCalledWith('Function extensions detected, starting logs polling')
-      expect(appLogsUtils.subscribeToAppLogs).toHaveBeenCalledWith(
-        developerPlatformClient,
-        appLogsSubscribeVariables,
-        'organizationId',
-        stdout,
-      )
-      expect(mkdir).toHaveBeenCalledWith(localApp.getLogsDir())
-      expect(pollAppLogs).toHaveBeenCalledOnce()
-      expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
-        stdout,
-        appLogsFetchInput: {jwtToken: JWT_TOKEN},
-        logsDir: localApp.getLogsDir(),
+        const eventCallback = appWatcher.onEvent.mock.calls[0][0]
+        expect(startCallback).toBe(eventCallback)
       })
-
-      const eventCallback = appWatcher.onEvent.mock.calls[0][0]
-      expect(startCallback).toBe(eventCallback)
     })
 
     test('prints error and returns on query errors', async () => {
-      // Given
-      vi.spyOn(appLogsUtils, 'subscribeToAppLogs').mockImplementation(() => {
-        throw new Error('uh oh, another error')
-      })
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        vi.spyOn(appLogsUtils, 'subscribeToAppLogs').mockImplementation(() => {
+          throw new Error('uh oh, another error')
+        })
+        const localApp = testAppWithConfig({
+          config: {},
+          app: {
+            directory: tmpDir,
+            allExtensions: [await testFunctionExtension({config: DEFAULT_FUNCTION_CONFIG})],
+          },
+        })
 
-      // When
-      await subscribeAndStartPolling(
-        {stdout, stderr, abortSignal},
-        {
+        // When
+        await subscribeAndStartPolling(
+          {stdout, stderr, abortSignal},
+          {
+            developerPlatformClient,
+            appLogsSubscribeVariables,
+            storeName: 'storeName',
+            organizationId: 'organizationId',
+            localApp,
+            appWatcher,
+          },
+        )
+
+        expect(appWatcher.onStart).toHaveBeenCalledOnce()
+        expect(appWatcher.onEvent).toHaveBeenCalledOnce()
+
+        const startCallback = appWatcher.onStart.mock.calls[0][0]
+        const appEvent = {
+          app: localApp,
+          extensionEvents: [],
+          startTime: [0, 0],
+          path: '',
+        }
+        await startCallback(appEvent)
+
+        // Then
+        expect(appLogsUtils.subscribeToAppLogs).toHaveBeenCalledWith(
           developerPlatformClient,
           appLogsSubscribeVariables,
-          storeName: 'storeName',
-          organizationId: 'organizationId',
-          localApp,
-          appWatcher,
-        },
-      )
-
-      expect(appWatcher.onStart).toHaveBeenCalledOnce()
-      expect(appWatcher.onEvent).toHaveBeenCalledOnce()
-
-      const startCallback = appWatcher.onStart.mock.calls[0][0]
-      const appEvent = {
-        app: localApp,
-        extensionEvents: [],
-        startTime: [0, 0],
-        path: '',
-      }
-      await startCallback(appEvent)
-
-      // Then
-      expect(appLogsUtils.subscribeToAppLogs).toHaveBeenCalledWith(
-        developerPlatformClient,
-        appLogsSubscribeVariables,
-        'organizationId',
-        stdout,
-      )
-      expect(outputDebug).toHaveBeenCalledWith('Failed to start function logs: Error: uh oh, another error', stderr)
-      expect(pollAppLogs).not.toHaveBeenCalled()
+          'organizationId',
+          stdout,
+        )
+        expect(outputDebug).toHaveBeenCalledWith('Failed to start function logs: Error: uh oh, another error', stderr)
+        expect(pollAppLogs).not.toHaveBeenCalled()
+      })
     })
   })
 })
