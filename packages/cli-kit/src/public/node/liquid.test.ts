@@ -14,6 +14,28 @@ describe('create', () => {
     // Then
     expect(got).toEqual('test')
   })
+
+  test('returns static string as-is when no Liquid syntax is present', async () => {
+    // Given
+    const templateContent = 'plain text, no templates'
+
+    // When
+    const got = await renderLiquidTemplate(templateContent, {variable: 'test'})
+
+    // Then
+    expect(got).toEqual(templateContent)
+  })
+
+  test('renders strings with only block tags', async () => {
+    // Given
+    const templateContent = '{% if true %}yes{% endif %}'
+
+    // When
+    const got = await renderLiquidTemplate(templateContent, {})
+
+    // Then
+    expect(got).toEqual('yes')
+  })
 })
 
 describe('recursiveLiquidTemplateCopy', () => {
