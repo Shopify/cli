@@ -121,6 +121,30 @@ describe('common API methods', () => {
       toLocaleLowerCaseSpy.mockRestore()
     }
   })
+
+  test('sanitizedHeadersOutput redacts additional sensitive headers', () => {
+    // Given
+    const headers = {
+      'X-Api-Key': 'secret-key',
+      'X-Shopify-Signature': 'secret-signature',
+      'X-Shopify-Shared-Secret': 'secret-secret',
+      'X-Auth-Token': 'secret-auth-token',
+      Password: 'secret-password',
+      'X-Auth-Key': 'secret-auth-key',
+    }
+
+    // When
+    const got = sanitizedHeadersOutput(headers)
+
+    // Then
+    expect(got).not.toContain('X-Api-Key')
+    expect(got).not.toContain('X-Shopify-Signature')
+    expect(got).not.toContain('X-Shopify-Shared-Secret')
+    expect(got).not.toContain('Password')
+    expect(got).not.toContain('X-Auth-Token')
+    expect(got).not.toContain('X-Auth-Key')
+    expect(got).not.toContain('secret')
+  })
 })
 
 describe('GraphQLClientError', () => {
