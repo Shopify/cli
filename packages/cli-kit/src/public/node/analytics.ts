@@ -148,7 +148,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   const wallClockElapsed = currentTime - startTime
   const totalTimeWithoutSubtimers = wallClockElapsed - totalTimeFromSubtimers
 
-  let payload = {
+  const payload = {
     public: {
       command: startCommand,
       time_start: startTime,
@@ -191,9 +191,6 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       payload.public[metric] = Math.floor(current)
     }
   })
-
-  // strip undefined fields -- they make up the majority of payloads due to wide metadata structure.
-  payload = JSON.parse(JSON.stringify(payload))
 
   return sanitizePayload(payload)
 }
