@@ -17,7 +17,7 @@ import {
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
 import {minimatch} from 'minimatch'
-import {createRequire} from 'module'
+import fastGlobLib from 'fast-glob'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -33,6 +33,7 @@ import {
   accessSync,
   ReadStream,
   WriteStream,
+  statSync,
 } from 'fs'
 
 import {
@@ -56,8 +57,6 @@ import {pathToFileURL as pathToFile} from 'url'
 import * as os from 'os'
 
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
-
-const require = createRequire(import.meta.url)
 
 /**
  * Strip the first `strip` parts of the path.
@@ -511,7 +510,7 @@ export function unixFileIsOwnedByCurrentUser(path: string): boolean | undefined 
   if (!fileExistsSync(path)) return false
 
   try {
-    const stats = fsStatSync(path)
+    const stats = statSync(path)
     const currentUid = process.getuid()
 
     return stats.uid === currentUid
@@ -595,13 +594,11 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
  * @returns An array of pathnames that match the given pattern.
  */
 export function globSync(pattern: Pattern | Pattern[], options?: GlobOptions): string[] {
-  // Performance: fast-glob is a heavy dependency. We lazy-load it here to avoid
-  // overhead during CLI startup for commands that don't need globbing.
   let overridenOptions = options
   if (options?.dot == null) {
     overridenOptions = {...options, dot: true}
   }
-  return (require('fast-glob') as typeof import('fast-glob')).sync(pattern, overridenOptions)
+  return fastGlobLib.sync(pattern, overridenOptions)
 }
 
 /**
