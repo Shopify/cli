@@ -89,6 +89,14 @@ describe('fetchTheme', () => {
       preferredBehaviour: expectedApiOptions,
     })
   })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError('`read_themes` access scope.'))
+
+    await expect(fetchTheme(123, session)).rejects.toThrow(
+      'The authenticated account or access token is missing `read_themes` access scope.',
+    )
+  })
 })
 
 describe('findDevelopmentThemeByName', () => {
@@ -151,6 +159,14 @@ describe('findDevelopmentThemeByName', () => {
 
     await expect(findDevelopmentThemeByName('PR-123', session)).rejects.toThrow()
   })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError('`read_themes` access scope.'))
+
+    await expect(findDevelopmentThemeByName('PR-123', session)).rejects.toThrow(
+      'The authenticated account or access token is missing `read_themes` access scope.',
+    )
+  })
 })
 
 describe('fetchThemes', () => {
@@ -187,6 +203,33 @@ describe('fetchThemes', () => {
 
     expect(themes[0]!.processing).toBeFalsy()
     expect(themes[1]!.processing).toBeTruthy()
+  })
+
+  test('throws a friendly error when the token is missing the required themes access scope', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError('`read_themes` access scope.'))
+
+    // When/Then
+    await expect(fetchThemes(session)).rejects.toMatchObject({
+      message: 'The authenticated account or access token is missing `read_themes` access scope.',
+      nextSteps: expect.arrayContaining([
+        expect.arrayContaining([
+          'If you authenticated with an Admin API access token, update the app or integration that issued the token to include the required theme access scopes, then reauthorize it or generate a new token.',
+        ]),
+        expect.arrayContaining([{command: 'theme pull'}, {command: 'read_themes'}]),
+        expect.arrayContaining([{command: 'shopify auth logout'}]),
+      ]),
+    })
+  })
+
+  test('throws a friendly error when access denied errors omit required access details', async () => {
+    // Given
+    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError())
+
+    // When/Then
+    await expect(fetchThemes(session)).rejects.toThrow(
+      'The authenticated account or access token is missing the required theme access scope.',
+    )
   })
 })
 
@@ -764,3 +807,24 @@ describe('parseThemeFileContent', () => {
     })
   })
 })
+
+function themeAccessDeniedError(requiredAccess?: string): ClientError {
+  const extensions = requiredAccess ? {code: 'ACCESS_DENIED', requiredAccess} : {code: 'ACCESS_DENIED'}
+  const message = requiredAccess
+    ? `Access denied for themes field. Required access: ${requiredAccess}`
+    : 'Access denied for themes field.'
+
+  return new ClientError(
+    {
+      status: 200,
+      errors: [
+        {
+          message,
+          extensions,
+          path: ['themes'],
+        } as any,
+      ],
+    },
+    {query: ''},
+  )
+}
