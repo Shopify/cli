@@ -1,5 +1,7 @@
 import crypto from 'crypto'
 
+const NON_RANDOM_UUID_NAMESPACE_BUFFER = Buffer.from('6ba7b8109dad11d180b400c04fd430c8', 'hex')
+
 /**
  * Generate a random string in Hex format of the provided size.
  *
@@ -17,7 +19,7 @@ export function randomHex(size: number): string {
  * @returns The encoded string.
  */
 export function base64URLEncode(str: Buffer): string {
-  return str.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]/g, '')
+  return str.toString('base64url')
 }
 
 /**
@@ -73,18 +75,13 @@ export function randomUUID(): string {
  * Generate a non-random UUID string.
  * Useful for generating an identifier from a string that is consistent
  * across different runs of the CLI.
+ * This returns a SHA1-derived UUID-like identifier, not a standards-compliant UUID.
  *
  * @param subject - The subject to generate the UUID from.
  * @returns A non-random UUID string.
  */
 export function nonRandomUUID(subject: string): string {
-  // A fixed namespace UUID
-  const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
-  return crypto
-    .createHash('sha1')
-    .update(Buffer.from(namespace.replace(/-/g, ''), 'hex'))
-    .update(subject)
-    .digest()
-    .toString('hex')
-    .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
+  const hash = crypto.createHash('sha1').update(NON_RANDOM_UUID_NAMESPACE_BUFFER).update(subject).digest('hex')
+
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}${hash.slice(32)}`
 }
