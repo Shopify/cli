@@ -160,14 +160,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists, skipping"
+          # gh release create does not support the REST API's make_latest=legacy option.
+          RELEASE_ID="$(gh release view "$TAG" --json databaseId --jq .databaseId 2>/dev/null || true)"
+          if [ -n "$RELEASE_ID" ]; then
+            gh api \
+              --method PATCH \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" \
+              -f make_latest=legacy >/dev/null
+            echo "Release $TAG already exists; ensured make_latest=legacy"
             exit 0
           fi
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --generate-notes \
-            --latest=legacy
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$GITHUB_REPOSITORY/releases" \
+            -f tag_name="$TAG" \
+            -f name="$TAG" \
+            -F generate_release_notes=true \
+            -f make_latest=legacy >/dev/null
           echo "Created release $TAG"
 
   # Manual/Cron release job - runs on schedule or manual trigger with tag
