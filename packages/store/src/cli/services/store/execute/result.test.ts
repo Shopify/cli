@@ -71,7 +71,9 @@ describe('writeOrOutputStoreExecuteResult', () => {
 
   test('writes json results to stdout without writing to stderr', async () => {
     process.env.SHOPIFY_UNIT_TEST = 'false'
+    vi.resetModules()
     const streams = captureStandardStreams()
+    const {writeOrOutputStoreExecuteResult} = await import('./result.js')
 
     try {
       await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, undefined, 'json')

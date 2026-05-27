@@ -75,9 +75,11 @@ describe('store auth presenter', () => {
     expect(output.info()).not.toContain('shopify store execute')
   })
 
-  test('writes browser guidance to stderr and json success to stdout', () => {
+  test('writes browser guidance to stderr and json success to stdout', async () => {
     process.env.SHOPIFY_UNIT_TEST = 'false'
+    vi.resetModules()
     const streams = captureStandardStreams()
+    const {createStoreAuthPresenter} = await import('./result.js')
     const presenter = createStoreAuthPresenter('json')
 
     try {
