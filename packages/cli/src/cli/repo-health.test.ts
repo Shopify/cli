@@ -141,3 +141,29 @@ describe('oclif manifest packaging', () => {
     ).toHaveLength(0)
   })
 })
+
+describe('CLI package runtime dependencies', () => {
+  test('declares lazy runtime dependencies used by bundled cli-kit code', async () => {
+    const cliPackageJson = JSON.parse(
+      await fs.readFile(path.join(repoRoot, 'packages/cli/package.json'), 'utf-8'),
+    ) as PackageJson
+    const cliKitFsSource = await fs.readFile(path.join(repoRoot, 'packages/cli-kit/src/public/node/fs.ts'), 'utf-8')
+
+    const lazyRuntimeDependencies = [...cliKitFsSource.matchAll(/require\(['"]([^.'"][^'"]*)['"]\)/g)].map(
+      ([, dependency]) => dependency,
+    )
+    const missingRuntimeDependencies = lazyRuntimeDependencies.filter(
+      (dependency) => !cliPackageJson.dependencies?.[dependency],
+    )
+
+    expect(
+      missingRuntimeDependencies,
+      [
+        'The following dependencies are lazy-required by cli-kit code that is bundled into @shopify/cli,',
+        'but are not declared in packages/cli/package.json dependencies:\n',
+        ...missingRuntimeDependencies.map((dependency) => `  - ${dependency}\n`),
+        '\nThe published @shopify/cli package must install these dependencies, otherwise commands fail at runtime once the lazy require path is hit.',
+      ].join(' '),
+    ).toHaveLength(0)
+  })
+})
