@@ -45,14 +45,24 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
  * @returns A promise that resolves with a boolean indicating if the port is available.
  */
 export async function checkPortAvailability(portNumber: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = createServer()
-    server.unref()
-    server.once('error', () => resolve(false))
-    server.listen(portNumber, 'localhost', () => {
-      server.close(() => resolve(true))
+  const check = (host: string) =>
+    new Promise<boolean>((resolve) => {
+      const server = createServer()
+      server.unref()
+      server.once('error', (err: any) => {
+        if (host === '::1' && ['EADDRNOTAVAIL', 'EAFNOSUPPORT'].includes(err.code)) {
+          resolve(true)
+        } else {
+          resolve(false)
+        }
+      })
+      server.listen(portNumber, host, () => {
+        server.close(() => resolve(true))
+      })
     })
-  })
+
+  const [v4Available, v6Available] = await Promise.all([check('127.0.0.1'), check('::1')])
+  return v4Available && v6Available
 }
 
 /**
@@ -60,21 +70,30 @@ export async function checkPortAvailability(portNumber: number): Promise<boolean
  *
  * @returns A promise that resolves with an available port number.
  */
-function getRandomPort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = createServer()
-    server.unref()
-    server.once('error', reject)
-    server.listen(0, 'localhost', () => {
-      const address = server.address()
-      if (address && typeof address === 'object') {
-        const assignedPort = address.port
-        server.close(() => resolve(assignedPort))
-      } else {
-        server.close(() => reject(new Error('Unable to determine assigned port')))
-      }
+async function getRandomPort(): Promise<number> {
+  for (let i = 0; i < 10; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const port = await new Promise<number>((resolve, reject) => {
+      const server = createServer()
+      server.unref()
+      server.once('error', reject)
+      server.listen(0, '127.0.0.1', () => {
+        const address = server.address()
+        if (address && typeof address === 'object') {
+          const assignedPort = address.port
+          server.close(() => resolve(assignedPort))
+        } else {
+          server.close(() => reject(new Error('Unable to determine assigned port')))
+        }
+      })
     })
-  })
+
+    // eslint-disable-next-line no-await-in-loop
+    if (await checkPortAvailability(port)) {
+      return port
+    }
+  }
+  throw new Error('Failed to find a port available on both IPv4 and IPv6 after 10 tries')
 }
 
 /**
