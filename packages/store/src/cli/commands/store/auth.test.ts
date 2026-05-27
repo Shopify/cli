@@ -40,6 +40,8 @@ describe('store auth command', () => {
     expect(StoreAuth.flags.store).toBeDefined()
     expect(StoreAuth.flags.scopes).toBeDefined()
     expect(StoreAuth.flags.json).toBeDefined()
+    expect('resume' in StoreAuth.flags).toBe(false)
+    expect('callback-url' in StoreAuth.flags).toBe(false)
     expect('port' in StoreAuth.flags).toBe(false)
     expect('client-secret-file' in StoreAuth.flags).toBe(false)
   })

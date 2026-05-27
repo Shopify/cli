@@ -5730,8 +5730,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
-      "descriptionWithMarkdown": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
+      "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.\n\nIn an interactive terminal, Shopify CLI opens or prints the authorization URL and waits for authentication to complete. Agents should keep the command running until the browser authorization finishes.\n\nIn a non-TTY environment, Shopify CLI returns the current session if it already has the requested scopes. If no usable session exists, it starts the same OAuth flow and waits for authentication to complete.",
+      "descriptionWithMarkdown": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.\n\nIn an interactive terminal, Shopify CLI opens or prints the authorization URL and waits for authentication to complete. Agents should keep the command running until the browser authorization finishes.\n\nIn a non-TTY environment, Shopify CLI returns the current session if it already has the requested scopes. If no usable session exists, it starts the same OAuth flow and waits for authentication to complete.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --json"
@@ -5760,7 +5760,6 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "scopes",
-          "required": true,
           "type": "option"
         },
         "store": {
@@ -5770,7 +5769,6 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
-          "required": true,
           "type": "option"
         },
         "verbose": {

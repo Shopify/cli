@@ -1,17 +1,27 @@
 import {authenticateStoreWithApp} from './index.js'
-import {setStoredStoreAppSession} from './session-store.js'
+import {getCurrentStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
-import {describe, expect, test, vi} from 'vitest'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./session-store.js')
 vi.mock('../attribution.js')
 vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
+vi.mock('@shopify/cli-kit/node/system', () => ({
+  openURL: vi.fn().mockResolvedValue(true),
+  terminalSupportsPrompting: vi.fn().mockReturnValue(true),
+}))
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
 
 describe('store auth service', () => {
+  beforeEach(() => {
+    vi.mocked(randomUUID).mockReturnValue('state-123')
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+  })
+
   test('authenticateStoreWithApp opens the browser, stores the session, and returns auth result', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const presenter = {
@@ -75,6 +85,92 @@ describe('store auth service', () => {
       lastName: undefined,
       accountOwner: undefined,
     })
+  })
+
+  test('authenticateStoreWithApp keeps waiting for auth when the terminal cannot prompt', async () => {
+    const openURL = vi.fn().mockResolvedValue(false)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    const result = await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+      },
+      {
+        openURL,
+        presenter,
+        terminalSupportsPrompting: vi.fn().mockReturnValue(false),
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+      },
+    )
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        userId: '42',
+        scopes: ['read_products'],
+      }),
+    )
+    expect(presenter.openingBrowser).toHaveBeenCalledOnce()
+    expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
+      expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
+    )
+    expect(presenter.success).toHaveBeenCalledWith(result)
+  })
+
+  test('authenticateStoreWithApp returns existing session without auth when non-TTY scopes are already granted', async () => {
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'token',
+      scopes: ['read_products'],
+      acquiredAt: '2026-03-27T00:00:00.000Z',
+      associatedUser: {id: 42, email: 'test@example.com'},
+    })
+
+    const result = await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+      },
+      {
+        presenter,
+        resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['read_products'], authoritative: true}),
+        terminalSupportsPrompting: vi.fn().mockReturnValue(false),
+        waitForStoreAuthCode: vi.fn(),
+        exchangeStoreAuthCodeForToken: vi.fn(),
+      },
+    )
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        userId: '42',
+        scopes: ['read_products'],
+        associatedUser: expect.objectContaining({email: 'test@example.com'}),
+      }),
+    )
+    expect(presenter.success).toHaveBeenCalledWith(result)
   })
 
   test('authenticateStoreWithApp uses remote scopes by default when available', async () => {

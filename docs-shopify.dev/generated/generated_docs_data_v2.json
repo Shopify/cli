@@ -4190,6 +4190,7 @@
           "name": "--scopes <value>",
           "value": "string",
           "description": "Comma-separated Admin API scopes to request for the app.",
+          "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_SCOPES"
         },
         {
@@ -4216,10 +4217,11 @@
           "name": "-s, --store <value>",
           "value": "string",
           "description": "The myshopify.com domain of the store to authenticate against.",
+          "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
-      "value": "export interface storeauth {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Comma-separated Admin API scopes to request for the app.\n   * @environment SHOPIFY_FLAG_SCOPES\n   */\n  '--scopes <value>': string\n\n  /**\n   * The myshopify.com domain of the store to authenticate against.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface storeauth {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Comma-separated Admin API scopes to request for the app.\n   * @environment SHOPIFY_FLAG_SCOPES\n   */\n  '--scopes <value>'?: string\n\n  /**\n   * The myshopify.com domain of the store to authenticate against.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "storeexecute": {

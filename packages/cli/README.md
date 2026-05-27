@@ -2157,15 +2157,14 @@ Authenticate an app against a store for store commands.
 
 ```
 USAGE
-  $ shopify store auth --scopes <value> -s <value> [-j] [--no-color] [--verbose]
+  $ shopify store auth [-j] [--no-color] [--scopes <value>] [-s <value>] [--verbose]
 
 FLAGS
-  -j, --json            [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-  -s, --store=<value>   (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to authenticate
-                        against.
-      --no-color        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --scopes=<value>  (required) [env: SHOPIFY_FLAG_SCOPES] Comma-separated Admin API scopes to request for the app.
-      --verbose         [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -j, --json                  [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -s, --store=<value>         [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to authenticate against.
+      --no-color              [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --scopes=<value>        [env: SHOPIFY_FLAG_SCOPES] Comma-separated Admin API scopes to request for the app.
+      --verbose               [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Authenticate an app against a store for store commands.
@@ -2174,6 +2173,12 @@ DESCRIPTION
   reuse.
 
   Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
+
+  In an interactive terminal, Shopify CLI opens or prints the authorization URL and waits for authentication to complete.
+  Agents should keep the command running until the browser authorization finishes.
+
+  In a non-TTY environment, Shopify CLI returns the current session if it already has the requested scopes. If no usable
+  session exists, it starts the same OAuth flow and waits for authentication to complete.
 
 EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products

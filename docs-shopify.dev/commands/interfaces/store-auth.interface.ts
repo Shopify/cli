@@ -20,13 +20,13 @@ export interface storeauth {
    * Comma-separated Admin API scopes to request for the app.
    * @environment SHOPIFY_FLAG_SCOPES
    */
-  '--scopes <value>': string
+  '--scopes <value>'?: string
 
   /**
    * The myshopify.com domain of the store to authenticate against.
    * @environment SHOPIFY_FLAG_STORE
    */
-  '-s, --store <value>': string
+  '-s, --store <value>'?: string
 
   /**
    * Increase the verbosity of the output.

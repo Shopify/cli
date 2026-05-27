@@ -1,6 +1,7 @@
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import StoreCommand from '../../utilities/store-command.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
@@ -10,7 +11,11 @@ export default class StoreAuth extends StoreCommand {
 
   static descriptionWithMarkdown = `Authenticates the app against the specified store for store commands and stores an online access token for later reuse.
 
-Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`
+Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
+
+In an interactive terminal, Shopify CLI opens or prints the authorization URL and waits for authentication to complete. Agents should keep the command running until the browser authorization finishes.
+
+In a non-TTY environment, Shopify CLI returns the current session if it already has the requested scopes. If no usable session exists, it starts the same OAuth flow and waits for authentication to complete.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -27,17 +32,20 @@ Re-run this command if the stored token is missing, expires, or no longer has th
       description: 'The myshopify.com domain of the store to authenticate against.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => normalizeStoreFqdn(input),
-      required: true,
     }),
     scopes: Flags.string({
       description: 'Comma-separated Admin API scopes to request for the app.',
       env: 'SHOPIFY_FLAG_SCOPES',
-      required: true,
     }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreAuth)
+    const presenter = createStoreAuthPresenter(flags.json ? 'json' : 'text')
+
+    if (!flags.store || !flags.scopes) {
+      throw new AbortError('Missing required flags.', 'Pass --store and --scopes.')
+    }
 
     await authenticateStoreWithApp(
       {
@@ -45,7 +53,7 @@ Re-run this command if the stored token is missing, expires, or no longer has th
         scopes: flags.scopes,
       },
       {
-        presenter: createStoreAuthPresenter(flags.json ? 'json' : 'text'),
+        presenter,
       },
     )
   }
