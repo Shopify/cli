@@ -6,6 +6,6 @@ export async function recordStoreFqdnMetadata(storeFqdn: string, validated: bool
   await addPublicMetadata(() => ({
     store_fqdn_hash: hashString(storeFqdn),
     store_fqdn_validated: validated,
-    store_shop_domain: storeFqdn,
+    store_domain: storeFqdn,
   }))
 }

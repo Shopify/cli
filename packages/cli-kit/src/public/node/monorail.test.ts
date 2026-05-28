@@ -70,7 +70,7 @@ describe('monorail', () => {
         user_id: '42',
         store_fqdn_hash: 'hashed-store',
         store_fqdn_validated: true,
-        store_shop_domain: 'shop.myshopify.com',
+        store_domain: 'shop.myshopify.com',
       },
       {
         args: '--store shop.myshopify.com',
@@ -99,7 +99,7 @@ describe('monorail', () => {
             user_id: '42',
             store_fqdn_hash: 'hashed-store',
             store_fqdn_validated: true,
-            store_shop_domain: 'shop.myshopify.com',
+            store_domain: 'shop.myshopify.com',
             args: '--store shop.myshopify.com',
             store_fqdn: 'shop.myshopify.com',
           },

@@ -82,7 +82,7 @@ async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean)
   await metadata.addPublicMetadata(() => ({
     cmd_app_reset_used: resetUsed,
     store_fqdn_hash: hashString(selectedStore.shopDomain),
-    store_shop_domain: selectedStore.shopDomain,
+    store_domain: selectedStore.shopDomain,
   }))
 
   await metadata.addSensitiveMetadata(() => ({
