@@ -82,5 +82,7 @@ export const aliases = (packagePath: string) => {
       },
     },
     {find: '@shopify/theme', replacement: path.join(packagePath, '../theme/src/index')},
+    {find: '@shopify/organizations', replacement: path.join(packagePath, '../organizations/src/index')},
+    {find: '@shopify/store', replacement: path.join(packagePath, '../store/src/index')},
   ]
 }

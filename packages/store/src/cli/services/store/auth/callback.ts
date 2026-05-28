@@ -135,7 +135,7 @@ export async function waitForStoreAuthCode({
       outputDebug(outputContent`Received OAuth callback for shop ${outputToken.raw(returnedStore ?? 'unknown')}`)
 
       if (!returnedStore) {
-        fail('OAuth callback store doesn\'t match the requested store')
+        fail('OAuth callback store does not match the requested store.')
         return
       }
 
@@ -147,7 +147,7 @@ export async function waitForStoreAuthCode({
 
       const returnedState = searchParams.get('state')
       if (!returnedState || !constantTimeEqual(returnedState, state)) {
-        fail('OAuth callback state doesn\'t match the original request')
+        fail('OAuth callback state does not match the original request.')
         return
       }
 
@@ -159,7 +159,7 @@ export async function waitForStoreAuthCode({
 
       const code = searchParams.get('code')
       if (!code) {
-        fail('OAuth callback didn\'t include an authorization code')
+        fail('OAuth callback did not include an authorization code.')
         return
       }
 

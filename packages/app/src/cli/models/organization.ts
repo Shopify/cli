@@ -1,14 +1,13 @@
 import {AppConfigurationUsedByCli} from './extensions/specifications/types/app_config.js'
 import {Flag, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {Organization as BaseOrganization} from '@shopify/organizations'
 
 export enum OrganizationSource {
   Partners = 'Partners',
   BusinessPlatform = 'BusinessPlatform',
 }
 
-export interface Organization {
-  id: string
-  businessName: string
+export interface Organization extends BaseOrganization {
   source: OrganizationSource
 }
 
