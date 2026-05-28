@@ -1,39 +1,10 @@
 import {createStoreAuthPresenter} from './result.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-function captureStandardStreams() {
-  const stdout: string[] = []
-  const stderr: string[] = []
-
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stdout.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stdout.write)
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stderr.write)
-
-  return {
-    stdout: () => stdout.join(''),
-    stderr: () => stderr.join(''),
-    restore: () => {
-      stdoutSpy.mockRestore()
-      stderrSpy.mockRestore()
-    },
-  }
-}
-
 describe('store auth presenter', () => {
-  const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
-
   beforeEach(() => {
     mockAndCaptureOutput().clear()
-  })
-
-  afterEach(() => {
-    process.env.SHOPIFY_UNIT_TEST = originalUnitTestEnv
   })
 
   test('renders human success output in text mode', () => {
@@ -75,30 +46,26 @@ describe('store auth presenter', () => {
     expect(output.info()).not.toContain('shopify store execute')
   })
 
-  test('writes browser guidance to stderr and json success to stdout', () => {
-    process.env.SHOPIFY_UNIT_TEST = 'false'
-    const streams = captureStandardStreams()
+  test('writes browser guidance and json success output', () => {
+    const output = mockAndCaptureOutput()
     const presenter = createStoreAuthPresenter('json')
 
-    try {
-      presenter.openingBrowser()
-      presenter.manualAuthUrl('https://shop.myshopify.com/admin/oauth/authorize?client_id=test')
-      presenter.success({
-        store: 'shop.myshopify.com',
-        userId: '42',
-        scopes: ['read_products'],
-        acquiredAt: '2026-04-02T00:00:00.000Z',
-        hasRefreshToken: true,
-        associatedUser: {id: 42, email: 'merchant@example.com'},
-      })
-    } finally {
-      streams.restore()
-    }
+    presenter.openingBrowser()
+    presenter.manualAuthUrl('https://shop.myshopify.com/admin/oauth/authorize?client_id=test')
+    presenter.success({
+      store: 'shop.myshopify.com',
+      userId: '42',
+      scopes: ['read_products'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+      hasRefreshToken: true,
+      associatedUser: {id: 42, email: 'merchant@example.com'},
+    })
 
-    expect(streams.stderr()).toContain('Shopify CLI will open the app authorization page in your browser.')
-    expect(streams.stderr()).toContain('Browser did not open automatically. Open this URL manually:')
-    expect(streams.stderr()).toContain('https://shop.myshopify.com/admin/oauth/authorize?client_id=test')
-    expect(streams.stdout()).toContain('"store": "shop.myshopify.com"')
-    expect(streams.stdout()).not.toContain('Authenticated')
+    expect(output.info()).toContain('Shopify CLI will open the app authorization page in your browser.')
+    expect(output.info()).toContain('Keep this command running until authentication completes in the browser.')
+    expect(output.info()).toContain('Browser did not open automatically. Open this URL manually:')
+    expect(output.info()).toContain('https://shop.myshopify.com/admin/oauth/authorize?client_id=test')
+    expect(output.output()).toContain('"store": "shop.myshopify.com"')
+    expect(output.output()).not.toContain('Authenticated')
   })
 })

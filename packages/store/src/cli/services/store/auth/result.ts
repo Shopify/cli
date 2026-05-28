@@ -44,12 +44,14 @@ function buildStoreAuthSuccessText(result: StoreAuthResult): {completed: string[
 
 function displayStoreAuthOpeningBrowser(): void {
   outputInfo('Shopify CLI will open the app authorization page in your browser.')
+  outputInfo('Keep this command running until authentication completes in the browser.')
   outputInfo('')
 }
 
 function displayStoreAuthManualAuthUrl(authorizationUrl: string): void {
   outputInfo('Browser did not open automatically. Open this URL manually:')
   outputInfo(outputContent`${outputToken.link(authorizationUrl)}`)
+  outputInfo('Keep this command running until authentication completes in the browser.')
   outputInfo('')
 }
 

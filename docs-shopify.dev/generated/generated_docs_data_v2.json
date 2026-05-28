@@ -4190,6 +4190,7 @@
           "name": "--scopes <value>",
           "value": "string",
           "description": "Comma-separated Admin API scopes to request for the app.",
+          "isOptional": false,
           "environmentValue": "SHOPIFY_FLAG_SCOPES"
         },
         {
@@ -4216,6 +4217,7 @@
           "name": "-s, --store <value>",
           "value": "string",
           "description": "The myshopify.com domain of the store to authenticate against.",
+          "isOptional": false,
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
