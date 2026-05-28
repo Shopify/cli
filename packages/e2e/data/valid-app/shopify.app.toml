@@ -44,3 +44,6 @@ include_config_on_deploy = true
 
 [app_preferences]
 url = "https://example.com/preferences"
+
+[sidekick]
+extensions_summary = "Read, create, and edit FAQ entries stored in the app"
