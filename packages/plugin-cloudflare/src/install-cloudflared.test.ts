@@ -1,5 +1,6 @@
 import install, {CURRENT_CLOUDFLARE_VERSION, versionIsGreaterThan} from './install-cloudflared.js'
 import * as http from '@shopify/cli-kit/node/http'
+import * as system from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -9,6 +10,7 @@ import {writeFileSync} from 'fs'
 import * as childProcess from 'child_process'
 
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/system')
 
 vi.mock('child_process')
 
@@ -42,11 +44,11 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
+      vi.mocked(system.exec).mockImplementation((_command, _args, options) => {
         // Simulate tar extracting the file
         const cwd = options?.cwd as string
         writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
-        return Buffer.from('')
+        return Promise.resolve()
       })
 
       // When
@@ -69,10 +71,10 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
+      vi.mocked(system.exec).mockImplementation((_command, _args, options) => {
         const cwd = options?.cwd as string
         writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
-        return Buffer.from('')
+        return Promise.resolve()
       })
 
       // When
