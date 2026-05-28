@@ -171,6 +171,8 @@ export type MetafieldOwnerType =
   | 'SELLING_PLAN'
   /** The Shop metafield owner type. */
   | 'SHOP'
+  /** The Transfer metafield owner type. */
+  | 'TRANSFER'
   /** The Validation metafield owner type. */
   | 'VALIDATION';
 
