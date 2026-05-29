@@ -86,7 +86,7 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
         if (process.env.DEBUG === '1') process.stdout.write(data)
       })
 
-      await waitForText(() => output, 'Open this link to start the auth process', CLI_TIMEOUT.short)
+      await waitForText(() => output, 'link to start the auth process', CLI_TIMEOUT.short)
 
       const stripped = stripAnsi(output)
       const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
