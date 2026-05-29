@@ -2,6 +2,7 @@ import {getHotReloadHandler, setupInMemoryTemplateWatcher} from './hot-reload/se
 import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
+import {storefrontFqdn} from './storefront-renderer.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
@@ -130,7 +131,11 @@ interface DevelopmentServerInstance {
 
 function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
   const app = createApp()
-  const allowedOrigins = [`http://${ctx.options.host}:${ctx.options.port}`, `https://${ctx.session.storeFqdn}`]
+  const allowedOrigins = [
+    `http://${ctx.options.host}:${ctx.options.port}`,
+    `https://${ctx.session.storeFqdn}`,
+    `https://${storefrontFqdn(ctx.session)}`,
+  ]
 
   app.use(
     defineLazyEventHandler(async () => {

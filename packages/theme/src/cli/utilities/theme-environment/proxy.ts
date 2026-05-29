@@ -1,5 +1,5 @@
 import {cleanHeader, defaultHeaders} from './storefront-utils.js'
-import {buildCookies} from './storefront-renderer.js'
+import {buildCookies, storefrontFqdn} from './storefront-renderer.js'
 import {logRequestLine} from '../log-request-line.js'
 
 import {createFetchError, extractFetchErrorInfo} from '../errors.js'
@@ -116,7 +116,7 @@ export function canProxyRequest(event: H3Event) {
 }
 
 function getStoreFqdnForRegEx(ctx: DevServerContext) {
-  return ctx.session.storeFqdn.replace(/\\/g, '\\\\').replace(/\./g, '\\.')
+  return storefrontFqdn(ctx.session).replace(/\\/g, '\\\\').replace(/\./g, '\\.')
 }
 
 /**
@@ -307,7 +307,7 @@ export function getProxyStorefrontHeaders(event: H3Event) {
 
 export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): Promise<Response> {
   const path = event.path.replace(new RegExp(EXTENSION_CDN_PREFIX, 'g'), '/')
-  const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
+  const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : storefrontFqdn(ctx.session)
   const url = new URL(path, `https://${host}`)
 
   // Check that we aren't redirecting to external hosts

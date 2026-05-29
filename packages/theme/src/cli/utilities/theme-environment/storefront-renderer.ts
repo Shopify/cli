@@ -136,12 +136,16 @@ function buildStorefrontUrl(session: DevServerSession, {path, sectionId, appBloc
   return `${url}?${params}`
 }
 
-export function buildBaseStorefrontUrl(session: AdminSession) {
+export function buildBaseStorefrontUrl(session: AdminSession & {storefrontFqdn?: string}) {
   if (isThemeAccessSession(session)) {
     return `https://${getThemeKitAccessDomain()}/cli/sfr`
   } else {
-    return `https://${session.storeFqdn}`
+    return `https://${storefrontFqdn(session)}`
   }
+}
+
+export function storefrontFqdn(session: AdminSession & {storefrontFqdn?: string}) {
+  return session.storefrontFqdn ?? session.storeFqdn
 }
 
 function isThemeAccessSession(session: AdminSession) {
@@ -150,7 +154,7 @@ function isThemeAccessSession(session: AdminSession) {
 
 function themeAccessHeaders(session: DevServerSession) {
   return {
-    'X-Shopify-Shop': session.storeFqdn,
+    'X-Shopify-Shop': storefrontFqdn(session),
     'X-Shopify-Access-Token': session.token,
   }
 }
