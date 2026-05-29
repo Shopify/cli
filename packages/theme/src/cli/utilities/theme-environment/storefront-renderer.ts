@@ -23,6 +23,7 @@ export async function render(session: DevServerSession, context: DevServerRender
     response = await fetch(url, {
       method: 'POST',
       body: bodyParams,
+      redirect: 'manual',
       headers: {
         ...headers,
         ...defaultHeaders(),
@@ -36,6 +37,7 @@ export async function render(session: DevServerSession, context: DevServerRender
     // eslint-disable-next-line no-restricted-globals
     response = await fetch(url, {
       method: context.method,
+      redirect: 'manual',
       headers: {
         ...headers,
         ...defaultHeaders(),
