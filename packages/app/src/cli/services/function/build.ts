@@ -14,6 +14,7 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {AppInterface} from '../../models/app/app.js'
 import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -313,7 +314,7 @@ async function importedWasmModules(modulePath: string): Promise<string[]> {
   const imports = WebAssembly.Module.imports(module)
   // Sets preserve insertion order so the returned array should be
   // deterministic when given the same Wasm module
-  return [...new Set(imports.map((importItem) => importItem.module))]
+  return uniq(imports.map((importItem) => importItem.module))
 }
 
 export async function runJavy(
