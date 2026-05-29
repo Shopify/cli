@@ -31,7 +31,15 @@ export async function renderDev({
   localURL?: string
 }) {
   if (!terminalSupportsPrompting()) {
-    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
+    await renderDevNonInteractive({
+      processes,
+      previewUrl,
+      graphiqlUrl,
+      app,
+      abortController,
+      developerPreview,
+      shopFqdn,
+    })
   } else if (app.developerPlatformClient.supportsDevSessions) {
     return render(
       <DevSessionUI
@@ -74,16 +82,23 @@ export async function renderDev({
 
 async function renderDevNonInteractive({
   processes,
+  previewUrl,
+  graphiqlUrl,
   app: {canEnablePreviewMode},
   abortController,
   developerPreview,
-}: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
+}: Omit<DevProps, 'graphiqlPort'>) {
   if (canEnablePreviewMode) {
     await developerPreview.enable()
     abortController?.signal.addEventListener('abort', async () => {
       await developerPreview.disable()
     })
   }
+  process.stdout.write(`\nPreview URL: ${previewUrl}\n`)
+  if (graphiqlUrl) {
+    process.stdout.write(`GraphiQL URL (Admin API): ${graphiqlUrl}\n`)
+  }
+
   return Promise.all(
     processes.map(async (concurrentProcess) => {
       await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
