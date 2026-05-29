@@ -1,8 +1,7 @@
 import {prepareStoreExecuteRequest} from './request.js'
-import {describe, expect, test, vi} from 'vitest'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-
-vi.mock('@shopify/cli-kit/node/fs')
+import {describe, expect, test} from 'vitest'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('prepareStoreExecuteRequest', () => {
   test('returns a prepared request for an inline query', async () => {
@@ -21,24 +20,33 @@ describe('prepareStoreExecuteRequest', () => {
   })
 
   test('reads the query from a file', async () => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readFile).mockResolvedValueOnce('query { shop { name } }' as any)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryPath = joinPath(tmpDir, 'operation.graphql')
+      await writeFile(queryPath, 'query { shop { name } }')
 
-    const request = await prepareStoreExecuteRequest({
-      queryFile: '/tmp/operation.graphql',
+      // When
+      const request = await prepareStoreExecuteRequest({
+        queryFile: queryPath,
+      })
+
+      // Then
+      expect(request.query).toBe('query { shop { name } }')
     })
-
-    expect(request.query).toBe('query { shop { name } }')
   })
 
   test('throws when the query file does not exist', async () => {
-    vi.mocked(fileExists).mockResolvedValue(false)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryPath = joinPath(tmpDir, 'missing.graphql')
 
-    await expect(
-      prepareStoreExecuteRequest({
-        queryFile: '/tmp/missing.graphql',
-      }),
-    ).rejects.toThrow('Query file not found')
+      // When/Then
+      await expect(
+        prepareStoreExecuteRequest({
+          queryFile: queryPath,
+        }),
+      ).rejects.toThrow('Query file not found')
+    })
   })
 
   test('throws when the inline query is empty', async () => {
@@ -50,14 +58,18 @@ describe('prepareStoreExecuteRequest', () => {
   })
 
   test('throws when the query file is empty', async () => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readFile).mockResolvedValueOnce('   ' as any)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryPath = joinPath(tmpDir, 'operation.graphql')
+      await writeFile(queryPath, '   ')
 
-    await expect(
-      prepareStoreExecuteRequest({
-        queryFile: '/tmp/operation.graphql',
-      }),
-    ).rejects.toThrow('is empty')
+      // When/Then
+      await expect(
+        prepareStoreExecuteRequest({
+          queryFile: queryPath,
+        }),
+      ).rejects.toThrow('is empty')
+    })
   })
 
   test('throws when no query input is provided', async () => {
@@ -107,16 +119,21 @@ describe('prepareStoreExecuteRequest', () => {
   })
 
   test('reads variables from a file', async () => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readFile)
-      .mockResolvedValueOnce('query { shop { id } }' as any)
-      .mockResolvedValueOnce('{"id":"gid://shopify/Shop/1"}' as any)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryPath = joinPath(tmpDir, 'operation.graphql')
+      const variablesPath = joinPath(tmpDir, 'variables.json')
+      await writeFile(queryPath, 'query { shop { id } }')
+      await writeFile(variablesPath, '{"id":"gid://shopify/Shop/1"}')
 
-    const request = await prepareStoreExecuteRequest({
-      queryFile: '/tmp/operation.graphql',
-      variableFile: '/tmp/variables.json',
+      // When
+      const request = await prepareStoreExecuteRequest({
+        queryFile: queryPath,
+        variableFile: variablesPath,
+      })
+
+      // Then
+      expect(request.parsedVariables).toEqual({id: 'gid://shopify/Shop/1'})
     })
-
-    expect(request.parsedVariables).toEqual({id: 'gid://shopify/Shop/1'})
   })
 })
