@@ -77,6 +77,16 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
+    'storefront-host': Flags.string({
+      hidden: true,
+      description: 'Storefront host used by the local development server when it differs from --store.',
+      env: 'SHOPIFY_FLAG_STOREFRONT_HOST',
+    }),
+    'preview-url': Flags.string({
+      hidden: true,
+      description: 'Preview URL to show for the share preview shortcut when the standard preview_theme_id URL is not usable.',
+      env: 'SHOPIFY_FLAG_PREVIEW_URL',
+    }),
     port: Flags.string({
       description: 'Local port to serve theme preview from.',
       env: 'SHOPIFY_FLAG_PORT',
@@ -169,6 +179,8 @@ You can run this command only in a directory that matches the [default Shopify t
       commandConfig: this.config,
       directory: flags.path,
       store: flags.store,
+      storefrontHost: flags['storefront-host'],
+      previewUrl: flags['preview-url'],
       password: flags.password,
       storePassword: flags['store-password'],
       theme,

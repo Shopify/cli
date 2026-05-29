@@ -13,6 +13,12 @@ import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/t
  */
 export interface DevServerSession extends AdminSession {
   /**
+   * Storefront domain used for SFR/dev-server rendering when it differs from
+   * the Admin API domain stored in `storeFqdn`.
+   */
+  storefrontFqdn?: string
+
+  /**
    * Token to authenticate section rendering API calls.
    */
   storefrontToken: string

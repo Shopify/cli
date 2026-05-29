@@ -9,6 +9,7 @@ import {initializeDevServerSession} from '../utilities/theme-environment/dev-ser
 import {ensureListingExists} from '../utilities/theme-listing.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {storeAdminUrl} from '@shopify/cli-kit/node/context/fqdn'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -25,6 +26,19 @@ import readline from 'readline'
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
 
+export function storefrontFqdnForThemeDev(storeFqdn: string, storefrontHost?: string) {
+  return storefrontHost ?? storeFqdn
+}
+
+export function themeEditorUrlForThemeDev(storeFqdn: string, themeId: number, port: string) {
+  const adminHost = storeFqdn.endsWith('.dev-api.shop.dev')
+    ? storeAdminUrl(storeFqdn.replace(/\.dev-api\.shop\.dev$/, '.my.shop.dev'))
+    : storeAdminUrl(storeFqdn)
+  const editorPath = adminHost === storeFqdn ? `/admin/themes/${themeId}/editor` : `/themes/${themeId}/editor`
+
+  return `https://${adminHost}${editorPath}?hr=${port}`
+}
+
 let hasReportedAnalyticsEvent = false
 
 interface DevOptions {
@@ -32,6 +46,8 @@ interface DevOptions {
   commandConfig: Config
   directory: string
   store: string
+  storefrontHost?: string
+  previewUrl?: string
   password?: string
   storePassword?: string
   open: boolean
@@ -100,18 +116,19 @@ export async function dev(options: DevOptions) {
   }
 
   const port = options.port ?? String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
+  const storefrontStore = storefrontFqdnForThemeDev(options.store, options.storefrontHost)
 
   const urls = {
     local: `http://${host}:${port}`,
     giftCard: `http://${host}:${port}/gift_cards/[store_id]/preview`,
-    themeEditor: `https://${options.store}/admin/themes/${options.theme.id}/editor?hr=${port}`,
-    preview: `https://${options.store}/?preview_theme_id=${options.theme.id}`,
+    themeEditor: themeEditorUrlForThemeDev(options.store, options.theme.id, port),
+    preview: options.previewUrl ?? `https://${storefrontStore}/?preview_theme_id=${options.theme.id}`,
   }
 
   const storefrontPassword = await storefrontPasswordPromise
   const session = await initializeDevServerSession(
     options.theme.id.toString(),
-    options.adminSession,
+    {...options.adminSession, storefrontFqdn: storefrontStore},
     options.password,
     storefrontPassword,
   )

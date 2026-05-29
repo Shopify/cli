@@ -89,6 +89,27 @@ describe('render', () => {
     expect(response.headers.get('something')).toEqual('else')
   })
 
+  test('renders using storefrontFqdn when Admin API host differs from storefront host', async () => {
+    // Given
+    vi.mocked(fetch).mockResolvedValue(new Response(null, {headers: {'Content-Type': 'application/json'}}))
+    const previewStoreSession = {
+      ...session,
+      storeFqdn: 'preview-1780041822.dev-api.shop.dev',
+      storefrontFqdn: 'preview-1780041822.my.shop.dev',
+    }
+
+    // When
+    await render(previewStoreSession, context)
+
+    // Then
+    expect(fetch).toHaveBeenCalledWith(
+      'https://preview-1780041822.my.shop.dev/products/1?_fd=0&pb=0',
+      expect.objectContaining({
+        method: 'GET',
+      }),
+    )
+  })
+
   test('renders using theme access API', async () => {
     // Given
     vi.mocked(fetch).mockResolvedValue(

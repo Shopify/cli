@@ -1,6 +1,6 @@
 import {DevServerSession} from './types.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
-import {buildBaseStorefrontUrl} from './storefront-renderer.js'
+import {buildBaseStorefrontUrl, storefrontFqdn} from './storefront-renderer.js'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -24,7 +24,7 @@ const REQUIRED_THEME_FILES = ['layout/theme.liquid', 'config/settings_schema.jso
  */
 export async function initializeDevServerSession(
   themeId: string,
-  adminSession: AdminSession,
+  adminSession: AdminSession & {storefrontFqdn?: string},
   adminPassword?: string,
   storefrontPassword?: string,
 ) {
@@ -62,7 +62,7 @@ export async function initializeDevServerSession(
  */
 export async function fetchDevServerSession(
   themeId: string,
-  adminSession: AdminSession,
+  adminSession: AdminSession & {storefrontFqdn?: string},
   adminPassword?: string,
   storefrontPassword?: string,
 ): Promise<DevServerSession> {
@@ -83,6 +83,7 @@ export async function fetchDevServerSession(
 
   return {
     ...session,
+    storefrontFqdn: adminSession.storefrontFqdn,
     sessionCookies,
     storefrontToken,
   }
@@ -91,13 +92,15 @@ export async function fetchDevServerSession(
 export async function getStorefrontSessionCookiesWithVerification(
   storeUrl: string,
   themeId: string,
-  adminSession: AdminSession,
+  adminSession: AdminSession & {storefrontFqdn?: string},
   storefrontToken: string,
   storefrontPassword?: string,
 ): Promise<Record<string, string>> {
+  const storefrontStoreFqdn = storefrontFqdn(adminSession)
+
   try {
-    return await getStorefrontSessionCookies(storeUrl, adminSession.storeFqdn, themeId, storefrontPassword, {
-      'X-Shopify-Shop': adminSession.storeFqdn,
+    return await getStorefrontSessionCookies(storeUrl, storefrontStoreFqdn, themeId, storefrontPassword, {
+      'X-Shopify-Shop': storefrontStoreFqdn,
       'X-Shopify-Access-Token': adminSession.token,
       Authorization: `Bearer ${storefrontToken}`,
     })

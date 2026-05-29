@@ -1,4 +1,12 @@
-import {dev, openURLSafely, renderLinks, createKeypressHandler, reportDevAnalytics} from './dev.js'
+import {
+  dev,
+  openURLSafely,
+  renderLinks,
+  createKeypressHandler,
+  reportDevAnalytics,
+  storefrontFqdnForThemeDev,
+  themeEditorUrlForThemeDev,
+} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
@@ -23,6 +31,14 @@ vi.mock('@shopify/cli-kit/node/colors', () => ({
 }))
 vi.mock('@shopify/cli-kit/node/system', () => ({
   openURL: vi.fn(),
+}))
+vi.mock('@shopify/cli-kit/node/context/fqdn', () => ({
+  storeAdminUrl: (storeFqdn: string) => {
+    if (storeFqdn.endsWith('.my.shop.dev')) {
+      return `admin.shop.dev/store/${storeFqdn.replace('.my.shop.dev', '')}`
+    }
+    return storeFqdn
+  },
 }))
 vi.mock('@shopify/cli-kit/node/analytics', () => ({
   reportAnalyticsEvent: vi.fn(),
@@ -54,6 +70,34 @@ vi.mock('../utilities/theme-environment/dev-server-session.js', () => ({
 
 const store = 'my-store.myshopify.com'
 const theme = buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!
+
+describe('storefrontFqdnForThemeDev', () => {
+  test('defaults to the store host', () => {
+    expect(storefrontFqdnForThemeDev('preview-1780041822.dev-api.shop.dev')).toBe(
+      'preview-1780041822.dev-api.shop.dev',
+    )
+  })
+
+  test('uses an explicit storefront host override when provided', () => {
+    expect(storefrontFqdnForThemeDev('preview-1780041822.dev-api.shop.dev', 'preview-1780041822.my.shop.dev')).toBe(
+      'preview-1780041822.my.shop.dev',
+    )
+  })
+})
+
+describe('themeEditorUrlForThemeDev', () => {
+  test('uses standard theme editor URLs for regular stores', () => {
+    expect(themeEditorUrlForThemeDev('my-store.myshopify.com', 123, '9292')).toBe(
+      'https://my-store.myshopify.com/admin/themes/123/editor?hr=9292',
+    )
+  })
+
+  test('uses local admin web URLs for dev-api store hosts', () => {
+    expect(themeEditorUrlForThemeDev('preview-1780041822.dev-api.shop.dev', 84, '9292')).toBe(
+      'https://admin.shop.dev/store/preview-1780041822/themes/84/editor?hr=9292',
+    )
+  })
+})
 
 describe('renderLinks', () => {
   test('renders "dev" command links', async () => {
@@ -352,5 +396,57 @@ describe('dev() Ctrl-C analytics', () => {
     await reportDevAnalytics(mockConfig, adminSession as any)
 
     expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+  })
+
+  test('uses storefront host override for local rendering while keeping Admin host for editor URLs', async () => {
+    const previewStoreOptions = {
+      ...baseOptions,
+      adminSession: {storeFqdn: 'preview-1780041822.dev-api.shop.dev', token: 'x'},
+      store: 'preview-1780041822.dev-api.shop.dev',
+      storefrontHost: 'preview-1780041822.my.shop.dev',
+      previewUrl: 'https://preview.example.test',
+    }
+
+    vi.mocked(initializeDevServerSession).mockResolvedValueOnce({
+      storeFqdn: previewStoreOptions.adminSession.storeFqdn,
+      storefrontFqdn: 'preview-1780041822.my.shop.dev',
+      token: previewStoreOptions.adminSession.token,
+    } as any)
+
+    const devPromise = dev(previewStoreOptions)
+    await new Promise((resolve) => setImmediate(resolve))
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(initializeDevServerSession).toHaveBeenCalledWith(
+      theme.id.toString(),
+      expect.objectContaining({
+        storeFqdn: 'preview-1780041822.dev-api.shop.dev',
+        storefrontFqdn: 'preview-1780041822.my.shop.dev',
+      }),
+      undefined,
+      undefined,
+    )
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nextSteps: expect.arrayContaining([
+          expect.arrayContaining([
+            expect.objectContaining({
+              link: expect.objectContaining({
+                url: 'https://preview.example.test',
+              }),
+            }),
+          ]),
+          expect.arrayContaining([
+            expect.objectContaining({
+              link: expect.objectContaining({
+                url: `https://admin.shop.dev/store/preview-1780041822/themes/${theme.id}/editor?hr=9292`,
+              }),
+            }),
+          ]),
+        ]),
+      }),
+    )
   })
 })

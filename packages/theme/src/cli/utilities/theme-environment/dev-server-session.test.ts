@@ -109,6 +109,33 @@ describe('dev server session', async () => {
         noPrompt: true,
       })
     })
+
+    test('preserves a separate storefront host for preview-store rendering', async () => {
+      // Given
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({_shopify_essential: ':cookie:'})
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn: 'preview-1780041822.dev-api.shop.dev',
+      })
+
+      // When
+      const session = await fetchDevServerSession(themeId, {
+        token: 'token',
+        storeFqdn: 'preview-1780041822.dev-api.shop.dev',
+        storefrontFqdn: 'preview-1780041822.my.shop.dev',
+      })
+
+      // Then
+      expect(getStorefrontSessionCookies).toHaveBeenCalledWith(
+        'https://preview-1780041822.my.shop.dev',
+        'preview-1780041822.my.shop.dev',
+        themeId,
+        undefined,
+        expect.objectContaining({'X-Shopify-Shop': 'preview-1780041822.my.shop.dev'}),
+      )
+      expect(session).toEqual(expect.objectContaining({storefrontFqdn: 'preview-1780041822.my.shop.dev'}))
+    })
   })
 
   describe('initializeDevServerSession', async () => {
