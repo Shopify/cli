@@ -402,6 +402,7 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
  * @returns The message without styles.
  */
 export function unstyled(message: string): string {
+  if (!message.includes('\u001b')) return message
   return stripAnsi(message)
 }
 
