@@ -257,6 +257,27 @@ describe('setupDevServer', () => {
       expect(vi.mocked(render)).not.toHaveBeenCalled()
     })
 
+    test('CORS allows the theme editor (Online Store Editor) origin so hot reload works in the editor', async () => {
+      const {res} = await dispatchEvent('/assets/file2.css', {origin: 'https://online-store-web.shopifyapps.com'})
+      expect(res.getHeader('access-control-allow-origin')).toEqual('https://online-store-web.shopifyapps.com')
+    })
+
+    test('CORS allows the storefront origin', async () => {
+      const origin = `https://${defaultServerContext.session.storeFqdn}`
+      const {res} = await dispatchEvent('/assets/file2.css', {origin})
+      expect(res.getHeader('access-control-allow-origin')).toEqual(origin)
+    })
+
+    test('CORS does not allow unknown origins', async () => {
+      const {res} = await dispatchEvent('/assets/file2.css', {origin: 'https://evil.example.com'})
+      expect(res.getHeader('access-control-allow-origin')).toBeUndefined()
+    })
+
+    test('CORS does not set headers on direct navigation without an Origin header', async () => {
+      const {res} = await dispatchEvent('/assets/file2.css')
+      expect(res.getHeader('access-control-allow-origin')).toBeUndefined()
+    })
+
     test('serves proxied local assets', async () => {
       const eventPromise = dispatchEvent('/cdn/somepathhere/assets/file1.css')
       await expect(eventPromise).resolves.not.toThrow()

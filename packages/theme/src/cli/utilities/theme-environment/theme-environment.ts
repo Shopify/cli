@@ -130,7 +130,12 @@ interface DevelopmentServerInstance {
 
 function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
   const app = createApp()
-  const allowedOrigins = [`http://${ctx.options.host}:${ctx.options.port}`, `https://${ctx.session.storeFqdn}`]
+  const allowedOrigins = [
+    `http://${ctx.options.host}:${ctx.options.port}`,
+    `https://${ctx.session.storeFqdn}`,
+    // Required for HMR with the theme editor
+    'https://online-store-web.shopifyapps.com',
+  ]
 
   app.use(
     defineLazyEventHandler(async () => {
