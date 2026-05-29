@@ -79,6 +79,7 @@
 * [`shopify store auth`](#shopify-store-auth)
 * [`shopify store create preview`](#shopify-store-create-preview)
 * [`shopify store execute`](#shopify-store-execute)
+* [`shopify store list`](#shopify-store-list)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -2222,6 +2223,37 @@ EXAMPLES
   $ shopify store execute --store shop.myshopify.com --query "mutation { shop { id } }" --allow-mutations
 
   $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }" --json
+```
+
+## `shopify store list`
+
+List stored store-auth sessions.
+
+```
+USAGE
+  $ shopify store list [-j] [--kind standard|preview] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json           [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --kind=<option>  [env: SHOPIFY_FLAG_STORE_LIST_KIND] Filter results to a single session kind.
+                       <options: standard|preview>
+      --no-color       [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose        [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  List stored store-auth sessions.
+
+  Lists every store that has a locally stored auth session, including both standard PKCE-authenticated stores (via
+  `shopify store auth`) and preview stores (via `shopify store create preview`).
+
+  Use `--kind` to filter by session type, or `--json` to emit a machine-readable list for agent consumption.
+
+EXAMPLES
+  $ shopify store list
+
+  $ shopify store list --kind preview
+
+  $ shopify store list --json
 ```
 
 ## `shopify theme check`

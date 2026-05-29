@@ -67,6 +67,27 @@ export class LocalStorage<T extends Record<string, any>> {
   }
 
   /**
+   * Get every `[key, value]` pair currently held in the local storage.
+   *
+   * Useful for callers that need to enumerate all stored values without knowing the
+   * full set of keys in advance (for example, a `list` command iterating over every
+   * stored session). The `conf` package stores its entire state as a single JSON
+   * object, so this is just a typed wrapper around that object.
+   *
+   * @returns An array of `[key, value]` tuples.
+   * @throws AbortError if a permission error occurs.
+   * @throws BugError if an unexpected error occurs.
+   */
+  entries(): [keyof T, T[keyof T]][] {
+    try {
+      return Object.entries(this.config.store) as [keyof T, T[keyof T]][]
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      this.handleError(error, 'entries')
+    }
+  }
+
+  /**
    * Clear the local storage (delete all values).
    *
    * @throws AbortError if a permission error occurs.
