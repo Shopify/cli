@@ -92,7 +92,7 @@ export default async function globalSetup() {
   })
 
   try {
-    await waitForText(() => output, 'Open this link to start the auth process', CLI_TIMEOUT.short)
+    await waitForText(() => output, 'link to start the auth process', CLI_TIMEOUT.short)
 
     const stripped = stripAnsi(output)
     const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)

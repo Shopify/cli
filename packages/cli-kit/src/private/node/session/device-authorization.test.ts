@@ -11,7 +11,8 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
-import {isCI} from '../../../public/node/system.js'
+import {isCI, openURL} from '../../../public/node/system.js'
+import * as output from '../../../public/node/output.js'
 
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
@@ -26,6 +27,7 @@ vi.mock('../../../public/node/system.js')
 beforeEach(() => {
   vi.mocked(isTTY).mockReturnValue(true)
   vi.mocked(isCI).mockReturnValue(false)
+  vi.mocked(openURL).mockResolvedValue(true)
 })
 
 describe('requestDeviceAuthorization', () => {
@@ -64,6 +66,22 @@ describe('requestDeviceAuthorization', () => {
       body: 'client_id=clientId&scope=scope1 scope2',
     })
     expect(got).toEqual(dataExpected)
+  })
+
+  test('opens the browser directly in an interactive terminal', async () => {
+    // Given
+    const outputInfo = vi.spyOn(output, 'outputInfo')
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    expect(openURL).toHaveBeenCalledWith(data.verification_uri_complete)
+    expect(outputInfo).not.toHaveBeenCalledWith('👉 Press any key to open the login page on your browser')
   })
 
   test('when the response is not valid JSON, throw an error with context', async () => {
