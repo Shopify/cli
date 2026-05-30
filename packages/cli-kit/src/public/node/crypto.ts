@@ -31,13 +31,13 @@ export function sha256(str: string): Buffer {
 }
 
 /**
- * Generate the SHA1 hash of a string.
+ * Generate the SHA256 hash of a string as a hex string.
  *
  * @param str - The string to hash.
- * @returns The SHA1 hash of the string.
+ * @returns The SHA256 hash of the string.
  */
 export function hashString(str: string): string {
-  return crypto.createHash('sha1').update(str).digest('hex')
+  return crypto.createHash('sha256').update(str).digest('hex')
 }
 
 /**
@@ -81,10 +81,11 @@ export function nonRandomUUID(subject: string): string {
   // A fixed namespace UUID
   const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
   return crypto
-    .createHash('sha1')
+    .createHash('sha256')
     .update(Buffer.from(namespace.replace(/-/g, ''), 'hex'))
     .update(subject)
     .digest()
     .toString('hex')
+    .substring(0, 32)
     .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
 }
