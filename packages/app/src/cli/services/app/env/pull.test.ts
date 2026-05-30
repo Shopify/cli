@@ -35,6 +35,7 @@ describe('env pull', () => {
       expect(file.writeFile).toHaveBeenCalledWith(
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
+        {encoding: 'utf8', mode: 0o600},
       )
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "Created ${filePath}:
@@ -61,6 +62,7 @@ describe('env pull', () => {
       expect(file.writeFile).toHaveBeenCalledWith(
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
+        {encoding: 'utf8', mode: 0o600},
       )
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "Updated ${filePath} to be:

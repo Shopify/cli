@@ -31,7 +31,7 @@ export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOp
     if (updatedEnvFileContent === envFileContent) {
       return outputContent`No changes to ${outputToken.path(envFile)}`
     } else {
-      await writeFile(envFile, updatedEnvFileContent)
+      await writeFile(envFile, updatedEnvFileContent, {encoding: 'utf8', mode: 0o600})
 
       const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
       return outputContent`Updated ${outputToken.path(envFile)} to be:
@@ -46,7 +46,7 @@ ${outputToken.linesDiff(diff)}
   } else {
     const newEnvFileContent = patchEnvFile(null, updatedValues)
 
-    await writeFile(envFile, newEnvFileContent)
+    await writeFile(envFile, newEnvFileContent, {encoding: 'utf8', mode: 0o600})
 
     return outputContent`Created ${outputToken.path(envFile)}:
 

@@ -211,6 +211,7 @@ export function appendFileSync(path: string, data: string): void {
 
 export interface WriteOptions {
   encoding: BufferEncoding
+  mode?: number | string
 }
 
 /**
@@ -227,6 +228,9 @@ export async function writeFile(
 ): Promise<void> {
   outputDebug(outputContent`Writing some content to file at ${outputToken.path(path)}...`)
   await fsWriteFile(path, data, options)
+  if (options.mode) {
+    await chmod(path, options.mode)
+  }
 }
 
 /**

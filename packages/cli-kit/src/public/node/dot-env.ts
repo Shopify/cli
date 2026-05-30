@@ -43,7 +43,7 @@ export async function writeDotEnv(file: DotEnvFile): Promise<void> {
     .map(([key, value]) => createDotEnvFileLine(key, value))
     .join('\n')
 
-  await writeFile(file.path, fileContent)
+  await writeFile(file.path, fileContent, {encoding: 'utf8', mode: 0o600})
 }
 
 /**

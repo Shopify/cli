@@ -26,6 +26,7 @@ import {
 import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
+import {statSync} from 'fs'
 
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -93,6 +94,49 @@ describe('copy', () => {
       // When / Then — fs-extra would otherwise throw "Source and destination must not be the same"
       await expect(copyFile(path, joinPath(path, '..', 'file'))).resolves.not.toThrow()
       await expect(readFile(path)).resolves.toEqual(content)
+    })
+  })
+})
+
+describe('writeFile', () => {
+  test('writes the file and sets the permissions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'test-file')
+      const content = 'test-content'
+
+      // When
+      await writeFile(filePath, content, {encoding: 'utf8', mode: 0o600})
+
+      // Then
+      await expect(readFile(filePath)).resolves.toBe(content)
+      if (process.platform !== 'win32') {
+        const stats = statSync(filePath)
+        expect(stats.mode & 0o777).toBe(0o600)
+      }
+    })
+  })
+
+  test('sets permissions even if the file already exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'test-file')
+      const content = 'test-content'
+      await writeFile(filePath, 'old-content')
+      // Make it world-readable first if possible
+      if (process.platform !== 'win32') {
+        await chmod(filePath, 0o644)
+      }
+
+      // When
+      await writeFile(filePath, content, {encoding: 'utf8', mode: 0o600})
+
+      // Then
+      await expect(readFile(filePath)).resolves.toBe(content)
+      if (process.platform !== 'win32') {
+        const stats = statSync(filePath)
+        expect(stats.mode & 0o777).toBe(0o600)
+      }
     })
   })
 })
