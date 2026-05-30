@@ -13,9 +13,11 @@ import {
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
+import macaddress from 'macaddress'
 
 import {afterEach, expect, describe, vi, test} from 'vitest'
 
+vi.mock('macaddress')
 vi.mock('../fs.js')
 vi.mock('../system.js')
 vi.mock('../environment.js')
@@ -207,12 +209,18 @@ describe('analitycsDisabled', () => {
 })
 
 describe('macAddress', () => {
-  test('returns any mac address value', async () => {
+  test('memoizes the mac address', async () => {
+    // Given
+    vi.mocked(macaddress.one as (iface?: string) => Promise<string>).mockResolvedValue('00:00:00:00:00:00')
+
     // When
-    const got = await macAddress()
+    const got1 = await macAddress()
+    const got2 = await macAddress()
 
     // Then
-    expect(got).not.toBeUndefined()
+    expect(got1).toBe('00:00:00:00:00:00')
+    expect(got2).toBe('00:00:00:00:00:00')
+    expect(macaddress.one).toHaveBeenCalledTimes(1)
   })
 })
 
