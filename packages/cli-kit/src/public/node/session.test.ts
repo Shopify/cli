@@ -264,11 +264,11 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
     vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
     vi.mocked(exchangeAppAutomationTokenForAppManagementAccessToken).mockResolvedValueOnce({
       accessToken: 'app-management-token',
-      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      userId: '2f900c8f-1240-6a83-5c00-8e03e7ecb2fb',
     })
     vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
       accessToken: 'business-platform-token',
-      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      userId: '2f900c8f-1240-6a83-5c00-8e03e7ecb2fb',
     })
 
     // When
@@ -277,7 +277,7 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
     // Then
     expect(got).toEqual({
       appManagementToken: 'app-management-token',
-      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      userId: '2f900c8f-1240-6a83-5c00-8e03e7ecb2fb',
       businessPlatformToken: 'business-platform-token',
     })
     expect(ensureAuthenticated).not.toHaveBeenCalled()
