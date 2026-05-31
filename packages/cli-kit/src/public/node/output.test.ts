@@ -7,6 +7,7 @@ import {
   outputToken,
   shouldDisplayColors,
   formatPackageManagerCommand,
+  unstyled,
 } from './output.js'
 
 import {currentProcessIsGlobal} from './is-global.js'
@@ -174,5 +175,29 @@ describe('formatPackageManagerCommand', () => {
 
     // Then
     expect(result).toEqual('shopify app dev --reset')
+  })
+})
+
+describe('unstyled', () => {
+  test('strips ANSI escape codes from a string', () => {
+    // Given
+    const message = '\u001b[31mError:\u001b[39m something went wrong'
+
+    // When
+    const result = unstyled(message)
+
+    // Then
+    expect(result).toEqual('Error: something went wrong')
+  })
+
+  test('returns the same string if it does not contain ANSI escape codes', () => {
+    // Given
+    const message = 'Just a plain message'
+
+    // When
+    const result = unstyled(message)
+
+    // Then
+    expect(result).toEqual(message)
   })
 })
