@@ -6,7 +6,7 @@ describe('hashString', () => {
     const hash1 = hashString('hello')
     const hash2 = hashString('hello')
     expect(hash1).toEqual(hash2)
-    expect(hash1).toMatch(/[a-f0-9]{40}/)
+    expect(hash1).toMatch(/[a-f0-9]{64}/)
   })
 })
 
