@@ -15,6 +15,7 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {formatContent} from '../../../utilities/file-formatter.js'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -288,7 +289,7 @@ const uiExtensionSpec = createExtensionSpecification({
       const typeFilePath = joinPath(tsConfigDir, 'shopify.d.ts')
 
       // Remove duplicates from targets
-      const uniqueTargets = [...new Set(targets)]
+      const uniqueTargets = uniq(targets)
       const generatedTypesHelperImportPath = getGeneratedTypesHelperImportPath(uniqueTargets)
 
       try {
