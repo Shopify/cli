@@ -394,6 +394,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--file-name <value>",
+          "value": "string",
+          "description": "The name of the app configuration file to create or overwrite.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_CONFIG_FILE_NAME"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--force",
+          "value": "''",
+          "description": "Overwrite an existing configuration file without prompting.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--no-color",
           "value": "''",
           "description": "Disable color output.",
@@ -437,7 +455,7 @@
           "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
         }
       ],
-      "value": "export interface appconfiglink {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appconfiglink {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The name of the app configuration file to create or overwrite.\n   * @environment SHOPIFY_FLAG_APP_CONFIG_FILE_NAME\n   */\n  '--file-name <value>'?: string\n\n  /**\n   * Overwrite an existing configuration file without prompting.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '--force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appconfigpull": {

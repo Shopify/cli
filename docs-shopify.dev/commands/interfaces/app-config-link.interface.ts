@@ -17,6 +17,18 @@ export interface appconfiglink {
   '-c, --config <value>'?: string
 
   /**
+   * The name of the app configuration file to create or overwrite.
+   * @environment SHOPIFY_FLAG_APP_CONFIG_FILE_NAME
+   */
+  '--file-name <value>'?: string
+
+  /**
+   * Overwrite an existing configuration file without prompting.
+   * @environment SHOPIFY_FLAG_FORCE
+   */
+  '--force'?: ''
+
+  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */

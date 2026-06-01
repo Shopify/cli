@@ -115,6 +115,76 @@ describe('link', () => {
     })
   })
 
+  test('does not ask for a name when a file name is provided as a flag', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        fileName: 'staging',
+        developerPlatformClient,
+      }
+      await mockLoadOpaqueAppWithApp(tmp)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+
+      // When
+      const {configFileName} = await link(options)
+
+      // Then
+      expect(selectConfigName).not.toHaveBeenCalled()
+      expect(configFileName).toBe('shopify.app.staging.toml')
+      expect(fileExistsSync(joinPath(tmp, 'shopify.app.staging.toml'))).toBeTruthy()
+    })
+  })
+
+  test('throws when a file name is provided for an existing file without force', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        fileName: 'staging',
+        developerPlatformClient,
+      }
+      writeFileSync(joinPath(tmp, 'shopify.app.staging.toml'), 'client_id = "12345"')
+      await mockLoadOpaqueAppWithApp(tmp)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+
+      // When
+      const result = link(options)
+
+      // Then
+      await expect(result).rejects.toThrow(/Configuration file shopify\.app\.staging\.toml already exists/)
+      expect(selectConfigName).not.toHaveBeenCalled()
+    })
+  })
+
+  test('overwrites an existing file name when force is provided', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        fileName: 'staging',
+        force: true,
+        developerPlatformClient,
+      }
+      writeFileSync(joinPath(tmp, 'shopify.app.staging.toml'), 'name = "old app"')
+      await mockLoadOpaqueAppWithApp(tmp)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+
+      // When
+      const {configFileName} = await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      expect(selectConfigName).not.toHaveBeenCalled()
+      expect(configFileName).toBe('shopify.app.staging.toml')
+      expect(content).toContain('client_id = "12345"')
+      expect(content).not.toContain('old app')
+    })
+  })
+
   test('does not ask for a name when the selected app is already linked', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
