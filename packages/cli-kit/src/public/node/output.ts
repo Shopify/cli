@@ -402,6 +402,10 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
  * @returns The message without styles.
  */
 export function unstyled(message: string): string {
+  // Optimization: skip regex execution for strings that don't have ANSI escape codes.
+  // In high-frequency paths like terminal layout calculations, this can save significant CPU time.
+  if (!message.includes('\u001b')) return message
+
   return stripAnsi(message)
 }
 
