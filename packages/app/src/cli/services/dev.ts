@@ -71,6 +71,7 @@ export interface DevOptions {
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
+  installMkcert?: boolean
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -152,6 +153,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnel,
     tunnelClient,
     remoteApp.configuration,
+    commandOptions.installMkcert,
   )
   app.webs = webs
 
@@ -324,6 +326,7 @@ async function setupNetworkingOptions(
   tunnelOptions: TunnelMode,
   tunnelClient?: TunnelClient,
   remoteAppConfig?: AppConfigurationUsedByCli,
+  installMkcert?: boolean,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 
@@ -361,6 +364,7 @@ async function setupNetworkingOptions(
   if (tunnelOptions.mode === 'use-localhost') {
     const {keyContent, certContent, certPath} = await generateCertificate({
       appDirectory,
+      install: installMkcert,
     })
 
     reverseProxyCert = {
