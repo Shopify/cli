@@ -54,6 +54,7 @@
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
     "esbuild": "0.28.0",
+    "graphql": "16.10.0",
     "global-agent": "3.0.0"
   },
   "devDependencies": {
@@ -99,6 +100,12 @@
       },
       "theme": {
         "description": "Build Liquid themes."
+      },
+      "docs": {
+        "description": "Search and generate Shopify developer documentation."
+      },
+      "validate": {
+        "description": "Validate Shopify project artifacts."
       },
       "app": {
         "description": "Build Shopify apps."

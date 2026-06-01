@@ -11,6 +11,7 @@ import KitchenSink from './cli/commands/kitchen-sink/index.js'
 import Doctor from './cli/commands/doctor-release/doctor-release.js'
 import DoctorTheme from './cli/commands/doctor-release/theme/index.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
+import DocsSearch from './cli/commands/docs/search.js'
 import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
@@ -19,6 +20,7 @@ import AutoupgradeOff from './cli/commands/config/autoupgrade/off.js'
 import AutoupgradeOn from './cli/commands/config/autoupgrade/on.js'
 import AutoupgradeStatus from './cli/commands/config/autoupgrade/status.js'
 import AgentSessionStart from './cli/commands/agent/session/start.js'
+import ValidateGraphQL from './cli/commands/validate/graphql.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import StoreCommands from '@shopify/store'
 import ThemeCommands from '@shopify/theme'
@@ -159,6 +161,7 @@ export const COMMANDS: any = {
   'doctor-release': Doctor,
   'doctor-release:theme': DoctorTheme,
   'docs:generate': DocsGenerate,
+  'docs:search': DocsSearch,
   'notifications:list': List,
   'notifications:generate': Generate,
   'cache:clear': ClearCache,
@@ -166,6 +169,7 @@ export const COMMANDS: any = {
   'config:autoupgrade:on': AutoupgradeOn,
   'config:autoupgrade:status': AutoupgradeStatus,
   'agent:session:start': AgentSessionStart,
+  'validate:graphql': ValidateGraphQL,
 }
 
 export default runShopifyCLI
