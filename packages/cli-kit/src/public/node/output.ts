@@ -238,12 +238,11 @@ export let collectedLogs: Record<string, string[]> = {}
  * @param content - The content of the log.
  */
 export function collectLog(key: string, content: OutputMessage): void {
-  const output = collectedLogs.output ?? []
-  const data = collectedLogs[key] ?? []
-  data.push(stripAnsi(stringifyMessage(content) ?? ''))
-  output.push(stripAnsi(stringifyMessage(content) ?? ''))
-  collectedLogs[key] = data
-  collectedLogs.output = output
+  const message = stripAnsi(stringifyMessage(content))
+  collectedLogs.output ??= []
+  collectedLogs[key] ??= []
+  collectedLogs.output.push(message)
+  collectedLogs[key].push(message)
 }
 
 export const clearCollectedLogs = (): void => {
