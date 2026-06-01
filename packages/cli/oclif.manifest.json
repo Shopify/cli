@@ -6403,6 +6403,19 @@
           "name": "port",
           "type": "option"
         },
+        "reconciliation-strategy": {
+          "description": "How to resolve JSON conflicts when --theme-editor-sync is enabled. Use keep-local to keep local files, keep-remote to keep remote files, or abort to fail instead of prompting.",
+          "env": "SHOPIFY_FLAG_RECONCILIATION_STRATEGY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "reconciliation-strategy",
+          "options": [
+            "keep-local",
+            "keep-remote",
+            "abort"
+          ],
+          "type": "option"
+        },
         "store": {
           "char": "s",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",

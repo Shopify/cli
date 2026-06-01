@@ -24,6 +24,7 @@ describe('reconcileJsonFiles', () => {
   let defaultThemeFileSystem: ThemeFileSystem
 
   beforeEach(() => {
+    vi.clearAllMocks()
     defaultThemeFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
   })
 
@@ -104,6 +105,26 @@ describe('reconcileJsonFiles', () => {
   })
 
   describe('files only present on remote developer theme', () => {
+    test('should download assets from remote theme without prompting when keep-remote strategy is selected', async () => {
+      // Given
+      const assetToBeDownloaded = {checksum: '2', key: 'templates/second_asset.json', value: 'content'}
+      vi.mocked(fetchThemeAssets).mockResolvedValue([assetToBeDownloaded])
+
+      // When
+      await reconcileAndWaitForReconciliationFinish(
+        developmentTheme,
+        adminSession,
+        [assetToBeDownloaded],
+        defaultThemeFileSystem,
+        {...defaultOptions, reconciliationStrategy: 'keep-remote'},
+      )
+
+      // Then
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+      expect(fetchThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [assetToBeDownloaded.key], adminSession)
+      expect(defaultThemeFileSystem.files.get('templates/second_asset.json')).toEqual(assetToBeDownloaded)
+    })
+
     test('should download assets from remote theme when `remote` source is selected', async () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
@@ -220,6 +241,46 @@ describe('reconcileJsonFiles', () => {
   })
 
   describe('files with conflicting checksums', () => {
+    test('should keep local files without prompting when keep-local strategy is selected', async () => {
+      // Given
+      const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
+      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
+      const remoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
+
+      // When
+      await reconcileAndWaitForReconciliationFinish(
+        developmentTheme,
+        adminSession,
+        remoteChecksums,
+        localThemeFileSystem,
+        {...defaultOptions, reconciliationStrategy: 'keep-local'},
+      )
+
+      // Then
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+      expect(fetchThemeAssets).not.toHaveBeenCalled()
+    })
+
+    test('should abort without prompting when abort strategy is selected', async () => {
+      // Given
+      const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
+      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
+      const remoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
+
+      // When
+      const result = reconcileAndWaitForReconciliationFinish(
+        developmentTheme,
+        adminSession,
+        remoteChecksums,
+        localThemeFileSystem,
+        {...defaultOptions, reconciliationStrategy: 'abort'},
+      )
+
+      // Then
+      await expect(result).rejects.toThrow('Theme JSON files need reconciliation.')
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+    })
+
     test('should download files from remote theme when `remote` source is selected', async () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)

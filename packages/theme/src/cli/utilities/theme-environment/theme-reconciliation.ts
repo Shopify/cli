@@ -7,8 +7,10 @@ import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/
 import {Checksum, ThemeFileSystem, ThemeAsset, Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import type {ReconciliationStrategy} from './types.js'
 
-type ReconciliationStrategy = typeof LOCAL_STRATEGY | typeof REMOTE_STRATEGY | undefined
+type PromptReconciliationStrategy = typeof LOCAL_STRATEGY | typeof REMOTE_STRATEGY | undefined
 
 interface FilePartitions {
   localFilesToDelete: Checksum[]
@@ -20,6 +22,7 @@ interface ReconciliationOptions {
   noDelete: boolean
   only: string[]
   ignore: string[]
+  reconciliationStrategy?: ReconciliationStrategy
 }
 
 const noWorkPromise = {
@@ -129,8 +132,14 @@ async function promptFileReconciliationStrategy(
       callback: (files: Checksum[]) => void
     }
   },
-): Promise<ReconciliationStrategy | undefined> {
+  strategy?: ReconciliationStrategy,
+): Promise<PromptReconciliationStrategy> {
   if (files.length === 0) {
+    return
+  }
+
+  if (strategy) {
+    applyReconciliationStrategy(files, title, options, strategy)
     return
   }
 
@@ -155,6 +164,34 @@ async function promptFileReconciliationStrategy(
     options.remote.callback(files)
   } else {
     options.local.callback(files)
+  }
+}
+
+function applyReconciliationStrategy(
+  files: Checksum[],
+  title: string,
+  options: {
+    remote: {
+      callback: (files: Checksum[]) => void
+    }
+    local: {
+      callback: (files: Checksum[]) => void
+    }
+  },
+  strategy: ReconciliationStrategy,
+) {
+  switch (strategy) {
+    case 'keep-remote':
+      options.remote.callback(files)
+      break
+    case 'keep-local':
+      options.local.callback(files)
+      break
+    case 'abort':
+      throw new AbortError(
+        'Theme JSON files need reconciliation.',
+        `${title}\n${files.map((file) => `- ${file.key}`).join('\n')}`,
+      )
   }
 }
 
@@ -201,6 +238,7 @@ async function partitionFilesByReconciliationStrategy(
   options: ReconciliationOptions,
 ): Promise<FilePartitions> {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = files
+  const {reconciliationStrategy} = options
 
   const localFilesToDelete: Checksum[] = []
   const filesToDownload: Checksum[] = []
@@ -222,6 +260,7 @@ async function partitionFilesByReconciliationStrategy(
           callback: () => {},
         },
       },
+      reconciliationStrategy,
     )
   }
 
@@ -242,6 +281,7 @@ async function partitionFilesByReconciliationStrategy(
         },
       },
     },
+    reconciliationStrategy,
   )
 
   await promptFileReconciliationStrategy(
@@ -259,6 +299,7 @@ async function partitionFilesByReconciliationStrategy(
         callback: () => {},
       },
     },
+    reconciliationStrategy,
   )
 
   return {localFilesToDelete, filesToDownload, remoteFilesToDelete}
