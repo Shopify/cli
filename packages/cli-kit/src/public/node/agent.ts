@@ -27,10 +27,7 @@ export interface StartAgentSessionOptions {
  * @param config - Optional config store for testing.
  * @returns The persisted session value.
  */
-export function startAgentSession(
-  options: StartAgentSessionOptions,
-  config?: LocalStorage<ConfSchema>,
-): AgentSession {
+export function startAgentSession(options: StartAgentSessionOptions, config?: LocalStorage<ConfSchema>): AgentSession {
   const session: AgentSession = {
     sessionId: options.sessionId,
     startedAt: new Date().toISOString(),
@@ -69,7 +66,7 @@ export function clearAgentSession(config?: LocalStorage<ConfSchema>): void {
  * Pack SHOPIFY_CLI_AGENT_INFO environment variable value from agent session.
  *
  * The format is a tagged string with agent metadata:
- * n:<name>|v:<version>|p:<provider>
+ * n:<name>|v:<version>|p:<provider>.
  *
  * Precedence: explicit process.env.SHOPIFY_CLI_AGENT_INFO takes priority over
  * persisted session state.
@@ -96,7 +93,7 @@ export function packAgentInfo(session?: AgentSession, config?: LocalStorage<Conf
  * Pack SHOPIFY_CLI_AGENT_IDS environment variable value from agent session.
  *
  * The format is a tagged string with session identifier:
- * s:<sessionId>
+ * s:<sessionId>.
  *
  * Precedence: explicit process.env.SHOPIFY_CLI_AGENT_IDS takes priority over
  * persisted session state.

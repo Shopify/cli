@@ -1,4 +1,3 @@
-import {describe, expect, test, beforeEach, afterEach, vi} from 'vitest'
 import {
   startAgentSession,
   getCurrentAgentSession,
@@ -7,15 +6,11 @@ import {
   packAgentIds,
   AgentSession,
 } from './agent.js'
-import {
-  getAgentSession,
-  setAgentSession,
-  removeAgentSession,
-  ConfSchema,
-} from '../../private/node/conf-store.js'
 import {LocalStorage} from './local-storage.js'
 import {inTemporaryDirectory} from './fs.js'
+import {getAgentSession, setAgentSession, ConfSchema} from '../../private/node/conf-store.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
+import {describe, expect, test, beforeEach, afterEach, vi} from 'vitest'
 
 vi.mock('../../private/node/context/service.js')
 
@@ -37,14 +32,17 @@ describe('startAgentSession', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // When
-      startAgentSession({
-        sessionId: 'conv_123',
-        agentName: 'test-agent',
-        agentVersion: '1.0.0',
-        agentProvider: 'test-provider',
-        metricsMode: 'on',
-        defaultNonInteractive: true,
-      }, config)
+      startAgentSession(
+        {
+          sessionId: 'conv_123',
+          agentName: 'test-agent',
+          agentVersion: '1.0.0',
+          agentProvider: 'test-provider',
+          metricsMode: 'on',
+          defaultNonInteractive: true,
+        },
+        config,
+      )
 
       // Then
       const session = getAgentSession(config)
@@ -65,12 +63,15 @@ describe('startAgentSession', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // When
-      startAgentSession({
-        sessionId: 'conv_456',
-        agentName: 'another-agent',
-        agentVersion: '2.0.0',
-        agentProvider: 'another-provider',
-      }, config)
+      startAgentSession(
+        {
+          sessionId: 'conv_456',
+          agentName: 'another-agent',
+          agentVersion: '2.0.0',
+          agentProvider: 'another-provider',
+        },
+        config,
+      )
 
       // Then
       const session = getAgentSession(config)
@@ -86,12 +87,15 @@ describe('startAgentSession', () => {
       const beforeTime = new Date().toISOString()
 
       // When
-      startAgentSession({
-        sessionId: 'conv_789',
-        agentName: 'time-agent',
-        agentVersion: '3.0.0',
-        agentProvider: 'time-provider',
-      }, config)
+      startAgentSession(
+        {
+          sessionId: 'conv_789',
+          agentName: 'time-agent',
+          agentVersion: '3.0.0',
+          agentProvider: 'time-provider',
+        },
+        config,
+      )
 
       // Then
       const session = getAgentSession(config)

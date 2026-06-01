@@ -87,8 +87,7 @@ export default class Release extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    const allowUpdates =
-      flags.force || flags['allow-updates'] || (isAgentNonInteractive && !hasExplicitReleaseFlags)
+    const allowUpdates = flags.force || flags['allow-updates'] || (isAgentNonInteractive && !hasExplicitReleaseFlags)
     const allowDeletes = flags.force || flags['allow-deletes']
 
     await release({

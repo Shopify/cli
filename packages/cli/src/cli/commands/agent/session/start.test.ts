@@ -1,5 +1,5 @@
-import {describe, expect, test, vi, beforeEach} from 'vitest'
 import AgentSessionStart from './start.js'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {startAgentSession} from '@shopify/cli-kit/node/agent'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {randomUUID} from 'crypto'
@@ -10,7 +10,8 @@ vi.mock('crypto', () => ({
 }))
 
 describe('AgentSessionStart', () => {
-  const mockSessionId = 'conv_test-uuid-1234'
+  const mockUuid = '00000000-0000-4000-8000-000000000001'
+  const mockSessionId = `conv_${mockUuid}`
   const mockSession = {
     sessionId: mockSessionId,
     startedAt: '2024-01-15T10:00:00.000Z',
@@ -22,7 +23,7 @@ describe('AgentSessionStart', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(randomUUID).mockReturnValue('test-uuid-1234')
+    vi.mocked(randomUUID).mockReturnValue(mockUuid)
     vi.mocked(startAgentSession).mockReturnValue(mockSession)
   })
 
@@ -33,12 +34,7 @@ describe('AgentSessionStart', () => {
 
     // When
     await AgentSessionStart.run(
-      [
-        '--agent', 'test-agent',
-        '--agent-version', '1.2.3',
-        '--provider', 'test-provider',
-        '--metrics', 'on',
-      ],
+      ['--agent', 'test-agent', '--agent-version', '1.2.3', '--provider', 'test-provider', '--metrics', 'on'],
       import.meta.url,
     )
 
@@ -70,12 +66,7 @@ describe('AgentSessionStart', () => {
 
     // When
     await AgentSessionStart.run(
-      [
-        '--agent', 'test-agent',
-        '--agent-version', '1.2.3',
-        '--provider', 'test-provider',
-        '--metrics', 'off',
-      ],
+      ['--agent', 'test-agent', '--agent-version', '1.2.3', '--provider', 'test-provider', '--metrics', 'off'],
       import.meta.url,
     )
 
@@ -102,10 +93,14 @@ describe('AgentSessionStart', () => {
     // When
     await AgentSessionStart.run(
       [
-        '--agent', 'test-agent',
-        '--agent-version', '1.2.3',
-        '--provider', 'test-provider',
-        '--metrics', 'on',
+        '--agent',
+        'test-agent',
+        '--agent-version',
+        '1.2.3',
+        '--provider',
+        'test-provider',
+        '--metrics',
+        'on',
         '--default-non-interactive',
       ],
       import.meta.url,
@@ -131,13 +126,7 @@ describe('AgentSessionStart', () => {
 
     // When
     await AgentSessionStart.run(
-      [
-        '--agent', 'test-agent',
-        '--agent-version', '1.2.3',
-        '--provider', 'test-provider',
-        '--metrics', 'on',
-        '--json',
-      ],
+      ['--agent', 'test-agent', '--agent-version', '1.2.3', '--provider', 'test-provider', '--metrics', 'on', '--json'],
       import.meta.url,
     )
 
@@ -156,25 +145,20 @@ describe('AgentSessionStart', () => {
 
   test('generates unique session ID using randomUUID', async () => {
     // Given
-    vi.mocked(randomUUID).mockReturnValue('unique-uuid-5678')
+    vi.mocked(randomUUID).mockReturnValue('00000000-0000-4000-8000-000000000002')
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
     await AgentSessionStart.run(
-      [
-        '--agent', 'test-agent',
-        '--agent-version', '1.2.3',
-        '--provider', 'test-provider',
-        '--metrics', 'on',
-      ],
+      ['--agent', 'test-agent', '--agent-version', '1.2.3', '--provider', 'test-provider', '--metrics', 'on'],
       import.meta.url,
     )
 
     // Then
     expect(vi.mocked(startAgentSession)).toHaveBeenCalledWith(
       expect.objectContaining({
-        sessionId: 'conv_unique-uuid-5678',
+        sessionId: 'conv_00000000-0000-4000-8000-000000000002',
       }),
     )
   })

@@ -1,28 +1,18 @@
 import Release from './release.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../models/organization.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {release} from '../../services/release.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
+import * as agent from '@shopify/cli-kit/node/agent'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../../services/release.js')
 vi.mock('../../services/app-context.js')
-vi.mock('@shopify/cli-kit/node/metadata', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/metadata')>()
-  return {...actual, addPublicMetadata: vi.fn()}
-})
-vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()
-  return {...actual, renderWarning: vi.fn()}
-})
-vi.mock('@shopify/cli-kit/node/agent', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/agent')>()
-  return {...actual, getCurrentAgentSession: vi.fn()}
-})
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('app release --force deprecation warning', () => {
-  beforeEach(async () => {
-    const {linkedAppContext} = await import('../../services/app-context.js')
-    const {release} = await import('../../services/release.js')
+  beforeEach(() => {
     vi.mocked(linkedAppContext).mockResolvedValue({
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
@@ -85,10 +75,7 @@ describe('app release --force deprecation warning', () => {
 })
 
 describe('app release agent session behavior', () => {
-  beforeEach(async () => {
-    const {linkedAppContext} = await import('../../services/app-context.js')
-    const {release} = await import('../../services/release.js')
-    const {getCurrentAgentSession} = await import('@shopify/cli-kit/node/agent')
+  beforeEach(() => {
     vi.mocked(linkedAppContext).mockResolvedValue({
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
@@ -103,12 +90,11 @@ describe('app release agent session behavior', () => {
       activeConfig: {} as any,
     })
     vi.mocked(release).mockResolvedValue(undefined)
-    vi.mocked(getCurrentAgentSession).mockReturnValue(undefined)
+    vi.spyOn(agent, 'getCurrentAgentSession').mockReturnValue(undefined)
   })
 
   test('applies --allow-updates when agent session with defaultNonInteractive=true exists and no explicit flags', async () => {
-    const {getCurrentAgentSession} = await import('@shopify/cli-kit/node/agent')
-    vi.mocked(getCurrentAgentSession).mockReturnValue({
+    vi.mocked(agent.getCurrentAgentSession).mockReturnValue({
       sessionId: 'test-session',
       startedAt: new Date().toISOString(),
       agentName: 'test-agent',
@@ -120,7 +106,6 @@ describe('app release agent session behavior', () => {
 
     await Release.run(['--version', 'v1.0.0'])
 
-    const {release} = await import('../../services/release.js')
     expect(release).toHaveBeenCalledWith(
       expect.objectContaining({
         allowUpdates: true,
@@ -130,8 +115,7 @@ describe('app release agent session behavior', () => {
   })
 
   test('explicit --allow-updates flag wins over agent session', async () => {
-    const {getCurrentAgentSession} = await import('@shopify/cli-kit/node/agent')
-    vi.mocked(getCurrentAgentSession).mockReturnValue({
+    vi.mocked(agent.getCurrentAgentSession).mockReturnValue({
       sessionId: 'test-session',
       startedAt: new Date().toISOString(),
       agentName: 'test-agent',
@@ -143,7 +127,6 @@ describe('app release agent session behavior', () => {
 
     await Release.run(['--version', 'v1.0.0', '--allow-updates'])
 
-    const {release} = await import('../../services/release.js')
     expect(release).toHaveBeenCalledWith(
       expect.objectContaining({
         allowUpdates: true,
@@ -153,8 +136,7 @@ describe('app release agent session behavior', () => {
   })
 
   test('explicit --allow-deletes does not trigger --allow-updates from agent session', async () => {
-    const {getCurrentAgentSession} = await import('@shopify/cli-kit/node/agent')
-    vi.mocked(getCurrentAgentSession).mockReturnValue({
+    vi.mocked(agent.getCurrentAgentSession).mockReturnValue({
       sessionId: 'test-session',
       startedAt: new Date().toISOString(),
       agentName: 'test-agent',
@@ -166,7 +148,6 @@ describe('app release agent session behavior', () => {
 
     await Release.run(['--version', 'v1.0.0', '--allow-deletes'])
 
-    const {release} = await import('../../services/release.js')
     expect(release).toHaveBeenCalledWith(
       expect.objectContaining({
         allowUpdates: false,
@@ -176,8 +157,7 @@ describe('app release agent session behavior', () => {
   })
 
   test('no behavior change when agent session exists but defaultNonInteractive=false', async () => {
-    const {getCurrentAgentSession} = await import('@shopify/cli-kit/node/agent')
-    vi.mocked(getCurrentAgentSession).mockReturnValue({
+    vi.mocked(agent.getCurrentAgentSession).mockReturnValue({
       sessionId: 'test-session',
       startedAt: new Date().toISOString(),
       agentName: 'test-agent',
@@ -189,7 +169,6 @@ describe('app release agent session behavior', () => {
 
     await Release.run(['--version', 'v1.0.0', '--allow-updates'])
 
-    const {release} = await import('../../services/release.js')
     expect(release).toHaveBeenCalledWith(
       expect.objectContaining({
         allowUpdates: true,
@@ -199,8 +178,7 @@ describe('app release agent session behavior', () => {
   })
 
   test('explicit --force flag works with agent session', async () => {
-    const {getCurrentAgentSession} = await import('@shopify/cli-kit/node/agent')
-    vi.mocked(getCurrentAgentSession).mockReturnValue({
+    vi.mocked(agent.getCurrentAgentSession).mockReturnValue({
       sessionId: 'test-session',
       startedAt: new Date().toISOString(),
       agentName: 'test-agent',
@@ -212,7 +190,6 @@ describe('app release agent session behavior', () => {
 
     await Release.run(['--version', 'v1.0.0', '--force'])
 
-    const {release} = await import('../../services/release.js')
     expect(release).toHaveBeenCalledWith(
       expect.objectContaining({
         allowUpdates: true,
