@@ -474,7 +474,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       watchedFiles.push(...importedFiles)
     }
 
-    return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
+    return uniq(watchedFiles.map((file) => normalizePath(file)))
   }
 
   /**
