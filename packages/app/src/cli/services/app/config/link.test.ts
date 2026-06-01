@@ -20,6 +20,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {setPathValue} from '@shopify/cli-kit/common/object'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/config.js')
@@ -36,6 +37,7 @@ vi.mock('../../../models/app/loader.js', async () => {
 })
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../context.js')
 vi.mock('../select-app.js')
@@ -66,6 +68,7 @@ function buildDeveloperPlatformClient(extraFields: Partial<DeveloperPlatformClie
 
 beforeEach(async () => {
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   // Default mock for selectConfigName - tests that need a specific value can override
   vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
 })
@@ -112,6 +115,28 @@ describe('link', () => {
       expect(configFileName).toBe('shopify.app.default-value.toml')
 
       expect(remoteApp).toEqual(mockRemoteApp({developerPlatformClient}))
+    })
+  })
+
+  test('throws in non-TTY when the remote app would require prompting', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        developerPlatformClient,
+      }
+      await mockLoadOpaqueAppWithApp(tmp)
+
+      // When
+      const result = link(options)
+
+      // Then
+      await expect(result).rejects.toThrow(/app config link requires additional flags/)
+      await expect(result).rejects.toThrow(/--client-id/)
+      expect(fetchOrCreateOrganizationApp).not.toHaveBeenCalled()
+      expect(selectConfigName).not.toHaveBeenCalled()
     })
   })
 
@@ -873,6 +898,31 @@ describe('link', () => {
 
       // Then - should use default filename without prompting
       expect(configFileName).toBe('shopify.app.toml')
+      expect(selectConfigName).not.toHaveBeenCalled()
+    })
+  })
+
+  test('throws in non-TTY when the config file name would require prompting', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const remoteApp = mockRemoteApp({developerPlatformClient, apiKey: 'new-api-key'})
+      const options: LinkOptions = {
+        directory: tmp,
+        apiKey: remoteApp.apiKey,
+        developerPlatformClient,
+      }
+      writeFileSync(joinPath(tmp, 'shopify.app.toml'), 'client_id = "existing-api-key"')
+      await mockLoadOpaqueAppWithApp(tmp)
+      vi.mocked(appFromIdentifiers).mockResolvedValue(remoteApp)
+
+      // When
+      const result = link(options)
+
+      // Then
+      await expect(result).rejects.toThrow(/app config link requires additional flags/)
+      await expect(result).rejects.toThrow(/--file-name/)
       expect(selectConfigName).not.toHaveBeenCalled()
     })
   })
