@@ -251,6 +251,9 @@ importers:
       global-agent:
         specifier: 3.0.0
         version: 3.0.0
+      graphql:
+        specifier: 16.10.0
+        version: 16.10.0
     devDependencies:
       '@oclif/core':
         specifier: 4.5.3
