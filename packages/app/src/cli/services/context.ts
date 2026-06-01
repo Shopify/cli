@@ -118,12 +118,12 @@ export async function ensureThemeExtensionDevContext(
     apiKey,
     organizationId: '1',
   })
-  const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
+  const remoteRegistration = remoteSpecifications.app.extensionRegistrations.find((extension) => {
     return extension.type === 'THEME_APP_EXTENSION'
   })
 
-  if (remoteRegistrations[0]) {
-    return remoteRegistrations[0]
+  if (remoteRegistration) {
+    return remoteRegistration
   }
 
   const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, developerPlatformClient)
