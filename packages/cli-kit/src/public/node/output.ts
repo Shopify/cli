@@ -230,6 +230,11 @@ function shouldOutput(logLevel: LogLevel): boolean {
 export let collectedLogs: Record<string, string[]> = {}
 
 /**
+ * Memoized value for the color check.
+ */
+let memoizedShouldDisplayColors: boolean | undefined
+
+/**
  * This is only used during UnitTesting.
  * If we are in a testing context, instead of printing the logs to the console,
  * we will store them in a variable that can be accessed from the tests.
@@ -415,12 +420,18 @@ export function unstyled(message: string): string {
  * @returns True if the console outputs should display colors, false otherwise.
  */
 export function shouldDisplayColors(_process = process): boolean {
-  const {env, stdout} = _process
-  if (Object.hasOwnProperty.call(env, 'FORCE_COLOR')) {
-    return isTruthy(env.FORCE_COLOR)
-  } else {
-    return Boolean(stdout.isTTY)
+  if (_process === process && memoizedShouldDisplayColors !== undefined) {
+    return memoizedShouldDisplayColors
   }
+
+  const {env, stdout} = _process
+  const result = Object.hasOwnProperty.call(env, 'FORCE_COLOR') ? isTruthy(env.FORCE_COLOR) : Boolean(stdout.isTTY)
+
+  if (_process === process) {
+    memoizedShouldDisplayColors = result
+  }
+
+  return result
 }
 
 /**
