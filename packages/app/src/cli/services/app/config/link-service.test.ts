@@ -8,6 +8,7 @@ import {selectOrganizationPrompt} from '@shopify/organizations'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/dev.js')
@@ -15,10 +16,12 @@ vi.mock('@shopify/organizations')
 vi.mock('../../../prompts/config.js')
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../dev/fetch.js')
 vi.mock('../../../utilities/developer-platform-client.js')
 vi.mock('../../../models/app/validation/multi-cli-warning.js')
 beforeEach(async () => {
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   // Default mock for selectConfigName - tests that need a specific value can override
   vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
 })
