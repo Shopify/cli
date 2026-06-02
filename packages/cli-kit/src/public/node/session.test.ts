@@ -63,7 +63,7 @@ describe('ensureAuthenticatedStorefront', () => {
     // Then
     expect(got).toEqual('theme_access_password')
     expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
-    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('dd5e7850-e2de-d283-9c5f-79c8190a19d18b52e0ce')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('21534e73-fdc5-9bd3-8c9f-3f45815510a7')
   })
 
   test('returns the password if provided, and auth method is theme_access_token', async () => {
@@ -73,7 +73,7 @@ describe('ensureAuthenticatedStorefront', () => {
     // Then
     expect(got).toEqual('shptka_theme_access_password')
     expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
-    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('730a64df-ab2c-3d92-8b11-76a66aadee947aa5c1ce')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('b7d6d99f-3f60-301f-71b8-3108eacc993e')
   })
 
   test('throws error if there is no storefront token', async () => {
@@ -142,7 +142,7 @@ describe('ensureAuthenticatedPartners', () => {
     // Given
     vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce({
       accessToken: partnersToken.accessToken,
-      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      userId: '18a8698d-f12b-f2db-4737-cecd09bb2c1e',
     })
     vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
 
@@ -150,7 +150,7 @@ describe('ensureAuthenticatedPartners', () => {
     const got = await ensureAuthenticatedPartners([])
 
     // Then
-    expect(got).toEqual({token: 'custom_partners_token', userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d'})
+    expect(got).toEqual({token: 'custom_partners_token', userId: '18a8698d-f12b-f2db-4737-cecd09bb2c1e'})
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
@@ -190,7 +190,7 @@ describe('ensureAuthenticatedTheme', () => {
     // Then
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
     expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
-    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('f5c7086f-320b-3b93-bcdc-a2296adbec02d71eb733')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('18a8698d-f12b-f2db-4737-cecd09bb2c1e')
   })
 
   test('returns the password when is provided and theme_access_token', async () => {
@@ -200,7 +200,7 @@ describe('ensureAuthenticatedTheme', () => {
     // Then
     expect(got).toEqual({token: 'shptka_password', storeFqdn: 'mystore.myshopify.com'})
     expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
-    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('e3d08cca-4e68-504a-00ec-23e2cea12a6340bb257b')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('aea5e074-48e7-cb2a-4b3b-6cebbb5d6f26')
   })
 })
 
@@ -264,11 +264,11 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
     vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
     vi.mocked(exchangeAppAutomationTokenForAppManagementAccessToken).mockResolvedValueOnce({
       accessToken: 'app-management-token',
-      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      userId: '18a8698d-f12b-f2db-4737-cecd09bb2c1e',
     })
     vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
       accessToken: 'business-platform-token',
-      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      userId: '18a8698d-f12b-f2db-4737-cecd09bb2c1e',
     })
 
     // When
@@ -277,7 +277,7 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
     // Then
     expect(got).toEqual({
       appManagementToken: 'app-management-token',
-      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      userId: '18a8698d-f12b-f2db-4737-cecd09bb2c1e',
       businessPlatformToken: 'business-platform-token',
     })
     expect(ensureAuthenticated).not.toHaveBeenCalled()
