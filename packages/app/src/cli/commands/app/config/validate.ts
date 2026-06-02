@@ -1,5 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import {validateApp} from '../../../services/validate.js'
+import {writeCachedSchemas} from '../../../services/schemas/write-cached-schemas.js'
+import {syncSchemaDirectives} from '../../../services/schemas/sync-schema-directives.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
@@ -8,7 +10,7 @@ import {Project} from '../../../models/project/project.js'
 import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
-import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {renderError} from '@shopify/cli-kit/node/ui'
 
 async function recordValidationFailure(issueCount: number, fileCount: number) {
@@ -105,6 +107,18 @@ export default class Validate extends AppLinkedCommand {
         throw new AbortSilentError()
       }
       throw err
+    }
+
+    // Refresh the IDE schema cache and per-TOML directives. Best-effort: failures here must not
+    // prevent the user from getting their validation result.
+    try {
+      const schemaIndex = await writeCachedSchemas(app)
+      if (!flags.json) {
+        await syncSchemaDirectives(app, schemaIndex)
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (err) {
+      outputDebug(`Failed to refresh cached IDE schemas: ${err}`)
     }
 
     await validateApp(app, {json: flags.json})

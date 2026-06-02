@@ -17,7 +17,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
  *
  * They'll be stripped before deployment (see usage of `configWithoutFirstClassFields` in `specification.ts`)
  */
-const JsonSchemaBaseProperties = {
+export const JsonSchemaBaseProperties = {
   type: {type: 'string'},
   handle: {type: 'string'},
   uid: {type: 'string'},

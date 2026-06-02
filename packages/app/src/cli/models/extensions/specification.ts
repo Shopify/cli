@@ -110,6 +110,20 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   uidStrategy: UidStrategy
 
   /**
+   * Local Zod schema used to validate this specification's configuration. Always populated at runtime by the
+   * spec factories (`createExtensionSpecification`, `createConfigExtensionSpecification`,
+   * `createContractBasedModuleSpecification`).
+   */
+  schema: ZodSchemaType<TConfiguration>
+
+  /**
+   * Remote JSON Schema contract for this specification, when one was returned by the platform.
+   * Populated by the local+remote spec merge in `fetchSpecifications`; absent for purely local specs
+   * (e.g. those loaded without a remote round-trip).
+   */
+  validationSchema?: {jsonSchema: string} | null
+
+  /**
    * Have this specification contribute to the schema used to validate app configuration. For specifications that don't
    * form part of app config, they can return the schema unchanged.
    *

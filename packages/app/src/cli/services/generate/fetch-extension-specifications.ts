@@ -130,6 +130,7 @@ function mergeLocalAndRemoteSpec(
     registrationLimit: remoteSpec.registrationLimit,
     uidStrategy: remoteSpec.uidStrategy,
     surface: remoteSpec.surface ?? localSpec.surface,
+    validationSchema: remoteSpec.validationSchema,
   }
   return merged
 }
@@ -146,5 +147,5 @@ async function createRemoteOnlySpecification(
     experience: remoteSpec.experience as 'extension' | 'configuration',
     appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
   })
-  return {...localSpec, loadedRemoteSpecs: true}
+  return {...localSpec, loadedRemoteSpecs: true, validationSchema}
 }

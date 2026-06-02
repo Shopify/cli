@@ -1,6 +1,8 @@
 import Validate from './validate.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {validateApp} from '../../../services/validate.js'
+import {writeCachedSchemas} from '../../../services/schemas/write-cached-schemas.js'
+import {syncSchemaDirectives} from '../../../services/schemas/sync-schema-directives.js'
 import {testAppLinked} from '../../../models/app/app.test-data.js'
 import {Project} from '../../../models/project/project.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
@@ -9,14 +11,24 @@ import metadata from '../../../metadata.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/validate.js')
+vi.mock('../../../services/schemas/write-cached-schemas.js')
+vi.mock('../../../services/schemas/sync-schema-directives.js')
 vi.mock('../../../models/project/project.js')
 vi.mock('../../../models/project/active-config.js')
 vi.mock('../../../models/project/config-selection.js')
 vi.mock('../../../metadata.js', () => ({default: {addPublicMetadata: vi.fn()}}))
+
+beforeEach(() => {
+  vi.mocked(writeCachedSchemas).mockResolvedValue({
+    appSchemaPath: '/app/.shopify/schemas/app.schema.json',
+    extensionSchemaByIdentifier: new Map(),
+  })
+  vi.mocked(syncSchemaDirectives).mockResolvedValue()
+})
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
   return {...actual, outputResult: vi.fn()}
@@ -147,6 +159,42 @@ describe('app config validate command', () => {
         cmd_app_validate_file_count: 1,
       },
     )
+  })
+
+  test('regenerates cached schemas and rewrites directives in default mode', async () => {
+    const app = testAppLinked()
+    mockHealthyProject()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockResolvedValue()
+
+    await Validate.run([], import.meta.url)
+
+    expect(writeCachedSchemas).toHaveBeenCalledWith(app)
+    expect(syncSchemaDirectives).toHaveBeenCalledTimes(1)
+  })
+
+  test('regenerates cached schemas but skips directive sync in --json mode', async () => {
+    const app = testAppLinked()
+    mockHealthyProject()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockResolvedValue()
+
+    await Validate.run(['--json'], import.meta.url)
+
+    expect(writeCachedSchemas).toHaveBeenCalledWith(app)
+    expect(syncSchemaDirectives).not.toHaveBeenCalled()
+  })
+
+  test('still validates the app when schema caching throws', async () => {
+    const app = testAppLinked()
+    mockHealthyProject()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockResolvedValue()
+    vi.mocked(writeCachedSchemas).mockRejectedValue(new Error('disk full'))
+
+    await Validate.run([], import.meta.url)
+
+    expect(validateApp).toHaveBeenCalledWith(app, {json: false})
   })
 
   test('records failure metadata when linkedAppContext throws a validation error with --json', async () => {
