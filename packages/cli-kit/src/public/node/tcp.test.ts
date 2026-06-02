@@ -90,4 +90,8 @@ describe('checkPortAvailability', () => {
       server.close()
     }
   })
+
+  test.each([13245574, 70000, -1, NaN])('resolves false for out-of-range/invalid port %s', async (port) => {
+    await expect(checkPortAvailability(port)).resolves.toBe(false)
+  })
 })

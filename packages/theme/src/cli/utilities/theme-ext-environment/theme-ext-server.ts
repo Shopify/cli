@@ -91,7 +91,7 @@ async function contextDevServerContext(
       ignore: [],
       only: [],
       host,
-      port: port.toString(),
+      port,
       liveReload: 'hot-reload',
       open: false,
       errorOverlay: 'default',
