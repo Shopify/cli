@@ -57,6 +57,10 @@ export interface BuildAsset {
   static?: boolean
 }
 
+interface ExtensionDeployConfigContext {
+  appConfiguration: AppConfiguration
+}
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -80,6 +84,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     directory: string,
     apiKey: string,
     moduleId?: string,
+    context?: ExtensionDeployConfigContext,
   ) => Promise<Record<string, unknown> | undefined>
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>

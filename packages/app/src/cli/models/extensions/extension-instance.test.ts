@@ -218,6 +218,30 @@ describe('deployConfig', async () => {
     expect(got).toMatchObject({theme_extension: {files: {}}})
   })
 
+  test('passes app configuration context to deployConfig', async () => {
+    const extensionInstance = await testThemeExtensions()
+    const originalDeployConfig = extensionInstance.specification.deployConfig
+    const deployConfig = vi.fn().mockResolvedValue({theme_extension: {files: {}}})
+    extensionInstance.specification.deployConfig = deployConfig
+
+    try {
+      await extensionInstance.deployConfig({
+        apiKey: 'apiKey',
+        appConfiguration: placeholderAppConfiguration,
+      })
+
+      expect(deployConfig).toHaveBeenCalledWith(
+        extensionInstance.configuration,
+        extensionInstance.directory,
+        'apiKey',
+        undefined,
+        {appConfiguration: placeholderAppConfiguration},
+      )
+    } finally {
+      extensionInstance.specification.deployConfig = originalDeployConfig
+    }
+  })
+
   test('returns transformed config when defined', async () => {
     const extensionInstance = await testAppConfigExtensions()
 

@@ -199,7 +199,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+    const deployConfig = await this.specification.deployConfig?.(
+      this.configuration,
+      this.directory,
+      apiKey,
+      undefined,
+      {
+        appConfiguration,
+      },
+    )
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined
