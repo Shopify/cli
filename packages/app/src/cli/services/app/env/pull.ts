@@ -24,6 +24,11 @@ export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOp
     SCOPES: getAppScopes(app.configuration),
   }
 
+  const redactedValues = {
+    ...updatedValues,
+    SHOPIFY_API_SECRET: '****',
+  }
+
   if (await fileExists(envFile)) {
     const envFileContent = await readFile(envFile)
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedValues)
@@ -33,10 +38,12 @@ export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOp
     } else {
       await writeFile(envFile, updatedEnvFileContent)
 
-      const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
+      const redactedOldEnvFileContent = patchEnvFile(envFileContent, {SHOPIFY_API_SECRET: '****'})
+      const redactedEnvFileContent = patchEnvFile(envFileContent, redactedValues)
+      const diff = diffLines(redactedOldEnvFileContent, redactedEnvFileContent)
       return outputContent`Updated ${outputToken.path(envFile)} to be:
 
-${updatedEnvFileContent}
+${redactedEnvFileContent}
 
 Here's what changed:
 
@@ -45,12 +52,13 @@ ${outputToken.linesDiff(diff)}
     }
   } else {
     const newEnvFileContent = patchEnvFile(null, updatedValues)
+    const redactedEnvFileContent = patchEnvFile(null, redactedValues)
 
     await writeFile(envFile, newEnvFileContent)
 
     return outputContent`Created ${outputToken.path(envFile)}:
 
-${newEnvFileContent}
+${redactedEnvFileContent}
 `
   }
 }
