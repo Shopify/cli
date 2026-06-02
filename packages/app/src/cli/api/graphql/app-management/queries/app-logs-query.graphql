@@ -1,0 +1,41 @@
+query AppLogsQuery(
+  $apiKey: String!
+  $startTime: DateTime!
+  $endTime: DateTime!
+  $types: [AppLogEventType!]
+  $status: AppLogStatus
+  $target: String
+  $shopIds: [Int!]
+  $first: Int
+  $after: String
+) {
+  appLogs(
+    apiKey: $apiKey
+    startTime: $startTime
+    endTime: $endTime
+    types: $types
+    status: $status
+    target: $target
+    shopIds: $shopIds
+    first: $first
+    after: $after
+  ) {
+    edges {
+      node {
+        id
+        timestamp
+        type
+        status
+        target
+        shopDomain
+        executionDurationMs
+        payload
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
