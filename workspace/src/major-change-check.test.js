@@ -17,7 +17,16 @@ import {mkdtemp, rm, writeFile, mkdir} from 'node:fs/promises'
 import os from 'node:os'
 import * as path from 'pathe'
 
-import {checkChangesets, extractSchemaFields, resolveContext, stripStringsAndComments} from './major-change-check.js'
+import {
+  checkChangesets,
+  codeownersPatternToRegExp,
+  extractSchemaFields,
+  findCodeownerApproval,
+  ownersForFiles,
+  parseCodeowners,
+  resolveContext,
+  stripStringsAndComments,
+} from './major-change-check.js'
 
 test('extracts top-level keys from a flat .object({...})', () => {
   const src = `
@@ -189,6 +198,87 @@ test('resolveContext: git failure degrades to scanning everything against main',
   assert.equal(ctx.changedFiles, null, 'git failure must NOT collapse to an empty diff set')
 })
 
+test('resolveContext: populates repo + prNumber from GITHUB_REPOSITORY and the event payload', async () => {
+  // Integration-shaped test: this is exactly the path that ships in CI.
+  // Without this, `runMain` calls findCodeownerApproval with undefined
+  // repo/prNumber and the override silently no-ops.
+  const runGit = async (args) => (args[0] === 'merge-base' ? 'abc123\n' : '')
+  const ctx = await resolveContext({
+    baseRef: 'main',
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => ({pull_request: {number: 7469}}),
+    runGit,
+  })
+  assert.deepEqual(ctx.repo, {owner: 'Shopify', name: 'cli'})
+  assert.equal(ctx.prNumber, 7469)
+})
+
+test('resolveContext: pull_request_review event also yields a PR number', async () => {
+  // The whole reason this workflow exists is to re-run on review events,
+  // so this shape must work.
+  const ctx = await resolveContext({
+    baseRef: 'main',
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => ({
+      action: 'submitted',
+      pull_request: {number: 7469},
+      review: {state: 'approved', user: {login: 'isaac'}},
+    }),
+    runGit: async () => '',
+  })
+  assert.equal(ctx.prNumber, 7469)
+})
+
+test('resolveContext: merge_group event has no PR number, repo still resolves', async () => {
+  const ctx = await resolveContext({
+    baseRef: 'main',
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => ({merge_group: {head_sha: 'deadbeef'}}),
+    runGit: async () => '',
+  })
+  assert.deepEqual(ctx.repo, {owner: 'Shopify', name: 'cli'})
+  assert.equal(ctx.prNumber, null, 'merge_group has no PR number; override is skipped cleanly')
+})
+
+test('resolveContext: missing env vars degrade to null (local invocation)', async () => {
+  const ctx = await resolveContext({
+    baseRef: undefined,
+    repository: undefined,
+    eventPath: undefined,
+    runGit: async () => '',
+  })
+  assert.equal(ctx.repo, null)
+  assert.equal(ctx.prNumber, null)
+  assert.equal(ctx.baselineRef, 'main')
+  assert.equal(ctx.changedFiles, null)
+})
+
+test('resolveContext: malformed GITHUB_REPOSITORY returns null repo', async () => {
+  const ctx = await resolveContext({
+    baseRef: undefined,
+    repository: 'not-a-valid-slug',
+    runGit: async () => '',
+  })
+  assert.equal(ctx.repo, null, 'a repository slug without a slash must not produce undefined-named URLs')
+})
+
+test('resolveContext: unreadable event file degrades to null prNumber (does not throw)', async () => {
+  const ctx = await resolveContext({
+    baseRef: undefined,
+    repository: 'Shopify/cli',
+    eventPath: '/fake/path/event.json',
+    readEvent: async () => {
+      throw new Error('ENOENT: no such file or directory')
+    },
+    runGit: async () => '',
+  })
+  assert.deepEqual(ctx.repo, {owner: 'Shopify', name: 'cli'})
+  assert.equal(ctx.prNumber, null)
+})
+
 // ---------------------------------------------------------------------------
 // checkChangesets() — only flag changesets the PR actually touched
 // ---------------------------------------------------------------------------
@@ -269,4 +359,160 @@ test('resolveContext: no GITHUB_BASE_REF falls back to scanning main (local invo
   assert.equal(ctx.baselineRef, 'main')
   assert.equal(ctx.changedFiles, null)
   assert.equal(called, false, 'must not shell out to git when no base ref is known')
+})
+
+// ---------------------------------------------------------------------------
+// CODEOWNERS parsing & matching
+// ---------------------------------------------------------------------------
+
+test('parseCodeowners strips comments and blank lines', () => {
+  const content = `
+# top of file
+* @shopify/dev_experience
+
+# section
+/.github/CODEOWNERS @shopify/developer-platforms @shopify/dev_experience
+packages/theme/** @shopify/theme  # inline comment
+`
+  const rules = parseCodeowners(content)
+  assert.deepEqual(rules, [
+    {pattern: '*', owners: ['@shopify/dev_experience']},
+    {pattern: '/.github/CODEOWNERS', owners: ['@shopify/developer-platforms', '@shopify/dev_experience']},
+    {pattern: 'packages/theme/**', owners: ['@shopify/theme']},
+  ])
+})
+
+test('codeownersPatternToRegExp matches like CODEOWNERS does', () => {
+  // `*` covers everything
+  assert.match('packages/app/foo.ts', codeownersPatternToRegExp('*'))
+
+  // Anchored path
+  const cliRule = codeownersPatternToRegExp('/.github/CODEOWNERS')
+  assert.match('.github/CODEOWNERS', cliRule)
+  assert.doesNotMatch('foo/.github/CODEOWNERS', cliRule)
+
+  // Directory glob
+  const themeRule = codeownersPatternToRegExp('packages/theme/**')
+  assert.match('packages/theme/index.ts', themeRule)
+  assert.match('packages/theme/sub/dir/file.ts', themeRule)
+  assert.doesNotMatch('packages/app/foo.ts', themeRule)
+})
+
+test('ownersForFiles: last matching rule wins (CODEOWNERS semantics)', () => {
+  const rules = parseCodeowners(`
+* @shopify/dev_experience
+packages/theme/** @shopify/theme
+`)
+  const themeOwners = ownersForFiles(rules, ['packages/theme/foo.ts'])
+  assert.deepEqual([...themeOwners], ['@shopify/theme'], 'theme rule overrides catch-all')
+
+  const appOwners = ownersForFiles(rules, ['packages/app/foo.ts'])
+  assert.deepEqual([...appOwners], ['@shopify/dev_experience'], 'falls through to catch-all')
+})
+
+// ---------------------------------------------------------------------------
+// findCodeownerApproval()
+// ---------------------------------------------------------------------------
+
+const fakeRepo = {owner: 'Shopify', name: 'cli'}
+
+test('findCodeownerApproval: approver with write access overrides', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 1,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [
+      {state: 'COMMENTED', user: {login: 'someone'}},
+      {state: 'APPROVED', user: {login: 'isaac'}},
+    ],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async (_repo, user) => (user === 'isaac' ? 'write' : 'read'),
+  })
+  assert.equal(result.approved, true)
+  assert.equal(result.approver, 'isaac')
+})
+
+test('findCodeownerApproval: latest review per author wins (changes_requested cancels earlier approval)', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 2,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [
+      {state: 'APPROVED', user: {login: 'isaac'}, submitted_at: '2025-01-01'},
+      {state: 'CHANGES_REQUESTED', user: {login: 'isaac'}, submitted_at: '2025-01-02'},
+    ],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async () => 'write',
+  })
+  assert.equal(result.approved, false, "withdrawn approval should not count")
+})
+
+test('findCodeownerApproval: later COMMENTED review does not overwrite an earlier APPROVED', async () => {
+  // Common workflow: approve a PR, then leave an inline review comment.
+  // GitHub records the comment as a `COMMENTED` review entry. We must
+  // ignore non-actionable states when computing "latest review per author",
+  // otherwise the approval is silently lost.
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 5,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [
+      {state: 'APPROVED', user: {login: 'isaac'}, submitted_at: '2025-01-01'},
+      {state: 'COMMENTED', user: {login: 'isaac'}, submitted_at: '2025-01-02'},
+    ],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async () => 'write',
+  })
+  assert.equal(result.approved, true, 'a later COMMENTED entry must not cancel an APPROVED review')
+  assert.equal(result.approver, 'isaac')
+})
+
+test('findCodeownerApproval: no approving reviewer with write access => not approved', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 3,
+    changedFiles: new Set(['packages/app/foo.ts']),
+    fetchReviews: async () => [{state: 'APPROVED', user: {login: 'external'}}],
+    fetchCodeowners: async () => '* @shopify/dev_experience',
+    fetchPermission: async () => 'read',
+  })
+  assert.equal(result.approved, false)
+  assert.equal(result.approver, null)
+})
+
+test('findCodeownerApproval: missing PR number bails immediately', async () => {
+  const result = await findCodeownerApproval({repo: fakeRepo, prNumber: null})
+  assert.equal(result.approved, false)
+  assert.match(result.reason, /no PR number/)
+})
+
+test('findCodeownerApproval: missing repo bails before any URL is constructed', async () => {
+  // Without this guard, `defaultFetchReviews(null, prNumber)` would throw
+  // `TypeError: Cannot read properties of null (reading 'owner')`. The
+  // crash is accidentally fail-safe (non-zero exit keeps the check red)
+  // but the error message is gibberish. Triggered in practice by
+  // resolveContext returning repo=null when GITHUB_REPOSITORY is unset or
+  // malformed (local invocation).
+  let fetchCalled = false
+  const result = await findCodeownerApproval({
+    repo: null,
+    prNumber: 42,
+    fetchReviews: async () => {
+      fetchCalled = true
+      return null
+    },
+  })
+  assert.equal(result.approved, false)
+  assert.match(result.reason, /no repo context/)
+  assert.equal(fetchCalled, false, 'must bail before any GitHub API URL is constructed')
+})
+
+test('findCodeownerApproval: reviews API failure bails (does not auto-approve)', async () => {
+  const result = await findCodeownerApproval({
+    repo: fakeRepo,
+    prNumber: 4,
+    changedFiles: new Set(['x']),
+    fetchReviews: async () => null,
+  })
+  assert.equal(result.approved, false, 'API failure must NOT silently grant override')
 })
