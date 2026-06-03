@@ -1,6 +1,34 @@
 import {storeAuthSessionKey} from './config.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
+/**
+ * Discriminator for a stored store auth session.
+ *
+ * - 'standard': created via `shopify store auth` (PKCE OAuth against a real Shopify identity).
+ * - 'preview':  created via `shopify store create preview`. Backed by a placeholder identity,
+ *               holds a shop-scoped Admin API token, has no refresh token, and cannot be
+ *               re-authenticated through the PKCE flow.
+ *
+ * Stored sessions written before this discriminator existed have no `kind` field and are
+ * read back as 'standard'.
+ */
+// Kept internal for now; re-exported when the `shopify store create preview` command lands.
+type StoredStoreSessionKind = 'standard' | 'preview'
+
+/**
+ * Preview-store-only metadata. Present iff `kind === 'preview'`.
+ */
+export interface StoredPreviewStoreMetadata {
+  /** Placeholder account UUID returned by Core's preview-stores orchestrator. */
+  placeholderAccountUuid: string
+  /** Base URL of the Core orchestrator that minted this session. */
+  coreUrl: string
+  /** One-time-use admin entry URL. Short-lived (~30 min). */
+  magicLinkUrl?: string
+  /** ISO timestamp at which `magicLinkUrl` is expected to stop working. */
+  magicLinkExpiresAt?: string
+}
+
 export interface StoredStoreAppSession {
   store: string
   clientId: string
@@ -18,6 +46,35 @@ export interface StoredStoreAppSession {
     lastName?: string
     accountOwner?: boolean
   }
+  /**
+   * Discriminator. Optional in storage for back-compat with sessions written before the
+   * field existed; `sessionKind()` resolves missing values to 'standard'.
+   */
+  kind?: StoredStoreSessionKind
+  /** Preview-store-only metadata. Set iff `kind === 'preview'`. */
+  preview?: StoredPreviewStoreMetadata
+}
+
+/**
+ * A stored session that has been narrowed to a preview-store session. The `preview`
+ * metadata is guaranteed to be present.
+ *
+ * Kept internal for now; re-exported when the `shopify store create preview` command
+ * lands and external callers need to construct or pass them around.
+ */
+type StoredPreviewStoreSession = StoredStoreAppSession & {
+  kind: 'preview'
+  preview: StoredPreviewStoreMetadata
+}
+
+/** Resolves the discriminator for a stored session, defaulting to 'standard'. */
+export function sessionKind(session: StoredStoreAppSession): StoredStoreSessionKind {
+  return session.kind ?? 'standard'
+}
+
+/** Type guard for preview-store-backed sessions. Narrows `preview` to non-optional. */
+export function isPreviewStoreSession(session: StoredStoreAppSession): session is StoredPreviewStoreSession {
+  return sessionKind(session) === 'preview' && session.preview !== undefined
 }
 
 interface StoredStoreAppSessionBucket {
@@ -55,6 +112,20 @@ function sanitizeAssociatedUser(value: unknown): StoredStoreAppSession['associat
   }
 }
 
+function sanitizePreviewMetadata(value: unknown): StoredPreviewStoreMetadata | undefined {
+  if (!value || typeof value !== 'object') return undefined
+
+  const metadata = value as Record<string, unknown>
+  if (!isString(metadata.placeholderAccountUuid) || !isString(metadata.coreUrl)) return undefined
+
+  return {
+    placeholderAccountUuid: metadata.placeholderAccountUuid,
+    coreUrl: metadata.coreUrl,
+    ...(isString(metadata.magicLinkUrl) ? {magicLinkUrl: metadata.magicLinkUrl} : {}),
+    ...(isString(metadata.magicLinkExpiresAt) ? {magicLinkExpiresAt: metadata.magicLinkExpiresAt} : {}),
+  }
+}
+
 function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | undefined {
   if (!value || typeof value !== 'object') return undefined
 
@@ -71,6 +142,17 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
     return undefined
   }
 
+  // Discriminator is optional for back-compat: sessions written before this field existed
+  // are read back as 'standard'. Unknown values are coerced to 'standard' and the field is
+  // omitted from the result so it doesn't pollute legacy buckets.
+  const kind: StoredStoreSessionKind = session.kind === 'preview' ? 'preview' : 'standard'
+  const preview = kind === 'preview' ? sanitizePreviewMetadata(session.preview) : undefined
+
+  // A session declared as 'preview' but missing/malformed metadata is rejected outright,
+  // because downstream code (recovery paths, future re-mint) requires `placeholderAccountUuid`
+  // and `coreUrl` to act on it.
+  if (kind === 'preview' && !preview) return undefined
+
   return {
     store: session.store,
     clientId: session.clientId,
@@ -84,6 +166,8 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
     ...(sanitizeAssociatedUser(session.associatedUser)
       ? {associatedUser: sanitizeAssociatedUser(session.associatedUser)}
       : {}),
+    ...(kind === 'preview' ? {kind} : {}),
+    ...(preview ? {preview} : {}),
   }
 }
 

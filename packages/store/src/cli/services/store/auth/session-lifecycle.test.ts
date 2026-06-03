@@ -10,7 +10,19 @@ import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('./session-store.js')
+vi.mock('./session-store.js', async () => {
+  // Auto-mock the storage helpers (so each test can stub their return values), but keep
+  // the pure helpers (`sessionKind`, `isPreviewStoreSession`) backed by the real impl —
+  // session-lifecycle branches on them and a default `vi.fn()` would return undefined.
+  const actual = await vi.importActual<typeof import('./session-store.js')>('./session-store.js')
+  return {
+    clearStoredStoreAppSession: vi.fn(),
+    getCurrentStoredStoreAppSession: vi.fn(),
+    setStoredStoreAppSession: vi.fn(),
+    isPreviewStoreSession: actual.isPreviewStoreSession,
+    sessionKind: actual.sessionKind,
+  }
+})
 vi.mock('./token-client.js')
 
 function buildSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
@@ -170,5 +182,63 @@ describe('loadStoredStoreSession', () => {
       tryMessage: 'To re-authenticate, run:',
     })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith('shop.myshopify.com', '42')
+  })
+
+  describe('preview-store sessions', () => {
+    function buildPreviewSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
+      return {
+        store: 'preview-1.myshopify.io',
+        clientId: STORE_AUTH_APP_CLIENT_ID,
+        userId: 'placeholder:abc',
+        accessToken: 'shpat_preview_token',
+        scopes: ['read_products'],
+        acquiredAt: '2026-03-27T00:00:00.000Z',
+        kind: 'preview',
+        preview: {
+          placeholderAccountUuid: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          coreUrl: 'https://app.shop.dev',
+        },
+        ...overrides,
+      }
+    }
+
+    test('returns the preview session as-is when it has no expiresAt', async () => {
+      const session = buildPreviewSession()
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(session)
+
+      await expect(loadStoredStoreSession('preview-1.myshopify.io')).resolves.toEqual(session)
+      expect(refreshStoreAccessToken).not.toHaveBeenCalled()
+    })
+
+    test('never attempts a PKCE refresh for an expired preview session, even if a refreshToken is somehow present', async () => {
+      // Defensive: the create-preview path never sets `refreshToken` on a preview session,
+      // but if one ever sneaks in we still must not hit the OAuth refresh endpoint, which
+      // the placeholder identity has no relationship with.
+      const session = buildPreviewSession({
+        expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
+        refreshToken: 'should-be-ignored',
+      })
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(session)
+
+      await expect(loadStoredStoreSession('preview-1.myshopify.io')).rejects.toMatchObject({
+        message: 'Preview store session for preview-1.myshopify.io is no longer valid.',
+      })
+      expect(refreshStoreAccessToken).not.toHaveBeenCalled()
+    })
+
+    test('surfaces the preview-specific recovery error rather than the standard re-auth message', async () => {
+      const session = buildPreviewSession({
+        expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
+      })
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(session)
+
+      await expect(loadStoredStoreSession('preview-1.myshopify.io')).rejects.toMatchObject({
+        tryMessage: expect.stringContaining("Preview store sessions can't be refreshed"),
+      })
+      // The PKCE-specific next-step must not surface for preview sessions.
+      await expect(loadStoredStoreSession('preview-1.myshopify.io')).rejects.not.toMatchObject({
+        tryMessage: 'To re-authenticate, run:',
+      })
+    })
   })
 })
