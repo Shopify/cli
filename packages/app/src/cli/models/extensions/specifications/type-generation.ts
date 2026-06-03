@@ -3,6 +3,7 @@ import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/n
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {compile} from 'json-schema-to-typescript'
 import {pascalize} from '@shopify/cli-kit/common/string'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {createRequire} from 'module'
 import type ts from 'typescript'
@@ -186,7 +187,7 @@ export async function findAllImportedFiles(filePath: string, visited = new Set<s
     allFiles.push(...nestedImports)
   }
 
-  return [...new Set(allFiles)]
+  return uniq(allFiles)
 }
 
 interface CreateTypeDefinitionOptions {
