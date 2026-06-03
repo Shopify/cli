@@ -729,13 +729,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables,
       cacheOptions: {
         cacheTTL: {minutes: 59},
-        // Scope the cached signed upload URL to this specific app and command
-        // run. Without this, concurrent deploys of different apps in the same
-        // organization can share a single cached signed upload URL — each
-        // process uploads its own bundle to the same destination and whichever
-        // upload App Management reads last gets used for every concurrent
-        // appVersionCreate, cross-contaminating app bundles.
-        // See https://github.com/Shopify/cli/issues/7696.
+        // Avoid reusing signed upload URLs across apps or commands.
         cacheExtraKey: `${apiKey}-${getCurrentCommandId()}`,
       },
     })
