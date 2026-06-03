@@ -161,6 +161,7 @@ import {
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {getCurrentCommandId} from '@shopify/cli-kit/node/global-context'
 import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
@@ -718,7 +719,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+  async generateSignedUploadUrl({apiKey, organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
     const variables = {
       sourceExtension: 'BR' as SourceExtension,
       organizationId: gidFromOrganizationIdForShopify(organizationId),
@@ -726,7 +727,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.appManagementRequest({
       query: CreateAssetUrl,
       variables,
-      cacheOptions: {cacheTTL: {minutes: 59}},
+      cacheOptions: {
+        cacheTTL: {minutes: 59},
+        // Scope the cached signed upload URL to this specific app and command
+        // run. Without this, concurrent deploys of different apps in the same
+        // organization can share a single cached signed upload URL — each
+        // process uploads its own bundle to the same destination and whichever
+        // upload App Management reads last gets used for every concurrent
+        // appVersionCreate, cross-contaminating app bundles.
+        // See https://github.com/Shopify/cli/issues/7696.
+        cacheExtraKey: `${apiKey}-${getCurrentCommandId()}`,
+      },
     })
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
