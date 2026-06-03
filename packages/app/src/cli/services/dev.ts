@@ -476,6 +476,7 @@ async function logMetadataForDev(options: {
     cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? hashString(options.tunnelUrl) : undefined,
     cmd_dev_urls_updated: options.shouldUpdateURLs,
     store_fqdn_hash: hashString(options.storeFqdn),
+    store_domain: options.storeFqdn,
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
   }))
 
