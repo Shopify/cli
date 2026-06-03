@@ -1,5 +1,7 @@
 import * as environments from './environments.js'
 import {encodeToml as tomlEncode} from './toml/codec.js'
+import {TomlFileError} from './toml/toml-file.js'
+import {shouldReportErrorAsUnexpected} from './error.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
@@ -80,6 +82,21 @@ describe('loading environments', async () => {
 
       // Then
       expect(loaded).toEqual(environment1)
+    })
+  })
+
+  test('malformed environment files fail as expected user errors', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, fileName)
+      await writeFile(filePath, 'environments = [invalid')
+
+      // When
+      const error = await environments.loadEnvironment('environment1', fileName, {from: tmpDir}).catch((err) => err)
+
+      // Then
+      expect(error).toBeInstanceOf(TomlFileError)
+      expect(shouldReportErrorAsUnexpected(error)).toBe(false)
     })
   })
 

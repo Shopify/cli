@@ -1,4 +1,5 @@
 import {TomlFile, TomlFileError} from './toml-file.js'
+import {shouldReportErrorAsUnexpected} from '../error.js'
 import {writeFile, readFile, inTemporaryDirectory} from '../fs.js'
 import {joinPath} from '../path.js'
 import {describe, expect, test} from 'vitest'
@@ -35,6 +36,18 @@ describe('TomlFile', () => {
 
         await expect(TomlFile.read(path)).rejects.toThrow(TomlFileError)
         await expect(TomlFile.read(path)).rejects.toThrow(/row.*col/)
+      })
+    })
+
+    test('classifies invalid TOML as an expected user error', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'bad.toml')
+        await writeFile(path, 'name = [invalid')
+
+        const error = await TomlFile.read(path).catch((err: unknown) => err)
+
+        expect(error).toBeInstanceOf(TomlFileError)
+        expect(shouldReportErrorAsUnexpected(error)).toBe(false)
       })
     })
 
