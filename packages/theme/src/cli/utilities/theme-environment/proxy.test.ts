@@ -29,7 +29,7 @@ describe('dev proxy', () => {
 
   const ctx = {
     session: {storeFqdn: 'my-store.myshopify.com', sessionCookies: {}},
-    options: {host: 'localhost', port: '1337'},
+    options: {host: 'localhost', port: 1337},
     localThemeFileSystem: {files: new Map([['assets/file1', 'content']])},
     localThemeExtensionFileSystem: {files: new Map([['assets/file-ext', 'content']])},
   } as unknown as DevServerContext

@@ -49,9 +49,16 @@ export async function checkPortAvailability(portNumber: number): Promise<boolean
     const server = createServer()
     server.unref()
     server.once('error', () => resolve(false))
-    server.listen(portNumber, 'localhost', () => {
-      server.close(() => resolve(true))
-    })
+    try {
+      server.listen(portNumber, 'localhost', () => {
+        server.close(() => resolve(true))
+      })
+    } catch (error) {
+      if (!(error instanceof RangeError)) {
+        throw error
+      }
+      resolve(false)
+    }
   })
 }
 

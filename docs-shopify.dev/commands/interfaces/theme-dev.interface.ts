@@ -95,7 +95,7 @@ export interface themedev {
   '--path <value>'?: string
 
   /**
-   * Local port to serve theme preview from.
+   * Local port to serve theme preview from. Must be between 1 and 65535.
    * @environment SHOPIFY_FLAG_PORT
    */
   '--port <value>'?: string

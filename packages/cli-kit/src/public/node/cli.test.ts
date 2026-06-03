@@ -1,4 +1,4 @@
-import {clearCache, runCLI, runCreateCLI} from './cli.js'
+import {clearCache, runCLI, runCreateCLI, portFlag} from './cli.js'
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as confStore from '../../private/node/conf-store.js'
@@ -134,4 +134,17 @@ describe('clearCache', () => {
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
+})
+
+describe('portFlag', () => {
+  const flag = portFlag()
+  test('parses a valid port to a number', async () => {
+    await expect(flag.parse('9292', {} as any, flag as any)).resolves.toBe(9292)
+  })
+  test.each(['13245574', '65536', '0', '-1', 'abc', '92.5', '', '0x10', '1e2', ' 9293 ', '+9292'])(
+    'rejects invalid port %s',
+    async (input) => {
+      await expect(flag.parse(input, {} as any, flag as any)).rejects.toThrowError(/Expected an integer/)
+    },
+  )
 })

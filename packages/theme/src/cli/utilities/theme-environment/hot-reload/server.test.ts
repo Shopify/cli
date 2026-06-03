@@ -555,7 +555,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
       only: [],
       noDelete: true,
       host: '',
-      port: '',
+      port: 9292,
       liveReload: 'hot-reload',
       open: false,
       themeEditorSync: false,
