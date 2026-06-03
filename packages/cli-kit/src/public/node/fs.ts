@@ -626,20 +626,24 @@ export type EOL = '\r\n' | '\n'
  * @returns The detected end-of-line marker
  */
 export function detectEOL(content: string): EOL {
-  const match = content.match(/\r\n|\n/g)
+  // Optimization: Use a single loop to count occurrences instead of .match().
+  // This avoids creating a potentially large intermediate array of matches.
+  let crlf = 0
+  let lf = 0
 
-  if (!match) {
+  for (let i = 0; i < content.length; i++) {
+    if (content[i] === '\n') {
+      if (content[i - 1] === '\r') {
+        crlf++
+      } else {
+        lf++
+      }
+    }
+  }
+
+  if (crlf === 0 && lf === 0) {
     return defaultEOL()
   }
-
-  // Optimization: Use a single loop to count occurrences instead of multiple .filter() calls.
-  // This reduces iterations from 2 to 1 and avoids creating intermediate arrays.
-  // For large files, this can be ~35-40% faster.
-  let crlf = 0
-  for (const eol of match) {
-    if (eol === '\r\n') crlf++
-  }
-  const lf = match.length - crlf
 
   return crlf > lf ? '\r\n' : '\n'
 }
