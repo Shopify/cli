@@ -100,6 +100,7 @@ export interface Schemas {
       cmd_app_validate_valid?: Optional<boolean>
       cmd_app_validate_issue_count?: Optional<number>
       cmd_app_validate_file_count?: Optional<number>
+      cmd_app_review_requirements_fetch_status?: Optional<number>
 
       // Dev related commands
       cmd_dev_tunnel_type?: Optional<string>

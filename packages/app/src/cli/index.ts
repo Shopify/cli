@@ -20,6 +20,7 @@ import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
 import ImportExtensions from './commands/app/import-extensions.js'
+import AppGetReviewRequirements from './commands/app/get-review-requirements.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
 import ConfigValidate from './commands/app/config/validate.js'
@@ -70,6 +71,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:function:schema': FetchSchema,
   'app:function:typegen': FunctionTypegen,
   'app:generate:extension': AppGenerateExtension,
+  'app:get-review-requirements': AppGetReviewRequirements,
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
   'demo:watcher': DemoWatcher,

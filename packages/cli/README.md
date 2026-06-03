@@ -21,6 +21,7 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
+* [`shopify app get-review-requirements`](#shopify-app-get-review-requirements)
 * [`shopify app import-custom-data-definitions`](#shopify-app-import-custom-data-definitions)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
@@ -747,6 +748,31 @@ DESCRIPTION
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for
   your extension.
+```
+
+## `shopify app get-review-requirements`
+
+Print the App Store self-review requirements as markdown.
+
+```
+USAGE
+  $ shopify app get-review-requirements [-c <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>  [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --no-color        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>    [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --verbose         [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Print the App Store self-review requirements as markdown.
+
+  Prints the "App Store review requirements"
+  (https://shopify.dev/docs/apps/launch/app-store-review/app-store-ai-self-review-requirements) to stdout as markdown,
+  including the agent verification guidance an AI agent needs to evaluate each requirement against a local codebase.
+
+  Designed to be invoked by the `shopify-app-review` agent skill from the Shopify AI Toolkit  as part of a local
+  pre-submission compliance check, but you can also run it yourself to read the latest locally checkable requirements.
 ```
 
 ## `shopify app import-custom-data-definitions`

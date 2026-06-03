@@ -2143,6 +2143,62 @@
       "strict": true,
       "summary": "Generate a new app Extension."
     },
+    "app:get-review-requirements": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Prints the \"App Store review requirements\" (https://shopify.dev/docs/apps/launch/app-store-review/app-store-ai-self-review-requirements) to stdout as markdown, including the agent verification guidance an AI agent needs to evaluate each requirement against a local codebase.\n\n  Designed to be invoked by the `shopify-app-review` agent skill from the Shopify AI Toolkit as part of a local pre-submission compliance check, but you can also run it yourself to read the latest locally checkable requirements.",
+      "descriptionWithMarkdown": "Prints the [App Store review requirements](https://shopify.dev/docs/apps/launch/app-store-review/app-store-ai-self-review-requirements) to stdout as markdown, including the agent verification guidance an AI agent needs to evaluate each requirement against a local codebase.\n\n  Designed to be invoked by the `shopify-app-review` agent skill from the Shopify AI Toolkit as part of a local pre-submission compliance check, but you can also run it yourself to read the latest locally checkable requirements.",
+      "enableJsonFlag": false,
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:get-review-requirements",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Print the App Store self-review requirements as markdown."
+    },
     "app:import-custom-data-definitions": {
       "aliases": [
       ],
