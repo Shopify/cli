@@ -13,12 +13,12 @@ runs:
         git config --global user.name "App Management"
       shell: bash
     - name: Install pnpm
-      uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+      uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
       with:
         version: ${{ env.PNPM_VERSION }}
         run_install: false
     - name: Install Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
         registry-url: 'https://registry.npmjs.org'
