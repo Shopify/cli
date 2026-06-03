@@ -13,6 +13,12 @@ import {
   getCachedPartnerAccountStatus,
   setCachedPartnerAccountStatus,
   runWithRateLimit,
+  getAgentSession,
+  setAgentSession,
+  removeAgentSession,
+  getAutoUpgradeEnabled,
+  setAutoUpgradeEnabled,
+  AgentSession,
 } from './conf-store.js'
 import {isLocalEnvironment} from './context/service.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
@@ -584,6 +590,34 @@ describe('runWithRateLimit', () => {
   })
 })
 
+describe('Auto Upgrade Preference', () => {
+  test('defaults to enabled when never set', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      expect(getAutoUpgradeEnabled(config)).toBe(true)
+    })
+  })
+
+  test('returns false when explicitly disabled', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      const config = new LocalStorage<ConfSchema>({cwd})
+      setAutoUpgradeEnabled(false, config)
+
+      expect(getAutoUpgradeEnabled(config)).toBe(false)
+    })
+  })
+
+  test('returns true when explicitly enabled', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      const config = new LocalStorage<ConfSchema>({cwd})
+      setAutoUpgradeEnabled(true, config)
+
+      expect(getAutoUpgradeEnabled(config)).toBe(true)
+    })
+  })
+})
+
 describe('Partner Account Status Cache', () => {
   beforeEach(() => {
     // Clear the partner status store before each test
@@ -614,6 +648,194 @@ describe('Partner Account Status Cache', () => {
       setCachedPartnerAccountStatus(token)
 
       expect(getCachedPartnerAccountStatus(token)).toBe(true)
+    })
+  })
+})
+
+describe('Agent Session', () => {
+  const mockSession: AgentSession = {
+    sessionId: 'conv_123',
+    startedAt: '2024-01-01T00:00:00Z',
+    agentName: 'test-agent',
+    agentVersion: '1.0.0',
+    agentProvider: 'test-provider',
+    metricsMode: 'on',
+    defaultNonInteractive: false,
+  }
+
+  describe('getAgentSession', () => {
+    test('returns undefined when not set', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const config = new LocalStorage<ConfSchema>({cwd})
+
+        // When
+        const got = getAgentSession(config)
+
+        // Then
+        expect(got).toBeUndefined()
+      })
+    })
+
+    test('returns the stored agent session in production', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const config = new LocalStorage<ConfSchema>({cwd})
+        config.set('currentAgentSession', mockSession)
+
+        // When
+        const got = getAgentSession(config)
+
+        // Then
+        expect(got).toEqual(mockSession)
+      })
+    })
+
+    test('returns the stored agent session in dev', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        vi.mocked(isLocalEnvironment).mockReturnValue(true)
+        const config = new LocalStorage<ConfSchema>({cwd})
+        config.set('devAgentSession', mockSession)
+
+        // When
+        const got = getAgentSession(config)
+
+        // Then
+        expect(got).toEqual(mockSession)
+      })
+    })
+
+    test('does not return dev session when in production', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const config = new LocalStorage<ConfSchema>({cwd})
+        config.set('devAgentSession', mockSession)
+
+        // When
+        const got = getAgentSession(config)
+
+        // Then
+        expect(got).toBeUndefined()
+      })
+    })
+  })
+
+  describe('setAgentSession', () => {
+    test('saves to currentAgentSession in production', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const config = new LocalStorage<ConfSchema>({cwd})
+
+        // When
+        setAgentSession(mockSession, config)
+
+        // Then
+        expect(config.get('currentAgentSession')).toEqual(mockSession)
+        expect(config.get('devAgentSession')).toBeUndefined()
+      })
+    })
+
+    test('saves to devAgentSession in dev', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        vi.mocked(isLocalEnvironment).mockReturnValue(true)
+        const config = new LocalStorage<ConfSchema>({cwd})
+
+        // When
+        setAgentSession(mockSession, config)
+
+        // Then
+        expect(config.get('devAgentSession')).toEqual(mockSession)
+        expect(config.get('currentAgentSession')).toBeUndefined()
+      })
+    })
+  })
+
+  describe('removeAgentSession', () => {
+    test('removes the currentAgentSession in production', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const config = new LocalStorage<ConfSchema>({cwd})
+        config.set('currentAgentSession', mockSession)
+
+        // When
+        removeAgentSession(config)
+
+        // Then
+        expect(config.get('currentAgentSession')).toBeUndefined()
+      })
+    })
+
+    test('removes the devAgentSession in dev', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        vi.mocked(isLocalEnvironment).mockReturnValue(true)
+        const config = new LocalStorage<ConfSchema>({cwd})
+        config.set('devAgentSession', mockSession)
+
+        // When
+        removeAgentSession(config)
+
+        // Then
+        expect(config.get('devAgentSession')).toBeUndefined()
+      })
+    })
+  })
+
+  describe('agent session environment isolation', () => {
+    test('getAgentSession returns production session in production', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const config = new LocalStorage<ConfSchema>({cwd})
+        const prodSession = {...mockSession, agentName: 'prod-agent'}
+        const devSession = {...mockSession, agentName: 'dev-agent'}
+        config.set('currentAgentSession', prodSession)
+        config.set('devAgentSession', devSession)
+
+        // When
+        const got = getAgentSession(config)
+
+        // Then
+        expect(got?.agentName).toEqual('prod-agent')
+      })
+    })
+
+    test('getAgentSession returns dev session in dev', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        vi.mocked(isLocalEnvironment).mockReturnValue(true)
+        const config = new LocalStorage<ConfSchema>({cwd})
+        const prodSession = {...mockSession, agentName: 'prod-agent'}
+        const devSession = {...mockSession, agentName: 'dev-agent'}
+        config.set('currentAgentSession', prodSession)
+        config.set('devAgentSession', devSession)
+
+        // When
+        const got = getAgentSession(config)
+
+        // Then
+        expect(got?.agentName).toEqual('dev-agent')
+      })
+    })
+
+    test('removeAgentSession only removes session for the current environment', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const config = new LocalStorage<ConfSchema>({cwd})
+        const prodSession = {...mockSession, agentName: 'prod-agent'}
+        const devSession = {...mockSession, agentName: 'dev-agent'}
+        config.set('currentAgentSession', prodSession)
+        config.set('devAgentSession', devSession)
+
+        // When
+        vi.mocked(isLocalEnvironment).mockReturnValue(true)
+        removeAgentSession(config)
+
+        // Then
+        expect(config.get('devAgentSession')).toBeUndefined()
+        expect(config.get('currentAgentSession')).toEqual(prodSession)
+      })
     })
   })
 })

@@ -1,5 +1,6 @@
 import {getLastSeenAuthMethod} from './session.js'
 import {getAutoUpgradeEnabled} from './conf-store.js'
+import {getCurrentAgentSession, packAgentInfo, packAgentIds} from '../../public/node/agent.js'
 import {hashString} from '../../public/node/crypto.js'
 import {getPackageManager, packageManagerFromUserAgent} from '../../public/node/node-package-manager.js'
 import BaseCommand from '../../public/node/base-command.js'
@@ -114,7 +115,22 @@ function getShopifyEnvironmentVariables() {
   // Monorail fields, e.g. SHOPIFY_CLI_AGENT, SHOPIFY_CLI_AGENT_VERSION,
   // SHOPIFY_CLI_AGENT_RUN_ID, SHOPIFY_CLI_AGENT_SESSION_ID, and
   // SHOPIFY_CLI_AGENT_PROVIDER.
-  return Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
+  const envVars = Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
+
+  // Resolve the persisted session once and let the packers preserve the precedence rule
+  // that explicit process env attribution wins over persisted session state.
+  const agentSession = getCurrentAgentSession()
+  const agentInfo = packAgentInfo(agentSession)
+  const agentIds = packAgentIds(agentSession)
+
+  if (agentInfo && !envVars.SHOPIFY_CLI_AGENT_INFO) {
+    envVars.SHOPIFY_CLI_AGENT_INFO = agentInfo
+  }
+  if (agentIds && !envVars.SHOPIFY_CLI_AGENT_IDS) {
+    envVars.SHOPIFY_CLI_AGENT_IDS = agentIds
+  }
+
+  return envVars
 }
 
 function getPluginNames(config: Interfaces.Config) {

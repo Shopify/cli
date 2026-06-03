@@ -4,6 +4,7 @@ import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
 import {sendErrorToBugsnag} from './error-handler.js'
 import {outputContent, outputDebug, outputToken} from './output.js'
+import {getCurrentAgentSession} from './agent.js'
 import {
   recordTiming as storageRecordTiming,
   recordError as storageRecordError,
@@ -63,8 +64,12 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       return
     }
 
-    const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
-    const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
+    // Check for metrics-off mode from persisted agent session
+    const agentSession = getCurrentAgentSession()
+    const metricsDisabledByAgent = agentSession?.metricsMode === 'off'
+
+    const skipMonorailAnalytics = !alwaysLogAnalytics() && (analyticsDisabled() || metricsDisabledByAgent)
+    const skipMetricAnalytics = !alwaysLogMetrics() && (analyticsDisabled() || metricsDisabledByAgent)
     if (skipMonorailAnalytics || skipMetricAnalytics) {
       outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
     }
