@@ -49,7 +49,7 @@ jobs:
       # WARNING: DO NOT RUN ANY CUSTOM LOCAL SCRIPT BEFORE RUNNING THE SNAPIT ACTION
       # This action can be executed by 3rd party users and it should not be able to run arbitrary code from a PR.
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Setup deps
@@ -89,7 +89,7 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
           fetch-depth: 0
@@ -99,7 +99,7 @@ jobs:
           node-version: 24.12.0
       - name: Create Release Pull Request
         id: changesets
-        uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
         with:
           version: pnpm changeset-manifests
           title: Version Packages - ${{ github.ref_name }}
@@ -180,7 +180,7 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
           fetch-depth: 0
