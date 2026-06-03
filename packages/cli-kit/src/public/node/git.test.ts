@@ -36,7 +36,7 @@ describe('downloadRepository()', async () => {
 
     await git.downloadGitRepository({repoUrl, destination})
 
-    expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', '--', repoUrl, destination])
   })
 
   test('calls git clone with branch', async () => {
@@ -50,9 +50,19 @@ describe('downloadRepository()', async () => {
       '--recurse-submodules',
       '--branch',
       'my-branch',
+      '--',
       'http://repoUrl',
       destination,
     ])
+  })
+
+  test('calls git clone with flag-like repository URL', async () => {
+    const repoUrl = '-repoUrl'
+    const destination = 'destination'
+
+    await git.downloadGitRepository({repoUrl, destination})
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', '--', repoUrl, destination])
   })
 
   test('fails when the shallow and latestTag properties are passed', async () => {
@@ -109,8 +119,27 @@ describe('downloadRepository()', async () => {
 
     await git.downloadGitRepository({repoUrl, destination, latestTag})
 
-    expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
-    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', '1.2.3'], {cwd: destination})
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', '--', repoUrl, destination])
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', 'refs/tags/1.2.3'], {cwd: destination})
+  })
+
+  test('clones and checks out a flag-like tag', async () => {
+    mockGitCommandSequence([
+      // clone
+      {stdout: ''},
+      // describe --tags --abbrev=0
+      {stdout: '--flag-like-tag'},
+      // checkout
+      {stdout: ''},
+    ])
+
+    const repoUrl = 'http://repoUrl'
+    const destination = 'destination'
+    const latestTag = true
+
+    await git.downloadGitRepository({repoUrl, destination, latestTag})
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', 'refs/tags/--flag-like-tag'], {cwd: destination})
   })
 
   test('throws when destination exists as a file', async () => {
@@ -159,7 +188,7 @@ describe('downloadRepository()', async () => {
 
       await git.downloadGitRepository({repoUrl, destination})
 
-      expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
+      expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', '--', repoUrl, destination])
     })
   })
 
@@ -170,7 +199,7 @@ describe('downloadRepository()', async () => {
 
       await git.downloadGitRepository({repoUrl, destination})
 
-      expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
+      expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', '--', repoUrl, destination])
     })
   })
 })
@@ -183,6 +212,41 @@ describe('initializeRepository()', () => {
 
     expect(mockedExeca).toHaveBeenCalledWith('git', ['init'], {cwd: directory})
     expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', '-b', 'my-branch'], {cwd: directory})
+  })
+})
+
+describe('checkIfIgnoredInGitRepository()', () => {
+  test('calls git check-ignore with -- and the list of files', async () => {
+    const directory = '/tmp/git-repo'
+    const files = ['file1', 'file2']
+    mockGitCommand('file1\n')
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, files)
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['check-ignore', '--', 'file1', 'file2'], {cwd: directory})
+    expect(result).toEqual(['file1'])
+  })
+
+  test('calls git check-ignore with flag-like file paths', async () => {
+    const directory = '/tmp/git-repo'
+    const files = ['-file1', '--file2']
+    mockGitCommand('-file1\n')
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, files)
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['check-ignore', '--', '-file1', '--file2'], {cwd: directory})
+    expect(result).toEqual(['-file1'])
+  })
+
+  test('returns an empty array when no files are ignored', async () => {
+    const directory = '/tmp/git-repo'
+    const files = ['file1']
+    const error = Object.assign(new Error('not ignored'), {exitCode: 1})
+    mockedExeca.mockRejectedValue(error)
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, files)
+
+    expect(result).toEqual([])
   })
 })
 

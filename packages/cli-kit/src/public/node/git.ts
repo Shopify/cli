@@ -69,7 +69,8 @@ export async function initializeGitRepository(directory: string, initialBranch =
  */
 export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
   try {
-    const stdout = await gitCommand(['check-ignore', ...files], directory)
+    // Security: Use -- to separate flags from positional arguments (file paths)
+    const stdout = await gitCommand(['check-ignore', '--', ...files], directory)
     return stdout.split('\n').filter(Boolean)
   } catch (error) {
     // git check-ignore exits with code 1 when no files are ignored
@@ -209,14 +210,16 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     if (!isTerminalInteractive()) {
       args.push('-c', 'core.askpass=true')
     }
-    args.push(repository!, destination)
+    // Security: Use -- to separate flags from positional arguments (repository URL and destination)
+    args.push('--', repository!, destination)
 
     try {
       await execa('git', args)
 
       if (latestTag) {
         const tag = await getLatestTagFromDirectory(destination, repoUrl)
-        await gitCommand(['checkout', tag], destination)
+        // Security: Use refs/tags/ prefix to ensure the tag is treated as a revision and not a flag
+        await gitCommand(['checkout', `refs/tags/${tag}`], destination)
       }
     } catch (err) {
       if (err instanceof AbortError) {
