@@ -3,13 +3,24 @@ import {BaseSchema} from '../schemas.js'
 import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {fileSize} from '@shopify/cli-kit/node/fs'
-import {dirname, relativePath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {zod} from '@shopify/cli-kit/node/schema'
+
+const ThemeExtensionSchema = BaseSchema.extend({
+  build: zod
+    .object({
+      watch: zod.union([zod.string(), zod.string().array()]).optional(),
+    })
+    .optional(),
+})
+
+type ThemeExtensionConfigType = zod.infer<typeof ThemeExtensionSchema>
 
 const themeSpec = createExtensionSpecification({
   identifier: 'theme',
-  schema: BaseSchema,
+  schema: ThemeExtensionSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   clientSteps: [
@@ -23,6 +34,17 @@ const themeSpec = createExtensionSpecification({
   ],
   appModuleFeatures: (_) => {
     return ['theme']
+  },
+  devSessionWatchConfig: (extension: ExtensionInstance<ThemeExtensionConfigType>) => {
+    const config = extension.configuration
+    if (!config.build || !config.build.watch) return undefined
+
+    const paths = [config.build.watch].flat().map((path) => joinPath(extension.directory, path))
+
+    paths.push(joinPath(extension.directory, 'locales', '**.json'))
+    paths.push(joinPath(extension.directory, '**.toml'))
+
+    return {paths}
   },
   deployConfig: async () => {
     return {theme_extension: {files: {}}}
