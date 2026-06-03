@@ -729,8 +729,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables,
       cacheOptions: {
         cacheTTL: {minutes: 59},
-        // Avoid reusing signed upload URLs across apps or commands.
-        cacheExtraKey: `${apiKey}-${getCurrentCommandId()}`,
+        // Avoid reusing signed upload URLs across apps or command runs.
+        cacheExtraKey: `${apiKey}-${process.env.COMMAND_RUN_ID ?? getCurrentCommandId()}`,
       },
     })
     return {

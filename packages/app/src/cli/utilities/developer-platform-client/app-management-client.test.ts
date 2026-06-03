@@ -62,8 +62,9 @@ vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/api/webhooks')
 
 beforeEach(() => {
-  // Reset the singleton instance before each test
   AppManagementClient.resetInstance()
+  setCurrentCommandId('')
+  delete process.env.COMMAND_RUN_ID
 })
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
@@ -1213,7 +1214,7 @@ describe('deploy', () => {
 
 describe('AppManagementClient', () => {
   describe('generateSignedUploadUrl', () => {
-    test('passes Brotli format for uploads and scopes the cache key to the app and command', async () => {
+    test('passes Brotli format for uploads and scopes the cache key to the app and command run', async () => {
       // Given
       const client = AppManagementClient.getInstance()
       const mockResponse = {
@@ -1225,7 +1226,7 @@ describe('AppManagementClient', () => {
 
       // Mock the app management request
       vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-      setCurrentCommandId('app:deploy')
+      process.env.COMMAND_RUN_ID = 'test-run-id'
 
       const app: MinimalAppIdentifiers = {
         apiKey: 'test-api-key',
@@ -1251,7 +1252,7 @@ describe('AppManagementClient', () => {
         },
         cacheOptions: {
           cacheTTL: {minutes: 59},
-          cacheExtraKey: 'test-api-key-app:deploy',
+          cacheExtraKey: 'test-api-key-test-run-id',
         },
       })
     })
@@ -1265,8 +1266,8 @@ describe('AppManagementClient', () => {
           userErrors: [],
         },
       }
-      vi.mocked(appManagementRequestDoc).mockResolvedValue(mockResponse)
-      setCurrentCommandId('app:deploy')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse).mockResolvedValueOnce(mockResponse)
+      process.env.COMMAND_RUN_ID = 'test-run-id'
 
       const appOne: MinimalAppIdentifiers = {
         apiKey: 'app-one-api-key',
@@ -1285,10 +1286,12 @@ describe('AppManagementClient', () => {
       await client.generateSignedUploadUrl(appTwo)
 
       // Then
-      const calls = vi.mocked(appManagementRequestDoc).mock.calls.map(
-        ([options]) => (options as {cacheOptions?: {cacheExtraKey?: string}}).cacheOptions?.cacheExtraKey,
-      )
-      expect(calls).toEqual(['app-one-api-key-app:deploy', 'app-two-api-key-app:deploy'])
+      const calls = vi
+        .mocked(appManagementRequestDoc)
+        .mock.calls.map(
+          ([options]) => (options as {cacheOptions?: {cacheExtraKey?: string}}).cacheOptions?.cacheExtraKey,
+        )
+      expect(calls).toEqual(['app-one-api-key-test-run-id', 'app-two-api-key-test-run-id'])
     })
   })
 
