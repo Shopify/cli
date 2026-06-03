@@ -56,6 +56,11 @@ describe('sanitizeURL', () => {
     'client_secret',
     'code',
     'token',
+    'api_key',
+    'secret',
+    'password',
+    'sig',
+    'signature',
   ])('sanitizes %s query parameter', (param) => {
     // Given
     const url = `https://example.com?${param}=secret-value`
@@ -78,5 +83,49 @@ describe('sanitizeURL', () => {
     expect(sanitizedUrl).toBe(
       'https://example.com/?access_token=****&refresh_token=****&device_code=****&subject_token=****&other=keep',
     )
+  })
+
+  test('sanitizes query parameters case-insensitively', () => {
+    // Given
+    const url = 'https://example.com?TOKEN=abc123&Access_Token=def456'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://example.com/?TOKEN=****&Access_Token=****')
+  })
+
+  test('sanitizes username and password in the URL', () => {
+    // Given
+    const url = 'https://user:pass@example.com/path?token=abc123'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://****:****@example.com/path?token=****')
+  })
+
+  test('sanitizes only password in the URL', () => {
+    // Given
+    const url = 'https://:pass@example.com/path'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://:****@example.com/path')
+  })
+
+  test('sanitizes only username in the URL', () => {
+    // Given
+    const url = 'https://user@example.com/path'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://****@example.com/path')
   })
 })
