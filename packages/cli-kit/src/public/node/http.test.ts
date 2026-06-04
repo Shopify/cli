@@ -292,6 +292,24 @@ describe('downloadFile', () => {
       await expect(fileExists(to)).resolves.toBe(false)
     })
   })
+
+  test('Fails and cleans up if server returns 500', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const url = 'https://shopify.example/500.txt'
+      const filename = '/bin/500.txt'
+      const to = joinPath(tmpDir, filename)
+
+      // When
+      const result = downloadFile(url, to)
+
+      // Then
+      await expect(result).rejects.toThrow(
+        'Failed to download file from https://shopify.example/500.txt: 500 Internal Server Error',
+      )
+      await expect(fileExists(to)).resolves.toBe(false)
+    })
+  })
 })
 
 describe('requestMode', () => {
