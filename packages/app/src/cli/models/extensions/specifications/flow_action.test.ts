@@ -70,7 +70,16 @@ describe('FlowActionExtension', () => {
     expect(parsed.state).toBe('error')
   })
 
-  test('prepends the app URL to relative URL fields in the deploy configuration', async () => {
+  test('preserves absolute URLs and prepends the app URL to relative URLs in the deploy configuration', async () => {
+    // Given
+    extension.configuration = {
+      ...extension.configuration,
+      runtime_url: '/api/execute',
+      validation_url: 'https://my-app.example.com/api/validate',
+      config_page_url: '/config',
+      config_page_preview_url: 'https://my-app.example.com/config/preview',
+    }
+
     // When
     const got = await extension.deployConfig({
       apiKey: 'api-key',
