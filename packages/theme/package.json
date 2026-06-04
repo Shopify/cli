@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@shopify/theme-hot-reload": "^0.0.22",
-    "@vitest/coverage-istanbul": "^3.1.4",
+    "@vitest/coverage-istanbul": "^3.2.6",
     "node-stream-zip": "^1.15.0"
   },
   "engines": {

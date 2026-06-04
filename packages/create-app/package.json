@@ -61,7 +61,7 @@
     "@shopify/cli-kit": "4.1.0",
     "@shopify/app": "4.1.0",
     "esbuild-plugin-copy": "^2.1.1",
-    "@vitest/coverage-istanbul": "^3.1.4"
+    "@vitest/coverage-istanbul": "^3.2.6"
   },
   "engines": {
     "node": ">=22.12.0"
