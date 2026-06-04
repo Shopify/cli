@@ -167,6 +167,32 @@ export const portFlag = (options: {description?: string; env?: string; hidden?: 
 }
 
 /**
+ * Marks a flag as required when the CLI runs in a non-interactive terminal (e.g. CI, or piped input).
+ *
+ * The flag stays optional in interactive sessions, where the command can prompt for the value. In
+ * non-interactive sessions `BaseCommand` fails with a clear error if the flag is missing. The factory
+ * also prepends `(required if non-interactive)` to the flag's description so the requirement shows up
+ * in `--help`, mirroring how oclif renders `(required)`.
+ *
+ * Wrap any oclif flag definition with it, for example:
+ *
+ * ```
+ *   template: requiredIfNonInteractive(Flags.string({description: 'The app template.'}))
+ * ```
+ * @param flag - A flag definition created with `Flags.string`, `Flags.boolean`, etc.
+ * @returns The same flag definition, annotated for non-interactive validation and help rendering.
+ */
+export function requiredIfNonInteractive<TFlag extends {description?: string}>(flag: TFlag): TFlag {
+  // Mutate the freshly-built flag in place: this keeps the original flag type intact (so command
+  // flag typings are unchanged) while attaching a custom property the parser ignores but
+  // `BaseCommand` reads from the live command class at parse time.
+  const annotated = flag as TFlag & {requiredIfNonInteractive?: boolean}
+  annotated.requiredIfNonInteractive = true
+  annotated.description = ['(required if non-interactive)', flag.description].filter(Boolean).join(' ')
+  return annotated
+}
+
+/**
  * Clear the CLI cache, used to store some API responses and handle notifications status
  */
 export async function clearCache(): Promise<void> {
