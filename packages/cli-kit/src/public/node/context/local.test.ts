@@ -3,6 +3,7 @@ import {
   hasGit,
   isDevelopment,
   isShopify,
+  _resetIsShopifyMemo,
   isTerminalInteractive,
   isUnitTest,
   analyticsDisabled,
@@ -14,7 +15,7 @@ import {
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 
-import {afterEach, expect, describe, vi, test} from 'vitest'
+import {afterEach, beforeEach, expect, describe, vi, test} from 'vitest'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
@@ -97,6 +98,10 @@ describe('isDevelopment', () => {
 })
 
 describe('isShopify', () => {
+  beforeEach(() => {
+    _resetIsShopifyMemo()
+  })
+
   test('returns false when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '1'}
@@ -119,6 +124,21 @@ describe('isShopify', () => {
 
     // When
     await expect(isShopify()).resolves.toBe(true)
+  })
+
+  test('memoizes the result when called with the same env', async () => {
+    // Given
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    const first = isShopify()
+    const second = isShopify()
+
+    // Then
+    await expect(first).resolves.toBe(true)
+    await expect(second).resolves.toBe(true)
+    expect(first).toBe(second)
+    expect(fileExists).toHaveBeenCalledTimes(1)
   })
 })
 
