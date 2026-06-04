@@ -23,8 +23,16 @@ describe('validateFlowActionUrl', () => {
     expect(schema.safeParse('http://example.com/api/execute').success).toBe(false)
   })
 
-  test('rejects relative URLs containing a newline', () => {
-    expect(schema.safeParse('/api/execute\nmalicious-header: value').success).toBe(false)
+  test.each(['\n', '\r', '\t'])('rejects relative URLs containing %j', (controlCharacter) => {
+    expect(schema.safeParse(`/api/execute${controlCharacter}malicious-header: value`).success).toBe(false)
+  })
+
+  test.each(['\n', '\r', '\t'])('rejects absolute URLs containing %j', (controlCharacter) => {
+    expect(schema.safeParse(`https://example.com/api/execute${controlCharacter}malicious-header`).success).toBe(false)
+  })
+
+  test('rejects protocol-relative URLs', () => {
+    expect(schema.safeParse('//example.com/api/execute').success).toBe(false)
   })
 })
 

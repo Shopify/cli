@@ -56,8 +56,16 @@ export const validateFieldShape = (
 
 export const isSchemaTypeReference = (type: string) => type.startsWith('schema.')
 
+const containsUrlControlCharacter = (value: string) => /[\r\n\t]/.test(value)
+
+const isFlowActionRelativeUrl = (value: string) => {
+  return value.startsWith('/') && !value.startsWith('//') && !containsUrlControlCharacter(value)
+}
+
 export const validateFlowActionUrl = (zodType: zod.ZodString) => {
-  return validateRelativeUrl(zodType).refine((value) => !value.includes('\n'), {message: 'Invalid URL'})
+  return validateRelativeUrl(zodType)
+    .refine((value) => !containsUrlControlCharacter(value), {message: 'Invalid URL'})
+    .refine((value) => !value.startsWith('/') || isFlowActionRelativeUrl(value), {message: 'Invalid URL'})
 }
 
 export const validateCustomConfigurationPageConfig = (
