@@ -4,7 +4,8 @@ import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
- * Loads the schema from the partner defined file.
+ * resolves url for fieldName by either prepending with appUrl on confirming that
+ * url start with https
  */
 export const resolveFlowActionUrl = (fieldName: string, url: string | undefined, appUrl: string | undefined) => {
   if (!url) return undefined
@@ -27,6 +28,9 @@ export const resolveFlowActionUrl = (fieldName: string, url: string | undefined,
   return resolvedUrl
 }
 
+/**
+ * Loads the schema from the partner defined file.
+ */
 export const loadSchemaFromPath = async (extensionPath: string, patchPath: string | undefined) => {
   if (!patchPath) {
     return ''

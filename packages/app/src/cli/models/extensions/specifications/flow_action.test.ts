@@ -70,6 +70,17 @@ describe('FlowActionExtension', () => {
     expect(parsed.state).toBe('error')
   })
 
+  test.each(urlFields)('rejects a relative %s containing a newline', (field) => {
+    // When
+    const parsed = extension.specification.parseConfigurationObject({
+      ...config,
+      [field]: `/${field}\nmalicious-header: value`,
+    })
+
+    // Then
+    expect(parsed.state).toBe('error')
+  })
+
   test('preserves absolute URLs and prepends the app URL to relative URLs in the deploy configuration', async () => {
     // Given
     extension.configuration = {

@@ -1,9 +1,8 @@
-// import {prependApplicationUrl} from './validation/url_prepender.js'
 import {BaseSchemaWithHandle} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {validateRelativeUrl} from '../../app/validation/common.js'
 import {
   validateFieldShape,
+  validateFlowActionUrl,
   validateCustomConfigurationPageConfig,
   validateReturnTypeConfig,
 } from '../../../services/flow/validation.js'
@@ -16,10 +15,10 @@ const RELATIVE_URL_FIELDS = ['runtime_url', 'validation_url', 'config_page_url',
 const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_action'),
   name: zod.string(),
-  runtime_url: validateRelativeUrl(zod.string({invalid_type_error: 'Value must be string'})),
-  validation_url: validateRelativeUrl(zod.string({invalid_type_error: 'Value must be string'})).optional(),
-  config_page_url: validateRelativeUrl(zod.string({invalid_type_error: 'Value must be string'})).optional(),
-  config_page_preview_url: validateRelativeUrl(zod.string({invalid_type_error: 'Value must be string'})).optional(),
+  runtime_url: validateFlowActionUrl(zod.string({invalid_type_error: 'Value must be string'})),
+  validation_url: validateFlowActionUrl(zod.string({invalid_type_error: 'Value must be string'})).optional(),
+  config_page_url: validateFlowActionUrl(zod.string({invalid_type_error: 'Value must be string'})).optional(),
+  config_page_preview_url: validateFlowActionUrl(zod.string({invalid_type_error: 'Value must be string'})).optional(),
   schema: zod.string().optional(),
   return_type_ref: zod.string().optional(),
 }).refine((config) => {

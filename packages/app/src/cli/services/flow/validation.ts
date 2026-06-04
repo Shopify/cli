@@ -1,6 +1,7 @@
 import {ConfigField, FlowExtensionTypes} from './types.js'
 import {SUPPORTED_COMMERCE_OBJECTS} from './constants.js'
 import {FlowTriggerSettingsSchema} from '../../models/extensions/specifications/flow_trigger.js'
+import {validateRelativeUrl} from '../../models/app/validation/common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
@@ -54,6 +55,10 @@ export const validateFieldShape = (
 }
 
 export const isSchemaTypeReference = (type: string) => type.startsWith('schema.')
+
+export const validateFlowActionUrl = (zodType: zod.ZodString) => {
+  return validateRelativeUrl(zodType).refine((value) => !value.includes('\n'), {message: 'Invalid URL'})
+}
 
 export const validateCustomConfigurationPageConfig = (
   configPageUrl?: string,

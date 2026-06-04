@@ -1,7 +1,32 @@
-import {validateFieldShape, validateCustomConfigurationPageConfig, validateReturnTypeConfig} from './validation.js'
+import {
+  validateFieldShape,
+  validateFlowActionUrl,
+  validateCustomConfigurationPageConfig,
+  validateReturnTypeConfig,
+} from './validation.js'
 import {ConfigField} from './types.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
+
+describe('validateFlowActionUrl', () => {
+  const schema = validateFlowActionUrl(zod.string())
+
+  test('accepts absolute HTTPS URLs', () => {
+    expect(schema.safeParse('https://example.com/api/execute').success).toBe(true)
+  })
+
+  test('accepts relative URLs starting with /', () => {
+    expect(schema.safeParse('/api/execute').success).toBe(true)
+  })
+
+  test('rejects non-HTTPS absolute URLs', () => {
+    expect(schema.safeParse('http://example.com/api/execute').success).toBe(false)
+  })
+
+  test('rejects relative URLs containing a newline', () => {
+    expect(schema.safeParse('/api/execute\nmalicious-header: value').success).toBe(false)
+  })
+})
 
 describe('validateFieldShape', () => {
   test('should return true when non-commerce object field has valid shape and is flow action', () => {
