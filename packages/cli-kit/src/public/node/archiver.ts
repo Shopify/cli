@@ -1,7 +1,7 @@
 import {outputDebug, outputContent, outputToken} from './output.js'
 import {glob, removeFile} from './fs.js'
 import {relativePath, joinPath, dirname} from './path.js'
-import archiver from 'archiver'
+import * as archiver from 'archiver'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
 import {readFile} from 'fs/promises'
 import {tmpdir} from 'os'
@@ -43,7 +43,7 @@ export async function zip(options: ZipOptions): Promise<void> {
   })
 
   return new Promise((resolve, reject) => {
-    const archive = archiver('zip')
+    const archive = new archiver.ZipArchive()
 
     const output = createWriteStream(outputZipPath)
     output.on('close', () => {
@@ -155,7 +155,7 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
   try {
     // Create tar archive using archiver
     await new Promise<void>((resolve, reject) => {
-      const archive = archiver('tar')
+      const archive = new archiver.TarArchive()
       const output = createWriteStream(tempTarPath)
 
       output.on('close', () => resolve())
