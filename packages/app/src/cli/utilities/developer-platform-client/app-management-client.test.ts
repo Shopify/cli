@@ -50,6 +50,7 @@ import {
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {setCurrentCommandId} from '@shopify/cli-kit/node/global-context'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
@@ -61,8 +62,9 @@ vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/api/webhooks')
 
 beforeEach(() => {
-  // Reset the singleton instance before each test
   AppManagementClient.resetInstance()
+  setCurrentCommandId('')
+  delete process.env.COMMAND_RUN_ID
 })
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
@@ -1212,7 +1214,7 @@ describe('deploy', () => {
 
 describe('AppManagementClient', () => {
   describe('generateSignedUploadUrl', () => {
-    test('passes Brotli format for uploads', async () => {
+    test('passes Brotli format for uploads and scopes the cache key to the app and command run', async () => {
       // Given
       const client = AppManagementClient.getInstance()
       const mockResponse = {
@@ -1224,6 +1226,7 @@ describe('AppManagementClient', () => {
 
       // Mock the app management request
       vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+      process.env.COMMAND_RUN_ID = 'test-run-id'
 
       const app: MinimalAppIdentifiers = {
         apiKey: 'test-api-key',
@@ -1249,8 +1252,46 @@ describe('AppManagementClient', () => {
         },
         cacheOptions: {
           cacheTTL: {minutes: 59},
+          cacheExtraKey: 'test-api-key-test-run-id',
         },
       })
+    })
+
+    test('produces different cache keys for different apps in the same organization', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      const mockResponse = {
+        appRequestSourceUploadUrl: {
+          sourceUploadUrl: 'https://example.com/upload-url',
+          userErrors: [],
+        },
+      }
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse).mockResolvedValueOnce(mockResponse)
+      process.env.COMMAND_RUN_ID = 'test-run-id'
+
+      const appOne: MinimalAppIdentifiers = {
+        apiKey: 'app-one-api-key',
+        organizationId: '213141',
+        id: 'app-one-id',
+      }
+      const appTwo: MinimalAppIdentifiers = {
+        apiKey: 'app-two-api-key',
+        organizationId: '213141',
+        id: 'app-two-id',
+      }
+
+      // When
+      client.token = () => Promise.resolve('token')
+      await client.generateSignedUploadUrl(appOne)
+      await client.generateSignedUploadUrl(appTwo)
+
+      // Then
+      const calls = vi
+        .mocked(appManagementRequestDoc)
+        .mock.calls.map(
+          ([options]) => (options as {cacheOptions?: {cacheExtraKey?: string}}).cacheOptions?.cacheExtraKey,
+        )
+      expect(calls).toEqual(['app-one-api-key-test-run-id', 'app-two-api-key-test-run-id'])
     })
   })
 

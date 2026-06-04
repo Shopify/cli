@@ -161,6 +161,7 @@ import {
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {getCurrentCommandId} from '@shopify/cli-kit/node/global-context'
 import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
@@ -718,7 +719,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+  async generateSignedUploadUrl({apiKey, organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
     const variables = {
       sourceExtension: 'BR' as SourceExtension,
       organizationId: gidFromOrganizationIdForShopify(organizationId),
@@ -726,7 +727,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.appManagementRequest({
       query: CreateAssetUrl,
       variables,
-      cacheOptions: {cacheTTL: {minutes: 59}},
+      cacheOptions: {
+        cacheTTL: {minutes: 59},
+        // Avoid reusing signed upload URLs across apps or command runs.
+        cacheExtraKey: `${apiKey}-${process.env.COMMAND_RUN_ID ?? getCurrentCommandId()}`,
+      },
     })
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
