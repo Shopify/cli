@@ -935,7 +935,7 @@
           "type": "option"
         },
         "graphiql-port": {
-          "description": "Local port of the GraphiQL development server.",
+          "description": "Local port of the GraphiQL development server. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_GRAPHIQL_PORT",
           "hasDynamicHelp": false,
           "hidden": true,
@@ -944,7 +944,7 @@
           "type": "option"
         },
         "localhost-port": {
-          "description": "Port to use for localhost.",
+          "description": "Port to use for localhost. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -1028,7 +1028,7 @@
           "type": "option"
         },
         "theme-app-extension-port": {
-          "description": "Local port of the theme app extension development server.",
+          "description": "Local port of the theme app extension development server. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6362,7 +6362,7 @@
           "type": "boolean"
         },
         "port": {
-          "description": "Local port to serve theme preview from.",
+          "description": "Local port to serve theme preview from. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,
           "multiple": false,

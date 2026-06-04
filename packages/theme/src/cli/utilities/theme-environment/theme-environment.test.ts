@@ -99,7 +99,7 @@ describe('setupDevServer', () => {
       only: ['templates/*.liquid'],
       noDelete: true,
       host: '127.0.0.1',
-      port: '9292',
+      port: 9292,
       liveReload: 'hot-reload',
       open: false,
       themeEditorSync: false,

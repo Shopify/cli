@@ -23,7 +23,7 @@ export interface appdev {
   '-c, --config <value>'?: string
 
   /**
-   * Port to use for localhost.
+   * Port to use for localhost. Must be between 1 and 65535.
    * @environment SHOPIFY_FLAG_LOCALHOST_PORT
    */
   '--localhost-port <value>'?: string
@@ -83,7 +83,7 @@ export interface appdev {
   '-t, --theme <value>'?: string
 
   /**
-   * Local port of the theme app extension development server.
+   * Local port of the theme app extension development server. Must be between 1 and 65535.
    * @environment SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT
    */
   '--theme-app-extension-port <value>'?: string

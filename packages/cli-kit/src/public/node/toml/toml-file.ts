@@ -1,4 +1,5 @@
 import {JsonMapType, decodeToml, encodeToml} from './codec.js'
+import {AbortError} from '../error.js'
 import {fileExists, readFile, writeFile} from '../fs.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 
@@ -6,9 +7,9 @@ type TomlPatchValue = string | number | boolean | undefined | (string | number |
 
 /**
  * An error on a TOML file — missing or malformed.
- * Extends Error so it can be thrown. Carries path and a clean message suitable for JSON output.
+ * Carries path and a clean message suitable for JSON output.
  */
-export class TomlFileError extends Error {
+export class TomlFileError extends AbortError {
   readonly path: string
 
   constructor(path: string, message: string) {

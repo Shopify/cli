@@ -24,7 +24,7 @@ jobs:
       github.event.label.name == 'devtools-investigate-for-gardener'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           # GITHUB_TOKEN won't trigger CI on PRs it creates (GitHub's loop-prevention).
@@ -71,7 +71,7 @@ jobs:
       - name: Investigate issue
         id: investigate
         timeout-minutes: 30
-        uses: anthropics/claude-code-action@b47fd721da662d48c5680e154ad16a73ed74d2e0 # v1
+        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
         with:

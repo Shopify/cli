@@ -154,6 +154,19 @@ export const jsonFlag = {
 }
 
 /**
+ * Builds a `--port` flag that only accepts a valid port number. The flag parses its
+ * value as an integer and rejects anything that isn't a whole number between 1 and
+ * 65535, so commands fail with a clear message instead of crashing on an out-of-range
+ * port. The accepted range is appended to the description so it shows up in `--help`.
+ * @param options - Optional overrides for the flag's description, environment variable, and visibility.
+ * @returns An oclif integer flag constrained to the valid port range.
+ */
+export const portFlag = (options: {description?: string; env?: string; hidden?: boolean} = {}) => {
+  const description = [options.description, 'Must be between 1 and 65535.'].filter(Boolean).join(' ')
+  return Flags.integer({min: 1, max: 65535, ...options, description})
+}
+
+/**
  * Clear the CLI cache, used to store some API responses and handle notifications status
  */
 export async function clearCache(): Promise<void> {

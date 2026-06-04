@@ -12,7 +12,7 @@ describe('store command attribution', () => {
     vi.mocked(hashString).mockReturnValue('hashed-store')
   })
 
-  test('records the sensitive, hashed, and validation state for a store fqdn', async () => {
+  test('records the sensitive, hashed, validation, and public store domain for a store fqdn', async () => {
     await recordStoreFqdnMetadata('shop.myshopify.com', true)
 
     expect(addSensitiveMetadata).toHaveBeenCalledWith(expect.any(Function))
@@ -21,7 +21,9 @@ describe('store command attribution', () => {
     expect(vi.mocked(addPublicMetadata).mock.calls[0]![0]()).toEqual({
       store_fqdn_hash: 'hashed-store',
       store_fqdn_validated: true,
+      store_domain: 'shop.myshopify.com',
     })
     expect(hashString).toHaveBeenCalledWith('shop.myshopify.com')
   })
+
 })

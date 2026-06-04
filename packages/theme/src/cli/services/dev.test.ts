@@ -354,3 +354,75 @@ describe('dev() Ctrl-C analytics', () => {
     expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('dev() port validation', () => {
+  const mockConfig = {} as unknown as Config
+  const adminSession = {storeFqdn: 'test.myshopify.com', token: 'x'}
+
+  let exitSpy: MockInstance
+  let resolveBackgroundJob: () => void
+
+  const baseOptions = {
+    adminSession,
+    commandConfig: mockConfig,
+    directory: '/tmp/theme',
+    store: 'test.myshopify.com',
+    open: false,
+    theme,
+    force: false,
+    'theme-editor-sync': false,
+    'live-reload': 'hot-reload' as const,
+    'error-overlay': 'default' as const,
+    noDelete: false,
+    ignore: [],
+    only: [],
+  }
+
+  beforeEach(() => {
+    vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+    vi.mocked(initializeDevServerSession).mockResolvedValue({
+      storeFqdn: adminSession.storeFqdn,
+      token: adminSession.token,
+    } as any)
+    vi.mocked(getAvailableTCPPort).mockResolvedValue(9292)
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+
+    const backgroundJobPromise = new Promise<void>((resolve) => {
+      resolveBackgroundJob = resolve
+    })
+    vi.mocked(setupDevServer).mockReturnValue({
+      serverStart: vi.fn().mockResolvedValue(undefined),
+      renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
+      backgroundJobPromise,
+      resolveBackgroundJob: resolveBackgroundJob!,
+      dispatchEvent: vi.fn(),
+    } as any)
+
+    exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+    exitSpy.mockRestore()
+  })
+
+  test('accepts a valid port and calls checkPortAvailability with it', async () => {
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+
+    const devPromise = dev({...baseOptions, port: 9293})
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(checkPortAvailability).toHaveBeenCalledWith(9293)
+  })
+
+  test('rejects a valid but unavailable port', async () => {
+    vi.mocked(checkPortAvailability).mockResolvedValue(false)
+
+    await expect(dev({...baseOptions, port: 9293})).rejects.toThrowError(/is not available/)
+  })
+})

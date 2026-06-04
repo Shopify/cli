@@ -23,7 +23,7 @@ import {Config} from '@oclif/core'
 import readline from 'readline'
 
 const DEFAULT_HOST = '127.0.0.1'
-const DEFAULT_PORT = '9292'
+const DEFAULT_PORT = 9292
 
 let hasReportedAnalyticsEvent = false
 
@@ -37,7 +37,7 @@ interface DevOptions {
   open: boolean
   theme: Theme
   host?: string
-  port?: string
+  port?: number
   force: boolean
   'theme-editor-sync': boolean
   'live-reload': LiveReload
@@ -93,13 +93,17 @@ export async function dev(options: DevOptions) {
   })
 
   const host = options.host ?? DEFAULT_HOST
-  if (options.port && !(await checkPortAvailability(Number(options.port)))) {
-    throw new AbortError(
-      `Port ${options.port} is not available. Try a different port or remove the --port flag to use an available port.`,
-    )
+  let port: number
+  if (options.port) {
+    if (!(await checkPortAvailability(options.port))) {
+      throw new AbortError(
+        `Port ${options.port} is not available. Try a different port or remove the --port flag to use an available port.`,
+      )
+    }
+    port = options.port
+  } else {
+    port = await getAvailableTCPPort(DEFAULT_PORT)
   }
-
-  const port = options.port ?? String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
   const urls = {
     local: `http://${host}:${port}`,
