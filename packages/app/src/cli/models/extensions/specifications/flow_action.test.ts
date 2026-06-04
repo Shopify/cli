@@ -19,6 +19,8 @@ const tunnelUrls: ApplicationURLs = {
   redirectUrlWhitelist: [],
 }
 
+const urlFields = ['runtime_url', 'validation_url', 'config_page_url', 'config_page_preview_url'] as const
+
 describe('FlowActionExtension', () => {
   let extension: ExtensionInstance<FlowActionConfig>
 
@@ -68,25 +70,50 @@ describe('FlowActionExtension', () => {
     expect(parsed.state).toBe('error')
   })
 
-  test('handles the deploy configuration', async () => {
+  test('prepends the app URL to relative URL fields in the deploy configuration', async () => {
     // When
     const got = await extension.deployConfig({
       apiKey: 'api-key',
-      appConfiguration: placeholderAppConfiguration,
+      appConfiguration: {
+        ...placeholderAppConfiguration,
+        application_url: 'https://my-app.example.com',
+      },
     })
 
     // Then
     expect(got).toEqual({
       title: extension.configuration.name,
       description: extension.configuration.description,
-      url: extension.configuration.runtime_url,
+      url: 'https://my-app.example.com/api/execute',
       fields: [],
-      validation_url: extension.configuration.validation_url,
-      custom_configuration_page_url: extension.configuration.config_page_url,
-      custom_configuration_page_preview_url: extension.configuration.config_page_preview_url,
+      validation_url: 'https://my-app.example.com/api/validate',
+      custom_configuration_page_url: 'https://my-app.example.com/config',
+      custom_configuration_page_preview_url: 'https://my-app.example.com/config/preview',
       schema_patch: '',
       return_type_ref: undefined,
     })
+  })
+
+  test.each(urlFields)('throws when deploying a relative %s without an app URL', async (field) => {
+    // Given
+    extension.configuration = {
+      ...extension.configuration,
+      runtime_url: 'https://my-prod-host.example.com/api/execute',
+      validation_url: 'https://my-prod-host.example.com/api/validate',
+      config_page_url: 'https://my-prod-host.example.com/config',
+      config_page_preview_url: 'https://my-prod-host.example.com/config/preview',
+    }
+    extension.configuration[field] = `/${field}`
+
+    // When/Then
+    await expect(
+      extension.deployConfig({
+        apiKey: 'api-key',
+        appConfiguration: placeholderAppConfiguration,
+      }),
+    ).rejects.toThrow(
+      `Flow action ${field} is a relative URL, but no application_url is configured. Set application_url in your app configuration or use an absolute HTTPS URL.`,
+    )
   })
 
   test('prepends the dev application URL to relative URL fields', () => {
