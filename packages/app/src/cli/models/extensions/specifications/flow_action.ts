@@ -7,10 +7,9 @@ import {
   validateReturnTypeConfig,
 } from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
+import {FLOW_ACTION_URL_FIELDS} from '../../../services/flow/types.js'
 import {loadSchemaFromPath, resolveFlowActionUrl} from '../../../services/flow/utils.js'
 import {zod} from '@shopify/cli-kit/node/schema'
-
-const RELATIVE_URL_FIELDS = ['runtime_url', 'validation_url', 'config_page_url', 'config_page_preview_url'] as const
 
 const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_action'),
@@ -56,10 +55,10 @@ const flowActionSpecification = createExtensionSpecification({
    *
    */
   patchWithAppDevURLs: (config, urls) => {
-    for (const key of RELATIVE_URL_FIELDS) {
+    for (const key of FLOW_ACTION_URL_FIELDS) {
       const value = config[key]
       if (typeof value === 'string' && value.startsWith('/')) {
-        config[key] = resolveFlowActionUrl(key, value, urls.applicationUrl) ?? ''
+        config[key] = resolveFlowActionUrl(key, value, urls.applicationUrl)
       }
     }
   },
@@ -72,13 +71,15 @@ const flowActionSpecification = createExtensionSpecification({
       description: config.description,
       url: resolveFlowActionUrl('runtime_url', config.runtime_url, appUrl),
       fields: serializeFields('flow_action', config.settings?.fields),
-      validation_url: resolveFlowActionUrl('validation_url', config.validation_url, appUrl),
-      custom_configuration_page_url: resolveFlowActionUrl('config_page_url', config.config_page_url, appUrl),
-      custom_configuration_page_preview_url: resolveFlowActionUrl(
-        'config_page_preview_url',
-        config.config_page_preview_url,
-        appUrl,
-      ),
+      validation_url: config.validation_url
+        ? resolveFlowActionUrl('validation_url', config.validation_url, appUrl)
+        : undefined,
+      custom_configuration_page_url: config.config_page_url
+        ? resolveFlowActionUrl('config_page_url', config.config_page_url, appUrl)
+        : undefined,
+      custom_configuration_page_preview_url: config.config_page_preview_url
+        ? resolveFlowActionUrl('config_page_preview_url', config.config_page_preview_url, appUrl)
+        : undefined,
       schema_patch: await loadSchemaFromPath(extensionPath, config.schema),
       return_type_ref: config.return_type_ref,
     }

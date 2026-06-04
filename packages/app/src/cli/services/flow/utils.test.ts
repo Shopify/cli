@@ -4,10 +4,6 @@ import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('resolveFlowActionUrl', () => {
-  test('returns undefined when the URL is not configured', () => {
-    expect(resolveFlowActionUrl('validation_url', undefined, 'https://my-app.example.com')).toBeUndefined()
-  })
-
   test('returns absolute URLs unchanged', () => {
     expect(
       resolveFlowActionUrl('runtime_url', 'https://my-prod-host.example.com/api/execute', 'https://my-app.example.com'),
@@ -28,6 +24,12 @@ describe('resolveFlowActionUrl', () => {
 
   test('throws when an absolute URL is not HTTPS', () => {
     expect(() => resolveFlowActionUrl('runtime_url', 'http://my-prod-host.example.com/api/execute', undefined)).toThrow(
+      'Flow action runtime_url must resolve to an HTTPS URL. Set application_url to an HTTPS URL or use an absolute HTTPS URL.',
+    )
+  })
+
+  test('throws when the URL is empty', () => {
+    expect(() => resolveFlowActionUrl('runtime_url', '', 'https://my-app.example.com')).toThrow(
       'Flow action runtime_url must resolve to an HTTPS URL. Set application_url to an HTTPS URL or use an absolute HTTPS URL.',
     )
   })

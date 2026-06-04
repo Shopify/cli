@@ -2,14 +2,13 @@ import {prependApplicationUrl} from '../../models/extensions/specifications/vali
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import type {FlowActionUrlField} from './types.js'
 
 /**
- * resolves url for fieldName by either prepending with appUrl on confirming that
- * url start with https
+ * Resolves a Flow action URL by prepending the app URL to relative URLs and
+ * ensuring the resolved URL is HTTPS.
  */
-export const resolveFlowActionUrl = (fieldName: string, url: string | undefined, appUrl: string | undefined) => {
-  if (!url) return undefined
-
+export const resolveFlowActionUrl = (fieldName: FlowActionUrlField, url: string, appUrl: string | undefined) => {
   const resolvedUrl = prependApplicationUrl(url, appUrl)
   if (resolvedUrl.startsWith('/')) {
     throw new AbortError(
