@@ -64,15 +64,22 @@ const flowActionSpecification = createExtensionSpecification({
       }
     }
   },
-  deployConfig: async (config, extensionPath) => {
+  deployConfig: async (config, extensionPath, _apiKey, _moduleId, context) => {
+    const appConfiguration = context?.appConfiguration
+    const appUrl = typeof appConfiguration?.application_url === 'string' ? appConfiguration.application_url : undefined
+
     return {
       title: config.name,
       description: config.description,
-      url: config.runtime_url,
+      url: prependApplicationUrl(config.runtime_url, appUrl),
       fields: serializeFields('flow_action', config.settings?.fields),
-      validation_url: config.validation_url,
-      custom_configuration_page_url: config.config_page_url,
-      custom_configuration_page_preview_url: config.config_page_preview_url,
+      validation_url: config.validation_url ? prependApplicationUrl(config.validation_url, appUrl) : undefined,
+      custom_configuration_page_url: config.config_page_url
+        ? prependApplicationUrl(config.config_page_url, appUrl)
+        : undefined,
+      custom_configuration_page_preview_url: config.config_page_preview_url
+        ? prependApplicationUrl(config.config_page_preview_url, appUrl)
+        : undefined,
       schema_patch: await loadSchemaFromPath(extensionPath, config.schema),
       return_type_ref: config.return_type_ref,
     }
