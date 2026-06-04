@@ -226,46 +226,52 @@ export function downloadFile(url: string, to: string): Promise<string> {
 
   return runWithTimer('cmd_all_timing_network_ms')(() => {
     return new Promise<string>((resolve, reject) => {
-      if (!fileExistsSync(dirname(to))) {
-        mkdirSync(dirname(to))
-      }
-
-      const file = createFileWriteStream(to)
-
-      // if we can't remove the file for some reason (seen on windows), that's ok -- it's in a temporary directory
-      const tryToRemoveFile = () => {
-        try {
-          unlinkFileSync(to)
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (err: unknown) {
-          outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${outputToken.raw(String(err))}`)
-        }
-      }
-
-      file.on('finish', () => {
-        file.close()
-        resolve(to)
-      })
-
-      file.on('error', (err) => {
-        tryToRemoveFile()
-        reject(err)
-      })
-
       nodeFetch(url, {redirect: 'follow'})
         .then((res) => {
           if (!res.ok) {
-            tryToRemoveFile()
             return reject(new Error(`Failed to download file from ${sanitizedUrl}: ${res.status} ${res.statusText}`))
           }
           if (!res.body) {
-            tryToRemoveFile()
             return reject(new Error(`Failed to download file from ${sanitizedUrl}: Empty response body`))
           }
+
+          if (!fileExistsSync(dirname(to))) {
+            mkdirSync(dirname(to))
+          }
+
+          const file = createFileWriteStream(to)
+
+          // if we can't remove the file for some reason (seen on windows), that's ok -- it's in a temporary directory
+          const tryToRemoveFile = () => {
+            try {
+              if (!file.destroyed) {
+                file.destroy()
+              }
+              unlinkFileSync(to)
+              // eslint-disable-next-line no-catch-all/no-catch-all
+            } catch (err: unknown) {
+              outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${outputToken.raw(String(err))}`)
+            }
+          }
+
+          file.on('finish', () => {
+            file.close()
+            resolve(to)
+          })
+
+          file.on('error', (err) => {
+            tryToRemoveFile()
+            reject(err instanceof Error ? err : new Error(String(err)))
+          })
+
+          res.body.on('error', (err) => {
+            tryToRemoveFile()
+            reject(err instanceof Error ? err : new Error(String(err)))
+          })
+
           res.body.pipe(file)
         })
         .catch((err) => {
-          tryToRemoveFile()
           reject(err instanceof Error ? err : new Error(String(err)))
         })
     })
