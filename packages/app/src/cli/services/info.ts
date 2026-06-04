@@ -16,6 +16,7 @@ import {
 } from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {uniq} from '@shopify/cli-kit/common/array'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
@@ -230,7 +231,7 @@ class AppInfo {
 
   extensionsSections(): AlertCustomSection[] {
     const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
-    const types = Array.from(new Set(extensions.map((ext) => ext.type)))
+    const types = uniq(extensions.map((ext) => ext.type))
     return types
       .map((extensionType: string): AlertCustomSection | undefined => {
         const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
