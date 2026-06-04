@@ -53,8 +53,6 @@ export const validateFieldShape = (
   return baseFieldSchema.parse(configField)
 }
 
-export const startsWithHttps = (url: string) => url.startsWith('https://')
-
 export const isSchemaTypeReference = (type: string) => type.startsWith('schema.')
 
 export const validateCustomConfigurationPageConfig = (
