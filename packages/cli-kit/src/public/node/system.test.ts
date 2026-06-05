@@ -393,3 +393,26 @@ describe('readStdinString', () => {
     await expect(got).rejects.toThrow('Stdin input exceeded the maximum allowed size.')
   })
 })
+
+describe('isWsl', () => {
+  test('memoizes the result', async () => {
+    // Given
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // When
+    const firstCall = await system.isWsl()
+
+    // Then
+    expect(firstCall).toBe(true)
+
+    // Given
+    // We change the mock value. If it's memoized, it should still return the first value.
+    vi.doMock('is-wsl', () => ({default: false}))
+
+    // When
+    const secondCall = await system.isWsl()
+
+    // Then
+    expect(secondCall).toBe(true)
+  })
+})
