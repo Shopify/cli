@@ -4,7 +4,17 @@ import {relativizePath} from '../../public/node/path.js'
 import ansiEscapes from 'ansi-escapes'
 import supportsHyperlinks from 'supports-hyperlinks'
 import cjs from 'color-json'
-import type {Change} from 'diff'
+
+/**
+ * A single segment of a line-based diff, as consumed by {@link LinesDiffContentToken}.
+ * Structurally a subset of jsdiff's `Change` type: unchanged segments have neither
+ * `added` nor `removed` set; changed segments set exactly one of them to `true`.
+ */
+export interface LinesDiffSegment {
+  value: string
+  added?: boolean
+  removed?: boolean
+}
 
 export abstract class ContentToken<T> {
   value: T
@@ -61,7 +71,7 @@ export class JsonContentToken extends ContentToken<any> {
   }
 }
 
-export class LinesDiffContentToken extends ContentToken<Change[]> {
+export class LinesDiffContentToken extends ContentToken<LinesDiffSegment[]> {
   output(): string[] {
     return this.value
       .map((part) => {

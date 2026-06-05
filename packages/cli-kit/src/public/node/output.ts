@@ -14,6 +14,7 @@ import {
   ItalicContentToken,
   JsonContentToken,
   LinesDiffContentToken,
+  LinesDiffSegment,
   LinkContentToken,
   PathContentToken,
   RawContentToken,
@@ -24,7 +25,7 @@ import {consoleLog, consoleWarn, output} from '../../private/node/output.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 
-import type {Change} from 'diff'
+export type {LinesDiffSegment}
 
 export type Logger = Writable | ((message: string, logLevel?: LogLevel) => void)
 
@@ -89,7 +90,7 @@ export const outputToken = {
   failIcon(): ErrorContentToken {
     return new ErrorContentToken('✖')
   },
-  linesDiff(value: Change[]): LinesDiffContentToken {
+  linesDiff(value: LinesDiffSegment[]): LinesDiffContentToken {
     return new LinesDiffContentToken(value)
   },
 }
