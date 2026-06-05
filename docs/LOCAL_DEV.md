@@ -29,7 +29,6 @@ SHOPIFY_CLI_NEVER_USE_PARTNERS_API=1
 ```
 
 - **Admin URLs**: in local mode the CLI maps `{store}.my.shop.dev` to `admin.shop.dev/store/{store}` — see `packages/cli-kit/src/public/node/context/fqdn.ts`.
-- **Organization**: use organization ID `1` for local development.
 
 ## Theme check
 
