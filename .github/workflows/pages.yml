@@ -4,7 +4,6 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - packages/cli-kit/package.json
       - "docs/**"
 
   workflow_dispatch:
@@ -38,8 +37,6 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: "22"
-      - name: Build TSDoc docs
-        run: pnpm build-api-docs --output-style=stream
       - name: Build Markdown files into HTML
         uses: actions/jekyll-build-pages@v1
         with:
