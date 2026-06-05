@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Asserts that a codegen step left the working tree clean for its owned paths.
 // Single source of truth for the codegen freshness checks run both locally
 // (via `pnpm codegen:check*`) and in CI (tests-pr.yml). Each key mirrors one
