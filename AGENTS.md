@@ -1,3 +1,6 @@
+See @.cursor/rules/base.mdc for your desired behavior.
+See @.cursor/rules/docs.mdc for Shopify CLI architecture and conventions.
+
 # Working in Shopify CLI
 
 Guidance for contributors and coding agents to get a change green in CI with the fewest round-trips. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for changesets/versioning and [`docs/LOCAL_DEV.md`](./docs/LOCAL_DEV.md) for running the CLI locally.
