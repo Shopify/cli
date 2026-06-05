@@ -58,14 +58,15 @@ export const isSchemaTypeReference = (type: string) => type.startsWith('schema.'
 
 const containsUrlControlCharacter = (value: string) => /[\r\n\t]/.test(value)
 
-const isFlowActionRelativeUrl = (value: string) => {
-  return value.startsWith('/') && !value.startsWith('//') && !containsUrlControlCharacter(value)
-}
-
 export const validateFlowActionUrl = (zodType: zod.ZodString) => {
-  return validateRelativeUrl(zodType)
-    .refine((value) => !containsUrlControlCharacter(value), {message: 'Invalid URL'})
-    .refine((value) => !value.startsWith('/') || isFlowActionRelativeUrl(value), {message: 'Invalid URL'})
+  return validateRelativeUrl(zodType, {
+    message:
+      'Invalid URL: URL must be an absolute HTTPS URL or a relative URL starting with a single slash (e.g. "/api/endpoint").',
+  })
+    .refine((value) => !containsUrlControlCharacter(value), {
+      message: 'Invalid URL: URL must not contain control characters such as newlines or tabs.',
+    })
+    .refine((value) => !value.startsWith('//'), {message: 'Invalid URL: Relative URLs must start with a single slash.'})
 }
 
 export const validateCustomConfigurationPageConfig = (
