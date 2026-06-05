@@ -300,7 +300,10 @@ describe('setupDevServer', () => {
     })
 
     test('CORS allows the theme editor (Online Store Editor) origin so hot reload works in the editor', async () => {
-      const {res} = await dispatchEvent(server, '/assets/file2.css', {host: defaultHost, origin: 'https://online-store-web.shopifyapps.com'})
+      const {res} = await dispatchEvent(server, '/assets/file2.css', {
+        host: defaultHost,
+        origin: 'https://online-store-web.shopifyapps.com',
+      })
       expect(res.getHeader('access-control-allow-origin')).toEqual('https://online-store-web.shopifyapps.com')
     })
 
@@ -311,7 +314,10 @@ describe('setupDevServer', () => {
     })
 
     test('CORS does not allow unknown origins', async () => {
-      const {res} = await dispatchEvent(server, '/assets/file2.css', {host: defaultHost, origin: 'https://evil.example.com'})
+      const {res} = await dispatchEvent(server, '/assets/file2.css', {
+        host: defaultHost,
+        origin: 'https://evil.example.com',
+      })
       expect(res.getHeader('access-control-allow-origin')).toBeUndefined()
     })
 
