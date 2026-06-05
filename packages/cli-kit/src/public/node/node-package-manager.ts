@@ -8,7 +8,7 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {parseJSON} from '../common/json.js'
-import {SemVer, satisfies as semverSatisfies} from 'semver'
+import {compareVersions, satisfies as versionSatisfiesRequirement} from 'compare-versions'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -334,7 +334,7 @@ export async function checkForNewVersion(
     return undefined
   }
 
-  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+  if (lastVersion && compareVersions(currentVersion, lastVersion) < 0) {
     return lastVersion
   } else {
     return undefined
@@ -351,7 +351,7 @@ export function checkForCachedNewVersion(dependency: string, currentVersion: str
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
   const lastVersion = cacheRetrieve(cacheKey)?.value
 
-  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+  if (lastVersion && compareVersions(currentVersion, lastVersion) < 0) {
     return lastVersion
   } else {
     return undefined
@@ -365,7 +365,39 @@ export function checkForCachedNewVersion(dependency: string, currentVersion: str
  * @returns A boolean indicating whether the version satisfies the requirements
  */
 export function versionSatisfies(version: string, requirements: string): boolean {
-  return semverSatisfies(version, requirements)
+  if (!semverVersionRegex.test(version)) return false
+
+  const prereleaseBaseVersion = baseVersionForPrerelease(version)
+  // semver excludes prerelease candidates from normal ranges unless the range opts into that prerelease tuple.
+  if (prereleaseBaseVersion && !requirementsTargetPrereleaseBaseVersion(requirements, prereleaseBaseVersion)) {
+    return false
+  }
+
+  return versionSatisfiesRequirement(version, normalizeSemverPartialRequirements(requirements))
+}
+
+const semverVersionRegex = /^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
+const prereleaseVersionRegex = /^v?(\d+)\.(\d+)\.(\d+)-[^+]+(?:\+.*)?$/
+const prereleaseRequirementRegex = /v?(\d+)\.(\d+)\.(\d+)-[0-9A-Za-z.-]+(?:\+[0-9A-Za-z.-]+)?/g
+const partialMinorUpperBoundRegex = /(^|\s)<=\s*v?(\d+)\.(\d+)(?=$|\s)/g
+
+function baseVersionForPrerelease(version: string): string | undefined {
+  const prereleaseMatch = version.match(prereleaseVersionRegex)
+  if (!prereleaseMatch) return undefined
+
+  return `${prereleaseMatch[1]}.${prereleaseMatch[2]}.${prereleaseMatch[3]}`
+}
+
+function requirementsTargetPrereleaseBaseVersion(requirements: string, baseVersion: string): boolean {
+  return Array.from(requirements.matchAll(prereleaseRequirementRegex)).some((requirementMatch) => {
+    return `${requirementMatch[1]}.${requirementMatch[2]}.${requirementMatch[3]}` === baseVersion
+  })
+}
+
+function normalizeSemverPartialRequirements(requirements: string): string {
+  return requirements.replace(partialMinorUpperBoundRegex, (_match, prefix: string, major: string, minor: string) => {
+    return `${prefix}<${major}.${Number(minor) + 1}.0`
+  })
 }
 
 /**

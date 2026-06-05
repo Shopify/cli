@@ -23,6 +23,7 @@ import {
   PackageManager,
   npmLockfile,
   lockfilesByManager,
+  versionSatisfies,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -581,6 +582,26 @@ describe('checkForCachedNewVersion', () => {
 
     // Then
     expect(result).toEqual(newestVersion)
+  })
+})
+
+describe('versionSatisfies', () => {
+  test.each<[boolean, string, string]>([
+    [true, '1.2.3', '>=1.0.0'],
+    [true, '1.2.3', '<=1.2.3'],
+    [false, '1.2.3', '<1.2.3'],
+    [false, '1.2', '>=1.2.0'],
+    [true, '2.0.0', '<=2.0'],
+    [true, '2.0.1', '<=2.0'],
+    [false, '2.1.0', '<=2.0'],
+    [false, '0.0.0-snapshot', '<1.0.0'],
+    [false, '1.2.3-alpha.1', '<1.2.3'],
+    [true, '1.2.3-alpha.1', '>=1.2.3-alpha.0'],
+    [true, '1.2.3-alpha.1', '<=1.2.3-alpha.1'],
+    [true, '1.2.3-alpha.1', '<1.2.3-alpha.2'],
+    [false, '1.2.4-alpha.1', '>1.2.3-alpha.1'],
+  ])('returns %s for version %s and requirements %s', (expected, version, requirements) => {
+    expect(versionSatisfies(version, requirements)).toBe(expected)
   })
 })
 
