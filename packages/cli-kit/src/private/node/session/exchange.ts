@@ -9,8 +9,6 @@ import {AbortError, BugError, ExtendableError} from '../../../public/node/error.
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
 
-import * as jose from 'jose'
-
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
 class InvalidTargetError extends AbortError {}
@@ -262,7 +260,7 @@ function buildIdentityToken(
   existingUserId?: string,
   existingAlias?: string,
 ): IdentityToken {
-  const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
+  const userId = existingUserId ?? (result.id_token ? getJwtSubject(result.id_token) : undefined)
 
   if (!userId) {
     throw new BugError('Error setting userId for session. No id_token or pre-existing user ID provided.')
@@ -284,4 +282,31 @@ function buildApplicationToken(result: TokenRequestResult): ApplicationToken {
     expiresAt: new Date(Date.now() + result.expires_in * 1000),
     scopes: result.scope.split(' '),
   }
+}
+
+function getJwtSubject(idToken: string): string | undefined {
+  const segments = idToken.split('.')
+
+  if (segments.length !== 3) {
+    throw new BugError('Invalid id_token: expected JWT with exactly 3 segments.')
+  }
+
+  const payload = segments[1] as string
+
+  let parsedPayload: unknown
+  try {
+    parsedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
+  } catch {
+    throw new BugError('Invalid id_token: payload must be base64url-encoded JSON.')
+  }
+
+  if (!parsedPayload || typeof parsedPayload !== 'object' || Array.isArray(parsedPayload)) {
+    throw new BugError('Invalid id_token: payload must be a non-empty JSON object.')
+  }
+
+  if (Object.keys(parsedPayload).length === 0) {
+    throw new BugError('Invalid id_token: payload must be a non-empty JSON object.')
+  }
+
+  return (parsedPayload as {sub?: string}).sub
 }

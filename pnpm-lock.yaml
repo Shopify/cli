@@ -405,9 +405,6 @@ importers:
       is-wsl:
         specifier: 3.1.0
         version: 3.1.0
-      jose:
-        specifier: 5.9.6
-        version: 5.9.6
       latest-version:
         specifier: 7.0.0
         version: 7.0.0
@@ -6755,9 +6752,6 @@ packages:
 
   jju@1.4.0:
     resolution: {integrity: sha512-8wb9Yw966OSxApiCt0K3yNJL8pnNeIv+OEq2YMidz4FKP6nonSRoOXc80iXY4JaN2FC11B9qsNmDsm+ZOfMROA==}
-
-  jose@5.9.6:
-    resolution: {integrity: sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -16595,8 +16589,6 @@ snapshots:
   jiti@2.6.1: {}
 
   jju@1.4.0: {}
-
-  jose@5.9.6: {}
 
   js-tokens@4.0.0: {}
 
