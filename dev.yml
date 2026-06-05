@@ -66,6 +66,9 @@ commands:
   type-check:
     desc: 'Type-check the project'
     run: pnpm run type-check:affected
+  pre-ci:
+    desc: 'Run the local subset of PR CI gates (run what CI runs) before pushing'
+    run: pnpm run pre-ci
 
 check:
   type-check: pnpm nx affected --target=type-check
