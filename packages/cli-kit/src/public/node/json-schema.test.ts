@@ -440,7 +440,7 @@ describe('normaliseJsonSchema', () => {
     })
   })
 
-  test("doesn't de-reference external $ref pointers", async () => {
+  test('preserves external $ref pointers unchanged', async () => {
     const schema = {
       $id: 'https://example.com/schema.json',
       type: 'object',
@@ -450,8 +450,52 @@ describe('normaliseJsonSchema', () => {
       required: ['foo'],
     }
 
+    await expect(normaliseJsonSchema(JSON.stringify(schema))).resolves.toEqual(schema)
+  })
+
+  test('preserves file-based $ref pointers unchanged', async () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        foo: {$ref: './definitions.json#/foo'},
+      },
+      required: ['foo'],
+    }
+
+    await expect(normaliseJsonSchema(JSON.stringify(schema))).resolves.toEqual(schema)
+  })
+
+  test('preserves cyclic internal $ref pointers without recursing forever', async () => {
+    const schema = {
+      definitions: {
+        node: {
+          type: 'object',
+          properties: {
+            value: {type: 'string'},
+            next: {$ref: '#/definitions/node'},
+          },
+        },
+      },
+      type: 'object',
+      properties: {
+        root: {$ref: '#/definitions/node'},
+      },
+      required: ['root'],
+    }
+
     const dereferenced = await normaliseJsonSchema(JSON.stringify(schema))
-    expect(dereferenced).toEqual(schema)
+    const rootNode = dereferenced.properties?.root as Record<string, unknown>
+    expect(rootNode).toMatchObject({
+      type: 'object',
+      properties: {
+        value: {type: 'string'},
+      },
+    })
+
+    const nextNode = (rootNode.properties as Record<string, unknown>).next as Record<string, unknown>
+    expect(nextNode).toBeTypeOf('object')
+    expect(nextNode).toBe((dereferenced.definitions as Record<string, unknown>).node)
+    expect((nextNode.properties as Record<string, unknown>).next as Record<string, unknown>).toBe(nextNode)
   })
 })
 
