@@ -7,7 +7,6 @@ import {platformAndArch} from './os.js'
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {setupServer} from 'msw/node'
 import {delay, http, HttpResponse} from 'msw'
-import FormData from 'form-data'
 
 const DURATION_UNTIL_ABORT_IS_SEEN = 100
 
@@ -80,7 +79,11 @@ describe('formData', () => {
   test('make an empty form data object', () => {
     const res = formData()
     expect(res).toBeInstanceOf(FormData)
-    expect(res.getLengthSync()).toBe(0)
+    let entryCount = 0
+    res.forEach(() => {
+      entryCount += 1
+    })
+    expect(entryCount).toBe(0)
   })
 })
 

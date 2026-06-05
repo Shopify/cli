@@ -4,7 +4,7 @@ import {AssetUrlSchema, DeveloperPlatformClient} from '../utilities/developer-pl
 import {MinimalAppIdentifiers} from '../models/organization.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
-import {formData, fetch} from '@shopify/cli-kit/node/http'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {fileSize, readFileSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {writeFile} from 'fs/promises'
@@ -44,10 +44,24 @@ export async function uploadToGCS(signedURL: string, filePath: string) {
       `Check the asset paths in your extension configuration — a misconfigured source can pull in much more than intended. Exclude large files or directories from your bundle, then try again.`,
     )
   }
-  const form = formData()
   const buffer = readFileSync(filePath)
-  form.append('my_upload', buffer)
-  await fetch(signedURL, {method: 'put', body: buffer, headers: form.getHeaders()}, 'slow-request')
+  // The body is the raw file buffer, not a multipart-encoded form: GCS stores the bytes from this
+  // signed PUT as-is. The previous `form-data`-based implementation also sent the raw buffer as the
+  // body while only borrowing form-data's `multipart/form-data; boundary=...` header, so the
+  // boundary never delimited anything on the wire. We keep that exact content-type shape here to
+  // preserve wire behaviour; because nothing parses the boundary, a fixed value is equivalent to the
+  // random one form-data generated per request — and it keeps the request deterministic and testable.
+  await fetch(
+    signedURL,
+    {
+      method: 'put',
+      body: buffer,
+      headers: {
+        'content-type': 'multipart/form-data; boundary=---shopify-cli-upload-boundary---',
+      },
+    },
+    'slow-request',
+  )
 }
 
 /**
