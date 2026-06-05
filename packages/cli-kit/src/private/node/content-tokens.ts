@@ -1,7 +1,7 @@
+import {osc8Link} from './hyperlink.js'
 import colors from '../../public/node/colors.js'
 import {OutputMessage, stringifyMessage} from '../../public/node/output.js'
 import {relativizePath} from '../../public/node/path.js'
-import ansiEscapes from 'ansi-escapes'
 import supportsHyperlinks from 'supports-hyperlinks'
 import cjs from 'color-json'
 import type {Change} from 'diff'
@@ -37,7 +37,7 @@ export class LinkContentToken extends ContentToken<OutputMessage> {
     const url = this.link ?? ''
     const defaultFallback = this.value === this.link ? text : `${text} ( ${url} )`
     if (supportsHyperlinks.stdout) {
-      return ansiEscapes.link(text, url)
+      return osc8Link(text, url)
     }
     return this.fallback ?? defaultFallback
   }
