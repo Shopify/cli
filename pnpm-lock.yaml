@@ -676,13 +676,16 @@ importers:
       h3:
         specifier: 1.15.11
         version: 1.15.11
-      yaml:
-        specifier: 2.9.0
-        version: 2.9.0
+      js-yaml:
+        specifier: 4.1.1
+        version: 4.1.1
     devDependencies:
       '@shopify/theme-hot-reload':
         specifier: ^0.0.22
         version: 0.0.22
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
         version: 3.2.4(vitest@4.1.8)
@@ -4186,6 +4189,9 @@ packages:
 
   '@types/http-cache-semantics@4.2.0':
     resolution: {integrity: sha512-L3LgimLHXtGkWikKnsPg0/VFx9OGZaC+eN1u4r+OB1XRqH3meBIAVC2zr1WdMH+RHmnRkqliQAOHNJ/E0j/e0Q==}
+
+  '@types/js-yaml@4.0.9':
+    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -13657,6 +13663,8 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/http-cache-semantics@4.2.0': {}
+
+  '@types/js-yaml@4.0.9': {}
 
   '@types/json-schema@7.0.15': {}
 
