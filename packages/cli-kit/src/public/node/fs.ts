@@ -16,8 +16,9 @@ import {
 
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
-import {minimatch} from 'minimatch'
 import fastGlobLib from 'fast-glob'
+// eslint-disable-next-line no-restricted-imports -- Node 22 native glob matching is not wrapped by cli-kit path helpers.
+import * as nodePath from 'node:path'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -688,9 +689,11 @@ export function findPathUpSync(
 }
 
 export interface MatchGlobOptions {
-  matchBase: boolean
-  noglobstar: boolean
+  matchBase?: boolean
+  noglobstar?: boolean
 }
+
+const {matchesGlob} = nodePath as typeof nodePath & {matchesGlob(path: string, pattern: string): boolean}
 
 /**
  * Matches a key against a glob pattern.
@@ -699,8 +702,31 @@ export interface MatchGlobOptions {
  * @param options - The options to refine the matching approach.
  * @returns true if the key matches the pattern, false otherwise.
  */
-export function matchGlob(key: string, pattern: string, options?: MatchGlobOptions): boolean {
-  return minimatch(key, pattern, options)
+export function matchGlob(key: string, pattern: string, options: MatchGlobOptions = {}): boolean {
+  const effectivePattern = options.noglobstar ? patternWithoutGlobstars(pattern) : pattern
+
+  if (matchesGlob(key, effectivePattern)) return true
+
+  if (options.matchBase && !hasPathSeparator(effectivePattern)) {
+    return matchesGlob(baseName(key), effectivePattern)
+  }
+
+  return false
+}
+
+function patternWithoutGlobstars(pattern: string): string {
+  return pattern
+    .split(/([/\\])/)
+    .map((part) => (part === '**' ? '*' : part))
+    .join('')
+}
+
+function hasPathSeparator(path: string): boolean {
+  return path.includes('/') || path.includes('\\')
+}
+
+function baseName(path: string): string {
+  return path.split(/[/\\]/).pop() ?? path
 }
 
 /**

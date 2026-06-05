@@ -22,6 +22,7 @@ import {
   copyDirectoryContents,
   symlink,
   fileRealPath,
+  matchGlob,
 } from './fs.js'
 import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
@@ -316,6 +317,41 @@ describe('glob', () => {
       expect(got.map((path) => normalizePath(path))).toContain(normalizePath(filePath))
       expect(got.map((path) => normalizePath(path))).not.toContain(normalizePath(dotFilePath))
     })
+  })
+})
+
+describe('matchGlob', () => {
+  test('matches liquid file patterns with native Node glob semantics', () => {
+    expect(matchGlob('theme.liquid', '*.liquid')).toBe(true)
+    expect(matchGlob('layout/theme.liquid', '*.liquid')).toBe(false)
+    expect(matchGlob('layout/theme.liquid', '**/*.liquid')).toBe(true)
+    expect(matchGlob('assets/theme.css', '*.liquid')).toBe(false)
+  })
+
+  test('matches watch-style globs used by extension file watching', () => {
+    expect(matchGlob('src/main.rs', 'src/**/*.rs')).toBe(true)
+    expect(matchGlob('src/lib/main.rs', 'src/**/*.rs')).toBe(true)
+    expect(matchGlob('src/main.ts', 'src/**/*.rs')).toBe(false)
+    expect(matchGlob('/tmp/my-function/src/main.rs', '/tmp/my-function/src/**/*.rs')).toBe(true)
+    expect(matchGlob('/tmp/my-function/src/lib/main.rs', '/tmp/my-function/src/**/*.rs')).toBe(true)
+  })
+
+  test('matches project config selection globs', () => {
+    expect(matchGlob('extensions/my-ext/shopify.extension.toml', 'extensions/*/*.extension.toml')).toBe(true)
+    expect(matchGlob('extensions/nested/my-ext/shopify.extension.toml', 'extensions/*/*.extension.toml')).toBe(false)
+    expect(matchGlob('web/shopify.web.toml', '**/shopify.web.toml')).toBe(true)
+  })
+
+  test('supports matchBase for theme ignore patterns', () => {
+    expect(matchGlob('assets/theme.css', '*.css', {matchBase: true, noglobstar: true})).toBe(true)
+    expect(matchGlob('assets/theme.css', '*.liquid', {matchBase: true, noglobstar: true})).toBe(false)
+  })
+
+  test('supports noglobstar for theme ignore patterns', () => {
+    expect(
+      matchGlob('templates/customers/account.json', 'templates/**/*.json', {matchBase: true, noglobstar: true}),
+    ).toBe(true)
+    expect(matchGlob('templates/404.json', 'templates/**/*.json', {matchBase: true, noglobstar: true})).toBe(false)
   })
 })
 
