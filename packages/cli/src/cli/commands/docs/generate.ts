@@ -3,7 +3,7 @@ import {Command as oclifCommand} from '@oclif/core'
 import {mkdir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 
-const docsPath = joinPath(cwd(), '/docs-shopify.dev/commands')
+const docsPath = () => joinPath(cwd(), '/docs-shopify.dev/commands')
 
 export type CommandWithMarkdown = oclifCommand.Loadable & {descriptionWithMarkdown?: string}
 
@@ -21,8 +21,8 @@ export default class DocsGenerate extends Command {
     const commands = this.config.commands as CommandWithMarkdown[]
 
     // Remove all files and recreate the folder. To make sure we don't leave any orphaned files.
-    await rmdir(docsPath)
-    await mkdir(docsPath)
+    await rmdir(docsPath())
+    await mkdir(docsPath())
 
     // Short by length to ensure that we first generate the interfaces for the parent topics to detect hidden ones.
     const sortedCommands = commands
@@ -96,6 +96,6 @@ export interface ${interfaceName} {
 ${flagsDetails}
 }
 `
-  await mkdir(`${docsPath}/interfaces`)
-  await writeFile(`${docsPath}/interfaces/${fileName}.interface.ts`, commandContent)
+  await mkdir(joinPath(docsPath(), 'interfaces'))
+  await writeFile(joinPath(docsPath(), 'interfaces', `${fileName}.interface.ts`), commandContent)
 }
