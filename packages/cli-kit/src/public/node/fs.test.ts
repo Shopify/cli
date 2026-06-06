@@ -254,12 +254,17 @@ describe('createFileReadStream', () => {
       await touchFile(filePath)
       await appendFile(filePath, content)
       const stream = createFileReadStream(filePath)
-      let data = ''
-      stream.on('data', (chunk) => {
-        data += chunk as string
-      })
-      stream.on('end', () => {
-        expect(data).toBe(content)
+
+      await new Promise<void>((resolve, reject) => {
+        let data = ''
+        stream.on('data', (chunk) => {
+          data += chunk as string
+        })
+        stream.on('end', () => {
+          expect(data).toBe(content)
+          resolve()
+        })
+        stream.on('error', reject)
       })
     })
   })
@@ -272,12 +277,17 @@ describe('createFileReadStream', () => {
       await appendFile(filePath, content)
 
       const stream = createFileReadStream(filePath, {start: 1, end: 7})
-      let data = ''
-      stream.on('data', (chunk) => {
-        data += chunk as string
-      })
-      stream.on('end', () => {
-        expect(data).toBe('est-con')
+
+      await new Promise<void>((resolve, reject) => {
+        let data = ''
+        stream.on('data', (chunk) => {
+          data += chunk as string
+        })
+        stream.on('end', () => {
+          expect(data).toBe('est-con')
+          resolve()
+        })
+        stream.on('error', reject)
       })
     })
   })
