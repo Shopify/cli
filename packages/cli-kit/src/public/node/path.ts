@@ -224,13 +224,20 @@ export function sanitizeRelativePath(input: string, warn: (msg: string) => void)
     if (seg === '..') {
       stripped = true
       stack.pop()
-    } else if (seg !== '.') {
+    } else if (seg === '.' || seg === '') {
+      // Skip empty segments (leading/multiple slashes) and current directory markers.
+      // This prevents absolute paths like '/etc/passwd' from being treated as such.
+      if (seg === '') stripped = true
+    } else if (/^[a-zA-Z]:$/.test(seg)) {
+      // Skip Windows drive letters (e.g. 'C:') to prevent escaping to other drives.
+      stripped = true
+    } else {
       stack.push(seg)
     }
   }
   const result = stack.join('/')
   if (stripped) {
-    warn(`Warning: path '${input}' contains '..' traversal — sanitized to '${result || '.'}'\n`)
+    warn(`Warning: path '${input}' contains traversal or absolute segments — sanitized to '${result || '.'}'\n`)
   }
   return result
 }
