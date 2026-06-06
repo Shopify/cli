@@ -1,6 +1,7 @@
 import {outputDebug, outputContent, outputToken} from './output.js'
 import {glob, removeFile} from './fs.js'
-import {relativePath, joinPath, dirname} from './path.js'
+import {relativePath, joinPath, dirname, isSubpath} from './path.js'
+import {AbortError} from './error.js'
 import archiver from 'archiver'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
 import {readFile} from 'fs/promises'
@@ -35,12 +36,14 @@ interface ZipOptions {
 export async function zip(options: ZipOptions): Promise<void> {
   const {inputDirectory, outputZipPath, matchFilePattern = '**/*'} = options
   outputDebug(outputContent`Zipping ${outputToken.path(inputDirectory)} into ${outputToken.path(outputZipPath)}`)
-  const pathsToZip = await glob(matchFilePattern, {
+  let pathsToZip = await glob(matchFilePattern, {
     cwd: inputDirectory,
     absolute: true,
     dot: true,
     followSymbolicLinks: false,
   })
+
+  pathsToZip = pathsToZip.filter((filePath) => isSubpath(inputDirectory, filePath))
 
   return new Promise((resolve, reject) => {
     const archive = archiver('zip')
@@ -96,6 +99,9 @@ function collectParentDirectories(fileRelativePath: string, accumulator: Set<str
 }
 
 async function archiveFile(inputDirectory: string, filePath: string, archive: archiver.Archiver): Promise<void> {
+  if (!isSubpath(inputDirectory, filePath)) {
+    throw new AbortError(outputContent`Skipped archiving of file ${outputToken.path(filePath)} outside the directory.`)
+  }
   const fileRelativePath = relativePath(inputDirectory, filePath)
   if (!filePath || !fileRelativePath) return
 
@@ -169,8 +175,9 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
         followSymbolicLinks: false,
       })
         .then(async (pathsToZip) => {
+          const filteredPaths = pathsToZip.filter((filePath) => isSubpath(options.inputDirectory, filePath))
           // Read all files immediately to prevent ENOENT errors during race conditions
-          const addFilesPromises = pathsToZip.map(async (filePath) => {
+          const addFilesPromises = filteredPaths.map(async (filePath) => {
             await archiveFile(options.inputDirectory, filePath, archive)
           })
 
