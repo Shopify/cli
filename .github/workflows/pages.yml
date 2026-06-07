@@ -4,6 +4,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
+      - packages/cli-kit/package.json
       - "docs/**"
 
   workflow_dispatch:
@@ -37,6 +38,15 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: "22"
+      # typedoc is needed only to generate the cli-kit API docs published to
+      # GitHub Pages. It's installed here just-in-time rather than tracked as a
+      # cli-kit devDependency so it doesn't generate Dependabot churn. Left
+      # unpinned so docs track the latest typedoc (and stay compatible with the
+      # repo's TypeScript) automatically; nothing here is committed.
+      - name: Install typedoc (docs generation only)
+        run: pnpm --filter @shopify/cli-kit add --save-dev typedoc
+      - name: Build TSDoc docs
+        run: pnpm build-api-docs --output-style=stream
       - name: Build Markdown files into HTML
         uses: actions/jekyll-build-pages@v1
         with:

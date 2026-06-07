@@ -42,6 +42,16 @@
         "command": "node bin/update-cli-kit-version.js"
       }
     },
+    "build-api-docs": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/docs"
+      ],
+      "options": {
+        "command": "node ./scripts/build-api-docs.js",
+        "cwd": "packages/cli-kit"
+      }
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

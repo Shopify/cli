@@ -51,6 +51,7 @@
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
+    "build-api-docs": "nx build-api-docs",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
