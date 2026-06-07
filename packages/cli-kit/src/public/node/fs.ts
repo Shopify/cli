@@ -1,5 +1,5 @@
 import {outputContent, outputToken, outputDebug} from './output.js'
-import {joinPath, normalizePath, resolvePath} from './path.js'
+import {basename, joinPath, matchesGlob, normalizePath, resolvePath, sep} from './path.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
 import {systemTempDir} from '../../private/node/temp-dir.js'
@@ -14,11 +14,8 @@ import {
   // @ts-ignore
 } from 'fs-extra/esm'
 
-import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
 import fastGlobLib from 'fast-glob'
-// eslint-disable-next-line no-restricted-imports -- Node 22 native glob matching is not wrapped by cli-kit path helpers.
-import * as nodePath from 'node:path'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -68,7 +65,7 @@ import type {Pattern, Options as GlobOptions} from 'fast-glob'
  */
 export function stripUpPath(path: string, strip: number): string {
   const parts = path.split(sep)
-  return join(...parts.slice(strip))
+  return joinPath(...parts.slice(strip))
 }
 
 /**
@@ -77,7 +74,7 @@ export function stripUpPath(path: string, strip: number): string {
  * @param callback - The callback that receives the temporary directory.
  */
 export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {
-  const tmpDir = await fsMkdtemp(join(systemTempDir, 'tmp-'))
+  const tmpDir = await fsMkdtemp(joinPath(systemTempDir, 'tmp-'))
   try {
     return await callback(tmpDir)
   } finally {
@@ -90,7 +87,7 @@ export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | 
  * @returns - The path to the temporary directory.
  */
 export function tempDirectory(): string {
-  return fsMkdtempSync(join(systemTempDir, 'tmp-'))
+  return fsMkdtempSync(joinPath(systemTempDir, 'tmp-'))
 }
 
 /**
@@ -693,8 +690,6 @@ export interface MatchGlobOptions {
   noglobstar?: boolean
 }
 
-const {matchesGlob} = nodePath as typeof nodePath & {matchesGlob(path: string, pattern: string): boolean}
-
 /**
  * Matches a key against a glob pattern.
  * @param key - The key to match.
@@ -708,7 +703,7 @@ export function matchGlob(key: string, pattern: string, options: MatchGlobOption
   if (matchesGlob(key, effectivePattern)) return true
 
   if (options.matchBase && !hasPathSeparator(effectivePattern)) {
-    return matchesGlob(baseName(key), effectivePattern)
+    return matchesGlob(basename(key), effectivePattern)
   }
 
   return false
@@ -723,10 +718,6 @@ function patternWithoutGlobstars(pattern: string): string {
 
 function hasPathSeparator(path: string): boolean {
   return path.includes('/') || path.includes('\\')
-}
-
-function baseName(path: string): string {
-  return path.split(/[/\\]/).pop() ?? path
 }
 
 /**

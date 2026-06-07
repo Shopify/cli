@@ -148,7 +148,7 @@
     "node-abort-controller": "3.1.1",
     "node-fetch": "3.3.2",
     "open": "8.4.2",
-    "pathe": "1.1.2",
+    "pathe": "2.0.3",
     "react": "19.2.4",
     "semver": "7.6.3",
     "stacktracey": "2.1.8",
