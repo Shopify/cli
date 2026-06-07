@@ -590,16 +590,17 @@ describe('versionSatisfies', () => {
     [true, '1.2.3', '>=1.0.0'],
     [true, '1.2.3', '<=1.2.3'],
     [false, '1.2.3', '<1.2.3'],
-    [false, '1.2', '>=1.2.0'],
-    [true, '2.0.0', '<=2.0'],
-    [true, '2.0.1', '<=2.0'],
-    [false, '2.1.0', '<=2.0'],
-    [false, '0.0.0-snapshot', '<1.0.0'],
-    [false, '1.2.3-alpha.1', '<1.2.3'],
+    [true, '2.0.0', '>=2.0.0'],
+    [true, '3.83.3', '<=3.83.3'],
+    [false, '3.83.4', '<=3.83.3'],
+    [true, '3.80.0', '>=3.50.0'],
+    [true, '3.80.0', '<4.0.0'],
+    // Prereleases are compared by numeric precedence; there is no semver-style exclusion from normal ranges.
+    [true, '1.2.3-alpha.1', '<1.2.3'],
     [true, '1.2.3-alpha.1', '>=1.2.3-alpha.0'],
-    [true, '1.2.3-alpha.1', '<=1.2.3-alpha.1'],
-    [true, '1.2.3-alpha.1', '<1.2.3-alpha.2'],
-    [false, '1.2.4-alpha.1', '>1.2.3-alpha.1'],
+    // Invalid versions are rejected rather than throwing.
+    [false, 'not-a-version', '>=1.0.0'],
+    [false, '', '>=1.0.0'],
   ])('returns %s for version %s and requirements %s', (expected, version, requirements) => {
     expect(versionSatisfies(version, requirements)).toBe(expected)
   })
