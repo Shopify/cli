@@ -123,7 +123,6 @@
     "color-json": "3.0.5",
     "conf": "11.0.2",
     "deepmerge": "4.3.1",
-    "dotenv": "16.4.7",
     "env-paths": "3.0.0",
     "execa": "7.2.0",
     "fast-glob": "3.3.3",

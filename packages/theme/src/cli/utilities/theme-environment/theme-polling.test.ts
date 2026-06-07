@@ -125,7 +125,7 @@ describe('pollRemoteJsonChanges', async () => {
     vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
 
     // Mock process.exit with a function that throws instead of actually exiting
-    vi.spyOn(process, 'exit').mockImplementation((code?: number): never => {
+    vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null): never => {
       throw new Error(`Process exit with code ${code}`)
     })
 

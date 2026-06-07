@@ -52,7 +52,7 @@
     "@octokit/rest": "22.0.0",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/generate-docs": "1.2.0",
-    "@types/node": "18.19.70",
+    "@types/node": "22.19.17",
     "@typescript-eslint/parser": "8.56.1",
     "@vitest/coverage-istanbul": "^3.1.4",
     "bugsnag-build-reporter": "^2.0.0",
