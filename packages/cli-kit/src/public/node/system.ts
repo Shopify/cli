@@ -98,9 +98,9 @@ export interface CaptureOutputResult {
  * @example
  * ```typescript
  * const result = await captureOutputWithExitCode('ls', ['-la'])
- * if (result.exitCode !== 0) \{
+ * if (result.exitCode !== 0) {
  *   console.error('Command failed:', result.stderr)
- * \}
+ * }
  * ```
  */
 export async function captureOutputWithExitCode(
@@ -352,13 +352,22 @@ export function isCI(): boolean {
 }
 
 /**
+ * Memoized value for the WSL check.
+ */
+let memoizedIsWsl: Promise<boolean> | undefined
+
+/**
  * Check if the current environment is a WSL environment.
  *
  * @returns True if the current environment is a WSL environment.
  */
-export async function isWsl(): Promise<boolean> {
-  const wsl = await import('is-wsl')
-  return wsl.default
+export function isWsl(): Promise<boolean> {
+  // Memoize the promise to avoid redundant dynamic imports and filesystem/environment checks.
+  // This is checked frequently during analytics generation.
+  return (memoizedIsWsl ??= (async () => {
+    const wsl = await import('is-wsl')
+    return wsl.default
+  })())
 }
 
 /**
