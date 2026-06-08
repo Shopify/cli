@@ -15,10 +15,7 @@ function createH3Event(path: string) {
   return createEvent(req, res)
 }
 
-function buildCtx({
-  themeFiles = [] as [string, unknown][],
-  extFiles = [] as [string, unknown][],
-}): DevServerContext {
+function buildCtx({themeFiles = [] as [string, unknown][], extFiles = [] as [string, unknown][]}): DevServerContext {
   const themeFs = emptyThemeFileSystem()
   for (const [key, value] of themeFiles) themeFs.files.set(key, value as never)
   const extFs = emptyThemeExtFileSystem()

@@ -1,9 +1,7 @@
 import {Organization} from '../models/organization.js'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
-export async function selectOrganizationPrompt<T extends Organization>(
-  organizations: T[],
-): Promise<T> {
+export async function selectOrganizationPrompt<T extends Organization>(organizations: T[]): Promise<T> {
   if (organizations.length === 1) {
     return organizations[0]!
   }

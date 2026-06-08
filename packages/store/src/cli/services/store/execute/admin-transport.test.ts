@@ -179,7 +179,7 @@ describe('fetchPublicApiVersions', () => {
   const adminSession = {token: 'token', storeFqdn: store}
 
   beforeEach(() => {
-    vi.mocked(adminUrl).mockImplementation((s, version) => `https://${s}/admin/api/${version}/graphql.json`)
+    vi.mocked(adminUrl).mockImplementation((shop, version) => `https://${shop}/admin/api/${version}/graphql.json`)
   })
 
   test('issues the publicApiVersions query against the unstable Admin endpoint', async () => {

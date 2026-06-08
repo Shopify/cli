@@ -8,7 +8,6 @@ vi.mock('@shopify/cli-kit/node/metadata')
 
 describe('store command attribution', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(hashString).mockReturnValue('hashed-store')
   })
 
@@ -25,5 +24,4 @@ describe('store command attribution', () => {
     })
     expect(hashString).toHaveBeenCalledWith('shop.myshopify.com')
   })
-
 })

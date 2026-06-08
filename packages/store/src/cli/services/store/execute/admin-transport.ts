@@ -156,6 +156,7 @@ function classifyAdminApiError(error: unknown, storeFqdn: string): AbortError | 
   // 402 Payment Required: the shop is frozen / on hold / otherwise unavailable. Store-state
   // issue, not a CLI bug.
   if (graphQLClientErrorStatus(error) === 402) {
+    // eslint-disable-next-line @shopify/cli/no-error-factory-functions
     return new AbortError(
       `The store ${storeFqdn} is currently unavailable.`,
       'Check the store in the Shopify admin and try again once it is reactivated.',
@@ -164,6 +165,7 @@ function classifyAdminApiError(error: unknown, storeFqdn: string): AbortError | 
 
   // User-aborted fetches (Ctrl-C, CLI-side fetch timeouts) are user-driven, not CLI bugs.
   if (isUserAbortedFetchError(error)) {
+    // eslint-disable-next-line @shopify/cli/no-error-factory-functions
     return new AbortError(`Request to ${storeFqdn} was aborted before it completed.`)
   }
 

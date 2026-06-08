@@ -174,8 +174,6 @@ describe('ThemeCommand', () => {
   let mockSession: AdminSession
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
     mockSession = {
       token: 'test-token',
       storeFqdn: 'test-store.myshopify.com',
@@ -344,7 +342,7 @@ describe('ThemeCommand', () => {
       vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
       vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (store) => ({
         token: 'test-token',
-        storeFqdn: store as string,
+        storeFqdn: store,
       }))
       vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
         for (const process of processes) {

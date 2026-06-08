@@ -97,7 +97,9 @@ describe('Notifier', () => {
 
       await notifier.notify(fileName)
 
-      expect(outputWarn).toHaveBeenCalledWith(expect.stringContaining(`Failed to notify filechange listener at ${tmpDir}`))
+      expect(outputWarn).toHaveBeenCalledWith(
+        expect.stringContaining(`Failed to notify filechange listener at ${tmpDir}`),
+      )
     })
   })
 })

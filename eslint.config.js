@@ -23,6 +23,20 @@ const config = [
     },
   },
 
+  // The theme package has tests that partially mock cli-kit with dynamic imports.
+  // Those mocks should not make every static cli-kit import in the package fail.
+  {
+    files: ['packages/theme/src/**/*.ts'],
+    rules: {
+      '@nx/enforce-module-boundaries': [
+        'error',
+        {
+          checkDynamicDependenciesExceptions: ['@shopify/cli-kit/**'],
+        },
+      ],
+    },
+  },
+
   // JSDoc rules for public API files
   {
     files: ['**/public/**/*.ts'],

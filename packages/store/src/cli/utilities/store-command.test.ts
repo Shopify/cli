@@ -1,13 +1,13 @@
 import StoreCommand from './store-command.js'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {Flags} from '@oclif/core'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/metadata')
 
 class TestStoreCommand extends StoreCommand {
   static flags = {
-    store: Flags.string({required: true}),
+    store: Flags.string({env: 'SHOPIFY_FLAG_STORE', required: true}),
   }
 
   async run(): Promise<void> {
@@ -16,10 +16,6 @@ class TestStoreCommand extends StoreCommand {
 }
 
 describe('StoreCommand', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   test('does not record store-specific metadata during base parsing', async () => {
     await TestStoreCommand.run(['--store', 'shop.myshopify.com'])
 
