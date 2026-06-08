@@ -326,5 +326,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Test the gate checker
+        run: node --test bin/check-ci-gates.test.js
       - name: Check the CI gate manifest matches this workflow
         run: node bin/check-ci-gates.js
