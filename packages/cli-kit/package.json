@@ -132,7 +132,7 @@
     "form-data": "4.0.5",
     "fs-extra": "11.1.0",
     "gradient-string": "2.0.2",
-    "graphql": "16.14.1",
+    "graphql": "16.10.0",
     "graphql-request": "6.1.0",
     "ignore": "6.0.2",
     "ink": "6.8.0",

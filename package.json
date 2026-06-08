@@ -53,7 +53,7 @@
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/generate-docs": "1.2.0",
     "@types/node": "18.19.70",
-    "@typescript-eslint/parser": "8.60.1",
+    "@typescript-eslint/parser": "8.56.1",
     "@vitest/coverage-istanbul": "^3.1.4",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
@@ -64,7 +64,7 @@
     "fast-glob": "3.3.3",
     "find-up": "^6.3.0",
     "fs-extra": "^11.1.0",
-    "graphql": "^16.14.1",
+    "graphql": "^16.10.0",
     "graphql-codegen-typescript-operation-types": "2.0.2",
     "graphql-tag": "^2.12.6",
     "json-stringify-deterministic": "1.0.12",
@@ -127,7 +127,7 @@
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
     "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare",
     "nanoid": "3.3.8",
-    "graphql": "16.14.1"
+    "graphql": "16.10.0"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",
