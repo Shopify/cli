@@ -31,6 +31,7 @@
     "release": "./bin/release",
     "post-release": "./bin/post-release",
     "pre-ci": "node bin/pre-ci.js",
+    "pre-ci:affected": "node bin/pre-ci.js --affected",
     "update-observe": "node bin/update-observe.js",
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
