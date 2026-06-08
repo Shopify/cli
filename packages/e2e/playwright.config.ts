@@ -1,9 +1,9 @@
 /* eslint-disable line-comment-position */
 import {TEST_TIMEOUT} from './setup/constants.js'
-import {config} from 'dotenv'
+import {loadEnvFile} from './setup/env.js'
 import {defineConfig} from '@playwright/test'
 
-config()
+loadEnvFile()
 
 const isCI = Boolean(process.env.CI)
 

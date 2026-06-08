@@ -1,7 +1,7 @@
 import {outputDebug, outputContent, outputToken} from './output.js'
 import {AbortError} from './error.js'
 import {fileExists, readFile, writeFile} from './fs.js'
-import {parse} from 'dotenv'
+import {parseEnv} from 'node:util'
 
 /**
  * This interface represents a .env file.
@@ -28,10 +28,13 @@ export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
     throw new AbortError(`The environment file at ${path} does not exist.`)
   }
   const content = await readFile(path)
-  return {
-    path,
-    variables: parse(content),
+  // parseEnv types values as `string | undefined`; drop any undefined values so the
+  // result truly matches Record<string, string> rather than casting the type away.
+  const variables: Record<string, string> = {}
+  for (const [key, value] of Object.entries(parseEnv(content))) {
+    if (value !== undefined) variables[key] = value
   }
+  return {path, variables}
 }
 
 /**

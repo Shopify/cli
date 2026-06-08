@@ -2,6 +2,7 @@
 const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
+const {execFileSync} = require('child_process')
 const debugEnabled = process.env.DEBUG && process.env.DEBUG.includes('eslint-plugin-cli')
 
 /**
@@ -31,9 +32,34 @@ function hashFileSync(filePath, algorithm = 'sha256') {
   return hash.digest('hex')
 }
 
+// The `knownFailures` keys are repo-root-relative, so we need the repo root to
+// build the lookup key. Ask git rather than deriving it from this rule's
+// __dirname: the package manager can place the plugin at different depths in
+// node_modules (e.g. pnpm `file:` injection vs `link:` symlink, depending on
+// peer resolution), so a fixed `..` offset from a shifting __dirname silently
+// breaks the lookup and flags every grandfathered file. Memoized since the root
+// is constant for a lint run.
+let repoRoot
+function findRepoRoot(filePath) {
+  if (repoRoot === undefined) {
+    try {
+      repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+        cwd: path.dirname(filePath),
+        encoding: 'utf8',
+      }).trim()
+    } catch {
+      // git missing or not a repo (this plugin is published, so it can run
+      // outside our tree). Fall back to cwd so linting keeps working; the
+      // known-failures lookup just won't match, which only matters in this repo.
+      repoRoot = process.cwd()
+    }
+  }
+  return repoRoot
+}
+
 function checkKnownFailuresIfShouldFail(context) {
   const filePath = context.filename || context.getFilename()
-  const relativePath = path.relative(path.resolve(__dirname, '../../../../../../..'), filePath)
+  const relativePath = path.relative(findRepoRoot(filePath), filePath).split(path.sep).join('/')
   const fileHash = hashFileSync(filePath)
   const shouldFail = !knownFailures[relativePath] || knownFailures[relativePath] !== fileHash
 
