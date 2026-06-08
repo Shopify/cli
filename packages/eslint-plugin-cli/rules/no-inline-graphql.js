@@ -37,16 +37,22 @@ function hashFileSync(filePath, algorithm = 'sha256') {
 // __dirname: the package manager can place the plugin at different depths in
 // node_modules (e.g. pnpm `file:` injection vs `link:` symlink, depending on
 // peer resolution), so a fixed `..` offset from a shifting __dirname silently
-// breaks the lookup and flags every grandfathered file. This rule only runs in
-// dev/CI, where git is always available; memoized since the root is constant
-// for a lint run.
+// breaks the lookup and flags every grandfathered file. Memoized since the root
+// is constant for a lint run.
 let repoRoot
 function findRepoRoot(filePath) {
   if (repoRoot === undefined) {
-    repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
-      cwd: path.dirname(filePath),
-      encoding: 'utf8',
-    }).trim()
+    try {
+      repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+        cwd: path.dirname(filePath),
+        encoding: 'utf8',
+      }).trim()
+    } catch {
+      // git missing or not a repo (this plugin is published, so it can run
+      // outside our tree). Fall back to cwd so linting keeps working; the
+      // known-failures lookup just won't match, which only matters in this repo.
+      repoRoot = process.cwd()
+    }
   }
   return repoRoot
 }

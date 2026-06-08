@@ -28,11 +28,13 @@ export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
     throw new AbortError(`The environment file at ${path} does not exist.`)
   }
   const content = await readFile(path)
-  return {
-    path,
-    // parseEnv types values as `string | undefined`, but it never yields undefined values at runtime.
-    variables: parseEnv(content) as Record<string, string>,
+  // parseEnv types values as `string | undefined`; drop any undefined values so the
+  // result truly matches Record<string, string> rather than casting the type away.
+  const variables: Record<string, string> = {}
+  for (const [key, value] of Object.entries(parseEnv(content))) {
+    if (value !== undefined) variables[key] = value
   }
+  return {path, variables}
 }
 
 /**
