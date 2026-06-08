@@ -13,7 +13,8 @@ import {MANIFEST_JOB_IDS} from './ci-gates.js'
 // (up to the next top-level key) and allow a trailing comment after the id. Job
 // keys are always bare (their mapping is on following lines), so nested keys —
 // indented deeper than 2 spaces — and `key: value` anchors are naturally excluded.
-export function parseJobIds(workflow) {
+export function parseJobIds(workflowText) {
+  const workflow = workflowText.replace(/\r\n/g, '\n')
   const jobsAt = workflow.search(/^jobs:/m)
   if (jobsAt === -1) return []
   const afterHeader = workflow.slice(jobsAt).replace(/^jobs:.*\n/, '')
@@ -24,8 +25,12 @@ export function parseJobIds(workflow) {
 
 // Pure and testable: given the two YAML texts and the manifest job ids, return the
 // list of human-readable problems (empty when everything is in sync).
-export function findProblems({workflow, devYml, manifestJobIds}) {
+export function findProblems({workflow: workflowText, devYml: devYmlText, manifestJobIds}) {
   const problems = []
+
+  // Normalize line endings so the parsing below is robust to CRLF working trees.
+  const workflow = workflowText.replace(/\r\n/g, '\n')
+  const devYml = devYmlText.replace(/\r\n/g, '\n')
 
   const workflowJobIds = parseJobIds(workflow)
   const manifestSet = new Set(manifestJobIds)

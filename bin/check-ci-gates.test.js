@@ -52,3 +52,10 @@ test('parseJobIds tolerates comments and ignores non-job lines', () => {
 test('parseJobIds returns empty when there is no jobs block', () => {
   assert.deepEqual(parseJobIds('name: t\non: push\n'), [])
 })
+
+test('CRLF line endings are handled', () => {
+  const wf = workflow(['a', 'b']).replace(/\n/g, '\r\n')
+  assert.deepEqual(parseJobIds(wf), ['a', 'b'])
+  const {problems} = findProblems({workflow: wf, devYml: devYml().replace(/\n/g, '\r\n'), manifestJobIds: ['a', 'b']})
+  assert.deepEqual(problems, [])
+})
