@@ -8,6 +8,7 @@ exports[`otel-metrics > logs metrics when activated 1`] = `
     {
       "cli_version": "pre",
       "exit": "ok",
+      "is_first_party": "false",
       "job": "@shopify/app::app dev",
     },
   ],
@@ -17,6 +18,7 @@ exports[`otel-metrics > logs metrics when activated 1`] = `
     {
       "cli_version": "pre",
       "exit": "ok",
+      "is_first_party": "false",
       "job": "@shopify/app::app dev",
     },
   ],
@@ -26,6 +28,7 @@ exports[`otel-metrics > logs metrics when activated 1`] = `
     {
       "cli_version": "pre",
       "exit": "ok",
+      "is_first_party": "false",
       "job": "@shopify/app::app dev",
       "stage": "active",
     },
@@ -36,6 +39,7 @@ exports[`otel-metrics > logs metrics when activated 1`] = `
     {
       "cli_version": "pre",
       "exit": "ok",
+      "is_first_party": "false",
       "job": "@shopify/app::app dev",
       "stage": "network",
     },
@@ -46,6 +50,7 @@ exports[`otel-metrics > logs metrics when activated 1`] = `
     {
       "cli_version": "pre",
       "exit": "ok",
+      "is_first_party": "false",
       "job": "@shopify/app::app dev",
       "stage": "prompt",
     },
@@ -58,14 +63,16 @@ exports[`otel-metrics > outputs debug information when deactivated 1`] = `
   "labels": {
     "exit": "ok",
     "job": "@shopify/app::app dev",
-    "cli_version": "nightly"
+    "cli_version": "nightly",
+    "is_first_party": "false"
   }
 }
 [OTEL] record cli_commands_duration_ms histogram 10ms {
   "labels": {
     "exit": "ok",
     "job": "@shopify/app::app dev",
-    "cli_version": "nightly"
+    "cli_version": "nightly",
+    "is_first_party": "false"
   }
 }
 [OTEL] record cli_commands_wall_clock_elapsed_ms histogram stage="active" 10ms
