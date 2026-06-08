@@ -69,6 +69,9 @@ commands:
   pre-ci:
     desc: 'Run the local subset of PR CI gates (run what CI runs) before pushing'
     run: pnpm run pre-ci
+  pre-ci:affected:
+    desc: 'Faster pre-ci limited to what your diff touches'
+    run: pnpm run pre-ci:affected
 
 check:
   type-check: pnpm nx affected --target=type-check

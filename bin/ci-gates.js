@@ -5,19 +5,29 @@
 //
 // `job` is the workflow job id (the key under `jobs:`), which is stable, unlike
 // the rendered display name (matrix jobs interpolate `${{ ... }}`).
+//
+// pre-ci gates may declare:
+//   command  — full-parity command (run by `pnpm pre-ci`)
+//   affected — faster command for `pnpm pre-ci:affected` (defaults to `command`)
+//   affectedWhen: 'codegen' — in affected mode, run only when the diff plausibly
+//     changes generated output; otherwise skip with a reminder.
+//
+// Affected commands base on `origin/main` (not the local `main` that nx's
+// defaultBase would use), matching the codegen/vitest change detection so all of
+// pre-ci:affected reasons about the same diff.
 
 export const CI_GATES = [
   // --- gates a contributor can reproduce locally before pushing ---
   // Ordered as pre-ci should run them: build precedes the oclif codegen check,
   // and the graphql check precedes the oclif check (their whole-repo `git status`
   // asserts otherwise cross-contaminate in a single working tree).
-  {job: 'type-check', kind: 'pre-ci', command: 'pnpm type-check'},
-  {job: 'lint', kind: 'pre-ci', command: 'pnpm lint'},
-  {job: 'bundle', kind: 'pre-ci', command: 'pnpm build'},
+  {job: 'type-check', kind: 'pre-ci', command: 'pnpm type-check', affected: 'pnpm exec nx affected --target=type-check --base=origin/main'},
+  {job: 'lint', kind: 'pre-ci', command: 'pnpm lint', affected: 'pnpm exec nx affected --target=lint --base=origin/main'},
+  {job: 'bundle', kind: 'pre-ci', command: 'pnpm build', affected: 'pnpm exec nx affected --target=build --base=origin/main'},
   {job: 'knip', kind: 'pre-ci', command: 'pnpm knip'},
-  {job: 'graphql-schema', kind: 'pre-ci', command: 'pnpm codegen:check:graphql'},
-  {job: 'oclif-checks', kind: 'pre-ci', command: 'pnpm codegen:check:oclif'},
-  {job: 'unit-tests', kind: 'pre-ci', command: 'pnpm test'},
+  {job: 'graphql-schema', kind: 'pre-ci', command: 'pnpm codegen:check:graphql', affectedWhen: 'codegen'},
+  {job: 'oclif-checks', kind: 'pre-ci', command: 'pnpm codegen:check:oclif', affectedWhen: 'codegen'},
+  {job: 'unit-tests', kind: 'pre-ci', command: 'pnpm test', affected: 'pnpm vitest run --changed origin/main'},
 
   // --- CI-only jobs, with the reason they are not part of pre-ci ---
   {
