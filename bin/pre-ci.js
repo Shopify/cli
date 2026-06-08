@@ -13,16 +13,29 @@ import {PRE_CI_GATES, CI_ONLY_GATES} from './ci-gates.js'
 
 const affected = process.argv.includes('--affected')
 
+// git may wrap paths with special chars in quotes; strip them.
+function unquote(path) {
+  return path.replace(/^"(.*)"$/, '$1')
+}
+
 // Changed files vs the merge-base with origin/main, plus the working tree.
 // Returns null if detection fails, so callers can fail safe (assume relevant).
 function changedFiles() {
   try {
     const base = execSync('git merge-base HEAD origin/main', {encoding: 'utf8'}).trim()
-    const committed = execSync(`git diff --name-only ${base}...HEAD`, {encoding: 'utf8'})
+    const committed = execSync(`git diff --name-only ${base}..HEAD`, {encoding: 'utf8'})
     const working = execSync('git status --porcelain', {encoding: 'utf8'})
     const files = new Set()
-    for (const line of committed.split('\n')) if (line.trim()) files.add(line.trim())
-    for (const line of working.split('\n')) if (line.slice(3).trim()) files.add(line.slice(3).trim())
+    for (const line of committed.split('\n')) {
+      const path = unquote(line.trim())
+      if (path) files.add(path)
+    }
+    for (const line of working.split('\n')) {
+      if (!line.trim()) continue
+      let entry = line.slice(3).trim()
+      if (entry.includes(' -> ')) entry = entry.split(' -> ').pop() // rename: keep the new path
+      files.add(unquote(entry))
+    }
     return [...files]
   } catch {
     return null
