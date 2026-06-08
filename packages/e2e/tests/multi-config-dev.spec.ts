@@ -52,6 +52,9 @@ api_version = "2025-01"
 [build]
 automatically_update_urls_on_dev = true
 include_config_on_deploy = true
+
+[sidekick]
+extensions_summary = "E2E staging app extensions"
 `.trimStart()
 
       fs.writeFileSync(path.join(appDir, 'shopify.app.staging.toml'), stagingToml)
@@ -128,6 +131,9 @@ redirect_urls = ["https://example.com/auth/callback"]
 
 [webhooks]
 api_version = "2025-01"
+
+[sidekick]
+extensions_summary = "E2E staging app extensions"
 `.trimStart()
 
       fs.writeFileSync(path.join(appDir, 'shopify.app.staging.toml'), stagingToml)
