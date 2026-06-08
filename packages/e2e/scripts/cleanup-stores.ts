@@ -19,10 +19,10 @@
  *   E2E_ORG_ID           — Organization ID to scan for stores
  */
 
-import {config} from 'dotenv'
 import * as path from 'path'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
+import {loadEnvFile} from '../setup/env.js'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import {deleteStore, dismissDevConsole, isStoreAppsEmpty} from '../setup/store.js'
 import {refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
@@ -32,7 +32,7 @@ import type {Page} from '@playwright/test'
 // Load .env from packages/e2e/ (not cwd) only if not already configured
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 if (!process.env.E2E_ACCOUNT_EMAIL || !process.env.E2E_ACCOUNT_PASSWORD || !process.env.E2E_ORG_ID) {
-  config({path: path.resolve(__dirname, '../.env')})
+  loadEnvFile(path.resolve(__dirname, '../.env'))
 }
 
 // ---------------------------------------------------------------------------

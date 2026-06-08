@@ -3,6 +3,7 @@ import {test as base} from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 import {fileURLToPath} from 'url'
+import {parseEnv} from 'node:util'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -74,6 +75,22 @@ export const directories = {
 export const executables = {
   cli: path.resolve(__dirname, '../../../packages/cli/bin/run.js'),
   createApp: path.resolve(__dirname, '../../../packages/create-app/bin/run.js'),
+}
+
+/**
+ * Loads environment variables from a `.env` file into `process.env`, mirroring
+ * dotenv's `config()`: a missing file is silently ignored and values already
+ * present in `process.env` are never overwritten.
+ *
+ * @param envPath - Path to the `.env` file. Defaults to `packages/e2e/.env`.
+ */
+export function loadEnvFile(envPath: string = path.resolve(__dirname, '../.env')): void {
+  if (!fs.existsSync(envPath)) return
+  for (const [key, value] of Object.entries(parseEnv(fs.readFileSync(envPath, 'utf8')))) {
+    if (value !== undefined && process.env[key] === undefined) {
+      process.env[key] = value
+    }
+  }
 }
 
 /**

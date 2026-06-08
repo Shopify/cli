@@ -33,7 +33,6 @@
     "@playwright/test": "^1.50.0",
     "@shopify/toml-patch": "0.3.0",
     "@types/node": "22.19.17",
-    "dotenv": "16.4.7",
     "execa": "^7.2.0",
     "node-pty": "^1.0.0",
     "strip-ansi": "^7.1.0",
