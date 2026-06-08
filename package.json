@@ -308,11 +308,9 @@
           "**/graphql/**/generated/*.ts"
         ],
         "project": "**/*.{ts,tsx}!",
-        "ignoreBinaries": [
-          "open"
-        ],
         "ignoreDependencies": [
-          "@graphql-typed-document-node/core"
+          "@graphql-typed-document-node/core",
+          "typedoc"
         ],
         "vite": {
           "config": [

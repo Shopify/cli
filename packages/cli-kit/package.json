@@ -52,7 +52,6 @@
     "build": "nx build",
     "clean": "nx clean",
     "build-api-docs": "nx build-api-docs",
-    "open-api-docs": "nx open-api-docs",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
@@ -170,8 +169,7 @@
     "@vitest/coverage-istanbul": "^3.1.4",
     "msw": "^2.7.1",
     "node-stream-zip": "^1.15.0",
-    "ts-morph": "^17.0.1",
-    "typedoc": "^0.28.17"
+    "ts-morph": "^17.0.1"
   },
   "engines": {
     "node": ">=22.12.0"
