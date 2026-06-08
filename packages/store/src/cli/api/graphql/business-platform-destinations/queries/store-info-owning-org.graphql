@@ -1,0 +1,8 @@
+query StoreInfoOwningOrg($destinationPublicId: DestinationPublicID!) {
+  currentUserAccount {
+    organizationForDestination(destinationPublicId: $destinationPublicId) {
+      id
+      name
+    }
+  }
+}
