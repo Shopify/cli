@@ -91,7 +91,7 @@
     "@types/react-dom": "^19.0.0",
     "@types/which": "3.0.4",
     "@types/ws": "^8.5.13",
-    "@vitest/coverage-istanbul": "^3.1.4"
+    "@vitest/coverage-istanbul": "^3.2.6"
   },
   "engines": {
     "node": ">=22.12.0"
