@@ -157,7 +157,9 @@
       "playwright"
     ],
     "ignoreDependencies": [
-      "@shopify/generate-docs"
+      "@shopify/generate-docs",
+      "@typescript-eslint/type-utils",
+      "@typescript-eslint/utils"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli",
