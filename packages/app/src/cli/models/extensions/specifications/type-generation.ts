@@ -1,5 +1,5 @@
 import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {dirname, isSubpath, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {compile} from 'json-schema-to-typescript'
 import {pascalize} from '@shopify/cli-kit/common/string'
@@ -95,7 +95,16 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
   return null
 }
 
-async function parseAndResolveImports(filePath: string): Promise<string[]> {
+interface FindAllImportedFilesOptions {
+  boundaryDirectory?: string
+}
+
+function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean {
+  if (!boundaryDirectory) return true
+  return isSubpath(resolvePath(boundaryDirectory), resolvePath(filePath))
+}
+
+async function parseAndResolveImports(filePath: string, options: FindAllImportedFilesOptions = {}): Promise<string[]> {
   try {
     const ts = await loadTypeScript()
     const content = readFileSync(filePath).toString()
@@ -147,14 +156,14 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
       if (resolvedModule.resolvedModule?.resolvedFileName) {
         const resolvedPath = resolvedModule.resolvedModule.resolvedFileName
 
-        if (!resolvedPath.includes('node_modules')) {
+        if (!resolvedPath.includes('node_modules') && isWithinBoundary(resolvedPath, options.boundaryDirectory)) {
           resolvedPaths.push(resolvedPath)
         }
       } else {
         // Fallback to manual resolution for edge cases
         // eslint-disable-next-line no-await-in-loop
         const fallbackPath = await fallbackResolve(importPath, dirname(filePath))
-        if (fallbackPath) {
+        if (fallbackPath && isWithinBoundary(fallbackPath, options.boundaryDirectory)) {
           resolvedPaths.push(fallbackPath)
         }
       }
@@ -170,20 +179,24 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
   }
 }
 
-export async function findAllImportedFiles(filePath: string, visited = new Set<string>()): Promise<string[]> {
+export async function findAllImportedFiles(
+  filePath: string,
+  options: FindAllImportedFilesOptions = {},
+  visited = new Set<string>(),
+): Promise<string[]> {
   if (visited.has(filePath)) {
     return []
   }
 
   visited.add(filePath)
-  const resolvedPaths = await parseAndResolveImports(filePath)
+  const resolvedPaths = await parseAndResolveImports(filePath, options)
 
   const allFiles = [...resolvedPaths]
 
   // Recursively find imports from the resolved files
   for (const resolvedPath of resolvedPaths) {
     // eslint-disable-next-line no-await-in-loop
-    const nestedImports = await findAllImportedFiles(resolvedPath, visited)
+    const nestedImports = await findAllImportedFiles(resolvedPath, options, visited)
     allFiles.push(...nestedImports)
   }
 
