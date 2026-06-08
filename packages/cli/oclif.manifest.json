@@ -5710,7 +5710,7 @@
         },
         "store": {
           "char": "s",
-          "description": "The myshopify.com domain of the store to authenticate against.",
+          "description": "The myshopify.com domain of the store.",
           "env": "SHOPIFY_FLAG_STORE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5804,7 +5804,7 @@
         },
         "store": {
           "char": "s",
-          "description": "The myshopify.com domain of the store to execute against.",
+          "description": "The myshopify.com domain of the store.",
           "env": "SHOPIFY_FLAG_STORE",
           "hasDynamicHelp": false,
           "multiple": false,

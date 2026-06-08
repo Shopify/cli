@@ -2111,8 +2111,7 @@ USAGE
 
 FLAGS
   -j, --json            [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-  -s, --store=<value>   (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to authenticate
-                        against.
+  -s, --store=<value>   (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
       --no-color        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --scopes=<value>  (required) [env: SHOPIFY_FLAG_SCOPES] Comma-separated Admin API scopes to request for the app.
       --verbose         [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
@@ -2143,8 +2142,7 @@ USAGE
 FLAGS
   -j, --json                   [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation, as a string.
-  -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to execute
-                               against.
+  -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
   -v, --variables=<value>      [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or
                                mutation, in JSON format.
       --allow-mutations        [env: SHOPIFY_FLAG_ALLOW_MUTATIONS] Allow GraphQL mutations to run against the target

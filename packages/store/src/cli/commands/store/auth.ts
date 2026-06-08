@@ -1,8 +1,8 @@
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import StoreCommand from '../../utilities/store-command.js'
+import {storeFlags} from '../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
 
 export default class StoreAuth extends StoreCommand {
@@ -22,13 +22,7 @@ Re-run this command if the stored token is missing, expires, or no longer has th
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    store: Flags.string({
-      char: 's',
-      description: 'The myshopify.com domain of the store to authenticate against.',
-      env: 'SHOPIFY_FLAG_STORE',
-      parse: async (input) => normalizeStoreFqdn(input),
-      required: true,
-    }),
+    store: storeFlags.store,
     scopes: Flags.string({
       description: 'Comma-separated Admin API scopes to request for the app.',
       env: 'SHOPIFY_FLAG_SCOPES',

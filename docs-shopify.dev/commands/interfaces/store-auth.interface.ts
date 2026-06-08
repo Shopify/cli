@@ -23,7 +23,7 @@ export interface storeauth {
   '--scopes <value>': string
 
   /**
-   * The myshopify.com domain of the store to authenticate against.
+   * The myshopify.com domain of the store.
    * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>': string
