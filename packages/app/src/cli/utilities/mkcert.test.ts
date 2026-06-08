@@ -22,6 +22,9 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/ui')
   return {
     ...actual,
+    renderTasks: vi.fn(async (tasks: {task: () => Promise<void>}[]) => {
+      await Promise.all(tasks.map(async (task) => task.task()))
+    }),
     renderWarning: vi.fn(),
     keypress: vi.fn(),
   }
@@ -291,7 +294,7 @@ describe('mkcert', () => {
       await setup(tempDir)
 
       const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
+        ok: false,
         text: async () => 'LICENSE CONTENT',
       } as unknown as Response)
       const mockOutput = mockAndCaptureOutput()
