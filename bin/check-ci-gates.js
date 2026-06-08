@@ -45,7 +45,7 @@ const pick = (source, regex, label) => {
 }
 
 const ciNode = pick(workflow, /DEFAULT_NODE_VERSION:\s*'([^']+)'/, 'DEFAULT_NODE_VERSION in tests-pr.yml')
-const devNode = pick(devYml, /node:[\s\S]*?version:\s*([0-9][\w.-]*)/, 'node version in dev.yml')
+const devNode = pick(devYml, /node:\s*\n\s+version:\s*([0-9][\w.-]*)/, 'node version in dev.yml')
 const ciPnpm = pick(workflow, /PNPM_VERSION:\s*'([^']+)'/, 'PNPM_VERSION in tests-pr.yml')
 const devPnpm = pick(devYml, /package_manager:\s*pnpm@([0-9][\w.-]*)/, 'pnpm version in dev.yml')
 
