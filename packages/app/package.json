@@ -82,7 +82,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "which": "4.0.0",
-    "ws": "8.18.0"
+    "ws": "8.20.1"
   },
   "devDependencies": {
     "@types/diff": "^5.0.3",
