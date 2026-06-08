@@ -8,7 +8,7 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {parseJSON} from '../common/json.js'
-import {SemVer, satisfies as semverSatisfies} from 'semver'
+import {compareVersions, satisfies as versionSatisfiesRequirement, validate} from 'compare-versions'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -334,7 +334,7 @@ export async function checkForNewVersion(
     return undefined
   }
 
-  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+  if (lastVersion && compareVersions(currentVersion, lastVersion) < 0) {
     return lastVersion
   } else {
     return undefined
@@ -351,7 +351,7 @@ export function checkForCachedNewVersion(dependency: string, currentVersion: str
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
   const lastVersion = cacheRetrieve(cacheKey)?.value
 
-  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+  if (lastVersion && compareVersions(currentVersion, lastVersion) < 0) {
     return lastVersion
   } else {
     return undefined
@@ -360,12 +360,17 @@ export function checkForCachedNewVersion(dependency: string, currentVersion: str
 
 /**
  * Utility function used to check whether a package version satisfies some requirements
+ *
+ * Prerelease versions are compared by their numeric precedence, the same as any other version
+ * (i.e. there is no semver-style exclusion of prereleases from non-prerelease ranges). Callers that
+ * need to special-case the CLI's `0.0.0-*` snapshot builds should do so explicitly before calling this.
  * @param version - The version to check
- * @param requirements - The requirements to check against, e.g. "\>=1.0.0" - see https://www.npmjs.com/package/semver#ranges
- * @returns A boolean indicating whether the version satisfies the requirements
+ * @param requirements - The requirements to check against, e.g. "\>=1.0.0" - see https://www.npmjs.com/package/compare-versions
+ * @returns A boolean indicating whether the version satisfies the requirements. Returns false for invalid versions.
  */
 export function versionSatisfies(version: string, requirements: string): boolean {
-  return semverSatisfies(version, requirements)
+  if (!validate(version)) return false
+  return versionSatisfiesRequirement(version, requirements)
 }
 
 /**

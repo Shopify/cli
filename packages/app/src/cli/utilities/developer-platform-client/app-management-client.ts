@@ -1352,14 +1352,17 @@ export async function allowedTemplates(
     // Check exp flags
     const hasNeededExpFlags =
       !ext.organizationExpFlags || ext.organizationExpFlags.every((flag) => enabledExpFlags[flag])
+    if (!hasNeededBetaFlags || !hasNeededExpFlags) return false
+
+    // Snapshot/dev builds (0.0.0-*) aren't real releases: they get every template that hasn't been
+    // explicitly deprecated, regardless of the minimum CLI version.
+    if (isPreReleaseVersion(version)) return ext.deprecatedFromCliVersion === undefined
+
     // Version checks
     const satisfiesMinCliVersion = !ext.minimumCliVersion || versionSatisfies(version, `>=${ext.minimumCliVersion}`)
     const satisfiesDeprecatedFromCliVersion =
       !ext.deprecatedFromCliVersion || versionSatisfies(version, `<${ext.deprecatedFromCliVersion}`)
-    const satisfiesVersion = satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
-    const satisfiesPreReleaseVersion = isPreReleaseVersion(version) && ext.deprecatedFromCliVersion === undefined
-    // Must satisfy both flag types AND version requirements
-    return hasNeededBetaFlags && hasNeededExpFlags && (satisfiesVersion || satisfiesPreReleaseVersion)
+    return satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
   })
 }
 

@@ -354,6 +354,9 @@ importers:
       color-json:
         specifier: 3.0.5
         version: 3.0.5
+      compare-versions:
+        specifier: 6.1.1
+        version: 6.1.1
       conf:
         specifier: 11.0.2
         version: 11.0.2
@@ -444,9 +447,6 @@ importers:
       react:
         specifier: 19.2.4
         version: 19.2.4
-      semver:
-        specifier: 7.6.3
-        version: 7.6.3
       stacktracey:
         specifier: 2.1.8
         version: 2.1.8
@@ -481,9 +481,6 @@ importers:
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
-      '@types/semver':
-        specifier: ^7.5.2
-        version: 7.7.1
       '@types/which':
         specifier: 3.0.4
         version: 3.0.4
@@ -4210,9 +4207,6 @@ packages:
   '@types/retry@0.12.5':
     resolution: {integrity: sha512-3xSjTp3v03X/lSQLkczaN9UIEwJMoMCA1+Nb5HfbJEQWogdeQIyVtTvxPXDQjZ5zws8rFQfVfRdz03ARihPJgw==}
 
-  '@types/semver@7.7.1':
-    resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
-
   '@types/statuses@2.0.6':
     resolution: {integrity: sha512-xMAgYwceFhRA2zY+XbEA7mxYbA093wdiW8Vu6gZPGWy9cmOyU9XesH1tNcEWsKFd5Vzrqx5T3D38PWx1FIIXkA==}
 
@@ -5077,6 +5071,9 @@ packages:
   common-tags@1.8.2:
     resolution: {integrity: sha512-gk/Z852D2Wtb//0I+kRFNKKE9dIIVirjoqPoA1wJU+XePVXZfGeBpk45+A1rKO4Q43prqWBNY/MiIeRLbPWUaA==}
     engines: {node: '>=4.0.0'}
+
+  compare-versions@6.1.1:
+    resolution: {integrity: sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==}
 
   compress-commons@4.1.2:
     resolution: {integrity: sha512-D3uMHtGc/fcO1Gt1/L7i1e33VOvD4A9hfQLP+6ewd+BvG/gQ84Yh4oftEhAdjSMgBgwGL+jsppT7JYNpo6MHHg==}
@@ -13686,8 +13683,6 @@ snapshots:
 
   '@types/retry@0.12.5': {}
 
-  '@types/semver@7.7.1': {}
-
   '@types/statuses@2.0.6': {}
 
   '@types/tinycolor2@1.4.6': {}
@@ -14665,6 +14660,8 @@ snapshots:
   comment-parser@1.4.5: {}
 
   common-tags@1.8.2: {}
+
+  compare-versions@6.1.1: {}
 
   compress-commons@4.1.2:
     dependencies:

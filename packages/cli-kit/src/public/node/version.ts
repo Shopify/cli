@@ -1,6 +1,6 @@
 import {captureOutput} from './system.js'
 import which from 'which'
-import {satisfies, SemVer} from 'semver'
+import {satisfies, validateStrict} from 'compare-versions'
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
@@ -54,6 +54,12 @@ export function isPreReleaseVersion(version: string): boolean {
   return version.startsWith('0.0.0')
 }
 
+function majorVersion(version: string): number {
+  const normalizedVersion = version.replace(/^v/, '')
+  if (!validateStrict(normalizedVersion)) throw new Error(`Invalid version: ${version}`)
+  return Number(normalizedVersion.split('.')[0])
+}
+
 /**
  * Checks if there is a major version change between two versions.
  * Pre-release versions (0.0.0-*) are treated as not having a major version change.
@@ -64,7 +70,5 @@ export function isPreReleaseVersion(version: string): boolean {
  */
 export function isMajorVersionChange(currentVersion: string, newerVersion: string): boolean {
   if (isPreReleaseVersion(currentVersion) || isPreReleaseVersion(newerVersion)) return false
-  const currentSemVer = new SemVer(currentVersion)
-  const newerSemVer = new SemVer(newerVersion)
-  return currentSemVer.major !== newerSemVer.major
+  return majorVersion(currentVersion) !== majorVersion(newerVersion)
 }

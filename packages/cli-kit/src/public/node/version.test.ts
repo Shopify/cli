@@ -1,5 +1,5 @@
 import {captureOutput} from './system.js'
-import {localCLIVersion, globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {localCLIVersion, globalCLIVersion, isPreReleaseVersion, isMajorVersionChange} from './version.js'
 import {inTemporaryDirectory} from './fs.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -87,5 +87,28 @@ describe('isPreReleaseVersion', () => {
 
   test('returns false when the version is not a pre-release version', () => {
     expect(isPreReleaseVersion('3.68.0')).toBe(false)
+  })
+})
+
+describe('isMajorVersionChange', () => {
+  test('returns true when the major version changes', () => {
+    expect(isMajorVersionChange('3.68.0', '4.0.0')).toBe(true)
+  })
+
+  test('returns false when the major version stays the same', () => {
+    expect(isMajorVersionChange('3.68.0', '3.69.0')).toBe(false)
+  })
+
+  test('handles a leading v and prerelease suffix', () => {
+    expect(isMajorVersionChange('v3.68.0-alpha.1', '3.69.0')).toBe(false)
+  })
+
+  test('throws for partial versions', () => {
+    expect(() => isMajorVersionChange('3.68', '4.0.0')).toThrow('Invalid version: 3.68')
+  })
+
+  test('returns false for prerelease CLI versions', () => {
+    expect(isMajorVersionChange('0.0.0-snapshot', '4.0.0')).toBe(false)
+    expect(isMajorVersionChange('3.68.0', '0.0.0-snapshot')).toBe(false)
   })
 })

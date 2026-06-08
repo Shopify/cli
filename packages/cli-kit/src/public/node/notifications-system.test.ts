@@ -276,6 +276,17 @@ describe('filterNotifications', () => {
     expect(result).toEqual(output)
   })
 
+  test('excludes version-pinned notifications for prerelease (0.0.0-*) CLI builds', () => {
+    // Given
+    const input = [betweenVersins1and2, fromVersion1, upToVersion2, showAlways]
+
+    // When
+    const result = filterNotifications(input, 'app:info', undefined, new Date('2020-01-15'), '0.0.0-nightly')
+
+    // Then
+    expect(result).toEqual([showAlways])
+  })
+
   test('Filter for frequency with always', async () => {
     // Given
     const current = new Date('2020-01-15T00:00:00.000Z')

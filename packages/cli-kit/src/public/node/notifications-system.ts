@@ -1,4 +1,5 @@
 import {versionSatisfies} from './node-package-manager.js'
+import {isPreReleaseVersion} from './version.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {getCurrentCommandId} from './global-context.js'
 import {outputDebug} from './output.js'
@@ -228,6 +229,8 @@ export function filterNotifications(
  * @param currentVersion - The current version of the CLI.
  */
 function filterByVersion(notification: Notification, currentVersion: string) {
+  // Snapshot/dev builds (0.0.0-*) aren't real releases, so they don't match version-pinned notifications.
+  if (isPreReleaseVersion(currentVersion)) return !notification.minVersion && !notification.maxVersion
   const minVersion = !notification.minVersion || versionSatisfies(currentVersion, `>=${notification.minVersion}`)
   const maxVersion = !notification.maxVersion || versionSatisfies(currentVersion, `<=${notification.maxVersion}`)
   return minVersion && maxVersion
