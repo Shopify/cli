@@ -8,6 +8,8 @@ import {
   extname as extnamePathe,
   parse,
   isAbsolute,
+  matchesGlob as matchesGlobPathe,
+  sep as patheSep,
 } from 'pathe'
 import {fileURLToPath} from 'url'
 // eslint-disable-next-line n/prefer-global/url
@@ -93,6 +95,22 @@ export function basename(path: string, ext?: string): string {
  */
 export function extname(path: string): string {
   return extnamePathe(path)
+}
+
+/**
+ * The platform-agnostic path segment separator (always `/`, via pathe).
+ */
+export const sep = patheSep
+
+/**
+ * Determines whether a path matches a glob pattern.
+ *
+ * @param path - The path to match.
+ * @param pattern - The glob pattern (or patterns) to match against.
+ * @returns Whether the path matches the pattern.
+ */
+export function matchesGlob(path: string, pattern: string | string[]): boolean {
+  return matchesGlobPathe(path, pattern)
 }
 
 /**

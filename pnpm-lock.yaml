@@ -122,8 +122,8 @@ importers:
         specifier: ^3.12.2
         version: 3.13.1
       pathe:
-        specifier: 1.1.1
-        version: 1.1.1
+        specifier: 2.0.3
+        version: 2.0.3
       pin-github-action:
         specifier: ^3.3.1
         version: 3.4.0
@@ -420,9 +420,6 @@ importers:
       macaddress:
         specifier: 0.5.3
         version: 0.5.3
-      minimatch:
-        specifier: 9.0.8
-        version: 9.0.8
       mrmime:
         specifier: 1.0.1
         version: 1.0.1
@@ -439,8 +436,8 @@ importers:
         specifier: 8.4.2
         version: 8.4.2
       pathe:
-        specifier: 1.1.2
-        version: 1.1.2
+        specifier: 2.0.3
+        version: 2.0.3
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -7672,14 +7669,8 @@ packages:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
 
-  pathe@1.1.1:
-    resolution: {integrity: sha512-d+RQGp0MAYTIaDBIMmOfMwz3E+LOZnxx1HZd5R18mmCZY0QBlK0LDZfPc8FW8Ed2DlvsuE6PRjroDY+wg4+j/Q==}
-
-  pathe@1.1.2:
-    resolution: {integrity: sha512-whLdWMYL2TwI08hn8/ZqAbrVemu0LNaNNJZX73O6qaIdCTfXutsLhMkjdENX0qhsQ9uIimo4/aQOmXkoon2nDQ==}
-
   pathe@2.0.3:
-    resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
+    resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==, tarball: https://registry.npmjs.org/pathe/-/pathe-2.0.3.tgz}
 
   pathval@2.0.1:
     resolution: {integrity: sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ==}
@@ -17681,10 +17672,6 @@ snapshots:
   path-to-regexp@6.3.0: {}
 
   path-type@4.0.0: {}
-
-  pathe@1.1.1: {}
-
-  pathe@1.1.2: {}
 
   pathe@2.0.3: {}
 

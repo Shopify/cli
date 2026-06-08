@@ -1,5 +1,5 @@
 import {outputContent, outputToken, outputDebug} from './output.js'
-import {joinPath, normalizePath, resolvePath} from './path.js'
+import {basename, joinPath, matchesGlob, normalizePath, resolvePath, sep} from './path.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
 import {systemTempDir} from '../../private/node/temp-dir.js'
@@ -14,9 +14,7 @@ import {
   // @ts-ignore
 } from 'fs-extra/esm'
 
-import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
-import {minimatch} from 'minimatch'
 import fastGlobLib from 'fast-glob'
 import {
   mkdirSync as fsMkdirSync,
@@ -67,7 +65,7 @@ import type {Pattern, Options as GlobOptions} from 'fast-glob'
  */
 export function stripUpPath(path: string, strip: number): string {
   const parts = path.split(sep)
-  return join(...parts.slice(strip))
+  return joinPath(...parts.slice(strip))
 }
 
 /**
@@ -76,7 +74,7 @@ export function stripUpPath(path: string, strip: number): string {
  * @param callback - The callback that receives the temporary directory.
  */
 export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {
-  const tmpDir = await fsMkdtemp(join(systemTempDir, 'tmp-'))
+  const tmpDir = await fsMkdtemp(joinPath(systemTempDir, 'tmp-'))
   try {
     return await callback(tmpDir)
   } finally {
@@ -89,7 +87,7 @@ export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | 
  * @returns - The path to the temporary directory.
  */
 export function tempDirectory(): string {
-  return fsMkdtempSync(join(systemTempDir, 'tmp-'))
+  return fsMkdtempSync(joinPath(systemTempDir, 'tmp-'))
 }
 
 /**
@@ -688,8 +686,8 @@ export function findPathUpSync(
 }
 
 export interface MatchGlobOptions {
-  matchBase: boolean
-  noglobstar: boolean
+  matchBase?: boolean
+  noglobstar?: boolean
 }
 
 /**
@@ -699,8 +697,27 @@ export interface MatchGlobOptions {
  * @param options - The options to refine the matching approach.
  * @returns true if the key matches the pattern, false otherwise.
  */
-export function matchGlob(key: string, pattern: string, options?: MatchGlobOptions): boolean {
-  return minimatch(key, pattern, options)
+export function matchGlob(key: string, pattern: string, options: MatchGlobOptions = {}): boolean {
+  const effectivePattern = options.noglobstar ? patternWithoutGlobstars(pattern) : pattern
+
+  if (matchesGlob(key, effectivePattern)) return true
+
+  if (options.matchBase && !hasPathSeparator(effectivePattern)) {
+    return matchesGlob(basename(key), effectivePattern)
+  }
+
+  return false
+}
+
+function patternWithoutGlobstars(pattern: string): string {
+  return pattern
+    .split(/([/\\])/)
+    .map((part) => (part === '**' ? '*' : part))
+    .join('')
+}
+
+function hasPathSeparator(path: string): boolean {
+  return path.includes('/') || path.includes('\\')
 }
 
 /**
