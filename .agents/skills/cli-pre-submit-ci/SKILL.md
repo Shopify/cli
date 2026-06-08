@@ -35,7 +35,7 @@ If the diff clearly maps to a narrow family, keep the investigation narrow.
 |---|---|
 | docs/config/wiring only, with no obvious workflow-enforced generator family | **stop there unless contradicted**: run lightweight sanity checks only (`git diff --check`, validate changed symlink targets, validate local markdown links if relevant); do not full-read large workflow/script files |
 | user is at PR time (`submit`, `open`, `update`, `restack`) | advisory mode: suggest minimal checks, staging needs, and likely CI risk; ask before running anything substantial |
-| user asks what to run before push | recommend the minimal high-signal checks implied by the workflow |
+| user asks what to run before push | recommend the minimal high-signal checks implied by the workflow; mention `pnpm pre-ci` as the full-parity option for a high-risk push |
 | user asks what to commit or stage | reproduce the relevant generator/check path, then inspect git status and diffs |
 | user explicitly asks to run checks | run the minimal derived set, not the whole world |
 
@@ -75,7 +75,7 @@ After any generator, freshness check, or lightweight sanity pass:
 
 ## Gotchas
 
-- At PR time, do **not** automatically run the full workflow-equivalent validation set unless the user asks.
+- At PR time, do **not** automatically run the full workflow-equivalent validation set unless the user asks. `pnpm pre-ci` is that full set — offer it for high-risk pushes, but default to the minimal derived checks.
 - `dev.yml` is a useful local entrypoint, but workflow YAML is the source of truth for what CI enforces.
 - Broad generated diffs are not automatically wrong; distinguish required churn from suspicious churn.
 - Do not stop at “run this command.” Explain what likely needs staging.
