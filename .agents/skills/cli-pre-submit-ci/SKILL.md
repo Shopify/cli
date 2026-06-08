@@ -59,11 +59,11 @@ Read only the files and script sections needed for the diff class you identified
 
 | Change shape | Inspect first | Likely response |
 |---|---|---|
-| Command/flag/help surface | docs/manifests/readme freshness jobs | derive the generator path from workflow → scripts |
-| GraphQL queries or schemas | schema/codegen freshness jobs | derive the schema fetch + codegen path |
-| TypeScript implementation or exports | type-check, lint, knip, bundle jobs | focused tests plus required static checks |
-| Test helpers, async UI, network/auth/callback logic | unit-test jobs and nearby tests | focused tests plus a CI-risk warning |
-| Workflow files or CI plumbing | affected workflow definitions | validate the changed contract directly |
+| Command/flag/help surface | OCLIF manifests/readme/docs freshness gate | run `pnpm codegen`; stage the regenerated manifests, README, and docs |
+| GraphQL queries or schemas | graphql-codegen freshness gate | run `pnpm codegen` (or `pnpm codegen:check:graphql`); stage generated types |
+| TypeScript implementation or exports | type-check, lint, knip, bundle jobs | `pnpm pre-ci:affected` (type-check, lint, knip, affected tests) |
+| Test helpers, async UI, network/auth/callback logic | unit-test jobs and nearby tests | focused affected tests plus a CI-risk warning |
+| Workflow files or CI plumbing | affected workflow definitions | validate the changed contract; `pnpm check-ci-gates` |
 
 ### 4) Finish with staging guidance
 After any generator, freshness check, or lightweight sanity pass:
@@ -81,13 +81,12 @@ After any generator, freshness check, or lightweight sanity pass:
 - `dev.yml` is a useful local entrypoint, but workflow YAML is the source of truth for what CI enforces.
 - Broad generated diffs are not automatically wrong; distinguish required churn from suspicious churn.
 - Do not stop at “run this command.” Explain what likely needs staging.
-- If the diff is docs/config/wiring only, do not escalate to heavyweight checks unless the workflow or the user gives a reason.
-- For docs/config/wiring-only diffs, avoid full reads of large workflow or script files unless the diff clearly maps to an enforced CI family.
+- For docs/config/wiring-only diffs, do not escalate to heavyweight checks or full reads of large workflow/script files unless the diff clearly maps to an enforced CI family.
 - If the change touches async/timing-heavy tests, local servers, callback flows, socket teardown, or workflow topology, warn that CI-only failures may still appear even after local checks pass.
 
 ## Examples
 
-- "What should I run before I push this PR?" → derive the minimal checks from workflow → `dev.yml` → `package.json`, then recommend focused tests plus any required generators.
+- "What should I run before I push this PR?" → `pnpm pre-ci:affected` for a fast diff-scoped check; if the diff touches commands, flags, or GraphQL, also run `pnpm codegen` and stage the output; `pnpm pre-ci` before a high-risk push.
 - "Submit this PR." → treat it as a pre-submit moment, suggest the minimal recommended checks and likely staging requirements first, and ask before running them.
-- "Which generated files do I need to commit?" → reproduce the relevant generation path, inspect git status, and separate required generated output from optional churn.
-- "I changed a command flag; what repo checks matter?" → start from the freshness job that enforces command-surface updates rather than from memory.
+- "Which generated files do I need to commit?" → run the relevant `pnpm codegen` path, inspect git status, and separate required generated output from optional churn.
+- "I changed a command flag; what repo checks matter?" → the OCLIF manifests/readme/docs freshness gate; run `pnpm codegen` and commit the regenerated files.
