@@ -159,6 +159,7 @@ import {
   BusinessPlatformRequestOptions,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {encodeGid, numericIdFromEncodedGid, numericIdFromGid} from '@shopify/cli-kit/common/gid'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -1266,7 +1267,7 @@ export function organizationGidForBP(id: string): string {
 
 // 1234 => gid://organization/Organization/1234 => base64
 export function encodedGidFromOrganizationIdForBP(id: string): string {
-  return Buffer.from(organizationGidForBP(id)).toString('base64')
+  return encodeGid(organizationGidForBP(id))
 }
 
 // App Managament uses a different GID format than Business Platform for organizationId.
@@ -1277,20 +1278,26 @@ function gidFromOrganizationIdForShopify(id: string): string {
 
 // 1234 => gid://organization/ShopifyShop/1234 => base64
 export function encodedGidFromShopId(id: string): string {
-  const gid = `gid://organization/ShopifyShop/${id}`
-  return Buffer.from(gid).toString('base64')
+  return encodeGid(`gid://organization/ShopifyShop/${id}`)
 }
 
 // base64 => gid://organization/Organization/1234 => 1234
 function idFromEncodedGid(gid: string): string {
-  const decodedGid = Buffer.from(gid, 'base64').toString('ascii')
-  return numberFromGid(decodedGid).toString()
+  const numeric = numericIdFromEncodedGid(gid)
+  if (numeric === undefined) {
+    throw new Error(`Invalid encoded GID: ${gid}`)
+  }
+  return numeric
 }
 
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
   if (gid.startsWith('gid://')) {
-    return Number(gid.match(/^gid.*\/(\d+)$/)![1])
+    const numeric = numericIdFromGid(gid)
+    if (numeric === undefined) {
+      throw new Error(`Invalid GID: ${gid}`)
+    }
+    return Number(numeric)
   }
   return Number(gid)
 }
