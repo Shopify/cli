@@ -34,7 +34,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'happy-dom',
     setupFiles: [path.resolve(__dirname, './tests/setup.ts')],
     deps: {
       inline: ['@shopify/react-testing'],
