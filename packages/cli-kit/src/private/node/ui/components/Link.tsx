@@ -1,7 +1,7 @@
 import {LinksContext, ContextValue as LinksContextValue} from '../contexts/LinksContext.js'
+import {osc8Link} from '../../hyperlink.js'
 import {Text} from 'ink'
 import React, {FunctionComponent, useContext} from 'react'
-import ansiEscapes from 'ansi-escapes'
 import supportsHyperlinks from 'supports-hyperlinks'
 import chalk from 'chalk'
 
@@ -27,7 +27,7 @@ function link(label: string | undefined, url: string, linksContext: LinksContext
     return label ? `${label} [${linkId}]` : `[${linkId}]`
   }
 
-  return ansiEscapes.link(label ?? url, url)
+  return osc8Link(label ?? url, url)
 }
 
 /**

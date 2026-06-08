@@ -9,9 +9,9 @@ import React, {FunctionComponent, useRef} from 'react'
 
 vi.mock('supports-hyperlinks')
 
-// Matches the on-the-wire OSC 8 sequence emitted by `ansiEscapes.link`,
-// which is what `<Link>` ultimately renders when the terminal supports
-// hyperlinks. Format: `ESC ] 8 ; ; URL BEL TEXT ESC ] 8 ; ; BEL`.
+// Matches the on-the-wire OSC 8 sequence emitted by `osc8Link`, which is what
+// `<Link>` ultimately renders when the terminal supports hyperlinks.
+// Format: `ESC ] 8 ; ; URL BEL TEXT ESC ] 8 ; ; BEL`.
 function asOsc8Link(url: string, label?: string) {
   return `\u001b]8;;${url}\u0007${label ?? url}\u001b]8;;\u0007`
 }
