@@ -40,19 +40,19 @@ pnpm test path/to/my.test.ts
 If the subject under testing does a filesystem I/O operation, we recommend not stubbing that behavior instead of hitting the filesystem. Create a temporary directory whose lifecycle is tied to the lifecycle of the test:
 
 ```ts
-import {file, path} from "@shopify/cli-kit"
+import {exists, inTemporaryDirectory, writeFile} from "@shopify/cli-kit/node/fs"
+import {joinPath} from "@shopify/cli-kit/node/path"
 
 test("writes", async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+  await inTemporaryDirectory(async (tmpDir: string) => {
     // Given
-    const outputPath = path.join(tmpDir, "output")
+    const outputPath = joinPath(tmpDir, "output")
 
     // When
-    await file.write(outputPath, "content")
+    await writeFile(outputPath, "content")
 
     // Then
-    const exists = await file.exists(outputPath)
-    expect(exists).toBe(true)
+    expect(await exists(outputPath)).toBe(true)
   })
 })
 ```
