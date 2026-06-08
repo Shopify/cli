@@ -27,7 +27,7 @@ For normal PR CI work, start with `.github/workflows/tests-pr.yml`.
 
 ## Local pre-submit tooling
 
-- `pnpm pre-ci` runs the local subset of PR gates at full CI parity (type-check, lint, build, knip, codegen freshness, unit tests). It is heavier than routine work needs; prefer the minimal diff-derived set below, and reach for `pre-ci` when the user wants full confidence before a high-risk push.
+- `pnpm pre-ci` runs the local subset of PR gates at full CI parity (type-check, lint, build, knip, codegen freshness, unit tests). `pnpm pre-ci:affected` runs the diff-scoped fast variant (nx/vitest affected; skips the codegen freshness checks unless the diff touches commands, flags, or GraphQL). Default to affected; reach for full `pre-ci` before a high-risk push.
 - Codegen freshness is single-sourced in `package.json`: `pnpm codegen` regenerates all generated files; `pnpm codegen:check:graphql` / `:oclif` regenerate and assert a clean tree. The workflow's `graphql-schema` and `oclif-checks` jobs call these scripts, so local and CI cannot drift.
 - `bin/ci-gates.js` is the source of truth mapping each `tests-pr.yml` job to a `pre-ci` command or a `ci-only` reason. `pnpm check-ci-gates` (CI job `CI gate manifest`) fails if a workflow job is unclassified or if the Node/pnpm versions in `dev.yml` and `tests-pr.yml` disagree.
 

@@ -7,7 +7,7 @@ Entry point for contributors and coding agents. Canonical docs live under [`docs
 
 ## Before you push
 
-- Derive the minimal checks for your diff with the [`cli-pre-submit-ci`](./.agents/skills/cli-pre-submit-ci/SKILL.md) skill. For full local CI parity (slower), run `pnpm pre-ci`.
+- Run `pnpm pre-ci:affected` for a fast, diff-scoped pre-push check, or `pnpm pre-ci` for full CI parity before a high-risk push. The [`cli-pre-submit-ci`](./.agents/skills/cli-pre-submit-ci/SKILL.md) skill covers deriving the minimal set and what to stage.
 - After changing commands, flags, or GraphQL queries, run `pnpm codegen` and commit the regenerated files.
 - `pnpm check-ci-gates` keeps the local gate list ([`bin/ci-gates.js`](./bin/ci-gates.js)) and pinned tool versions in sync with the workflow.
 
