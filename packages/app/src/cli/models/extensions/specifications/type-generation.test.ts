@@ -1,9 +1,12 @@
 import {
   createIntentsTypeDefinition,
   createToolsTypeDefinition,
+  findAllImportedFiles,
   getGeneratedTypesHelperImportPath,
 } from './type-generation.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 
 const adminGeneratedTypesHelperImportPath = '@shopify/ui-extensions/admin'
@@ -18,6 +21,47 @@ describe('getGeneratedTypesHelperImportPath', () => {
     expect(getGeneratedTypesHelperImportPath(['customer-account.order-status.block.render'])).toBe(
       '@shopify/ui-extensions/customer-account',
     )
+  })
+})
+
+describe('findAllImportedFiles', () => {
+  test('stops recursive import scanning at the boundary directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDir = joinPath(tmpDir, 'extensions', 'extension')
+      const srcDir = joinPath(extensionDir, 'src')
+      const sharedDir = joinPath(tmpDir, 'shared')
+
+      await mkdir(extensionDir)
+      await mkdir(srcDir)
+      await mkdir(sharedDir)
+
+      const entryPath = joinPath(srcDir, 'index.ts')
+      const localPath = joinPath(srcDir, 'local.ts')
+      const nestedPath = joinPath(srcDir, 'nested.ts')
+      const externalPath = joinPath(sharedDir, 'utils.ts')
+      const externalNestedPath = joinPath(sharedDir, 'secret.ts')
+
+      await writeFile(
+        entryPath,
+        `
+          import './local.ts'
+          import '../../../shared/utils.ts'
+        `,
+      )
+      await writeFile(localPath, `import './nested.ts'`)
+      await writeFile(nestedPath, `export const nested = true`)
+      await writeFile(externalPath, `import './secret.ts'`)
+      await writeFile(externalNestedPath, `export const secret = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath, {boundaryDirectory: extensionDir})).map((file) =>
+        normalizePath(file),
+      )
+
+      expect(importedFiles).toContain(normalizePath(localPath))
+      expect(importedFiles).toContain(normalizePath(nestedPath))
+      expect(importedFiles).not.toContain(normalizePath(externalPath))
+      expect(importedFiles).not.toContain(normalizePath(externalNestedPath))
+    })
   })
 })
 
