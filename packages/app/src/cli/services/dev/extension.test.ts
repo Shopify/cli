@@ -33,12 +33,11 @@ describe('devUIExtensions()', () => {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    vi.spyOn(store, 'ExtensionsPayloadStore').mockImplementation(
-      () =>
-        ({
-          mock: 'payload-store',
-        }) as unknown as store.ExtensionsPayloadStore,
-    )
+    vi.spyOn(store, 'ExtensionsPayloadStore').mockImplementation(function () {
+      return {
+        mock: 'payload-store',
+      } as unknown as store.ExtensionsPayloadStore
+    } as any)
     vi.spyOn(server, 'setupHTTPServer').mockReturnValue({
       mock: 'http-server',
       close: serverCloseSpy,

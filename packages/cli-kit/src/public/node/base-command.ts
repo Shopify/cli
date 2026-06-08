@@ -185,7 +185,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
     ])
 
     // Report successful application of the environment.
-    reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
+    await reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
       noDefaultsResult.flags,
       result.flags,
       isDefaultEnvironment ? 'default' : (environments[0] as string),
@@ -244,7 +244,7 @@ function reportEnvironmentApplication<
   flagsWithEnvironments: ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
   environmentName: string,
   environment: JsonMap,
-): void {
+): Promise<void> {
   const changes: JsonMap = {}
   for (const [name, value] of Object.entries(flagsWithEnvironments)) {
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
@@ -254,11 +254,10 @@ function reportEnvironmentApplication<
       changes[name] = valueToReport
     }
   }
-  if (Object.keys(changes).length === 0) return
+  if (Object.keys(changes).length === 0) return Promise.resolve()
 
   const items = Object.entries(changes).map(([name, value]) => `${name}: ${value}`)
-  // eslint-disable-next-line no-void
-  void import('./ui.js').then(({renderInfo}) => {
+  return import('./ui.js').then(({renderInfo}) => {
     renderInfo({
       headline: ['Using applicable flags from', {userInput: environmentName}, 'environment:'],
       body: [{list: {items}}],

@@ -30,6 +30,10 @@ describe('stageFile', () => {
 
   let formDataAppendSpy: ReturnType<typeof vi.spyOn>
 
+  function fileAppendCall() {
+    return formDataAppendSpy.mock.calls.find((call: unknown[]) => call[0] === 'file')
+  }
+
   beforeEach(() => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
@@ -59,8 +63,7 @@ describe('stageFile', () => {
       variablesJsonl,
     })
 
-    const fileAppendCall = formDataAppendSpy.mock.calls.find((call) => call[0] === 'file')
-    const uploadedBlob = fileAppendCall?.[1] as Blob
+    const uploadedBlob = fileAppendCall()?.[1] as Blob
     const uploadedContent = await uploadedBlob?.text()
 
     expect(uploadedContent).toBe('{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}')
@@ -80,8 +83,7 @@ describe('stageFile', () => {
       variablesJsonl,
     })
 
-    const fileAppendCall = formDataAppendSpy.mock.calls.find((call) => call[0] === 'file')
-    const uploadedBlob = fileAppendCall?.[1] as Blob
+    const uploadedBlob = fileAppendCall()?.[1] as Blob
     const uploadedContent = await uploadedBlob?.text()
 
     const expectedContent = [
