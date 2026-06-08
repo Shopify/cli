@@ -378,9 +378,6 @@ importers:
       find-up:
         specifier: 6.3.0
         version: 6.3.0
-      form-data:
-        specifier: 4.0.4
-        version: 4.0.4
       fs-extra:
         specifier: 11.1.0
         version: 11.1.0

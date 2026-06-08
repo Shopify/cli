@@ -4,10 +4,21 @@ import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
 import {recordRetry} from '../../public/node/analytics.js'
 
-import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
-
 import {performance} from 'perf_hooks'
+
+/**
+ * A structural type for response headers that the request helpers below can iterate.
+ *
+ * "Any" means any HTTP client's headers. Our two callers pass node-fetch's `Headers` and the
+ * global/WHATWG `Headers`, which aren't assignable to each other, so we can't use one concrete
+ * type. Instead we describe only the minimal surface we use — `forEach` (to collect interesting
+ * headers for debug logging) and an optional `get` — which both satisfy.
+ */
+export interface AnyHeaders {
+  forEach: (callback: (value: string, key: string) => void) => void
+  get?: (name: string) => string | null
+}
 
 export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform' | 'app-management'
 
@@ -137,7 +148,7 @@ export function isNetworkError(error: unknown): boolean {
   return false
 }
 
-async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; status: number}>(
+async function runRequestWithNetworkLevelRetry<T extends {headers: AnyHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
 ): Promise<T> {
   if (!requestOptions.useNetworkLevelRetry) {
@@ -166,7 +177,7 @@ async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; stat
   throw lastSeenError
 }
 
-async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
+async function makeVerboseRequest<T extends {headers: AnyHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
 ): Promise<VerboseResponse<T>> {
   const t0 = performance.now()
@@ -176,8 +187,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   let response: T = {} as T
   try {
     response = await runRequestWithNetworkLevelRetry(requestOptions)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    response.headers.forEach((value: any, key: any) => {
+    response.headers.forEach((value, key) => {
       if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
     })
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -266,7 +276,7 @@ function errorsIncludeStatus429(error: ClientError): boolean {
   return error.response.errors?.some((error) => error.extensions?.code === '429') ?? false
 }
 
-export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
+export async function simpleRequestWithDebugLog<T extends {headers: AnyHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
 ): Promise<T> {
@@ -329,7 +339,7 @@ ${result.sanitizedHeaders}
  * @param retryOptions - Options for the retry
  * @returns The response from the request
  */
-export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
+export async function retryAwareRequest<T extends {headers: AnyHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
   retryOptions: {

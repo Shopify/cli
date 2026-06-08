@@ -8,7 +8,6 @@ import {httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers
 import {NetworkRetryBehaviour, simpleRequestWithDebugLog} from '../../private/node/api.js'
 import {DEFAULT_MAX_TIME_MS} from '../../private/node/sleep-with-backoff.js'
 
-import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit, Response} from 'node-fetch'
 
 export {FetchError, Request, Response} from 'node-fetch'
