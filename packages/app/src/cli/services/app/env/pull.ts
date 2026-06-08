@@ -1,10 +1,10 @@
+import {diffLines} from './lines-diff.js'
 import {AppLinkedInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {logMetadataForLoadedContext} from '../../context.js'
 
 import {Organization, OrganizationApp} from '../../../models/organization.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
