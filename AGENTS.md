@@ -3,7 +3,7 @@ See @.cursor/rules/docs.mdc for Shopify CLI architecture and conventions.
 
 # Working in Shopify CLI
 
-Entry point for contributors and coding agents. Canonical docs live under [`docs/`](./docs/README.md) and agent skills under [`.agents/skills/`](./.agents/skills); this file routes to them rather than restating them.
+Entry point for contributors and coding agents. It summarizes the pre-submit commands below and links to the canonical material: docs under [`docs/`](./docs/README.md), agent skills under [`.agents/skills/`](./.agents/skills).
 
 ## Before you push
 
