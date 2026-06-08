@@ -1,4 +1,4 @@
-import {autoUpgradeIfNeeded} from './postrun.js'
+import {autoUpgradeIfNeeded, hook} from './postrun.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
 import {
   getOutputUpdateCLIReminder,
@@ -9,6 +9,7 @@ import {
 import {isMajorVersionChange} from '../version.js'
 import {inferPackageManagerForGlobalCLI} from '../is-global.js'
 import {addPublicMetadata} from '../metadata.js'
+import {reportAnalyticsEvent} from '../analytics.js'
 import {describe, expect, test, vi, afterEach} from 'vitest'
 
 vi.mock('../upgrade.js', async (importOriginal) => {
@@ -38,6 +39,14 @@ vi.mock('../is-global.js', async (importOriginal) => {
   }
 })
 
+vi.mock('../analytics.js', () => ({
+  reportAnalyticsEvent: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('./deprecations.js', () => ({
+  postrun: vi.fn(),
+}))
+
 vi.mock('../metadata.js', async (importOriginal) => {
   const actual: any = await importOriginal()
   return {
@@ -61,7 +70,28 @@ vi.mock('../../../private/node/conf-store.js', async (importOriginal) => {
 afterEach(() => {
   mockAndCaptureOutput().clear()
   vi.mocked(addPublicMetadata).mockClear()
+  vi.mocked(reportAnalyticsEvent).mockClear()
   vi.mocked(hasBlockingAutoUpgradeNotification).mockResolvedValue(false)
+})
+
+describe('postrun hook', () => {
+  test('reports analytics after auto-upgrade so auto-upgrade metadata is available', async () => {
+    const config = {plugins: new Map(), runHook: vi.fn()} as any
+    const Command = {id: 'app dev'} as any
+    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(isMajorVersionChange).mockReturnValue(false)
+    vi.mocked(runCLIUpgrade).mockResolvedValue(undefined)
+
+    await hook.call({} as any, {config, Command} as any)
+
+    expect(runCLIUpgrade).toHaveBeenCalled()
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith({config, exitMode: 'ok'})
+    expect(vi.mocked(runCLIUpgrade).mock.invocationCallOrder[0]!).toBeLessThan(
+      vi.mocked(reportAnalyticsEvent).mock.invocationCallOrder[0]!,
+    )
+    const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+    expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_success: true}))
+  })
 })
 
 describe('autoUpgradeIfNeeded', () => {

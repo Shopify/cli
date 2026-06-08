@@ -189,6 +189,7 @@ const coreData = createRuntimeMetadataContainer<
   {
     commandStartOptions: {
       startTime: number
+      endTime?: number
       startCommand: string
       startTopic?: string
       startArgs: string[]
