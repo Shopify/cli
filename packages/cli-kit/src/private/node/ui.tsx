@@ -65,10 +65,7 @@ export function renderOnce(element: JSX.Element, {logLevel = 'info', renderOptio
 }
 
 export async function render(element: JSX.Element, options?: RenderOptions) {
-  const {waitUntilExit} = inkRender(<InkLifecycleRoot>{element}</InkLifecycleRoot>, {
-    patchConsole: !isUnitTest(),
-    ...options,
-  })
+  const {waitUntilExit} = inkRender(<InkLifecycleRoot>{element}</InkLifecycleRoot>, options)
   await waitUntilExit()
 }
 
