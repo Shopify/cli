@@ -1,11 +1,13 @@
 import {stageFile} from './stage-file.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {renderSingleTask, RenderSingleTaskOptions} from '@shopify/cli-kit/node/ui'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('stageFile', () => {
   const mockSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}
@@ -35,6 +37,9 @@ describe('stageFile', () => {
   }
 
   beforeEach(() => {
+    vi.mocked(renderSingleTask).mockImplementation(async (options: RenderSingleTaskOptions<unknown>) => {
+      return options.task(vi.fn())
+    })
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue(''),
