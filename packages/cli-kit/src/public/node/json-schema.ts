@@ -4,7 +4,6 @@ import {getPathValue} from '../common/object.js'
 
 import {capitalize} from '../common/string.js'
 import {Ajv, ErrorObject, SchemaObject, ValidateFunction} from 'ajv'
-import $RefParser from '@apidevtools/json-schema-ref-parser'
 import cloneDeep from 'lodash/cloneDeep.js'
 
 export type HandleInvalidAdditionalProperties = 'strip' | 'fail'
@@ -21,9 +20,135 @@ type AjvError = ErrorObject<string, Record<string, unknown>>
  */
 export async function normaliseJsonSchema(schema: string): Promise<SchemaObject> {
   // we want to modify the schema, removing any $ref elements and inlining with their source
-  const parsedSchema = JSON.parse(schema)
-  await $RefParser.dereference(parsedSchema, {resolve: {external: false}})
-  return parsedSchema
+  const parsedSchema = JSON.parse(schema) as SchemaObject
+  return dereferenceInternalRefs(parsedSchema)
+}
+
+function dereferenceInternalRefs(rootSchema: SchemaObject): SchemaObject {
+  const resolvedNodes = new Map<string, unknown>()
+  const visitedRefs = new Set<string>()
+
+  const dereferenceNode = (node: unknown, path: string): unknown => {
+    if (resolvedNodes.has(path)) {
+      return resolvedNodes.get(path)
+    }
+
+    if (Array.isArray(node)) {
+      const dereferencedArray: unknown[] = []
+      resolvedNodes.set(path, dereferencedArray)
+      dereferencedArray.push(
+        ...node.map((item, index) => dereferenceNode(item, appendJsonPointerToken(path, String(index)))),
+      )
+      return dereferencedArray
+    }
+
+    if (!isRecord(node)) {
+      resolvedNodes.set(path, node)
+      return node
+    }
+
+    const dereferencedObject: Record<string, unknown> = {}
+    resolvedNodes.set(path, dereferencedObject)
+
+    const siblingEntries = Object.entries(node).filter(([key]) => key !== '$ref')
+    const dereferencedSiblings = Object.fromEntries(
+      siblingEntries.map(([key, value]) => [key, dereferenceNode(value, appendJsonPointerToken(path, key))]),
+    )
+    const ref = typeof node.$ref === 'string' ? node.$ref : undefined
+
+    if (ref === undefined) {
+      Object.assign(dereferencedObject, dereferencedSiblings)
+      return dereferencedObject
+    }
+
+    if (!isInternalJsonPointerRef(ref)) {
+      Object.assign(dereferencedObject, {$ref: ref}, dereferencedSiblings)
+      return dereferencedObject
+    }
+
+    const resolvedRef = resolveInternalRef(ref)
+    if (!isRecord(resolvedRef)) {
+      resolvedNodes.set(path, resolvedRef)
+      return resolvedRef
+    }
+
+    if (Object.keys(dereferencedSiblings).length === 0) {
+      resolvedNodes.set(path, resolvedRef)
+      return resolvedRef
+    }
+
+    Object.assign(dereferencedObject, resolvedRef, dereferencedSiblings)
+    return dereferencedObject
+  }
+
+  const resolveInternalRef = (ref: string): unknown => {
+    if (resolvedNodes.has(ref)) {
+      return resolvedNodes.get(ref)
+    }
+
+    if (visitedRefs.has(ref)) {
+      return resolvedNodes.get(ref)
+    }
+
+    const target = getInternalRefTarget(rootSchema, ref)
+    visitedRefs.add(ref)
+
+    try {
+      return dereferenceNode(target, ref)
+    } finally {
+      visitedRefs.delete(ref)
+    }
+  }
+
+  return dereferenceNode(rootSchema, '#') as SchemaObject
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isInternalJsonPointerRef(ref: string) {
+  return ref.startsWith('#/')
+}
+
+function appendJsonPointerToken(basePath: string, token: string) {
+  return basePath === '#' ? `#/${encodeJsonPointerToken(token)}` : `${basePath}/${encodeJsonPointerToken(token)}`
+}
+
+function encodeJsonPointerToken(token: string) {
+  return token.replace(/~/g, '~0').replace(/\//g, '~1')
+}
+
+function decodeJsonPointerToken(token: string) {
+  return decodeURIComponent(token).replace(/~1/g, '/').replace(/~0/g, '~')
+}
+
+function getInternalRefTarget(rootSchema: SchemaObject, ref: string): unknown {
+  if (ref === '#') {
+    return rootSchema
+  }
+
+  if (!ref.startsWith('#/')) {
+    throw new Error(`Unsupported internal JSON pointer ref: ${ref}`)
+  }
+
+  let current: unknown = rootSchema
+
+  for (const token of ref.slice(2).split('/').map(decodeJsonPointerToken)) {
+    if (isRecord(current) && token in current) {
+      current = current[token]
+      continue
+    }
+
+    if (Array.isArray(current) && token in current) {
+      current = current[Number(token)]
+      continue
+    }
+
+    throw new Error(`Unable to resolve internal JSON pointer ref: ${ref}`)
+  }
+
+  return current
 }
 
 function createAjvValidator(
