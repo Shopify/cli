@@ -1,5 +1,6 @@
 import {
   exchangeAccessForApplicationTokens,
+  exchangeDeviceCodeForAccessToken,
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
@@ -234,6 +235,58 @@ describe('refresh access tokens', () => {
     expect(result.userId).toBe('1234-5678')
     // Alias is preserved
     expect(result.alias).toBe('my-custom-alias')
+  })
+})
+
+describe('exchange device code for access token', () => {
+  test('extracts sub from id_token when existingUserId is absent', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(data)))
+
+    const result = await exchangeDeviceCodeForAccessToken('device-code')
+
+    expect(result.isErr()).toBe(false)
+    expect(result.valueOrBug()).toEqual({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresAt: expiredDate,
+      scopes: data.scope.split(' '),
+      userId: '1234-5678',
+      alias: undefined,
+    })
+  })
+
+  test.each([
+    {
+      title: 'JWT does not have exactly 3 segments',
+      idToken: 'not-a-jwt',
+      expectedMessage: 'Invalid id_token: expected JWT with exactly 3 segments.',
+    },
+    {
+      title: 'payload is not base64url-encoded JSON',
+      idToken: 'header.invalid-payload.signature',
+      expectedMessage: 'Invalid id_token: payload must be base64url-encoded JSON.',
+    },
+    {
+      title: 'payload is a JSON string',
+      idToken: 'header.InN0cmluZyI.signature',
+      expectedMessage: 'Invalid id_token: payload must be a non-empty JSON object.',
+    },
+    {
+      title: 'payload is an empty object',
+      idToken: 'header.e30.signature',
+      expectedMessage: 'Invalid id_token: payload must be a non-empty JSON object.',
+    },
+  ])('throws when $title', async ({idToken, expectedMessage}) => {
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...data,
+          id_token: idToken,
+        }),
+      ),
+    )
+
+    await expect(exchangeDeviceCodeForAccessToken('device-code')).rejects.toThrow(expectedMessage)
   })
 })
 
