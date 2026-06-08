@@ -169,9 +169,7 @@ export async function waitForStoreAuthCode({
       res.setHeader('Content-Type', 'text/html')
       res.setHeader('Connection', 'close')
       res.once('finish', () => settle(() => resolve(code)))
-      res.end(
-        renderAuthCallbackPage('Authentication succeeded', 'Close this window and return to the terminal'),
-      )
+      res.end(renderAuthCallbackPage('Authentication succeeded', 'Close this window and return to the terminal'))
     })
 
     const settle = (callback: () => void) => {

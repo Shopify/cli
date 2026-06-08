@@ -267,7 +267,6 @@ describe('createKeypressHandler', () => {
     expect(openURL).toHaveBeenCalledTimes(1)
     expect(openURL).toHaveBeenCalledWith(urls.local)
   })
-
 })
 
 describe('dev() Ctrl-C analytics', () => {
@@ -318,7 +317,6 @@ describe('dev() Ctrl-C analytics', () => {
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
     exitSpy.mockRestore()
   })
 
@@ -403,7 +401,6 @@ describe('dev() port validation', () => {
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
     exitSpy.mockRestore()
   })
 

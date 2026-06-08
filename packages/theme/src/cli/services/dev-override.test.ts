@@ -30,9 +30,9 @@ describe('devWithOverrideFile', () => {
       const overrideJson = joinPath(tmpDir, 'missing.json')
 
       // When/Then
-      await expect(
-        devWithOverrideFile({adminSession, overrideJson, themeId: '123', open: false}),
-      ).rejects.toThrow(`Override file not found: ${overrideJson}`)
+      await expect(devWithOverrideFile({adminSession, overrideJson, themeId: '123', open: false})).rejects.toThrow(
+        `Override file not found: ${overrideJson}`,
+      )
     })
   })
 

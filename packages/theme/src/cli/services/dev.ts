@@ -216,7 +216,6 @@ export function createKeypressHandler(
       case 'g':
         debouncedOpenURL(urls.giftCard, 'gift card preview')
         break
-      case undefined:
       default:
         break
     }

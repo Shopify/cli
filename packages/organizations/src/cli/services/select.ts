@@ -15,7 +15,9 @@ export async function selectOrg(orgIdFromFlag?: string): Promise<Organization> {
     if (!org) {
       throw new AbortError(
         `Organization with ID ${orgIdFromFlag} not found.`,
-        `Available organizations: ${organizations.map((o) => `${o.businessName} (${o.id})`).join(', ')}`,
+        `Available organizations: ${organizations
+          .map((organization) => `${organization.businessName} (${organization.id})`)
+          .join(', ')}`,
       )
     }
     return org
