@@ -49,8 +49,26 @@ function touchesGeneratedOutput(files) {
   )
 }
 
+// Affected mode bases on origin/main. Warn if the local main has drifted from it,
+// since that usually means origin/main is stale and the affected set may be off.
+function localMainDriftWarning() {
+  try {
+    const local = execSync('git rev-parse main', {encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore']}).trim()
+    const remote = execSync('git rev-parse origin/main', {encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore']}).trim()
+    if (local !== remote) {
+      return 'Local `main` differs from `origin/main` (affected mode bases on `origin/main`). Run `git fetch origin main` if the affected set looks off.'
+    }
+  } catch {
+    // No local `main` ref (e.g. a fresh worktree) — nothing to compare.
+  }
+  return null
+}
+
 const diff = affected ? changedFiles() : null
 const codegenRelevant = affected ? touchesGeneratedOutput(diff) : true
+
+const driftWarning = affected ? localMainDriftWarning() : null
+if (driftWarning) process.stdout.write(`\n⚠ ${driftWarning}\n`)
 
 const steps = [{label: 'CI gate manifest in sync', command: 'pnpm check-ci-gates'}]
 const skipped = []
