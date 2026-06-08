@@ -1,16 +1,8 @@
-import {platformAndArch, username} from './os.js'
+import {platformAndArch, username, _resetUsernameCache} from './os.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {execa} from 'execa'
 import {userInfo as osUserInfo} from 'os'
 
-vi.mock('node:process', () => ({
-  default: {
-    platform: 'linux',
-    arch: 'x64',
-    env: {},
-    argv: [],
-  },
-}))
 vi.mock('execa')
 vi.mock('os', async (importOriginal) => {
   const original = (await importOriginal()) as any
@@ -22,6 +14,7 @@ vi.mock('os', async (importOriginal) => {
 
 describe('username', () => {
   beforeEach(() => {
+    _resetUsernameCache()
     vi.mocked(execa).mockClear()
     vi.mocked(osUserInfo).mockReturnValue({} as any)
     vi.stubEnv('USER', '')
@@ -34,31 +27,50 @@ describe('username', () => {
 
   test('memoizes the result when platform matches process.platform', async () => {
     // Given
-    vi.mocked(execa).mockResolvedValue({stdout: '123'} as any)
-    // First call to id -u, second to id -un 123
-    vi.mocked(execa).mockResolvedValueOnce({stdout: '123'} as any)
-    vi.mocked(execa).mockResolvedValueOnce({stdout: 'user'} as any)
+    if (process.platform === 'win32') {
+      vi.mocked(execa).mockResolvedValue({stdout: 'domain\\user'} as any)
+    } else {
+      vi.mocked(execa).mockResolvedValueOnce({stdout: '123'} as any)
+      vi.mocked(execa).mockResolvedValueOnce({stdout: 'user'} as any)
+    }
 
     // When
-    const firstResult = await username('linux')
-    const secondResult = await username('linux')
+    const firstResult = await username()
+    const secondResult = await username()
 
     // Then
     expect(firstResult).toBe('user')
     expect(secondResult).toBe('user')
-    expect(execa).toHaveBeenCalledTimes(2)
+    if (process.platform === 'win32') {
+      expect(execa).toHaveBeenCalledTimes(1)
+      expect(execa).toHaveBeenCalledWith('whoami')
+    } else {
+      expect(execa).toHaveBeenCalledTimes(2)
+      expect(execa).toHaveBeenNthCalledWith(1, 'id', ['-u'])
+      expect(execa).toHaveBeenNthCalledWith(2, 'id', ['-un', '123'])
+    }
   })
 
   test('does not memoize the result when platform does not match process.platform', async () => {
     // Given
-    vi.mocked(execa).mockResolvedValue({stdout: 'user'} as any)
+    const otherPlatform = process.platform === 'win32' ? 'linux' : 'win32'
+    if (otherPlatform === 'win32') {
+      vi.mocked(execa).mockResolvedValue({stdout: 'domain\\user'} as any)
+    } else {
+      vi.mocked(execa).mockResolvedValue({stdout: 'user'} as any)
+    }
 
     // When
-    await username('win32')
-    await username('win32')
+    await username(otherPlatform)
+    await username(otherPlatform)
 
     // Then
-    expect(execa).toHaveBeenCalledTimes(2)
+    if (otherPlatform === 'win32') {
+      expect(execa).toHaveBeenCalledTimes(2)
+    } else {
+      // id -u is called each time, and potentially id -un
+      expect(execa).toHaveBeenCalledTimes(4)
+    }
   })
 })
 

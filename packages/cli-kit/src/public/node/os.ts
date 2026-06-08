@@ -21,6 +21,13 @@ export function username(platform: typeof process.platform = process.platform): 
   return (memoizedUsername ??= fetchUsername(platform))
 }
 
+/**
+ * Resets the memoized username.
+ */
+export function _resetUsernameCache(): void {
+  memoizedUsername = undefined
+}
+
 async function fetchUsername(platform: typeof process.platform = process.platform): Promise<string | null> {
   outputDebug(outputContent`Obtaining user name...`)
   const environmentVariable = getEnvironmentVariable()
