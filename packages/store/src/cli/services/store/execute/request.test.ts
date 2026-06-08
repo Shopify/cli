@@ -22,28 +22,29 @@ describe('prepareStoreExecuteRequest', () => {
   test('reads the query from a file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const queryPath = joinPath(tmpDir, 'operation.graphql')
-      await writeFile(queryPath, 'query { shop { name } }')
+      const queryFile = joinPath(tmpDir, 'operation.graphql')
+      const queryContent = 'query { shop { name } }'
+      await writeFile(queryFile, queryContent)
 
       // When
       const request = await prepareStoreExecuteRequest({
-        queryFile: queryPath,
+        queryFile,
       })
 
       // Then
-      expect(request.query).toBe('query { shop { name } }')
+      expect(request.query).toBe(queryContent)
     })
   })
 
   test('throws when the query file does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const queryPath = joinPath(tmpDir, 'missing.graphql')
+      const missingFile = joinPath(tmpDir, 'missing.graphql')
 
       // When/Then
       await expect(
         prepareStoreExecuteRequest({
-          queryFile: queryPath,
+          queryFile: missingFile,
         }),
       ).rejects.toThrow('Query file not found')
     })
@@ -60,13 +61,13 @@ describe('prepareStoreExecuteRequest', () => {
   test('throws when the query file is empty', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const queryPath = joinPath(tmpDir, 'operation.graphql')
-      await writeFile(queryPath, '   ')
+      const queryFile = joinPath(tmpDir, 'operation.graphql')
+      await writeFile(queryFile, '   ')
 
       // When/Then
       await expect(
         prepareStoreExecuteRequest({
-          queryFile: queryPath,
+          queryFile,
         }),
       ).rejects.toThrow('is empty')
     })
@@ -121,15 +122,18 @@ describe('prepareStoreExecuteRequest', () => {
   test('reads variables from a file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const queryPath = joinPath(tmpDir, 'operation.graphql')
-      const variablesPath = joinPath(tmpDir, 'variables.json')
-      await writeFile(queryPath, 'query { shop { id } }')
-      await writeFile(variablesPath, '{"id":"gid://shopify/Shop/1"}')
+      const queryFile = joinPath(tmpDir, 'operation.graphql')
+      const variablesFile = joinPath(tmpDir, 'variables.json')
+      const queryContent = 'query { shop { id } }'
+      const variablesContent = '{"id":"gid://shopify/Shop/1"}'
+
+      await writeFile(queryFile, queryContent)
+      await writeFile(variablesFile, variablesContent)
 
       // When
       const request = await prepareStoreExecuteRequest({
-        queryFile: queryPath,
-        variableFile: variablesPath,
+        queryFile,
+        variableFile: variablesFile,
       })
 
       // Then
