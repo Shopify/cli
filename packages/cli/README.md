@@ -1515,15 +1515,14 @@ USAGE
     [--typescript]
 
 ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|tokenlessApi|all) The
-             route to generate. One of
-             home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
+             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
 
 FLAGS
   -f, --force                 [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
                               already exist.
-      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] Remix adapter used in the route. The default is
-                              `@shopify/remix-oxygen`.
+      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] React Router adapter used in the route. The default
+                              is `react-router`.
       --locale-param=<value>  [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] The param name in Remix routes for the i18n locale,
                               if any. Example: `locale` becomes ($locale).
       --path=<value>          [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the Hydrogen storefront.
@@ -1545,8 +1544,8 @@ USAGE
 FLAGS
   -f, --force                 [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
                               already exist.
-      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] Remix adapter used in the route. The default is
-                              `@shopify/remix-oxygen`.
+      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] React Router adapter used in the route. The default
+                              is `react-router`.
       --locale-param=<value>  [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] The param name in Remix routes for the i18n locale,
                               if any. Example: `locale` becomes ($locale).
       --path=<value>          [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the Hydrogen storefront.
