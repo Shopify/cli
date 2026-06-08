@@ -22,6 +22,9 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/ui')
   return {
     ...actual,
+    renderTasks: vi.fn(async (tasks: {task: () => Promise<void>}[]) => {
+      await Promise.all(tasks.map(async (task) => task.task()))
+    }),
     renderWarning: vi.fn(),
     keypress: vi.fn(),
   }

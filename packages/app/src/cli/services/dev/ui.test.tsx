@@ -9,6 +9,13 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/ui', () => ({
+  render: vi.fn(async (element: {type?: unknown; props?: unknown}) => {
+    if (typeof element.type === 'function') {
+      element.type(element.props, undefined)
+    }
+  }),
+}))
 vi.mock('./ui/components/Dev.js')
 vi.mock('../context.js')
 vi.mock('./ui/components/DevSessionUI.js')
