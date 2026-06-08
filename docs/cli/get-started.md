@@ -72,5 +72,11 @@ Besides the scripts for building and running the CLIs, there are others that mig
 - `pnpm lint:fix`: Runs ESLint and Prettier checks for all the packages and fixes the fixable issues.
 - `pnpm type-check`: Type-checks all the packagesusing the Typescript `tsc` tool.
 - `pnpm clean`: Removes the `dist` directory from all the packages.
+- `pnpm pre-ci`: Runs the local subset of PR CI gates (type-check, lint, build, knip, codegen freshness, unit tests) at full parity with CI. Slower, for a high-risk push.
+- `pnpm pre-ci:affected`: The diff-scoped fast variant for routine PRs (nx/vitest affected; skips codegen freshness checks unless the diff touches commands, flags, or GraphQL).
+- `pnpm codegen`: Regenerates all generated files (GraphQL types, OCLIF manifests, README, docs). Run after changing commands, flags, or queries, and commit the result.
+- `pnpm check-ci-gates`: Verifies the local CI-gate manifest stays in sync with the GitHub Actions workflow.
+
+Prefer these scripts over invoking `eslint`/`prettier`/`tsc` directly: CI runs them through Nx over package sources, not over root `bin/` scripts.
 
 All the packages in the repository contain the above scripts so they can be executed too for an individual package.

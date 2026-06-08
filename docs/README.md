@@ -11,6 +11,7 @@ The Shopify CLI is a tool for merchants, partners, and developers to interact wi
 The list below contains valuable resources for people interested in contributing to the CLI project in this repository.
 
 * [Get started](./cli/get-started.md)
+* [Local development against services](./cli/local-development.md)
 * [Architecture](./cli/architecture.md)
 * [Conventions](./cli/conventions.md)
 * [Performance](./cli/performance.md)
