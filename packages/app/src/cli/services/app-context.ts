@@ -232,9 +232,7 @@ const APP_CONTEXT_METADATA_TIMEOUT_MS = 3000
  */
 export async function logAppContextMetadataIfAuthenticated(directory: string): Promise<void> {
   try {
-    // A command that loads the app (e.g. `app dev`) already populated identity.
     if (metadata.getAllPublicMetadata().api_key !== undefined) return
-    // Only enrich for users who are already authenticated; never trigger a login.
     if (!(await sessionExists())) return
 
     let timer: ReturnType<typeof setTimeout> | undefined
