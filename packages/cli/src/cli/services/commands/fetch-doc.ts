@@ -4,7 +4,11 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 const DEFAULT_CONTENT_TYPE = 'text/markdown'
 
-export async function fetchService(url: string, contentType?: string) {
+// Hosts whose documents are allowed to be fetched. A URL matches when its
+// hostname is one of these or a subdomain of one of these.
+const ALLOWED_HOSTS = ['shopify.dev']
+
+export async function fetchDocService(url: string, contentType?: string) {
   let parsedURL: URL
   try {
     parsedURL = new URL(url)
@@ -13,8 +17,9 @@ export async function fetchService(url: string, contentType?: string) {
   }
 
   const {hostname} = parsedURL
-  if (hostname !== 'shopify.dev' && !hostname.endsWith('.shopify.dev')) {
-    throw new AbortError('Only shopify.dev URLs can be fetched.')
+  const isAllowed = ALLOWED_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`))
+  if (!isAllowed) {
+    throw new AbortError(`Only documents from the following hosts can be fetched: ${ALLOWED_HOSTS.join(', ')}.`)
   }
 
   const accept = contentType ?? DEFAULT_CONTENT_TYPE

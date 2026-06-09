@@ -1,4 +1,4 @@
-import {fetchService} from './fetch.js'
+import {fetchDocService} from './fetch-doc.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -14,9 +14,9 @@ beforeEach(() => {
   vi.mocked(fetch).mockResolvedValue(okResponse('# Doc'))
 })
 
-describe('fetchService', () => {
+describe('fetchDocService', () => {
   test('requests Markdown by default and prints the body to stdout', async () => {
-    await fetchService('https://shopify.dev/docs/api/shopify-cli')
+    await fetchDocService('https://shopify.dev/docs/api/shopify-cli')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
       headers: {Accept: 'text/markdown'},
@@ -25,7 +25,7 @@ describe('fetchService', () => {
   })
 
   test('passes a custom content type through as the Accept header', async () => {
-    await fetchService('https://shopify.dev/docs/api/shopify-cli', 'text/html')
+    await fetchDocService('https://shopify.dev/docs/api/shopify-cli', 'text/html')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
       headers: {Accept: 'text/html'},
@@ -33,25 +33,25 @@ describe('fetchService', () => {
   })
 
   test('accepts shopify.dev subdomains', async () => {
-    await fetchService('https://www.shopify.dev/docs')
+    await fetchDocService('https://www.shopify.dev/docs')
 
     expect(fetch).toHaveBeenCalledOnce()
   })
 
-  test('rejects non-shopify.dev URLs without fetching', async () => {
-    await expect(fetchService('https://example.com/docs')).rejects.toThrowError(AbortError)
+  test('rejects URLs from disallowed hosts without fetching', async () => {
+    await expect(fetchDocService('https://example.com/docs')).rejects.toThrowError(AbortError)
     expect(fetch).not.toHaveBeenCalled()
   })
 
   test('rejects malformed URLs without fetching', async () => {
-    await expect(fetchService('not a url')).rejects.toThrowError(AbortError)
+    await expect(fetchDocService('not a url')).rejects.toThrowError(AbortError)
     expect(fetch).not.toHaveBeenCalled()
   })
 
   test('throws when the response is not ok', async () => {
     vi.mocked(fetch).mockResolvedValue({ok: false, status: 404, statusText: 'Not Found'} as any)
 
-    await expect(fetchService('https://shopify.dev/missing')).rejects.toThrowError(AbortError)
+    await expect(fetchDocService('https://shopify.dev/missing')).rejects.toThrowError(AbortError)
     expect(outputResult).not.toHaveBeenCalled()
   })
 })

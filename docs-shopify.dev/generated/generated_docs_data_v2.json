@@ -2742,15 +2742,15 @@
       "value": "export interface configautoupgradestatus {\n\n}"
     }
   },
-  "fetch": {
-    "docs-shopify.dev/commands/interfaces/fetch.interface.ts": {
-      "filePath": "docs-shopify.dev/commands/interfaces/fetch.interface.ts",
-      "name": "fetch",
-      "description": "The following flags are available for the `fetch` command:",
+  "fetchdoc": {
+    "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
+      "name": "fetchdoc",
+      "description": "The following flags are available for the `fetch-doc` command:",
       "isPublicDocs": true,
       "members": [
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/fetch.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--content-type <value>",
           "value": "string",
@@ -2759,7 +2759,7 @@
           "environmentValue": "SHOPIFY_FLAG_CONTENT_TYPE"
         }
       ],
-      "value": "export interface fetch {\n  /**\n   * The Accept content type to request (defaults to text/markdown).\n   * @environment SHOPIFY_FLAG_CONTENT_TYPE\n   */\n  '--content-type <value>'?: string\n}"
+      "value": "export interface fetchdoc {\n  /**\n   * The Accept content type to request (defaults to text/markdown).\n   * @environment SHOPIFY_FLAG_CONTENT_TYPE\n   */\n  '--content-type <value>'?: string\n}"
     }
   },
   "help": {
