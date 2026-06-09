@@ -49,6 +49,7 @@
 │     ├─ off
 │     ├─ on
 │     └─ status
+├─ fetch-doc
 ├─ help
 ├─ hydrogen
 │  ├─ build
