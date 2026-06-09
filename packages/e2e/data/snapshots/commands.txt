@@ -51,6 +51,7 @@
 │     └─ status
 ├─ doc
 │  └─ search
+├─ fetch-doc
 ├─ help
 ├─ hydrogen
 │  ├─ build
