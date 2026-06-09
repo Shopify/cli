@@ -1358,7 +1358,7 @@ USAGE
 
 FLAGS
   -f, --force                               [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Forces a deployment to proceed if there
-                                            are uncommited changes in its Git repository.
+                                            are uncommitted changes in its Git repository.
   -s, --shop=<value>                        [env: SHOPIFY_SHOP] Shop URL. It can be the shop prefix (janes-apparel) or
                                             the full myshopify.com URL (janes-apparel.myshopify.com,
                                             https://janes-apparel.myshopify.com).
@@ -1388,7 +1388,7 @@ FLAGS
                                             `--no-lockfile-check`.
       --metadata-description=<value>        [env: SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION] Description of the changes
                                             in the deployment. Defaults to the commit message of the latest commit if
-                                            there are no uncommited changes.
+                                            there are no uncommitted changes.
       --metadata-user=<value>               [env: SHOPIFY_HYDROGEN_FLAG_METADATA_USER] User that initiated the
                                             deployment. Will be saved and displayed in the Shopify admin
       --no-verify                           Skip the routability verification step after deployment.
@@ -1515,15 +1515,14 @@ USAGE
     [--typescript]
 
 ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|tokenlessApi|all) The
-             route to generate. One of
-             home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
+             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
 
 FLAGS
   -f, --force                 [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
                               already exist.
-      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] Remix adapter used in the route. The default is
-                              `@shopify/remix-oxygen`.
+      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] React Router adapter used in the route. The default
+                              is `react-router`.
       --locale-param=<value>  [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] The param name in Remix routes for the i18n locale,
                               if any. Example: `locale` becomes ($locale).
       --path=<value>          [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the Hydrogen storefront.
@@ -1545,8 +1544,8 @@ USAGE
 FLAGS
   -f, --force                 [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
                               already exist.
-      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] Remix adapter used in the route. The default is
-                              `@shopify/remix-oxygen`.
+      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] React Router adapter used in the route. The default
+                              is `react-router`.
       --locale-param=<value>  [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] The param name in Remix routes for the i18n locale,
                               if any. Example: `locale` becomes ($locale).
       --path=<value>          [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the Hydrogen storefront.

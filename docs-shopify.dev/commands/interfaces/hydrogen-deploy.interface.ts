@@ -47,7 +47,7 @@ export interface hydrogendeploy {
   '--env-file <value>'?: string
 
   /**
-   * Forces a deployment to proceed if there are uncommited changes in its Git repository.
+   * Forces a deployment to proceed if there are uncommitted changes in its Git repository.
    * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
   '-f, --force'?: ''
@@ -71,7 +71,7 @@ export interface hydrogendeploy {
   '--lockfile-check'?: ''
 
   /**
-   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.
+   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommitted changes.
    * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION
    */
   '--metadata-description <value>'?: string
