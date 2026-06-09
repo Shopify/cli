@@ -3,7 +3,8 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {Args, Flags} from '@oclif/core'
 
 export default class FetchDoc extends Command {
-  static description = 'Fetch a document from shopify.dev. Defaults to Markdown.'
+  static description =
+    'Download a complete document from shopify.dev, returned as Markdown by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.'
 
   static usage = `fetch-doc [URL]`
 

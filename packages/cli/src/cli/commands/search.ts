@@ -3,7 +3,8 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {Args} from '@oclif/core'
 
 export default class Search extends Command {
-  static description = 'Starts a search on shopify.dev.'
+  static description =
+    'Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `fetch-doc`.'
 
   static usage = `search [query]`
 
