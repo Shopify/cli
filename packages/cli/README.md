@@ -1215,7 +1215,7 @@ DESCRIPTION
 
 ## `shopify fetch-doc [URL]`
 
-Download a complete document from shopify.dev, returned as Markdown by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.
+Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.
 
 ```
 USAGE
@@ -1229,9 +1229,10 @@ FLAGS
                           text/markdown).
 
 DESCRIPTION
-  Download a complete document from shopify.dev, returned as Markdown by default. Use this to pull an entire document
-  verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant
-  pieces of content across shopify.dev instead, use `search`.
+  Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this
+  tool returns by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent
+  follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use
+  `search`.
 
 EXAMPLES
   # fetch the Markdown version of a Shopify.dev page
