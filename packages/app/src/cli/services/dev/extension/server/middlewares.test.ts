@@ -6,6 +6,7 @@ import {
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
   getExtensionPointMiddleware,
+  devConsoleAssetsMiddleware,
 } from './middlewares.js'
 import * as utilities from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
@@ -15,6 +16,7 @@ import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {copyConfigKeyEntry} from '../../../build/steps/include-assets/copy-config-key-entry.js'
+import * as fs from '@shopify/cli-kit/node/fs'
 import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
@@ -686,6 +688,31 @@ describe('getExtensionPayloadMiddleware()', () => {
         extension: {
           mock: 'extension payload',
         },
+      })
+    })
+  })
+})
+
+describe('devConsoleAssetsMiddleware()', () => {
+  test('returns 404 for path traversal attempts', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => ({}) as any)
+      vi.spyOn(fs, 'findPathUp').mockResolvedValue(joinPath(tmpDir, 'assets'))
+
+      await fs.mkdir(joinPath(tmpDir, 'assets'))
+      await writeFile(joinPath(tmpDir, 'secret.txt'), 'secret')
+
+      const event = getMockEvent({
+        params: {
+          assetPath: '../secret.txt',
+        },
+      })
+
+      await devConsoleAssetsMiddleware(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
       })
     })
   })
