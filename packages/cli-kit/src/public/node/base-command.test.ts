@@ -186,6 +186,13 @@ describe('applying environments', async () => {
     })
   }
 
+  async function waitForInfoOutput(outputMock: ReturnType<typeof mockAndCaptureOutput>) {
+    await vi.waitFor(() => {
+      expect(outputMock.info()).toEqual(expect.anything())
+      expect(outputMock.info()).not.toEqual('')
+    })
+  }
+
   runTestInTmpDir(
     'does not apply a environment when none is specified and there is no default',
     async (tmpDir: string) => {
@@ -234,6 +241,7 @@ describe('applying environments', async () => {
 
     // Then
     expectFlags(tmpDir, 'validEnvironment')
+    await waitForInfoOutput(outputMock)
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -257,6 +265,7 @@ describe('applying environments', async () => {
 
     // Then
     expectFlags(tmpDir, 'default')
+    await waitForInfoOutput(outputMock)
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -333,6 +342,7 @@ describe('applying environments', async () => {
 
     // Then
     expect(testResult.someString).toEqual('cheesy')
+    await waitForInfoOutput(outputMock)
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -449,6 +459,7 @@ describe('applying environments', async () => {
 
     // Then
     expectFlags(tmpDir, 'environmentWithDefaultOverride')
+    await waitForInfoOutput(outputMock)
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -471,6 +482,7 @@ describe('applying environments', async () => {
 
     // Then
     expectFlags(tmpDir, 'environmentMatchingDefault')
+    await waitForInfoOutput(outputMock)
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -493,6 +505,7 @@ describe('applying environments', async () => {
 
     // Then
     expectFlags(tmpDir, 'environmentWithPassword')
+    await waitForInfoOutput(outputMock)
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │

@@ -1,12 +1,13 @@
 import {SerialBatchProcessor} from './serial-batch-processor.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
+import type {Mock} from 'vitest'
 
 describe('SerialBatchProcessor', () => {
-  let processBatchMock: ReturnType<typeof vi.fn>
+  let processBatchMock: Mock<(items: string[]) => Promise<void>>
 
   beforeEach(() => {
     // Default mock that resolves immediately
-    processBatchMock = vi.fn(async (_items: string[]) => Promise.resolve())
+    processBatchMock = vi.fn<(items: string[]) => Promise<void>>(async () => {})
   })
 
   test('should process a single item in a batch', async () => {

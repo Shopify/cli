@@ -1,11 +1,13 @@
 import {stageFile} from './stage-file.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {renderSingleTask, RenderSingleTaskOptions} from '@shopify/cli-kit/node/ui'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('stageFile', () => {
   const mockSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}
@@ -30,7 +32,14 @@ describe('stageFile', () => {
 
   let formDataAppendSpy: ReturnType<typeof vi.spyOn>
 
+  function fileAppendCall() {
+    return formDataAppendSpy.mock.calls.find((call: unknown[]) => call[0] === 'file')
+  }
+
   beforeEach(() => {
+    vi.mocked(renderSingleTask).mockImplementation(async (options: RenderSingleTaskOptions<unknown>) => {
+      return options.task(vi.fn())
+    })
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue(''),
@@ -59,8 +68,7 @@ describe('stageFile', () => {
       variablesJsonl,
     })
 
-    const fileAppendCall = formDataAppendSpy.mock.calls.find((call) => call[0] === 'file')
-    const uploadedBlob = fileAppendCall?.[1] as Blob
+    const uploadedBlob = fileAppendCall()?.[1] as Blob
     const uploadedContent = await uploadedBlob?.text()
 
     expect(uploadedContent).toBe('{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}')
@@ -80,8 +88,7 @@ describe('stageFile', () => {
       variablesJsonl,
     })
 
-    const fileAppendCall = formDataAppendSpy.mock.calls.find((call) => call[0] === 'file')
-    const uploadedBlob = fileAppendCall?.[1] as Blob
+    const uploadedBlob = fileAppendCall()?.[1] as Blob
     const uploadedContent = await uploadedBlob?.text()
 
     const expectedContent = [

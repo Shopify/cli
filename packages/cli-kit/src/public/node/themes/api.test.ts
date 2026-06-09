@@ -32,7 +32,7 @@ import {AbortError} from '../error.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
 
-vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('../api/admin.js')
 vi.mock('@shopify/cli-kit/node/system')
 vi.stubGlobal('fetch', vi.fn())
 
