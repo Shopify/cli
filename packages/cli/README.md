@@ -39,7 +39,7 @@
 * [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
 * [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
-* [`shopify fetch [URL]`](#shopify-fetch-url)
+* [`shopify fetch-doc [URL]`](#shopify-fetch-doc-url)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -1213,13 +1213,13 @@ DESCRIPTION
   Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
 ```
 
-## `shopify fetch [URL]`
+## `shopify fetch-doc [URL]`
 
 Fetch a document from shopify.dev. Defaults to Markdown.
 
 ```
 USAGE
-  $ shopify fetch [URL]
+  $ shopify fetch-doc [URL]
 
 ARGUMENTS
   URL  The shopify.dev URL to fetch.
@@ -1233,9 +1233,9 @@ DESCRIPTION
 
 EXAMPLES
   # fetch the Markdown version of a Shopify.dev page
-      shopify fetch https://shopify.dev/docs/api/shopify-cli
+      shopify fetch-doc https://shopify.dev/docs/api/shopify-cli
       # fetch the HTML version of a Shopify.dev page
-      shopify fetch https://shopify.dev/docs/api/shopify-cli --content-type text/html
+      shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --content-type text/html
 ```
 
 ## `shopify help [command] [flags]`

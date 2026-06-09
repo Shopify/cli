@@ -1,18 +1,18 @@
-import {fetchService} from '../services/commands/fetch.js'
+import {fetchDocService} from '../services/commands/fetch-doc.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {Args, Flags} from '@oclif/core'
 
-export default class Fetch extends Command {
+export default class FetchDoc extends Command {
   static description = 'Fetch a document from shopify.dev. Defaults to Markdown.'
 
-  static usage = `fetch [URL]`
+  static usage = `fetch-doc [URL]`
 
   static examples = [
     `# fetch the Markdown version of a Shopify.dev page
-    shopify fetch https://shopify.dev/docs/api/shopify-cli
+    shopify fetch-doc https://shopify.dev/docs/api/shopify-cli
 
     # fetch the HTML version of a Shopify.dev page
-    shopify fetch https://shopify.dev/docs/api/shopify-cli --content-type text/html
+    shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --content-type text/html
     `,
   ]
 
@@ -32,7 +32,7 @@ export default class Fetch extends Command {
   }
 
   async run(): Promise<void> {
-    const {args, flags} = await this.parse(Fetch)
-    await fetchService(args.url, flags['content-type'])
+    const {args, flags} = await this.parse(FetchDoc)
+    await fetchDocService(args.url, flags['content-type'])
   }
 }
