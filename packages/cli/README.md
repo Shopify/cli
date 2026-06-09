@@ -1216,7 +1216,7 @@ DESCRIPTION
 
 ## `shopify fetch-doc [URL]`
 
-Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.
+Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.
 
 ```
 USAGE
@@ -1226,22 +1226,24 @@ ARGUMENTS
   URL  The shopify.dev URL to fetch.
 
 FLAGS
-  --content-type=<value>  [env: SHOPIFY_FLAG_CONTENT_TYPE] The Accept content type to request (defaults to
-                          text/markdown).
-  --no-color              [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-  --verbose               [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -o, --output=<value>  [env: SHOPIFY_FLAG_OUTPUT] Write the document to this file path instead of printing it to
+                        stdout.
+      --no-color        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose         [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this
-  tool returns by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent
-  follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use
-  `search`.
+  tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like
+  a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.
 
 EXAMPLES
   # fetch the Markdown version of a Shopify.dev page
-      shopify fetch-doc https://shopify.dev/docs/api/shopify-cli
-      # fetch the HTML version of a Shopify.dev page
-      shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --content-type text/html
+
+    $ shopify fetch-doc https://shopify.dev/docs/api/shopify-cli
+
+  # save the document to a file instead of printing it
+
+    $ shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md
 ```
 
 ## `shopify help [command] [flags]`

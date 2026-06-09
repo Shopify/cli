@@ -5,16 +5,16 @@
  */
 export interface fetchdoc {
   /**
-   * The Accept content type to request (defaults to text/markdown).
-   * @environment SHOPIFY_FLAG_CONTENT_TYPE
-   */
-  '--content-type <value>'?: string
-
-  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
+
+  /**
+   * Write the document to this file path instead of printing it to stdout.
+   * @environment SHOPIFY_FLAG_OUTPUT
+   */
+  '-o, --output <value>'?: string
 
   /**
    * Increase the verbosity of the output.
