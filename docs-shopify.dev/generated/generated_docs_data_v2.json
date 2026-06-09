@@ -2752,15 +2752,6 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
           "syntaxKind": "PropertySignature",
-          "name": "--content-type <value>",
-          "value": "string",
-          "description": "The Accept content type to request (defaults to text/markdown).",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_CONTENT_TYPE"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
-          "syntaxKind": "PropertySignature",
           "name": "--no-color",
           "value": "''",
           "description": "Disable color output.",
@@ -2775,9 +2766,18 @@
           "description": "Increase the verbosity of the output.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-o, --output <value>",
+          "value": "string",
+          "description": "Write the document to this file path instead of printing it to stdout.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_OUTPUT"
         }
       ],
-      "value": "export interface fetchdoc {\n  /**\n   * The Accept content type to request (defaults to text/markdown).\n   * @environment SHOPIFY_FLAG_CONTENT_TYPE\n   */\n  '--content-type <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface fetchdoc {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "help": {

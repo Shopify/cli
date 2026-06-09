@@ -5,17 +5,15 @@ import {Args, Flags} from '@oclif/core'
 
 export default class FetchDoc extends Command {
   static description =
-    'Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.'
+    'Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.'
 
   static usage = `fetch-doc [URL]`
 
   static examples = [
     `# fetch the Markdown version of a Shopify.dev page
-    shopify fetch-doc https://shopify.dev/docs/api/shopify-cli
-
-    # fetch the HTML version of a Shopify.dev page
-    shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --content-type text/html
-    `,
+shopify fetch-doc https://shopify.dev/docs/api/shopify-cli`,
+    `# save the document to a file instead of printing it
+shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md`,
   ]
 
   static args = {
@@ -28,14 +26,15 @@ export default class FetchDoc extends Command {
 
   static flags = {
     ...globalFlags,
-    'content-type': Flags.string({
-      description: 'The Accept content type to request (defaults to text/markdown).',
-      env: 'SHOPIFY_FLAG_CONTENT_TYPE',
+    output: Flags.string({
+      char: 'o',
+      description: 'Write the document to this file path instead of printing it to stdout.',
+      env: 'SHOPIFY_FLAG_OUTPUT',
     }),
   }
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(FetchDoc)
-    await fetchDocService(args.url, flags['content-type'])
+    await fetchDocService(args.url, flags.output)
   }
 }

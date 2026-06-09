@@ -3,9 +3,12 @@ import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {dirname, resolvePath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/fs')
 
 const okResponse = (body: string) =>
   ({ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(body)}) as any
@@ -15,21 +18,13 @@ beforeEach(() => {
 })
 
 describe('fetchDocService', () => {
-  test('requests Markdown by default and prints the body to stdout', async () => {
+  test('requests Markdown and prints the body to stdout', async () => {
     await fetchDocService('https://shopify.dev/docs/api/shopify-cli')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
       headers: {Accept: 'text/markdown'},
     })
     expect(outputResult).toHaveBeenCalledWith('# Doc')
-  })
-
-  test('passes a custom content type through as the Accept header', async () => {
-    await fetchDocService('https://shopify.dev/docs/api/shopify-cli', 'text/html')
-
-    expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
-      headers: {Accept: 'text/html'},
-    })
   })
 
   test('accepts shopify.dev subdomains', async () => {
@@ -46,6 +41,15 @@ describe('fetchDocService', () => {
   test('rejects malformed URLs without fetching', async () => {
     await expect(fetchDocService('not a url')).rejects.toThrowError(AbortError)
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  test('writes the document to the output path instead of stdout', async () => {
+    await fetchDocService('https://shopify.dev/docs/api/shopify-cli', 'docs/shopify-cli.md')
+
+    const expectedPath = resolvePath('docs/shopify-cli.md')
+    expect(mkdir).toHaveBeenCalledWith(dirname(expectedPath))
+    expect(writeFile).toHaveBeenCalledWith(expectedPath, '# Doc')
+    expect(outputResult).not.toHaveBeenCalled()
   })
 
   test('throws when the response is not ok', async () => {
