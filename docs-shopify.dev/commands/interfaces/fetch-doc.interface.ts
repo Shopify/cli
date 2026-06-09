@@ -9,4 +9,16 @@ export interface fetchdoc {
    * @environment SHOPIFY_FLAG_CONTENT_TYPE
    */
   '--content-type <value>'?: string
+
+  /**
+   * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
+   */
+  '--no-color'?: ''
+
+  /**
+   * Increase the verbosity of the output.
+   * @environment SHOPIFY_FLAG_VERBOSE
+   */
+  '--verbose'?: ''
 }

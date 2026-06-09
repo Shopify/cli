@@ -1,5 +1,6 @@
 import {fetchDocService} from '../services/commands/fetch-doc.js'
 import Command from '@shopify/cli-kit/node/base-command'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args, Flags} from '@oclif/core'
 
 export default class FetchDoc extends Command {
@@ -26,6 +27,7 @@ export default class FetchDoc extends Command {
   }
 
   static flags = {
+    ...globalFlags,
     'content-type': Flags.string({
       description: 'The Accept content type to request (defaults to text/markdown).',
       env: 'SHOPIFY_FLAG_CONTENT_TYPE',

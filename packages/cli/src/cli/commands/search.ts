@@ -1,5 +1,6 @@
 import {searchService} from '../services/commands/search.js'
 import Command from '@shopify/cli-kit/node/base-command'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args} from '@oclif/core'
 
 export default class Search extends Command {
@@ -22,6 +23,10 @@ export default class Search extends Command {
 
   static args = {
     query: Args.string(),
+  }
+
+  static flags = {
+    ...globalFlags,
   }
 
   async run(): Promise<void> {
