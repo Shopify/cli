@@ -1227,6 +1227,8 @@ ARGUMENTS
 FLAGS
   --content-type=<value>  [env: SHOPIFY_FLAG_CONTENT_TYPE] The Accept content type to request (defaults to
                           text/markdown).
+  --no-color              [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+  --verbose               [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this
@@ -2117,6 +2119,10 @@ Search shopify.dev for the most relevant content matching a query. Best for disc
 ```
 USAGE
   $ shopify search [query]
+
+FLAGS
+  --no-color  [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+  --verbose   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces
