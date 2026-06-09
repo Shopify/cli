@@ -3544,7 +3544,7 @@
           "required": true
         }
       },
-      "description": "Fetch a document from shopify.dev. Defaults to Markdown.",
+      "description": "Download a complete document from shopify.dev, returned as Markdown by default. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.",
       "enableJsonFlag": false,
       "examples": [
         "# fetch the Markdown version of a Shopify.dev page\n    shopify fetch-doc https://shopify.dev/docs/api/shopify-cli\n\n    # fetch the HTML version of a Shopify.dev page\n    shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --content-type text/html\n    "
@@ -5687,7 +5687,7 @@
           "name": "query"
         }
       },
-      "description": "Starts a search on shopify.dev.",
+      "description": "Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `fetch-doc`.",
       "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
