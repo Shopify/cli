@@ -4184,6 +4184,62 @@
       "value": "export interface storeauth {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Comma-separated Admin API scopes to request for the app.\n   * @environment SHOPIFY_FLAG_SCOPES\n   */\n  '--scopes <value>': string\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
+  "storecreatepreview": {
+    "docs-shopify.dev/commands/interfaces/store-create-preview.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/store-create-preview.interface.ts",
+      "name": "storecreatepreview",
+      "description": "The following flags are available for the `store create preview` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-create-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--country <value>",
+          "value": "string",
+          "description": "Two-letter ISO 3166-1 alpha-2 country code for the store, such as US, CA, or GB.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-create-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--name <value>",
+          "value": "string",
+          "description": "The name of the store.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PREVIEW_STORE_NAME"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-create-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-create-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-create-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface storecreatepreview {\n  /**\n   * Two-letter ISO 3166-1 alpha-2 country code for the store, such as US, CA, or GB.\n   * @environment SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY\n   */\n  '--country <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * The name of the store.\n   * @environment SHOPIFY_FLAG_PREVIEW_STORE_NAME\n   */\n  '--name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "storeexecute": {
     "docs-shopify.dev/commands/interfaces/store-execute.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
