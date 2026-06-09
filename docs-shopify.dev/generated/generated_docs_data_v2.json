@@ -3115,6 +3115,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--assets-dir <value>",
+          "value": "string",
+          "description": "Directory containing the client assets to deploy, relative to the project root. Defaults to the detected Vite client output directory, then falls back to `dist/client`.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_HYDROGEN_FLAG_ASSETS_DIR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--auth-bypass-token",
           "value": "''",
           "description": "Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.",
@@ -3135,7 +3144,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--build-command <value>",
           "value": "string",
-          "description": "Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.",
+          "description": "Specify a build command to run before deploying. If not specified, the Hydrogen build pipeline will be used. When custom output directories are configured, defaults to `node --run build`.",
           "isOptional": true
         },
         {
@@ -3203,7 +3212,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--metadata-description <value>",
           "value": "string",
-          "description": "Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.",
+          "description": "Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommitted changes.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION"
         },
@@ -3246,7 +3255,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
-          "description": "Forces a deployment to proceed if there are uncommited changes in its Git repository.",
+          "description": "Forces a deployment to proceed if there are uncommitted changes in its Git repository.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
         },
@@ -3267,9 +3276,18 @@
           "description": "Oxygen deployment token. Defaults to the linked storefront's token if available.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--worker-dir <value>",
+          "value": "string",
+          "description": "Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root. Defaults to the detected Vite server output directory, then falls back to `dist/server`.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_HYDROGEN_FLAG_WORKER_DIR"
         }
       ],
-      "value": "export interface hydrogendeploy {\n  /**\n   * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.\n   * @environment AUTH_BYPASS_TOKEN\n   */\n  '--auth-bypass-token'?: ''\n\n  /**\n   * Specify the duration (in hours) up to 12 hours for the authentication bypass token. Defaults to `2`\n   * @environment AUTH_BYPASS_TOKEN_DURATION\n   */\n  '--auth-bypass-token-duration <value>'?: string\n\n  /**\n   * Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.\n   *\n   */\n  '--build-command <value>'?: string\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the deployment.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Forces a deployment to proceed if there are uncommited changes in its Git repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP\n   */\n  '--force-client-sourcemap'?: ''\n\n  /**\n   * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.\n   *\n   */\n  '--json-output'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION\n   */\n  '--metadata-description <value>'?: string\n\n  /**\n   * User that initiated the deployment. Will be saved and displayed in the Shopify admin\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_USER\n   */\n  '--metadata-user <value>'?: string\n\n  /**\n   * Skip the routability verification step after deployment.\n   *\n   */\n  '--no-verify'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Deploys to the Preview environment.\n   *\n   */\n  '--preview'?: ''\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Oxygen deployment token. Defaults to the linked storefront's token if available.\n   * @environment SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN\n   */\n  '-t, --token <value>'?: string\n}"
+      "value": "export interface hydrogendeploy {\n  /**\n   * Directory containing the client assets to deploy, relative to the project root. Defaults to the detected Vite client output directory, then falls back to `dist/client`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ASSETS_DIR\n   */\n  '--assets-dir <value>'?: string\n\n  /**\n   * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.\n   * @environment AUTH_BYPASS_TOKEN\n   */\n  '--auth-bypass-token'?: ''\n\n  /**\n   * Specify the duration (in hours) up to 12 hours for the authentication bypass token. Defaults to `2`\n   * @environment AUTH_BYPASS_TOKEN_DURATION\n   */\n  '--auth-bypass-token-duration <value>'?: string\n\n  /**\n   * Specify a build command to run before deploying. If not specified, the Hydrogen build pipeline will be used. When custom output directories are configured, defaults to `node --run build`.\n   *\n   */\n  '--build-command <value>'?: string\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the deployment.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Forces a deployment to proceed if there are uncommitted changes in its Git repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP\n   */\n  '--force-client-sourcemap'?: ''\n\n  /**\n   * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.\n   *\n   */\n  '--json-output'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommitted changes.\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION\n   */\n  '--metadata-description <value>'?: string\n\n  /**\n   * User that initiated the deployment. Will be saved and displayed in the Shopify admin\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_USER\n   */\n  '--metadata-user <value>'?: string\n\n  /**\n   * Skip the routability verification step after deployment.\n   *\n   */\n  '--no-verify'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Deploys to the Preview environment.\n   *\n   */\n  '--preview'?: ''\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Oxygen deployment token. Defaults to the linked storefront's token if available.\n   * @environment SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN\n   */\n  '-t, --token <value>'?: string\n\n  /**\n   * Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root. Defaults to the detected Vite server output directory, then falls back to `dist/server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_WORKER_DIR\n   */\n  '--worker-dir <value>'?: string\n}"
     }
   },
   "hydrogendev": {
@@ -3543,7 +3561,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--adapter <value>",
           "value": "string",
-          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
+          "description": "React Router adapter used in the route. The default is `react-router`.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_ADAPTER"
         },
@@ -3584,7 +3602,7 @@
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
         }
       ],
-      "value": "export interface hydrogengenerateroute {\n  /**\n   * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
+      "value": "export interface hydrogengenerateroute {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
     }
   },
   "hydrogengenerateroutes": {
@@ -3599,7 +3617,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--adapter <value>",
           "value": "string",
-          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
+          "description": "React Router adapter used in the route. The default is `react-router`.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_ADAPTER"
         },
@@ -3640,7 +3658,7 @@
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
         }
       ],
-      "value": "export interface hydrogengenerateroutes {\n  /**\n   * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
+      "value": "export interface hydrogengenerateroutes {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
     }
   },
   "hydrogeninit": {
