@@ -3607,6 +3607,41 @@
       "pluginType": "core",
       "strict": true
     },
+    "fetch": {
+      "aliases": [
+      ],
+      "args": {
+        "url": {
+          "description": "The shopify.dev URL to fetch.",
+          "name": "url",
+          "required": true
+        }
+      },
+      "description": "Fetch a document from shopify.dev. Defaults to Markdown.",
+      "enableJsonFlag": false,
+      "examples": [
+        "# fetch the Markdown version of a Shopify.dev page\n    shopify fetch https://shopify.dev/docs/api/shopify-cli\n\n    # fetch the HTML version of a Shopify.dev page\n    shopify fetch https://shopify.dev/docs/api/shopify-cli --content-type text/html\n    "
+      ],
+      "flags": {
+        "content-type": {
+          "description": "The Accept content type to request (defaults to text/markdown).",
+          "env": "SHOPIFY_FLAG_CONTENT_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "content-type",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "fetch",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "usage": "fetch [URL]"
+    },
     "help": {
       "aliases": [
       ],

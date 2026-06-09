@@ -39,7 +39,7 @@
 * [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
 * [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
-* [`shopify doc search`](#shopify-doc-search)
+* [`shopify fetch [URL]`](#shopify-fetch-url)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -1214,33 +1214,29 @@ DESCRIPTION
   Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
 ```
 
-## `shopify doc search`
+## `shopify fetch [URL]`
 
-Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.
+Fetch a document from shopify.dev. Defaults to Markdown.
 
 ```
 USAGE
-  $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [--no-color] [--verbose]
+  $ shopify fetch [URL]
+
+ARGUMENTS
+  URL  The shopify.dev URL to fetch.
 
 FLAGS
-  --api-name=<value>     [env: SHOPIFY_FLAG_API_NAME] Limit results to a specific API (for example: admin, storefront,
-                         hydrogen, functions). Unrecognized values are ignored.
-  --api-version=<value>  [env: SHOPIFY_FLAG_API_VERSION] Limit results to a specific API version (for example: 2025-10,
-                         latest, current).
-  --no-color             [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-  --query=<value>        (required) [env: SHOPIFY_FLAG_QUERY] The search query.
-  --verbose              [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  --content-type=<value>  [env: SHOPIFY_FLAG_CONTENT_TYPE] The Accept content type to request (defaults to
+                          text/markdown).
 
 DESCRIPTION
-  Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic
-  discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To
-  download a full document verbatim, use `doc fetch`.
+  Fetch a document from shopify.dev. Defaults to Markdown.
 
 EXAMPLES
-  # search shopify.dev for a topic
-      shopify doc search --query "subscribe to webhooks"
-      # narrow the search to a specific API and version
-      shopify doc search --query "create a product" --api-name admin --api-version latest
+  # fetch the Markdown version of a Shopify.dev page
+      shopify fetch https://shopify.dev/docs/api/shopify-cli
+      # fetch the HTML version of a Shopify.dev page
+      shopify fetch https://shopify.dev/docs/api/shopify-cli --content-type text/html
 ```
 
 ## `shopify help [command] [flags]`
