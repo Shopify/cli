@@ -39,6 +39,7 @@
 * [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
 * [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
+* [`shopify fetch [URL]`](#shopify-fetch-url)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -1210,6 +1211,31 @@ DESCRIPTION
   When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
 
   Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
+```
+
+## `shopify fetch [URL]`
+
+Fetch a document from shopify.dev. Defaults to Markdown.
+
+```
+USAGE
+  $ shopify fetch [URL]
+
+ARGUMENTS
+  URL  The shopify.dev URL to fetch.
+
+FLAGS
+  --content-type=<value>  [env: SHOPIFY_FLAG_CONTENT_TYPE] The Accept content type to request (defaults to
+                          text/markdown).
+
+DESCRIPTION
+  Fetch a document from shopify.dev. Defaults to Markdown.
+
+EXAMPLES
+  # fetch the Markdown version of a Shopify.dev page
+      shopify fetch https://shopify.dev/docs/api/shopify-cli
+      # fetch the HTML version of a Shopify.dev page
+      shopify fetch https://shopify.dev/docs/api/shopify-cli --content-type text/html
 ```
 
 ## `shopify help [command] [flags]`

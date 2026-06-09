@@ -1,5 +1,6 @@
 import VersionCommand from './cli/commands/version.js'
 import Search from './cli/commands/search.js'
+import Fetch from './cli/commands/fetch.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
 import Login from './cli/commands/auth/login.js'
@@ -145,6 +146,7 @@ export const COMMANDS: any = {
   ...HydrogenCommands,
   ...StoreCommands,
   search: Search,
+  fetch: Fetch,
   upgrade: Upgrade,
   version: VersionCommand,
   help: HelpCommand,
