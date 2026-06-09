@@ -254,7 +254,13 @@ export function downloadFile(url: string, to: string): Promise<string> {
 
       nodeFetch(url, {redirect: 'follow'})
         .then((res) => {
-          res.body?.pipe(file)
+          if (res.ok) {
+            res.body?.pipe(file)
+          } else {
+            file.destroy()
+            tryToRemoveFile()
+            reject(new Error(`Failed to download file from ${sanitizedUrl}. Status: ${res.status}`))
+          }
         })
         .catch((err) => {
           tryToRemoveFile()

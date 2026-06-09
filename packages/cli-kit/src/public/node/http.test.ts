@@ -276,6 +276,24 @@ describe('downloadFile', () => {
     })
   })
 
+  test('Fails if the server returns a 500 error', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const url = 'https://shopify.example/500.txt'
+      const filename = '/bin/500.txt'
+      const to = joinPath(tmpDir, filename)
+
+      // When
+      const result = downloadFile(url, to)
+
+      // Then
+      await expect(result).rejects.toThrow(
+        /Failed to download file from https:\/\/shopify.example\/500.txt. Status: 500/,
+      )
+      await expect(fileExists(to)).resolves.toBe(false)
+    })
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
 
   test.skipIf(runningOnWindows)('Cleans up if download fails', async () => {
