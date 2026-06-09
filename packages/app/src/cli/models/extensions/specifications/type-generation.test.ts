@@ -25,6 +25,72 @@ describe('getGeneratedTypesHelperImportPath', () => {
 })
 
 describe('findAllImportedFiles', () => {
+  test('ignores commented-out imports', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const commentedPath = joinPath(tmpDir, 'commented.ts')
+
+      await writeFile(
+        entryPath,
+        `
+          // import './commented.ts'
+          /*
+            import './commented.ts'
+          */
+        `,
+      )
+      await writeFile(commentedPath, `export const commented = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath)).map((file) => normalizePath(file))
+
+      expect(importedFiles).not.toContain(normalizePath(commentedPath))
+    })
+  })
+
+  test('does not follow type-only imports and exports', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const valuePath = joinPath(tmpDir, 'value.ts')
+      const valueNestedPath = joinPath(tmpDir, 'value-nested.ts')
+      const mixedValuePath = joinPath(tmpDir, 'mixed-value.ts')
+      const mixedExportPath = joinPath(tmpDir, 'mixed-export.ts')
+      const typePath = joinPath(tmpDir, 'types.ts')
+      const typeNestedPath = joinPath(tmpDir, 'type-nested.ts')
+      const exportedTypePath = joinPath(tmpDir, 'exported-types.ts')
+      const exportedTypeNestedPath = joinPath(tmpDir, 'exported-type-nested.ts')
+
+      await writeFile(
+        entryPath,
+        `
+          import './value.ts'
+          import MixedValue, { type MixedType } from './mixed-value.ts'
+          import type { TypeOnly } from './types.ts'
+          export { mixedValue, type MixedExportType } from './mixed-export.ts'
+          export type { ExportedTypeOnly } from './exported-types.ts'
+        `,
+      )
+      await writeFile(valuePath, `import './value-nested.ts'`)
+      await writeFile(valueNestedPath, `export const valueNested = true`)
+      await writeFile(mixedValuePath, `export default true; export type MixedType = string`)
+      await writeFile(mixedExportPath, `export const mixedValue = true; export type MixedExportType = string`)
+      await writeFile(typePath, `import './type-nested.ts'; export type TypeOnly = string`)
+      await writeFile(typeNestedPath, `export const typeNested = true`)
+      await writeFile(exportedTypePath, `import './exported-type-nested.ts'; export type ExportedTypeOnly = string`)
+      await writeFile(exportedTypeNestedPath, `export const exportedTypeNested = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath)).map((file) => normalizePath(file))
+
+      expect(importedFiles).toContain(normalizePath(valuePath))
+      expect(importedFiles).toContain(normalizePath(valueNestedPath))
+      expect(importedFiles).toContain(normalizePath(mixedValuePath))
+      expect(importedFiles).toContain(normalizePath(mixedExportPath))
+      expect(importedFiles).not.toContain(normalizePath(typePath))
+      expect(importedFiles).not.toContain(normalizePath(typeNestedPath))
+      expect(importedFiles).not.toContain(normalizePath(exportedTypePath))
+      expect(importedFiles).not.toContain(normalizePath(exportedTypeNestedPath))
+    })
+  })
+
   test('stops recursive import scanning at the boundary directory', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const extensionDir = joinPath(tmpDir, 'extensions', 'extension')

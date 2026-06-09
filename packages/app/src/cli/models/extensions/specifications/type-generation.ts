@@ -128,6 +128,19 @@ async function parseAndResolveImports(filePath: string, options: FindAllImported
 
     const visit = (node: ts.Node): void => {
       if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        if (node.importClause?.isTypeOnly) {
+          return
+        }
+
+        if (
+          !node.importClause?.name &&
+          node.importClause?.namedBindings &&
+          ts.isNamedImports(node.importClause.namedBindings) &&
+          node.importClause.namedBindings.elements.every((element) => element.isTypeOnly)
+        ) {
+          return
+        }
+
         importPaths.push(node.moduleSpecifier.text)
       } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
         const firstArg = node.arguments[0]
@@ -135,6 +148,18 @@ async function parseAndResolveImports(filePath: string, options: FindAllImported
           importPaths.push(firstArg.text)
         }
       } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        if (node.isTypeOnly) {
+          return
+        }
+
+        if (
+          node.exportClause &&
+          ts.isNamedExports(node.exportClause) &&
+          node.exportClause.elements.every((element) => element.isTypeOnly)
+        ) {
+          return
+        }
+
         importPaths.push(node.moduleSpecifier.text)
       }
 
