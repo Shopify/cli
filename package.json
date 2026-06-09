@@ -103,7 +103,8 @@
     "overrides": {
       "@typescript-eslint/type-utils": "8.56.1",
       "@typescript-eslint/utils": "8.56.1",
-      "prettier": "3.8.1"
+      "prettier": "3.8.1",
+      "rollup": "4.59.0"
     },
     "peerDependencyRules": {
       "allowedVersions": {
