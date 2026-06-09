@@ -1,11 +1,14 @@
 import * as system from './system.js'
 import {execa} from 'execa'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
 
 import * as fs from 'fs'
 
+vi.mock('is-wsl', () => ({
+  default: true,
+}))
 vi.mock('which')
 vi.mock('execa')
 vi.mock('fs', async (importOriginal) => {
@@ -391,5 +394,28 @@ describe('readStdinString', () => {
 
     // Then
     await expect(got).rejects.toThrow('Stdin input exceeded the maximum allowed size.')
+  })
+})
+
+describe('isWsl', () => {
+  beforeEach(() => {
+    system._resetIsWsl()
+  })
+
+  test('returns true when is-wsl is true', async () => {
+    // When
+    const got = await system.isWsl()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('memoizes the result', () => {
+    // When
+    const firstCall = system.isWsl()
+    const secondCall = system.isWsl()
+
+    // Then
+    expect(firstCall).toBe(secondCall)
   })
 })
