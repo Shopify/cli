@@ -1,4 +1,4 @@
-import {linkedAppContext, localAppContext} from './app-context.js'
+import {linkedAppContext, localAppContext, logAppContextMetadataIfAuthenticated} from './app-context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import link from './app/config/link.js'
@@ -14,6 +14,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {sessionExists} from '@shopify/cli-kit/node/session'
 
 vi.mock('../models/app/validation/multi-cli-warning.js')
 vi.mock('./generate/fetch-extension-specifications.js')
@@ -22,6 +23,7 @@ vi.mock('./context.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./app/add-uid-to-extension-toml.js')
 vi.mock('../models/extensions/load-specifications.js')
+vi.mock('@shopify/cli-kit/node/session')
 
 async function writeAppConfig(tmp: string, content: string, configName?: string) {
   const appConfigPath = joinPath(tmp, configName ?? 'shopify.app.toml')
@@ -497,6 +499,84 @@ describe('localAppContext', () => {
           }),
         }),
       )
+    })
+  })
+})
+
+describe('logAppContextMetadataIfAuthenticated', () => {
+  const linkedAppToml = `
+    name = "test-app"
+    client_id = "test-client-id"
+    application_url = "https://example.com"
+    embedded = true
+
+    [auth]
+    redirect_urls = ["https://example.com/callback"]
+
+    [webhooks]
+    api_version = "2024-01"
+  `
+
+  beforeEach(() => {
+    vi.mocked(loadLocalExtensionsSpecifications).mockResolvedValue([])
+    vi.mocked(sessionExists).mockResolvedValue(true)
+  })
+
+  test('attaches api_key for an authenticated user inside an app project', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
+      const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
+      await writeAppConfig(tmp, linkedAppToml)
+
+      // When
+      await logAppContextMetadataIfAuthenticated(tmp)
+
+      // Then — the local app load emits its own metadata too, so find the call
+      // carrying the api_key (only this helper emits it in the local-load path).
+      const payloads = await Promise.all(addSpy.mock.calls.map((call) => call[0]()))
+      expect(payloads).toContainEqual(expect.objectContaining({api_key: 'test-client-id'}))
+    })
+  })
+
+  test('does nothing when the user is not authenticated', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(sessionExists).mockResolvedValue(false)
+      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
+      const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
+      await writeAppConfig(tmp, linkedAppToml)
+
+      // When
+      await logAppContextMetadataIfAuthenticated(tmp)
+
+      // Then
+      expect(addSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  test('short-circuits without checking the session when api_key is already set', async () => {
+    // Given — a command like `app dev` already populated identity
+    vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({api_key: 'already-set'})
+    const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
+
+    // When
+    await logAppContextMetadataIfAuthenticated('/does/not/matter')
+
+    // Then
+    expect(sessionExists).not.toHaveBeenCalled()
+    expect(addSpy).not.toHaveBeenCalled()
+  })
+
+  test('never throws and adds nothing when the directory is not an app project', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given — no shopify.app.toml on disk
+      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
+      const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
+
+      // When / Then
+      await expect(logAppContextMetadataIfAuthenticated(tmp)).resolves.toBeUndefined()
+      expect(addSpy).not.toHaveBeenCalled()
     })
   })
 })
