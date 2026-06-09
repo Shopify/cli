@@ -1,6 +1,23 @@
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
 
+function countryFlag(env: string) {
+  return Flags.string({
+    description: 'Two-letter country code for the store, such as US, CA, or GB.',
+    env,
+    required: false,
+    parse: async (value) => value.trim().toUpperCase(),
+  })
+}
+
+export function isCountryCode(value: string): boolean {
+  return /^[A-Z]{2}$/.test(value)
+}
+
+export const previewStoreFlags = {
+  country: countryFlag('SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY'),
+}
+
 export const storeFlags = {
   store: Flags.string({
     char: 's',
