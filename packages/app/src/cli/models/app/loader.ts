@@ -979,7 +979,7 @@ function getAllLinkedConfigClientIds(
   return Object.fromEntries(entries)
 }
 
-async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
+export async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
   const backendWebs = webs.filter((web) => isWebType(web, WebType.Backend))
   const frontendWebs = webs.filter((web) => isWebType(web, WebType.Frontend))
   if (backendWebs.length > 1) {

@@ -9,6 +9,7 @@ import {Organization, OrganizationApp, OrganizationSource} from '../models/organ
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {
   getAppConfigurationContext,
+  getProjectType,
   loadAppFromContext,
   formatConfigurationError,
   type ConfigurationError,
@@ -18,6 +19,7 @@ import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {sessionExists} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
@@ -61,10 +63,12 @@ interface LoadedAppContextOptions {
  *
  * @param directory - The directory containing the app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param skipPrompts - When true, never prompts the user (e.g. to re-select a config). Required for non-interactive callers such as telemetry.
  */
 interface LocalAppContextOptions {
   directory: string
   userProvidedConfigName?: string
+  skipPrompts?: boolean
 }
 
 /**
@@ -188,8 +192,9 @@ interface LocalAppContextOutput {
 export async function localAppContext({
   directory,
   userProvidedConfigName,
+  skipPrompts = false,
 }: LocalAppContextOptions): Promise<LocalAppContextOutput> {
-  const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
+  const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName, {skipPrompts})
 
   if (activeConfig.file.errors.length > 0) {
     throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
@@ -203,4 +208,57 @@ export async function localAppContext({
   }
 
   return {app, project}
+}
+
+// Upper bound on the best-effort app-context load below. It runs on the postrun of
+// every command, so it must never delay process exit, even on a pathological project.
+const APP_CONTEXT_METADATA_TIMEOUT_MS = 3000
+
+/**
+ * Best-effort, non-interactive enrichment of command analytics with app context.
+ *
+ * When the user is already authenticated and `directory` is an app project, this reads
+ * the app from disk (no network, no prompts) and attaches `api_key` and `project_type`
+ * to the public Monorail metadata. It is designed to run on the postrun of every CLI
+ * command, so it:
+ *   - does nothing unless the user is already logged in (so we never enrich anonymous usage),
+ *   - short-circuits when `api_key` is already set (a command like `app dev` already loaded
+ *     the app — no need to redo the work),
+ *   - never prompts, never makes a network request,
+ *   - is bounded by a short timeout so it can't delay command exit, and
+ *   - swallows all errors (a directory that isn't an app, an invalid config, etc.).
+ *
+ * @param directory - The working directory to inspect for an app.
+ */
+export async function logAppContextMetadataIfAuthenticated(directory: string): Promise<void> {
+  try {
+    // A command that loads the app (e.g. `app dev`) already populated identity.
+    if (metadata.getAllPublicMetadata().api_key !== undefined) return
+    // Only enrich for users who are already authenticated; never trigger a login.
+    if (!(await sessionExists())) return
+
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const deadline = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, APP_CONTEXT_METADATA_TIMEOUT_MS)
+    })
+
+    const load = (async () => {
+      const {app} = await localAppContext({directory, skipPrompts: true})
+      const clientId = app.configuration.client_id
+      const projectType = await getProjectType(app.webs)
+      await metadata.addPublicMetadata(() => ({
+        ...(typeof clientId === 'string' && clientId.length > 0 ? {api_key: clientId} : {}),
+        ...(projectType ? {project_type: projectType} : {}),
+      }))
+    })()
+
+    try {
+      await Promise.race([load, deadline])
+    } finally {
+      if (timer) clearTimeout(timer)
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // Telemetry is strictly best-effort: never surface errors or affect the command.
+  }
 }
