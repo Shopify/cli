@@ -50,8 +50,8 @@
 │     ├─ on
 │     └─ status
 ├─ doc
+│  ├─ fetch
 │  └─ search
-├─ fetch-doc
 ├─ help
 ├─ hydrogen
 │  ├─ build
