@@ -4,6 +4,7 @@ import {
   createTypeDefinition,
   createToolsTypeDefinition,
   findNearestTsConfigDir,
+  findExplicitTsConfigFiles,
   getGeneratedTypesHelperImportPath,
   IntentSchemaFileSchema,
   parseApiVersion,
@@ -254,7 +255,12 @@ const uiExtensionSpec = createExtensionSpecification({
       if (!exists) continue
 
       // Find all imported files recursively
-      const importedFiles = await findAllImportedFiles(fullPath, {boundaryDirectory: extension.directory})
+      const allowedFiles = await findExplicitTsConfigFiles(fullPath, extension.directory)
+      const importedFiles = await findAllImportedFiles(fullPath, {
+        boundaryDirectory: extension.directory,
+        allowedFiles,
+        alwaysAllowedFiles: new Set([fullPath]),
+      })
 
       // Associate imported files with this extension point's target
       for (const importedFile of importedFiles) {
@@ -271,8 +277,11 @@ const uiExtensionSpec = createExtensionSpecification({
         )
         const shouldRenderExists = await fileExists(shouldRenderPath)
         if (shouldRenderExists) {
+          const shouldRenderAllowedFiles = await findExplicitTsConfigFiles(shouldRenderPath, extension.directory)
           const shouldRenderImports = await findAllImportedFiles(shouldRenderPath, {
             boundaryDirectory: extension.directory,
+            allowedFiles: shouldRenderAllowedFiles,
+            alwaysAllowedFiles: new Set([shouldRenderPath]),
           })
           for (const importedFile of shouldRenderImports) {
             const currentTargets = fileToTargetsMap.get(importedFile) ?? []

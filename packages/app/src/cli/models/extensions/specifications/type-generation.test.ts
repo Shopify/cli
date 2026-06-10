@@ -1,6 +1,7 @@
 import {
   createIntentsTypeDefinition,
   createToolsTypeDefinition,
+  findExplicitTsConfigFiles,
   findAllImportedFiles,
   getGeneratedTypesHelperImportPath,
 } from './type-generation.js'
@@ -127,6 +128,84 @@ describe('findAllImportedFiles', () => {
       expect(importedFiles).toContain(normalizePath(nestedPath))
       expect(importedFiles).not.toContain(normalizePath(externalPath))
       expect(importedFiles).not.toContain(normalizePath(externalNestedPath))
+    })
+  })
+
+  test('only follows files from an explicit tsconfig include list when provided', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      const excludedDir = joinPath(tmpDir, 'excluded')
+
+      await mkdir(srcDir)
+      await mkdir(excludedDir)
+
+      const entryPath = joinPath(srcDir, 'index.ts')
+      const includedPath = joinPath(srcDir, 'included.ts')
+      const includedNestedPath = joinPath(srcDir, 'included-nested.ts')
+      const excludedPath = joinPath(excludedDir, 'excluded.ts')
+      const excludedNestedPath = joinPath(excludedDir, 'excluded-nested.ts')
+
+      await writeFile(
+        joinPath(tmpDir, 'tsconfig.json'),
+        JSON.stringify({
+          include: ['src/**/*'],
+        }),
+      )
+      await writeFile(
+        entryPath,
+        `
+          import './included.ts'
+          import '../excluded/excluded.ts'
+        `,
+      )
+      await writeFile(includedPath, `import './included-nested.ts'`)
+      await writeFile(includedNestedPath, `export const includedNested = true`)
+      await writeFile(excludedPath, `import './excluded-nested.ts'`)
+      await writeFile(excludedNestedPath, `export const excludedNested = true`)
+
+      const allowedFiles = await findExplicitTsConfigFiles(entryPath, tmpDir)
+      const importedFiles = (
+        await findAllImportedFiles(entryPath, {
+          boundaryDirectory: tmpDir,
+          allowedFiles,
+          alwaysAllowedFiles: new Set([entryPath]),
+        })
+      ).map((file) => normalizePath(file))
+
+      expect(importedFiles).toContain(normalizePath(includedPath))
+      expect(importedFiles).toContain(normalizePath(includedNestedPath))
+      expect(importedFiles).not.toContain(normalizePath(excludedPath))
+      expect(importedFiles).not.toContain(normalizePath(excludedNestedPath))
+    })
+  })
+
+  test('does not follow declaration files', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const declarationPath = joinPath(tmpDir, 'types.d.ts')
+      const nestedPath = joinPath(tmpDir, 'nested.ts')
+
+      await writeFile(entryPath, `import './types.d.ts'`)
+      await writeFile(declarationPath, `import './nested.ts'`)
+      await writeFile(nestedPath, `export const nested = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath, {boundaryDirectory: tmpDir})).map((file) =>
+        normalizePath(file),
+      )
+
+      expect(importedFiles).not.toContain(normalizePath(declarationPath))
+      expect(importedFiles).not.toContain(normalizePath(nestedPath))
+    })
+  })
+
+  test('does not use a tsconfig allowlist when files and include are implicit', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+
+      await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+      await writeFile(entryPath, `export const entry = true`)
+
+      await expect(findExplicitTsConfigFiles(entryPath, tmpDir)).resolves.toBeUndefined()
     })
   })
 })
