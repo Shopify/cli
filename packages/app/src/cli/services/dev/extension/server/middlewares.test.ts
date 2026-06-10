@@ -6,6 +6,7 @@ import {
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
   getExtensionPointMiddleware,
+  devConsoleAssetsMiddleware,
 } from './middlewares.js'
 import * as utilities from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
@@ -16,6 +17,7 @@ import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {copyConfigKeyEntry} from '../../../build/steps/include-assets/copy-config-key-entry.js'
 import {describe, expect, vi, test} from 'vitest'
+import * as file from '@shopify/cli-kit/node/fs'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -844,5 +846,31 @@ describe('getExtensionPointMiddleware()', () => {
     await getExtensionPayloadMiddleware(options)(event)
 
     expect(h3.sendRedirect).toHaveBeenCalledWith(event, 'http://www.mock.com/redirect/url', 307)
+  })
+})
+
+describe('devConsoleAssetsMiddleware()', () => {
+  test('returns 404 for path traversal attempts', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+      const rootDirectory = joinPath(tmpDir, 'assets')
+      await mkdir(rootDirectory)
+
+      // Mock findPathUp to return our temp rootDirectory
+      vi.spyOn(file, 'findPathUp').mockResolvedValue(rootDirectory)
+
+      const event = getMockEvent({
+        params: {
+          assetPath: '../secret.txt',
+        },
+      })
+
+      await devConsoleAssetsMiddleware(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+      })
+    })
   })
 })
