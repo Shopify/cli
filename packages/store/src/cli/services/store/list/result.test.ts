@@ -64,6 +64,39 @@ describe('writeStoreListResult', () => {
     expect(output.info()).not.toContain('my-shop.my.shop.dev')
   })
 
+  test('renders store-auth rows with subdomain and connected date', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'store-auth',
+        stores: [{store: 'shop.myshopify.com', connectedAt: '2026-06-03T00:00:00Z'}],
+      },
+      'text',
+    )
+
+    expect(output.info()).toContain('Subdomain')
+    expect(output.info()).toContain('Connected')
+    expect(output.info()).toContain('shop')
+    expect(output.info()).toContain('Jun 03, 2026')
+  })
+
+  test('writes the store-auth notice to stderr and the empty state to stdout', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'store-auth',
+        stores: [],
+        notice: 'Showing locally stored store auth instead.',
+      },
+      'text',
+    )
+
+    expect(output.warn()).toContain('Showing locally stored store auth instead.')
+    expect(output.info()).toContain('No stores authenticated locally.')
+  })
+
   test('writes the unresolved-session notice to stderr and the empty state to stdout', () => {
     const output = mockAndCaptureOutput()
 
@@ -88,15 +121,16 @@ describe('writeStoreListResult', () => {
     expect(output.info()).toContain('No stores found in Acme.')
   })
 
-  test('renders the fallback organization empty state when no organization is selected', () => {
+  test('renders the organization empty state and store-auth fallback guidance', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult({source: 'organization', stores: []}, 'text')
 
     expect(output.info()).toContain('No stores found in your Shopify organization.')
+    expect(output.info()).toContain('Run `shopify store list --from store-auth` to inspect locally stored store auth.')
   })
 
-  test('emits a {stores, source, organization} JSON document on stdout', () => {
+  test('emits a {stores, source, organization} JSON document for organization results', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult(
@@ -135,8 +169,25 @@ describe('writeStoreListResult', () => {
     })
   })
 
+  test('emits a {stores, source} JSON document for store-auth results', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'store-auth',
+        stores: [{store: 'shop.myshopify.com', connectedAt: '2026-06-03T00:00:00Z'}],
+      },
+      'json',
+    )
+
+    expect(JSON.parse(output.output())).toEqual({
+      stores: [{store: 'shop.myshopify.com', connectedAt: '2026-06-03T00:00:00Z'}],
+      source: 'store-auth',
+    })
+  })
+
   test('warns on stderr when the listing was truncated, in both text and json', () => {
-    const result = {
+    const organizationResult = {
       source: 'organization' as const,
       organization,
       stores: [
@@ -151,13 +202,45 @@ describe('writeStoreListResult', () => {
     }
 
     const textOutput = mockAndCaptureOutput()
-    writeStoreListResult(result, 'text')
+    writeStoreListResult(organizationResult, 'text')
     expect(textOutput.warn()).toContain('Showing the 250 most recent stores in Acme. More stores exist')
 
     const jsonOutput = mockAndCaptureOutput()
-    writeStoreListResult(result, 'json')
+    writeStoreListResult(organizationResult, 'json')
     expect(jsonOutput.warn()).toContain('Showing the 250 most recent stores in Acme. More stores exist')
     // The structured truncation flag is part of the JSON document on stdout (prose stays on stderr).
     expect(jsonOutput.output()).toContain('"truncated": true')
+  })
+
+  test('warns on stderr when the store-auth listing was truncated', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'store-auth',
+        stores: [{store: 'shop.myshopify.com', connectedAt: '2026-06-03T00:00:00Z'}],
+        truncated: true,
+      },
+      'text',
+    )
+
+    expect(output.warn()).toContain('Showing the 250 most recent stores. More stores exist')
+  })
+
+  test('emits truncated in JSON when the store-auth listing was truncated', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'store-auth',
+        stores: [{store: 'shop.myshopify.com', connectedAt: '2026-06-03T00:00:00Z'}],
+        truncated: true,
+      },
+      'json',
+    )
+
+    expect(output.warn()).toContain('Showing the 250 most recent stores. More stores exist')
+    expect(output.output()).toContain('"source": "store-auth"')
+    expect(output.output()).toContain('"truncated": true')
   })
 })

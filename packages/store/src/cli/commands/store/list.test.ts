@@ -8,13 +8,22 @@ vi.mock('../../services/store/list/result.js')
 vi.mock('../../services/store/attribution.js')
 
 describe('store list command', () => {
-  test('runs the list service and writes text output by default', async () => {
+  test('passes the parsed --from flag through to the list service', async () => {
+    vi.mocked(listStores).mockResolvedValue({stores: [], source: 'store-auth'})
+
+    await StoreList.run(['--from', 'store-auth'])
+
+    expect(listStores).toHaveBeenCalledWith({source: 'store-auth'})
+    expect(writeStoreListResult).toHaveBeenCalledWith({stores: [], source: 'store-auth'}, 'text')
+  })
+
+  test('defaults to the auto source and writes json output when requested', async () => {
     vi.mocked(listStores).mockResolvedValue({stores: [], source: 'organization'})
 
-    await StoreList.run([])
+    await StoreList.run(['--json'])
 
-    expect(listStores).toHaveBeenCalledWith({organizationId: undefined})
-    expect(writeStoreListResult).toHaveBeenCalledWith({stores: [], source: 'organization'}, 'text')
+    expect(listStores).toHaveBeenCalledWith({source: 'auto', organizationId: undefined})
+    expect(writeStoreListResult).toHaveBeenCalledWith({stores: [], source: 'organization'}, 'json')
   })
 
   test('passes the organization id through to the list service', async () => {
@@ -22,20 +31,12 @@ describe('store list command', () => {
 
     await StoreList.run(['--organization-id', '1234567'])
 
-    expect(listStores).toHaveBeenCalledWith({organizationId: '1234567'})
-  })
-
-  test('writes json output when requested', async () => {
-    vi.mocked(listStores).mockResolvedValue({stores: [], source: 'organization'})
-
-    await StoreList.run(['--json'])
-
-    expect(listStores).toHaveBeenCalledWith({organizationId: undefined})
-    expect(writeStoreListResult).toHaveBeenCalledWith({stores: [], source: 'organization'}, 'json')
+    expect(listStores).toHaveBeenCalledWith({source: 'auto', organizationId: '1234567'})
   })
 
   test('defines the expected flags', () => {
-    expect(StoreList.flags.json).toBeDefined()
+    expect(StoreList.flags.from).toBeDefined()
     expect(StoreList.flags['organization-id']).toBeDefined()
+    expect(StoreList.flags.json).toBeDefined()
   })
 })

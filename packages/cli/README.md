@@ -2209,35 +2209,52 @@ EXAMPLES
 
 ## `shopify store list`
 
-List stores in a Shopify organization.
+List stores available to the current CLI session.
 
 ```
 USAGE
-  $ shopify store list [-j] [--no-color] [--organization-id <value>] [--verbose]
+  $ shopify store list [--from auto|organization|store-auth] [-j] [--no-color] [--organization-id <value>]
+    [--verbose]
 
 FLAGS
   -j, --json                     [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color
                                  output.
+      --from=<option>            [default: auto, env: SHOPIFY_FLAG_STORE_LIST_FROM] Source for the listing. `auto`
+                                 prefers your Shopify organization and falls back to locally stored store auth when
+                                 necessary.
+                                 <options: auto|organization|store-auth>
       --no-color                 [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --organization-id=<value>  [env: SHOPIFY_FLAG_ORGANIZATION_ID] Filters the store list by organization. If omitted
-                                 and you belong to more than one organization, you will be prompted to choose one.
+                                 and you belong to more than one organization, you will be prompted to choose one. Only
+                                 valid with `--from auto` or `--from organization`.
       --verbose                  [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
-  List stores in a Shopify organization.
+  List stores available to the current CLI session.
 
-  Lists stores in a Shopify organization available to the current CLI account.
+  Lists stores available to the current Shopify CLI session.
+
+  By default, the command uses `--from auto`:
+  - a selected Shopify organization when the current CLI session can be used without reauthentication
+  - the locally stored store auth cache when the organization can't be listed for the current session
 
   When more than one organization is available, the command prompts you to pick one unless you provide
   `--organization-id`.
   In non-interactive environments, provide `--organization-id`.
+
+  Use `--from organization` to only list organization stores, or `--from store-auth` to inspect only stores connected
+  with `shopify store auth`.
 
   Run `shopify organization list` to find organization IDs.
 
 EXAMPLES
   $ shopify store list
 
+  $ shopify store list --from organization
+
   $ shopify store list --organization-id 1234567
+
+  $ shopify store list --from store-auth
 
   $ shopify store list --json
 ```

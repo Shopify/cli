@@ -4349,6 +4349,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/store-list.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--from <value>",
+          "value": "string",
+          "description": "Source for the listing. `auto` prefers your Shopify organization and falls back to locally stored store auth when necessary.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_STORE_LIST_FROM"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-list.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--no-color",
           "value": "''",
           "description": "Disable color output.",
@@ -4360,7 +4369,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--organization-id <value>",
           "value": "string",
-          "description": "Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.",
+          "description": "Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one. Only valid with `--from auto` or `--from organization`.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_ORGANIZATION_ID"
         },
@@ -4383,7 +4392,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface storelist {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.\n   * @environment SHOPIFY_FLAG_ORGANIZATION_ID\n   */\n  '--organization-id <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface storelist {\n  /**\n   * Source for the listing. `auto` prefers your Shopify organization and falls back to locally stored store auth when necessary.\n   * @environment SHOPIFY_FLAG_STORE_LIST_FROM\n   */\n  '--from <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one. Only valid with `--from auto` or `--from organization`.\n   * @environment SHOPIFY_FLAG_ORGANIZATION_ID\n   */\n  '--organization-id <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themecheck": {

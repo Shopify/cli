@@ -13,7 +13,7 @@ import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/out
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
-export {listStoredStoreAuthSummaries, type StoredStoreAuthSummary} from './stored-auth.js'
+export {listStoredStoreAuthSummaries} from './stored-auth.js'
 
 interface StoreAuthInput {
   store: string

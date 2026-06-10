@@ -15,16 +15,21 @@ export async function fetchOrganizations(): Promise<Organization[]> {
   return result.organizations
 }
 
+interface FetchOrganizationsWithAccessInfoOptions {
+  noPrompt?: boolean
+}
+
 export async function fetchOrganizationsWithAccessInfo(
   token?: string,
+  options: FetchOrganizationsWithAccessInfoOptions = {},
 ): Promise<FetchOrganizationsWithAccessInfoResult> {
-  const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform())
+  const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
   const unauthorizedHandler = {
     type: 'token_refresh' as const,
     handler: async () => {
       if (token) return {}
 
-      const newToken = await ensureAuthenticatedBusinessPlatform()
+      const newToken = await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt})
       return {token: newToken}
     },
   }
