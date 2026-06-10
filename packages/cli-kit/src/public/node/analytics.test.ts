@@ -13,7 +13,7 @@ import {inTemporaryDirectory, touchFile, mkdir} from './fs.js'
 import {joinPath, dirname} from './path.js'
 import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {addPublicMetadata} from './metadata.js'
+import {addPublicMetadata, addSensitiveMetadata} from './metadata.js'
 import {sendErrorToBugsnag} from './error-handler.js'
 import {hashString} from './crypto.js'
 import * as store from '../../private/node/analytics/storage.js'
@@ -121,6 +121,40 @@ describe('event tracking', () => {
       expect(publishEventMock).toHaveBeenCalledOnce()
       expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
       expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
+    })
+  })
+
+  test('uses a recorded command end time when reporting after postrun work', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      const startTime = currentDate.getTime() - 100
+      const commandEndTime = currentDate.getTime()
+      await startAnalytics({commandContent, args, currentTime: startTime})
+      await addSensitiveMetadata(() => ({
+        commandStartOptions: {
+          startTime,
+          endTime: commandEndTime,
+          startCommand: commandContent.command,
+          startArgs: args,
+        },
+      }))
+      vi.setSystemTime(new Date(commandEndTime + 60000))
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject({
+        time_start: startTime,
+        time_end: commandEndTime,
+        total_time: 100,
+      })
     })
   })
 

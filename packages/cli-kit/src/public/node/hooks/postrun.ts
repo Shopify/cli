@@ -56,8 +56,16 @@ export function waitForPostRunHookAndExit(): void {
 export const hook: Hook.Postrun = async ({config, Command}) => {
   await detectStopCommand(Command as unknown as typeof Command)
 
-  const {reportAnalyticsEvent} = await import('../analytics.js')
-  await reportAnalyticsEvent({config, exitMode: 'ok'})
+  const metadata = await import('../metadata.js')
+  const {commandStartOptions} = metadata.getAllSensitiveMetadata()
+  if (commandStartOptions) {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {
+        ...commandStartOptions,
+        endTime: new Date().getTime(),
+      },
+    }))
+  }
 
   const {postrun: deprecationsHook} = await import('./deprecations.js')
   deprecationsHook(Command)
@@ -67,6 +75,10 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   outputDebug(`Completed command ${command}`)
 
   if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
+
+  const {reportAnalyticsEvent} = await import('../analytics.js')
+  await reportAnalyticsEvent({config, exitMode: 'ok'})
+
   postRunHookCompleted = true
 }
 

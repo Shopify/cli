@@ -117,8 +117,8 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
     outputDebug('Unable to log analytics event - no information on executed command')
     return
   }
-  const {startCommand, startArgs, startTime} = commandStartOptions
-  const currentTime = new Date().getTime()
+  const {startCommand, startArgs, startTime, endTime} = commandStartOptions
+  const currentTime = endTime ?? new Date().getTime()
 
   // All bundled plugins appear as `@shopify/cli` in the payload
   const {'@shopify/cli': internalPluginsPublic, ...externalPluginsPublic} = await fanoutHooks(
