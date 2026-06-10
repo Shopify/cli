@@ -1,64 +1,5 @@
 {
   "commands": {
-    "agent-search": {
-      "aliases": [
-      ],
-      "args": {
-        "query": {
-          "description": "The search query.",
-          "name": "query",
-          "required": true
-        }
-      },
-      "description": "Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `fetch-doc`.",
-      "enableJsonFlag": false,
-      "examples": [
-        "# search shopify.dev for a topic\n    shopify agent-search \"subscribe to webhooks\"\n\n    # narrow the search to a specific API and version\n    shopify agent-search \"create a product\" --api-name admin --api-version latest\n    "
-      ],
-      "flags": {
-        "api-name": {
-          "description": "Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are ignored.",
-          "env": "SHOPIFY_FLAG_API_NAME",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "api-name",
-          "type": "option"
-        },
-        "api-version": {
-          "description": "Limit results to a specific API version (for example: 2025-10, latest, current).",
-          "env": "SHOPIFY_FLAG_API_VERSION",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "api-version",
-          "type": "option"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
-      "id": "agent-search",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "usage": "agent-search [query]"
-    },
     "app:build": {
       "aliases": [
       ],
@@ -5711,7 +5652,10 @@
           "name": "query"
         }
       },
-      "description": "Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive, human use. If you are an agent or need results programmatically, use `agent-search` instead, which returns the matching documentation as JSON.",
+      "deprecationOptions": {
+        "to": "doc search"
+      },
+      "description": "Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive, human use. Deprecated: if you are an agent or need results programmatically, use `doc search` instead, which returns the matching documentation as JSON.",
       "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
@@ -5725,6 +5669,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "state": "deprecated",
       "strict": true,
       "usage": "search [query]"
     },

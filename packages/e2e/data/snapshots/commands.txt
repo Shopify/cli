@@ -1,4 +1,3 @@
-├─ agent-search
 ├─ app
 │  ├─ build
 │  ├─ bulk
@@ -92,7 +91,6 @@
 │  ├─ uninstall
 │  ├─ unlink
 │  └─ update
-├─ search
 ├─ store
 │  ├─ auth
 │  └─ execute
