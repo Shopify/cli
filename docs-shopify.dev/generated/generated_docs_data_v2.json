@@ -2742,6 +2742,44 @@
       "value": "export interface configautoupgradestatus {\n\n}"
     }
   },
+  "docfetch": {
+    "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
+      "name": "docfetch",
+      "description": "The following flags are available for the `doc fetch` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-o, --output <value>",
+          "value": "string",
+          "description": "Write the document to this file path instead of printing it to stdout.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_OUTPUT"
+        }
+      ],
+      "value": "export interface docfetch {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "help": {
     "docs-shopify.dev/commands/interfaces/help.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
@@ -4126,8 +4164,27 @@
       "name": "search",
       "description": "The following flags are available for the `search` command:",
       "isPublicDocs": true,
-      "members": [],
-      "value": "export interface search {\n\n}"
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        }
+      ],
+      "value": "export interface search {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "storeauth": {

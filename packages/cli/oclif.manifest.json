@@ -3424,6 +3424,59 @@
       "strict": true,
       "summary": "Watch and prints out changes to an app."
     },
+    "doc:fetch": {
+      "aliases": [
+      ],
+      "args": {
+        "url": {
+          "description": "The shopify.dev URL to fetch.",
+          "name": "url",
+          "required": true
+        }
+      },
+      "description": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
+      "enableJsonFlag": false,
+      "examples": [
+        "# fetch the Markdown version of a Shopify.dev page\nshopify doc fetch https://shopify.dev/docs/api/shopify-cli",
+        "# save the document to a file instead of printing it\nshopify doc fetch https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md"
+      ],
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "output": {
+          "char": "o",
+          "description": "Write the document to this file path instead of printing it to stdout.",
+          "env": "SHOPIFY_FLAG_OUTPUT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "output",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "doc:fetch",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "usage": "doc fetch [URL]"
+    },
     "docs:generate": {
       "aliases": [
       ],
@@ -5652,12 +5705,28 @@
           "name": "query"
         }
       },
-      "description": "Starts a search on shopify.dev.",
+      "description": "Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
       "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
       ],
       "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
