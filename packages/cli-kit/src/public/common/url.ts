@@ -28,3 +28,32 @@ export function safeParseURL(url: string): URL | undefined {
     return undefined
   }
 }
+
+/**
+ * Extracts the lowercased hostname from a URL-shaped string. Tolerates
+ * bare hosts (without a scheme) and inputs that come back from APIs as
+ * either `https://shop.myshopify.com` or `shop.myshopify.com`.
+ *
+ * @param value - A URL or bare host string, possibly null/undefined.
+ * @returns The lowercased hostname, or undefined when the input is empty.
+ */
+export function extractHost(value: string | null | undefined): string | undefined {
+  if (!value) return undefined
+  const lowered = value.toLowerCase()
+  const parsed = safeParseURL(lowered)
+  if (parsed) return parsed.hostname
+  return lowered.replace(/^https?:\/\//, '').split('/')[0]
+}
+
+/**
+ * Extracts the subdomain handle from a `*.myshopify.com` URL or host.
+ *
+ * @param value - A URL or host string, possibly null/undefined.
+ * @returns The myshopify subdomain handle, or undefined when the input isn't a `*.myshopify.com` URL.
+ */
+export function extractMyshopifyHandle(value: string | null | undefined): string | undefined {
+  const host = extractHost(value)
+  if (!host) return undefined
+  const match = host.match(/^([^.]+)\.myshopify\.com$/)
+  return match ? match[1] : undefined
+}
