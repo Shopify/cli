@@ -147,7 +147,8 @@
       "unresolved": "error"
     },
     "ignoreBinaries": [
-      "playwright"
+      "playwright",
+      "tsx"
     ],
     "ignoreDependencies": [
       "@shopify/generate-docs"

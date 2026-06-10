@@ -13,6 +13,8 @@
  *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --delete      # Delete only (skip uninstall — delete only apps with 0 installs)
  *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --headed      # Show browser window
  *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern X   # Match apps containing "X" (default: "E2E-")
+ *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --max-apps 25 # Stop after finding 25 matching apps
+ *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --max-pages 5 # Stop after scanning 5 dashboard pages
  *
  * Environment variables (loaded from packages/e2e/.env):
  *   E2E_ACCOUNT_EMAIL    — Shopify account email for login
@@ -59,6 +61,10 @@ export interface CleanupOptions {
   headed?: boolean
   /** Organization ID (default: from E2E_ORG_ID env) */
   orgId?: string
+  /** Stop discovering apps after this many matching apps */
+  maxApps?: number
+  /** Stop discovering apps after this many dashboard pages */
+  maxPages?: number
 }
 
 /**
@@ -77,6 +83,8 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
   console.log(`[cleanup-apps] Mode:    ${MODE_LABELS[mode]}`)
   console.log(`[cleanup-apps] Org:     ${orgId || '(not set)'}`)
   console.log(`[cleanup-apps] Pattern: "${pattern}"`)
+  if (opts.maxApps) console.log(`[cleanup-apps] Max apps: ${opts.maxApps}`)
+  if (opts.maxPages) console.log(`[cleanup-apps] Max pages: ${opts.maxPages}`)
   console.log('')
 
   if (!email || !password) {
@@ -118,7 +126,11 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
 
     // Step 3: Find matching apps
     console.log('[cleanup-apps] Finding matching apps...')
-    const apps = await findAppsOnDashboard(page, pattern)
+    const apps = await findAppsOnDashboard(page, pattern, {
+      maxApps: opts.maxApps,
+      maxPages: opts.maxPages,
+      onlyUninstalled: mode === 'delete',
+    })
     console.log(`[cleanup-apps] Found ${apps.length} app(s) matching pattern "${pattern}"`)
     console.log('')
 
@@ -233,12 +245,15 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
 async function findAppsOnDashboard(
   page: Page,
   namePattern: string,
+  opts: {maxApps?: number; maxPages?: number; onlyUninstalled?: boolean} = {},
 ): Promise<{name: string; url: string; installs: number}[]> {
   const apps: {name: string; url: string; installs: number}[] = []
   let totalSeen = 0
+  let pagesSeen = 0
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
+    pagesSeen++
     // Recover from transient 500/502 before parsing the page
     for (let attempt = 1; attempt <= 3; attempt++) {
       if (!(await refreshIfPageError(page))) break
@@ -261,12 +276,17 @@ async function findAppsOnDashboard(
 
       const installMatch = text.match(/(\d+)\s+install/i)
       const installs = installMatch ? parseInt(installMatch[1]!, 10) : 0
+      if (opts.onlyUninstalled && installs > 0) continue
 
       const url = href.startsWith('http') ? href : `https://dev.shopify.com${href}`
       apps.push({name, url, installs})
+      if (opts.maxApps && apps.length >= opts.maxApps) break
     }
 
     console.log(`[cleanup-apps]   ...loaded ${totalSeen} apps`)
+
+    if (opts.maxApps && apps.length >= opts.maxApps) break
+    if (opts.maxPages && pagesSeen >= opts.maxPages) break
 
     // Check for next page — navigate via href since the button click may not work
     const nextLink = page.locator('a[href*="next_cursor"]').first()
@@ -392,12 +412,30 @@ async function main() {
     pattern = nextArg
   }
 
+  const maxApps = parsePositiveIntegerOption(args, '--max-apps')
+  const maxPages = parsePositiveIntegerOption(args, '--max-pages')
+
   let mode: CleanupMode = 'full'
   if (args.includes('--list')) mode = 'list'
   else if (args.includes('--uninstall')) mode = 'uninstall'
   else if (args.includes('--delete')) mode = 'delete'
 
-  await cleanupAllApps({mode, pattern, headed})
+  await cleanupAllApps({mode, pattern, headed, maxApps, maxPages})
+}
+
+function parsePositiveIntegerOption(args: string[], name: string): number | undefined {
+  const optionIndex = args.indexOf(name)
+  if (optionIndex === -1) return undefined
+
+  const optionValue = args[optionIndex + 1]
+  const parsedValue = Number(optionValue)
+  if (!optionValue || !Number.isInteger(parsedValue) || parsedValue <= 0) {
+    console.error(`[cleanup-apps] ${name} requires a positive integer`)
+    process.exitCode = 1
+    return undefined
+  }
+
+  return parsedValue
 }
 
 // Run if executed directly (not imported)

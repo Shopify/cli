@@ -219,8 +219,35 @@ jobs:
         if: needs.unit-tests.result != 'success'
         run: exit 1
 
+  e2e-cleanup-apps:
+    name: 'E2E preflight app cleanup'
+    if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.PLAYWRIGHT_NODE_VERSION }}
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium
+        working-directory: packages/e2e
+      - name: Delete stale E2E apps
+        working-directory: packages/e2e
+        env:
+          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
+          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
+          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+        run: pnpm exec tsx scripts/cleanup-apps.ts --delete --max-apps 25 --max-pages 10
+
   e2e-tests:
     name: "E2E tests (shard ${{ matrix.shard }})"
+    needs: e2e-cleanup-apps
     if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
