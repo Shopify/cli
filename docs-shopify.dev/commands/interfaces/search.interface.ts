@@ -4,27 +4,5 @@
  * @publicDocs
  */
 export interface search {
-  /**
-   * Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are ignored.
-   * @environment SHOPIFY_FLAG_API_NAME
-   */
-  '--api-name <value>'?: string
 
-  /**
-   * Limit results to a specific API version (for example: 2025-10, latest, current).
-   * @environment SHOPIFY_FLAG_API_VERSION
-   */
-  '--api-version <value>'?: string
-
-  /**
-   * Disable color output.
-   * @environment SHOPIFY_FLAG_NO_COLOR
-   */
-  '--no-color'?: ''
-
-  /**
-   * Increase the verbosity of the output.
-   * @environment SHOPIFY_FLAG_VERBOSE
-   */
-  '--verbose'?: ''
 }
