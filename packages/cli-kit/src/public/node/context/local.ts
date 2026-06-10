@@ -45,6 +45,11 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the shopify check.
+ */
+let memoizedIsShopify: Promise<boolean> | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -77,11 +82,22 @@ export function isVerbose(env = process.env): boolean {
  * @returns True if the CLI is used in a Shopify environment.
  */
 export async function isShopify(env = process.env): Promise<boolean> {
-  if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
-    return !isTruthy(env[environmentVariables.runAsUser])
+  if (env === process.env && memoizedIsShopify !== undefined) {
+    return memoizedIsShopify
   }
-  const devInstalled = await lazyFileExists(pathConstants.executables.dev)
-  return devInstalled
+
+  const resultPromise = (async () => {
+    if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
+      return !isTruthy(env[environmentVariables.runAsUser])
+    } else {
+      return lazyFileExists(pathConstants.executables.dev)
+    }
+  })()
+
+  if (env === process.env) {
+    memoizedIsShopify = resultPromise
+  }
+  return resultPromise
 }
 
 /**
@@ -323,6 +339,14 @@ export function opentelemetryDomain(env = process.env): string {
   const domain = env[environmentVariables.otelURL]
 
   return isSet(domain) ? domain : 'https://otlp-http-production-cli.shopifysvc.com'
+}
+
+/**
+ * This function is only used during UnitTesting.
+ * It resets the memoized value of the shopify check.
+ */
+export function _resetIsShopifyCache(): void {
+  memoizedIsShopify = undefined
 }
 
 export type CIMetadata = Metadata
