@@ -94,6 +94,9 @@
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
+      "doc": {
+        "description": "Search and fetch documentation from shopify.dev."
+      },
       "hydrogen": {
         "description": "Build Hydrogen storefronts."
       },
