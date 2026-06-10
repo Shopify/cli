@@ -46,23 +46,27 @@ export function parseApiVersion(apiVersion: string): {year: number; month: numbe
   return {year: parseInt(year, 10), month: parseInt(month, 10)}
 }
 
-async function loadTsConfig(
-  startPath: string,
-): Promise<{compilerOptions: ts.CompilerOptions; configPath: string | undefined}> {
+async function loadTsConfig(startPath: string): Promise<{
+  compilerOptions: ts.CompilerOptions
+  configPath: string | undefined
+  fileNames?: string[]
+  hasExplicitFiles: boolean
+}> {
   const ts = await loadTypeScript()
   const configPath = ts.findConfigFile(startPath, ts.sys.fileExists.bind(ts.sys), 'tsconfig.json')
   if (!configPath) {
-    return {compilerOptions: {}, configPath: undefined}
+    return {compilerOptions: {}, configPath: undefined, hasExplicitFiles: false}
   }
 
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile.bind(ts.sys))
   if (configFile.error) {
-    return {compilerOptions: {}, configPath}
+    return {compilerOptions: {}, configPath, hasExplicitFiles: false}
   }
 
   const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configPath))
+  const hasExplicitFiles = Boolean(configFile.config.files ?? configFile.config.include)
 
-  return {compilerOptions: parsedConfig.options, configPath}
+  return {compilerOptions: parsedConfig.options, configPath, fileNames: parsedConfig.fileNames, hasExplicitFiles}
 }
 
 async function fallbackResolve(importPath: string, baseDir: string): Promise<string | null> {
@@ -97,6 +101,8 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
 
 interface FindAllImportedFilesOptions {
   boundaryDirectory?: string
+  allowedFiles?: Set<string>
+  alwaysAllowedFiles?: Set<string>
 }
 
 function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean {
@@ -104,8 +110,28 @@ function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean
   return isSubpath(resolvePath(boundaryDirectory), resolvePath(filePath))
 }
 
+function isAllowedFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
+  if (!options.allowedFiles) return true
+
+  const resolvedPath = resolvePath(filePath)
+  return options.allowedFiles.has(resolvedPath) || Boolean(options.alwaysAllowedFiles?.has(resolvedPath))
+}
+
+function isScannableFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
+  return (
+    !filePath.includes('node_modules') &&
+    !filePath.endsWith('.d.ts') &&
+    isWithinBoundary(filePath, options.boundaryDirectory) &&
+    isAllowedFile(filePath, options)
+  )
+}
+
 async function parseAndResolveImports(filePath: string, options: FindAllImportedFilesOptions = {}): Promise<string[]> {
   try {
+    if (!isAllowedFile(filePath, options)) {
+      return []
+    }
+
     const ts = await loadTypeScript()
     const content = readFileSync(filePath).toString()
     const resolvedPaths: string[] = []
@@ -181,14 +207,14 @@ async function parseAndResolveImports(filePath: string, options: FindAllImported
       if (resolvedModule.resolvedModule?.resolvedFileName) {
         const resolvedPath = resolvedModule.resolvedModule.resolvedFileName
 
-        if (!resolvedPath.includes('node_modules') && isWithinBoundary(resolvedPath, options.boundaryDirectory)) {
+        if (isScannableFile(resolvedPath, options)) {
           resolvedPaths.push(resolvedPath)
         }
       } else {
         // Fallback to manual resolution for edge cases
         // eslint-disable-next-line no-await-in-loop
         const fallbackPath = await fallbackResolve(importPath, dirname(filePath))
-        if (fallbackPath && isWithinBoundary(fallbackPath, options.boundaryDirectory)) {
+        if (fallbackPath && isScannableFile(fallbackPath, options)) {
           resolvedPaths.push(fallbackPath)
         }
       }
@@ -226,6 +252,22 @@ export async function findAllImportedFiles(
   }
 
   return uniq(allFiles)
+}
+
+export async function findExplicitTsConfigFiles(
+  fromFile: string,
+  extensionDirectory: string,
+): Promise<Set<string> | undefined> {
+  const {configPath, fileNames, hasExplicitFiles} = await loadTsConfig(fromFile)
+  if (!configPath || !hasExplicitFiles) return
+
+  if (!isWithinBoundary(configPath, extensionDirectory)) return
+
+  return new Set(
+    (fileNames ?? [])
+      .filter((fileName) => isWithinBoundary(fileName, extensionDirectory))
+      .map((fileName) => resolvePath(fileName)),
+  )
 }
 
 interface CreateTypeDefinitionOptions {
