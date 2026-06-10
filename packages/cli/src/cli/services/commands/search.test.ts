@@ -8,12 +8,12 @@ describe('searchService', () => {
   test('the right URL is open in the system when a query is passed', async () => {
     await searchService('deploy app')
 
-    expect(openURL).toBeCalledWith('https://shopify.dev?search=deploy+app')
+    expect(openURL).toBeCalledWith('https://shopify.dev/?search=deploy+app')
   })
 
   test('the right URL is open in the system when a query is not passed', async () => {
     await searchService()
 
-    expect(openURL).toBeCalledWith('https://shopify.dev?search=')
+    expect(openURL).toBeCalledWith('https://shopify.dev/?search=')
   })
 })

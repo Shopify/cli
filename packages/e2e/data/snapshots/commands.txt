@@ -92,6 +92,7 @@
 │  ├─ uninstall
 │  ├─ unlink
 │  └─ update
+├─ search
 ├─ store
 │  ├─ auth
 │  └─ execute

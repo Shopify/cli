@@ -5711,9 +5711,6 @@
           "name": "query"
         }
       },
-      "deprecationOptions": {
-        "to": "agent-search"
-      },
       "description": "Starts a search on shopify.dev.",
       "enableJsonFlag": false,
       "examples": [
@@ -5728,7 +5725,6 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "state": "deprecated",
       "strict": true,
       "usage": "search [query]"
     },
