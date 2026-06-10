@@ -5711,7 +5711,7 @@
           "name": "query"
         }
       },
-      "description": "Starts a search on shopify.dev.",
+      "description": "Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive, human use. If you are an agent or need results programmatically, use `agent-search` instead, which returns the matching documentation as JSON.",
       "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "

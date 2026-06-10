@@ -3,7 +3,8 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {Args} from '@oclif/core'
 
 export default class Search extends Command {
-  static description = 'Starts a search on shopify.dev.'
+  static description =
+    'Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive, human use. If you are an agent or need results programmatically, use `agent-search` instead, which returns the matching documentation as JSON.'
 
   static usage = `search [query]`
 
