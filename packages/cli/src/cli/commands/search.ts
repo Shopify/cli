@@ -5,6 +5,12 @@ import {Args} from '@oclif/core'
 export default class Search extends Command {
   static description = 'Starts a search on shopify.dev.'
 
+  // Deprecated in favor of `agent-search`, which returns JSON for programmatic use.
+  // The browser behavior below is intentionally preserved so existing usage doesn't
+  // break; oclif emits a runtime deprecation warning pointing to `agent-search`.
+  static state = 'deprecated'
+  static deprecationOptions = {to: 'agent-search'}
+
   static usage = `search [query]`
 
   static examples = [
