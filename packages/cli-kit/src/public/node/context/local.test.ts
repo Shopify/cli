@@ -3,6 +3,7 @@ import {
   hasGit,
   isDevelopment,
   isShopify,
+  _resetIsShopifyCache,
   isTerminalInteractive,
   isUnitTest,
   analyticsDisabled,
@@ -97,6 +98,10 @@ describe('isDevelopment', () => {
 })
 
 describe('isShopify', () => {
+  afterEach(() => {
+    _resetIsShopifyCache()
+  })
+
   test('returns false when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '1'}
@@ -119,6 +124,18 @@ describe('isShopify', () => {
 
     // When
     await expect(isShopify()).resolves.toBe(true)
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await isShopify()
+    await isShopify()
+
+    // Then
+    expect(fileExists).toHaveBeenCalledTimes(1)
   })
 })
 
