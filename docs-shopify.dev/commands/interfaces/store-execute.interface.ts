@@ -41,7 +41,7 @@ export interface storeexecute {
   '--query-file <value>'?: string
 
   /**
-   * The myshopify.com domain of the store to execute against.
+   * The myshopify.com domain of the store.
    * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>': string
