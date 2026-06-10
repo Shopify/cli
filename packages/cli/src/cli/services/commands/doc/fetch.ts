@@ -12,7 +12,7 @@ const MARKDOWN_CONTENT_TYPE = 'text/markdown'
 // hostname is one of these or a subdomain of one of these.
 const ALLOWED_HOSTS = ['shopify.dev']
 
-export async function fetchDocService(url: string, outputPath?: string) {
+export async function docFetchService(url: string, outputPath?: string) {
   let parsedURL: URL
   try {
     parsedURL = new URL(url)

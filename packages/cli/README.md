@@ -39,7 +39,7 @@
 * [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
 * [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
-* [`shopify fetch-doc [URL]`](#shopify-fetch-doc-url)
+* [`shopify doc fetch [URL]`](#shopify-doc-fetch-url)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -1213,13 +1213,13 @@ DESCRIPTION
   Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
 ```
 
-## `shopify fetch-doc [URL]`
+## `shopify doc fetch [URL]`
 
-Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.
+Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
 ```
 USAGE
-  $ shopify fetch-doc [URL]
+  $ shopify doc fetch [URL]
 
 ARGUMENTS
   URL  The shopify.dev URL to fetch.
@@ -1233,16 +1233,16 @@ FLAGS
 DESCRIPTION
   Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this
   tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like
-  a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `search`.
+  a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
 EXAMPLES
   # fetch the Markdown version of a Shopify.dev page
 
-    $ shopify fetch-doc https://shopify.dev/docs/api/shopify-cli
+    $ shopify doc fetch https://shopify.dev/docs/api/shopify-cli
 
   # save the document to a file instead of printing it
 
-    $ shopify fetch-doc https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md
+    $ shopify doc fetch https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md
 ```
 
 ## `shopify help [command] [flags]`
@@ -2116,7 +2116,7 @@ DESCRIPTION
 
 ## `shopify search [query]`
 
-Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `fetch-doc`.
+Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.
 
 ```
 USAGE
@@ -2128,8 +2128,8 @@ FLAGS
 
 DESCRIPTION
   Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces
-  of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use
-  `fetch-doc`.
+  of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc
+  fetch`.
 
 EXAMPLES
   # open the search modal on Shopify.dev

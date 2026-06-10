@@ -2742,15 +2742,15 @@
       "value": "export interface configautoupgradestatus {\n\n}"
     }
   },
-  "fetchdoc": {
-    "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts": {
-      "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
-      "name": "fetchdoc",
-      "description": "The following flags are available for the `fetch-doc` command:",
+  "docfetch": {
+    "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
+      "name": "docfetch",
+      "description": "The following flags are available for the `doc fetch` command:",
       "isPublicDocs": true,
       "members": [
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--no-color",
           "value": "''",
@@ -2759,7 +2759,7 @@
           "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--verbose",
           "value": "''",
@@ -2768,7 +2768,7 @@
           "environmentValue": "SHOPIFY_FLAG_VERBOSE"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/fetch-doc.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "-o, --output <value>",
           "value": "string",
@@ -2777,7 +2777,7 @@
           "environmentValue": "SHOPIFY_FLAG_OUTPUT"
         }
       ],
-      "value": "export interface fetchdoc {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface docfetch {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "help": {
