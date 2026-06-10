@@ -1,9 +1,10 @@
 import {maskToken} from './config.js'
 import {throwStoredStoreAuthError, throwReauthenticateStoreAuthError} from './recovery.js'
-import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
+import {clearStoredStoreAppSession, getStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
 import {refreshStoreAccessToken} from './token-client.js'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {currentAgentKey} from '@shopify/cli-kit/node/context/agent'
 import type {StoredStoreAppSession} from './session-store.js'
 
 const EXPIRY_MARGIN_MS = 4 * 60 * 1000
@@ -42,14 +43,31 @@ function buildRefreshedStoredSession(
 }
 
 export async function loadStoredStoreSession(store: string): Promise<StoredStoreAppSession> {
-  let session = getCurrentStoredStoreAppSession(store)
+  const agentKey = currentAgentKey()
+  let session = getStoredStoreAppSession(store, agentKey)
+  let resolvedAgentKey = agentKey
+
+  if (!session && agentKey !== 'default') {
+    const fallback = getStoredStoreAppSession(store, 'default')
+    if (fallback) {
+      session = fallback
+      resolvedAgentKey = 'default'
+      outputDebug(
+        outputContent`No ${outputToken.raw(agentKey)} session for ${outputToken.raw(store)}; falling back to default.`,
+      )
+    }
+  }
 
   if (!session) {
     throwStoredStoreAuthError(store)
   }
 
+  outputInfo(
+    outputContent`Using ${outputToken.raw(resolvedAgentKey)} token for ${outputToken.raw(store)} (scopes: ${outputToken.raw(session.scopes.join(', ') || 'none')})`,
+  )
+
   outputDebug(
-    outputContent`Loaded stored session for ${outputToken.raw(store)}: token=${outputToken.raw(maskToken(session.accessToken))}, expires=${outputToken.raw(session.expiresAt ?? 'unknown')}`,
+    outputContent`Loaded stored session for ${outputToken.raw(store)} (agent ${outputToken.raw(resolvedAgentKey)}): token=${outputToken.raw(maskToken(session.accessToken))}, expires=${outputToken.raw(session.expiresAt ?? 'unknown')}`,
   )
 
   if (!isSessionExpired(session)) {
@@ -77,7 +95,7 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
       refreshToken: session.refreshToken,
     })
   } catch (error) {
-    clearStoredStoreAppSession(session.store, session.userId)
+    clearStoredStoreAppSession(session.store, session.agentKey, session.userId)
 
     if (error instanceof AbortError && error.message.startsWith(`Token refresh failed for ${session.store} (HTTP `)) {
       throwReauthenticateStoreAuthError(error.message, session.store, session.scopes.join(','))

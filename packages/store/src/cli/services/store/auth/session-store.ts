@@ -4,6 +4,7 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 export interface StoredStoreAppSession {
   store: string
   clientId: string
+  agentKey: string
   userId: string
   accessToken: string
   refreshToken?: string
@@ -20,9 +21,13 @@ export interface StoredStoreAppSession {
   }
 }
 
-interface StoredStoreAppSessionBucket {
+interface StoredStoreAppAgentGroup {
   currentUserId: string
   sessionsByUserId: {[userId: string]: StoredStoreAppSession}
+}
+
+interface StoredStoreAppSessionBucket {
+  sessionsByAgentKey: {[agentKey: string]: StoredStoreAppAgentGroup}
 }
 
 interface StoreSessionSchema {
@@ -62,6 +67,7 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
   if (
     !isString(session.store) ||
     !isString(session.clientId) ||
+    !isString(session.agentKey) ||
     !isString(session.userId) ||
     !isString(session.accessToken) ||
     !Array.isArray(session.scopes) ||
@@ -74,6 +80,7 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
   return {
     store: session.store,
     clientId: session.clientId,
+    agentKey: session.agentKey,
     userId: session.userId,
     accessToken: session.accessToken,
     scopes: session.scopes,
@@ -87,22 +94,16 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
   }
 }
 
-function readStoredStoreAppSessionBucket(
-  store: string,
-  storage: LocalStorage<StoreSessionSchema>,
-): StoredStoreAppSessionBucket | undefined {
-  const key = storeAuthSessionKey(store)
-  const storedBucket = storage.get(key)
-  if (!storedBucket || typeof storedBucket !== 'object') return undefined
+function sanitizeAgentGroup(value: unknown): StoredStoreAppAgentGroup | undefined {
+  if (!value || typeof value !== 'object') return undefined
 
-  const {sessionsByUserId, currentUserId} = storedBucket as Partial<StoredStoreAppSessionBucket>
+  const {currentUserId, sessionsByUserId} = value as Partial<StoredStoreAppAgentGroup>
   if (
+    typeof currentUserId !== 'string' ||
     !sessionsByUserId ||
     typeof sessionsByUserId !== 'object' ||
-    Array.isArray(sessionsByUserId) ||
-    typeof currentUserId !== 'string'
+    Array.isArray(sessionsByUserId)
   ) {
-    storage.delete(key)
     return undefined
   }
 
@@ -113,38 +114,56 @@ function readStoredStoreAppSessionBucket(
     }),
   )
 
-  if (Object.keys(sanitizedSessionsByUserId).length !== Object.keys(sessionsByUserId).length) {
-    if (sanitizedSessionsByUserId[currentUserId]) {
-      storage.set(key, {
-        currentUserId,
-        sessionsByUserId: sanitizedSessionsByUserId,
-      })
-    } else {
-      storage.delete(key)
-      return undefined
-    }
-  }
+  if (Object.keys(sanitizedSessionsByUserId).length === 0) return undefined
+  if (!sanitizedSessionsByUserId[currentUserId]) return undefined
 
-  return {
-    currentUserId,
-    sessionsByUserId: sanitizedSessionsByUserId,
-  }
+  return {currentUserId, sessionsByUserId: sanitizedSessionsByUserId}
 }
 
-export function getCurrentStoredStoreAppSession(
+function readStoredStoreAppSessionBucket(
   store: string,
+  storage: LocalStorage<StoreSessionSchema>,
+): StoredStoreAppSessionBucket | undefined {
+  const key = storeAuthSessionKey(store)
+  const storedBucket = storage.get(key)
+  if (!storedBucket || typeof storedBucket !== 'object') return undefined
+
+  const {sessionsByAgentKey} = storedBucket as Partial<StoredStoreAppSessionBucket>
+  if (!sessionsByAgentKey || typeof sessionsByAgentKey !== 'object' || Array.isArray(sessionsByAgentKey)) {
+    storage.delete(key)
+    return undefined
+  }
+
+  const sanitizedSessionsByAgentKey: StoredStoreAppSessionBucket['sessionsByAgentKey'] = {}
+  for (const [agentKey, group] of Object.entries(sessionsByAgentKey)) {
+    const sanitizedGroup = sanitizeAgentGroup(group)
+    if (sanitizedGroup) sanitizedSessionsByAgentKey[agentKey] = sanitizedGroup
+  }
+
+  if (Object.keys(sanitizedSessionsByAgentKey).length === 0) {
+    storage.delete(key)
+    return undefined
+  }
+
+  if (Object.keys(sanitizedSessionsByAgentKey).length !== Object.keys(sessionsByAgentKey).length) {
+    storage.set(key, {sessionsByAgentKey: sanitizedSessionsByAgentKey})
+  }
+
+  return {sessionsByAgentKey: sanitizedSessionsByAgentKey}
+}
+
+export function getStoredStoreAppSession(
+  store: string,
+  agentKey: string,
   storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
 ): StoredStoreAppSession | undefined {
   const bucket = readStoredStoreAppSessionBucket(store, storage)
   if (!bucket) return undefined
 
-  const session = bucket.sessionsByUserId[bucket.currentUserId]
-  if (!session) {
-    storage.delete(storeAuthSessionKey(store))
-    return undefined
-  }
+  const group = bucket.sessionsByAgentKey[agentKey]
+  if (!group) return undefined
 
-  return session
+  return group.sessionsByUserId[group.currentUserId]
 }
 
 export function setStoredStoreAppSession(
@@ -153,12 +172,20 @@ export function setStoredStoreAppSession(
 ): void {
   const key = storeAuthSessionKey(session.store)
   const existingBucket = readStoredStoreAppSessionBucket(session.store, storage)
+  const existingGroup = existingBucket?.sessionsByAgentKey[session.agentKey]
 
-  const nextBucket: StoredStoreAppSessionBucket = {
+  const nextGroup: StoredStoreAppAgentGroup = {
     currentUserId: session.userId,
     sessionsByUserId: {
-      ...(existingBucket?.sessionsByUserId ?? {}),
+      ...(existingGroup?.sessionsByUserId ?? {}),
       [session.userId]: session,
+    },
+  }
+
+  const nextBucket: StoredStoreAppSessionBucket = {
+    sessionsByAgentKey: {
+      ...(existingBucket?.sessionsByAgentKey ?? {}),
+      [session.agentKey]: nextGroup,
     },
   }
 
@@ -167,15 +194,13 @@ export function setStoredStoreAppSession(
 
 export function clearStoredStoreAppSession(
   store: string,
-  userIdOrStorage?: string | LocalStorage<StoreSessionSchema>,
-  maybeStorage?: LocalStorage<StoreSessionSchema>,
+  agentKey?: string,
+  userId?: string,
+  storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
 ): void {
-  const userId = typeof userIdOrStorage === 'string' ? userIdOrStorage : undefined
-  const storage = (typeof userIdOrStorage === 'string' ? maybeStorage : userIdOrStorage) ?? storeSessionStorage()
-
   const key = storeAuthSessionKey(store)
 
-  if (!userId) {
+  if (!agentKey) {
     storage.delete(key)
     return
   }
@@ -183,16 +208,36 @@ export function clearStoredStoreAppSession(
   const existingBucket = readStoredStoreAppSessionBucket(store, storage)
   if (!existingBucket) return
 
-  const {[userId]: _removedSession, ...remainingSessions} = existingBucket.sessionsByUserId
+  const existingGroup = existingBucket.sessionsByAgentKey[agentKey]
+  if (!existingGroup) return
 
-  const remainingUserIds = Object.keys(remainingSessions)
-  if (remainingUserIds.length === 0) {
+  let nextSessionsByAgentKey: StoredStoreAppSessionBucket['sessionsByAgentKey']
+
+  if (!userId) {
+    const {[agentKey]: _removedGroup, ...remainingAgents} = existingBucket.sessionsByAgentKey
+    nextSessionsByAgentKey = remainingAgents
+  } else {
+    const {[userId]: _removedSession, ...remainingSessions} = existingGroup.sessionsByUserId
+    const remainingUserIds = Object.keys(remainingSessions)
+
+    if (remainingUserIds.length === 0) {
+      const {[agentKey]: _removedGroup, ...remainingAgents} = existingBucket.sessionsByAgentKey
+      nextSessionsByAgentKey = remainingAgents
+    } else {
+      nextSessionsByAgentKey = {
+        ...existingBucket.sessionsByAgentKey,
+        [agentKey]: {
+          currentUserId: existingGroup.currentUserId === userId ? remainingUserIds[0]! : existingGroup.currentUserId,
+          sessionsByUserId: remainingSessions,
+        },
+      }
+    }
+  }
+
+  if (Object.keys(nextSessionsByAgentKey).length === 0) {
     storage.delete(key)
     return
   }
 
-  storage.set(key, {
-    currentUserId: existingBucket.currentUserId === userId ? remainingUserIds[0]! : existingBucket.currentUserId,
-    sessionsByUserId: remainingSessions,
-  })
+  storage.set(key, {sessionsByAgentKey: nextSessionsByAgentKey})
 }

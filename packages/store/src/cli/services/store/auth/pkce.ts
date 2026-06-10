@@ -35,6 +35,7 @@ export function buildStoreAuthUrl(options: {
   state: string
   redirectUri: string
   codeChallenge: string
+  connectionName?: string
 }): string {
   const params = new URLSearchParams()
   params.set('client_id', STORE_AUTH_APP_CLIENT_ID)
@@ -44,6 +45,9 @@ export function buildStoreAuthUrl(options: {
   params.set('response_type', 'code')
   params.set('code_challenge', options.codeChallenge)
   params.set('code_challenge_method', 'S256')
+  if (options.connectionName) {
+    params.set('connection_name_suggestion', options.connectionName)
+  }
 
   return `https://${options.store}/admin/oauth/authorize?${params.toString()}`
 }
@@ -57,14 +61,15 @@ export function createPkceBootstrap(options: {
     codeVerifier: string
     redirectUri: string
   }) => Promise<StoreTokenResponse>
+  connectionName?: string
 }): StoreAuthBootstrap {
-  const {store, scopes, exchangeCodeForToken} = options
+  const {store, scopes, exchangeCodeForToken, connectionName} = options
   const port = DEFAULT_STORE_AUTH_PORT
   const state = randomUUID()
   const redirectUri = storeAuthRedirectUri(port)
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = computeCodeChallenge(codeVerifier)
-  const authorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge})
+  const authorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge, connectionName})
 
   outputDebug(
     outputContent`Starting PKCE auth for ${outputToken.raw(store)} with scopes ${outputToken.raw(scopes.join(','))} (redirect_uri=${outputToken.raw(redirectUri)})`,

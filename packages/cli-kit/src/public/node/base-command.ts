@@ -1,7 +1,8 @@
 import {isDevelopment} from './context/local.js'
+import {callingAgent} from './context/agent.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {outputContent, outputResult, outputToken} from './output.js'
+import {outputContent, outputInfo, outputResult, outputToken} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
@@ -48,6 +49,7 @@ abstract class BaseCommand extends Command {
   protected async init(): Promise<unknown> {
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
+    outputInfo(`ZL------- AGENT: ${callingAgent()}`)
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       const {registerCleanBugsnagErrorsFromWithinPlugins} = await import('./error-handler.js')

@@ -48,21 +48,5 @@ export function resolveGrantedScopes(tokenResponse: StoreTokenResponse, requeste
     return requestedScopes
   }
 
-  const grantedScopes = parseStoreAuthScopes(tokenResponse.scope)
-  const expandedGrantedScopes = expandImpliedStoreScopes(grantedScopes)
-  const missingScopes = requestedScopes.filter((scope) => !expandedGrantedScopes.has(scope))
-
-  if (missingScopes.length > 0) {
-    throw new AbortError(
-      'Shopify granted fewer scopes than were requested.',
-      `Missing scopes: ${missingScopes.join(', ')}.`,
-      [
-        'Update the app or store installation scopes.',
-        'See https://shopify.dev/app/scopes',
-        'Re-run shopify store auth.',
-      ],
-    )
-  }
-
-  return grantedScopes
+  return parseStoreAuthScopes(tokenResponse.scope)
 }
