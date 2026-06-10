@@ -51,13 +51,17 @@ const schemas = [
     localPaths: [
       './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
       './packages/organizations/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
+      './packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
     ],
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
-    localPaths: ['./packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql'],
+    localPaths: [
+      './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
+      './packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
+    ],
   },
   {
     owner: 'shop',
