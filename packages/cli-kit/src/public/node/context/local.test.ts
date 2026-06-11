@@ -10,15 +10,21 @@ import {
   macAddress,
   getThemeKitAccessDomain,
   opentelemetryDomain,
+  _resetMacAddressCache,
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 
-import {afterEach, expect, describe, vi, test} from 'vitest'
+import {afterEach, expect, describe, vi, test, beforeEach} from 'vitest'
+import macaddress from 'macaddress'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
 vi.mock('../environment.js')
+
+beforeEach(() => {
+  _resetMacAddressCache()
+})
 
 describe('isTerminalInteractive', () => {
   const originalIsTTY = process.stdout.isTTY
@@ -213,6 +219,26 @@ describe('macAddress', () => {
 
     // Then
     expect(got).not.toBeUndefined()
+  })
+
+  test('memoizes the mac address', async () => {
+    // Given
+    const spy = vi
+      .spyOn(macaddress, 'one')
+      .mockImplementation((ifaceOrCallback?: string | macaddress.MacAddressOneCallback): any => {
+        if (typeof ifaceOrCallback === 'function') {
+          ifaceOrCallback(null, '00:00:00:00:00:00')
+        }
+        return Promise.resolve('00:00:00:00:00:00')
+      })
+
+    // When
+    await macAddress()
+    await macAddress()
+
+    // Then
+    expect(spy).toHaveBeenCalledTimes(1)
+    spy.mockRestore()
   })
 })
 
