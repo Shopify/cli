@@ -87,6 +87,9 @@ describe('common API methods', () => {
       'X-Shopify-Access-Token': 'token',
       Cookie: 'session=123',
       'Set-Cookie': 'session=456',
+      Signature: 'signature-value',
+      'Signature-Input': 'signature-input-value',
+      'Signature-Agent': 'signature-agent-value',
     }
 
     // When

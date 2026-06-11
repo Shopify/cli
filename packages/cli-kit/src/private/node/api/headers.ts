@@ -26,7 +26,7 @@ export class GraphQLClientError extends RequestClientError {
   }
 }
 
-const SENSITIVE_HEADERS = ['token', 'authorization', 'subject_token', 'cookie']
+const SENSITIVE_HEADERS = ['token', 'authorization', 'subject_token', 'cookie', 'signature']
 
 /**
  * Removes the sensitive data from the headers and outputs them as a string.
