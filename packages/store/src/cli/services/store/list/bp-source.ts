@@ -1,5 +1,5 @@
 import {STORE_LIST_LIMIT} from './constants.js'
-import {type StoreListEntry} from './types.js'
+import {type OrganizationStoreListEntry} from './types.js'
 import {storeTypeHandle} from '../store-type.js'
 import {
   ListAccessibleShops,
@@ -14,10 +14,11 @@ import {type Organization} from '@shopify/organizations'
 interface ListBusinessPlatformStoresOptions {
   token: string
   organization: Organization
+  noPrompt?: boolean
 }
 
 interface BusinessPlatformStoreListResult {
-  entries: StoreListEntry[]
+  entries: OrganizationStoreListEntry[]
   // True when the selected organization had more stores than we fetched (server-side limited).
   hasMore?: boolean
 }
@@ -25,7 +26,7 @@ interface BusinessPlatformStoreListResult {
 export async function listBusinessPlatformStores(
   options: ListBusinessPlatformStoresOptions,
 ): Promise<BusinessPlatformStoreListResult> {
-  const {entries, hasMore} = await fetchOrganizationStores(options.token, options.organization)
+  const {entries, hasMore} = await fetchOrganizationStores(options)
 
   return {
     entries: entries.sort(byCreatedAtDescending),
@@ -33,21 +34,21 @@ export async function listBusinessPlatformStores(
   }
 }
 
-// Fetches one server-sorted page of the selected organization's newest stores. The page size is the
-// maximum number of stores we can display, and hasMore reflects whether more stores exist beyond it.
+// Fetches one server-sorted page of the selected organization's newest active stores. The page size
+// is the maximum number of stores we can display, and hasMore reflects whether more stores exist
+// beyond it.
 async function fetchOrganizationStores(
-  token: string,
-  organization: Organization,
-): Promise<{entries: StoreListEntry[]; hasMore: boolean}> {
+  options: ListBusinessPlatformStoresOptions,
+): Promise<{entries: OrganizationStoreListEntry[]; hasMore: boolean}> {
   const unauthorizedHandler: UnauthorizedHandler = {
     type: 'token_refresh',
-    handler: async () => ({token: await ensureAuthenticatedBusinessPlatform()}),
+    handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt})}),
   }
 
   const result = await businessPlatformOrganizationsRequestDoc({
     query: ListAccessibleShops,
-    token,
-    organizationId: organization.id,
+    token: options.token,
+    organizationId: options.organization.id,
     variables: {first: STORE_LIST_LIMIT},
     unauthorizedHandler,
   })
@@ -55,9 +56,9 @@ async function fetchOrganizationStores(
   const accessibleShops = result.organization?.accessibleShops
   if (!accessibleShops) return {entries: [], hasMore: false}
 
-  const entries: StoreListEntry[] = []
+  const entries: OrganizationStoreListEntry[] = []
   for (const edge of accessibleShops.edges) {
-    const entry = toStoreListEntry(edge.node, organization)
+    const entry = toStoreListEntry(edge.node, options.organization)
     if (entry) entries.push(entry)
   }
 
@@ -68,7 +69,7 @@ type ShopNode = NonNullable<
   NonNullable<NonNullable<ListAccessibleShopsQuery['organization']>['accessibleShops']>['edges'][number]['node']
 >
 
-function toStoreListEntry(node: ShopNode, organization: Organization): StoreListEntry | undefined {
+function toStoreListEntry(node: ShopNode, organization: Organization): OrganizationStoreListEntry | undefined {
   const store = node.url ?? node.primaryDomain
   if (!store) return undefined
 
@@ -87,7 +88,7 @@ function toStoreListEntry(node: ShopNode, organization: Organization): StoreList
   }
 }
 
-function byCreatedAtDescending(left: StoreListEntry, right: StoreListEntry): number {
+function byCreatedAtDescending(left: OrganizationStoreListEntry, right: OrganizationStoreListEntry): number {
   if (left.createdAt === right.createdAt) return left.store.localeCompare(right.store)
   return right.createdAt.localeCompare(left.createdAt)
 }

@@ -210,15 +210,15 @@ describe('listBusinessPlatformStores', () => {
     )
   })
 
-  test('refreshes the Business Platform token when the store request is unauthorized', async () => {
+  test('refreshes the Business Platform token without prompting when the store request is unauthorized in auto mode', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
     vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('refreshed-token')
 
-    await listBusinessPlatformStores({token: 'bp-token', organization})
+    await listBusinessPlatformStores({token: 'bp-token', organization, noPrompt: true})
 
     const requestOptions = vi.mocked(businessPlatformOrganizationsRequestDoc).mock.calls[0]?.[0] as any
     await requestOptions.unauthorizedHandler.handler()
 
-    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith()
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true})
   })
 })

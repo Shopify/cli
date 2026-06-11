@@ -5927,14 +5927,31 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nRun `shopify organization list` to find organization IDs.",
-      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nRun `shopify organization list` to find organization IDs.",
+      "description": "Lists stores available to the current Shopify CLI session.\n\nBy default, the command uses `--from auto`:\n- a selected Shopify organization when the current CLI session can be used without reauthentication\n- the locally stored store auth cache when the organization can't be listed for the current session\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nUse `--from organization` to only list organization stores, or `--from store-auth` to inspect only stores connected with `shopify store auth`.\n\nRun `shopify organization list` to find organization IDs.",
+      "descriptionWithMarkdown": "Lists stores available to the current Shopify CLI session.\n\nBy default, the command uses `--from auto`:\n- a selected Shopify organization when the current CLI session can be used without reauthentication\n- the locally stored store auth cache when the organization can't be listed for the current session\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nUse `--from organization` to only list organization stores, or `--from store-auth` to inspect only stores connected with `shopify store auth`.\n\nRun `shopify organization list` to find organization IDs.",
       "examples": [
         "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --from organization",
         "<%= config.bin %> <%= command.id %> --organization-id 1234567",
+        "<%= config.bin %> <%= command.id %> --from store-auth",
         "<%= config.bin %> <%= command.id %> --json"
       ],
       "flags": {
+        "from": {
+          "default": "auto",
+          "description": "Source for the listing. `auto` prefers your Shopify organization and falls back to locally stored store auth when necessary.",
+          "env": "SHOPIFY_FLAG_STORE_LIST_FROM",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "from",
+          "options": [
+            "auto",
+            "organization",
+            "store-auth"
+          ],
+          "required": false,
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -5953,7 +5970,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.",
+          "description": "Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one. Only valid with `--from auto` or `--from organization`.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5978,7 +5995,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "List stores in a Shopify organization."
+      "summary": "List stores available to the current CLI session."
     },
     "theme:check": {
       "aliases": [

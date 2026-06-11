@@ -5,6 +5,12 @@
  */
 export interface storelist {
   /**
+   * Source for the listing. `auto` prefers your Shopify organization and falls back to locally stored store auth when necessary.
+   * @environment SHOPIFY_FLAG_STORE_LIST_FROM
+   */
+  '--from <value>'?: string
+
+  /**
    * Output the result as JSON. Automatically disables color output.
    * @environment SHOPIFY_FLAG_JSON
    */
@@ -17,7 +23,7 @@ export interface storelist {
   '--no-color'?: ''
 
   /**
-   * Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.
+   * Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one. Only valid with `--from auto` or `--from organization`.
    * @environment SHOPIFY_FLAG_ORGANIZATION_ID
    */
   '--organization-id <value>'?: string

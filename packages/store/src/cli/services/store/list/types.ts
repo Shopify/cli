@@ -1,4 +1,6 @@
-export interface StoreListEntry {
+export type StoreListRequestedSource = 'auto' | 'organization' | 'store-auth'
+
+export interface OrganizationStoreListEntry {
   id?: string
   store: string
   createdAt: string
@@ -8,15 +10,29 @@ export interface StoreListEntry {
   type?: string
 }
 
+export interface StoreAuthStoreListEntry {
+  store: string
+  connectedAt: string
+}
+
 export interface StoreListOrganization {
   id: string
   name: string
 }
 
-export interface ListStoresResult {
-  stores: StoreListEntry[]
+interface OrganizationListStoresResult {
   source: 'organization'
+  stores: OrganizationStoreListEntry[]
   organization?: StoreListOrganization
   notice?: string
   truncated?: boolean
 }
+
+interface StoreAuthListStoresResult {
+  source: 'store-auth'
+  stores: StoreAuthStoreListEntry[]
+  notice?: string
+  truncated?: boolean
+}
+
+export type ListStoresResult = OrganizationListStoresResult | StoreAuthListStoresResult

@@ -1,5 +1,5 @@
 import {STORE_LIST_LIMIT} from './constants.js'
-import {type ListStoresResult, type StoreListEntry} from './types.js'
+import {type ListStoresResult, type OrganizationStoreListEntry, type StoreAuthStoreListEntry} from './types.js'
 import {storeTypeLabel} from '../store-type.js'
 import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderTable} from '@shopify/cli-kit/node/ui'
@@ -18,7 +18,7 @@ export function writeStoreListResult(result: ListStoresResult, format: 'text' | 
         {
           stores: result.stores,
           source: result.source,
-          ...(result.organization ? {organization: result.organization} : {}),
+          ...(result.source === 'organization' && result.organization ? {organization: result.organization} : {}),
           ...(result.truncated ? {truncated: true} : {}),
         },
         null,
@@ -32,8 +32,12 @@ export function writeStoreListResult(result: ListStoresResult, format: 'text' | 
 }
 
 function truncationWarning(result: ListStoresResult): string {
-  const organization = result.organization ? ` in ${result.organization.name}` : ' in this organization'
-  return `Showing the ${STORE_LIST_LIMIT} most recent stores${organization}. More stores exist.`
+  if (result.source === 'organization') {
+    const organization = result.organization ? ` in ${result.organization.name}` : ' in this organization'
+    return `Showing the ${STORE_LIST_LIMIT} most recent stores${organization}. More stores exist.`
+  }
+
+  return `Showing the ${STORE_LIST_LIMIT} most recent stores. More stores exist.`
 }
 
 function renderTextResult(result: ListStoresResult): void {
@@ -42,14 +46,17 @@ function renderTextResult(result: ListStoresResult): void {
     return
   }
 
-  if (result.organization) {
-    outputInfo(`Organization: ${result.organization.name} (${result.organization.id})`)
+  if (result.source === 'organization') {
+    if (result.organization) {
+      outputInfo(`Organization: ${result.organization.name} (${result.organization.id})`)
+    }
+    renderOrganizationTable(result.stores)
+  } else {
+    renderStoreAuthTable(result.stores)
   }
-
-  renderOrganizationTable(result.stores)
 }
 
-function renderOrganizationTable(stores: StoreListEntry[]): void {
+function renderOrganizationTable(stores: OrganizationStoreListEntry[]): void {
   renderTable({
     rows: stores.map((entry) => ({
       subdomain: subdomainFor(entry.store),
@@ -66,16 +73,41 @@ function renderOrganizationTable(stores: StoreListEntry[]): void {
   })
 }
 
+function renderStoreAuthTable(stores: StoreAuthStoreListEntry[]): void {
+  renderTable({
+    rows: stores.map((entry) => ({
+      subdomain: subdomainFor(entry.store),
+      connected: formatShortDate(entry.connectedAt),
+    })),
+    columns: {
+      subdomain: {header: 'Subdomain'},
+      connected: {header: 'Connected'},
+    },
+  })
+}
+
 function emptyStateMessage(result: ListStoresResult): string {
-  if (result.notice) {
-    return 'No stores were returned for the current CLI session.'
+  if (result.source === 'organization') {
+    if (result.notice) {
+      return 'No stores were returned for the current CLI session.'
+    }
+
+    if (result.organization) {
+      return `No stores found in ${result.organization.name}.`
+    }
+
+    return [
+      'No stores found in your Shopify organization.',
+      '',
+      'Run `shopify store list --from store-auth` to inspect locally stored store auth.',
+    ].join('\n')
   }
 
-  if (result.organization) {
-    return `No stores found in ${result.organization.name}.`
-  }
-
-  return 'No stores found in your Shopify organization.'
+  return [
+    'No stores authenticated locally.',
+    '',
+    'Run `shopify store auth --store <domain>` to authenticate against an existing store.',
+  ].join('\n')
 }
 
 function subdomainFor(store: string): string {

@@ -1,6 +1,6 @@
 import {listCurrentStoredStoreAppSessions, type StoredStoreAppSession} from './session-store.js'
 
-export interface StoredStoreAuthSummary {
+interface StoredStoreAuthSummary {
   store: string
   userId: string
   scopes: string[]
