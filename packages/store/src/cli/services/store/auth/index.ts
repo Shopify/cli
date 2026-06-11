@@ -1,5 +1,4 @@
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
-import {getCurrentStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
 import {exchangeStoreAuthCodeForToken} from './token-client.js'
 import {waitForStoreAuthCode} from './callback.js'
 import {createPkceBootstrap} from './pkce.js'
@@ -7,6 +6,7 @@ import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScope
 import {resolveExistingStoreAuthScopes, type ResolvedStoreAuthScopes} from './existing-scopes.js'
 import {createStoreAuthPresenter, type StoreAuthPresenter, type StoreAuthResult} from './result.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
+import {getCurrentStoredStoreAppSession, setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'

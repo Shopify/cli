@@ -1,16 +1,16 @@
 import {isSessionExpired, loadStoredStoreSession} from './session-lifecycle.js'
+import {refreshStoreAccessToken} from './token-client.js'
+import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {
   clearStoredStoreAppSession,
   getCurrentStoredStoreAppSession,
   setStoredStoreAppSession,
   type StoredStoreAppSession,
-} from './session-store.js'
-import {refreshStoreAccessToken} from './token-client.js'
-import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
+} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('./session-store.js')
+vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('./token-client.js')
 
 function buildSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {

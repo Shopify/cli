@@ -1,0 +1,1 @@
+export const STORE_AUTH_APP_CLIENT_ID = '7e9cb568cfd431c538f36d1ad3f2b4f6'

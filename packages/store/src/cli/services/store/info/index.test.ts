@@ -3,9 +3,9 @@ import {StoreInfoBusinessPlatformStoreNotFoundError, fetchDestinationsContext} f
 import {fetchOrganizationShop} from './organization-shop.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
-import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '../auth/session-store.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {getPreviewStore} from '../create/preview/client.js'
+import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -23,7 +23,7 @@ vi.mock('./destinations.js', async () => {
 })
 vi.mock('./organization-shop.js')
 vi.mock('../auth/session-lifecycle.js')
-vi.mock('../auth/session-store.js')
+vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('../attribution.js')
 vi.mock('../create/preview/client.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')

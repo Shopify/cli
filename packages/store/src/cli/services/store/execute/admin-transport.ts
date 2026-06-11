@@ -5,7 +5,7 @@ import {
   throwIfStoredStoreAuthIsInvalid,
   ABORTED_FETCH_MESSAGE_FRAGMENTS,
 } from '../admin-errors.js'
-import {clearStoredStoreAppSession} from '../auth/session-store.js'
+import {clearStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -14,7 +14,7 @@ import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {PreparedStoreExecuteRequest} from './request.js'
 import type {AdminStoreGraphQLContext} from './admin-context.js'
-import type {StoredStoreAppSession} from '../auth/session-store.js'
+import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 
 export {ABORTED_FETCH_MESSAGE_FRAGMENTS}
 

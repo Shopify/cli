@@ -137,4 +137,8 @@ export default class Push extends ThemeCommand {
     )
     recordTiming('theme-command:push')
   }
+
+  protected storeAuthScopes(): string[] {
+    return ['read_themes', 'write_themes']
+  }
 }

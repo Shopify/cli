@@ -1,7 +1,7 @@
 import {PreviewStoreClientOptions, PreviewStoreCreateResponse, createPreviewStore} from './client.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../../auth/config.js'
-import {setStoredStoreAppSession} from '../../auth/session-store.js'
 import {recordStoreFqdnMetadata} from '../../attribution.js'
+import {setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 
 export const PREVIEW_USER_ID_PREFIX = 'preview:'
