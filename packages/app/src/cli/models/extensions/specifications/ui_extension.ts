@@ -211,6 +211,7 @@ const uiExtensionSpec = createExtensionSpecification({
     const fileToTargetsMap = new Map<string, string[]>()
     const fileToToolsMap = new Map<string, string>()
     const fileToIntentsMap = new Map<string, NonNullable<NewExtensionPointSchemaType['intents']>>()
+    const importCache = new Map<string, string[]>()
 
     // First pass: collect all entry point files and their targets
     for await (const extensionPoint of configuration.extension_points) {
@@ -260,6 +261,7 @@ const uiExtensionSpec = createExtensionSpecification({
         boundaryDirectory: extension.directory,
         allowedFiles,
         alwaysAllowedFiles: new Set([fullPath]),
+        importCache,
       })
 
       // Associate imported files with this extension point's target
@@ -282,6 +284,7 @@ const uiExtensionSpec = createExtensionSpecification({
             boundaryDirectory: extension.directory,
             allowedFiles: shouldRenderAllowedFiles,
             alwaysAllowedFiles: new Set([shouldRenderPath]),
+            importCache,
           })
           for (const importedFile of shouldRenderImports) {
             const currentTargets = fileToTargetsMap.get(importedFile) ?? []

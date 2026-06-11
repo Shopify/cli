@@ -5,10 +5,11 @@ import {
   findAllImportedFiles,
   getGeneratedTypesHelperImportPath,
 } from './type-generation.js'
+import * as fs from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 const adminGeneratedTypesHelperImportPath = '@shopify/ui-extensions/admin'
 
@@ -206,6 +207,33 @@ describe('findAllImportedFiles', () => {
       await writeFile(entryPath, `export const entry = true`)
 
       await expect(findExplicitTsConfigFiles(entryPath, tmpDir)).resolves.toBeUndefined()
+    })
+  })
+
+  test('uses cached imports when the same file is scanned more than once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const localPath = joinPath(tmpDir, 'local.ts')
+      const nestedPath = joinPath(tmpDir, 'nested.ts')
+
+      await writeFile(entryPath, `import './local.ts'`)
+      await writeFile(localPath, `import './nested.ts'`)
+      await writeFile(nestedPath, `export const nested = true`)
+
+      const readFileSync = vi.spyOn(fs, 'readFileSync')
+      const importCache = new Map<string, string[]>()
+
+      await findAllImportedFiles(entryPath, {boundaryDirectory: tmpDir, importCache})
+      await findAllImportedFiles(entryPath, {boundaryDirectory: tmpDir, importCache})
+
+      const readCountsByPath = new Map<string, number>()
+      for (const [path] of readFileSync.mock.calls) {
+        readCountsByPath.set(path, (readCountsByPath.get(path) ?? 0) + 1)
+      }
+
+      expect(readCountsByPath.get(entryPath)).toBe(1)
+      expect(readCountsByPath.get(localPath)).toBe(1)
+      expect(readCountsByPath.get(nestedPath)).toBe(1)
     })
   })
 })

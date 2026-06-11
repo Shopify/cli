@@ -103,6 +103,11 @@ interface FindAllImportedFilesOptions {
   boundaryDirectory?: string
   allowedFiles?: Set<string>
   alwaysAllowedFiles?: Set<string>
+  importCache?: Map<string, string[]>
+}
+
+interface ParseAndResolveImportsOptions {
+  importCache?: Map<string, string[]>
 }
 
 function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean {
@@ -126,10 +131,15 @@ function isScannableFile(filePath: string, options: FindAllImportedFilesOptions)
   )
 }
 
-async function parseAndResolveImports(filePath: string, options: FindAllImportedFilesOptions = {}): Promise<string[]> {
+async function parseAndResolveImports(
+  filePath: string,
+  options: ParseAndResolveImportsOptions = {},
+): Promise<string[]> {
   try {
-    if (!isAllowedFile(filePath, options)) {
-      return []
+    const resolvedFilePath = resolvePath(filePath)
+    const cachedImports = options.importCache?.get(resolvedFilePath)
+    if (cachedImports) {
+      return cachedImports
     }
 
     const ts = await loadTypeScript()
@@ -207,19 +217,18 @@ async function parseAndResolveImports(filePath: string, options: FindAllImported
       if (resolvedModule.resolvedModule?.resolvedFileName) {
         const resolvedPath = resolvedModule.resolvedModule.resolvedFileName
 
-        if (isScannableFile(resolvedPath, options)) {
-          resolvedPaths.push(resolvedPath)
-        }
+        resolvedPaths.push(resolvedPath)
       } else {
         // Fallback to manual resolution for edge cases
         // eslint-disable-next-line no-await-in-loop
         const fallbackPath = await fallbackResolve(importPath, dirname(filePath))
-        if (fallbackPath && isScannableFile(fallbackPath, options)) {
+        if (fallbackPath) {
           resolvedPaths.push(fallbackPath)
         }
       }
     }
 
+    options.importCache?.set(resolvedFilePath, resolvedPaths)
     return resolvedPaths
   } catch (error) {
     // Re-throw AbortError as-is, wrap other errors
@@ -240,7 +249,9 @@ export async function findAllImportedFiles(
   }
 
   visited.add(filePath)
-  const resolvedPaths = await parseAndResolveImports(filePath, options)
+  const resolvedPaths = (await parseAndResolveImports(filePath, options)).filter((resolvedPath) =>
+    isScannableFile(resolvedPath, options),
+  )
 
   const allFiles = [...resolvedPaths]
 
