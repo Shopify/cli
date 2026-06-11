@@ -105,12 +105,10 @@ export function jsonSchemaValidate(
 }
 
 /**
- * Converts errors from Ajv into a zod-like format.
+ * Get a more precise type name for JSON Schema error messages.
  *
- * @param rawErrors - JSON Schema errors taken directly from Ajv.
- * @param subject - The object being validated.
- * @param schema - The JSON schema to validated against.
- * @returns The errors in a zod-like format.
+ * @param value - The value to get the type of.
+ * @returns A string representing the type (e.g., 'array', 'null', 'object').
  */
 function getJsonSchemaValueType(value: unknown): string {
   if (Array.isArray(value)) return 'array'
@@ -118,6 +116,14 @@ function getJsonSchemaValueType(value: unknown): string {
   return typeof value
 }
 
+/**
+ * Converts errors from Ajv into a zod-like format.
+ *
+ * @param rawErrors - JSON Schema errors taken directly from Ajv.
+ * @param subject - The object being validated.
+ * @param schema - The JSON schema to validated against.
+ * @returns The errors in a zod-like format.
+ */
 function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema: SchemaObject) {
   // This reduces the number of errors by simplifying errors coming from different branches of a union
   const errors = simplifyUnionErrors(rawErrors, subject, schema)
