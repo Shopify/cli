@@ -5,7 +5,7 @@ import {BROWSER_TIMEOUT} from './constants.js'
 import {createLogger, e2eSection} from './env.js'
 import * as fs from 'fs'
 import type {BrowserContext} from './browser.js'
-import type {Page} from '@playwright/test'
+import type {Locator, Page} from '@playwright/test'
 
 const log = createLogger('browser')
 
@@ -164,9 +164,35 @@ export async function uninstallAppFromStore(page: Page, storeSlug: string, appNa
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   // Step 4: Confirm the uninstall in the modal (if one appears).
-  const confirmBtn = page.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
+  const modal = page.locator('.Polaris-Modal-Dialog__Modal').last()
+  const confirmBtn = modal.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
   if (await isVisibleWithin(confirmBtn, BROWSER_TIMEOUT.medium)) {
-    await confirmBtn.click()
+    await selectUninstallReason(page, modal)
+    await fillUninstallFeedback(modal)
+    await dismissOpenPopover(page, modal)
+
+    let confirmEnabled = false
+    for (let i = 1; i <= 3; i++) {
+      if (await confirmBtn.isEnabled().catch(() => false)) {
+        confirmEnabled = true
+        break
+      }
+      await selectUninstallReason(page, modal)
+      await fillUninstallFeedback(modal)
+      await dismissOpenPopover(page, modal)
+      await page.waitForTimeout(BROWSER_TIMEOUT.short)
+    }
+
+    // If still disabled, the force-click below no-ops; flag it so a stuck confirm
+    // is distinguishable from a real uninstall in the logs (verified in step 5).
+    if (!confirmEnabled) {
+      // eslint-disable-next-line no-console
+      console.warn(`    Uninstall confirm button never enabled for ${appName} — force-clicking anyway`)
+    }
+
+    // Force a DOM click to bypass Playwright actionability (the button can read as
+    // disabled mid-transition).
+    await confirmBtn.evaluate((button) => button.click())
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
@@ -181,6 +207,75 @@ export async function uninstallAppFromStore(page: Page, storeSlug: string, appNa
     BROWSER_TIMEOUT.medium,
   )
   return !stillVisible
+}
+
+async function selectUninstallReason(page: Page, modal: Locator): Promise<void> {
+  const nativeSelect = modal.locator('select').first()
+  if (await isVisibleWithin(nativeSelect, BROWSER_TIMEOUT.short)) {
+    await nativeSelect.selectOption({index: 1}).catch(() => {})
+    return
+  }
+
+  const reasonTrigger = modal
+    .locator('button, [role="combobox"]')
+    .filter({hasText: /Select all that apply|Reason for uninstalling/i})
+    .first()
+  if (!(await isVisibleWithin(reasonTrigger, BROWSER_TIMEOUT.short))) return
+
+  await reasonTrigger.click()
+  await page.waitForTimeout(BROWSER_TIMEOUT.short)
+
+  const preferredReason = page
+    .locator('[role="option"], [role="menuitemcheckbox"], [role="checkbox"], label')
+    .filter({hasText: /Other|No longer need|Don't need|Do not need|Not using|Testing/i})
+    .first()
+  if (await isVisibleWithin(preferredReason, BROWSER_TIMEOUT.short)) {
+    await preferredReason.click()
+    return
+  }
+
+  const options = await page.locator('[role="option"], [role="menuitemcheckbox"], [role="checkbox"]').all()
+  for (const option of options) {
+    if (await isVisibleWithin(option, BROWSER_TIMEOUT.short)) {
+      await option.click()
+      return
+    }
+  }
+}
+
+async function fillUninstallFeedback(modal: Locator): Promise<void> {
+  const feedback = modal.locator('textarea').first()
+  if (await isVisibleWithin(feedback, BROWSER_TIMEOUT.short)) {
+    await feedback.fill('Automated E2E cleanup.')
+  }
+}
+
+async function dismissOpenPopover(page: Page, modal: Locator): Promise<void> {
+  const feedback = modal.locator('textarea').first()
+  if (await isVisibleWithin(feedback, BROWSER_TIMEOUT.short)) {
+    await feedback.click({force: true}).catch(() => {})
+  } else {
+    await modal
+      .locator('h1, h2, h3')
+      .first()
+      .click({force: true})
+      .catch(() => {})
+  }
+  await page.waitForTimeout(BROWSER_TIMEOUT.short)
+
+  if (
+    await page
+      .locator('[data-portal-id^="popover-"]')
+      .isVisible({timeout: BROWSER_TIMEOUT.short})
+      .catch(() => false)
+  ) {
+    await modal
+      .locator('textarea, h1, h2, h3')
+      .first()
+      .click({force: true})
+      .catch(() => {})
+    await page.waitForTimeout(BROWSER_TIMEOUT.short)
+  }
 }
 
 /** Check if the current page shows the empty state (zero apps installed). Caller must navigate first. */
