@@ -3,6 +3,8 @@ import StoreCreatePreview from './cli/commands/store/create/preview.js'
 import StoreExecute from './cli/commands/store/execute.js'
 import StoreInfo from './cli/commands/store/info.js'
 
+export {loadAdminSessionFromStoreAuth} from './cli/services/store/auth/admin-session.js'
+
 const COMMANDS = {
   'store:auth': StoreAuth,
   'store:create:preview': StoreCreatePreview,

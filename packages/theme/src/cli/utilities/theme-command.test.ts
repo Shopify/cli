@@ -3,6 +3,7 @@ import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {loadAdminSessionFromStoreAuth} from '@shopify/store'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -14,6 +15,7 @@ import {hashString} from '@shopify/cli-kit/node/crypto'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/store', () => ({loadAdminSessionFromStoreAuth: vi.fn()}))
 vi.mock('@shopify/cli-kit/node/environments')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/metadata', () => ({
@@ -180,6 +182,9 @@ describe('ThemeCommand', () => {
     }
     vi.mocked(ensureThemeStore).mockReturnValue('test-store.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
+    vi.mocked(loadAdminSessionFromStoreAuth).mockRejectedValue(
+      new AbortError('No stored app authentication found for test-store.myshopify.com.'),
+    )
     vi.mocked(fileExistsSync).mockReturnValue(true)
   })
 
@@ -242,6 +247,45 @@ describe('ThemeCommand', () => {
       )
       const sensitiveMetadata = vi.mocked(addSensitiveMetadata).mock.calls.map(([getMetadata]) => getMetadata())
       expect(sensitiveMetadata).toContainEqual({store_fqdn: mockSession.storeFqdn})
+    })
+
+    test('uses a matching store auth cache session when no password is provided', async () => {
+      const storeAuthSession = {token: 'shpat_preview_token', storeFqdn: 'test-store.myshopify.com'}
+      vi.mocked(loadAdminSessionFromStoreAuth).mockResolvedValue({adminSession: storeAuthSession, session: {} as any})
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      await command.run()
+
+      expect(loadAdminSessionFromStoreAuth).toHaveBeenCalledWith('test-store.myshopify.com')
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.commandCalls[0]).toMatchObject({session: storeAuthSession})
+    })
+
+    test('uses the password flag instead of a matching store auth cache session', async () => {
+      const storeAuthSession = {token: 'shpat_preview_token', storeFqdn: 'test-store.myshopify.com'}
+      vi.mocked(loadAdminSessionFromStoreAuth).mockResolvedValue({adminSession: storeAuthSession, session: {} as any})
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(['--password', 'shptka_password'], CommandConfig)
+
+      await command.run()
+
+      expect(loadAdminSessionFromStoreAuth).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', 'shptka_password')
+      expect(command.commandCalls[0]).toMatchObject({session: mockSession})
+    })
+
+    test('falls back to theme authentication when no matching store auth cache session exists', async () => {
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      await command.run()
+
+      expect(loadAdminSessionFromStoreAuth).toHaveBeenCalledWith('test-store.myshopify.com')
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', undefined)
+      expect(command.commandCalls[0]).toMatchObject({session: mockSession})
     })
 
     test('single environment provided but not found in TOML - throws AbortError', async () => {
@@ -837,6 +881,60 @@ describe('ThemeCommand', () => {
       expect(liveEnvFlags?.store).toEqual('store3.myshopify.com')
       expect(liveEnvFlags?.live).toEqual(true)
       expect(liveEnvFlags?.['no-color']).toEqual(true)
+    })
+
+    test('multiple environment commands accept missing password when a store auth cache session exists', async () => {
+      const storeAuthSession = {token: 'shpat_preview_token', storeFqdn: 'store1.myshopify.com'}
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', path: '/home/path/to/theme1'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2', path: '/home/path/to/theme2'})
+      vi.mocked(loadAdminSessionFromStoreAuth).mockResolvedValue({adminSession: storeAuthSession, session: {} as any})
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithPathFlag(
+        ['--environment', 'preview', '--environment', 'another-preview'],
+        CommandConfig,
+      )
+
+      await command.run()
+
+      expect(renderWarning).not.toHaveBeenCalled()
+      expect(loadAdminSessionFromStoreAuth).toHaveBeenCalledWith('store1.myshopify.com')
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('store2.myshopify.com', 'password2')
+      expect(command.commandCalls).toEqual(
+        expect.arrayContaining([expect.objectContaining({session: storeAuthSession})]),
+      )
+    })
+
+    test('multiple environment commands still require password when no store auth cache session exists', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', path: '/home/path/to/theme1'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2', path: '/home/path/to/theme2'})
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithPathFlag(
+        ['--environment', 'preview', '--environment', 'another-preview'],
+        CommandConfig,
+      )
+
+      await command.run()
+
+      expect(renderWarning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: ['Missing required flags in environment configuration for preview:', {list: {items: ['password']}}],
+        }),
+      )
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
     })
 
     test('commands will only create a session object if the password flag is supported', async () => {
