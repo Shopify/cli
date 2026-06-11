@@ -94,7 +94,8 @@
 ├─ search
 ├─ store
 │  ├─ auth
-│  └─ execute
+│  ├─ execute
+│  └─ info
 ├─ theme
 │  ├─ check
 │  ├─ console
