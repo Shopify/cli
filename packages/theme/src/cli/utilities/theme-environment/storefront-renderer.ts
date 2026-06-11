@@ -10,6 +10,10 @@ import {recordError} from '@shopify/cli-kit/node/analytics'
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
   const headers = await buildHeaders(session, context)
+  const requestHeaders = {
+    ...headers,
+    ...defaultHeaders(),
+  }
   let response: Response
 
   const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
@@ -24,10 +28,7 @@ export async function render(session: DevServerSession, context: DevServerRender
       method: 'POST',
       body: bodyParams,
       redirect: 'manual',
-      headers: {
-        ...headers,
-        ...defaultHeaders(),
-      },
+      headers: requestHeaders,
     }).catch((error) => {
       throw createFetchError(recordError(error), url)
     })
@@ -38,10 +39,7 @@ export async function render(session: DevServerSession, context: DevServerRender
     response = await fetch(url, {
       method: context.method,
       redirect: 'manual',
-      headers: {
-        ...headers,
-        ...defaultHeaders(),
-      },
+      headers: requestHeaders,
     }).catch((error) => {
       throw createFetchError(recordError(error), url)
     })
@@ -81,6 +79,7 @@ async function buildStandardHeaders(session: DevServerSession, context: Pick<Dev
 
   return cleanHeader({
     ...context.headers,
+    ...session.crawlerSignatureHeaders,
     Authorization: `Bearer ${storefrontToken}`,
     Cookie: cookies,
   })
@@ -101,6 +100,7 @@ async function buildThemeAccessHeaders(session: DevServerSession, context: Pick<
   return cleanHeader({
     ...filteredHeaders,
     ...themeAccessHeaders(session),
+    ...session.crawlerSignatureHeaders,
     Authorization: `Bearer ${storefrontToken}`,
     Cookie: cookies,
   })

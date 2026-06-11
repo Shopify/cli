@@ -516,6 +516,41 @@ describe('dev proxy', () => {
         'Request failed: Hostname mismatch. Expected host: cdn.shopify.com. Resulting URL hostname: evil.com',
       )
     })
+
+    test('passes crawler signature headers to proxied SFR requests', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(new Response('OK'))
+      vi.stubGlobal('fetch', fetchMock)
+      const event = createH3Event('GET', '/cart.js')
+      const localCtx = {
+        ...ctx,
+        type: 'theme',
+        session: {
+          storeFqdn: 'my-store.myshopify.com',
+          sessionCookies: {},
+          storefrontToken: 'sfr-devtools-token',
+          crawlerSignatureHeaders: {
+            Signature: 'signature-value',
+            'Signature-Input': 'signature-input-value',
+            'Signature-Agent': 'signature-agent-value',
+          },
+        },
+      } as unknown as DevServerContext
+
+      try {
+        await proxyStorefrontRequest(event, localCtx)
+
+        const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+        expect(init.headers).toEqual(
+          expect.objectContaining({
+            Signature: 'signature-value',
+            'Signature-Input': 'signature-input-value',
+            'Signature-Agent': 'signature-agent-value',
+          }),
+        )
+      } finally {
+        vi.unstubAllGlobals()
+      }
+    })
   })
 
   describe('proxyStorefrontRequest — Storefront API passthrough', () => {

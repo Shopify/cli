@@ -3,6 +3,7 @@ import {setupDevServer} from '../utilities/theme-environment/theme-environment.j
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {fetchOrCreateCrawlerSignatureHeaders} from '../utilities/theme-environment/crawler-signature.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {describe, expect, test, vi, beforeEach, afterEach, type MockInstance} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
@@ -26,6 +27,8 @@ vi.mock('@shopify/cli-kit/node/system', () => ({
 }))
 vi.mock('@shopify/cli-kit/node/analytics', () => ({
   reportAnalyticsEvent: vi.fn(),
+  recordEvent: vi.fn(),
+  recordError: vi.fn((error) => error),
 }))
 vi.mock('@shopify/cli-kit/node/metadata', () => ({
   addPublicMetadata: vi.fn(),
@@ -51,9 +54,21 @@ vi.mock('../utilities/theme-environment/storefront-session.js', () => ({
 vi.mock('../utilities/theme-environment/dev-server-session.js', () => ({
   initializeDevServerSession: vi.fn(),
 }))
+vi.mock('../utilities/theme-environment/crawler-signature.js', async (realImport) => {
+  const realModule = await realImport<typeof import('../utilities/theme-environment/crawler-signature.js')>()
+  return {
+    ...realModule,
+    fetchOrCreateCrawlerSignatureHeaders: vi.fn(),
+  }
+})
 
 const store = 'my-store.myshopify.com'
 const theme = buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!
+const crawlerSignatureHeaders = {
+  Signature: 'signature-value',
+  'Signature-Input': 'signature-input-value',
+  'Signature-Agent': 'signature-agent-value',
+}
 
 describe('renderLinks', () => {
   test('renders "dev" command links', async () => {
@@ -296,6 +311,7 @@ describe('dev() Ctrl-C analytics', () => {
   beforeEach(() => {
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+    vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockResolvedValue(crawlerSignatureHeaders)
     vi.mocked(initializeDevServerSession).mockResolvedValue({
       storeFqdn: adminSession.storeFqdn,
       token: adminSession.token,
@@ -419,6 +435,7 @@ describe('dev() port validation', () => {
   beforeEach(() => {
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+    vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockResolvedValue(crawlerSignatureHeaders)
     vi.mocked(initializeDevServerSession).mockResolvedValue({
       storeFqdn: adminSession.storeFqdn,
       token: adminSession.token,

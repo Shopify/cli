@@ -59,6 +59,33 @@ describe('render', () => {
     )
   })
 
+  test('passes crawler signature headers to SFR requests', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, {headers: {'Content-Type': 'application/json'}}))
+
+    await render(
+      {
+        ...session,
+        crawlerSignatureHeaders: {
+          Signature: 'signature-value',
+          'Signature-Input': 'signature-input-value',
+          'Signature-Agent': 'signature-agent-value',
+        },
+      },
+      context,
+    )
+
+    expect(fetch).toHaveBeenCalledWith(
+      'https://store.myshopify.com/products/1?_fd=0&pb=0',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Signature: 'signature-value',
+          'Signature-Input': 'signature-input-value',
+          'Signature-Agent': 'signature-agent-value',
+        }),
+      }),
+    )
+  })
+
   test('preserves Content-Type header for JSON responses', async () => {
     // Given
     vi.mocked(fetch).mockResolvedValue(

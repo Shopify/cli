@@ -1,5 +1,6 @@
 import {defaultHeaders} from './storefront-utils.js'
 import {parseCookies, serializeCookies} from './cookies.js'
+import {type CrawlerSignatureHeaders} from './crawler-signature.js'
 import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -18,7 +19,11 @@ export async function isStorefrontPasswordProtected(session: AdminSession): Prom
  * Sends a request to the password redirect page.
  * If the password is correct, SFR will respond with a 302 to redirect to the storefront
  */
-export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
+export async function isStorefrontPasswordCorrect(
+  password: string | undefined,
+  store: string,
+  crawlerSignatureHeaders?: CrawlerSignatureHeaders,
+) {
   const storeUrl = prependHttps(store)
   const params = new URLSearchParams()
 
@@ -28,11 +33,14 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
 
   recordEvent('theme-service:storefront-session:check-storefront-password')
 
+  const requestHeaders = {
+    'cache-control': 'no-cache',
+    'content-type': 'application/x-www-form-urlencoded',
+    ...crawlerSignatureHeaders,
+  }
+
   const response = await shopifyFetch(`${storeUrl}/password`, {
-    headers: {
-      'cache-control': 'no-cache',
-      'content-type': 'application/x-www-form-urlencoded',
-    },
+    headers: requestHeaders,
     body: params.toString(),
     method: 'POST',
     redirect: 'manual',
@@ -94,13 +102,15 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
 
   recordEvent(`theme-service:storefront-session:get-session-essential-cookie`)
 
+  const requestHeaders = {
+    ...headers,
+    ...defaultHeaders(),
+  }
+
   const response = await shopifyFetch(url, {
     method: 'HEAD',
     redirect: 'manual',
-    headers: {
-      ...headers,
-      ...defaultHeaders(),
-    },
+    headers: requestHeaders,
   })
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
@@ -144,15 +154,17 @@ async function enrichSessionWithStorefrontPassword(
 ): Promise<Record<string, string>> {
   const params = new URLSearchParams({password})
 
+  const requestHeaders = {
+    ...headers,
+    ...defaultHeaders(),
+    Cookie: serializeCookies({_shopify_essential: shopifyEssential}),
+  }
+
   const response = await shopifyFetch(`${storeUrl}/password`, {
     method: 'POST',
     redirect: 'manual',
     body: params,
-    headers: {
-      ...headers,
-      ...defaultHeaders(),
-      Cookie: serializeCookies({_shopify_essential: shopifyEssential}),
-    },
+    headers: requestHeaders,
   })
 
   if (!redirectsToStorefront(response, storeOrigin)) {

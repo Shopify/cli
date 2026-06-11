@@ -1,5 +1,8 @@
+import {type CrawlerSignatureHeaders} from './crawler-signature.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+
+export type {CrawlerSignatureHeaders} from './crawler-signature.js'
 
 /**
  * Defines an authentication session for the theme development server.
@@ -21,6 +24,11 @@ export interface DevServerSession extends AdminSession {
    * Password for accessing password-protected stores.
    */
   storefrontPassword?: string
+
+  /**
+   * Crawler signature headers used to authenticate storefront rendering requests.
+   */
+  crawlerSignatureHeaders?: CrawlerSignatureHeaders
 
   /**
    * This holds all cookies that impact the rendering of the development server.
