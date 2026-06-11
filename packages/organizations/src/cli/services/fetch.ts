@@ -5,11 +5,25 @@ import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {numericIdFromEncodedGid} from '@shopify/cli-kit/common/gid'
 
+interface FetchOrganizationsWithAccessInfoResult {
+  organizations: Organization[]
+  currentUserResolved: boolean
+}
+
 export async function fetchOrganizations(): Promise<Organization[]> {
-  const token = await ensureAuthenticatedBusinessPlatform()
+  const result = await fetchOrganizationsWithAccessInfo()
+  return result.organizations
+}
+
+export async function fetchOrganizationsWithAccessInfo(
+  token?: string,
+): Promise<FetchOrganizationsWithAccessInfoResult> {
+  const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform())
   const unauthorizedHandler = {
     type: 'token_refresh' as const,
     handler: async () => {
+      if (token) return {}
+
       const newToken = await ensureAuthenticatedBusinessPlatform()
       return {token: newToken}
     },
@@ -17,20 +31,24 @@ export async function fetchOrganizations(): Promise<Organization[]> {
 
   const result = await businessPlatformRequestDoc({
     query: ListOrganizations,
-    token,
+    token: resolvedToken,
     unauthorizedHandler,
   })
 
   if (!result.currentUserAccount) {
-    return []
+    return {organizations: [], currentUserResolved: false}
   }
 
-  const orgs = result.currentUserAccount.organizationsWithAccessToDestination.nodes
-  return orgs.map((org) => {
+  const organizations = result.currentUserAccount.organizationsWithAccessToDestination.nodes.map((org) => {
     const id = numericIdFromEncodedGid(org.id)
     if (id === undefined) {
       throw new AbortError(`Failed to decode organization ID from: ${org.id}`)
     }
     return {id, businessName: org.name}
   })
+
+  return {
+    organizations,
+    currentUserResolved: true,
+  }
 }
