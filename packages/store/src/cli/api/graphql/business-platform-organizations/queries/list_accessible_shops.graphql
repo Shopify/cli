@@ -1,0 +1,26 @@
+query ListAccessibleShops($first: Int!) {
+  organization {
+    id
+    name
+    accessibleShops(
+      first: $first
+      sort: SHOP_CREATED_AT_DESC
+      filters: [{field: STORE_STATUS, operator: EQUALS, value: "active"}]
+    ) {
+      edges {
+        node {
+          id
+          shopifyShopId
+          name
+          storeType
+          primaryDomain
+          url
+          createdAt
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+}

@@ -79,6 +79,7 @@
 * [`shopify store auth`](#shopify-store-auth)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify store info`](#shopify-store-info)
+* [`shopify store list`](#shopify-store-list)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -2206,6 +2207,41 @@ EXAMPLES
   $ shopify store info --store shop.myshopify.com
 
   $ shopify store info --store shop.myshopify.com --json
+```
+
+## `shopify store list`
+
+List stores in a Shopify organization.
+
+```
+USAGE
+  $ shopify store list [-j] [--no-color] [--organization-id <value>] [--verbose]
+
+FLAGS
+  -j, --json                     [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color
+                                 output.
+      --no-color                 [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --organization-id=<value>  [env: SHOPIFY_FLAG_ORGANIZATION_ID] Filters the store list by organization. If omitted
+                                 and you belong to more than one organization, you will be prompted to choose one.
+      --verbose                  [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  List stores in a Shopify organization.
+
+  Lists stores in a Shopify organization available to the current CLI account.
+
+  When more than one organization is available, the command prompts you to pick one unless you provide
+  `--organization-id`.
+  In non-interactive environments, provide `--organization-id`.
+
+  Run `shopify organization list` to find organization IDs.
+
+EXAMPLES
+  $ shopify store list
+
+  $ shopify store list --organization-id 1234567
+
+  $ shopify store list --json
 ```
 
 ## `shopify theme check`

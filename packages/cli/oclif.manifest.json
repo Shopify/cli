@@ -6065,6 +6065,65 @@
       "strict": true,
       "summary": "Surface metadata about a Shopify store."
     },
+    "store:list": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nRun `shopify organization list` to find organization IDs.",
+      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nRun `shopify organization list` to find organization IDs.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --organization-id 1234567",
+        "<%= config.bin %> <%= command.id %> --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "organization-id": {
+          "description": "Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.",
+          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "organization-id",
+          "required": false,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:list",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "List stores in a Shopify organization."
+    },
     "theme:check": {
       "aliases": [
       ],

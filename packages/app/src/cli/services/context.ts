@@ -23,7 +23,7 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
-import {selectOrganizationPrompt} from '@shopify/organizations'
+import {selectOrganizationFromList} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
@@ -320,7 +320,7 @@ export async function fetchOrCreateOrganizationApp(
  */
 export async function selectOrg(): Promise<Organization> {
   const orgs = await fetchOrganizations()
-  const org = await selectOrganizationPrompt(orgs)
+  const org = await selectOrganizationFromList(orgs)
   return org
 }
 
