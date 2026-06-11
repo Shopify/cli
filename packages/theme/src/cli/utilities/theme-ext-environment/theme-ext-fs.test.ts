@@ -1,6 +1,11 @@
 import {mountThemeExtensionFileSystem} from './theme-ext-fs.js'
-import {test, describe, expect} from 'vitest'
+import * as themeFsModule from '../theme-fs.js'
+import * as checksumModule from '../asset-checksum.js'
+import {test, describe, expect, vi, beforeEach, afterEach} from 'vitest'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import * as systemModule from '@shopify/cli-kit/node/system'
+import chokidar from 'chokidar'
+import EventEmitter from 'node:events'
 import {fileURLToPath} from 'node:url'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
@@ -169,6 +174,156 @@ describe('theme-ext-fs', () => {
       expect(updatedFile?.attachment).toBe('')
       expect(typeof updatedFile?.stats?.size).toBe('number')
       expect(typeof updatedFile?.stats?.mtime).toBe('number')
+    })
+  })
+
+  describe('startWatcher debounce', () => {
+    const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+      vi.spyOn(themeFsModule, 'readThemeFile').mockResolvedValue('mock content')
+      vi.spyOn(checksumModule, 'calculateChecksum').mockReturnValue('mock-checksum')
+      vi.spyOn(systemModule, 'sleep').mockResolvedValue(undefined as any)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test('triggers handler after debounce period (add event)', async () => {
+      const themeFileSystem = mountThemeExtensionFileSystem(root)
+      await themeFileSystem.ready()
+
+      const addHandler = vi.fn()
+      themeFileSystem.addEventListener('add', addHandler)
+
+      await themeFileSystem.startWatcher()
+
+      const watcher = chokidar.watch('') as unknown as EventEmitter
+      watcher.emit('add', joinPath(root, 'blocks/new_block.liquid'))
+
+      expect(addHandler).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(250)
+
+      expect(addHandler).toHaveBeenCalledOnce()
+      expect(addHandler).toHaveBeenCalledWith(expect.objectContaining({fileKey: 'blocks/new_block.liquid'}))
+    })
+
+    test('triggers delete handler after debounce period (unlink event)', async () => {
+      const themeFileSystem = mountThemeExtensionFileSystem(root)
+      await themeFileSystem.ready()
+
+      const unlinkHandler = vi.fn()
+      themeFileSystem.addEventListener('unlink', unlinkHandler)
+
+      await themeFileSystem.startWatcher()
+
+      const watcher = chokidar.watch('') as unknown as EventEmitter
+      watcher.emit('unlink', joinPath(root, 'blocks/star_rating.liquid'))
+
+      expect(unlinkHandler).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(250)
+
+      expect(unlinkHandler).toHaveBeenCalledOnce()
+      expect(unlinkHandler).toHaveBeenCalledWith(expect.objectContaining({fileKey: 'blocks/star_rating.liquid'}))
+      expect(themeFileSystem.files.has('blocks/star_rating.liquid')).toBe(false)
+    })
+
+    test('collapses rapid duplicate events into single handler call', async () => {
+      const themeFileSystem = mountThemeExtensionFileSystem(root)
+      await themeFileSystem.ready()
+
+      const changeHandler = vi.fn()
+      themeFileSystem.addEventListener('change', changeHandler)
+
+      await themeFileSystem.startWatcher()
+
+      const watcher = chokidar.watch('') as unknown as EventEmitter
+      const filePath = joinPath(root, 'blocks/star_rating.liquid')
+
+      watcher.emit('change', filePath)
+      watcher.emit('change', filePath)
+      watcher.emit('change', filePath)
+      watcher.emit('change', filePath)
+      watcher.emit('change', filePath)
+
+      await vi.advanceTimersByTimeAsync(250)
+
+      expect(changeHandler).toHaveBeenCalledOnce()
+    })
+
+    test('debounces different files independently', async () => {
+      const themeFileSystem = mountThemeExtensionFileSystem(root)
+      await themeFileSystem.ready()
+
+      const changeHandler = vi.fn()
+      themeFileSystem.addEventListener('change', changeHandler)
+
+      await themeFileSystem.startWatcher()
+
+      const watcher = chokidar.watch('') as unknown as EventEmitter
+      watcher.emit('change', joinPath(root, 'blocks/star_rating.liquid'))
+      watcher.emit('change', joinPath(root, 'snippets/stars.liquid'))
+
+      await vi.advanceTimersByTimeAsync(250)
+
+      expect(changeHandler).toHaveBeenCalledTimes(2)
+    })
+
+    test('calls correct handler per event type', async () => {
+      const themeFileSystem = mountThemeExtensionFileSystem(root)
+      await themeFileSystem.ready()
+
+      const addHandler = vi.fn()
+      const unlinkHandler = vi.fn()
+      themeFileSystem.addEventListener('add', addHandler)
+      themeFileSystem.addEventListener('unlink', unlinkHandler)
+
+      await themeFileSystem.startWatcher()
+
+      const watcher = chokidar.watch('') as unknown as EventEmitter
+      watcher.emit('add', joinPath(root, 'blocks/new_block.liquid'))
+      watcher.emit('unlink', joinPath(root, 'snippets/stars.liquid'))
+
+      await vi.advanceTimersByTimeAsync(250)
+
+      expect(addHandler).toHaveBeenCalledOnce()
+      expect(addHandler).toHaveBeenCalledWith(expect.objectContaining({fileKey: 'blocks/new_block.liquid'}))
+      expect(unlinkHandler).toHaveBeenCalledOnce()
+      expect(unlinkHandler).toHaveBeenCalledWith(expect.objectContaining({fileKey: 'snippets/stars.liquid'}))
+    })
+
+    test('resets debounce timer on new event for same file', async () => {
+      const themeFileSystem = mountThemeExtensionFileSystem(root)
+      await themeFileSystem.ready()
+
+      const changeHandler = vi.fn()
+      themeFileSystem.addEventListener('change', changeHandler)
+
+      await themeFileSystem.startWatcher()
+
+      const watcher = chokidar.watch('') as unknown as EventEmitter
+      const filePath = joinPath(root, 'blocks/star_rating.liquid')
+
+      watcher.emit('change', filePath)
+
+      await vi.advanceTimersByTimeAsync(200)
+      expect(changeHandler).not.toHaveBeenCalled()
+
+      watcher.emit('change', filePath)
+
+      await vi.advanceTimersByTimeAsync(200)
+      expect(changeHandler).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(50)
+      expect(changeHandler).toHaveBeenCalledOnce()
     })
   })
 
