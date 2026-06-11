@@ -13,7 +13,7 @@ import {
   type Theme,
   path as pathUtils,
 } from '@shopify/theme-check-node'
-import YAML from 'yaml'
+import {dump as yamlDump} from 'js-yaml'
 
 type OffenseMap = Record<string, Offense[]>
 
@@ -265,9 +265,9 @@ export async function initConfig(root: string) {
   // The initialized config will extend the recommended settings and
   // will simply show the commented checks for the user to customize.
   const {settings} = await loadConfig(undefined, root)
-  const checksYml = commentString(YAML.stringify(settings))
+  const checksYml = commentString(yamlDump(settings))
 
-  const initConfigYml = YAML.stringify({extends: 'theme-check:recommended', ignore: ['node_modules/**']})
+  const initConfigYml = yamlDump({extends: 'theme-check:recommended', ignore: ['node_modules/**']})
 
   await writeFile(filePath, `${initConfigYml}${checksYml}`)
 
@@ -301,7 +301,7 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string,
     ...settings,
   }
   const output = environment ? {[environment]: config} : config
-  outputResult(YAML.stringify(output))
+  outputResult(yamlDump(output))
 }
 
 export async function outputActiveChecks(root: string, configPath?: string, environment?: string) {
@@ -341,7 +341,7 @@ export async function outputActiveChecks(root: string, configPath?: string, envi
   }, {})
 
   const output = environment ? {[environment]: checksList} : checksList
-  outputResult(YAML.stringify(output))
+  outputResult(yamlDump(output))
 }
 
 interface ExtendedWriteStream extends NodeJS.WriteStream {
