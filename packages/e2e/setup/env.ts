@@ -150,6 +150,7 @@ export const envFixture = base.extend<{testSection: void}, {env: E2EEnv}>({
         ...xdgEnv,
         SHOPIFY_CLI_CLOUDFLARED_PATH: cloudflaredPath,
         SHOPIFY_RUN_AS_USER: '0',
+        SHOPIFY_CLI_NO_ANALYTICS: '1',
         NODE_OPTIONS: '',
         CI: '1',
         SHOPIFY_CLI_1P_DEV: undefined,

@@ -2,6 +2,7 @@ import {appTestFixture as test, createApp, deployApp, versionsList, configLink} 
 import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
+import {stripAnsi} from '../helpers/strip-ansi.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 // eslint-disable-next-line no-restricted-imports
@@ -28,6 +29,13 @@ import * as path from 'path'
 interface VersionLine {
   versionTag?: string | null
   status: string
+}
+
+function assertDeployAnalytics(opts: {output: string; appName: string; step: string}) {
+  const output = stripAnsi(opts.output)
+  expect(output, `${opts.step} - expected deploy analytics command`).toContain('"command": "app deploy"')
+  expect(output, `${opts.step} - expected deploy analytics success`).toContain('"success": true')
+  expect(output, `${opts.step} - expected deploy analytics app name`).toContain(`"app_name": "${opts.appName}"`)
 }
 
 /**
@@ -85,9 +93,26 @@ test.describe('App deploy', () => {
 
       // Step 2: Deploy with a tagged version
       const versionTag = `E2E-v1-${Date.now()}`
-      const deployResult = await deployApp({cli, appDir, version: versionTag, message: 'E2E A primary deployment'})
+      const deployResult = await cli.exec(
+        [
+          'app',
+          'deploy',
+          '--version',
+          versionTag,
+          '--message',
+          'E2E A primary deployment',
+          '--allow-updates',
+          '--path',
+          appDir,
+        ],
+        {
+          env: {SHOPIFY_FLAG_VERBOSE: '1'},
+          timeout: TEST_TIMEOUT.long,
+        },
+      )
       const deployOutput = deployResult.stdout + deployResult.stderr
       expect(deployResult.exitCode, `Step 2 - deploy failed:\n${deployOutput}`).toBe(0)
+      assertDeployAnalytics({output: deployOutput, appName, step: 'Step 2'})
 
       // Step 3: Verify the primary tag is active and no other version is stuck active.
       const listResult = await versionsList({cli, appDir})

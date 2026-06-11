@@ -52,6 +52,7 @@ export default async function globalSetup() {
     ...process.env,
     ...xdgEnv,
     SHOPIFY_RUN_AS_USER: '0',
+    SHOPIFY_CLI_NO_ANALYTICS: '1',
     NODE_OPTIONS: '',
     CI: '1',
     SHOPIFY_CLI_1P_DEV: undefined,

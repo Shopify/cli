@@ -47,9 +47,9 @@ const hookEntryPoints = glob.sync('./src/hooks/*.ts', {
 })
 
 // Build esbuild entry points for app/theme commands so they get bundled into
-// the CLI's own dist/ with all imports resolved. This is needed because
-// @shopify/app and @shopify/theme are devDependencies (private packages) and
-// won't exist as real node_modules in the published snapshot.
+// the CLI's own dist/ with all imports resolved. These entrypoints use the
+// app/theme dist outputs so package imports and per-command imports share the
+// same module graph.
 const manifest = JSON.parse(readFileSync(joinPath(process.cwd(), 'oclif.manifest.json'), 'utf8'))
 const commandEntryPointOverrides = {
   'app:logs:sources': 'cli/commands/app/app-logs/sources',
@@ -58,13 +58,13 @@ const commandEntryPointOverrides = {
   'doctor-release': 'cli/commands/doctor-release/doctor-release',
   'doctor-release:theme': 'cli/commands/doctor-release/theme/index',
 }
-const externalPackageDirs = {'@shopify/app': '../app/', '@shopify/theme': '../theme/'}
+const externalPackageDirs = {'@shopify/app': '../app/dist/', '@shopify/theme': '../theme/dist/'}
 
 const externalCommandEntryPoints = Object.entries(manifest.commands)
   .filter(([, cmd]) => externalPackageDirs[cmd.customPluginName])
   .map(([id, cmd]) => {
     const out = commandEntryPointOverrides[id] ?? `cli/commands/${id.replace(/:/g, '/')}`
-    const inPath = externalPackageDirs[cmd.customPluginName] + `src/${out}.ts`
+    const inPath = externalPackageDirs[cmd.customPluginName] + `${out}.js`
     return {in: inPath, out}
   })
 
