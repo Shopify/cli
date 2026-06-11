@@ -14,7 +14,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {ensureValidPassword, isStorefrontPasswordProtected} from '@shopify/theme'
+import {ensureValidPassword, isStorefrontPasswordProtected, fetchOrCreateCrawlerSignatureHeaders} from '@shopify/theme'
 
 vi.mock('../../../utilities/extensions/theme/host-theme-manager')
 vi.mock('@shopify/cli-kit/node/output')
@@ -42,14 +42,21 @@ vi.mock('@shopify/theme', async (realImport) => {
     ...realModule,
     ensureValidPassword: vi.fn(),
     isStorefrontPasswordProtected: vi.fn(),
+    fetchOrCreateCrawlerSignatureHeaders: vi.fn(),
   }
 })
 
 describe('setupPreviewThemeAppExtensionsProcess', () => {
   const mockAdminSession = {storeFqdn: 'test.myshopify.com'} as any as AdminSession
+  const crawlerSignatureHeaders = {
+    Signature: 'signature-value',
+    'Signature-Input': 'signature-input-value',
+    'Signature-Agent': 'signature-agent-value',
+  }
 
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(mockAdminSession)
+    vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockResolvedValue(crawlerSignatureHeaders)
     vi.mocked(partnersFqdn).mockResolvedValue('partners.shopify.com')
     vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
   })
@@ -201,8 +208,9 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
     })
 
     expect(ensureValidPassword).toHaveBeenCalledOnce()
-    expect(ensureValidPassword).toHaveBeenCalledWith(undefined, 'test.myshopify.com')
+    expect(ensureValidPassword).toHaveBeenCalledWith(undefined, 'test.myshopify.com', crawlerSignatureHeaders)
     expect(result!.options.storefrontPassword).toEqual(storefrontPassword)
+    expect(result!.options.crawlerSignatureHeaders).toEqual(crawlerSignatureHeaders)
   })
 })
 

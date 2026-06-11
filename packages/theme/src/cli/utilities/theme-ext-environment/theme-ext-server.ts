@@ -1,5 +1,5 @@
 import {mountThemeExtensionFileSystem} from './theme-ext-fs.js'
-import {DevServerContext} from '../theme-environment/types.js'
+import {type CrawlerSignatureHeaders, DevServerContext} from '../theme-environment/types.js'
 import {getHtmlHandler} from '../theme-environment/html.js'
 import {getAssetsHandler} from '../theme-environment/local-assets.js'
 import {getProxyHandler} from '../theme-environment/proxy.js'
@@ -24,6 +24,7 @@ export interface DevExtensionServerContext {
   themeExtensionPort: number
   themeExtensionDirectory: string
   storefrontPassword?: string
+  crawlerSignatureHeaders?: CrawlerSignatureHeaders
 }
 
 export async function initializeDevelopmentExtensionServer(theme: Theme, devExt: DevExtensionServerContext) {
@@ -70,7 +71,13 @@ async function contextDevServerContext(
   theme: Theme,
   extensionContext: DevExtensionServerContext,
 ): Promise<DevServerContext> {
-  const {adminSession, storefrontPassword, themeExtensionPort, themeExtensionDirectory: directory} = extensionContext
+  const {
+    adminSession,
+    storefrontPassword,
+    themeExtensionPort,
+    themeExtensionDirectory: directory,
+    crawlerSignatureHeaders,
+  } = extensionContext
 
   const host = '127.0.0.1'
   const port = themeExtensionPort ?? 9293
@@ -78,7 +85,13 @@ async function contextDevServerContext(
   const localThemeExtensionFileSystem = mountThemeExtensionFileSystem(directory)
   await localThemeExtensionFileSystem.ready()
 
-  const session = await initializeDevServerSession(theme.id.toString(), adminSession, undefined, storefrontPassword)
+  const session = await initializeDevServerSession(
+    theme.id.toString(),
+    adminSession,
+    undefined,
+    storefrontPassword,
+    crawlerSignatureHeaders,
+  )
 
   return {
     session,
