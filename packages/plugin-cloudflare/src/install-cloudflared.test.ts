@@ -42,7 +42,7 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
+      vi.mocked(childProcess.execFileSync).mockImplementation((_command, _args, options) => {
         // Simulate tar extracting the file
         const cwd = options?.cwd as string
         writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
@@ -69,7 +69,7 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
+      vi.mocked(childProcess.execFileSync).mockImplementation((_command, _args, options) => {
         const cwd = options?.cwd as string
         writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
         return Buffer.from('')
