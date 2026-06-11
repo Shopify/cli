@@ -4,7 +4,7 @@ import {
   DefaultOtelService,
   DefaultOtelServiceOptions,
 } from '../../public/node/vendor/otel-js/service/DefaultOtelService/DefaultOtelService.js'
-import {isUnitTest, opentelemetryDomain} from '../../public/node/context/local.js'
+import {firstPartyDev, isUnitTest, opentelemetryDomain} from '../../public/node/context/local.js'
 import {ValueType, diag} from '@opentelemetry/api'
 
 type MetricRecorder =
@@ -20,6 +20,7 @@ type Labels = {
   exit: string
   job: string
   cli_version: string
+  is_first_party: string
 }
 
 interface Timing {
@@ -76,6 +77,10 @@ export async function recordMetrics(
     exit: options.exitMode,
     job: `${options.owningPlugin}::${options.command}`,
     cli_version: regularisedCliVersion,
+    // Distinguishes Shopify first-party (1P) developers from third-party developers so the
+    // CLI guardrail dashboards can be scoped to 1P. Keyed off the 1P dev path
+    // (SHOPIFY_CLI_1P_DEV), the same signal that sets the X-Shopify-Cli-Employee header.
+    is_first_party: firstPartyDev() ? 'true' : 'false',
   }
 
   recordCommandCounter(recorder, labels)
