@@ -32,11 +32,17 @@ const LatestApiVersionByFQDN = new Map<string, string>()
  * @param query - GraphQL query to execute.
  * @param session - Shopify admin session including token and Store FQDN.
  * @param variables - GraphQL variables to pass to the query.
+ * @param version - API version.
  * @returns The response of the query of generic type <T>.
  */
-export async function adminRequest<T>(query: string, session: AdminSession, variables?: GraphQLVariables): Promise<T> {
+export async function adminRequest<T>(
+  query: string,
+  session: AdminSession,
+  variables?: GraphQLVariables,
+  version?: string,
+): Promise<T> {
   const api = 'Admin'
-  const version = await fetchLatestSupportedApiVersion(session)
+  const apiVersion = version ?? (await fetchLatestSupportedApiVersion(session))
   let storeDomain = session.storeFqdn
   const addedHeaders = themeAccessHeaders(session)
 
@@ -45,7 +51,7 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
     storeDomain = new DevServerCore().host('app')
   }
 
-  const url = adminUrl(storeDomain, version, session)
+  const url = adminUrl(storeDomain, apiVersion, session)
   return graphqlRequest({query, api, addedHeaders, url, token: session.token, variables})
 }
 

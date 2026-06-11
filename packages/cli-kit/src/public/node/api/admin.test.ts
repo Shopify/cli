@@ -64,6 +64,27 @@ describe('admin-graphql-api', () => {
     })
   })
 
+  test('request uses the provided API version when specified', async () => {
+    // Given
+    vi.mocked(graphqlRequest).mockResolvedValue({})
+    vi.mocked(graphqlRequestDoc).mockResolvedValue(mockedResult)
+
+    // When
+    await admin.adminRequest('query', Session, {variables: 'variables'}, 'unstable')
+
+    // Then
+    expect(graphqlRequestDoc).not.toHaveBeenCalled()
+    expect(graphqlRequest).toHaveBeenCalledOnce()
+    expect(graphqlRequest).toHaveBeenCalledWith({
+      query: 'query',
+      api: 'Admin',
+      url: 'https://store.myshopify.com/admin/api/unstable/graphql.json',
+      addedHeaders: {},
+      token,
+      variables: {variables: 'variables'},
+    })
+  })
+
   test('request is called with correct parameters when it is a theme access session', async () => {
     // Given
     const themeAccessToken = 'shptka_token'
