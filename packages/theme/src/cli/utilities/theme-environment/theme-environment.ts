@@ -3,6 +3,7 @@ import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
+import {createHostValidationHandler} from './host-validation.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {renderThrownError} from '../errors.js'
@@ -136,6 +137,8 @@ function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWor
     // Required for HMR with the theme editor
     'https://online-store-web.shopifyapps.com',
   ]
+
+  app.use(createHostValidationHandler(ctx.options.host, ctx.options.port))
 
   app.use(
     defineLazyEventHandler(async () => {

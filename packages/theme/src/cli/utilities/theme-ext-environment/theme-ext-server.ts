@@ -4,6 +4,7 @@ import {getHtmlHandler} from '../theme-environment/html.js'
 import {getAssetsHandler} from '../theme-environment/local-assets.js'
 import {getProxyHandler} from '../theme-environment/proxy.js'
 import {getHotReloadHandler, triggerHotReload} from '../theme-environment/hot-reload/server.js'
+import {createHostValidationHandler} from '../theme-environment/host-validation.js'
 import {emptyThemeFileSystem} from '../theme-fs-empty.js'
 import {initializeDevServerSession} from '../theme-environment/dev-server-session.js'
 import {createApp, toNodeListener} from 'h3'
@@ -36,6 +37,7 @@ export async function initializeDevelopmentExtensionServer(theme: Theme, devExt:
 export function createDevelopmentExtensionServer(theme: Theme, ctx: DevServerContext) {
   const app = createApp()
 
+  app.use(createHostValidationHandler(ctx.options.host, ctx.options.port))
   app.use(getHotReloadHandler(theme, ctx))
   app.use(getAssetsHandler(theme, ctx))
   app.use(getProxyHandler(theme, ctx))
