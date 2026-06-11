@@ -1,4 +1,4 @@
-import {storeAuthSessionKey} from './config.js'
+import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './config.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 export interface StoredStoreAppSession {
@@ -71,6 +71,8 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
     return undefined
   }
 
+  const associatedUser = sanitizeAssociatedUser(session.associatedUser)
+
   return {
     store: session.store,
     clientId: session.clientId,
@@ -81,21 +83,22 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
     ...(isString(session.refreshToken) ? {refreshToken: session.refreshToken} : {}),
     ...(isString(session.expiresAt) ? {expiresAt: session.expiresAt} : {}),
     ...(isString(session.refreshTokenExpiresAt) ? {refreshTokenExpiresAt: session.refreshTokenExpiresAt} : {}),
-    ...(sanitizeAssociatedUser(session.associatedUser)
-      ? {associatedUser: sanitizeAssociatedUser(session.associatedUser)}
-      : {}),
+    ...(associatedUser ? {associatedUser} : {}),
   }
 }
 
-function readStoredStoreAppSessionBucket(
+function sanitizeStoredStoreAppSessionBucket(
   store: string,
+  storedBucket: unknown,
   storage: LocalStorage<StoreSessionSchema>,
 ): StoredStoreAppSessionBucket | undefined {
-  const key = storeAuthSessionKey(store)
-  const storedBucket = storage.get(key)
   if (!storedBucket || typeof storedBucket !== 'object') return undefined
 
   const {sessionsByUserId, currentUserId} = storedBucket as Partial<StoredStoreAppSessionBucket>
+  const looksLikeBucket = sessionsByUserId !== undefined || currentUserId !== undefined
+  if (!looksLikeBucket) return undefined
+
+  const key = storeAuthSessionKey(store)
   if (
     !sessionsByUserId ||
     typeof sessionsByUserId !== 'object' ||
@@ -129,6 +132,58 @@ function readStoredStoreAppSessionBucket(
     currentUserId,
     sessionsByUserId: sanitizedSessionsByUserId,
   }
+}
+
+function readStoredStoreAppSessionBucket(
+  store: string,
+  storage: LocalStorage<StoreSessionSchema>,
+): StoredStoreAppSessionBucket | undefined {
+  return sanitizeStoredStoreAppSessionBucket(store, storage.get(storeAuthSessionKey(store)), storage)
+}
+
+// `conf` persists dotted keys as nested objects. Store-auth callers should not
+// learn that layout directly; this helper keeps the current traversal private to
+// the persistence seam while higher-level code projects summaries instead.
+function readRawStoreSessionStorage(storage: LocalStorage<StoreSessionSchema>): Record<string, unknown> {
+  return (storage as unknown as {config: {store: Record<string, unknown>}}).config.store ?? {}
+}
+
+function collectCurrentStoredStoreAppSessions(
+  storage: LocalStorage<StoreSessionSchema>,
+  store: string,
+  value: unknown,
+  sessions: StoredStoreAppSession[],
+): void {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return
+
+  const bucket = sanitizeStoredStoreAppSessionBucket(store, value, storage)
+  if (bucket) {
+    const session = bucket.sessionsByUserId[bucket.currentUserId]
+    if (session) sessions.push(session)
+    return
+  }
+
+  for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+    collectCurrentStoredStoreAppSessions(storage, `${store}.${childKey}`, childValue, sessions)
+  }
+}
+
+/**
+ * Internal persistence helper for projecting the current session for every
+ * store that has locally stored store auth.
+ */
+export function listCurrentStoredStoreAppSessions(
+  storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
+): StoredStoreAppSession[] {
+  const sessions: StoredStoreAppSession[] = []
+  const keyPrefix = `${STORE_AUTH_APP_CLIENT_ID}::`
+
+  for (const [key, value] of Object.entries(readRawStoreSessionStorage(storage))) {
+    if (!key.startsWith(keyPrefix)) continue
+    collectCurrentStoredStoreAppSessions(storage, key.slice(keyPrefix.length), value, sessions)
+  }
+
+  return sessions
 }
 
 export function getCurrentStoredStoreAppSession(
