@@ -263,6 +263,63 @@ describe('jsonSchemaValidate', () => {
     expect(schemaParsed.errors, `Converting ${JSON.stringify(schemaParsed.rawErrors)}`).toEqual(zodErrors)
   })
 
+  test('reports arrays distinctly when an object is expected', () => {
+    const subject = {
+      events: [
+        {},
+        {
+          metrics: [],
+        },
+      ],
+    }
+    const contract = {
+      type: 'object',
+      properties: {
+        events: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              metrics: {type: 'object'},
+            },
+          },
+        },
+      },
+    }
+
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
+
+    expect(schemaParsed.state).toBe('error')
+    expect(schemaParsed.errors).toEqual([
+      {
+        path: ['events', '1', 'metrics'],
+        message: 'Expected object, received array',
+      },
+    ])
+  })
+
+  test('reports null distinctly when an object is expected', () => {
+    const subject = {
+      foo: null,
+    }
+    const contract = {
+      type: 'object',
+      properties: {
+        foo: {type: 'object'},
+      },
+    }
+
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
+
+    expect(schemaParsed.state).toBe('error')
+    expect(schemaParsed.errors).toEqual([
+      {
+        path: ['foo'],
+        message: 'Expected object, received null',
+      },
+    ])
+  })
+
   test('ignores custom x-taplo directive', () => {
     const subject = {
       foo: 'bar',

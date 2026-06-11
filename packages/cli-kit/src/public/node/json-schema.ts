@@ -112,6 +112,12 @@ export function jsonSchemaValidate(
  * @param schema - The JSON schema to validated against.
  * @returns The errors in a zod-like format.
  */
+function getJsonSchemaValueType(value: unknown): string {
+  if (Array.isArray(value)) return 'array'
+  if (value === null) return 'null'
+  return typeof value
+}
+
 function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema: SchemaObject) {
   // This reduces the number of errors by simplifying errors coming from different branches of a union
   const errors = simplifyUnionErrors(rawErrors, subject, schema)
@@ -129,7 +135,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
         ? error.params.type.join(', ')
         : (error.params.type as string)
       const actualType = getPathValue(subject, path.join('.'))
-      return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
+      return {path, message: `Expected ${expectedType}, received ${getJsonSchemaValueType(actualType)}`}
     }
 
     if (error.keyword === 'anyOf' || error.keyword === 'oneOf') {

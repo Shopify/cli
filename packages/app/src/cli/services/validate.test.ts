@@ -37,6 +37,28 @@ describe('formatConfigurationError', () => {
       '[access.admin]: Required',
     )
   })
+
+  test('adds a TOML table hint for object array type mismatches', () => {
+    expect(
+      formatConfigurationError({
+        file: 'shopify.app.toml',
+        path: ['events', '1', 'metrics'],
+        message: 'Expected object, received array',
+      }),
+    ).toBe(
+      '[events.1.metrics]: Expected object, received array. Use a single TOML table instead of an array of tables. [table] defines one table; [[table]] defines an array of tables.',
+    )
+  })
+
+  test('does not add a TOML table hint for non-TOML files', () => {
+    expect(
+      formatConfigurationError({
+        file: 'config.json',
+        path: ['events', '1', 'metrics'],
+        message: 'Expected object, received array',
+      }),
+    ).toBe('[events.1.metrics]: Expected object, received array')
+  })
 })
 
 describe('validateApp', () => {
