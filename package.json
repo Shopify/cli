@@ -120,7 +120,7 @@
   },
   "resolutions": {
     "@types/react": "18.3.12",
-    "vite": "6.4.1",
+    "vite": "6.4.3",
     "@typescript-eslint/utils": "8.56.1",
     "@typescript-eslint/type-utils": "8.56.1",
     "@typescript-eslint/typescript-estree": "8.56.1",
