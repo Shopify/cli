@@ -6,6 +6,7 @@ import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from './output.js'
+import {isCloudEnvironment} from './context/local.js'
 import {execa, ExecaChildProcess} from 'execa'
 import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
@@ -51,6 +52,8 @@ interface BuildExecOptions {
  * @returns A promise that resolves true if the URL was opened successfully, false otherwise.
  */
 export async function openURL(url: string): Promise<boolean> {
+  if (isCloudEnvironment()) return false
+
   const externalOpen = await import('open')
   try {
     await externalOpen.default(url)
