@@ -20,10 +20,12 @@ const result = {
     name: 'Lavender Candles',
     subdomain: 'x12y45z.myshopify.com',
     accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
+    claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
     requestedCountry: 'US',
   },
   nextSteps: [
     'Open https://app.shopify.com/auth/preview-store?token=access-token to view and access your preview store.',
+    'Claim https://admin.shopify.com/store-transfer/accept/claim-token to save your preview store and continue editing later.',
     'Use shopify store execute --store x12y45z.myshopify.com to add products, collections, pages, and more.',
     'Use shopify theme pull and shopify theme push to edit your store design.',
   ],
@@ -43,6 +45,7 @@ describe('preview store create result presenter', () => {
             name: 'Lavender Candles',
             subdomain: 'x12y45z.myshopify.com',
             accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
+            claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
             requestedCountry: 'US',
           },
           next_steps: result.nextSteps,
@@ -68,6 +71,7 @@ describe('preview store create result presenter', () => {
                 ['Name', 'Lavender Candles'],
                 ['Domain', 'x12y45z.myshopify.com'],
                 ['Access URL', 'https://app.shopify.com/auth/preview-store?token=access-token'],
+                ['Claim URL', 'https://admin.shopify.com/store-transfer/accept/claim-token'],
                 ['Requested country', 'US'],
               ],
               firstColumnSubdued: true,
@@ -84,6 +88,16 @@ describe('preview store create result presenter', () => {
               },
             },
             ' to view and access your preview store.',
+          ],
+          [
+            'Claim ',
+            {
+              link: {
+                label: 'https://admin.shopify.com/store-transfer/accept/claim-token',
+                url: 'https://admin.shopify.com/store-transfer/accept/claim-token',
+              },
+            },
+            ' to save your preview store and continue editing later.',
           ],
           [
             'Use ',

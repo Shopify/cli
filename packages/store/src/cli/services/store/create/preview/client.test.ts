@@ -1,8 +1,10 @@
 import {
   CLI_INSTANCE_HEADER,
   CLI_VERSION_HEADER,
+  claimPreviewStore,
   createPreviewStore,
   getOrCreateCliInstanceId,
+  previewStoreClaimHeaders,
   previewStoreCreateHeaders,
 } from './client.js'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -56,6 +58,18 @@ describe('preview store client', () => {
       'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
       [CLI_INSTANCE_HEADER]: 'instance-1',
       [CLI_VERSION_HEADER]: CLI_KIT_VERSION,
+    })
+  })
+
+  test('builds claim request headers with the Admin API token', () => {
+    expect(previewStoreClaimHeaders('instance-1', 'shpat_token')).toEqual({
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+      [CLI_INSTANCE_HEADER]: 'instance-1',
+      [CLI_VERSION_HEADER]: CLI_KIT_VERSION,
+      authorization: 'shpat_token',
+      'X-Shopify-Access-Token': 'shpat_token',
     })
   })
 
@@ -124,7 +138,42 @@ describe('preview store client', () => {
     await expect(createPreviewStore({}, {storage: inMemoryStorage('instance-1')})).rejects.toThrow(message)
   })
 
-  test('rejects malformed success responses without leaking the admin API token or access URL', async () => {
+  test('POSTs to /services/preview-stores/:shop_id/claim with the Admin API token', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(
+      response(201, {claim_url: 'https://admin.shopify.com/store-transfer/accept/claim-token'}),
+    )
+
+    const got = await claimPreviewStore(
+      {shopId: '123', adminApiToken: 'shpat_token'},
+      {storage: inMemoryStorage('instance-1')},
+    )
+
+    expect(shopifyFetch).toHaveBeenCalledWith('https://app.shopify.com/services/preview-stores/123/claim', {
+      method: 'POST',
+      headers: expect.objectContaining({
+        [CLI_INSTANCE_HEADER]: 'instance-1',
+        authorization: 'shpat_token',
+        'X-Shopify-Access-Token': 'shpat_token',
+      }),
+      body: JSON.stringify({}),
+    })
+    expect(got).toEqual({claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token'})
+  })
+
+  test('sends optional email when requesting a preview store claim URL', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(
+      response(201, {claim_url: 'https://admin.shopify.com/store-transfer/accept/claim-token'}),
+    )
+
+    await claimPreviewStore(
+      {shopId: '123', adminApiToken: 'shpat_token', email: 'merchant@example.com'},
+      {storage: inMemoryStorage('instance-1')},
+    )
+
+    expect(vi.mocked(shopifyFetch).mock.calls[0]![1]!.body).toBe(JSON.stringify({email: 'merchant@example.com'}))
+  })
+
+  test('rejects malformed create responses without leaking the admin API token or access URL', async () => {
     vi.mocked(shopifyFetch).mockResolvedValueOnce(
       response(201, {
         shop: {id: 123},
@@ -136,6 +185,17 @@ describe('preview store client', () => {
     await expect(createPreviewStore({}, {storage: inMemoryStorage('instance-1')})).rejects.toMatchObject({
       message: 'Preview store creation response is missing required fields.',
       tryMessage: expect.stringMatching(/"admin_api_token":"\[REDACTED\]".*"access_url":"\[REDACTED\]"/),
+    })
+  })
+
+  test('rejects malformed claim responses without leaking the claim URL', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(response(201, {claim_url: 123}))
+
+    await expect(
+      claimPreviewStore({shopId: '123', adminApiToken: 'shpat_token'}, {storage: inMemoryStorage('instance-1')}),
+    ).rejects.toMatchObject({
+      message: 'Preview store claim URL response is missing required fields.',
+      tryMessage: expect.stringContaining('"claim_url":"[REDACTED]"'),
     })
   })
 })

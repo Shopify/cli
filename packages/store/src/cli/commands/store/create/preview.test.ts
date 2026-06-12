@@ -21,6 +21,7 @@ describe('store create preview command', () => {
         name: 'Lavender Candles',
         subdomain: 'x.myshopify.com',
         accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
+        claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
         requestedCountry: 'US',
       },
       nextSteps: [],
