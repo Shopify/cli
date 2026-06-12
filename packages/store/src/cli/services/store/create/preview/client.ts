@@ -62,7 +62,7 @@ interface PreviewStoreClaimRequest {
   email?: string
 }
 
-export interface PreviewStoreClaimResponse {
+interface PreviewStoreClaimResponse {
   claimUrl: string
 }
 
