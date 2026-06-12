@@ -1,10 +1,11 @@
 import {outputContent, outputDebug, outputToken} from './output.js'
 import {err, ok, Result} from './result.js'
 import {fetch, Response} from './http.js'
-import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
+import {mkdir, inTemporaryDirectory, moveFile, chmod, createFileWriteStream} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {AbortError} from './error.js'
+import {pipeline} from 'stream/promises'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -162,8 +163,10 @@ export async function downloadGitHubRelease(
         )
       }
 
-      const buffer = await response.arrayBuffer()
-      await writeFile(tempPath, Buffer.from(buffer))
+      if (!response.body) {
+        throw new AbortError(`Failed to download ${assetName}: No response body`)
+      }
+      await pipeline(response.body, createFileWriteStream(tempPath))
 
       await chmod(tempPath, 0o755)
       await mkdir(dirname(targetPath))

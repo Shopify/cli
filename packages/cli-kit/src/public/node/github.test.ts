@@ -13,6 +13,7 @@ import {readFile} from './fs.js'
 import {isExecutable} from 'is-executable'
 import {describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
+import {Readable} from 'stream'
 
 vi.mock('./http.js')
 
@@ -180,10 +181,10 @@ describe('downloadGitHubRelease', () => {
   testWithTempDir('successfully downloads the release asset', async ({tempDir}) => {
     // GIVEN
     const downloadContent = 'hello'
-    const content = Buffer.from(downloadContent)
+    const content = Readable.from(downloadContent)
     const mockResponse = {
       ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(content),
+      body: content,
     }
     vi.mocked(fetch).mockResolvedValue(mockResponse as any)
 
@@ -221,7 +222,25 @@ describe('downloadGitHubRelease', () => {
 
   testWithTempDir('throws an AbortError when the response is not ok', async ({tempDir}) => {
     // GIVEN
-    vi.mocked(downloadFile).mockRejectedValue(new Error('Not Found'))
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      statusText: 'Not Found',
+    } as any)
+    const targetPath = joinPath(tempDir, 'downloads', 'example')
+
+    // WHEN
+    const result = downloadGitHubRelease(repo, version, asset, targetPath)
+
+    // THEN
+    await expect(result).rejects.toThrow(AbortError)
+  })
+
+  testWithTempDir('throws an AbortError when the response body is missing', async ({tempDir}) => {
+    // GIVEN
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      body: null,
+    } as any)
     const targetPath = joinPath(tempDir, 'downloads', 'example')
 
     // WHEN
