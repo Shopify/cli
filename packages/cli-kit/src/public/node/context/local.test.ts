@@ -10,11 +10,12 @@ import {
   macAddress,
   getThemeKitAccessDomain,
   opentelemetryDomain,
+  _resetIsShopify,
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 
-import {afterEach, expect, describe, vi, test} from 'vitest'
+import {afterEach, beforeEach, expect, describe, vi, test} from 'vitest'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
@@ -97,6 +98,10 @@ describe('isDevelopment', () => {
 })
 
 describe('isShopify', () => {
+  beforeEach(() => {
+    _resetIsShopify()
+  })
+
   test('returns false when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '1'}
@@ -119,6 +124,18 @@ describe('isShopify', () => {
 
     // When
     await expect(isShopify()).resolves.toBe(true)
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await isShopify()
+    await isShopify()
+
+    // Then
+    expect(fileExists).toHaveBeenCalledTimes(1)
   })
 })
 
