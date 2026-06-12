@@ -1,4 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
+import {createClientCredentialsTokenProvider} from './graphiql-token-provider.js'
 import {setupGraphiQLServer} from '@shopify/cli-kit/node/graphiql/server'
 
 interface GraphiQLServerProcessOptions {
@@ -30,7 +31,23 @@ export const launchGraphiQLServer: DevProcessFunction<GraphiQLServerProcessOptio
   {stdout, abortSignal},
   options: GraphiQLServerProcessOptions,
 ) => {
-  const httpServer = setupGraphiQLServer({...options, stdout})
+  const tokenProvider = createClientCredentialsTokenProvider({
+    apiKey: options.apiKey,
+    apiSecret: options.apiSecret,
+    storeFqdn: options.storeFqdn,
+  })
+  const httpServer = setupGraphiQLServer({
+    stdout,
+    port: options.port,
+    storeFqdn: options.storeFqdn,
+    key: options.key,
+    tokenProvider,
+    appContext: {
+      appName: options.appName,
+      appUrl: options.appUrl,
+      apiSecret: options.apiSecret,
+    },
+  })
   abortSignal.addEventListener('abort', async () => {
     httpServer.close()
   })
