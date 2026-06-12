@@ -3442,7 +3442,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--adapter <value>",
           "value": "string",
-          "description": "React Router adapter used in the route. The default is `react-router`.",
+          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_ADAPTER"
         },
@@ -3483,7 +3483,7 @@
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
         }
       ],
-      "value": "export interface hydrogengenerateroute {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
+      "value": "export interface hydrogengenerateroute {\n  /**\n   * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
     }
   },
   "hydrogengenerateroutes": {
@@ -3498,7 +3498,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--adapter <value>",
           "value": "string",
-          "description": "React Router adapter used in the route. The default is `react-router`.",
+          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_ADAPTER"
         },
@@ -3539,7 +3539,7 @@
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
         }
       ],
-      "value": "export interface hydrogengenerateroutes {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
+      "value": "export interface hydrogengenerateroutes {\n  /**\n   * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
     }
   },
   "hydrogeninit": {

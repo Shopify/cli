@@ -4361,7 +4361,7 @@
       ],
       "args": {
         "routeName": {
-          "description": "The route to generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.",
+          "description": "The route to generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.",
           "name": "routeName",
           "options": [
             "home",
@@ -4375,6 +4375,7 @@
             "search",
             "robots",
             "sitemap",
+            "tokenlessApi",
             "all"
           ],
           "required": true
@@ -4386,7 +4387,7 @@
       "enableJsonFlag": false,
       "flags": {
         "adapter": {
-          "description": "React Router adapter used in the route. The default is `react-router`.",
+          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_ADAPTER",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -4444,7 +4445,7 @@
       "enableJsonFlag": false,
       "flags": {
         "adapter": {
-          "description": "React Router adapter used in the route. The default is `react-router`.",
+          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_ADAPTER",
           "hasDynamicHelp": false,
           "multiple": false,
