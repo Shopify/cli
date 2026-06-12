@@ -9,9 +9,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, closed]
     paths:
-      - 'docs-shopify.dev/generated/generated_docs_data.json'
-      - 'docs-shopify.dev/generated/generated_static_pages.json'
-      - 'docs-shopify.dev/generated/generated_category_pages.json'
+      - 'docs-shopify.dev/generated/generated_docs_data_v2.json'
+      - 'docs-shopify.dev/generated/cli-descriptions.json'
 
 concurrency:
   group: shopify-dev-docs-sync-${{ github.head_ref }}
@@ -50,9 +49,8 @@ jobs:
         run: |
           # Define the files we're monitoring
           MONITORED_FILES=(
-            "docs-shopify.dev/generated/generated_docs_data.json"
-            "docs-shopify.dev/generated/generated_static_pages.json"
-            "docs-shopify.dev/generated/generated_category_pages.json"
+            "docs-shopify.dev/generated/generated_docs_data_v2.json"
+            "docs-shopify.dev/generated/cli-descriptions.json"
           )
 
           # Get the list of changed files in this PR using explicit SHAs
