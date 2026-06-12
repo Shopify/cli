@@ -116,6 +116,10 @@ function getJsonSchemaValueType(value: unknown): string {
   return typeof value
 }
 
+function getJsonSchemaErrorValue(subject: object, path: string[]): unknown {
+  return path.length === 0 ? subject : getPathValue(subject, path)
+}
+
 /**
  * Converts errors from Ajv into a zod-like format.
  *
@@ -140,7 +144,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
       const expectedType = Array.isArray(error.params.type)
         ? error.params.type.join(', ')
         : (error.params.type as string)
-      const actualType = getPathValue(subject, path.join('.'))
+      const actualType = getJsonSchemaErrorValue(subject, path)
       return {path, message: `Expected ${expectedType}, received ${getJsonSchemaValueType(actualType)}`}
     }
 
@@ -150,7 +154,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
 
     if (error.params.allowedValues) {
       const allowedValues = error.params.allowedValues as string[]
-      const actualValue = getPathValue(subject, path.join('.'))
+      const actualValue = getJsonSchemaErrorValue(subject, path)
       return {
         path,
         message: `Invalid enum value. Expected ${allowedValues
@@ -162,7 +166,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     if (error.params.comparison) {
       const comparison = error.params.comparison as string
       const limit = error.params.limit
-      const actualValue = getPathValue(subject, path.join('.'))
+      const actualValue = getJsonSchemaErrorValue(subject, path)
 
       let comparisonText = comparison
       switch (comparison) {

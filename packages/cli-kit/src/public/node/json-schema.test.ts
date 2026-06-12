@@ -320,6 +320,30 @@ describe('jsonSchemaValidate', () => {
     ])
   })
 
+  test('reports top-level arrays distinctly when an object is expected', () => {
+    const schemaParsed = jsonSchemaValidate([], {type: 'object'}, 'strip')
+
+    expect(schemaParsed.state).toBe('error')
+    expect(schemaParsed.errors).toEqual([
+      {
+        path: [],
+        message: 'Expected object, received array',
+      },
+    ])
+  })
+
+  test('reports top-level null distinctly when an object is expected', () => {
+    const schemaParsed = jsonSchemaValidate(null as unknown as object, {type: 'object'}, 'strip')
+
+    expect(schemaParsed.state).toBe('error')
+    expect(schemaParsed.errors).toEqual([
+      {
+        path: [],
+        message: 'Expected object, received null',
+      },
+    ])
+  })
+
   test('ignores custom x-taplo directive', () => {
     const subject = {
       foo: 'bar',
