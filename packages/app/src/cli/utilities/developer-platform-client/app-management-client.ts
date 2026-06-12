@@ -160,6 +160,7 @@ import {
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {encodeGid, numericIdFromEncodedGid, numericIdFromGid} from '@shopify/cli-kit/common/gid'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -1343,8 +1344,8 @@ export async function allowedTemplates(
   version: string = CLI_KIT_VERSION,
 ): Promise<GatedExtensionTemplate[]> {
   // Extract both types of flags from templates
-  const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
-  const allExpFlags = Array.from(new Set(templates.map((ext) => ext.organizationExpFlags ?? []).flat()))
+  const allBetaFlags = uniq(templates.flatMap((ext) => ext.organizationBetaFlags ?? []))
+  const allExpFlags = uniq(templates.flatMap((ext) => ext.organizationExpFlags ?? []))
 
   // Fetch both flag types in parallel
   const [enabledBetaFlags, enabledExpFlags] = await Promise.all([
