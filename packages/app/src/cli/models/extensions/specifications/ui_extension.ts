@@ -4,6 +4,7 @@ import {
   createTypeDefinition,
   createToolsTypeDefinition,
   findNearestTsConfigDir,
+  findExplicitTsConfigFiles,
   getGeneratedTypesHelperImportPath,
   IntentSchemaFileSchema,
   parseApiVersion,
@@ -210,6 +211,7 @@ const uiExtensionSpec = createExtensionSpecification({
     const fileToTargetsMap = new Map<string, string[]>()
     const fileToToolsMap = new Map<string, string>()
     const fileToIntentsMap = new Map<string, NonNullable<NewExtensionPointSchemaType['intents']>>()
+    const importCache = new Map<string, string[]>()
 
     // First pass: collect all entry point files and their targets
     for await (const extensionPoint of configuration.extension_points) {
@@ -254,7 +256,13 @@ const uiExtensionSpec = createExtensionSpecification({
       if (!exists) continue
 
       // Find all imported files recursively
-      const importedFiles = await findAllImportedFiles(fullPath)
+      const allowedFiles = await findExplicitTsConfigFiles(fullPath, extension.directory)
+      const importedFiles = await findAllImportedFiles(fullPath, {
+        boundaryDirectory: extension.directory,
+        allowedFiles,
+        alwaysAllowedFiles: new Set([fullPath]),
+        importCache,
+      })
 
       // Associate imported files with this extension point's target
       for (const importedFile of importedFiles) {
@@ -271,7 +279,13 @@ const uiExtensionSpec = createExtensionSpecification({
         )
         const shouldRenderExists = await fileExists(shouldRenderPath)
         if (shouldRenderExists) {
-          const shouldRenderImports = await findAllImportedFiles(shouldRenderPath)
+          const shouldRenderAllowedFiles = await findExplicitTsConfigFiles(shouldRenderPath, extension.directory)
+          const shouldRenderImports = await findAllImportedFiles(shouldRenderPath, {
+            boundaryDirectory: extension.directory,
+            allowedFiles: shouldRenderAllowedFiles,
+            alwaysAllowedFiles: new Set([shouldRenderPath]),
+            importCache,
+          })
           for (const importedFile of shouldRenderImports) {
             const currentTargets = fileToTargetsMap.get(importedFile) ?? []
             currentTargets.push(getShouldRenderTarget(extensionPoint.target))

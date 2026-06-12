@@ -1,5 +1,5 @@
 import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {dirname, isSubpath, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {compile} from 'json-schema-to-typescript'
 import {pascalize} from '@shopify/cli-kit/common/string'
@@ -46,23 +46,27 @@ export function parseApiVersion(apiVersion: string): {year: number; month: numbe
   return {year: parseInt(year, 10), month: parseInt(month, 10)}
 }
 
-async function loadTsConfig(
-  startPath: string,
-): Promise<{compilerOptions: ts.CompilerOptions; configPath: string | undefined}> {
+async function loadTsConfig(startPath: string): Promise<{
+  compilerOptions: ts.CompilerOptions
+  configPath: string | undefined
+  fileNames?: string[]
+  hasExplicitFiles: boolean
+}> {
   const ts = await loadTypeScript()
   const configPath = ts.findConfigFile(startPath, ts.sys.fileExists.bind(ts.sys), 'tsconfig.json')
   if (!configPath) {
-    return {compilerOptions: {}, configPath: undefined}
+    return {compilerOptions: {}, configPath: undefined, hasExplicitFiles: false}
   }
 
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile.bind(ts.sys))
   if (configFile.error) {
-    return {compilerOptions: {}, configPath}
+    return {compilerOptions: {}, configPath, hasExplicitFiles: false}
   }
 
   const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configPath))
+  const hasExplicitFiles = Boolean(configFile.config.files ?? configFile.config.include)
 
-  return {compilerOptions: parsedConfig.options, configPath}
+  return {compilerOptions: parsedConfig.options, configPath, fileNames: parsedConfig.fileNames, hasExplicitFiles}
 }
 
 async function fallbackResolve(importPath: string, baseDir: string): Promise<string | null> {
@@ -95,8 +99,49 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
   return null
 }
 
-async function parseAndResolveImports(filePath: string): Promise<string[]> {
+interface FindAllImportedFilesOptions {
+  boundaryDirectory?: string
+  allowedFiles?: Set<string>
+  alwaysAllowedFiles?: Set<string>
+  importCache?: Map<string, string[]>
+}
+
+interface ParseAndResolveImportsOptions {
+  importCache?: Map<string, string[]>
+}
+
+function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean {
+  if (!boundaryDirectory) return true
+  return isSubpath(resolvePath(boundaryDirectory), resolvePath(filePath))
+}
+
+function isAllowedFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
+  if (!options.allowedFiles) return true
+
+  const resolvedPath = resolvePath(filePath)
+  return options.allowedFiles.has(resolvedPath) || Boolean(options.alwaysAllowedFiles?.has(resolvedPath))
+}
+
+function isScannableFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
+  return (
+    !filePath.includes('node_modules') &&
+    !filePath.endsWith('.d.ts') &&
+    isWithinBoundary(filePath, options.boundaryDirectory) &&
+    isAllowedFile(filePath, options)
+  )
+}
+
+async function parseAndResolveImports(
+  filePath: string,
+  options: ParseAndResolveImportsOptions = {},
+): Promise<string[]> {
   try {
+    const resolvedFilePath = resolvePath(filePath)
+    const cachedImports = options.importCache?.get(resolvedFilePath)
+    if (cachedImports) {
+      return cachedImports
+    }
+
     const ts = await loadTypeScript()
     const content = readFileSync(filePath).toString()
     const resolvedPaths: string[] = []
@@ -119,6 +164,19 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
 
     const visit = (node: ts.Node): void => {
       if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        if (node.importClause?.isTypeOnly) {
+          return
+        }
+
+        if (
+          !node.importClause?.name &&
+          node.importClause?.namedBindings &&
+          ts.isNamedImports(node.importClause.namedBindings) &&
+          node.importClause.namedBindings.elements.every((element) => element.isTypeOnly)
+        ) {
+          return
+        }
+
         importPaths.push(node.moduleSpecifier.text)
       } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
         const firstArg = node.arguments[0]
@@ -126,6 +184,18 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
           importPaths.push(firstArg.text)
         }
       } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        if (node.isTypeOnly) {
+          return
+        }
+
+        if (
+          node.exportClause &&
+          ts.isNamedExports(node.exportClause) &&
+          node.exportClause.elements.every((element) => element.isTypeOnly)
+        ) {
+          return
+        }
+
         importPaths.push(node.moduleSpecifier.text)
       }
 
@@ -147,9 +217,7 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
       if (resolvedModule.resolvedModule?.resolvedFileName) {
         const resolvedPath = resolvedModule.resolvedModule.resolvedFileName
 
-        if (!resolvedPath.includes('node_modules')) {
-          resolvedPaths.push(resolvedPath)
-        }
+        resolvedPaths.push(resolvedPath)
       } else {
         // Fallback to manual resolution for edge cases
         // eslint-disable-next-line no-await-in-loop
@@ -160,6 +228,7 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
       }
     }
 
+    options.importCache?.set(resolvedFilePath, resolvedPaths)
     return resolvedPaths
   } catch (error) {
     // Re-throw AbortError as-is, wrap other errors
@@ -170,24 +239,46 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
   }
 }
 
-export async function findAllImportedFiles(filePath: string, visited = new Set<string>()): Promise<string[]> {
+export async function findAllImportedFiles(
+  filePath: string,
+  options: FindAllImportedFilesOptions = {},
+  visited = new Set<string>(),
+): Promise<string[]> {
   if (visited.has(filePath)) {
     return []
   }
 
   visited.add(filePath)
-  const resolvedPaths = await parseAndResolveImports(filePath)
+  const resolvedPaths = (await parseAndResolveImports(filePath, options)).filter((resolvedPath) =>
+    isScannableFile(resolvedPath, options),
+  )
 
   const allFiles = [...resolvedPaths]
 
   // Recursively find imports from the resolved files
   for (const resolvedPath of resolvedPaths) {
     // eslint-disable-next-line no-await-in-loop
-    const nestedImports = await findAllImportedFiles(resolvedPath, visited)
+    const nestedImports = await findAllImportedFiles(resolvedPath, options, visited)
     allFiles.push(...nestedImports)
   }
 
   return uniq(allFiles)
+}
+
+export async function findExplicitTsConfigFiles(
+  fromFile: string,
+  extensionDirectory: string,
+): Promise<Set<string> | undefined> {
+  const {configPath, fileNames, hasExplicitFiles} = await loadTsConfig(fromFile)
+  if (!configPath || !hasExplicitFiles) return
+
+  if (!isWithinBoundary(configPath, extensionDirectory)) return
+
+  return new Set(
+    (fileNames ?? [])
+      .filter((fileName) => isWithinBoundary(fileName, extensionDirectory))
+      .map((fileName) => resolvePath(fileName)),
+  )
 }
 
 interface CreateTypeDefinitionOptions {
