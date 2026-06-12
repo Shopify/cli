@@ -1,4 +1,4 @@
-import {PreviewStoreClientOptions, PreviewStoreCreateResponse, createPreviewStore} from './client.js'
+import {PreviewStoreClientOptions, PreviewStoreCreateResponse, claimPreviewStore, createPreviewStore} from './client.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../../auth/config.js'
 import {setStoredStoreAppSession} from '../../auth/session-store.js'
 import {recordStoreFqdnMetadata} from '../../attribution.js'
@@ -14,6 +14,7 @@ interface CreatePreviewStoreInput {
 
 interface CreatePreviewStoreDependencies {
   createPreviewStore: typeof createPreviewStore
+  claimPreviewStore: typeof claimPreviewStore
   setStoredStoreAppSession: typeof setStoredStoreAppSession
   recordStoreFqdnMetadata: typeof recordStoreFqdnMetadata
   setLastSeenUserId: typeof setLastSeenUserId
@@ -28,6 +29,7 @@ export interface CreatePreviewStoreResult {
     name: string
     subdomain: string
     accessUrl: string
+    claimUrl: string
     requestedCountry?: string
   }
   nextSteps: string[]
@@ -35,6 +37,7 @@ export interface CreatePreviewStoreResult {
 
 const defaultDependencies: CreatePreviewStoreDependencies = {
   createPreviewStore,
+  claimPreviewStore,
   setStoredStoreAppSession,
   recordStoreFqdnMetadata,
   setLastSeenUserId,
@@ -54,7 +57,7 @@ export async function createPreviewStoreCommand(
     input.client,
   )
 
-  return persistPreviewStoreSession(response, input.country, resolvedDependencies)
+  return persistPreviewStoreSession(response, input.country, resolvedDependencies, input.client)
 }
 
 function previewUserId(response: PreviewStoreCreateResponse): string {
@@ -65,6 +68,7 @@ async function persistPreviewStoreSession(
   response: PreviewStoreCreateResponse,
   country: string | undefined,
   dependencies: CreatePreviewStoreDependencies,
+  client: PreviewStoreClientOptions | undefined,
 ): Promise<CreatePreviewStoreResult> {
   const acquiredAt = dependencies.now().toISOString()
   const userId = previewUserId(response)
@@ -89,6 +93,11 @@ async function persistPreviewStoreSession(
   dependencies.setLastSeenUserId(userId)
   await dependencies.recordStoreFqdnMetadata(response.shop.domain, true)
 
+  const claim = await dependencies.claimPreviewStore(
+    {shopId: response.shop.id, adminApiToken: response.adminApiToken},
+    client,
+  )
+
   return {
     status: 'success',
     message:
@@ -98,10 +107,12 @@ async function persistPreviewStoreSession(
       name: response.shop.name,
       subdomain: response.shop.domain,
       accessUrl: response.accessUrl,
+      claimUrl: claim.claimUrl,
       ...(country ? {requestedCountry: country} : {}),
     },
     nextSteps: [
       `Open ${response.accessUrl} to view and access your preview store.`,
+      `Claim ${claim.claimUrl} to save your preview store and continue editing later.`,
       `Use shopify store execute --store ${response.shop.domain} to add products, collections, pages, and more.`,
       'Use shopify theme pull and shopify theme push to edit your store design.',
     ],

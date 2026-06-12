@@ -37,6 +37,7 @@ function renderTextResult(result: CreatePreviewStoreResult): void {
             ['Name', result.store.name],
             ['Domain', result.store.subdomain],
             ['Access URL', result.store.accessUrl],
+            ['Claim URL', result.store.claimUrl],
             ...(result.store.requestedCountry
               ? ([['Requested country', result.store.requestedCountry]] as string[][])
               : []),
@@ -50,6 +51,11 @@ function renderTextResult(result: CreatePreviewStoreResult): void {
         'Open ',
         {link: {label: result.store.accessUrl, url: result.store.accessUrl}},
         ' to view and access your preview store.',
+      ],
+      [
+        'Claim ',
+        {link: {label: result.store.claimUrl, url: result.store.claimUrl}},
+        ' to save your preview store and continue editing later.',
       ],
       [
         'Use ',
