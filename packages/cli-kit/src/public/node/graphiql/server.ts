@@ -1,6 +1,13 @@
 import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import {filterCustomHeaders} from './utilities.js'
+import {performActionWithRetryAfterRecovery} from '../../common/retry.js'
+import {CLI_KIT_VERSION} from '../../common/version.js'
+import {AbortError} from '../error.js'
+import {adminUrl, supportedApiVersions} from '../api/admin.js'
+import {fetch} from '../http.js'
+import {renderLiquidTemplate} from '../liquid.js'
+import {outputDebug} from '../output.js'
 import {
   createApp,
   createRouter,
@@ -13,13 +20,6 @@ import {
   setResponseStatus,
   toNodeListener,
 } from 'h3'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
-import {fetch} from '@shopify/cli-kit/node/http'
-import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import {createHmac} from 'crypto'
 import {createServer, Server} from 'http'
 import {readFileSync} from 'fs'
@@ -30,6 +30,10 @@ import {createRequire} from 'module'
  * Derives a deterministic GraphiQL authentication key from the app's API secret and store FQDN.
  * The key is stable across dev server restarts (so browser tabs survive restarts)
  * but is not guessable without the app secret.
+ *
+ * @param apiSecret - The Partners app's client secret used as the HMAC key.
+ * @param storeFqdn - The myshopify.com domain the GraphiQL session targets.
+ * @returns A 64-character hex string suitable for use as the `?key=` query param.
  */
 export function deriveGraphiQLKey(apiSecret: string, storeFqdn: string): string {
   return createHmac('sha256', apiSecret).update(`graphiql:${storeFqdn}`).digest('hex')
@@ -38,6 +42,11 @@ export function deriveGraphiQLKey(apiSecret: string, storeFqdn: string): string 
 /**
  * Resolves the GraphiQL authentication key. Uses the explicitly provided key
  * if non-empty, otherwise derives one deterministically from the app secret.
+ *
+ * @param providedKey - An explicit key supplied by the caller; takes precedence when non-empty.
+ * @param apiSecret - The Partners app's client secret, used to derive a stable key as a fallback.
+ * @param storeFqdn - The myshopify.com domain the GraphiQL session targets.
+ * @returns The resolved key.
  */
 export function resolveGraphiQLKey(providedKey: string | undefined, apiSecret: string, storeFqdn: string): string {
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional: empty string after trim should fall through to deriveGraphiQLKey
@@ -63,16 +72,18 @@ interface SetupGraphiQLServerOptions {
   storeFqdn: string
 }
 
-export function setupGraphiQLServer({
-  stdout,
-  port,
-  appName,
-  appUrl,
-  apiKey,
-  apiSecret,
-  key: providedKey,
-  storeFqdn,
-}: SetupGraphiQLServerOptions): Server {
+/**
+ * Starts a local HTTP server that hosts the GraphiQL UI and proxies requests to the
+ * Admin API for the configured store. The server uses the OAuth `client_credentials`
+ * grant with the supplied `apiKey` / `apiSecret` to mint and refresh access tokens
+ * on the fly.
+ *
+ * @param options - Configuration for the server, including the target store, the
+ * Partners app credentials, and the local port to bind to.
+ * @returns The underlying Node `http.Server` instance, already listening on `options.port`.
+ */
+export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server {
+  const {stdout, port, appName, appUrl, apiKey, apiSecret, key: providedKey, storeFqdn} = options
   // Always require an authentication key. If not explicitly provided, derive one
   // deterministically from apiSecret + storeFqdn so the key is stable across restarts
   // (browser tabs survive dev server restarts) but not guessable without the app secret.
@@ -120,9 +131,9 @@ export function setupGraphiQLServer({
     )
   }
 
-  const faviconPath = require.resolve('@shopify/app/assets/graphiql/favicon.ico')
+  const faviconPath = require.resolve('@shopify/cli-kit/assets/graphiql/favicon.ico')
   const faviconContent = readFileSync(faviconPath)
-  const stylePath = require.resolve('@shopify/app/assets/graphiql/style.css')
+  const stylePath = require.resolve('@shopify/cli-kit/assets/graphiql/style.css')
   const styleContent = readFileSync(stylePath, 'utf8')
 
   app.use(
