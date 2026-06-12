@@ -53,7 +53,7 @@
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/generate-docs": "1.2.0",
     "@types/node": "18.19.70",
-    "@typescript-eslint/parser": "8.61.0",
+    "@typescript-eslint/parser": "8.56.1",
     "@vitest/coverage-istanbul": "^3.1.4",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
