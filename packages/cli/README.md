@@ -21,6 +21,7 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
+* [`shopify app graphiql`](#shopify-app-graphiql)
 * [`shopify app import-custom-data-definitions`](#shopify-app-import-custom-data-definitions)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
@@ -78,6 +79,7 @@
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
 * [`shopify store execute`](#shopify-store-execute)
+* [`shopify store graphiql`](#shopify-store-graphiql)
 * [`shopify store info`](#shopify-store-info)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
@@ -748,6 +750,43 @@ DESCRIPTION
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for
   your extension.
+```
+
+## `shopify app graphiql`
+
+Open a local GraphiQL UI for your app and store.
+
+```
+USAGE
+  $ shopify app graphiql [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--port <value>]
+    [--reset | ] [-s <value>] [-v <value>] [--verbose] [--version <value>]
+
+FLAGS
+  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -s, --store=<value>      [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to open GraphiQL against. The
+                           app must be installed on the store. If not specified, you will be prompted to select a store.
+  -v, --variables=<value>  [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or mutation,
+                           in JSON format.
+      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --port=<value>       [env: SHOPIFY_FLAG_PORT] Local port for the GraphiQL server. Must be between 1 and 65535.
+      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --version=<value>    [env: SHOPIFY_FLAG_VERSION] The API version to use in GraphiQL. Defaults to the latest stable
+                           version.
+
+DESCRIPTION
+  Open a local GraphiQL UI for your app and store.
+
+  Opens an authenticated Admin API GraphiQL UI for your app and selected store.
+
+  The app must be installed on the store.
+
+EXAMPLES
+  $ shopify app graphiql --store shop.myshopify.com
+
+  $ shopify app graphiql --store shop.myshopify.com --port 9123
 ```
 
 ## `shopify app import-custom-data-definitions`
@@ -2176,6 +2215,43 @@ EXAMPLES
   $ shopify store execute --store shop.myshopify.com --query "mutation { shop { id } }" --allow-mutations
 
   $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }" --json
+```
+
+## `shopify store graphiql`
+
+Open a local GraphiQL UI for a store.
+
+```
+USAGE
+  $ shopify store graphiql -s <value> [--allow-mutations] [--no-color] [--port <value>] [-v <value>] [--verbose]
+    [--version <value>]
+
+FLAGS
+  -s, --store=<value>      (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+  -v, --variables=<value>  [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or mutation,
+                           in JSON format.
+      --allow-mutations    [env: SHOPIFY_FLAG_ALLOW_MUTATIONS] Allow GraphQL mutations to run against the target store.
+      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --port=<value>       [env: SHOPIFY_FLAG_PORT] Local port for the GraphiQL server. Must be between 1 and 65535.
+      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --version=<value>    [env: SHOPIFY_FLAG_VERSION] The API version to use in GraphiQL. Defaults to the latest stable
+                           version.
+
+DESCRIPTION
+  Open a local GraphiQL UI for a store.
+
+  Opens an authenticated Admin API GraphiQL UI for the specified store using previously stored app authentication.
+
+  Run `shopify store auth` first to create stored auth for the store.
+
+  Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
+
+EXAMPLES
+  $ shopify store graphiql --store shop.myshopify.com
+
+  $ shopify store graphiql --store shop.myshopify.com --allow-mutations
+
+  $ shopify store graphiql --store shop.myshopify.com --port 9123
 ```
 
 ## `shopify store info`
