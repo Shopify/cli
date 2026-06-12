@@ -73,11 +73,21 @@ export interface ConfigurationError {
   code?: string
 }
 
+function tomlObjectArrayHint(error: ConfigurationError): string | undefined {
+  if (!error.file.endsWith('.toml')) return undefined
+  if (error.message !== 'Expected object, received array') return undefined
+
+  return 'Use a single TOML table instead of an array of tables. [table] defines one table; [[table]] defines an array of tables.'
+}
+
 export function formatConfigurationError(error: ConfigurationError): string {
+  const hint = tomlObjectArrayHint(error)
+  const message = hint ? `${error.message}. ${hint}` : error.message
+
   if (error.path?.length) {
-    return `[${error.path.join('.')}]: ${error.message}`
+    return `[${error.path.join('.')}]: ${message}`
   }
-  return error.message
+  return message
 }
 
 type ConfigurationResult<T> = {data: T; errors?: never} | {data?: never; errors: ConfigurationError[]}
