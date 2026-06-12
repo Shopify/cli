@@ -4,6 +4,15 @@ import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {FlowActionUrlField} from './types.js'
 
+const isHttpsUrl = (url: string) => {
+  try {
+    return new URL(url).protocol === 'https:'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (TypeError) {
+    return false
+  }
+}
+
 /**
  * Resolves a Flow action URL by prepending the app URL to relative URLs and
  * ensuring the resolved URL is HTTPS.
@@ -17,7 +26,7 @@ export const resolveFlowActionUrl = (fieldName: FlowActionUrlField, url: string,
     )
   }
 
-  if (!resolvedUrl.startsWith('https://')) {
+  if (!isHttpsUrl(resolvedUrl)) {
     throw new AbortError(
       `Flow action ${fieldName} must resolve to an HTTPS URL. ` +
         'Set application_url to an HTTPS URL or use an absolute HTTPS URL.',

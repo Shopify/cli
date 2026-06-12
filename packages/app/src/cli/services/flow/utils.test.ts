@@ -10,6 +10,12 @@ describe('resolveFlowActionUrl', () => {
     ).toBe('https://my-prod-host.example.com/api/execute')
   })
 
+  test('accepts absolute HTTPS URLs regardless of scheme casing', () => {
+    expect(
+      resolveFlowActionUrl('runtime_url', 'HTTPS://my-prod-host.example.com/api/execute', 'https://my-app.example.com'),
+    ).toBe('HTTPS://my-prod-host.example.com/api/execute')
+  })
+
   test('prepends the app URL to relative URLs', () => {
     expect(resolveFlowActionUrl('runtime_url', '/api/execute', 'https://my-app.example.com/')).toBe(
       'https://my-app.example.com/api/execute',
