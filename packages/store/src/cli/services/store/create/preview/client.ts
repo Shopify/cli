@@ -62,7 +62,7 @@ interface PreviewStoreClaimRequest {
   email?: string
 }
 
-export interface PreviewStoreClaimResponse {
+interface PreviewStoreClaimResponse {
   claimUrl: string
 }
 
@@ -251,7 +251,8 @@ function previewStoreClaimError(status: number, rawText: string): {message: stri
 
   return {
     message: `Preview store claim URL request failed with HTTP ${status}.`,
-    tryMessage: parsed.message ?? (redactedRawText.length > 0 ? redactedRawText.slice(0, 1000) : 'No response body returned.'),
+    tryMessage:
+      parsed.message ?? (redactedRawText.length > 0 ? redactedRawText.slice(0, 1000) : 'No response body returned.'),
   }
 }
 

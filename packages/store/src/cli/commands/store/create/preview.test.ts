@@ -27,7 +27,6 @@ describe('store create preview command', () => {
         country: 'US',
         storefrontUrl: 'https://x.myshopify.com',
         saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
-
       },
     }
     vi.mocked(createPreviewStoreCommand).mockResolvedValueOnce(result)
