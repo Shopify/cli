@@ -1,5 +1,25 @@
 # @shopify/theme
 
+## 4.2.0
+
+### Patch Changes
+
+- e50cf1c: Set localhost variants and run host header validations to prevent DNS rebinding vulnerability
+- 38bc94a: Fix `theme dev` hot reload not working in the theme editor by allowing the Online Store Editor origin through the dev server's CORS policy
+- 30895ae: Bump @shopify/theme-hot-reload to address HMR issues
+- c9c2faa: Fix `theme dev` serving a same-named theme asset in response to a `/cdn/extensions/...` request. When a theme and an installed app extension shared an asset filename (e.g. `app.js`), the local dev server's theme matcher swallowed the extension URL prefix and returned the theme file. Extension asset requests now fall through to the CDN proxy (or to a locally-developed extension's filesystem) as intended.
+- 16d24c5: `theme dev` now shows a clear error when `--port` is given an invalid value, instead of crashing. The port must be a number between 1 and 65535.
+- 89535d6: Fix `theme dev` preview occasionally rendering the live theme by preserving the Shopify `_shopify_essential` cookie in redirects
+- edcb122: Bump Shopify/theme-tools packages:
+
+  - @shopify/theme-check-node: 3.26.0 → 3.26.1
+  - @shopify/theme-language-server-node: 2.21.2 → 2.21.3
+
+- Updated dependencies [ef14e49]
+- Updated dependencies [334e2d4]
+- Updated dependencies [16d24c5]
+  - @shopify/cli-kit@4.2.0
+
 ## 4.1.0
 
 ### Patch Changes

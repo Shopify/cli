@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 4.2.0
+
+### Minor Changes
+
+- 43520bc: Add `shopify store info --store <domain>` command to display metadata about a store. Supports `--json` for machine-readable output.
+
 ## 4.1.0
 
 ## 4.0.0
