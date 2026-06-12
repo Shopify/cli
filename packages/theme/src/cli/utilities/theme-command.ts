@@ -6,6 +6,7 @@ import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {loadAdminSessionFromStoreAuth} from '@shopify/store'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {
   renderWarning,
@@ -29,6 +30,7 @@ interface ValidEnvironment {
   environment: EnvironmentName
   flags: FlagValues
   requiresAuth: boolean
+  storeAuthSession?: AdminSession
 }
 type EnvironmentName = string
 /**
@@ -184,14 +186,23 @@ export default abstract class ThemeCommand extends Command {
     const valid: ValidEnvironment[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
 
-    for (const [environmentName, {flags, validationFlags}] of environmentMap) {
-      const validationResult = this.validConfig(validationFlags, requiredFlags, environmentName)
+    const entriesWithStoreAuthSessions = await Promise.all(
+      Array.from(environmentMap.entries()).map(async ([environmentName, {flags, validationFlags}]) => ({
+        environmentName,
+        flags,
+        validationFlags,
+        storeAuthSession: await this.storeAuthSessionForTheme(validationFlags),
+      })),
+    )
+
+    for (const {environmentName, flags, validationFlags, storeAuthSession} of entriesWithStoreAuthSessions) {
+      const validationResult = this.validConfig(validationFlags, requiredFlags, environmentName, storeAuthSession)
       if (validationResult !== true) {
         const missingFlagsText = validationResult.join(', ')
         invalid.push({environment: environmentName, reason: `Missing flags: ${missingFlagsText}`})
         continue
       }
-      valid.push({environment: environmentName, flags, requiresAuth})
+      valid.push({environment: environmentName, flags, requiresAuth, storeAuthSession})
     }
 
     return {valid, invalid}
@@ -267,13 +278,13 @@ export default abstract class ThemeCommand extends Command {
     for (const runGroup of runGroups) {
       // eslint-disable-next-line no-await-in-loop
       await renderConcurrent({
-        processes: runGroup.map(({environment, flags, requiresAuth}) => ({
+        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthSession}) => ({
           prefix: environment,
           action: async (stdout: Writable, stderr: Writable, _signal) => {
             try {
               const store = flags.store as string
               await useThemeStoreContext(store, async () => {
-                const session = requiresAuth ? await this.createSession(flags) : undefined
+                const session = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
 
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
@@ -323,12 +334,32 @@ export default abstract class ThemeCommand extends Command {
    * @param flags - The environment flags containing store and password
    * @returns The unauthenticated session object
    */
-  private async createSession(flags: FlagValues) {
-    const store = flags.store as string
-    const password = flags.password as string
-    const session = await ensureAuthenticatedThemes(ensureThemeStore({store}), password)
+  private async createSession(flags: FlagValues, storeAuthSession?: AdminSession) {
+    const store = ensureThemeStore({store: flags.store as string | undefined})
+    const password = flags.password as string | undefined
+    const session = password
+      ? await ensureAuthenticatedThemes(store, password)
+      : (storeAuthSession ??
+        (await this.storeAuthSessionForTheme({store})) ??
+        (await ensureAuthenticatedThemes(store, password)))
 
     return session
+  }
+
+  private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {
+    const store = typeof flags.store === 'string' ? flags.store : undefined
+    const password = flags.password
+    if (!store || password) return undefined
+
+    try {
+      const {adminSession} = await loadAdminSessionFromStoreAuth(store)
+      return adminSession
+    } catch (error) {
+      if (error instanceof AbortError && error.message.startsWith('No stored app authentication found for ')) {
+        return undefined
+      }
+      throw error
+    }
   }
 
   /**
@@ -342,9 +373,14 @@ export default abstract class ThemeCommand extends Command {
     environmentFlags: FlagValues,
     requiredFlags: Exclude<RequiredFlags, null>,
     environmentName: string,
+    storeAuthSession?: AdminSession,
   ): string[] | true {
     const missingFlags = requiredFlags
-      .filter((flag) => (Array.isArray(flag) ? !flag.some((flag) => environmentFlags[flag]) : !environmentFlags[flag]))
+      .filter((flag) =>
+        Array.isArray(flag)
+          ? !flag.some((flag) => this.hasRequiredFlag(environmentFlags, flag, storeAuthSession))
+          : !this.hasRequiredFlag(environmentFlags, flag, storeAuthSession),
+      )
       .map((flag) => (Array.isArray(flag) ? flag.join(' or ') : flag))
 
     if (missingFlags.length > 0) {
@@ -358,6 +394,11 @@ export default abstract class ThemeCommand extends Command {
     }
 
     return true
+  }
+
+  private hasRequiredFlag(environmentFlags: FlagValues, flag: string, storeAuthSession?: AdminSession): boolean {
+    if (flag === 'password' && storeAuthSession) return true
+    return Boolean(environmentFlags[flag])
   }
 
   /**

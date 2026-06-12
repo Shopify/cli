@@ -5,6 +5,7 @@
       {"path": "./packages/cli"},
       {"path": "./packages/app"},
       {"path": "./packages/theme"},
+      {"path": "./packages/store"},
       {"path": "./packages/cli-kit"},
       {"path": "./packages/create-app"},
       {"path": "./packages/ui-extensions-server-kit"},

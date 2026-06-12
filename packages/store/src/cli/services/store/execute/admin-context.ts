@@ -1,8 +1,6 @@
 import {fetchPublicApiVersions} from './admin-transport.js'
-import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
-import {recordStoreFqdnMetadata} from '../attribution.js'
+import {loadAdminSessionFromStoreAuth} from '../auth/admin-session.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {StoredStoreAppSession} from '../auth/session-store.js'
 
@@ -38,13 +36,7 @@ export async function prepareAdminStoreGraphQLContext(input: {
   store: string
   userSpecifiedVersion?: string
 }): Promise<AdminStoreGraphQLContext> {
-  const session = await loadStoredStoreSession(input.store)
-  await recordStoreFqdnMetadata(session.store, true)
-  setLastSeenUserId(session.userId)
-  const adminSession = {
-    token: session.accessToken,
-    storeFqdn: session.store,
-  }
+  const {adminSession, session} = await loadAdminSessionFromStoreAuth(input.store)
   const version = await resolveApiVersion({session, adminSession, userSpecifiedVersion: input.userSpecifiedVersion})
 
   return {adminSession, version, session}
