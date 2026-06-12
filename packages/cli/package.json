@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@oclif/core": "4.11.4",
-    "@oclif/plugin-commands": "4.1.33",
+    "@oclif/plugin-commands": "4.1.57",
     "@oclif/plugin-plugins": "5.4.47",
     "@shopify/app": "4.1.0",
     "@shopify/store": "4.1.0",
@@ -68,7 +68,7 @@
     "@shopify/theme": "4.1.0",
     "@shopify/cli-hydrogen": "11.1.10",
     "@types/global-agent": "3.0.0",
-    "@vitest/coverage-istanbul": "^3.1.4",
+    "@vitest/coverage-istanbul": "^3.2.6",
     "esbuild-plugin-copy": "^2.1.1"
   },
   "engines": {

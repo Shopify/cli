@@ -172,11 +172,11 @@
     "@types/react-dom": "^19.0.0",
     "@types/semver": "^7.5.2",
     "@types/which": "3.0.4",
-    "@vitest/coverage-istanbul": "^3.1.4",
-    "msw": "^2.7.1",
+    "@vitest/coverage-istanbul": "^3.2.6",
+    "msw": "^2.14.6",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
-    "typedoc": "^0.28.17"
+    "typedoc": "^0.28.19"
   },
   "engines": {
     "node": ">=22.12.0"
