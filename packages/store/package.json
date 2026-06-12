@@ -41,7 +41,8 @@
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
     "@oclif/core": "4.11.4",
-    "@shopify/cli-kit": "4.1.0"
+    "@shopify/cli-kit": "4.1.0",
+    "@shopify/organizations": "4.1.0"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.1.4"

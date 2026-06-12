@@ -657,6 +657,9 @@ importers:
       '@shopify/cli-kit':
         specifier: 4.1.0
         version: link:../cli-kit
+      '@shopify/organizations':
+        specifier: 4.1.0
+        version: link:../organizations
     devDependencies:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
