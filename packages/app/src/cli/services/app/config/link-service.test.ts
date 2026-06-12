@@ -4,7 +4,7 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../u
 import {OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt} from '../../../prompts/dev.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {selectOrganizationPrompt} from '@shopify/organizations'
+import {selectOrganizationFromList} from '@shopify/organizations'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -83,7 +83,7 @@ api_version = "2024-01"
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('A user provided name')
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
+      vi.mocked(selectOrganizationFromList).mockResolvedValue({
         id: '12345',
         businessName: 'test',
       })
@@ -176,7 +176,7 @@ api_version = "2025-07"
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('My App')
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
+      vi.mocked(selectOrganizationFromList).mockResolvedValue({
         id: '12345',
         businessName: 'test',
       })
@@ -224,7 +224,7 @@ required = true
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('My App')
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
+      vi.mocked(selectOrganizationFromList).mockResolvedValue({
         id: '12345',
         businessName: 'test',
       })

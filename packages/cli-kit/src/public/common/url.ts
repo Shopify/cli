@@ -40,9 +40,17 @@ export function safeParseURL(url: string): URL | undefined {
 export function extractHost(value: string | null | undefined): string | undefined {
   if (!value) return undefined
   const lowered = value.toLowerCase()
-  const parsed = safeParseURL(lowered)
-  if (parsed) return parsed.hostname
-  return lowered.replace(/^https?:\/\//, '').split('/')[0]
+  // A bare `host:port` (e.g. `my-shop.shop.dev:9292`) parses as an opaque URL whose hostname is
+  // empty (the host is read as the scheme), so try parsing with an explicit scheme as well and only
+  // accept a non-empty hostname.
+  for (const candidate of [lowered, `https://${lowered}`]) {
+    const hostname = safeParseURL(candidate)?.hostname
+    if (hostname) return hostname
+  }
+  // Never return an empty string: callers using `extractHost(value) ?? value` must keep the input.
+  const fallback = lowered.replace(/^https?:\/\//, '').split('/')[0]
+  if (fallback) return fallback
+  return undefined
 }
 
 /**
@@ -56,4 +64,18 @@ export function extractMyshopifyHandle(value: string | null | undefined): string
   if (!host) return undefined
   const match = host.match(/^([^.]+)\.myshopify\.com$/)
   return match ? match[1] : undefined
+}
+
+/**
+ * Extracts the leading subdomain label from a URL or host, across environments — e.g.
+ * `acme.myshopify.com`, `acme.shop.dev`, or local development hosts — rather than assuming a
+ * `*.myshopify.com` domain.
+ *
+ * @param value - A URL or host string, possibly null/undefined.
+ * @returns The first DNS label, or undefined when no host can be extracted.
+ */
+export function extractSubdomain(value: string | null | undefined): string | undefined {
+  const host = extractHost(value)
+  if (!host) return undefined
+  return host.split('.')[0]
 }

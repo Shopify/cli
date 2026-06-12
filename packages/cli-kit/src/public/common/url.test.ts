@@ -1,4 +1,4 @@
-import {extractHost, extractMyshopifyHandle, isValidURL, safeParseURL} from './url.js'
+import {extractHost, extractMyshopifyHandle, extractSubdomain, isValidURL, safeParseURL} from './url.js'
 import {describe, expect, test} from 'vitest'
 
 describe('isValidURL', () => {
@@ -67,6 +67,11 @@ describe('extractHost', () => {
     expect(extractHost('shop.myshopify.com/admin')).toBe('shop.myshopify.com')
   })
 
+  test('returns the host for a bare host with a port (opaque URL guard)', () => {
+    expect(extractHost('my-shop.shop.dev:9292/admin')).toBe('my-shop.shop.dev')
+    expect(extractHost('localhost:3000')).toBe('localhost')
+  })
+
   test('returns undefined for null/undefined/empty input', () => {
     expect(extractHost(null)).toBeUndefined()
     expect(extractHost(undefined)).toBeUndefined()
@@ -86,5 +91,25 @@ describe('extractMyshopifyHandle', () => {
   test('returns undefined for null/undefined input', () => {
     expect(extractMyshopifyHandle(null)).toBeUndefined()
     expect(extractMyshopifyHandle(undefined)).toBeUndefined()
+  })
+})
+
+describe('extractSubdomain', () => {
+  test('extracts the first label from a myshopify.com host', () => {
+    expect(extractSubdomain('https://my-shop.myshopify.com')).toBe('my-shop')
+  })
+
+  test('extracts the first label from non-myshopify hosts (local dev)', () => {
+    expect(extractSubdomain('my-shop.my.shop.dev')).toBe('my-shop')
+    expect(extractSubdomain('https://acme.shop.dev/admin')).toBe('acme')
+  })
+
+  test('extracts the first label from a bare host with a port', () => {
+    expect(extractSubdomain('my-shop.shop.dev:9292/admin')).toBe('my-shop')
+  })
+
+  test('returns undefined for null/undefined input', () => {
+    expect(extractSubdomain(null)).toBeUndefined()
+    expect(extractSubdomain(undefined)).toBeUndefined()
   })
 })

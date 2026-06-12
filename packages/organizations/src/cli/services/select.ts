@@ -5,7 +5,13 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function selectOrg(orgIdFromFlag?: string): Promise<Organization> {
   const organizations = await fetchOrganizations()
+  return selectOrganizationFromList(organizations, orgIdFromFlag)
+}
 
+export async function selectOrganizationFromList<T extends Organization>(
+  organizations: T[],
+  orgIdFromFlag?: string,
+): Promise<T> {
   if (organizations.length === 0) {
     throw new AbortError('No organizations found.', 'Make sure you have access to a Shopify organization.')
   }

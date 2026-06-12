@@ -1,11 +1,11 @@
 import {fetchDestinationsContext} from './destinations.js'
 import {fetchOrganizationShop} from './organization-shop.js'
 import {mapPlanToPublicHandle} from './plan.js'
+import {storeTypeHandle} from '../store-type.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {compact} from '@shopify/cli-kit/common/object'
 import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import type {Store} from '../../../api/graphql/business-platform-organizations/generated/types.js'
 import type {DestinationsContext, OrganizationShopFields, StoreInfoResult, StoreInfoStoreOwner} from './types.js'
 
 interface GetStoreInfoOptions {
@@ -62,7 +62,7 @@ function buildResult(args: BuildResultArgs): StoreInfoResult {
     organizationId: destinationsCtx.owningOrg?.id,
     organizationName: destinationsCtx.owningOrg?.name,
     storeOwner: buildStoreOwner(orgShop),
-    type: mapStoreType(orgShop?.storeType),
+    type: storeTypeHandle(orgShop?.storeType),
     plan: mapPlanToPublicHandle(orgShop?.planName),
     featurePreview: orgShop?.developerPreviewHandle,
     adminUrl: buildAdminUrl(extractMyshopifyHandle(store)),
@@ -86,23 +86,4 @@ function buildStoreOwner(orgShop: OrganizationShopFields | undefined): StoreInfo
 function buildAdminUrl(handle: string | undefined): string | undefined {
   if (!handle) return undefined
   return `https://admin.shopify.com/store/${encodeURIComponent(handle)}`
-}
-
-// The public store-type handle surfaced as `type` for every member of the BP `Store` enum.
-// Declared as a fully-keyed record so adding a value to the enum fails type-checking here until
-// it's given an explicit handle, rather than silently falling back to a lowercased raw value.
-const storeTypeHandles: {[key in Store]: string} = {
-  APP_DEVELOPMENT: 'dev',
-  CLIENT_TRANSFER: 'client_transfer',
-  COLLABORATOR: 'collaborator',
-  DEVELOPMENT: 'dev',
-  DEVELOPMENT_SUPERSET: 'dev',
-  PRODUCTION: 'production',
-}
-
-// Returns undefined for an unrecognized value (e.g. a newer enum member than the generated types
-// know about) so the field is omitted rather than shown as a guessed handle.
-function mapStoreType(storeType: Store | undefined): string | undefined {
-  if (!storeType) return undefined
-  return storeTypeHandles[storeType]
 }

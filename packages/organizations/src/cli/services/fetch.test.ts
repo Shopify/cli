@@ -1,4 +1,4 @@
-import {fetchOrganizations} from './fetch.js'
+import {fetchOrganizations, fetchOrganizationsWithAccessInfo} from './fetch.js'
 import {describe, expect, test, vi} from 'vitest'
 import {businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
@@ -15,6 +15,7 @@ describe('fetchOrganizations', () => {
     vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
       currentUserAccount: {
         uuid: 'user-uuid',
+        email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
           nodes: [
             {id: ENCODED_GID_1, name: 'My Org'},
@@ -47,6 +48,7 @@ describe('fetchOrganizations', () => {
     vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
       currentUserAccount: {
         uuid: 'user-uuid',
+        email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
           nodes: [],
         },
@@ -62,6 +64,7 @@ describe('fetchOrganizations', () => {
     vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
       currentUserAccount: {
         uuid: 'user-uuid',
+        email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
           nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
         },
@@ -78,5 +81,99 @@ describe('fetchOrganizations', () => {
         }),
       }),
     )
+  })
+})
+
+describe('fetchOrganizationsWithAccessInfo', () => {
+  test('uses a provided token without re-authenticating', async () => {
+    vi.mocked(ensureAuthenticatedBusinessPlatform).mockClear()
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {
+        uuid: 'user-uuid',
+        email: 'merchant@example.com',
+        organizationsWithAccessToDestination: {
+          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+        },
+      },
+    })
+
+    await fetchOrganizationsWithAccessInfo('pre-resolved-token')
+
+    expect(ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
+    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(expect.objectContaining({token: 'pre-resolved-token'}))
+  })
+
+  test('does not replace a provided token with ambient local auth on unauthorized', async () => {
+    vi.mocked(ensureAuthenticatedBusinessPlatform).mockClear()
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {
+        uuid: 'user-uuid',
+        email: 'merchant@example.com',
+        organizationsWithAccessToDestination: {
+          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+        },
+      },
+    })
+
+    await fetchOrganizationsWithAccessInfo('pre-resolved-token')
+
+    const requestOptions = vi.mocked(businessPlatformRequestDoc).mock.calls[0]?.[0] as any
+    await expect(requestOptions.unauthorizedHandler.handler()).resolves.toEqual({})
+    expect(ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
+  })
+
+  test('refreshes ambient local auth on unauthorized when no token is provided', async () => {
+    vi.mocked(ensureAuthenticatedBusinessPlatform)
+      .mockResolvedValueOnce('initial-token')
+      .mockResolvedValueOnce('refreshed-token')
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {
+        uuid: 'user-uuid',
+        email: 'merchant@example.com',
+        organizationsWithAccessToDestination: {
+          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+        },
+      },
+    })
+
+    await fetchOrganizationsWithAccessInfo()
+
+    const requestOptions = vi.mocked(businessPlatformRequestDoc).mock.calls[0]?.[0] as any
+    await expect(requestOptions.unauthorizedHandler.handler()).resolves.toEqual({token: 'refreshed-token'})
+    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(expect.objectContaining({token: 'initial-token'}))
+  })
+
+  test('returns organizations plus current-user metadata when the session resolves to a user', async () => {
+    vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('test-token')
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {
+        uuid: 'user-uuid',
+        email: 'merchant@example.com',
+        organizationsWithAccessToDestination: {
+          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+        },
+      },
+    })
+
+    const result = await fetchOrganizationsWithAccessInfo()
+
+    expect(result).toEqual({
+      organizations: [{id: '1234', businessName: 'My Org'}],
+      currentUserResolved: true,
+    })
+  })
+
+  test('returns unresolved current-user metadata when BP cannot resolve currentUserAccount', async () => {
+    vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('test-token')
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: null,
+    })
+
+    const result = await fetchOrganizationsWithAccessInfo()
+
+    expect(result).toEqual({
+      organizations: [],
+      currentUserResolved: false,
+    })
   })
 })
