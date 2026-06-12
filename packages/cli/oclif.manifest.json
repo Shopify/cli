@@ -5737,6 +5737,74 @@
       "strict": true,
       "summary": "Authenticate an app against a store for store commands."
     },
+    "store:create:preview": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Creates a new preview Shopify store for a merchant who wants to try Shopify without needing to immediately create an account.",
+      "descriptionWithMarkdown": "Creates a new preview Shopify store for a merchant who wants to try Shopify without needing to immediately create an account.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\"",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --country US",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --json"
+      ],
+      "flags": {
+        "country": {
+          "description": "Two-letter ISO 3166-1 alpha-2 country code for the store, such as US, CA, or GB.",
+          "env": "SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "country",
+          "required": false,
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "The name of the store.",
+          "env": "SHOPIFY_FLAG_PREVIEW_STORE_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "required": false,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:create:preview",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Create a preview Shopify store."
+    },
     "store:execute": {
       "aliases": [
       ],

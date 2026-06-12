@@ -1,6 +1,32 @@
 import {storeAuthSessionKey} from './config.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
+/**
+ * Discriminator for a stored store auth session.
+ *
+ * - 'standard': created via `shopify store auth`.
+ * - 'preview': created via `shopify store create preview`; backed by a server-issued Admin API token.
+ *
+ * Stored sessions written before this discriminator existed have no `kind` field and are
+ * read back as 'standard'.
+ */
+type StoredStoreSessionKind = 'standard' | 'preview'
+
+interface StoredPreviewStoreMetadata {
+  /** Placeholder account UUID returned by the preview-store backend when available. */
+  placeholderAccountUuid?: string
+  /** Numeric shop id returned by the preview-store backend. */
+  shopId: string
+  /** Store name returned by the preview-store backend. */
+  name: string
+  /** ISO country code requested for the store, when provided by the caller. */
+  country?: string
+  /** ISO timestamp for when the preview store was created locally. */
+  createdAt: string
+  /** Access URL returned by the preview-store backend. */
+  accessUrl?: string
+}
+
 export interface StoredStoreAppSession {
   store: string
   clientId: string
@@ -18,6 +44,13 @@ export interface StoredStoreAppSession {
     lastName?: string
     accountOwner?: boolean
   }
+  /**
+   * Discriminator. Optional in storage for back-compat with sessions written before the
+   * field existed; `sessionKind()` resolves missing values to 'standard'.
+   */
+  kind?: StoredStoreSessionKind
+  /** Preview-store-only metadata. Set iff `kind === 'preview'`. */
+  preview?: StoredPreviewStoreMetadata
 }
 
 interface StoredStoreAppSessionBucket {
@@ -55,6 +88,22 @@ function sanitizeAssociatedUser(value: unknown): StoredStoreAppSession['associat
   }
 }
 
+function sanitizePreviewMetadata(value: unknown): StoredPreviewStoreMetadata | undefined {
+  if (!value || typeof value !== 'object') return undefined
+
+  const metadata = value as Record<string, unknown>
+  if (!isString(metadata.shopId) || !isString(metadata.name) || !isString(metadata.createdAt)) return undefined
+
+  return {
+    shopId: metadata.shopId,
+    name: metadata.name,
+    createdAt: metadata.createdAt,
+    ...(isString(metadata.placeholderAccountUuid) ? {placeholderAccountUuid: metadata.placeholderAccountUuid} : {}),
+    ...(isString(metadata.country) ? {country: metadata.country} : {}),
+    ...(isString(metadata.accessUrl) ? {accessUrl: metadata.accessUrl} : {}),
+  }
+}
+
 function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | undefined {
   if (!value || typeof value !== 'object') return undefined
 
@@ -71,6 +120,16 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
     return undefined
   }
 
+  // Discriminator is optional for back-compat: sessions written before this field existed
+  // are read back as 'standard'. Unknown values are coerced to 'standard' and the field is
+  // omitted from the result so it doesn't pollute legacy buckets.
+  const kind: StoredStoreSessionKind = session.kind === 'preview' ? 'preview' : 'standard'
+  const preview = kind === 'preview' ? sanitizePreviewMetadata(session.preview) : undefined
+
+  // A session declared as 'preview' but missing/malformed metadata is rejected outright,
+  // because store-list fallback and future re-mint/claim flows rely on this metadata.
+  if (kind === 'preview' && !preview) return undefined
+
   return {
     store: session.store,
     clientId: session.clientId,
@@ -84,6 +143,8 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
     ...(sanitizeAssociatedUser(session.associatedUser)
       ? {associatedUser: sanitizeAssociatedUser(session.associatedUser)}
       : {}),
+    ...(kind === 'preview' ? {kind} : {}),
+    ...(preview ? {preview} : {}),
   }
 }
 

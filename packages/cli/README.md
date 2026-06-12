@@ -77,6 +77,7 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
+* [`shopify store create preview`](#shopify-store-create-preview)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify store info`](#shopify-store-info)
 * [`shopify theme check`](#shopify-theme-check)
@@ -2129,6 +2130,36 @@ EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
+```
+
+## `shopify store create preview`
+
+Create a preview Shopify store.
+
+```
+USAGE
+  $ shopify store create preview [--country <value>] [-j] [--name <value>] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json             [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --country=<value>  [env: SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY] Two-letter ISO 3166-1 alpha-2 country code for the
+                         store, such as US, CA, or GB.
+      --name=<value>     [env: SHOPIFY_FLAG_PREVIEW_STORE_NAME] The name of the store.
+      --no-color         [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose          [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Create a preview Shopify store.
+
+  Creates a new preview Shopify store for a merchant who wants to try Shopify without needing to immediately create an
+  account.
+
+EXAMPLES
+  $ shopify store create preview --name "Lavender Candles"
+
+  $ shopify store create preview --name "Lavender Candles" --country US
+
+  $ shopify store create preview --name "Lavender Candles" --json
 ```
 
 ## `shopify store execute`
