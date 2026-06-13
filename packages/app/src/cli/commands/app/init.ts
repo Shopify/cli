@@ -10,7 +10,7 @@ import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompt
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
 import {isValidName} from '../../models/app/validation/common.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
@@ -38,12 +38,14 @@ export default class Init extends AppLinkedCommand {
       default: async () => cwd(),
       hidden: false,
     }),
-    template: Flags.string({
-      description: `The app template. Accepts one of the following:
+    template: requiredIfNonInteractive(
+      Flags.string({
+        description: `The app template. Accepts one of the following:
        - <${visibleTemplates.join('|')}>
        - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]`,
-      env: 'SHOPIFY_FLAG_TEMPLATE',
-    }),
+        env: 'SHOPIFY_FLAG_TEMPLATE',
+      }),
+    ),
     flavor: Flags.string({
       description: 'Which flavor of the given template to use.',
       env: 'SHOPIFY_FLAG_TEMPLATE_FLAVOR',
