@@ -1,7 +1,7 @@
 import {outputContent, outputDebug, outputToken} from './output.js'
 import {err, ok, Result} from './result.js'
-import {fetch, Response} from './http.js'
-import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
+import {fetch, downloadFile} from './http.js'
+import {mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {AbortError} from './error.js'
@@ -150,20 +150,13 @@ export async function downloadGitHubRelease(
     outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
     await inTemporaryDirectory(async (tmpDir) => {
       const tempPath = joinPath(tmpDir, assetName)
-      let response: Response
       try {
-        response = await fetch(url, undefined, 'slow-request')
-        if (!response.ok) {
-          throw new AbortError(`Failed to download ${assetName}: ${response.statusText}`)
-        }
+        await downloadFile(url, tempPath)
       } catch (error) {
         throw new AbortError(
           `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
         )
       }
-
-      const buffer = await response.arrayBuffer()
-      await writeFile(tempPath, Buffer.from(buffer))
 
       await chmod(tempPath, 0o755)
       await mkdir(dirname(targetPath))

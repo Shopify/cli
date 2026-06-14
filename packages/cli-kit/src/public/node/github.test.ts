@@ -9,7 +9,7 @@ import {fetch, downloadFile} from './http.js'
 import {AbortError} from './error.js'
 import {testWithTempDir} from './testing/test-with-temp-dir.js'
 import {joinPath} from './path.js'
-import {readFile} from './fs.js'
+import {readFile, writeFile} from './fs.js'
 import {isExecutable} from 'is-executable'
 import {describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
@@ -180,12 +180,10 @@ describe('downloadGitHubRelease', () => {
   testWithTempDir('successfully downloads the release asset', async ({tempDir}) => {
     // GIVEN
     const downloadContent = 'hello'
-    const content = Buffer.from(downloadContent)
-    const mockResponse = {
-      ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(content),
-    }
-    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+    vi.mocked(downloadFile).mockImplementation(async (_url, to) => {
+      await writeFile(to, downloadContent)
+      return to
+    })
 
     const binary = process.platform === 'win32' ? 'test-asset.exe' : 'test-asset'
     const targetPath = joinPath(tempDir, 'downloads', binary)
@@ -194,10 +192,9 @@ describe('downloadGitHubRelease', () => {
     await downloadGitHubRelease(repo, version, asset, targetPath)
 
     // THEN
-    expect(fetch).toHaveBeenCalledWith(
+    expect(downloadFile).toHaveBeenCalledWith(
       `https://github.com/${repo}/releases/download/${version}/${asset}`,
-      undefined,
-      'slow-request',
+      expect.stringContaining(asset),
     )
 
     const downloadedContent = await readFile(targetPath)
