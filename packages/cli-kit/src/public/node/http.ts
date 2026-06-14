@@ -244,6 +244,9 @@ export function downloadFile(url: string, to: string): Promise<string> {
 
     try {
       const res = await nodeFetch(url, {redirect: 'follow'})
+      if (!res.ok) {
+        throw new Error(`Failed to download ${sanitizedUrl}: ${res.status} ${res.statusText}`)
+      }
       if (!res.body) {
         throw new Error(`No response body received when downloading ${sanitizedUrl}`)
       }
