@@ -5773,12 +5773,12 @@
           "name": "no-color",
           "type": "boolean"
         },
-        "organization": {
+        "organization-id": {
           "description": "The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.",
-          "env": "SHOPIFY_FLAG_ORGANIZATION",
+          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "organization",
+          "name": "organization-id",
           "type": "option"
         },
         "verbose": {

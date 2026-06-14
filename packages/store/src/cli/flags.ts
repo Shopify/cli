@@ -9,4 +9,8 @@ export const storeFlags = {
     parse: async (input) => normalizeStoreFqdn(input),
     required: true,
   }),
+  'organization-id': Flags.integer({
+    description: 'The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.',
+    env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
+  }),
 }

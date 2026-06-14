@@ -16,7 +16,7 @@ const POLL_TIMEOUT_MS = 5 * 60 * 1000
 
 interface CreateDevStoreOptions {
   name: string
-  organization?: string
+  organizationId?: number
   json: boolean
 }
 
@@ -46,7 +46,7 @@ function friendlyStatus(status: StoreCreationStatus): string {
 }
 
 export async function createDevStore(options: CreateDevStoreOptions): Promise<void> {
-  const org = await selectOrg(options.organization)
+  const org = await selectOrg(options.organizationId?.toString())
   const token = await ensureAuthenticatedBusinessPlatform()
   const unauthorizedHandler = {
     type: 'token_refresh' as const,

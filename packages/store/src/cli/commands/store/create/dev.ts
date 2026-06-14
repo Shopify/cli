@@ -1,4 +1,5 @@
 import {createDevStore} from '../../../services/store/create/dev.js'
+import {storeFlags} from '../../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -22,10 +23,7 @@ export default class StoreCreateDev extends Command {
       required: true,
       env: 'SHOPIFY_FLAG_STORE_NAME',
     }),
-    organization: Flags.string({
-      description: 'The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.',
-      env: 'SHOPIFY_FLAG_ORGANIZATION',
-    }),
+    'organization-id': storeFlags['organization-id'],
   }
 
   async run(): Promise<void> {
@@ -33,7 +31,7 @@ export default class StoreCreateDev extends Command {
     try {
       await createDevStore({
         name: flags.name,
-        organization: flags.organization,
+        organizationId: flags['organization-id'],
         json: flags.json,
       })
     } catch (error) {

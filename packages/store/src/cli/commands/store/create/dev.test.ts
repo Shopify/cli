@@ -20,17 +20,17 @@ describe('store create dev command', () => {
 
     expect(createDevStore).toHaveBeenCalledWith({
       name: 'my-test-store',
-      organization: undefined,
+      organizationId: undefined,
       json: false,
     })
   })
 
-  test('passes organization flag through to the service', async () => {
-    await StoreCreateDev.run(['--name', 'my-test-store', '--organization', '12345'])
+  test('passes organization-id flag through to the service', async () => {
+    await StoreCreateDev.run(['--name', 'my-test-store', '--organization-id', '12345'])
 
     expect(createDevStore).toHaveBeenCalledWith({
       name: 'my-test-store',
-      organization: '12345',
+      organizationId: 12345,
       json: false,
     })
   })
@@ -40,14 +40,14 @@ describe('store create dev command', () => {
 
     expect(createDevStore).toHaveBeenCalledWith({
       name: 'my-test-store',
-      organization: undefined,
+      organizationId: undefined,
       json: true,
     })
   })
 
   test('defines the expected flags', () => {
     expect(StoreCreateDev.flags.name).toBeDefined()
-    expect(StoreCreateDev.flags.organization).toBeDefined()
+    expect(StoreCreateDev.flags['organization-id']).toBeDefined()
     expect(StoreCreateDev.flags.json).toBeDefined()
   })
 

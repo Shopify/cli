@@ -184,14 +184,14 @@ describe('createDevStore', () => {
     )
   })
 
-  test('passes organization flag to selectOrg', async () => {
+  test('passes organization-id flag to selectOrg as a string', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc)
       .mockResolvedValueOnce(defaultMutationResult)
       .mockResolvedValueOnce({
         organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
       })
 
-    await createDevStore({name: 'test-store', organization: '456', json: false})
+    await createDevStore({name: 'test-store', organizationId: 456, json: false})
 
     expect(selectOrg).toHaveBeenCalledWith('456')
   })
