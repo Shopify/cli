@@ -1,6 +1,6 @@
 import * as system from './system.js'
 import {execa} from 'execa'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
 
@@ -350,6 +350,38 @@ describe('isStdinPiped', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('isWsl', () => {
+  beforeEach(() => {
+    system._resetIsWsl()
+  })
+
+  test('returns the value from is-wsl', async () => {
+    // Given
+    vi.doMock('is-wsl', () => ({
+      default: true,
+    }))
+
+    // When
+    const got = await system.isWsl()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    const isWslModule = await import('is-wsl')
+    const spy = vi.spyOn(isWslModule, 'default', 'get').mockReturnValue(true)
+
+    // When
+    await system.isWsl()
+    await system.isWsl()
+
+    // Then
+    expect(spy).toHaveBeenCalledTimes(1)
   })
 })
 
