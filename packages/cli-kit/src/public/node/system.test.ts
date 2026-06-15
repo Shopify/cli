@@ -1,6 +1,6 @@
 import * as system from './system.js'
 import {execa} from 'execa'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
 
@@ -350,6 +350,65 @@ describe('isStdinPiped', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('isWsl', () => {
+  beforeEach(() => {
+    system._resetIsWsl()
+  })
+
+  test('returns true when is-wsl returns true', async () => {
+    // Given
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // When
+    const got = await system.isWsl()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false when is-wsl returns false', async () => {
+    // Given
+    vi.doMock('is-wsl', () => ({default: false}))
+
+    // When
+    const got = await system.isWsl()
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // When
+    const result1 = system.isWsl()
+    const result2 = system.isWsl()
+
+    // Then
+    await expect(result1).resolves.toBe(true)
+    await expect(result2).resolves.toBe(true)
+    expect(result1).toBe(result2)
+  })
+
+  test('resets the memoized value', async () => {
+    // Given
+    vi.doMock('is-wsl', () => ({default: true}))
+    const result1 = system.isWsl()
+    await result1
+
+    // When
+    system._resetIsWsl()
+    vi.doMock('is-wsl', () => ({default: false}))
+    const result2 = system.isWsl()
+
+    // Then
+    await expect(result1).resolves.toBe(true)
+    await expect(result2).resolves.toBe(false)
+    expect(result1).not.toBe(result2)
   })
 })
 
