@@ -17,8 +17,7 @@ documentation, run:
 pnpm verify:generated
 ```
 
-This mirrors the generated-file freshness checks in `.github/workflows/tests-pr.yml`. To inspect the planned commands
-without running generators, use `pnpm verify:generated --dry-run`.
+This runs the generators checked by `.github/workflows/tests-pr.yml`. Commit any generated file changes before pushing.
 
 ### Choosing the right bump type
 
