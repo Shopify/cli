@@ -41,7 +41,7 @@ export interface storeexecute {
   '--query-file <value>'?: string
 
   /**
-   * The myshopify.com domain of the store.
+   * The store to operate on: its myshopify.com domain, numeric store ID, or Shop GID (gid://shopify/Shop/<id>).
    * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>': string

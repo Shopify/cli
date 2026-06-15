@@ -1,12 +1,11 @@
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
 
 export const storeFlags = {
   store: Flags.string({
     char: 's',
-    description: 'The myshopify.com domain of the store.',
+    description:
+      'The store to operate on: its myshopify.com domain, numeric store ID, or Shop GID (gid://shopify/Shop/<id>).',
     env: 'SHOPIFY_FLAG_STORE',
-    parse: async (input) => normalizeStoreFqdn(input),
     required: true,
   }),
 }

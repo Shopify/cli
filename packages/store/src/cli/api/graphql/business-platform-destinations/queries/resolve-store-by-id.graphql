@@ -1,0 +1,8 @@
+query ResolveStoreById($id: DestinationPublicID!) {
+  currentUserAccount {
+    destination(id: $id) {
+      webUrl
+      primaryDomain
+    }
+  }
+}
