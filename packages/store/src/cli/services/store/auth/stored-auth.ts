@@ -23,5 +23,5 @@ export function listStoredStoreAuthSummaries(storage?: StoreSessionStorage): Sto
       ...(session.refreshTokenExpiresAt ? {refreshTokenExpiresAt: session.refreshTokenExpiresAt} : {}),
       ...(session.associatedUser ? {associatedUser: session.associatedUser} : {}),
     }))
-    .sort((left, right) => left.store.localeCompare(right.store))
+    .sort((left, right) => right.acquiredAt.localeCompare(left.acquiredAt) || left.store.localeCompare(right.store))
 }

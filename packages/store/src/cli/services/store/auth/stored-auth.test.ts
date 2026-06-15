@@ -27,17 +27,25 @@ describe('listStoredStoreAuthSummaries', () => {
     })
   })
 
-  test('returns one summary per store sorted by store using the current user session', async () => {
+  test('returns one summary per store sorted by newest auth using the current user session', async () => {
     await inTemporaryDirectory((cwd) => {
       const storage = new LocalStorage<Record<string, unknown>>({cwd})
 
-      setStoredStoreAppSession(buildSession({store: 'b-shop.myshopify.com'}), storage as any)
+      setStoredStoreAppSession(
+        buildSession({store: 'b-shop.myshopify.com', acquiredAt: '2026-03-27T00:00:00.000Z'}),
+        storage as any,
+      )
       setStoredStoreAppSession(
         buildSession({store: 'a-shop.myshopify.com', userId: '41', accessToken: 'token-41'}),
         storage as any,
       )
       setStoredStoreAppSession(
-        buildSession({store: 'a-shop.myshopify.com', userId: '84', accessToken: 'token-84'}),
+        buildSession({
+          store: 'a-shop.myshopify.com',
+          userId: '84',
+          accessToken: 'token-84',
+          acquiredAt: '2026-03-28T00:00:00.000Z',
+        }),
         storage as any,
       )
 
@@ -46,7 +54,7 @@ describe('listStoredStoreAuthSummaries', () => {
           store: 'a-shop.myshopify.com',
           userId: '84',
           scopes: ['read_products'],
-          acquiredAt: '2026-03-27T00:00:00.000Z',
+          acquiredAt: '2026-03-28T00:00:00.000Z',
         },
         {
           store: 'b-shop.myshopify.com',
