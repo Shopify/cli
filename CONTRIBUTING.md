@@ -14,10 +14,10 @@ Before pushing changes that touch GraphQL operations, command definitions, flags
 documentation, run:
 
 ```
-pnpm verify:generated
+pnpm generate:all
 ```
 
-This runs the generators checked by `.github/workflows/tests-pr.yml`. Commit any generated file changes before pushing.
+This runs all generators checked by `.github/workflows/tests-pr.yml`. Commit any generated file changes before pushing.
 
 ### Choosing the right bump type
 

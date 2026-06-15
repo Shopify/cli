@@ -38,7 +38,7 @@
     "type-check:affected": "nx affected --target=type-check",
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
     "update-bugsnag": "bin/update-bugsnag.js",
-    "verify:generated": "pnpm graphql-codegen:get-graphql-schemas && pnpm graphql-codegen && pnpm build --output-style=stream && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-code-documentation && pnpm build-dev-docs"
+    "generate:all": "pnpm graphql-codegen:get-graphql-schemas && pnpm graphql-codegen && pnpm build --output-style=stream && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-code-documentation && pnpm build-dev-docs"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
