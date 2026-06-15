@@ -15,15 +15,23 @@ const SENSITIVE_QUERY_PARAMS = [
 ]
 
 /**
- * Removes the sensitive data from the url and outputs them as a string.
- * @param url - HTTP headers.
- * @returns A sanitized version of the url as a string.
+ * Removes sensitive data (credentials, tokens) from the URL before it is logged
+ * or displayed to the user to prevent accidental leakage of secrets.
+ *
+ * @param url - The URL to sanitize.
+ * @returns A sanitized version of the URL.
  */
 export function sanitizeURL(url: string): string {
   const parsedUrl = new URL(url)
-  for (const param of SENSITIVE_QUERY_PARAMS) {
-    if (parsedUrl.searchParams.has(param)) {
-      parsedUrl.searchParams.set(param, '****')
+
+  if (parsedUrl.username) parsedUrl.username = '****'
+  if (parsedUrl.password) parsedUrl.password = '****'
+
+  const sensitiveParams = SENSITIVE_QUERY_PARAMS.map((param) => param.toLowerCase())
+
+  for (const [key] of parsedUrl.searchParams.entries()) {
+    if (sensitiveParams.includes(key.toLowerCase())) {
+      parsedUrl.searchParams.set(key, '****')
     }
   }
   return parsedUrl.toString()
