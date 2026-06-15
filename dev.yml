@@ -12,23 +12,47 @@ up:
       meet: mkdir -p bin && printf '#!/bin/sh\nexec pnpm "$@"\n' > bin/p && chmod +x bin/p
   - custom:
       name: 'Install PNPM dependencies'
-      # we flip these two conditions to always run `pnpm install`
-      # whenever we run dev up.
-      met?: pnpm install
-      meet: 'true'
+      met?: |
+        test -d node_modules/.pnpm &&
+        test -x node_modules/.bin/nx &&
+        test "$(printf 'node %s\npnpm %s\n' "$(node --version)" "$(pnpm --version)" && cksum package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc .nvmrc dev.yml 2>/dev/null)" = "$(cat node_modules/.dev-up/pnpm-install 2>/dev/null)"
+      meet: |
+        pnpm install &&
+        mkdir -p node_modules/.dev-up &&
+        (printf 'node %s\npnpm %s\n' "$(node --version)" "$(pnpm --version)" && cksum package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc .nvmrc dev.yml) > node_modules/.dev-up/pnpm-install
   - custom:
       name: 'Get GraphQL schemas'
-      # Always fetch these on dev up
-      met?: pnpm graphql-codegen:get-graphql-schemas
-      meet: 'true'
+      met?: |
+        schema_files="packages/app/src/cli/api/graphql/partners/cli_schema.graphql packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/organizations/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql packages/app/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql" &&
+        for schema_file in $schema_files; do test -s "$schema_file" || exit 1; done &&
+        test "$(printf 'service %s\n' "${SHOPIFY_SERVICE_ENV:-}" && cksum bin/get-graphql-schemas.js dev.yml $schema_files 2>/dev/null)" = "$(cat node_modules/.dev-up/graphql-schemas 2>/dev/null)"
+      meet: |
+        schema_files="packages/app/src/cli/api/graphql/partners/cli_schema.graphql packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/organizations/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql packages/app/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql" &&
+        pnpm graphql-codegen:get-graphql-schemas &&
+        mkdir -p node_modules/.dev-up &&
+        (printf 'service %s\n' "${SHOPIFY_SERVICE_ENV:-}" && cksum bin/get-graphql-schemas.js dev.yml $schema_files) > node_modules/.dev-up/graphql-schemas
   - custom:
       name: 'Install Playwright Chromium'
-      met?: cd packages/e2e && pnpx playwright install chromium
-      meet: 'true'
+      met?: |
+        test "$(printf 'node %s\n' "$(node --version)" && cksum packages/e2e/package.json pnpm-lock.yaml dev.yml 2>/dev/null)" = "$(cat node_modules/.dev-up/playwright-chromium 2>/dev/null)" &&
+        cd packages/e2e &&
+        node --input-type=module -e "import {existsSync} from 'node:fs'; import {chromium} from '@playwright/test'; process.exit(existsSync(chromium.executablePath()) ? 0 : 1)"
+      meet: |
+        cd packages/e2e &&
+        pnpm exec playwright install chromium &&
+        cd ../.. &&
+        mkdir -p node_modules/.dev-up &&
+        (printf 'node %s\n' "$(node --version)" && cksum packages/e2e/package.json pnpm-lock.yaml dev.yml) > node_modules/.dev-up/playwright-chromium
   - custom:
       name: 'Rebuild node-pty'
-      met?: pnpm rebuild node-pty
-      meet: 'true'
+      met?: |
+        test "$(printf 'node %s\n' "$(node --version)" && cksum packages/e2e/package.json pnpm-lock.yaml dev.yml 2>/dev/null)" = "$(cat node_modules/.dev-up/node-pty-rebuild 2>/dev/null)" &&
+        cd packages/e2e &&
+        node -e "require('node-pty')"
+      meet: |
+        pnpm rebuild node-pty &&
+        mkdir -p node_modules/.dev-up &&
+        (printf 'node %s\n' "$(node --version)" && cksum packages/e2e/package.json pnpm-lock.yaml dev.yml) > node_modules/.dev-up/node-pty-rebuild
 
 env:
   SHOPIFY_CLI_ENV: development
