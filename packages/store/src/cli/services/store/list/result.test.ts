@@ -38,6 +38,7 @@ describe('writeStoreListResult', () => {
     expect(output.info()).toContain('My Shop')
     expect(output.info()).toContain('Dev')
     expect(output.info()).toContain('May 22, 2026')
+    expect(output.info()).toContain('shopify auth list')
   })
 
   test('renders the subdomain handle for non-myshopify hosts (local dev)', () => {
@@ -78,6 +79,7 @@ describe('writeStoreListResult', () => {
 
     expect(output.warn()).toContain("Couldn't resolve a Shopify account for the current CLI session.")
     expect(output.info()).toContain('No stores were returned for the current CLI session.')
+    expect(output.info()).toContain('shopify auth list')
   })
 
   test('renders the selected organization empty state', () => {
@@ -94,6 +96,7 @@ describe('writeStoreListResult', () => {
     writeStoreListResult({source: 'organization', stores: []}, 'text')
 
     expect(output.info()).toContain('No stores found in your Shopify organization.')
+    expect(output.info()).toContain('shopify auth list')
   })
 
   test('emits a {stores, organization} JSON document on stdout', () => {

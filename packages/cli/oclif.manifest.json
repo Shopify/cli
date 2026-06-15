@@ -3048,6 +3048,56 @@
       "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     },
+    "auth:list": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Lists stores authenticated directly on this machine with `shopify store auth`.\n\nUse this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.\nTo list stores in a Shopify organization, run `shopify store list`.",
+      "descriptionWithMarkdown": "Lists stores authenticated directly on this machine with `shopify store auth`.\n\nUse this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.\nTo list stores in a Shopify organization, run `shopify store list`.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "auth:list",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "List stores authenticated directly with store auth."
+    },
     "auth:login": {
       "aliases": [
       ],
