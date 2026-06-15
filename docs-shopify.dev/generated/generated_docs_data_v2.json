@@ -4360,7 +4360,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--organization-id <value>",
           "value": "string",
-          "description": "Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_ORGANIZATION_ID"
         },
@@ -4383,7 +4383,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface storelist {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.\n   * @environment SHOPIFY_FLAG_ORGANIZATION_ID\n   */\n  '--organization-id <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface storelist {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The numeric organization ID. Auto-selects if you belong to a single organization.\n   * @environment SHOPIFY_FLAG_ORGANIZATION_ID\n   */\n  '--organization-id <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themecheck": {
