@@ -1,5 +1,5 @@
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchOrganizations} from './dev/fetch.js'
+import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
@@ -298,8 +298,12 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   })
 }
 
-export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): Promise<OrganizationApp> {
-  const org = await selectOrg()
+export async function fetchOrCreateOrganizationApp(
+  options: CreateAppOptions & {organizationId?: string},
+): Promise<OrganizationApp> {
+  const org = options.organizationId
+    ? await fetchOrgFromId(options.organizationId, selectDeveloperPlatformClient())
+    : await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
   const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)

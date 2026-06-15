@@ -122,7 +122,11 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     }
   }
 
-  const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
+  const remoteApp = await fetchOrCreateOrganizationApp({
+    ...creationOptions,
+    directory: appDirectory,
+    organizationId: options.organizationId,
+  })
 
   const developerPlatformClient = remoteApp.developerPlatformClient
 

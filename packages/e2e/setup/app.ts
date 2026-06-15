@@ -230,7 +230,7 @@ export async function versionsList(
 /**
  * Run `app config link` to create a brand-new app on Shopify interactively.
  * Answers the prompts:
- *   "Which organization is this work for?" → filter by orgId → Enter
+ *   --organization-id flag skips the organization picker
  *   "Create this project as a new app on Shopify?" → Yes (default)
  *   "App name" → appName
  *   "Configuration file name" → skipped via `--config` flag
@@ -257,7 +257,7 @@ export async function configLink(
     configName?: string
   },
 ): Promise<ExecResult> {
-  const args = ['app', 'config', 'link']
+  const args = ['app', 'config', 'link', '--organization-id', ctx.orgId]
   // Pass configName as --config flag. link.ts → loadConfigurationFileName skips
   // the "Configuration file name" prompt when options.configName is set, which
   // also side-steps a painful interactive quirk: that prompt uses
@@ -279,42 +279,18 @@ export async function configLink(
   const settle = (ms = 50) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
   try {
-    // The first prompt is either the multi-org selector or — when the account
-    // has only one org, or none of the orgs have existing apps — we jump
-    // straight to `createAsNewAppPrompt`. Race all three; the loser
-    // waitForOutput calls are cancelled via AbortSignal so their timers and
-    // outputWaiter entries are freed immediately when the winner resolves.
+    // With --organization-id, the first prompt is either "Create this project"
+    // when the org has existing apps, or "App name" when it does not. Race both;
+    // the loser waitForOutput call is cancelled via AbortSignal so its timer and
+    // outputWaiter entry are freed immediately when the winner resolves.
     const firstPrompt = await raceWaiters((signal) => [
-      proc.waitForOutput('Which organization', {timeoutMs: CLI_TIMEOUT.medium, signal}).then(() => 'org' as const),
       proc
         .waitForOutput('Create this project as a new app', {timeoutMs: CLI_TIMEOUT.medium, signal})
         .then(() => 'create' as const),
       proc.waitForOutput('App name', {timeoutMs: CLI_TIMEOUT.medium, signal}).then(() => 'appName' as const),
     ])
 
-    if (firstPrompt === 'org') {
-      // Type the orgId to filter the autocomplete prompt to exactly one match.
-      // selectOrganizationPrompt's label includes `(${org.id})` when duplicate
-      // org names exist (which is true for the e2e test account), so substring
-      // matching on the numeric ID is unique. Avoids relying on MRU ordering.
-      await settle()
-      proc.ptyProcess.write(ctx.orgId)
-      await settle()
-      proc.sendKey('\r')
-      // After org selection the CLI fetches apps for the chosen org. If
-      // the org has existing apps → "Create this project" prompt. If it has
-      // zero apps → selectOrCreateApp skips straight to appNamePrompt.
-      const next = await raceWaiters((signal) => [
-        proc
-          .waitForOutput('Create this project as a new app', {timeoutMs: CLI_TIMEOUT.medium, signal})
-          .then(() => 'create' as const),
-        proc.waitForOutput('App name', {timeoutMs: CLI_TIMEOUT.medium, signal}).then(() => 'appName' as const),
-      ])
-      if (next === 'create') {
-        await settle()
-        proc.sendKey('\r')
-      }
-    } else if (firstPrompt === 'create') {
+    if (firstPrompt === 'create') {
       await settle()
       proc.sendKey('\r')
     }

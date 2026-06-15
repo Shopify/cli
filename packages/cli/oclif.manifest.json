@@ -469,6 +469,17 @@
           "name": "no-color",
           "type": "boolean"
         },
+        "organization-id": {
+          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
+          "exclusive": [
+            "client-id"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "organization-id",
+          "type": "option"
+        },
         "path": {
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
