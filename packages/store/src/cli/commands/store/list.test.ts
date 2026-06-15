@@ -22,7 +22,7 @@ describe('store list command', () => {
 
     await StoreList.run(['--organization-id', '1234567'])
 
-    expect(listStores).toHaveBeenCalledWith({organizationId: '1234567'})
+    expect(listStores).toHaveBeenCalledWith({organizationId: 1234567})
   })
 
   test('writes json output when requested', async () => {
@@ -37,5 +37,6 @@ describe('store list command', () => {
   test('defines the expected flags', () => {
     expect(StoreList.flags.json).toBeDefined()
     expect(StoreList.flags['organization-id']).toBeDefined()
+    expect(StoreList.flags).not.toHaveProperty('from')
   })
 })

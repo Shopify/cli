@@ -60,7 +60,7 @@ describe('listStores', () => {
     mockOrganizations([acme, beta])
     vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: []})
 
-    await listStores({organizationId: '5678'})
+    await listStores({organizationId: 5678})
 
     expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: beta})
     expect(selectOrganizationFromList).toHaveBeenCalledWith([acme, beta], '5678')
@@ -132,18 +132,11 @@ describe('listStores', () => {
     await expect(listStores()).rejects.toThrow('Access denied for accessibleShops')
   })
 
-  test('rejects a present-but-empty organization id', async () => {
-    const spy = vi.spyOn(bpSource, 'listBusinessPlatformStores')
-
-    await expect(listStores({organizationId: '  '})).rejects.toThrow('The `--organization-id` value is empty.')
-    expect(spy).not.toHaveBeenCalled()
-  })
-
   test('throws with the accessible organizations when the requested organization is not found', async () => {
     mockOrganizations([acme])
     vi.spyOn(bpSource, 'listBusinessPlatformStores')
 
-    await expect(listStores({organizationId: '9999999'})).rejects.toThrow('Organization with ID 9999999 not found.')
+    await expect(listStores({organizationId: 9999999})).rejects.toThrow('Organization with ID 9999999 not found.')
   })
 
   test('caps the listing at 250 entries and flags truncation when more were returned', async () => {

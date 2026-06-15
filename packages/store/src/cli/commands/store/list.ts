@@ -1,8 +1,8 @@
 import {listStores} from '../../services/store/list/index.js'
 import {writeStoreListResult} from '../../services/store/list/result.js'
+import {storeFlags} from '../../flags.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {Flags} from '@oclif/core'
 
 export default class StoreList extends StoreCommand {
   static summary = 'List stores in a Shopify organization.'
@@ -25,12 +25,7 @@ Run \`shopify organization list\` to find organization IDs.`
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    'organization-id': Flags.string({
-      description:
-        'Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.',
-      env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
-      required: false,
-    }),
+    'organization-id': storeFlags['organization-id'],
   }
 
   public async run(): Promise<void> {

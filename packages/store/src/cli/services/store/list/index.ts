@@ -7,19 +7,10 @@ import {isTTY} from '@shopify/cli-kit/node/ui'
 import {fetchOrganizationsWithAccessInfo, selectOrganizationFromList, type Organization} from '@shopify/organizations'
 
 interface ListStoresOptions {
-  organizationId?: string
+  organizationId?: number
 }
 
 export async function listStores(options: ListStoresOptions = {}): Promise<ListStoresResult> {
-  // A present-but-blank organization id (e.g. an empty `SHOPIFY_FLAG_ORGANIZATION_ID`) must not
-  // silently widen the listing to every accessible organization.
-  if (options.organizationId !== undefined && options.organizationId.trim() === '') {
-    throw new AbortError(
-      'The `--organization-id` value is empty.',
-      'Provide an organization ID, for example `--organization-id 1234567`. Run `shopify organization list` to find IDs.',
-    )
-  }
-
   const token = await ensureAuthenticatedBusinessPlatform()
   const organizationsResult = await fetchOrganizationsWithAccessInfo(token)
 
@@ -44,7 +35,7 @@ export async function listStores(options: ListStoresOptions = {}): Promise<ListS
 
   const selectedOrganization = await selectOrganizationFromList(
     organizationsResult.organizations,
-    options.organizationId,
+    options.organizationId?.toString(),
   )
 
   const result = await listBusinessPlatformStores({token, organization: selectedOrganization})
