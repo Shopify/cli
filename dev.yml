@@ -22,15 +22,9 @@ up:
         (printf 'node %s\npnpm %s\n' "$(node --version)" "$(pnpm --version)" && cksum package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc .nvmrc dev.yml) > node_modules/.dev-up/pnpm-install
   - custom:
       name: 'Get GraphQL schemas'
-      met?: |
-        schema_files="packages/app/src/cli/api/graphql/partners/cli_schema.graphql packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/organizations/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql packages/app/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql" &&
-        for schema_file in $schema_files; do test -s "$schema_file" || exit 1; done &&
-        test "$(printf 'service %s\n' "${SHOPIFY_SERVICE_ENV:-}" && cksum bin/get-graphql-schemas.js dev.yml $schema_files 2>/dev/null)" = "$(cat node_modules/.dev-up/graphql-schemas 2>/dev/null)"
-      meet: |
-        schema_files="packages/app/src/cli/api/graphql/partners/cli_schema.graphql packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/organizations/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql packages/app/src/cli/api/graphql/admin/admin_schema.graphql packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql" &&
-        pnpm graphql-codegen:get-graphql-schemas &&
-        mkdir -p node_modules/.dev-up &&
-        (printf 'service %s\n' "${SHOPIFY_SERVICE_ENV:-}" && cksum bin/get-graphql-schemas.js dev.yml $schema_files) > node_modules/.dev-up/graphql-schemas
+      # Always fetch these on dev up
+      met?: pnpm graphql-codegen:get-graphql-schemas
+      meet: 'true'
   - custom:
       name: 'Install Playwright Chromium'
       met?: |
