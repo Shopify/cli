@@ -146,8 +146,13 @@ export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
     })
   }
 
+  const candidate = resolvePath(joinPath(rootDirectory, assetPath))
+  if (!isSubpath(rootDirectory, candidate)) {
+    return sendError(event, {statusCode: 404, statusMessage: 'Not Found'})
+  }
+
   return fileServerMiddleware(event, {
-    filePath: joinPath(rootDirectory, assetPath),
+    filePath: candidate,
   })
 })
 
