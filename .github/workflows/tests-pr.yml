@@ -73,6 +73,56 @@ jobs:
       - name: 'Bundle'
         run: pnpm nx run-many --all --skip-nx-cache --target=bundle --output-style=stream
 
+  affected-checks:
+    name: 'Affected checks (informational)'
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    env:
+      NX_BASE: ${{ github.event.pull_request.base.sha }}
+      NX_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+      - name: Fetch PR base for Nx affected
+        run: git fetch --no-tags --depth=1 https://github.com/${{ github.event.pull_request.base.repo.full_name }}.git "$NX_BASE"
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Show affected projects
+        run: pnpm nx show projects --affected --base="$NX_BASE" --head="$NX_HEAD"
+      - name: Affected build
+        id: affected_build
+        continue-on-error: true
+        run: pnpm nx affected --target=build --base="$NX_BASE" --head="$NX_HEAD" --skip-nx-cache --output-style=stream
+      - name: Affected lint
+        id: affected_lint
+        continue-on-error: true
+        run: pnpm nx affected --target=lint --base="$NX_BASE" --head="$NX_HEAD" --skip-nx-cache --output-style=stream
+      - name: Affected type check
+        id: affected_type_check
+        continue-on-error: true
+        run: pnpm nx affected --target=type-check --base="$NX_BASE" --head="$NX_HEAD" --skip-nx-cache --output-style=stream
+      - name: Summarize affected checks
+        if: always()
+        run: |
+          {
+            echo '### Affected checks (informational)'
+            echo ''
+            echo 'These checks are non-blocking. The full required CI jobs remain authoritative.'
+            echo ''
+            echo '| Target | Outcome |'
+            echo '| --- | --- |'
+            echo '| build | ${{ steps.affected_build.outcome }} |'
+            echo '| lint | ${{ steps.affected_lint.outcome }} |'
+            echo '| type-check | ${{ steps.affected_type_check.outcome }} |'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   knip:
     name: 'Knip (unused code check)'
     runs-on: ubuntu-latest
