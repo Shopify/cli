@@ -15,7 +15,7 @@
     },
     "build:code": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "command": "pnpm vite build --config vite.config.mts",
         "cwd": "packages/ui-extensions-server-kit"
@@ -24,7 +24,7 @@
     "build:types": {
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
-      "outputs": ["{workspaceRoot}/dist"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "command": "pnpm tsc --emitDeclarationOnly",
         "cwd": "packages/ui-extensions-server-kit"
@@ -33,7 +33,7 @@
     "build": {
       "executor": "nx:run-commands",
       "dependsOn": ["build:code", "build:types"],
-      "outputs": ["{workspaceRoot}/dist"],
+      "outputs": ["{projectRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/testing.*", "{projectRoot}/index.*"],
       "options": {
         "command": "cd .",

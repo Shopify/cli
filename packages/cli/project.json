@@ -15,7 +15,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
+      "outputs": ["{projectRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
@@ -24,12 +24,7 @@
     },
     "bundle": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "build",
-        "cli-kit:generate-version",
-        "app:build",
-        "theme:build"
-      ],
+      "dependsOn": ["build", "cli-kit:generate-version", "app:build", "theme:build"],
       "options": {
         "command": "node bin/bundle",
         "cwd": "packages/cli"

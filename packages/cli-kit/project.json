@@ -3,9 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/cli-kit/src",
   "projectType": "library",
-  "tags": [
-    "scope:foundation"
-  ],
+  "tags": ["scope:foundation"],
   "targets": {
     "clean": {
       "executor": "nx:run-commands",
@@ -16,15 +14,9 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{workspaceRoot}/dist"
-      ],
-      "inputs": [
-        "{projectRoot}/src/**/*"
-      ],
-      "dependsOn": [
-        "generate-version"
-      ],
+      "outputs": ["{projectRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*"],
+      "dependsOn": ["generate-version"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
         "cwd": "packages/cli-kit"
@@ -32,21 +24,15 @@
     },
     "generate-version": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{projectRoot}/src/public/common/version.ts"
-      ],
-      "inputs": [
-        "{projectRoot}/package.json"
-      ],
+      "outputs": ["{projectRoot}/src/public/common/version.ts"],
+      "inputs": ["{projectRoot}/package.json"],
       "options": {
         "command": "node bin/update-cli-kit-version.js"
       }
     },
     "build-api-docs": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{workspaceRoot}/docs"
-      ],
+      "outputs": ["{workspaceRoot}/docs"],
       "options": {
         "command": "node ./scripts/build-api-docs.js",
         "cwd": "packages/cli-kit"
@@ -54,9 +40,7 @@
     },
     "open-api-docs": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "build-api-docs"
-      ],
+      "dependsOn": ["build-api-docs"],
       "options": {
         "command": "open ../../docs/api/cli-kit/index.html",
         "cwd": "packages/cli-kit"
@@ -92,59 +76,40 @@
     },
     "graphql-codegen": {
       "executor": "nx:noop",
-      "dependsOn": [
-        "graphql-codegen:formatting"
-      ]
+      "dependsOn": ["graphql-codegen:formatting"]
     },
     "graphql-codegen:formatting": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "graphql-codegen:postfix"
-      ],
+      "dependsOn": ["graphql-codegen:postfix"],
       "inputs": [
         {
           "dependentTasksOutputFiles": "**/*.ts"
         }
       ],
-      "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
-      ],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix"
-        ],
+        "commands": ["pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix"],
         "cwd": "packages/cli-kit"
       }
     },
     "graphql-codegen:generate:admin": {
       "executor": "nx:run-commands",
-      "inputs": [
-        "{workspaceRoot}/graphql.config.ts",
-        "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"
-      ],
-      "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
-      ],
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=admin"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=admin"],
         "cwd": "{workspaceRoot}"
       }
     },
     "graphql-codegen:postfix": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "graphql-codegen:generate:admin"
-      ],
+      "dependsOn": ["graphql-codegen:generate:admin"],
       "inputs": [
         {
           "dependentTasksOutputFiles": "**/*.ts"
         }
       ],
-      "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
-      ],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"],
       "options": {
         "commands": [
           "find ./packages/cli-kit/src/cli/api/graphql/admin/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
