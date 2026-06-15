@@ -3,6 +3,7 @@ import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
+import {createHostValidationHandler} from './host-validation.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {renderThrownError} from '../errors.js'
@@ -18,7 +19,11 @@ import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  const {promise: backgroundJobPromise, reject: rejectBackgroundJob} = promiseWithResolvers<never>()
+  const {
+    promise: backgroundJobPromise,
+    resolve: resolveBackgroundJob,
+    reject: rejectBackgroundJob,
+  } = promiseWithResolvers<void>()
 
   const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx)
   const envSetup = ensureThemeEnvironmentSetup(theme, ctx, rejectBackgroundJob)
@@ -33,6 +38,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
     backgroundJobPromise,
+    resolveBackgroundJob,
   }
 }
 
@@ -125,7 +131,14 @@ interface DevelopmentServerInstance {
 
 function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
   const app = createApp()
-  const allowedOrigins = [`http://${ctx.options.host}:${ctx.options.port}`, `https://${ctx.session.storeFqdn}`]
+  const allowedOrigins = [
+    `http://${ctx.options.host}:${ctx.options.port}`,
+    `https://${ctx.session.storeFqdn}`,
+    // Required for HMR with the theme editor
+    'https://online-store-web.shopifyapps.com',
+  ]
+
+  app.use(createHostValidationHandler(ctx.options.host, ctx.options.port))
 
   app.use(
     defineLazyEventHandler(async () => {

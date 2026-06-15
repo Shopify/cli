@@ -4,7 +4,6 @@ updates:
     versioning-strategy: increase
     directories:
       - "/"
-      - "packages/*"
     schedule:
       interval: "weekly"
     labels:

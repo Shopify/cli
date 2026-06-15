@@ -8,7 +8,7 @@ import {lookup, mimes} from 'mrmime'
  * @returns The mime type.
  */
 export function lookupMimeType(fileName: string): string {
-  return lookup(fileName) || 'application/octet-stream'
+  return lookup(fileName) ?? 'application/octet-stream'
 }
 
 /**

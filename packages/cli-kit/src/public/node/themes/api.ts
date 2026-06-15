@@ -25,11 +25,13 @@ import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc} from '../api/admin.js'
+import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
 import {recordTiming, recordEvent, recordError} from '../analytics.js'
+import {ClientError, type Variables} from 'graphql-request'
+import type {InlineToken, TokenItem} from '../ui.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
@@ -40,6 +42,7 @@ const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   maxRetryTimeMs: 90 * 1000,
   recordCommandRetries: true,
 }
+const DEFAULT_THEME_ACCESS_REQUIREMENT = 'the required theme access scope'
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const gid = composeThemeGid(id)
@@ -65,6 +68,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
 
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    abortIfMissingThemeAccessScope(error)
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -84,13 +88,14 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc({
+    const response = await requestThemeAdminDoc({
       query: GetThemes,
       session,
       variables: {after},
       responseOptions: {handleErrors: false},
       preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
+
     if (!response.themes) {
       unexpectedGraphQLError('Failed to fetch themes')
     }
@@ -117,7 +122,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 export async function findDevelopmentThemeByName(name: string, session: AdminSession): Promise<Theme | undefined> {
   recordEvent('theme-api:find-development-theme-by-name')
 
-  const {themes} = await adminRequestDoc({
+  const {themes} = await requestThemeAdminDoc({
     query: FindDevelopmentThemeByName,
     session,
     variables: {name},
@@ -134,7 +139,6 @@ export async function findDevelopmentThemeByName(name: string, session: AdminSes
   }
 
   if (themes.nodes.length === 1) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const {id, processing, role, name} = themes.nodes[0]!
 
     return buildTheme({
@@ -189,7 +193,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc({
+    const response = await requestThemeAdminDoc({
       query: GetThemeFileBodies,
       session,
       variables: {id: themeGid(id), filenames, after},
@@ -375,7 +379,7 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc({
+    const response = await requestThemeAdminDoc({
       query: GetThemeFileChecksums,
       session,
       variables: {id: themeGid(id), after},
@@ -605,6 +609,82 @@ export async function passwordProtected(session: AdminSession): Promise<boolean>
 
 function unexpectedGraphQLError(message: string): never {
   throw recordError(new AbortError(message))
+}
+
+async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
+  options: AdminRequestOptions<TResult, TVariables>,
+): Promise<TResult> {
+  try {
+    const response = await adminRequestDoc(options)
+    return response
+  } catch (error) {
+    abortIfMissingThemeAccessScope(error)
+    throw error
+  }
+}
+
+function abortIfMissingThemeAccessScope(error: unknown): void {
+  if (!(error instanceof ClientError)) return
+
+  const requiredAccess = getThemeAccessRequirementForAccessDeniedError(error)
+  if (!requiredAccess) return
+
+  const nextSteps: TokenItem<InlineToken>[] = [
+    [
+      'If you authenticated with an Admin API access token, update the app or integration that issued the token to include the required theme access scopes, then reauthorize it or generate a new token.',
+    ],
+    [
+      'For',
+      {command: 'theme pull'},
+      {char: ','},
+      {command: 'theme list'},
+      {char: ','},
+      'and',
+      {command: 'theme info'},
+      {char: ','},
+      'add the',
+      {command: 'read_themes'},
+      'scope',
+      {char: '.'},
+    ],
+    [
+      'For',
+      {command: 'theme push'},
+      'and',
+      {command: 'theme dev'},
+      {char: ','},
+      'add both the',
+      {command: 'read_themes'},
+      'and',
+      {command: 'write_themes'},
+      'scopes',
+      {char: '.'},
+    ],
+    [
+      'If you authenticated with your Shopify account, make sure your staff or collaborator account can access Online Store themes, then run',
+      {command: 'shopify auth logout'},
+      'and try again',
+      {char: '.'},
+    ],
+    ['See', {link: {label: 'Shopify access scopes', url: 'https://shopify.dev/api/usage/access-scopes'}}, {char: '.'}],
+  ]
+
+  throw recordError(
+    new AbortError(`The authenticated account or access token is missing ${requiredAccess}.`, undefined, nextSteps),
+  )
+}
+
+function getThemeAccessRequirementForAccessDeniedError(error: ClientError): string | undefined {
+  const graphQLErrors = error.response.errors
+  if (!Array.isArray(graphQLErrors)) return undefined
+
+  const accessDeniedError = graphQLErrors.find((graphQLError) => graphQLError.extensions?.code === 'ACCESS_DENIED')
+  if (!accessDeniedError) return undefined
+
+  const requiredAccess = accessDeniedError.extensions?.requiredAccess
+  if (typeof requiredAccess !== 'string') return DEFAULT_THEME_ACCESS_REQUIREMENT
+
+  return requiredAccess.trim().replace(/\.$/, '') || DEFAULT_THEME_ACCESS_REQUIREMENT
 }
 
 function themeGid(id: number): string {

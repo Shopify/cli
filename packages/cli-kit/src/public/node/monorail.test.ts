@@ -1,5 +1,5 @@
 import * as http from './http.js'
-import {publishMonorailEvent} from './monorail.js'
+import {MONORAIL_COMMAND_TOPIC, publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -51,5 +51,62 @@ describe('monorail', () => {
     expect(res.type).toEqual('ok')
     expect(outputMock.debug()).toContain('"api_key": "****"')
     expect(outputMock.debug()).not.toContain('some-api-key')
+  })
+
+  test('builds a request for the real command topic including validated store attribution', async () => {
+    const res = await publishMonorailEvent(
+      MONORAIL_COMMAND_TOPIC,
+      {
+        command: 'shopify store auth',
+        time_start: 1643709600000,
+        time_end: 1643709601000,
+        total_time: 1000,
+        success: true,
+        cli_version: '3.94.0',
+        uname: 'Darwin test',
+        ruby_version: '3.3.0',
+        node_version: '22.0.0',
+        is_employee: false,
+        user_id: '42',
+        store_fqdn_hash: 'hashed-store',
+        store_fqdn_validated: true,
+        store_domain: 'shop.myshopify.com',
+      },
+      {
+        args: '--store shop.myshopify.com',
+        store_fqdn: 'shop.myshopify.com',
+      },
+    )
+
+    expect(res.type).toEqual('ok')
+    expect(http.fetch).toHaveBeenCalledWith(
+      expectedURL,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          schema_id: MONORAIL_COMMAND_TOPIC,
+          payload: {
+            command: 'shopify store auth',
+            time_start: 1643709600000,
+            time_end: 1643709601000,
+            total_time: 1000,
+            success: true,
+            cli_version: '3.94.0',
+            uname: 'Darwin test',
+            ruby_version: '3.3.0',
+            node_version: '22.0.0',
+            is_employee: false,
+            user_id: '42',
+            store_fqdn_hash: 'hashed-store',
+            store_fqdn_validated: true,
+            store_domain: 'shop.myshopify.com',
+            args: '--store shop.myshopify.com',
+            store_fqdn: 'shop.myshopify.com',
+          },
+        }),
+        headers: expectedHeaders,
+      },
+      'non-blocking',
+    )
   })
 })

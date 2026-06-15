@@ -1,55 +1,43 @@
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {DevSessionWatchConfig, ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
-import {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
-import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
-import {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
-import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
-import {PrivacyComplianceWebhooksSpecIdentifier} from './specifications/app_config_privacy_compliance_webhooks.js'
-import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
-import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
-import {EventsSpecIdentifier} from './specifications/app_config_events.js'
-import {
-  ExtensionBuildOptions,
-  buildFunctionExtension,
-  buildThemeExtension,
-  buildUIExtension,
-  bundleFunctionExtension,
-} from '../../services/build/extension.js'
-import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
+import {ExtensionBuildOptions, bundleFunctionExtension} from '../../services/build/extension.js'
+import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
+import {executeStep, BuildContext} from '../../services/build/client-steps.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, normalizePath, resolvePath, relativePath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, moveFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
+import {
+  extractJSImports,
+  extractImportPathsRecursively,
+  clearImportPathsCache,
+  getImportScanningCacheStats,
+} from '@shopify/cli-kit/node/import-extractor'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {uniq} from '@shopify/cli-kit/common/array'
 
-// DEPRECATED. We should get the experience from the specification instead of hardcoding it based on the identifier.
-// This is a temporary solution to avoid breaking changes while we update the API and the specifications query.
-export const CONFIG_EXTENSION_IDS: string[] = [
-  AppAccessSpecIdentifier,
-  AppHomeSpecIdentifier,
-  AppProxySpecIdentifier,
-  BrandingSpecIdentifier,
-  PosSpecIdentifier,
-  PrivacyComplianceWebhooksSpecIdentifier,
-  WebhookSubscriptionSpecIdentifier,
-  WebhooksSpecIdentifier,
-  EventsSpecIdentifier,
-
-  // Hardcoded identifiers that don't exist locally.
-  'data',
-  'admin',
+/**
+ * Default ignore patterns for files watched in an extension directory. Used when
+ * the extension does not provide a custom devSessionWatchConfig.
+ */
+const DEFAULT_WATCH_IGNORE = [
+  '**/node_modules/**',
+  '**/.git/**',
+  '**/*.test.*',
+  '**/dist/**',
+  '**/*.swp',
+  '**/generated/**',
+  '**/.gitignore',
 ]
 
 /**
@@ -138,6 +126,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.identifier === 'editor_extension_collection'
   }
 
+  get hasDeploySteps(): boolean {
+    return (
+      this.specification.clientSteps?.some((group) => group.lifecycle === 'deploy' && group.steps.length > 0) ?? false
+    )
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
@@ -205,7 +199,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+    const deployConfig = await this.specification.deployConfig?.(
+      this.configuration,
+      this.directory,
+      apiKey,
+      undefined,
+      {
+        appConfiguration,
+      },
+    )
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined
@@ -223,9 +225,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.preDeployValidation(this)
   }
 
-  buildValidation(): Promise<void> {
+  buildValidation({outputPath}: {outputPath: string}): Promise<void> {
     if (!this.specification.buildValidation) return Promise.resolve()
-    return this.specification.buildValidation(this)
+    return this.specification.buildValidation(this, outputPath)
   }
 
   async keepBuiltSourcemapsLocally(inputPath: string): Promise<void> {
@@ -303,20 +305,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return [this.entrySourceFilePath]
   }
 
-  // Custom paths to be watched in a dev session
-  // Return undefiend if there aren't custom configured paths (everything is watched)
-  // If there are, include some default paths.
-  get devSessionCustomWatchPaths() {
-    const config = this.configuration as unknown as FunctionConfigType
-    if (!config.build || !config.build.watch) return undefined
+  // Custom watch configuration for dev sessions
+  // Return undefined to watch everything (default for 'extension' experience)
+  // Return a config with empty paths to watch nothing (default for 'configuration' experience)
+  get devSessionWatchConfig(): DevSessionWatchConfig | undefined {
+    if (this.specification.devSessionWatchConfig) {
+      return this.specification.devSessionWatchConfig(this)
+    }
 
-    const watchPaths = [config.build.watch].flat().map((path) => joinPath(this.directory, path))
-
-    watchPaths.push(joinPath(this.directory, 'locales', '**.json'))
-    watchPaths.push(joinPath(this.directory, '**', '!(.)*.graphql'))
-    watchPaths.push(joinPath(this.directory, '**.toml'))
-
-    return watchPaths
+    return this.isAppConfigExtension ? {paths: []} : undefined
   }
 
   async watchConfigurationPaths() {
@@ -341,32 +338,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const mode = this.specification.buildConfig.mode
+    const {clientSteps = []} = this.specification
 
-    switch (mode) {
-      case 'theme':
-        await buildThemeExtension(this, options)
-        return bundleThemeExtension(this, options)
-      case 'function':
-        return buildFunctionExtension(this, options)
-      case 'ui':
-        await buildUIExtension(this, options)
-        // Copy static assets after build completes
-        return this.copyStaticAssets()
-      case 'tax_calculation':
-        await touchFile(this.outputPath)
-        await writeFile(this.outputPath, '(()=>{})();')
-        break
-      case 'copy_files':
-        return copyFilesForExtension(
-          this,
-          options,
-          this.specification.buildConfig.filePatterns,
-          this.specification.buildConfig.ignoredFilePatterns,
-        )
-      case 'hosted_app_home':
-      case 'none':
-        break
+    const context: BuildContext = {
+      extension: this,
+      options,
+      stepResults: new Map(),
+    }
+
+    const steps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
+
+    for (const step of steps) {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await executeStep(step, context)
+      context.stepResults.set(step.id, result)
     }
   }
 
@@ -383,16 +368,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.specification.buildConfig.mode
-
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
-    } else if (buildMode !== 'none') {
+    } else if (this.hasDeploySteps) {
       outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
       if (await fileExists(defaultOutputPath)) {
         await copyFile(defaultOutputPath, this.outputPath)
 
-        if (buildMode === 'function') {
+        if (this.isFunctionExtension) {
           await bundleFunctionExtension(this.outputPath, this.outputPath)
         }
       }
@@ -463,42 +446,43 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   /**
+   * Returns the raw watch patterns (paths + ignore) for this extension, without
+   * expanding globs against the file system. The file watcher uses this to decide
+   * whether a path created at runtime should be tracked by this extension.
+   */
+  watchPatterns(): {paths: string[]; ignore: string[]} {
+    const watchConfig = this.devSessionWatchConfig
+    return {
+      paths: watchConfig?.paths ?? ['**/*'],
+      ignore: watchConfig?.ignore ?? DEFAULT_WATCH_IGNORE,
+    }
+  }
+
+  /**
    * Returns all files that need to be watched for this extension
    * This includes files in the extension directory (respecting watch paths and gitignore)
    * as well as any imported files from outside the extension directory
    */
   watchedFiles(): string[] {
     const watchedFiles: string[] = []
-
-    // Add extension directory files based on devSessionCustomWatchPaths or all files
-    const patterns = this.devSessionCustomWatchPaths ?? ['**/*']
-    const files = patterns.flatMap((pattern) =>
+    const {paths, ignore} = this.watchPatterns()
+    const files = paths.flatMap((pattern) =>
       globSync(pattern, {
         cwd: this.directory,
         absolute: true,
         followSymbolicLinks: false,
-        ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
+        ignore,
       }),
     )
     watchedFiles.push(...files.flat())
 
-    // Add imported files from outside the extension directory unless custom watch paths are defined
-    if (!this.devSessionCustomWatchPaths) {
+    // Add imported files from outside the extension directory unless custom watch config is defined
+    if (!this.devSessionWatchConfig) {
       const importedFiles = this.scanImports()
       watchedFiles.push(...importedFiles)
     }
 
-    return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
-  }
-
-  /**
-   * Copy static assets from the extension directory to the output path
-   * Used by both dev and deploy builds
-   */
-  async copyStaticAssets(outputPath?: string) {
-    if (this.specification.copyStaticAssets) {
-      return this.specification.copyStaticAssets(this.configuration, this.directory, outputPath ?? this.outputPath)
-    }
+    return uniq(watchedFiles.map((file) => normalizePath(file)))
   }
 
   /**
@@ -508,6 +492,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async rescanImports(): Promise<boolean> {
     const oldImportPaths = this.cachedImportPaths
     this.cachedImportPaths = undefined
+    clearImportPathsCache()
     this.scanImports()
     return oldImportPaths !== this.cachedImportPaths
   }
@@ -522,13 +507,26 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return this.cachedImportPaths
     }
 
+    if (isTruthy(process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING)) {
+      this.cachedImportPaths = []
+      return this.cachedImportPaths
+    }
+
     try {
-      const imports = this.devSessionDefaultWatchPaths().flatMap((entryFile) => {
+      const startTime = performance.now()
+      const entryFiles = this.devSessionDefaultWatchPaths()
+
+      const imports = entryFiles.flatMap((entryFile) => {
         return extractImportPathsRecursively(entryFile).map((importPath) => normalizePath(resolvePath(importPath)))
       })
-      // Cache and return unique paths
+
       this.cachedImportPaths = uniq(imports) ?? []
-      outputDebug(`Found ${this.cachedImportPaths.length} external imports (recursively) for extension ${this.handle}`)
+      const elapsed = Math.round(performance.now() - startTime)
+      const cacheStats = getImportScanningCacheStats()
+      const cacheInfo = cacheStats ? ` (cache: ${cacheStats.directImports} parsed, ${cacheStats.fileExists} stats)` : ''
+      outputDebug(
+        `Import scan for "${this.handle}": ${entryFiles.length} entries, ${this.cachedImportPaths.length} files, ${elapsed}ms${cacheInfo}`,
+      )
       return this.cachedImportPaths
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {

@@ -1,5 +1,6 @@
 import nxPlugin from '@nx/eslint-plugin'
 import cliPlugin from '@shopify/eslint-plugin-cli'
+import jsdocPlugin from 'eslint-plugin-jsdoc'
 
 // Spread the CLI plugin's base config which includes all necessary plugins
 const config = [
@@ -19,6 +20,20 @@ const config = [
     },
     rules: {
       '@nx/enforce-module-boundaries': 'error',
+    },
+  },
+
+  // The theme package has tests that partially mock cli-kit with dynamic imports.
+  // Those mocks should not make every static cli-kit import in the package fail.
+  {
+    files: ['packages/theme/src/**/*.ts'],
+    rules: {
+      '@nx/enforce-module-boundaries': [
+        'error',
+        {
+          checkDynamicDependenciesExceptions: ['@shopify/cli-kit/**'],
+        },
+      ],
     },
   },
 
@@ -44,6 +59,9 @@ const config = [
       '**/public/node/result.ts',
       '**/public/node/themes/**/*',
     ],
+    plugins: {
+      jsdoc: jsdocPlugin,
+    },
     settings: {
       jsdoc: {
         publicFunctionsOnly: true,
@@ -190,6 +208,17 @@ const config = [
     files: ['packages/cli/bin/*.js'],
     rules: {
       '@shopify/strict-component-boundaries': 'off',
+    },
+  },
+
+  // The cli package uses a lazy command-loading pattern (command-registry.ts) that
+  // dynamically imports libraries at runtime. NX detects these dynamic imports and
+  // flags every static import of the same library elsewhere in the package. Since
+  // the command files themselves are lazy-loaded, their static imports are fine.
+  {
+    files: ['packages/cli/src/**/*.ts'],
+    rules: {
+      '@nx/enforce-module-boundaries': 'off',
     },
   },
 ]

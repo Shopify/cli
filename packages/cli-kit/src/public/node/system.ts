@@ -6,12 +6,21 @@ import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from './output.js'
-import {execa, execaCommand, ExecaChildProcess} from 'execa'
+import {isCloudEnvironment} from './context/local.js'
+import {execa, ExecaChildProcess} from 'execa'
+import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
 import {delimiter} from 'pathe'
 
 import {fstatSync} from 'fs'
 import type {Writable, Readable} from 'stream'
+
+/**
+ * The maximum size of data that can be read from stdin in bytes.
+ * This is to prevent memory exhaustion when reading from stdin.
+ * 10MB.
+ */
+const MAX_STDIN_SIZE = 10 * 1024 * 1024
 
 export interface ExecOptions {
   cwd?: string
@@ -43,6 +52,8 @@ interface BuildExecOptions {
  * @returns A promise that resolves true if the URL was opened successfully, false otherwise.
  */
 export async function openURL(url: string): Promise<boolean> {
+  if (isCloudEnvironment()) return false
+
   const externalOpen = await import('open')
   try {
     await externalOpen.default(url)
@@ -171,26 +182,11 @@ function parseCommand(command: string): string[] {
  * ```
  */
 export async function captureCommandWithExitCode(command: string, options?: ExecOptions): Promise<CaptureOutputResult> {
-  const env = options?.env ?? process.env
-  if (shouldDisplayColors()) {
-    env.FORCE_COLOR = '1'
-  }
-  const executionCwd = options?.cwd ?? cwd()
   const [cmd, ...args] = parseCommand(command)
   if (!cmd) {
     return {stdout: '', stderr: 'Empty command', exitCode: 1}
   }
-  checkCommandSafety(cmd, {cwd: executionCwd})
-  const result = await execa(cmd, args, {
-    env,
-    cwd: executionCwd,
-    reject: false,
-  })
-  return {
-    stdout: result.stdout,
-    stderr: result.stderr,
-    exitCode: result.exitCode ?? 0,
-  }
+  return captureOutputWithExitCode(cmd, args, options)
 }
 
 /**
@@ -200,29 +196,11 @@ export async function captureCommandWithExitCode(command: string, options?: Exec
  * @param options - Optional settings for how to run the command.
  */
 export async function execCommand(command: string, options?: ExecOptions): Promise<void> {
-  const env = options?.env ?? process.env
-  if (shouldDisplayColors()) {
-    env.FORCE_COLOR = '1'
+  const [cmd, ...args] = parseCommand(command)
+  if (!cmd) {
+    throw new AbortError('Empty command')
   }
-  const executionCwd = options?.cwd ?? cwd()
-  try {
-    await execaCommand(command, {
-      env,
-      cwd: executionCwd,
-      stdin: options?.stdin,
-      stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
-      stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
-    })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (processError: any) {
-    if (options?.externalErrorHandler) {
-      await options.externalErrorHandler(processError)
-    } else {
-      const abortError = new ExternalError(processError.message, command, [])
-      abortError.stack = processError.stack
-      throw abortError
-    }
-  }
+  await exec(cmd, args, options)
 }
 
 /**
@@ -347,6 +325,15 @@ export async function sleep(seconds: number): Promise<void> {
 }
 
 /**
+ * Check if the terminal supports OSC 8 hyperlinks.
+ *
+ * @returns True if the terminal supports hyperlinks.
+ */
+export function terminalSupportsHyperlinks(): boolean {
+  return supportsHyperlinks.stdout
+}
+
+/**
  * Check if the standard input and output streams support prompting.
  *
  * @returns True if the standard input and output streams support prompting.
@@ -410,9 +397,15 @@ export async function readStdinString(): Promise<string | undefined> {
   }
 
   let data = ''
+  let totalSize = 0
   process.stdin.setEncoding('utf8')
   for await (const chunk of process.stdin) {
-    data += String(chunk)
+    const chunkString = String(chunk)
+    totalSize += Buffer.byteLength(chunkString, 'utf8')
+    if (totalSize > MAX_STDIN_SIZE) {
+      throw new AbortError('Stdin input exceeded the maximum allowed size.')
+    }
+    data += chunkString
   }
   return data.trim()
 }

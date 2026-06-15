@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-app",
-  "version": "3.92.0",
+  "version": "4.1.0",
   "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
@@ -45,7 +45,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "NODE_ENV=production node ../../bin/update-bugsnag create-app && cp ../../README.md README.md",
+    "prepack": "NODE_ENV=production node ../../bin/update-bugsnag create-app && pnpm oclif manifest && cp ../../README.md README.md",
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
@@ -55,16 +55,16 @@
     ]
   },
   "dependencies": {
-    "esbuild": "0.27.3"
+    "esbuild": "0.28.1"
   },
   "devDependencies": {
-    "@shopify/cli-kit": "3.92.0",
-    "@shopify/app": "3.92.0",
+    "@shopify/cli-kit": "4.1.0",
+    "@shopify/app": "4.1.0",
     "esbuild-plugin-copy": "^2.1.1",
-    "@vitest/coverage-istanbul": "^3.1.4"
+    "@vitest/coverage-istanbul": "^3.2.6"
   },
   "engines": {
-    "node": ">=20.10.0"
+    "node": ">=22.12.0"
   },
   "os": [
     "darwin",

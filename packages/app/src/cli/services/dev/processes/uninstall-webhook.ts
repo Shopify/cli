@@ -44,8 +44,8 @@ export function setupSendUninstallWebhookProcess({
 }): SendWebhookProcess | undefined {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
   const webhooksPath =
-    webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
-  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
+    webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) ?? '/api/webhooks'
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig ?? backendConfig)
   if (!sendUninstallWebhook) {
     return
   }

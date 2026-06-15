@@ -1,5 +1,5 @@
-import {Stdout} from '../ui.js'
-import {ReactElement} from 'react'
+import {Stdout, InkLifecycleRoot} from '../ui.js'
+import React, {ReactElement} from 'react'
 import {render as inkRender} from 'ink'
 
 import {EventEmitter} from 'events'
@@ -66,7 +66,7 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
   const stderr = new Stderr()
   const stdin = new Stdin()
 
-  const instance = inkRender(tree, {
+  const instance = inkRender(React.createElement(InkLifecycleRoot, null, tree), {
     stdout: options.stdout ?? (stdout as any),
 
     stderr: options.stderr ?? (stderr as any),
@@ -78,10 +78,10 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
   })
 
   return {
-    rerender: instance.rerender,
+    rerender: (tree: ReactElement) => instance.rerender(React.createElement(InkLifecycleRoot, null, tree)),
     unmount: instance.unmount,
     cleanup: instance.cleanup,
-    waitUntilExit: () => trackPromise(instance.waitUntilExit()),
+    waitUntilExit: () => trackPromise(instance.waitUntilExit().then(() => {})),
     stdout,
     stderr,
     stdin,
@@ -146,8 +146,10 @@ export function waitForContent(
  */
 export async function sendInputAndWaitForChange(renderInstance: ReturnType<typeof render>, ...inputs: string[]) {
   await waitForChange(() => inputs.forEach((input) => renderInstance.stdin.write(input)), renderInstance.lastFrame)
-  // wait for another tick so we give time to react to update caches
-  await new Promise((resolve) => setTimeout(resolve, 0))
+  // Yield via setImmediate → setTimeout(0) so React 19's scheduler can flush
+  // effects (e.g. re-register useInput handlers with up-to-date closures)
+  // before subsequent input is sent.
+  await new Promise((resolve) => setImmediate(() => setTimeout(resolve, 0)))
 }
 
 /** Send input and wait a number of milliseconds.

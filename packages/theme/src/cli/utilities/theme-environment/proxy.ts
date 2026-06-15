@@ -21,6 +21,7 @@ const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
 const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
+const STOREFRONT_API_PATTERN = /^\/api\/(unstable|\d{4}-\d{2})\/graphql\.json/
 
 const IGNORED_ENDPOINTS = [
   '/.well-known',
@@ -120,6 +121,16 @@ function getStoreFqdnForRegEx(ctx: DevServerContext) {
 }
 
 /**
+ * Whether the request should be forwarded to SFR without modification.
+ */
+function isPassthroughRequest(event: H3Event) {
+  // Forward Storefront API requests as-is. The public Storefront API expects
+  // X-Shopify-Storefront-Access-Token from the caller and rejects our SFR
+  // devtools bearer, so we must not inject theme auth, cookies, or dev params.
+  return STOREFRONT_API_PATTERN.test(event.path)
+}
+
+/**
  * Replaces every VanityCDN-like (...myshopify.com/cdn/...) URL to pass through the local server.
  * It also replaces MainCDN-like (cdn.shopify.com/...) URLs to files that are known local assets.
  * Other MainCDN matches are left unmodified.
@@ -188,12 +199,12 @@ export async function patchRenderingResponse(
   rawResponse: Response,
   patchCallback?: (html: string) => string | undefined,
 ): Promise<Response> {
-  // 3xx responses should be returned
-  if (rawResponse.status >= 300 && rawResponse.status < 400) {
-    return rawResponse
-  }
-
   const response = patchProxiedResponseHeaders(ctx, rawResponse)
+
+  // 3xx responses should be returned
+  if (response.status >= 300 && response.status < 400) {
+    return response
+  }
 
   // Only set HTML content-type for actual HTML responses, preserve JSON content-type:
   const originalContentType = rawResponse.headers.get('content-type')
@@ -312,32 +323,30 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     )
   }
 
-  // When a .css.liquid or .js.liquid file is requested but it doesn't exist in SFR,
-  // it will be rendered with a query string like `assets/file.css?1234`.
-  // For some reason, after refreshing, this rendered URL keeps the wrong `?1234`
-  // query string for a while. We replace it with a proper timestamp here to fix it.
-  if (/\/assets\/[^/]+\.(css|js)$/.test(url.pathname) && /\?\d+$/.test(url.search)) {
-    url.search = `?v=${Date.now()}`
-  }
-
-  url.searchParams.set('_fd', '0')
-  url.searchParams.set('pb', '0')
-  const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
+  let headers = getProxyStorefrontHeaders(event)
 
-  const baseHeaders: Record<string, string> = {
-    ...headers,
-    ...defaultHeaders(),
-    referer: url.origin,
-    Cookie: buildCookies(ctx.session, {headers}),
+  if (!isPassthroughRequest(event)) {
+    // When a .css.liquid or .js.liquid file is requested but it doesn't exist in SFR,
+    // it will be rendered with a query string like `assets/file.css?1234`.
+    // For some reason, after refreshing, this rendered URL keeps the wrong `?1234`
+    // query string for a while. We replace it with a proper timestamp here to fix it.
+    if (/\/assets\/[^/]+\.(css|js)$/.test(url.pathname) && /\?\d+$/.test(url.search)) {
+      url.search = `?v=${Date.now()}`
+    }
+
+    url.searchParams.set('_fd', '0')
+    url.searchParams.set('pb', '0')
+
+    headers = cleanHeader({
+      ...headers,
+      ...defaultHeaders(),
+      referer: url.origin,
+      Cookie: buildCookies(ctx.session, {headers}),
+      // Only include Authorization for theme dev, not theme-extensions
+      ...(ctx.type === 'theme' ? {Authorization: `Bearer ${ctx.session.storefrontToken}`} : {}),
+    })
   }
-
-  // Only include Authorization for theme dev, not theme-extensions
-  if (ctx.type === 'theme') {
-    baseHeaders.Authorization = `Bearer ${ctx.session.storefrontToken}`
-  }
-
-  const finalHeaders = cleanHeader(baseHeaders)
 
   // eslint-disable-next-line no-restricted-globals
   return fetch(url, {
@@ -346,7 +355,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     duplex: body ? 'half' : undefined,
     // Important to return 3xx responses to the client
     redirect: 'manual',
-    headers: finalHeaders,
+    headers,
   } as RequestInit & {duplex?: 'half'})
     .then((response) => patchProxiedResponseHeaders(ctx, response))
     .catch((error: Error) => {

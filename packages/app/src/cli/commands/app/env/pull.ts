@@ -6,7 +6,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class EnvPull extends AppLinkedCommand {
   static summary = 'Pull app and extensions environment variables.'
@@ -36,7 +36,7 @@ export default class EnvPull extends AppLinkedCommand {
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    const envFile = joinPath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configPath))
+    const envFile = resolvePath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configPath))
     outputResult(await pullEnv({app, remoteApp, organization, envFile}))
     return {app}
   }

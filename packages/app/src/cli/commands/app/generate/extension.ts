@@ -6,7 +6,6 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-l
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class AppGenerateExtension extends AppLinkedCommand {
   static summary = 'Generate a new app Extension.'
@@ -21,12 +20,6 @@ export default class AppGenerateExtension extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    type: Flags.string({
-      char: 't',
-      hidden: false,
-      description: `Deprecated. Please use --template`,
-      env: 'SHOPIFY_FLAG_EXTENSION_TYPE',
-    }),
     template: Flags.string({
       char: 't',
       hidden: false,
@@ -54,10 +47,6 @@ export default class AppGenerateExtension extends AppLinkedCommand {
     }),
   }
 
-  public static analyticsNameOverride(): string | undefined {
-    return 'app scaffold extension'
-  }
-
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppGenerateExtension)
 
@@ -67,17 +56,9 @@ export default class AppGenerateExtension extends AppLinkedCommand {
       cmd_scaffold_type_owner: '@shopify/app',
     }))
 
-    if (flags.type) {
-      renderWarning({
-        headline: ['The flag --type has been deprecated in favor of --template.'],
-        body: ['Please use --template instead.'],
-      })
-      process.exit(2)
-    }
-
     await checkFolderIsValidApp(flags.path)
 
-    const {app, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
+    const {app, project, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
       forceRelink: flags.reset,
@@ -92,6 +73,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
       template: flags.template,
       flavor: flags.flavor,
       app,
+      project,
       specifications,
       remoteApp,
       developerPlatformClient,

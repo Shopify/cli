@@ -485,22 +485,49 @@ describe('renderSingleTask', async () => {
     await expect(renderSingleTask({title, task})).rejects.toThrow('Delayed failure')
   })
 
-  test('handles concurrent single tasks', async () => {
+  test('handles sequential single tasks', async () => {
     // Given
     const task1 = () => new Promise((resolve) => setTimeout(() => resolve('result1'), 50))
     const task2 = () => new Promise((resolve) => setTimeout(() => resolve('result2'), 100))
     const task3 = () => new Promise((resolve) => setTimeout(() => resolve('result3'), 25))
 
-    // When
-    const [result1, result2, result3] = await Promise.all([
-      renderSingleTask({title: new TokenizedString('Task 1'), task: task1}),
-      renderSingleTask({title: new TokenizedString('Task 2'), task: task2}),
-      renderSingleTask({title: new TokenizedString('Task 3'), task: task3}),
-    ])
+    // When — ink only supports one render instance per stdout at a time,
+    // so sequential execution is the correct pattern
+    const result1 = await renderSingleTask({title: new TokenizedString('Task 1'), task: task1})
+    const result2 = await renderSingleTask({title: new TokenizedString('Task 2'), task: task2})
+    const result3 = await renderSingleTask({title: new TokenizedString('Task 3'), task: task3})
 
     // Then
     expect(result1).toBe('result1')
     expect(result2).toBe('result2')
     expect(result3).toBe('result3')
+  })
+})
+
+describe('sequential renders', () => {
+  test('consecutive renders do not interleave or leak teardown output', async () => {
+    const output = mockAndCaptureOutput()
+
+    await renderTasks([
+      {
+        title: 'First batch',
+        task: async () => {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+        },
+      },
+    ])
+
+    await renderSingleTask({
+      title: new TokenizedString('Second batch'),
+      task: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        return 'done'
+      },
+    })
+
+    // The key assertion: no interleaving. The second render's output should
+    // not contain fragments from the first render's teardown.
+    const frames = output.output()
+    expect(frames).not.toContain('First batch')
   })
 })

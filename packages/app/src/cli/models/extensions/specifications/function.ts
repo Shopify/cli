@@ -88,9 +88,25 @@ const functionSpec = createExtensionSpecification({
   ],
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],
-  buildConfig: {mode: 'function'},
-  getOutputRelativePath: (extension: ExtensionInstance<FunctionConfigType>) =>
-    extension.configuration.build?.path ?? joinPath('dist', 'index.wasm'),
+  getOutputRelativePath: (_extension: ExtensionInstance<FunctionConfigType>) => joinPath('dist', 'index.wasm'),
+  devSessionWatchConfig: (extension: ExtensionInstance<FunctionConfigType>) => {
+    const config = extension.configuration
+    if (!config.build || !config.build.watch) return undefined
+
+    const paths = [config.build.watch].flat().map((path) => joinPath(extension.directory, path))
+
+    paths.push(joinPath(extension.directory, 'locales', '**.json'))
+    paths.push(joinPath(extension.directory, '**', '!(.)*.graphql'))
+    paths.push(joinPath(extension.directory, '**.toml'))
+
+    return {paths}
+  },
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [{id: 'build-function', name: 'Build Function', type: 'build_function', config: {}}],
+    },
+  ],
   deployConfig: async (config, directory, apiKey) => {
     let inputQuery: string | undefined
     const moduleId = randomUUID()

@@ -1,0 +1,20 @@
+query StoreInfoShop($search: String) {
+  organization {
+    accessibleShops(first: 5, search: $search) {
+      edges {
+        node {
+          shopifyShopId
+          name
+          primaryDomain
+          storeType
+          developerPreviewHandle
+          planName
+          ownerDetails {
+            fullName
+            email
+          }
+        }
+      }
+    }
+  }
+}

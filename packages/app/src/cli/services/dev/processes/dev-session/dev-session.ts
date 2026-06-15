@@ -162,10 +162,14 @@ export class DevSession {
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
       await this.logger.logMultipleErrors(errors)
-      throw new AbortError('Dev preview aborted, build errors detected in extensions')
+      await setImmediate(() => {
+        const affected = errors.map((err) => err.prefix)
+        throw new AbortError(`Dev preview aborted, build errors detected in extensions: ${affected}`)
+      })
+    } else {
+      const result = await this.bundleExtensionsAndUpload(event)
+      await this.handleDevSessionResult(result, event)
     }
-    const result = await this.bundleExtensionsAndUpload(event)
-    await this.handleDevSessionResult(result, event)
   }
 
   /**
@@ -246,7 +250,12 @@ export class DevSession {
     // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
     // async nature of the process.
     if (!this.statusManager.status.isReady && !isUnitTest()) {
-      throw new AbortError('Failed to start dev preview.')
+      // Deferring the throw with setImmediate so the `logUserErrors` call above has a chance to
+      // finish logging `result.error` before the process exits. A synchronous throw here would
+      // abort the function immediately, swallowing the error output.
+      setImmediate(() => {
+        throw new AbortError('Failed to start dev preview.')
+      })
     }
   }
 
@@ -260,7 +269,12 @@ export class DevSession {
     const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
     const useDevConsole = firstPartyDev() && hasPreview
     const newPreviewURL = useDevConsole ? this.options.appLocalProxyURL : this.options.appPreviewURL
-    this.statusManager.updateStatus({previewURL: newPreviewURL})
+    const hasExtensions = event.app.nonConfigExtensions.length > 0
+    this.statusManager.updateStatus({
+      previewURL: newPreviewURL,
+      appEmbedded: event.app.configuration.embedded,
+      hasExtensions,
+    })
   }
 
   /**
@@ -346,17 +360,24 @@ export class DevSession {
       .filter((event) => event.type !== 'deleted')
       .map((event) => event.extension.uid)
 
+    // WORKAROUND. This is a temporary fix because `admin` is not compatible with inheritedUids in Core.
+    // It needs to be included in the manifest always if present in the app.
+    if (appEvent.app.allExtensions.some((ext) => ext.type === 'admin') && !updatedUids.includes('admin')) {
+      updatedUids.push('admin')
+    }
+
     const nonUpdatedUids = appEvent.app.allExtensions
       .filter((ext) => !updatedUids.includes(ext.uid))
       .map((ext) => ext.uid)
 
     const appManifest = await appEvent.app.manifest(undefined)
 
-    // Only use inherited for UPDATE session. Create still needs the manifest in the bundle.
+    // Always write the full manifest to the bundle so it stays current
+    await writeManifestToBundle(appManifest, this.bundlePath)
+
+    // For UPDATE sessions, only send changed modules in the API payload
     if (this.statusManager.status.isReady) {
       appManifest.modules = appManifest.modules.filter((module) => updatedUids.includes(module.uid))
-    } else {
-      await writeManifestToBundle(appManifest, this.bundlePath)
     }
 
     const existingDirs = await readdir(this.bundlePath)

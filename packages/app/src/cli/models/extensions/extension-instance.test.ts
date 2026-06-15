@@ -14,7 +14,7 @@ import {
   testSingleWebhookSubscriptionExtension,
   placeholderAppConfiguration,
 } from '../app/app.test-data.js'
-import {ExtensionBuildOptions, buildUIExtension} from '../../services/build/extension.js'
+import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -32,7 +32,6 @@ vi.mock('../../services/build/extension.js', async () => {
   return {
     ...actual,
     buildUIExtension: vi.fn(),
-    buildThemeExtension: vi.fn(),
     buildFunctionExtension: vi.fn(),
   }
 })
@@ -148,8 +147,16 @@ describe('build', async () => {
       // Given
       const extensionInstance = await testTaxCalculationExtension(tmpDir)
       const options: ExtensionBuildOptions = {
-        stdout: new Writable(),
-        stderr: new Writable(),
+        stdout: new Writable({
+          write(chunk, enc, cb) {
+            cb()
+          },
+        }),
+        stderr: new Writable({
+          write(chunk, enc, cb) {
+            cb()
+          },
+        }),
         app: testApp(),
         environment: 'production',
       }
@@ -162,33 +169,6 @@ describe('build', async () => {
       // Then
       const outputFileContent = await readFile(outputFilePath)
       expect(outputFileContent).toEqual('(()=>{})();')
-    })
-  })
-
-  test('calls copyStaticAssets after buildUIExtension when building UI extensions', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const extensionInstance = await testUIExtension({
-        type: 'ui_extension',
-        directory: tmpDir,
-      })
-
-      const copyStaticAssetsSpy = vi.spyOn(extensionInstance, 'copyStaticAssets').mockResolvedValue()
-      vi.mocked(buildUIExtension).mockResolvedValue()
-
-      const options: ExtensionBuildOptions = {
-        stdout: new Writable({write: vi.fn()}),
-        stderr: new Writable({write: vi.fn()}),
-        app: testApp(),
-        environment: 'production',
-      }
-
-      // When
-      await extensionInstance.build(options)
-
-      // Then
-      expect(buildUIExtension).toHaveBeenCalledWith(extensionInstance, options)
-      expect(copyStaticAssetsSpy).toHaveBeenCalledOnce()
     })
   })
 
@@ -236,6 +216,30 @@ describe('deployConfig', async () => {
     })
 
     expect(got).toMatchObject({theme_extension: {files: {}}})
+  })
+
+  test('passes app configuration context to deployConfig', async () => {
+    const extensionInstance = await testThemeExtensions()
+    const originalDeployConfig = extensionInstance.specification.deployConfig
+    const deployConfig = vi.fn().mockResolvedValue({theme_extension: {files: {}}})
+    extensionInstance.specification.deployConfig = deployConfig
+
+    try {
+      await extensionInstance.deployConfig({
+        apiKey: 'apiKey',
+        appConfiguration: placeholderAppConfiguration,
+      })
+
+      expect(deployConfig).toHaveBeenCalledWith(
+        extensionInstance.configuration,
+        extensionInstance.directory,
+        'apiKey',
+        undefined,
+        {appConfiguration: placeholderAppConfiguration},
+      )
+    } finally {
+      extensionInstance.specification.deployConfig = originalDeployConfig
+    }
   })
 
   test('returns transformed config when defined', async () => {
@@ -544,7 +548,7 @@ describe('draftMessages', async () => {
       expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
     })
 
-    test('uses custom path when build.path is defined', async () => {
+    test('uses default path when build.path is defined (custom path is only applied during build)', async () => {
       // Given
       const config = functionConfiguration()
       config.build = {
@@ -557,9 +561,39 @@ describe('draftMessages', async () => {
         dir: 'test-function',
       })
 
-      // Then
-      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'custom/output.wasm'))
+      // Then - outputPath always defaults to dist/index.wasm; build.path is applied by buildFunctionExtension
+      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
     })
+  })
+})
+
+describe('devSessionWatchConfig', () => {
+  test('returns undefined for extension experience (watch everything)', async () => {
+    const extensionInstance = await testUIExtension({type: 'ui_extension'})
+    expect(extensionInstance.devSessionWatchConfig).toBeUndefined()
+  })
+
+  test('returns empty paths for configuration experience (watch nothing)', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+    expect(extensionInstance.devSessionWatchConfig).toEqual({paths: []})
+  })
+
+  test('delegates to specification devSessionWatchConfig when defined', async () => {
+    const config = functionConfiguration()
+    config.build = {
+      watch: 'src/**/*.rs',
+      wasm_opt: true,
+    }
+    const extensionInstance = await testFunctionExtension({config, dir: '/tmp/my-function'})
+    const watchConfig = extensionInstance.devSessionWatchConfig
+    expect(watchConfig).toBeDefined()
+    expect(watchConfig!.paths).toContain(joinPath('/tmp/my-function', 'src/**/*.rs'))
+  })
+
+  test('returns undefined for function extension without build.watch', async () => {
+    const config = functionConfiguration()
+    const extensionInstance = await testFunctionExtension({config})
+    expect(extensionInstance.devSessionWatchConfig).toBeUndefined()
   })
 })
 
@@ -597,6 +631,58 @@ describe('watchedFiles', async () => {
 
       // Clean up
       vi.mocked(extractImportPathsRecursively).mockReset()
+    })
+  })
+
+  test('respects custom ignore paths from devSessionWatchConfig', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - create an extension with a spec that defines custom ignore paths
+      const config = functionConfiguration()
+      config.build = {
+        watch: '**/*',
+        wasm_opt: true,
+      }
+      const extensionInstance = await testFunctionExtension({
+        config,
+        dir: tmpDir,
+      })
+
+      // Override devSessionWatchConfig to include ignore paths
+      vi.spyOn(extensionInstance, 'devSessionWatchConfig', 'get').mockReturnValue({
+        paths: [joinPath(tmpDir, '**/*')],
+        ignore: ['**/ignored-dir/**'],
+      })
+
+      // Create files - one in a normal dir, one in the ignored dir
+      const srcDir = joinPath(tmpDir, 'src')
+      const ignoredDir = joinPath(tmpDir, 'ignored-dir')
+      await mkdir(srcDir)
+      await mkdir(ignoredDir)
+      await writeFile(joinPath(srcDir, 'index.js'), 'code')
+      await writeFile(joinPath(ignoredDir, 'should-be-ignored.js'), 'ignored')
+
+      // When
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      // Then
+      expect(watchedFiles).toContain(joinPath(srcDir, 'index.js'))
+      expect(watchedFiles).not.toContain(joinPath(ignoredDir, 'should-be-ignored.js'))
+    })
+  })
+
+  test('returns empty watched files for configuration extensions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionInstance = await testAppConfigExtensions(false, tmpDir)
+
+      // Create files that should not be watched
+      await writeFile(joinPath(tmpDir, 'some-file.ts'), 'code')
+
+      // When
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      // Then - configuration extensions default to empty paths, so no files watched
+      expect(watchedFiles).toHaveLength(0)
     })
   })
 
@@ -691,6 +777,34 @@ describe('rescanImports', async () => {
 
       // Clean up
       vi.mocked(extractImportPathsRecursively).mockReset()
+    })
+  })
+})
+
+describe('SHOPIFY_CLI_DISABLE_IMPORT_SCANNING', () => {
+  test('skips import scanning when env var is set', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionInstance = await testUIExtension({
+        directory: tmpDir,
+        entrySourceFilePath: joinPath(tmpDir, 'src', 'index.ts'),
+      })
+
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.ts'), 'import "../shared"')
+
+      vi.mocked(extractImportPathsRecursively).mockReset()
+      vi.mocked(extractImportPathsRecursively).mockReturnValue(['/some/external/file.ts'])
+
+      process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING = '1'
+      try {
+        const watched = extensionInstance.watchedFiles()
+        expect(extractImportPathsRecursively).not.toHaveBeenCalled()
+        expect(watched.some((file) => file.includes('external'))).toBe(false)
+      } finally {
+        delete process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING
+        vi.mocked(extractImportPathsRecursively).mockReset()
+      }
     })
   })
 })

@@ -1,4 +1,4 @@
-import {renderSelectPrompt} from './ui.js'
+import {renderSelectPrompt, renderTextPrompt} from './ui.js'
 import {ensureAuthenticatedUser} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
 import * as sessionStore from '../../private/node/session/store.js'
@@ -37,13 +37,23 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
 
 /**
  * Handles the new login flow.
+ * If no alias is stored (email couldn't be fetched), prompts the user for a friendly alias.
  *
  * @returns The alias of the authenticated user.
  */
 async function handleNewLogin(): Promise<string> {
   const result = await ensureAuthenticatedUser({}, {forceNewSession: true})
   const alias = await sessionStore.getSessionAlias(result.userId)
-  return alias ?? result.userId
+
+  if (!alias) {
+    const userAlias = await renderTextPrompt({
+      message: 'Enter an alias for this account (e.g. your email or a nickname)',
+    })
+    await sessionStore.setSessionAlias(result.userId, userAlias)
+    return userAlias
+  }
+
+  return alias
 }
 
 /**

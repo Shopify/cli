@@ -1,4 +1,4 @@
-import {isValidURL, safeParseURL} from './url.js'
+import {extractHost, extractMyshopifyHandle, isValidURL, safeParseURL} from './url.js'
 import {describe, expect, test} from 'vitest'
 
 describe('isValidURL', () => {
@@ -55,5 +55,36 @@ describe('safeParseURL', () => {
     const result = safeParseURL('')
 
     expect(result).toBeUndefined()
+  })
+})
+
+describe('extractHost', () => {
+  test('returns the hostname for a full URL', () => {
+    expect(extractHost('https://Shop.MyShopify.com/admin')).toBe('shop.myshopify.com')
+  })
+
+  test('strips the scheme and path for a bare host string', () => {
+    expect(extractHost('shop.myshopify.com/admin')).toBe('shop.myshopify.com')
+  })
+
+  test('returns undefined for null/undefined/empty input', () => {
+    expect(extractHost(null)).toBeUndefined()
+    expect(extractHost(undefined)).toBeUndefined()
+    expect(extractHost('')).toBeUndefined()
+  })
+})
+
+describe('extractMyshopifyHandle', () => {
+  test('extracts the subdomain from a myshopify.com URL', () => {
+    expect(extractMyshopifyHandle('https://my-shop.myshopify.com')).toBe('my-shop')
+  })
+
+  test('returns undefined when the host is not a myshopify.com domain', () => {
+    expect(extractMyshopifyHandle('https://example.com')).toBeUndefined()
+  })
+
+  test('returns undefined for null/undefined input', () => {
+    expect(extractMyshopifyHandle(null)).toBeUndefined()
+    expect(extractMyshopifyHandle(undefined)).toBeUndefined()
   })
 })

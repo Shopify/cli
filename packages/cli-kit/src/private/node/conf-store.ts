@@ -32,6 +32,7 @@ export interface ConfSchema {
   devSessionStore?: string
   currentDevSessionId?: string
   cache?: Cache
+  autoUpgradeEnabled?: boolean
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -42,9 +43,7 @@ let _instance: LocalStorage<ConfSchema> | undefined
  * @returns CLIKitStore.
  */
 function cliKitStore() {
-  if (!_instance) {
-    _instance = new LocalStorage<ConfSchema>({projectName: `shopify-cli-kit${isUnitTest() ? '-test' : ''}`})
-  }
+  _instance ??= new LocalStorage<ConfSchema>({projectName: `shopify-cli-kit${isUnitTest() ? '-test' : ''}`})
   return _instance
 }
 
@@ -265,6 +264,25 @@ export async function runWithRateLimit(options: RunWithRateLimitOptions, config 
   config.set('cache', cache)
 
   return true
+}
+
+/**
+ * Get auto-upgrade preference.
+ * Defaults to true if the preference has never been explicitly set.
+ *
+ * @returns Whether auto-upgrade is enabled.
+ */
+export function getAutoUpgradeEnabled(config: LocalStorage<ConfSchema> = cliKitStore()): boolean {
+  return config.get('autoUpgradeEnabled') ?? true
+}
+
+/**
+ * Set auto-upgrade preference.
+ *
+ * @param enabled - Whether auto-upgrade should be enabled.
+ */
+export function setAutoUpgradeEnabled(enabled: boolean, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.set('autoUpgradeEnabled', enabled)
 }
 
 export function getConfigStoreForPartnerStatus() {

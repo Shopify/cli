@@ -35,7 +35,8 @@ export interface ExtensionDevOptions {
   buildDirectory?: string
 
   /**
-   * The extension to be built.
+   * All real extensions in the app, including non-previewable ones (e.g., admin config).
+   * Previewable extensions are filtered internally for the UI payload.
    */
   extensions: ExtensionInstance[]
 
@@ -124,16 +125,21 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   // affecting the original `options` object and we only need to care about `payloadOptions` in this function.
 
   const bundlePath = payloadOptions.appWatcher.buildOutputPath
-  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
-  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
-  let extensions = payloadOptions.extensions
+  const assetResolvers = new Map()
+  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath, assetResolvers)
+  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions, assetResolvers)
+  let extensions = payloadOptions.extensions.filter((ext) => ext.isPreviewable)
 
   const getExtensions = () => {
     return extensions
   }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore, getExtensions})
+  const httpServer = setupHTTPServer({
+    devOptions: payloadOptions,
+    payloadStore,
+    getExtensions,
+  })
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})

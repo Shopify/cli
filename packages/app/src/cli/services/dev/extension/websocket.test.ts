@@ -10,7 +10,10 @@ vi.mock('./websocket/handlers.js')
 vi.mock('ws')
 
 describe('setupWebsocketConnection', () => {
-  const websocketServer = new WebSocketServer()
+  const websocketServer = {
+    close: vi.fn(),
+    clients: new Set(),
+  } as unknown as WebSocketServer
   const handler: any = {}
   const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
   const httpServer: Server = {on: vi.fn()} as any
@@ -19,7 +22,9 @@ describe('setupWebsocketConnection', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
-    vi.mocked(WebSocketServer).mockReturnValue(websocketServer)
+    vi.mocked(WebSocketServer).mockImplementation(function () {
+      return websocketServer
+    } as any)
   })
 
   afterEach(() => {
@@ -63,7 +68,7 @@ describe('setupWebsocketConnection', () => {
   test('pings alive clients periodically to keep the connection alive', () => {
     // Given
     const client = {readyState: 1, ping: vi.fn()}
-    WebSocketServer.prototype.clients = [client] as any
+    websocketServer.clients = new Set([client]) as any
     vi.mocked(getPayloadUpdateHandler).mockReturnValue(handler)
 
     // When
@@ -77,7 +82,7 @@ describe('setupWebsocketConnection', () => {
   test("doesn't ping disconnected clients periodically", () => {
     // Given
     const client = {readyState: 3, ping: vi.fn()}
-    WebSocketServer.prototype.clients = [client] as any
+    websocketServer.clients = new Set([client]) as any
     vi.mocked(getPayloadUpdateHandler).mockReturnValue(handler)
 
     // When

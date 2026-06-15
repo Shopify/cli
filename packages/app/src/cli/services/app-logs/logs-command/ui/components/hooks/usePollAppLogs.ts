@@ -2,6 +2,7 @@ import {useSelfAdjustingInterval} from './useSelfAdjustingInterval.js'
 import {
   ONE_MILLION,
   POLLING_INTERVAL_MS,
+  MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES,
   parseFunctionRunPayload,
   LOG_TYPE_FUNCTION_RUN,
   LOG_TYPE_RESPONSE_FROM_CACHE,
@@ -57,6 +58,7 @@ async function performPoll({
     organizationId,
   })
 
+  let resubscribeResult: 'succeeded' | 'failed' | 'not_attempted' = 'not_attempted'
   const errorResponse = response as ErrorResponse
 
   if (errorResponse.errors) {
@@ -72,6 +74,8 @@ async function performPoll({
         return resubscribeCallback()
       },
     })
+
+    resubscribeResult = result.resubscribeResult
 
     if (result.nextJwtToken) {
       nextJwtToken = result.nextJwtToken
@@ -134,7 +138,7 @@ async function performPoll({
     }
   }
 
-  return {nextJwtToken, retryIntervalMs, cursor: nextCursor ?? cursor}
+  return {nextJwtToken, retryIntervalMs, cursor: nextCursor ?? cursor, resubscribeResult}
 }
 
 export function usePollAppLogs({
@@ -150,6 +154,7 @@ export function usePollAppLogs({
   const nextJwtToken = useRef(initialJwt)
   const retryIntervalMs = useRef(0)
   const cursor = useRef<string | undefined>('')
+  const consecutiveResubscribeFailures = useRef(0)
 
   const performPollCallback = useCallback(async () => {
     const res = await performPoll({
@@ -163,6 +168,16 @@ export function usePollAppLogs({
       developerPlatformClient,
       organizationId,
     })
+
+    if (res.resubscribeResult === 'failed') {
+      consecutiveResubscribeFailures.current += 1
+      if (consecutiveResubscribeFailures.current >= MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES) {
+        setErrors(['App log streaming session has expired. Please restart your dev session.'])
+        return {retryIntervalMs: 0}
+      }
+    } else if (res.resubscribeResult === 'succeeded') {
+      consecutiveResubscribeFailures.current = 0
+    }
 
     // ESLint is concerned about these updates being atomic, but the approach to useSelfAdjustingInterval ensures that is the case.
     // eslint-disable-next-line require-atomic-updates

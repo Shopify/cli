@@ -1,4 +1,5 @@
-import {TomlFile, TomlParseError} from './toml-file.js'
+import {TomlFile, TomlFileError} from './toml-file.js'
+import {shouldReportErrorAsUnexpected} from '../error.js'
 import {writeFile, readFile, inTemporaryDirectory} from '../fs.js'
 import {joinPath} from '../path.js'
 import {describe, expect, test} from 'vitest'
@@ -28,18 +29,30 @@ describe('TomlFile', () => {
       })
     })
 
-    test('throws TomlParseError with file path on invalid TOML', async () => {
+    test('throws TomlFileError with file path on invalid TOML', async () => {
       await inTemporaryDirectory(async (dir) => {
         const path = joinPath(dir, 'bad.toml')
         await writeFile(path, 'name = [invalid')
 
-        await expect(TomlFile.read(path)).rejects.toThrow(TomlParseError)
-        await expect(TomlFile.read(path)).rejects.toThrow(/bad\.toml/)
+        await expect(TomlFile.read(path)).rejects.toThrow(TomlFileError)
+        await expect(TomlFile.read(path)).rejects.toThrow(/row.*col/)
       })
     })
 
-    test('throws if file does not exist', async () => {
-      await expect(TomlFile.read('/nonexistent/path/test.toml')).rejects.toThrow()
+    test('classifies invalid TOML as an expected user error', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'bad.toml')
+        await writeFile(path, 'name = [invalid')
+
+        const error = await TomlFile.read(path).catch((err: unknown) => err)
+
+        expect(error).toBeInstanceOf(TomlFileError)
+        expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+      })
+    })
+
+    test('throws TomlFileError if file does not exist', async () => {
+      await expect(TomlFile.read('/nonexistent/path/test.toml')).rejects.toThrow(TomlFileError)
     })
   })
 
@@ -267,14 +280,14 @@ describe('TomlFile', () => {
       })
     })
 
-    test('throws TomlParseError and does not write to disk when transform produces invalid TOML', async () => {
+    test('throws TomlFileError and does not write to disk when transform produces invalid TOML', async () => {
       await inTemporaryDirectory(async (dir) => {
         const path = joinPath(dir, 'test.toml')
         const originalContent = 'name = "app"\n'
         await writeFile(path, originalContent)
 
         const file = await TomlFile.read(path)
-        await expect(file.transformRaw(() => 'name = [invalid')).rejects.toThrow(TomlParseError)
+        await expect(file.transformRaw(() => 'name = [invalid')).rejects.toThrow(TomlFileError)
 
         const raw = await readFile(path)
         expect(raw).toBe(originalContent)

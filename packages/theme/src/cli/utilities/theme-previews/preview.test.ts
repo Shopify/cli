@@ -68,9 +68,9 @@ describe('createThemePreview', () => {
     vi.mocked(shopifyFetch).mockResolvedValue(jsonResponse({}, {status: 422, statusText: 'Unprocessable Entity'}))
 
     // When/Then
-    await expect(
-      createThemePreview({session, overridesContent: overrides, themeId: expectedThemeId}),
-    ).rejects.toThrow('Theme preview request failed with status 422: Unprocessable Entity')
+    await expect(createThemePreview({session, overridesContent: overrides, themeId: expectedThemeId})).rejects.toThrow(
+      'Theme preview request failed with status 422: Unprocessable Entity',
+    )
   })
 
   test('throws AbortError when the response body contains an error', async () => {
@@ -82,9 +82,9 @@ describe('createThemePreview', () => {
     )
 
     // When/Then
-    await expect(
-      createThemePreview({session, overridesContent: overrides, themeId: expectedThemeId}),
-    ).rejects.toThrow('Theme preview failed: Invalid template')
+    await expect(createThemePreview({session, overridesContent: overrides, themeId: expectedThemeId})).rejects.toThrow(
+      'Theme preview failed: Invalid template',
+    )
   })
 })
 

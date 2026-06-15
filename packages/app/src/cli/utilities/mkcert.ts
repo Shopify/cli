@@ -58,6 +58,7 @@ async function getMkcertPath(
 async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arch: NodeJS.Architecture): Promise<void> {
   let assetName: string
 
+  // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check -- default throws for unsupported platforms
   switch (platform) {
     case 'darwin':
       assetName = arch === 'arm64' ? `mkcert-${MKCERT_VERSION}-darwin-arm64` : `mkcert-${MKCERT_VERSION}-darwin-amd64`

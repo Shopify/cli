@@ -1,9 +1,8 @@
 import {isTruthy} from './context/utilities.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
-import {cacheClear} from '../../private/node/conf-store.js'
 import {environmentVariables} from '../../private/node/constants.js'
-
 import {Flags} from '@oclif/core'
+import type {LazyCommandLoader} from './custom-oclif-loader.js'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
@@ -14,6 +13,8 @@ interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
   development: boolean
+  /** Optional lazy command loader for on-demand command loading */
+  lazyCommandLoader?: LazyCommandLoader
 }
 
 async function exitIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.versions) {
@@ -62,8 +63,11 @@ function setupEnvironmentVariables(
 function forceNoColor(argv: string[] = process.argv, env: NodeJS.ProcessEnv = process.env) {
   if (
     argv.includes('--no-color') ||
+    argv.includes('--json') ||
+    argv.includes('-j') ||
     isTruthy(env.NO_COLOR) ||
     isTruthy(env.SHOPIFY_FLAG_NO_COLOR) ||
+    isTruthy(env[environmentVariables.json]) ||
     env.TERM === 'dumb'
   ) {
     env.FORCE_COLOR = '0'
@@ -77,7 +81,7 @@ function forceNoColor(argv: string[] = process.argv, env: NodeJS.ProcessEnv = pr
  */
 export async function runCLI(
   options: RunCLIOptions & {runInCreateMode?: boolean},
-  launchCLI: (options: {moduleURL: string}) => Promise<void> = defaultLaunchCli,
+  launchCLI: (options: {moduleURL: string; lazyCommandLoader?: LazyCommandLoader}) => Promise<void> = defaultLaunchCli,
   argv: string[] = process.argv,
   env: NodeJS.ProcessEnv = process.env,
   versions: NodeJS.ProcessVersions = process.versions,
@@ -88,7 +92,7 @@ export async function runCLI(
   }
   forceNoColor(argv, env)
   await exitIfOldNodeVersion(versions)
-  return launchCLI({moduleURL: options.moduleURL})
+  return launchCLI({moduleURL: options.moduleURL, lazyCommandLoader: options.lazyCommandLoader})
 }
 
 async function addInitToArgvWhenRunningCreateCLI(
@@ -142,7 +146,7 @@ export const globalFlags = {
 export const jsonFlag = {
   json: Flags.boolean({
     char: 'j',
-    description: 'Output the result as JSON.',
+    description: 'Output the result as JSON. Automatically disables color output.',
     hidden: false,
     default: false,
     env: environmentVariables.json,
@@ -150,8 +154,22 @@ export const jsonFlag = {
 }
 
 /**
+ * Builds a `--port` flag that only accepts a valid port number. The flag parses its
+ * value as an integer and rejects anything that isn't a whole number between 1 and
+ * 65535, so commands fail with a clear message instead of crashing on an out-of-range
+ * port. The accepted range is appended to the description so it shows up in `--help`.
+ * @param options - Optional overrides for the flag's description, environment variable, and visibility.
+ * @returns An oclif integer flag constrained to the valid port range.
+ */
+export const portFlag = (options: {description?: string; env?: string; hidden?: boolean} = {}) => {
+  const description = [options.description, 'Must be between 1 and 65535.'].filter(Boolean).join(' ')
+  return Flags.integer({min: 1, max: 65535, ...options, description})
+}
+
+/**
  * Clear the CLI cache, used to store some API responses and handle notifications status
  */
-export function clearCache(): void {
+export async function clearCache(): Promise<void> {
+  const {cacheClear} = await import('../../private/node/conf-store.js')
   cacheClear()
 }

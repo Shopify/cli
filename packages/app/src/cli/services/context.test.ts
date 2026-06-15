@@ -16,16 +16,15 @@ import {
   OrganizationStore,
 } from '../models/organization.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
-  DEFAULT_CONFIG,
   testDeveloperPlatformClient,
   testAppWithConfig,
   testOrganizationApp,
   testThemeExtensions,
+  testProject,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {AppConfigurationState, getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
+import {getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {
@@ -34,6 +33,7 @@ import {
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -77,21 +77,10 @@ const STORE1: OrganizationStore = {
   provisionable: true,
 }
 
-const state: AppConfigurationState = {
-  basicConfiguration: {
-    ...DEFAULT_CONFIG,
-    client_id: APP2.apiKey,
-  },
-  appDirectory: 'tmp',
-  configurationPath: 'shopify.app.toml',
-  configSource: 'flag',
-  configurationFileName: 'shopify.app.toml',
-  isLinked: true,
-}
-
 const deployOptions = (app: AppLinkedInterface, reset = false, force = false): DeployOptions => {
   return {
     app,
+    project: testProject(),
     remoteApp: APP2,
     organization: ORG1,
     reset,
@@ -129,6 +118,7 @@ vi.mock('./dev/create-extension')
 vi.mock('./dev/select-app')
 vi.mock('./dev/select-store')
 vi.mock('../prompts/dev')
+vi.mock('@shopify/organizations')
 vi.mock('../models/app/identifiers')
 vi.mock('./context/identifiers')
 vi.mock('../models/app/loader.js')
@@ -172,7 +162,7 @@ beforeEach(async () => {
   vi.mocked(link).mockResolvedValue({
     configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     remoteApp: APP2,
-    state,
+    configFileName: 'shopify.app.toml',
   })
 
   // this is needed because using importActual to mock the ui module
@@ -429,6 +419,7 @@ describe('ensureDeployContext', () => {
     // When
     const options = {
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,
@@ -471,6 +462,7 @@ describe('ensureDeployContext', () => {
     // When
     const options = {
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,
@@ -530,6 +522,7 @@ describe('ensureDeployContext', () => {
     // When
     const result = await ensureDeployContext({
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,
@@ -576,6 +569,7 @@ describe('ensureDeployContext', () => {
     // When
     const result = await ensureDeployContext({
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,

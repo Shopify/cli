@@ -1,5 +1,5 @@
-import {writeAppConfigurationFile} from './write-app-configuration-file.js'
-import {DEFAULT_CONFIG, buildVersionedAppSchema} from '../../models/app/app.test-data.js'
+import {stripEmptyObjects, writeAppConfigurationFile} from './write-app-configuration-file.js'
+import {DEFAULT_CONFIG} from '../../models/app/app.test-data.js'
 import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -45,24 +45,31 @@ describe('writeAppConfigurationFile', () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema} = await buildVersionedAppSchema()
 
       // When
-      await writeAppConfigurationFile(FULL_CONFIGURATION, schema, filePath)
+      await writeAppConfigurationFile(FULL_CONFIGURATION, filePath)
 
       // Then
       const content = await readFile(filePath)
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
+application_url = "https://myapp.com/"
 client_id = "api-key"
 name = "my app"
-application_url = "https://myapp.com/"
 embedded = true
 
 [build]
+include_config_on_deploy = true
 automatically_update_urls_on_dev = true
 dev_store_url = "example.myshopify.com"
-include_config_on_deploy = true
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  topics = [ "products/create" ]
+  compliance_topics = [ "customer_deletion_url", "customer_data_request_url" ]
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -74,14 +81,6 @@ redirect_urls = [
   "https://example.com/redirect",
   "https://example.com/redirect2"
 ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
-  uri = "/webhooks"
-  compliance_topics = [ "customer_deletion_url", "customer_data_request_url" ]
 
 [app_proxy]
 url = "https://example.com/auth/prox"
@@ -102,7 +101,6 @@ url = "https://example.com/prefs"
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema} = await buildVersionedAppSchema()
 
       // When
       await writeAppConfigurationFile(
@@ -116,7 +114,6 @@ url = "https://example.com/prefs"
             privacy_compliance: {},
           },
         } as CurrentAppConfiguration,
-        schema,
         filePath,
       )
 
@@ -133,7 +130,6 @@ url = "https://example.com/prefs"
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema} = await buildVersionedAppSchema()
 
       // When
       await writeAppConfigurationFile(
@@ -141,7 +137,6 @@ url = "https://example.com/prefs"
           ...FULL_CONFIGURATION,
           auth: {redirect_urls: []},
         } as CurrentAppConfiguration,
-        schema,
         filePath,
       )
 
@@ -149,5 +144,45 @@ url = "https://example.com/prefs"
       const content = await readFile(filePath)
       expect(content).toContain('redirect_urls')
     })
+  })
+
+  test('does not crash with type-mismatched config data', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const malformedConfig = {
+        ...DEFAULT_CONFIG,
+        auth: {redirect_urls: 'not-an-array'},
+        webhooks: {api_version: '2023-07', subscriptions: 'also-not-an-array'},
+      }
+
+      await writeAppConfigurationFile(malformedConfig as unknown as CurrentAppConfiguration, filePath)
+
+      const content = await readFile(filePath)
+      expect(content).toContain('client_id')
+      expect(content).toContain('api-key')
+    })
+  })
+})
+
+describe('stripEmptyObjects', () => {
+  test('removes empty objects', () => {
+    expect(stripEmptyObjects({name: 'hello', empty: {}})).toEqual({name: 'hello'})
+  })
+
+  test('removes nested empty objects', () => {
+    expect(stripEmptyObjects({outer: {inner: {}}})).toEqual({})
+  })
+
+  test('preserves empty arrays', () => {
+    expect(stripEmptyObjects({items: []})).toEqual({items: []})
+  })
+
+  test('preserves null and undefined', () => {
+    expect(stripEmptyObjects(null)).toBeNull()
+    expect(stripEmptyObjects(undefined)).toBeUndefined()
+  })
+
+  test('recurses into arrays', () => {
+    expect(stripEmptyObjects({items: [{val: 1, empty: {}}, {val: 2}]})).toEqual({items: [{val: 1}, {val: 2}]})
   })
 })

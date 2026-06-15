@@ -46,7 +46,9 @@ export const templates = {
   remix: {
     url: 'https://github.com/Shopify/shopify-app-template-remix',
     label: 'Build a Remix app',
-    visible: true,
+    // The remix template is deprecated: kept accessible via `--template remix` for back-compat,
+    // but hidden from help text and the interactive prompt. Use `reactRouter` instead.
+    visible: false,
     branches: {
       prompt: 'For your Remix template, which language do you want?',
       options: {
@@ -56,7 +58,7 @@ export const templates = {
     },
   } as Template,
   none: {
-    url: 'https://github.com/Shopify/shopify-app-template-none',
+    url: 'https://github.com/Shopify/shopify-app-template-extension-only',
     label: 'Build an extension-only app',
     visible: true,
   } as Template,
@@ -84,18 +86,16 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     template: templates.reactRouter.url,
   } as const
 
-  if (!template) {
-    template = await renderSelectPrompt({
-      choices: templateOptionsInOrder.map((key) => {
-        return {
-          label: templates[key].label || key,
-          value: key,
-        }
-      }),
-      message: 'Get started building your app:',
-      defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
-    })
-  }
+  template ??= await renderSelectPrompt({
+    choices: templateOptionsInOrder.map((key) => {
+      return {
+        label: templates[key].label || key, // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty label should show key
+        value: key,
+      }
+    }),
+    message: 'Get started building your app:',
+    defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
+  })
 
   const answers: InitOutput = {
     ...options,
@@ -129,7 +129,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     selectedUrl = `${selectedUrl}#${branch}`
   }
 
-  answers.template = selectedUrl || answers.template || defaults.template
+  answers.template = selectedUrl || answers.template || defaults.template // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty URL should fall through
 
   answers.globalCLIResult = await installGlobalCLIPrompt()
 

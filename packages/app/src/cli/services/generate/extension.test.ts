@@ -17,6 +17,7 @@ import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
+import {Project} from '../../models/project/project.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
@@ -559,6 +560,7 @@ async function createFromTemplate({
   onGetTemplateRepository,
   developerPlatformClient = testDeveloperPlatformClient(),
 }: CreateFromTemplateOptions): Promise<string> {
+  const project = await Project.load(appDirectory)
   const result = await generateExtensionTemplate({
     extensionTemplate: specification,
     app: (await loadApp({
@@ -566,6 +568,7 @@ async function createFromTemplate({
       specifications,
       userProvidedConfigName: undefined,
     })) as AppLinkedInterface,
+    project,
     extensionChoices: {name, flavor: extensionFlavor},
     developerPlatformClient,
     onGetTemplateRepository,

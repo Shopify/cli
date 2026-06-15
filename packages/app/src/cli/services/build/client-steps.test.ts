@@ -27,8 +27,7 @@ describe('executeStep', () => {
   const step: LifecycleStep = {
     id: 'test-step',
     name: 'Test Step',
-    type: 'include_assets',
-    config: {},
+    type: 'build_theme',
   }
 
   describe('success', () => {
@@ -41,14 +40,6 @@ describe('executeStep', () => {
       expect(result.success).toBe(true)
       if (result.success) expect(result.output).toEqual({filesCopied: 3})
       expect(result.duration).toBeGreaterThanOrEqual(0)
-    })
-
-    test('logs step execution to stdout', async () => {
-      vi.mocked(stepsIndex.executeStepByType).mockResolvedValue({})
-
-      await executeStep(step, mockContext)
-
-      expect(mockContext.options.stdout.write).toHaveBeenCalledWith('Executing step: Test Step\n')
     })
   })
 

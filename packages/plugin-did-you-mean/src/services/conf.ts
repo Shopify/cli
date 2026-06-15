@@ -9,9 +9,7 @@ export function setAutocorrect(value: boolean, conf: LocalStorage<ConfigSchema> 
 }
 
 function getConfig() {
-  if (!configInstance) {
-    configInstance = new LocalStorage<ConfigSchema>({projectName: 'did-you-mean'})
-  }
+  configInstance ??= new LocalStorage<ConfigSchema>({projectName: 'did-you-mean'})
   return configInstance
 }
 

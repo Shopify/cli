@@ -6,7 +6,7 @@ import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
 import {ensureLiveThemeConfirmed} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -82,7 +82,7 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR',
       default: false,
     }),
-    port: Flags.string({
+    port: portFlag({
       description: 'Local port to serve theme preview from.',
       env: 'SHOPIFY_FLAG_PORT',
     }),
@@ -171,6 +171,7 @@ You can run this command only in a directory that matches the [default Shopify t
 
     await dev({
       adminSession,
+      commandConfig: this.config,
       directory: flags.path,
       store: flags.store,
       password: flags.password,

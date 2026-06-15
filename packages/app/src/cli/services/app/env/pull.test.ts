@@ -100,9 +100,7 @@ describe('env pull', () => {
   })
 })
 
-function mockApp(currentVersion = '2.2.2'): AppInterface {
-  const nodeDependencies: {[key: string]: string} = {}
-  nodeDependencies['@shopify/cli'] = currentVersion
+function mockApp(): AppInterface {
   return testApp({
     name: 'myapp',
     directory: '/',
@@ -116,6 +114,5 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
       },
       extension_directories: ['extensions/*'],
     },
-    nodeDependencies,
   })
 }

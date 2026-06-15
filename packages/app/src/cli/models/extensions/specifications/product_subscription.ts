@@ -16,8 +16,13 @@ const productSubscriptionSpec = createExtensionSpecification({
   graphQLType: 'subscription_management',
   schema: BaseSchema,
   appModuleFeatures: (_) => ['ui_preview', 'esbuild', 'single_js_entry_path'],
-  buildConfig: {mode: 'ui'},
   getOutputRelativePath: (extension: ExtensionInstance<ProductSubscriptionConfigType>) => `dist/${extension.handle}.js`,
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [{id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}}],
+    },
+  ],
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)

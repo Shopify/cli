@@ -5,9 +5,7 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
-import {isCloudEnvironment} from '../../../public/node/context/local.js'
 import {isCI, openURL} from '../../../public/node/system.js'
-import {isTTY, keypress} from '../../../public/node/ui.js'
 
 import {Response} from 'node-fetch'
 
@@ -81,21 +79,11 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
   const linkToken = outputToken.link(jsonResult.verification_uri_complete)
 
-  const cloudMessage = () => {
-    outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
-  }
-
-  if (isCloudEnvironment() || !isTTY()) {
-    cloudMessage()
+  const opened = await openURL(jsonResult.verification_uri_complete)
+  if (opened) {
+    outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
   } else {
-    outputInfo('👉 Press any key to open the login page on your browser')
-    await keypress()
-    const opened = await openURL(jsonResult.verification_uri_complete)
-    if (opened) {
-      outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
-    } else {
-      cloudMessage()
-    }
+    outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
   }
 
   return {

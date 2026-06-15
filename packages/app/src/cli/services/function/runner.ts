@@ -3,6 +3,7 @@ import {validateShopifyFunctionPackageVersion} from './build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {Readable, Writable} from 'stream'
 
 interface FunctionRunnerOptions {
@@ -26,6 +27,13 @@ async function getFunctionRunnerBinary(ext: ExtensionInstance<FunctionConfigType
   return functionRunnerBinary()
 }
 
+function getFunctionPath(ext: ExtensionInstance<FunctionConfigType>) {
+  if (ext.configuration.build?.path) {
+    return joinPath(ext.directory, ext.configuration.build.path)
+  }
+  return ext.outputPath
+}
+
 export async function runFunction(options: FunctionRunnerOptions) {
   const ext = options.functionExtension
 
@@ -47,7 +55,9 @@ export async function runFunction(options: FunctionRunnerOptions) {
     args.push('--query-path', options.queryPath)
   }
 
-  return exec(functionRunner.path, ['-f', options.functionExtension.outputPath, ...args], {
+  const functionPath = getFunctionPath(ext)
+
+  return exec(functionRunner.path, ['-f', functionPath, ...args], {
     cwd: options.functionExtension.directory,
     stdin: options.stdin,
     stdout: options.stdout ?? 'inherit',

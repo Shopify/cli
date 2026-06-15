@@ -23,12 +23,14 @@ vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
   extractJSImports: vi.fn(() => []),
 }))
 
-// Mock fs module for fileExistsSync
+// Mock fs module for fileExistsSync, mkdir, and writeFile
 vi.mock('@shopify/cli-kit/node/fs', async () => {
   const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/fs')>('@shopify/cli-kit/node/fs')
   return {
     ...actual,
     fileExistsSync: vi.fn(),
+    mkdir: vi.fn(),
+    writeFile: vi.fn(),
   }
 })
 
@@ -74,6 +76,8 @@ interface TestCaseSingleEvent {
   fileSystemEvent: string
   path: string
   expectedEvent?: Omit<WatcherEvent, 'startTime'> & {startTime?: WatcherEvent['startTime']}
+  expectedEventCount?: number
+  expectedHandles?: string[]
 }
 
 /**
@@ -101,7 +105,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_updated',
       path: '/extensions/ui_extension_1/index.js',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
+    expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'change in toml',
@@ -111,7 +118,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
+    expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'change in app config',
@@ -131,7 +141,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_created',
       path: '/extensions/ui_extension_1/new-file.js',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
+    expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'delete a file',
@@ -261,15 +274,7 @@ describe('file-watcher events', () => {
 
       // Then
       expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, '/shopify.app.toml'), joinPath(dir, '/extensions')], {
-        ignored: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/*.test.*',
-          '**/dist/**',
-          '**/*.swp',
-          '**/generated/**',
-          '**/.gitignore',
-        ],
+        ignored: ['**/node_modules/**', '**/.git/**'],
         ignoreInitial: true,
         persistent: true,
       })
@@ -278,7 +283,7 @@ describe('file-watcher events', () => {
 
   test.each(singleEventTestCases)(
     'The event $name returns the expected WatcherEvent',
-    async ({fileSystemEvent, path, expectedEvent}) => {
+    async ({fileSystemEvent, path, expectedEvent, expectedEventCount, expectedHandles}) => {
       // Given
       let eventHandler: any
 
@@ -367,7 +372,8 @@ describe('file-watcher events', () => {
               throw new Error('Expected onChange to be called with events, but all calls had empty arrays')
             }
 
-            expect(actualEvents).toHaveLength(1)
+            const eventCount = expectedEventCount ?? 1
+            expect(actualEvents).toHaveLength(eventCount)
             const actualEvent = actualEvents[0]
 
             expect(actualEvent.type).toBe(expectedEvent.type)
@@ -375,6 +381,14 @@ describe('file-watcher events', () => {
             expect(actualEvent.extensionPath).toBe(normalizePath(expectedEvent.extensionPath))
             expect(Array.isArray(actualEvent.startTime)).toBe(true)
             expect(actualEvent.startTime).toHaveLength(2)
+
+            // Verify extensionHandle is set correctly on file-level events
+            if (expectedHandles) {
+              const actualHandles = actualEvents.map((event: WatcherEvent) => event.extensionHandle).sort()
+              expect(actualHandles).toEqual(expectedHandles.sort())
+            } else if (expectedEvent.extensionHandle) {
+              expect(actualEvent.extensionHandle).toBe(expectedEvent.extensionHandle)
+            }
           },
           {timeout: 1000, interval: 50},
         )
@@ -716,6 +730,230 @@ describe('file-watcher events', () => {
         clearTimeout(timeout)
         throw error
       }
+    })
+  })
+
+  test('creates extension directories if they do not exist before starting watcher', async () => {
+    const realFs = await vi.importActual<typeof import('@shopify/cli-kit/node/fs')>('@shopify/cli-kit/node/fs')
+
+    await inTemporaryDirectory(async (dir) => {
+      const extDir = joinPath(dir, 'extensions')
+      const configPath = joinPath(dir, 'shopify.app.toml')
+      await realFs.writeFile(configPath, '')
+
+      const app = testAppLinked({
+        allExtensions: [],
+        directory: dir,
+        configPath,
+        configuration: {
+          client_id: 'test-client-id',
+          name: 'my-app',
+          application_url: 'https://example.com',
+          embedded: true,
+          access_scopes: {scopes: ''},
+          extension_directories: ['extensions'],
+        },
+      })
+
+      // Use real mkdir for this test
+      vi.mocked(mkdir).mockImplementation((path: string) => realFs.mkdir(path))
+
+      const mockWatcher = {
+        on: vi.fn().mockReturnThis(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      expect(realFs.fileExistsSync(extDir)).toBe(true)
+    })
+  })
+
+  test('strips glob suffixes when creating extension directories', async () => {
+    const realFs = await vi.importActual<typeof import('@shopify/cli-kit/node/fs')>('@shopify/cli-kit/node/fs')
+
+    await inTemporaryDirectory(async (dir) => {
+      const extDir = joinPath(dir, 'extensions')
+      const configPath = joinPath(dir, 'shopify.app.toml')
+      await realFs.writeFile(configPath, '')
+
+      const app = testAppLinked({
+        allExtensions: [],
+        directory: dir,
+        configPath,
+        configuration: {
+          client_id: 'test-client-id',
+          name: 'my-app',
+          application_url: 'https://example.com',
+          embedded: true,
+          access_scopes: {scopes: ''},
+          extension_directories: ['extensions/**'],
+        },
+      })
+
+      vi.mocked(mkdir).mockImplementation((path: string) => realFs.mkdir(path))
+
+      const mockWatcher = {
+        on: vi.fn().mockReturnThis(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // Should create extensions/, not extensions/**
+      expect(realFs.fileExistsSync(extDir)).toBe(true)
+      expect(realFs.fileExistsSync(joinPath(extDir, '**'))).toBe(false)
+    })
+  })
+
+  describe('runtime file discovery', () => {
+    test('files added at runtime inside an existing extension trigger file_created', async () => {
+      // Given: extension knows about index.js but NOT runtime-added.js
+      mockExtensionWatchedFiles(extension1, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension1B, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension2, [])
+      mockExtensionWatchedFiles(functionExtension, [])
+      mockExtensionWatchedFiles(posExtension, [])
+      mockExtensionWatchedFiles(appAccessExtension, [])
+
+      const testApp = {
+        ...defaultApp,
+        allExtensions: defaultApp.allExtensions,
+        nonConfigExtensions: defaultApp.allExtensions.filter((ext) => !ext.isAppConfigExtension),
+        realExtensions: defaultApp.allExtensions,
+      }
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // When: a file the extension didn't pre-register is created on disk
+      await eventHandler('add', '/extensions/ui_extension_1/runtime-added.js', undefined)
+      await sleep(0.15)
+
+      // Then: it's attributed to the owning extensions and emitted
+      await vi.waitFor(
+        () => {
+          const events = onChange.mock.calls.find((call) => call[0].length > 0)?.[0]
+          if (!events) throw new Error('no events emitted')
+          expect(events).toHaveLength(2)
+          for (const event of events) {
+            expect(event.type).toBe('file_created')
+            expect(event.path).toBe('/extensions/ui_extension_1/runtime-added.js')
+            expect(event.extensionPath).toBe('/extensions/ui_extension_1')
+          }
+          const handles = events.map((event: WatcherEvent) => event.extensionHandle).sort()
+          expect(handles).toEqual(['h1', 'h2'])
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+
+    test('files added at runtime outside any extension are ignored', async () => {
+      mockExtensionWatchedFiles(extension1, [])
+      mockExtensionWatchedFiles(extension1B, [])
+      mockExtensionWatchedFiles(extension2, [])
+      mockExtensionWatchedFiles(functionExtension, [])
+      mockExtensionWatchedFiles(posExtension, [])
+      mockExtensionWatchedFiles(appAccessExtension, [])
+
+      const testApp = {
+        ...defaultApp,
+        allExtensions: defaultApp.allExtensions,
+        nonConfigExtensions: defaultApp.allExtensions.filter((ext) => !ext.isAppConfigExtension),
+        realExtensions: defaultApp.allExtensions,
+      }
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      await eventHandler('add', '/some/random/path/file.js', undefined)
+      await sleep(0.15)
+
+      const hasNonEmptyCall = onChange.mock.calls.some((call) => call[0].length > 0)
+      expect(hasNonEmptyCall).toBe(false)
+    })
+
+    test('subsequent change/unlink on a runtime-discovered file are not dropped', async () => {
+      mockExtensionWatchedFiles(extension1, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension1B, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension2, [])
+      mockExtensionWatchedFiles(functionExtension, [])
+      mockExtensionWatchedFiles(posExtension, [])
+      mockExtensionWatchedFiles(appAccessExtension, [])
+
+      const testApp = {
+        ...defaultApp,
+        allExtensions: defaultApp.allExtensions,
+        nonConfigExtensions: defaultApp.allExtensions.filter((ext) => !ext.isAppConfigExtension),
+        realExtensions: defaultApp.allExtensions,
+      }
+
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') eventHandler = listener
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+      await flushPromises()
+
+      // Discover the file via 'add'
+      await eventHandler('add', '/extensions/ui_extension_1/runtime-added.js', undefined)
+      await sleep(0.1)
+
+      // Now fire a 'change' on the same path; should produce a file_updated event
+      onChange.mockClear()
+      await eventHandler('change', '/extensions/ui_extension_1/runtime-added.js', undefined)
+      await sleep(0.1)
+
+      await vi.waitFor(
+        () => {
+          const events = onChange.mock.calls.find((call) => call[0].length > 0)?.[0]
+          if (!events) throw new Error('no change events emitted')
+          expect(events.some((event: WatcherEvent) => event.type === 'file_updated')).toBe(true)
+        },
+        {timeout: 1000, interval: 50},
+      )
     })
   })
 

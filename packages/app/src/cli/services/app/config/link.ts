@@ -1,16 +1,9 @@
 import {setCurrentConfigPreference} from './use.js'
-import {
-  AppConfiguration,
-  CurrentAppConfiguration,
-  getAppVersionedSchema,
-  CliBuildPreferences,
-  getAppScopes,
-} from '../../../models/app/app.js'
+import {AppConfiguration, CurrentAppConfiguration, CliBuildPreferences, getAppScopes} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {
   AppConfigurationFileName,
-  AppConfigurationState,
   getAppConfigurationFileName,
   loadApp,
   loadOpaqueApp,
@@ -48,9 +41,9 @@ export interface LinkOptions {
 }
 
 interface LinkOutput {
-  configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
-  state: AppConfigurationState
+  configFileName: AppConfigurationFileName
+  configuration: CurrentAppConfiguration
 }
 /**
  * Link a local app configuration file to a remote app on the Shopify platform.
@@ -95,16 +88,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  const state: AppConfigurationState = {
-    basicConfiguration: mergedAppConfiguration,
-    appDirectory,
-    configurationPath: joinPath(appDirectory, configFileName),
-    configSource: options.configName ? 'flag' : 'cached',
-    configurationFileName: configFileName,
-    isLinked: mergedAppConfiguration.client_id !== '',
-  }
-
-  return {configuration: mergedAppConfiguration, remoteApp, state}
+  return {remoteApp, configFileName, configuration: mergedAppConfiguration}
 }
 
 /**
@@ -138,7 +122,11 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     }
   }
 
-  const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
+  const remoteApp = await fetchOrCreateOrganizationApp({
+    ...creationOptions,
+    directory: appDirectory,
+    organizationId: options.organizationId,
+  })
 
   const developerPlatformClient = remoteApp.developerPlatformClient
 
@@ -173,9 +161,9 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
     const app = await loadApp({
       specifications: await loadLocalExtensionsSpecifications(),
       directory: options.directory,
-      mode: 'report',
       userProvidedConfigName: options.configName,
       remoteFlags: undefined,
+      skipPrompts: true,
     })
 
     return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
@@ -242,7 +230,7 @@ export async function loadLocalAppOptions(
     configName: options.configName,
     specifications,
     remoteFlags,
-    mode: 'report',
+    skipPrompts: true,
   })
 
   switch (result.state) {
@@ -257,7 +245,7 @@ export async function loadLocalAppOptions(
           existingBuildOptions: configuration.build,
           existingConfig: {...configuration},
           appDirectory: app.directory,
-          packageManager: app.packageManager,
+          packageManager: result.packageManager,
         }
       }
       return {
@@ -320,6 +308,9 @@ async function loadConfigurationFileName(
   const currentToml = existingTomls[remoteApp.apiKey]
   if (currentToml) return currentToml
 
+  // If no TOML files exist at all, use the default filename without prompting
+  if (isEmpty(existingTomls)) return 'shopify.app.toml'
+
   return selectConfigName(localAppInfo.appDirectory ?? options.directory, remoteApp.title)
 }
 
@@ -378,9 +369,7 @@ export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (mergedAppConfiguration as any).scopes
 
-  // Always output using the canonical schema
-  const schema = getAppVersionedSchema(specifications)
-  await writeAppConfigurationFile(mergedAppConfiguration, schema, configFilePath)
+  await writeAppConfigurationFile(mergedAppConfiguration, configFilePath)
   setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
 
   return mergedAppConfiguration

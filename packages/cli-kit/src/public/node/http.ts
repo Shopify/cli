@@ -10,6 +10,7 @@ import {DEFAULT_MAX_TIME_MS} from '../../private/node/sleep-with-backoff.js'
 
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit, Response} from 'node-fetch'
+import {pipeline} from 'stream/promises'
 
 export {FetchError, Request, Response} from 'node-fetch'
 
@@ -224,42 +225,33 @@ export function downloadFile(url: string, to: string): Promise<string> {
   const sanitizedUrl = sanitizeURL(url)
   outputDebug(`Downloading ${sanitizedUrl} to ${to}`)
 
-  return runWithTimer('cmd_all_timing_network_ms')(() => {
-    return new Promise<string>((resolve, reject) => {
-      if (!fileExistsSync(dirname(to))) {
-        mkdirSync(dirname(to))
-      }
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    if (!fileExistsSync(dirname(to))) {
+      mkdirSync(dirname(to))
+    }
 
-      const file = createFileWriteStream(to)
-
-      // if we can't remove the file for some reason (seen on windows), that's ok -- it's in a temporary directory
-      const tryToRemoveFile = () => {
-        try {
+    // if we can't remove the file for some reason (seen on windows), that's ok -- it's in a temporary directory
+    const tryToRemoveFile = () => {
+      try {
+        if (fileExistsSync(to)) {
           unlinkFileSync(to)
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (err: unknown) {
-          outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${outputToken.raw(String(err))}`)
         }
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (err: unknown) {
+        outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${outputToken.raw(String(err))}`)
       }
+    }
 
-      file.on('finish', () => {
-        file.close()
-        resolve(to)
-      })
-
-      file.on('error', (err) => {
-        tryToRemoveFile()
-        reject(err)
-      })
-
-      nodeFetch(url, {redirect: 'follow'})
-        .then((res) => {
-          res.body?.pipe(file)
-        })
-        .catch((err) => {
-          tryToRemoveFile()
-          reject(err)
-        })
-    })
+    try {
+      const res = await nodeFetch(url, {redirect: 'follow'})
+      if (!res.body) {
+        throw new Error(`No response body received when downloading ${sanitizedUrl}`)
+      }
+      await pipeline(res.body, createFileWriteStream(to))
+      return to
+    } catch (err) {
+      tryToRemoveFile()
+      throw err instanceof Error ? err : new Error(String(err))
+    }
   })
 }

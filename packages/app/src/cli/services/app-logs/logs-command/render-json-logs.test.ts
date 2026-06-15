@@ -1,6 +1,6 @@
 import {renderJsonLogs} from './render-json-logs.js'
 import {pollAppLogs} from './poll-app-logs.js'
-import {handleFetchAppLogsError} from '../utils.js'
+import {handleFetchAppLogsError, MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
@@ -101,6 +101,72 @@ describe('renderJsonLogs', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
+  test('should retry at throttle interval when handleFetchAppLogsError returns null token', async () => {
+    const timeoutSpy = vi.spyOn(global, 'setTimeout')
+    const mockErrorResponse = {
+      errors: [{status: 401, message: 'Unauthorized'}],
+    }
+    const pollAppLogsMock = vi.fn().mockResolvedValue(mockErrorResponse)
+    vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
+    const throttleRetryInterval = 60000
+    const handleFetchAppLogsErrorMock = vi.fn(() => {
+      return Promise.resolve({
+        nextJwtToken: null,
+        retryIntervalMs: throttleRetryInterval,
+        resubscribeResult: 'not_attempted' as const,
+      })
+    })
+    vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
+
+    const storeNameById = new Map<string, string>()
+    storeNameById.set('1', 'storeName')
+    await renderJsonLogs({
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
+      options: {
+        variables: {shopIds: [], apiKey: ''},
+        developerPlatformClient: testDeveloperPlatformClient(),
+      },
+      storeNameById,
+      organizationId: 'organizationId',
+    })
+
+    expect(handleFetchAppLogsError).toHaveBeenCalled()
+    expect(pollAppLogs).toHaveBeenCalled()
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), throttleRetryInterval)
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('should stop polling after MAX consecutive resubscribe failures', async () => {
+    const mockErrorResponse = {
+      errors: [{status: 401, message: 'Unauthorized'}],
+    }
+    const pollAppLogsMock = vi.fn().mockResolvedValue(mockErrorResponse)
+    vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
+    const handleFetchAppLogsErrorMock = vi.fn(() => {
+      return Promise.resolve({nextJwtToken: null, retryIntervalMs: 60000, resubscribeResult: 'failed' as const})
+    })
+    vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
+
+    const storeNameById = new Map<string, string>()
+    storeNameById.set('1', 'storeName')
+    await renderJsonLogs({
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
+      options: {
+        variables: {shopIds: [], apiKey: ''},
+        developerPlatformClient: testDeveloperPlatformClient(),
+      },
+      storeNameById,
+      organizationId: 'organizationId',
+      consecutiveResubscribeFailures: MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES - 1,
+    })
+
+    expect(handleFetchAppLogsError).toHaveBeenCalled()
+    expect(outputInfo).toHaveBeenCalledWith(
+      JSON.stringify({message: 'App log streaming session has expired. Please restart your dev session.'}),
+    )
+    expect(vi.getTimerCount()).toEqual(0)
+  })
+
   test('should handle error response and retry as expected', async () => {
     const mockErrorResponse = {
       errors: [{status: 500, message: 'Server Error'}],
@@ -110,8 +176,12 @@ describe('renderJsonLogs', () => {
     const mockRetryInterval = 1000
     const handleFetchAppLogsErrorMock = vi.fn((input) => {
       input.onUnknownError(mockRetryInterval)
-      return new Promise<{retryIntervalMs: number; nextJwtToken: string | null}>((resolve, _reject) => {
-        resolve({nextJwtToken: 'new-jwt-token', retryIntervalMs: mockRetryInterval})
+      return new Promise<{
+        retryIntervalMs: number
+        nextJwtToken: string | null
+        resubscribeResult: 'succeeded' | 'failed' | 'not_attempted'
+      }>((resolve, _reject) => {
+        resolve({nextJwtToken: 'new-jwt-token', retryIntervalMs: mockRetryInterval, resubscribeResult: 'not_attempted'})
       })
     })
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)

@@ -1,5 +1,12 @@
 import {loadLocalExtensionsSpecifications} from './load-specifications.js'
-import {configWithoutFirstClassFields, createContractBasedModuleSpecification} from './specification.js'
+import {
+  configWithoutFirstClassFields,
+  createContractBasedModuleSpecification,
+  createConfigExtensionSpecification,
+  createExtensionSpecification,
+} from './specification.js'
+import {BaseSchema} from './schemas.js'
+import {ClientSteps} from '../../services/build/client-steps.js'
 import {AppSchema} from '../app/app.js'
 import {describe, test, expect, beforeAll} from 'vitest'
 
@@ -28,12 +35,26 @@ describe('allLocalSpecs', () => {
   })
 })
 
+const testClientSteps: ClientSteps = [
+  {
+    lifecycle: 'deploy',
+    steps: [
+      {
+        id: 'bundle-ui',
+        name: 'Bundle UI Extension',
+        type: 'bundle_ui',
+      },
+    ],
+  },
+]
+
 describe('createContractBasedModuleSpecification', () => {
   test('creates a specification with the given identifier', () => {
     // When
     const got = createContractBasedModuleSpecification({
       identifier: 'test',
       uidStrategy: 'uuid',
+      experience: 'extension',
       appModuleFeatures: () => ['localization'],
     })
 
@@ -46,6 +67,62 @@ describe('createContractBasedModuleSpecification', () => {
       }),
     )
     expect(got.appModuleFeatures()).toEqual(['localization'])
+  })
+
+  test('passes clientSteps through to the created specification', () => {
+    // When
+    const got = createContractBasedModuleSpecification({
+      identifier: 'channel_config',
+      uidStrategy: 'uuid',
+      experience: 'extension',
+      appModuleFeatures: () => [],
+      clientSteps: testClientSteps,
+    })
+
+    // Then
+    expect(got.clientSteps).toEqual(testClientSteps)
+  })
+
+  test('clientSteps is undefined when not provided', () => {
+    // When
+    const got = createContractBasedModuleSpecification({
+      identifier: 'test',
+      uidStrategy: 'uuid',
+      experience: 'extension',
+      appModuleFeatures: () => [],
+    })
+
+    // Then
+    expect(got.clientSteps).toBeUndefined()
+  })
+})
+
+describe('createExtensionSpecification', () => {
+  test('passes clientSteps through to the created specification', () => {
+    // When
+    const got = createExtensionSpecification({
+      identifier: 'test_extension',
+      appModuleFeatures: () => [],
+      clientSteps: testClientSteps,
+    })
+
+    // Then
+    expect(got.clientSteps).toEqual(testClientSteps)
+  })
+})
+
+describe('createConfigExtensionSpecification', () => {
+  test('passes clientSteps through to the created specification', () => {
+    // When
+    const got = createConfigExtensionSpecification({
+      identifier: 'test_config',
+      schema: BaseSchema,
+      transformConfig: {},
+      clientSteps: testClientSteps,
+    })
+
+    // Then
+    expect(got.clientSteps).toEqual(testClientSteps)
   })
 })
 

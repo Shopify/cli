@@ -8,7 +8,6 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class Deploy extends AppLinkedCommand {
   static summary = 'Deploy your Shopify app.'
@@ -25,13 +24,6 @@ export default class Deploy extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    force: Flags.boolean({
-      hidden: false,
-      description:
-        '[Deprecated] Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.',
-      env: 'SHOPIFY_FLAG_FORCE',
-      char: 'f',
-    }),
     'allow-updates': Flags.boolean({
       hidden: false,
       description:
@@ -80,19 +72,6 @@ export default class Deploy extends AppLinkedCommand {
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Deploy)
 
-    if (flags.force) {
-      renderWarning({
-        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in the next major release.'],
-        body: [
-          'Use',
-          {command: '--allow-updates'},
-          'for CI/CD environments, or',
-          {command: '--allow-updates --allow-deletes'},
-          'if you also want to allow removals.',
-        ],
-      })
-    }
-
     await metadata.addPublicMetadata(() => ({
       cmd_deploy_flag_message_used: Boolean(flags.message),
       cmd_deploy_flag_version_used: Boolean(flags.version),
@@ -108,9 +87,9 @@ export default class Deploy extends AppLinkedCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const force = flags.force || flags['no-release']
+    const force = flags['no-release']
 
-    // When releasing, we require --force or --allow-updates or --allow-deletes for non-TTY.
+    // When releasing, we require --no-release or --allow-updates or --allow-deletes for non-TTY.
     const requiredNonTTYFlags: string[] = []
     const hasAnyForceFlags = force || flags['allow-updates'] || flags['allow-deletes']
     if (!hasAnyForceFlags) {
@@ -118,7 +97,7 @@ export default class Deploy extends AppLinkedCommand {
     }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
+    const {app, project, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
       clientId,
       forceRelink: flags.reset,
@@ -130,6 +109,7 @@ export default class Deploy extends AppLinkedCommand {
 
     const result = await deploy({
       app,
+      project,
       remoteApp,
       organization,
       developerPlatformClient,

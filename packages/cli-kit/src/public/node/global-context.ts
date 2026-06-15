@@ -10,9 +10,7 @@ let _globalContext: GlobalContext | undefined
  * @returns Global context.
  */
 function getGlobalContext(): GlobalContext {
-  if (!_globalContext) {
-    _globalContext = {currentCommandId: ''}
-  }
+  _globalContext ??= {currentCommandId: ''}
   return _globalContext
 }
 

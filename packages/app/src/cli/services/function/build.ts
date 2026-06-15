@@ -14,6 +14,7 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {AppInterface} from '../../models/app/app.js'
 import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -24,6 +25,7 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {packageManagerBinaryCommandForDirectory} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
 
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
@@ -143,8 +145,15 @@ export async function buildGraphqlTypes(
     )
   }
 
+  const command = await packageManagerBinaryCommandForDirectory(
+    fun.directory,
+    'graphql-code-generator',
+    '--config',
+    'package.json',
+  )
+
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+    return exec(command.command, command.args, {
       cwd: fun.directory,
       stderr: options.stderr,
       signal: options.signal,
@@ -305,7 +314,7 @@ async function importedWasmModules(modulePath: string): Promise<string[]> {
   const imports = WebAssembly.Module.imports(module)
   // Sets preserve insertion order so the returned array should be
   // deterministic when given the same Wasm module
-  return [...new Set(imports.map((importItem) => importItem.module))]
+  return uniq(imports.map((importItem) => importItem.module))
 }
 
 export async function runJavy(
@@ -464,7 +473,7 @@ export function ${identifier}() { return __runFunction(${alias}) }`
 }
 
 export function jsExports(fun: ExtensionInstance<FunctionConfigType>) {
-  const targets = fun.configuration.targeting || []
+  const targets = fun.configuration.targeting ?? []
   const withoutExport = targets.filter((target) => !target.export)
   const withExport = targets.filter((target) => Boolean(target.export))
 

@@ -5,7 +5,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type FetchStoreByDomainQueryVariables = Types.Exact<{
   domain?: Types.InputMaybe<Types.Scalars['String']['input']>
-  storeTypes: Types.Scalars['String']['input']
+  filters?: Types.InputMaybe<Types.ShopFilterInput[] | Types.ShopFilterInput>
 }>
 
 export type FetchStoreByDomainQuery = {
@@ -44,8 +44,11 @@ export const FetchStoreByDomain = {
         },
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'storeTypes'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'filters'}},
+          type: {
+            kind: 'ListType',
+            type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ShopFilterInput'}}},
+          },
         },
       ],
       selectionSet: {
@@ -66,26 +69,7 @@ export const FetchStoreByDomain = {
                     {
                       kind: 'Argument',
                       name: {kind: 'Name', value: 'filters'},
-                      value: {
-                        kind: 'ObjectValue',
-                        fields: [
-                          {
-                            kind: 'ObjectField',
-                            name: {kind: 'Name', value: 'field'},
-                            value: {kind: 'EnumValue', value: 'STORE_TYPE'},
-                          },
-                          {
-                            kind: 'ObjectField',
-                            name: {kind: 'Name', value: 'operator'},
-                            value: {kind: 'EnumValue', value: 'IN'},
-                          },
-                          {
-                            kind: 'ObjectField',
-                            name: {kind: 'Name', value: 'value'},
-                            value: {kind: 'Variable', name: {kind: 'Name', value: 'storeTypes'}},
-                          },
-                        ],
-                      },
+                      value: {kind: 'Variable', name: {kind: 'Name', value: 'filters'}},
                     },
                     {
                       kind: 'Argument',

@@ -66,7 +66,17 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function findLocalFile(event: H3Event, ctx: DevServerContext) {
+// Theme assets are served under either a bare `/assets/...` path or the vanity CDN
+// prefix `/cdn/.../assets/...`. The negative lookahead prevents this matcher from
+// claiming `/cdn/extensions/...` paths, which belong to theme app extensions.
+const THEME_ASSET_PATTERN = /^(?:\/cdn\/(?!extensions\/).*?)?\/assets\/([^?]+)/
+
+// Theme app extension assets are served under either `/ext/cdn/extensions/...`
+// (locally-developed extensions, rewritten by `injectCdnProxy` via EXTENSION_CDN_PREFIX)
+// or `/cdn/extensions/...` (storefront-emitted URLs for installed extensions).
+const THEME_EXTENSION_ASSET_PATTERN = /^(?:\/(?:ext\/)?cdn\/extensions\/.*?)?\/assets\/([^?]+)/
+
+export function findLocalFile(event: H3Event, ctx: DevServerContext) {
   const tryGetFile = (pattern: RegExp, fileSystem: VirtualFileSystem) => {
     const matchedFileName = event.path.match(pattern)?.[1]
 
@@ -81,10 +91,13 @@ function findLocalFile(event: H3Event, ctx: DevServerContext) {
     }
   }
 
-  // Try to match theme asset files first and fallback to theme extension asset files
+  // Try to match theme asset files first and fallback to theme extension asset files.
+  // When neither matches (e.g. `/cdn/extensions/<uuid>/<app>/assets/<name>` for an
+  // installed third-party app), the request falls through to `getProxyHandler` which
+  // forwards to cdn.shopify.com.
   return (
-    tryGetFile(/^(?:\/cdn\/.*?)?\/assets\/([^?]+)/, ctx.localThemeFileSystem) ??
-    tryGetFile(/^(?:\/ext\/cdn\/extensions\/.*?)?\/assets\/([^?]+)/, ctx.localThemeExtensionFileSystem) ?? {
+    tryGetFile(THEME_ASSET_PATTERN, ctx.localThemeFileSystem) ??
+    tryGetFile(THEME_EXTENSION_ASSET_PATTERN, ctx.localThemeExtensionFileSystem) ?? {
       isUnsynced: false,
       fileKey: undefined,
       file: undefined,
@@ -109,7 +122,10 @@ function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
       return handleBlockScriptsJs(ctx, event, 'snippet')
     case 'scripts.js':
       return handleBlockScriptsJs(ctx, event, 'section')
+    case undefined:
+      break
     default:
+      break
   }
 }
 

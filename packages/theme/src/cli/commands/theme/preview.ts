@@ -10,8 +10,7 @@ import {InferredFlags} from '@oclif/core/interfaces'
 type PreviewFlags = InferredFlags<typeof Preview.flags>
 
 export default class Preview extends ThemeCommand {
-  static summary =
-    'Applies JSON overrides to a theme and returns a preview URL.'
+  static summary = 'Applies JSON overrides to a theme and returns a preview URL.'
 
   static descriptionWithMarkdown = `Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.
 
@@ -42,6 +41,11 @@ export default class Preview extends ThemeCommand {
       env: 'SHOPIFY_FLAG_OPEN',
       default: false,
     }),
+    json: Flags.boolean({
+      description: 'Output the preview URL and identifier as JSON.',
+      env: 'SHOPIFY_FLAG_JSON',
+      default: false,
+    }),
   }
 
   static multiEnvironmentsFlags: RequiredFlags = null
@@ -55,6 +59,7 @@ export default class Preview extends ThemeCommand {
       previewIdentifier: flags['preview-id'],
       open: flags.open,
       password: flags.password,
+      json: flags.json,
     })
   }
 }

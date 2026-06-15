@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.92.0",
+  "version": "4.1.0",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for building and publishing themes",
@@ -22,8 +22,7 @@
     }
   },
   "files": [
-    "/dist",
-    "/oclif.manifest.json"
+    "/dist"
   ],
   "scripts": {
     "build": "nx build",
@@ -41,21 +40,21 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "4.5.3",
-    "@shopify/cli-kit": "3.92.0",
-    "@shopify/theme-check-node": "3.24.0",
-    "@shopify/theme-language-server-node": "2.20.2",
+    "@oclif/core": "4.11.4",
+    "@shopify/cli-kit": "4.1.0",
+    "@shopify/theme-check-node": "3.26.1",
+    "@shopify/theme-language-server-node": "2.21.3",
     "chokidar": "3.6.0",
-    "h3": "1.13.0",
-    "yaml": "2.7.0"
+    "h3": "1.15.11",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
-    "@shopify/theme-hot-reload": "^0.0.18",
-    "@vitest/coverage-istanbul": "^3.1.4",
+    "@shopify/theme-hot-reload": "^0.0.22",
+    "@vitest/coverage-istanbul": "^3.2.6",
     "node-stream-zip": "^1.15.0"
   },
   "engines": {
-    "node": ">=20.10.0"
+    "node": ">=22.12.0"
   },
   "os": [
     "darwin",

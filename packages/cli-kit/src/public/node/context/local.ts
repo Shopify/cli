@@ -1,13 +1,20 @@
 import {isTruthy} from './utilities.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
-import {fileExists} from '../fs.js'
-import {exec} from '../system.js'
-
-import isInteractive from 'is-interactive'
 import macaddress from 'macaddress'
-
 import {homedir} from 'os'
+
+// Dynamic imports to avoid circular dependency: context/local → fs → output → context/local
+// fileExists and exec are only used in specific async functions, not at module init.
+async function lazyFileExists(path: string): Promise<boolean> {
+  const {fileExists} = await import('../fs.js')
+  return fileExists(path)
+}
+
+async function lazyExec(command: string, args: string[]): Promise<void> {
+  const {exec} = await import('../system.js')
+  await exec(command, args)
+}
 
 /**
  * It returns true if the terminal is interactive.
@@ -15,7 +22,7 @@ import {homedir} from 'os'
  * @returns True if the terminal is interactive.
  */
 export function isTerminalInteractive(): boolean {
-  return isInteractive()
+  return Boolean(process.stdout.isTTY && process.env.TERM !== 'dumb' && !('CI' in process.env))
 }
 
 /**
@@ -26,6 +33,16 @@ export function isTerminalInteractive(): boolean {
 export function homeDirectory(): string {
   return homedir()
 }
+
+/**
+ * Memoized value for the verbose check.
+ */
+let memoizedIsVerbose: boolean | undefined
+
+/**
+ * Memoized value for the unit test check.
+ */
+let memoizedIsUnitTest: boolean | undefined
 
 /**
  * Returns true if the CLI is running in debug mode.
@@ -44,6 +61,11 @@ export function isDevelopment(env = process.env): boolean {
  * @returns True if SHOPIFY_FLAG_VERBOSE is truthy or the flag --verbose has been passed.
  */
 export function isVerbose(env = process.env): boolean {
+  if (env === process.env) {
+    // Memoize the result to avoid repeated scans of process.argv and env lookups
+    // in high-frequency paths like outputDebug.
+    return (memoizedIsVerbose ??= isTruthy(env[environmentVariables.verbose]) || process.argv.includes('--verbose'))
+  }
   return isTruthy(env[environmentVariables.verbose]) || process.argv.includes('--verbose')
 }
 
@@ -58,7 +80,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
   if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
     return !isTruthy(env[environmentVariables.runAsUser])
   }
-  const devInstalled = await fileExists(pathConstants.executables.dev)
+  const devInstalled = await lazyFileExists(pathConstants.executables.dev)
   return devInstalled
 }
 
@@ -71,6 +93,11 @@ export async function isShopify(env = process.env): Promise<boolean> {
  * @returns True if the SHOPIFY_UNIT_TEST environment variable is truthy.
  */
 export function isUnitTest(env = process.env): boolean {
+  if (env === process.env) {
+    // Memoize the result as SHOPIFY_UNIT_TEST is static during execution
+    // and checked frequently to suppress output.
+    return (memoizedIsUnitTest ??= isTruthy(env[environmentVariables.unitTest]))
+  }
   return isTruthy(env[environmentVariables.unitTest])
 }
 
@@ -78,10 +105,14 @@ export function isUnitTest(env = process.env): boolean {
  * Returns true if reporting analytics is enabled.
  *
  * @param env - The environment variables from the environment of the current process.
- * @returns True unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
+ * @returns True unless SHOPIFY_CLI_NO_ANALYTICS or OPT_OUT_INSTRUMENTATION is truthy, or debug mode is enabled.
  */
 export function analyticsDisabled(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.noAnalytics]) || isDevelopment(env)
+  return (
+    isTruthy(env[environmentVariables.noAnalytics]) ||
+    isTruthy(env[environmentVariables.optOutInstrumentation]) ||
+    isDevelopment(env)
+  )
 }
 
 /**
@@ -207,7 +238,7 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
  */
 export async function hasGit(): Promise<boolean> {
   try {
-    await exec('git', ['--version'])
+    await lazyExec('git', ['--version'])
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {

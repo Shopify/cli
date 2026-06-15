@@ -15,6 +15,8 @@ import {vi, describe, test, expect} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import type {Project} from '../models/project/project.js'
+import type {ActiveConfig} from '../models/project/active-config.js'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-store')
@@ -43,6 +45,8 @@ describe('storeContext', () => {
     developerPlatformClient: mockDeveloperPlatformClient,
     remoteApp: testOrganizationApp(),
     specifications: [],
+    project: {} as unknown as Project,
+    activeConfig: {isLinked: true, hiddenConfig: {}} as unknown as ActiveConfig,
   }
 
   test('uses explicitly provided storeFqdn', async () => {
@@ -170,6 +174,7 @@ describe('storeContext', () => {
       expect(meta).toEqual(
         expect.objectContaining({
           store_fqdn_hash: hashString(mockStore.shopDomain),
+          store_domain: mockStore.shopDomain,
         }),
       )
 
@@ -177,6 +182,31 @@ describe('storeContext', () => {
       expect(sensitiveMeta).toEqual(
         expect.objectContaining({
           store_fqdn: mockStore.shopDomain,
+        }),
+      )
+    })
+  })
+
+  test('normalizes the selected store before logging metadata', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      const unnormalizedStore = testOrganizationStore({shopId: 'store1', shopDomain: 'test-store'})
+      vi.mocked(fetchStore).mockResolvedValue(unnormalizedStore)
+      await prepareAppFolder(mockApp, dir)
+
+      await storeContext({appContextResult, forceReselectStore: false})
+
+      const meta = metadata.getAllPublicMetadata()
+      expect(meta).toEqual(
+        expect.objectContaining({
+          store_fqdn_hash: hashString('test-store.myshopify.com'),
+          store_domain: 'test-store.myshopify.com',
+        }),
+      )
+
+      const sensitiveMeta = metadata.getAllSensitiveMetadata()
+      expect(sensitiveMeta).toEqual(
+        expect.objectContaining({
+          store_fqdn: 'test-store.myshopify.com',
         }),
       )
     })

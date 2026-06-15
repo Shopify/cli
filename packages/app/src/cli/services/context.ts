@@ -1,11 +1,10 @@
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchOrganizations} from './dev/fetch.js'
+import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import {DeployOptions} from './deploy.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
@@ -24,6 +23,7 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
@@ -118,12 +118,12 @@ export async function ensureThemeExtensionDevContext(
     apiKey,
     organizationId: '1',
   })
-  const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
+  const remoteRegistration = remoteSpecifications.app.extensionRegistrations.find((extension) => {
     return extension.type === 'THEME_APP_EXTENSION'
   })
 
-  if (remoteRegistrations[0]) {
-    return remoteRegistrations[0]
+  if (remoteRegistration) {
+    return remoteRegistration
   }
 
   const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, developerPlatformClient)
@@ -220,7 +220,15 @@ async function checkIncludeConfigOnDeploy({
       {command: 'include_config_on_deploy'},
       'in your TOML file. Including configuration will be required very soon.',
     ]
-    const nextSteps = ['Run', {command: 'shopify app deploy'}, 'interactively, without', {command: '--force'}, '.']
+    const nextSteps = [
+      'Run',
+      {command: 'shopify app deploy'},
+      'interactively, without',
+      {command: '--allow-updates'},
+      'or',
+      {command: '--allow-deletes'},
+      '.',
+    ]
     throw new AbortError(message, nextSteps)
   }
 
@@ -290,8 +298,12 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   })
 }
 
-export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): Promise<OrganizationApp> {
-  const org = await selectOrg()
+export async function fetchOrCreateOrganizationApp(
+  options: CreateAppOptions & {organizationId?: string},
+): Promise<OrganizationApp> {
+  const org = options.organizationId
+    ? await fetchOrgFromId(options.organizationId, selectDeveloperPlatformClient())
+    : await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
   const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)

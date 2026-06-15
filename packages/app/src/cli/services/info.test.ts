@@ -1,23 +1,24 @@
 import {InfoOptions, info} from './info.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp, OrganizationSource} from '../models/organization.js'
-import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
   testOrganizationApp,
   testUIExtension,
   testAppConfigExtensions,
   testAppLinked,
+  testProject,
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 
-vi.mock('../prompts/dev.js')
+vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('../utilities/developer-platform-client.js')
 
@@ -87,7 +88,10 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, {...infoOptions(), webEnv: true})) as OutputMessage
+      const result = (await info(app, remoteApp, ORG1, testProject(), {
+        ...infoOptions(),
+        webEnv: true,
+      })) as OutputMessage
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -107,7 +111,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, {
+      const result = (await info(app, remoteApp, ORG1, testProject(), {
         ...infoOptions(),
         format: 'json',
         webEnv: true,
@@ -146,8 +150,8 @@ describe('info', () => {
       })
 
       const errors = new AppErrors()
-      errors.addError(uiExtension1.configurationPath, 'Mock error with ui_extension')
-      errors.addError(uiExtension2.configurationPath, 'Mock error with checkout_ui_extension')
+      errors.addError({file: uiExtension1.configurationPath, message: 'Mock error with ui_extension'})
+      errors.addError({file: uiExtension2.configurationPath, message: 'Mock error with checkout_ui_extension'})
 
       const app = mockApp({
         directory: tmp,
@@ -159,7 +163,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
       const uiData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const checkoutData = tabularDataSectionFromInfo(result, 'checkout_ui_extension_external')
 
@@ -207,7 +211,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
       const uiExtensionsData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const relevantExtension = extensionTitleRow(uiExtensionsData, 'handle-for-extension-1')
       const irrelevantExtension = extensionTitleRow(uiExtensionsData, 'point_of_sale')
@@ -241,7 +245,11 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, ORG1, {format: 'json', webEnv: false, developerPlatformClient})
+      const result = await info(app, remoteApp, ORG1, testProject(), {
+        format: 'json',
+        webEnv: false,
+        developerPlatformClient,
+      })
 
       // Then
       expect(result).toBeInstanceOf(TokenizedString)
@@ -249,24 +257,25 @@ describe('info', () => {
       const extensionsIdentifiers = resultObject.allExtensions.map((extension) => extension.localIdentifier)
       expect(extensionsIdentifiers).toContain('handle-for-extension-1')
       expect(extensionsIdentifiers).not.toContain('point_of_sale')
+
+      // Verify backward-compat: project fields injected into JSON output
+      const rawResult = JSON.parse((result as TokenizedString).value)
+      expect(rawResult.packageManager).toBe('yarn')
+      expect(rawResult.nodeDependencies).toEqual({})
+      expect(rawResult.usesWorkspaces).toBe(false)
     })
   })
 })
 
 function mockApp({
   directory,
-  currentVersion = '2.2.2',
   configContents = 'scopes = "read_products"',
   app,
 }: {
   directory: string
-  currentVersion?: string
   configContents?: string
   app?: Partial<AppInterface>
 }): AppLinkedInterface {
-  const nodeDependencies: {[key: string]: string} = {}
-  nodeDependencies['@shopify/cli'] = currentVersion
-
   writeFileSync(joinPath(directory, 'shopify.app.toml'), configContents)
 
   return testAppLinked({
@@ -283,8 +292,7 @@ function mockApp({
       },
       extension_directories: ['extensions/*'],
     },
-    nodeDependencies,
-    ...(app ? app : {}),
+    ...(app ?? {}),
   })
 }
 

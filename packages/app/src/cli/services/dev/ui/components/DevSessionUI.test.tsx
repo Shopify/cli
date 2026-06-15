@@ -14,15 +14,30 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+  return {
+    ...actual,
+    openURL: vi.fn(),
+    terminalSupportsHyperlinks: mocks.terminalSupportsHyperlinks,
+  }
+})
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/tree-kill')
+vi.mock('@shopify/cli-kit/node/hooks/postrun', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/hooks/postrun')
+  return {
+    ...actual,
+    waitForPostRunHookAndExit: vi.fn(),
+  }
+})
 
 const mocks = vi.hoisted(() => {
   return {
     useStdin: vi.fn(() => {
       return {isRawModeSupported: true}
     }),
+    terminalSupportsHyperlinks: vi.fn(() => false),
   }
 })
 
@@ -40,12 +55,16 @@ const initialStatus: DevSessionStatus = {
   isReady: true,
   previewURL: 'https://shopify.com',
   graphiqlURL: 'https://graphiql.shopify.com',
+  appEmbedded: false,
+  hasExtensions: true,
 }
 
 const onAbort = vi.fn()
 
 describe('DevSessionUI', () => {
   beforeEach(() => {
+    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
+    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
     devSessionStatusManager = new DevSessionStatusManager()
     devSessionStatusManager.reset()
     devSessionStatusManager.updateStatus(initialStatus)
@@ -121,10 +140,12 @@ describe('DevSessionUI', () => {
     expect(output).toContain('(q) Quit')
 
     // Shortcuts and URLs should be visible
-    expect(output).toContain('(g) Open GraphiQL')
-    expect(output).toContain('(p) Preview in your browser')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
     expect(output).toContain('Preview URL: https://shopify.com')
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+    expect(output).toContain('Dev Console URL: https://mystore.myshopify.com/admin?dev-console=show')
 
     renderInstance.unmount()
   })
@@ -167,6 +188,80 @@ describe('DevSessionUI', () => {
 
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://graphiql.shopify.com')
+
+    renderInstance.unmount()
+  })
+
+  test('opens the dev console URL when c is pressed for non-embedded apps', async () => {
+    // Given
+    devSessionStatusManager.updateStatus({appEmbedded: false})
+
+    // When
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 10, 'c')
+
+    // Then
+    expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://mystore.myshopify.com/admin?dev-console=show')
+
+    renderInstance.unmount()
+  })
+
+  test('does not show dev console shortcut when app is embedded', async () => {
+    // Given
+    devSessionStatusManager.updateStatus({appEmbedded: true})
+
+    // When
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('(c) Open Dev Console')
+    expect(output).not.toContain('Dev Console URL')
+
+    renderInstance.unmount()
+  })
+
+  test('does not show dev console shortcut when app has no extensions', async () => {
+    // Given
+    devSessionStatusManager.updateStatus({hasExtensions: false})
+
+    // When
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('(c) Open Dev Console')
+    expect(output).not.toContain('Dev Console URL')
 
     renderInstance.unmount()
   })
@@ -356,7 +451,7 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // Initial state
-    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('preview in your browser')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Open app preview')
 
     // When status updates
     devSessionStatusManager.updateStatus({
@@ -365,7 +460,7 @@ describe('DevSessionUI', () => {
       graphiqlURL: 'https://new-graphiql.shopify.com',
     })
 
-    await waitForContent(renderInstance, 'Preview in your browser')
+    await waitForContent(renderInstance, 'Open app preview')
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://new-preview-url.shopify.com')
@@ -466,6 +561,120 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
+  test('hides Local URL in app info when an app URL is available', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        localURL="http://localhost:3000"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When
+    await sendInputAndWait(renderInstance, 10, 'a')
+
+    // Then - only App URL is shown, Local URL is hidden
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('App URL:')
+    expect(output).toContain('https://my-app.ngrok.io')
+    expect(output).not.toContain('Local URL:')
+    expect(output).not.toContain('http://localhost:3000')
+
+    renderInstance.unmount()
+  })
+
+  test('shows Local URL in app info when no app URL is available', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        localURL="http://localhost:3000"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When
+    await sendInputAndWait(renderInstance, 10, 'a')
+
+    // Then - Local URL is shown in place of App URL
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('Local URL:')
+    expect(output).toContain('http://localhost:3000')
+    expect(output).not.toContain('App URL:')
+
+    renderInstance.unmount()
+  })
+
+  test('hides URL list when terminal supports hyperlinks', async () => {
+    // Given
+    mocks.terminalSupportsHyperlinks.mockReturnValue(true)
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - shortcuts with label text should be present but URL list should be hidden
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
+    expect(output).not.toContain('Preview URL:')
+    expect(output).not.toContain('Dev Console URL:')
+    expect(output).not.toContain('GraphiQL URL:')
+
+    renderInstance.unmount()
+  })
+
+  test('shows URL list when terminal does not support hyperlinks', async () => {
+    // Given
+    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - both shortcuts with label text and URL list should be present
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
+    expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('Dev Console URL: https://mystore.myshopify.com/admin?dev-console=show')
+    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+
+    renderInstance.unmount()
+  })
+
   test('shows non-interactive fallback when raw mode is not supported', async () => {
     // Given - mock useStdin to return false for isRawModeSupported
     mocks.useStdin.mockReturnValue({isRawModeSupported: false})
@@ -492,8 +701,5 @@ describe('DevSessionUI', () => {
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
-
-    // Restore original mock for other tests
-    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
   })
 })

@@ -1,0 +1,129 @@
+import {prepareAdminStoreGraphQLContext} from './admin-context.js'
+import {fetchPublicApiVersions} from './admin-transport.js'
+import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
+import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
+
+vi.mock('../auth/session-lifecycle.js', () => ({loadStoredStoreSession: vi.fn()}))
+vi.mock('../attribution.js')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./admin-transport.js', () => ({
+  fetchPublicApiVersions: vi.fn(),
+  // runAdminStoreGraphQLOperation isn't exercised here, but we re-export it for type completeness.
+  runAdminStoreGraphQLOperation: vi.fn(),
+}))
+
+describe('prepareAdminStoreGraphQLContext', () => {
+  const store = 'shop.myshopify.com'
+  const storedSession = {
+    store,
+    clientId: STORE_AUTH_APP_CLIENT_ID,
+    userId: '42',
+    accessToken: 'token',
+    refreshToken: 'refresh-token',
+    scopes: ['read_products', 'write_orders'],
+    acquiredAt: '2026-03-27T00:00:00.000Z',
+  }
+
+  beforeEach(() => {
+    vi.mocked(loadStoredStoreSession).mockResolvedValue(storedSession)
+    vi.mocked(fetchPublicApiVersions).mockResolvedValue([
+      {handle: '2025-10', supported: true},
+      {handle: '2025-07', supported: true},
+      {handle: 'unstable', supported: false},
+    ])
+  })
+
+  test('returns the stored admin session, version, and full auth session', async () => {
+    const result = await prepareAdminStoreGraphQLContext({store})
+
+    expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
+    expect(setLastSeenUserId).toHaveBeenCalledWith('42')
+    expect(fetchPublicApiVersions).toHaveBeenCalledWith({
+      adminSession: {token: 'token', storeFqdn: store},
+      session: storedSession,
+    })
+    expect(result).toEqual({
+      adminSession: {token: 'token', storeFqdn: store},
+      version: '2025-10',
+      session: storedSession,
+    })
+  })
+
+  test('uses the loaded refreshed session for both admin auth and returned context', async () => {
+    const refreshedSession = {
+      ...storedSession,
+      accessToken: 'fresh-token',
+      refreshToken: 'fresh-refresh-token',
+      expiresAt: '2026-04-03T00:00:00.000Z',
+    }
+    vi.mocked(loadStoredStoreSession).mockResolvedValue(refreshedSession)
+
+    const result = await prepareAdminStoreGraphQLContext({store})
+
+    expect(fetchPublicApiVersions).toHaveBeenCalledWith({
+      adminSession: {token: 'fresh-token', storeFqdn: store},
+      session: refreshedSession,
+    })
+    expect(result.adminSession.token).toBe('fresh-token')
+    expect(result.session).toEqual(refreshedSession)
+  })
+
+  test('returns the requested API version when provided', async () => {
+    const result = await prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: '2025-07'})
+
+    expect(result.version).toBe('2025-07')
+  })
+
+  test('allows unstable without consulting the transport, but still loads the stored session', async () => {
+    const result = await prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: 'unstable'})
+
+    expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
+    expect(result).toEqual({
+      adminSession: {token: 'token', storeFqdn: store},
+      version: 'unstable',
+      session: storedSession,
+    })
+    expect(fetchPublicApiVersions).not.toHaveBeenCalled()
+  })
+
+  test('throws when the requested API version is invalid', async () => {
+    await expect(prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: '1999-01'})).rejects.toThrow(
+      'Invalid API version',
+    )
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
+  })
+
+  test('does not record validated store metadata when loading stored auth fails', async () => {
+    vi.mocked(loadStoredStoreSession).mockRejectedValue(new AbortError('missing stored auth'))
+
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('missing stored auth')
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
+    expect(fetchPublicApiVersions).not.toHaveBeenCalled()
+  })
+
+  test('re-records fqdn metadata when the stored session store differs from the requested store', async () => {
+    vi.mocked(loadStoredStoreSession).mockResolvedValue({...storedSession, store: 'permanent-shop.myshopify.com'})
+
+    await prepareAdminStoreGraphQLContext({store})
+
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('permanent-shop.myshopify.com', true)
+  })
+
+  test('rethrows whatever the transport raises (errors are owned by the transport)', async () => {
+    vi.mocked(fetchPublicApiVersions).mockRejectedValue(new AbortError('upstream exploded'))
+
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('upstream exploded')
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
+  })
+})

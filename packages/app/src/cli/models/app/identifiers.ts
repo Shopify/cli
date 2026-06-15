@@ -52,11 +52,9 @@ export async function updateAppIdentifiers(
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
 
-  if (!dotenvFile) {
-    dotenvFile = {
-      path: joinPath(app.directory, getDotEnvFileName(app.configPath)),
-      variables: {},
-    }
+  dotenvFile ??= {
+    path: joinPath(app.directory, getDotEnvFileName(app.configPath)),
+    variables: {},
   }
   const updatedVariables: {[key: string]: string} = {...(app.dotenv?.variables ?? {})}
   if (!systemEnvironment[app.idEnvironmentVariableName]) {

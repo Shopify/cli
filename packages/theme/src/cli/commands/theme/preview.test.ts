@@ -107,4 +107,18 @@ describe('Preview', () => {
       }),
     )
   })
+
+  test('passes --json to devWithOverrideFile when provided', async () => {
+    const expectedTheme = buildTheme({id: 5, name: 'Expected Theme', role: 'unpublished'})!
+    vi.mocked(findOrSelectTheme).mockResolvedValue(expectedTheme)
+
+    await run(['--overrides=/path/to/overrides.json', `--theme=${expectedTheme.id}`, '--json'])
+
+    expect(devWithOverrideFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        themeId: expectedTheme.id.toString(),
+        json: true,
+      }),
+    )
+  })
 })

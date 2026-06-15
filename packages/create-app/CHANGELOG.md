@@ -1,5 +1,17 @@
 # @shopify/create-app
 
+## 4.1.0
+
+## 4.0.0
+
+### Major Changes
+
+- 0c35553: Drop support for Node 20
+
+## 3.94.0
+
+## 3.93.0
+
 ## 3.92.0
 
 ## 3.91.0

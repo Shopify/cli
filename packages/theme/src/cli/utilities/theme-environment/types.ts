@@ -123,7 +123,7 @@ export interface DevServerContext {
     /**
      * Port to bind the development server to.
      */
-    port: string
+    port: number
 
     /**
      * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']

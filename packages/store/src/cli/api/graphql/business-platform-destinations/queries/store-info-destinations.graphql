@@ -1,0 +1,11 @@
+query StoreInfoDestinations($search: String!) {
+  currentUserAccount {
+    destinations(search: $search, shopsOnly: true, first: 25) {
+      nodes {
+        publicId
+        primaryDomain
+        webUrl
+      }
+    }
+  }
+}

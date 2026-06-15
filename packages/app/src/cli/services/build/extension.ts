@@ -1,7 +1,8 @@
-import {runThemeCheck} from './theme-check.js'
+import {formatBundleSize} from './bundle-size.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
+import {validateSchemaApiVersion} from '../function/schema-version.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -56,32 +57,29 @@ export interface ExtensionBuildOptions {
 }
 
 /**
- * It builds the theme extensions.
- * @param options - Build options.
- */
-export async function buildThemeExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
-  options.stdout.write(`Running theme check on your Theme app extension...`)
-  const offenses = await runThemeCheck(extension.directory)
-  if (offenses) options.stdout.write(offenses)
-}
-
-/**
  * It builds the UI extensions.
  * @param options - Build options.
+ * @returns The local output path.
  */
-export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
+export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<string> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
   const env = options.app.dotenv?.variables ?? {}
   if (options.appURL) {
     env.APP_URL = options.appURL
   }
 
+  const buildDirectory = options.buildDirectory ?? ''
+
+  // Always build into the extension's local directory (e.g. ext/dist/handle.js)
+  const localOutputPath = joinPath(extension.directory, buildDirectory, extension.outputRelativePath)
+
   const {main, assets} = extension.getBundleExtensionStdinContent()
 
+  const startTime = performance.now()
   try {
     await bundleExtension({
       minify: true,
-      outputPath: extension.outputPath,
+      outputPath: localOutputPath,
       stdin: {
         contents: main,
         resolveDir: extension.directory,
@@ -98,7 +96,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
         assets.map(async (asset) => {
           await bundleExtension({
             minify: true,
-            outputPath: joinPath(dirname(extension.outputPath), asset.outputFileName),
+            outputPath: joinPath(dirname(localOutputPath), asset.outputFileName),
             stdin: {
               contents: asset.content,
               resolveDir: extension.directory,
@@ -112,16 +110,26 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
         }),
       )
     }
-  } catch (extensionBundlingError) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (extensionBundlingError: any) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
-    throw new AbortError(
+    // Preserve esbuild errors array so the dev watcher can format actionable error messages
+    const errorMessage = (extensionBundlingError as Error).message ?? 'Unknown error occurred'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newError: any = new AbortError(
       `Failed to bundle extension ${extension.localIdentifier}. Please check the extension source code for errors.`,
+      errorMessage,
     )
+    newError.errors = extensionBundlingError.errors
+    throw newError
   }
 
-  await extension.buildValidation()
+  await extension.buildValidation({outputPath: localOutputPath})
 
-  options.stdout.write(`${extension.localIdentifier} successfully built`)
+  const duration = Math.round(performance.now() - startTime)
+  const sizeInfo = await formatBundleSize(localOutputPath)
+  options.stdout.write(`${extension.localIdentifier} successfully built in ${duration}ms${sizeInfo}`)
+  return localOutputPath
 }
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions
@@ -149,10 +157,17 @@ export async function buildFunctionExtension(
   }
 
   try {
+    const functionConfiguration = (extension as ExtensionInstance<FunctionConfigType>).configuration
     const bundlePath = extension.outputPath
-    const relativeBuildPath = extension.specification.getOutputRelativePath?.(extension) ?? ''
+    const relativeBuildPath = functionConfiguration.build?.path ?? extension.outputRelativePath
 
     extension.outputPath = joinPath(extension.directory, relativeBuildPath)
+
+    await validateSchemaApiVersion({
+      directory: extension.directory,
+      localIdentifier: extension.localIdentifier,
+      apiVersion: functionConfiguration.api_version,
+    })
 
     if (extension.isJavaScript) {
       await runCommandOrBuildJSFunction(extension, options)
@@ -169,9 +184,18 @@ export async function buildFunctionExtension(
       await runTrampoline(extension.outputPath)
     }
 
-    if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
+    const projectOutputPath = joinPath(extension.directory, extension.outputRelativePath)
+
+    if (
+      fileExistsSync(extension.outputPath) &&
+      bundlePath !== extension.outputPath &&
+      bundlePath !== projectOutputPath &&
+      dirname(bundlePath) !== dirname(extension.outputPath)
+    ) {
+      // Bundle build for deploy: base64-encode into the bundle directory
       await bundleFunctionExtension(extension.outputPath, bundlePath)
     }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.

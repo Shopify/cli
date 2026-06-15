@@ -1,5 +1,5 @@
 import * as path from 'pathe'
-import {defineConfig} from 'vitest/config'
+import {configDefaults, defineConfig} from 'vitest/config'
 import type {AliasOptions} from 'vite'
 
 const TIMEOUTS = {
@@ -41,6 +41,7 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
       clearMocks: true,
       mockReset: true, // Note: In Vitest 3.0, mockReset restores the original implementation
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
+      exclude: [...configDefaults.exclude, '**/dist/**'],
       reporters: process.env.CI ? ['basic'] : ['verbose', 'hanging-process'],
       pool: poolStrategy,
       coverage: {
@@ -82,5 +83,7 @@ export const aliases = (packagePath: string) => {
       },
     },
     {find: '@shopify/theme', replacement: path.join(packagePath, '../theme/src/index')},
+    {find: '@shopify/organizations', replacement: path.join(packagePath, '../organizations/src/index')},
+    {find: '@shopify/store', replacement: path.join(packagePath, '../store/src/index')},
   ]
 }

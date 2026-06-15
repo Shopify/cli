@@ -1,4 +1,3 @@
-import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {BaseConfigType} from '../models/extensions/schemas.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
@@ -32,10 +31,11 @@ const JsonSchemaBaseProperties = {
  * @returns A function that can parse a configuration object
  */
 export async function unifiedConfigurationParserFactory(
-  merged: RemoteAwareExtensionSpecification & FlattenedRemoteSpecification,
+  merged: RemoteAwareExtensionSpecification,
+  validationSchema: {jsonSchema: string} | null | undefined,
   handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'strip',
 ) {
-  const contractJsonSchema = merged.validationSchema?.jsonSchema
+  const contractJsonSchema = validationSchema?.jsonSchema
   if (contractJsonSchema === undefined || isEmpty(JSON.parse(contractJsonSchema))) {
     return merged.parseConfigurationObject
   }
@@ -59,7 +59,7 @@ export async function unifiedConfigurationParserFactory(
     )
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
-    let errors = zodParse.errors || []
+    let errors = zodParse.errors ?? []
     if (jsonSchemaParse.state === 'error') {
       errors = errors.concat(jsonSchemaParse.errors)
     }

@@ -5,10 +5,11 @@ import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {throttle} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
+import {useComplete} from '../../ui.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 
 import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
-import {Box, useApp} from 'ink'
+import {Box} from 'ink'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -27,9 +28,17 @@ export interface AutocompletePromptProps<T> {
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
   groupOrder?: string[]
+  /**
+   * Throttle window in milliseconds applied to the search callback. Defaults to 400ms,
+   * which is appropriate for remote/paginated backends. In-memory consumers (where the
+   * search callback resolves synchronously) can pass 0 for instant filtering on every
+   * keystroke.
+   */
+  searchDebounceMs?: number
 }
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
+const DEFAULT_SEARCH_DEBOUNCE_MS = 400
 
 function AutocompletePrompt<T>({
   message,
@@ -41,8 +50,9 @@ function AutocompletePrompt<T>({
   abortSignal,
   infoMessage,
   groupOrder,
+  searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
-  const {exit: unmountInk} = useApp()
+  const complete = useComplete()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
   const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
@@ -72,10 +82,10 @@ function AutocompletePrompt<T>({
   useEffect(() => {
     if (promptState === PromptState.Submitted && answer) {
       setSearchTerm('')
-      unmountInk()
       onSubmit(answer.value)
+      complete()
     }
-  }, [answer, onSubmit, promptState, unmountInk])
+  }, [answer, onSubmit, promptState, complete])
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
 
@@ -120,10 +130,10 @@ function AutocompletePrompt<T>({
               clearTimeout(setLoadingWhenSlow.current)
             })
         },
-        400,
+        searchDebounceMs,
         {leading: true, trailing: true},
       ),
-    [paginatedSearch, setPromptState],
+    [paginatedSearch, setPromptState, searchDebounceMs],
   )
 
   return (

@@ -5,7 +5,10 @@ import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit
 import {joinPath, moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
 import {platform} from 'os'
 
-vi.mock('os')
+vi.mock('os', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('os')>()
+  return {...actual, platform: vi.fn()}
+})
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '1.2.3'}))
 

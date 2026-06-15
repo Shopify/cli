@@ -206,6 +206,60 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       expect(result).toBe(true)
     })
 
+    test('and no force with deleted extensions and installCount should pass installCount to danger prompt', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+      const renderDangerousConfirmationPromptSpyOn = vi
+        .spyOn(ui, 'renderDangerousConfirmationPrompt')
+        .mockResolvedValue(true)
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      const appTitle = 'app title'
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle,
+        release: true,
+        force: false,
+        installCount: 1243,
+      })
+
+      // Then
+      expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          warningItem: expect.arrayContaining([{error: '1243'}]),
+        }),
+      )
+      expect(result).toBe(true)
+    })
+
+    test('and no force with deleted extensions but installCount 0 should not pass warningItem to danger prompt', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+      const renderDangerousConfirmationPromptSpyOn = vi
+        .spyOn(ui, 'renderDangerousConfirmationPrompt')
+        .mockResolvedValue(true)
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      const appTitle = 'app title'
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle,
+        release: true,
+        force: false,
+        installCount: 0,
+      })
+
+      // Then
+      expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          warningItem: expect.anything(),
+        }),
+      )
+      expect(result).toBe(true)
+    })
+
     test('and no force with deleted extensions but without app title should display the complete confirmation prompt', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()

@@ -28,17 +28,20 @@ async function addUidToToml(extension: ExtensionInstance) {
     if (currentExtension && 'uid' in currentExtension) return
   }
 
-  if (extensionsArray && extensionsArray.length > 1) {
-    // Multi-extension TOML: use regex to insert uid after the correct handle.
+  if (extensionsArray) {
+    // [[extensions]] array-of-tables TOML: use regex to insert uid after the correct handle.
     // updateTomlValues (WASM) doesn't support patching individual array-of-tables entries,
-    // so transformRaw with positional insertion is the pragmatic choice here.
+    // so transformRaw with positional insertion is the pragmatic choice here. This applies
+    // whether the array has one entry or many — putting `uid` at the top level of the file
+    // would place it outside the [[extensions]] block, which is the wrong location.
     const handle = extension.handle
     await file.transformRaw((raw) => {
       const regex = new RegExp(`(\\n?(\\s*)handle\\s*=\\s*"${handle}")`)
       return raw.replace(regex, `$1\n$2uid = "${extension.uid}"`)
     })
   } else {
-    // Single extension (or no extensions array): add uid at the top level via WASM patch
+    // Legacy single-extension TOML with top-level `type`/`handle` fields: add uid at the
+    // top level via WASM patch.
     await file.patch({uid: extension.uid})
   }
 }

@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
-import {envFixture, executables} from './env.js'
+import {CLI_TIMEOUT} from './constants.js'
+import {createLogger, envFixture, executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {execa, type Options as ExecaOptions} from 'execa'
 import type {E2EEnv} from './env.js'
@@ -11,9 +11,19 @@ export interface ExecResult {
   exitCode: number
 }
 
+export interface WaitForOutputOptions {
+  timeoutMs?: number
+  /** Cancel the wait early — frees the timer and removes the waiter entry. */
+  signal?: AbortSignal
+}
+
 export interface SpawnedProcess {
-  /** Wait for a string to appear in the PTY output */
-  waitForOutput(text: string, timeoutMs?: number): Promise<void>
+  /**
+   * Wait for a string to appear in the PTY output.
+   * Pass a number for the legacy positional `timeoutMs` form, or an options
+   * object to also supply an `AbortSignal` for cancellation.
+   */
+  waitForOutput(text: string, opts?: number | WaitForOutputOptions): Promise<void>
   /** Send a single key to the PTY */
   sendKey(key: string): void
   /** Send a line of text followed by Enter */
@@ -44,11 +54,23 @@ export interface CLIProcess {
 export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
   cli: async ({env}, use) => {
     const spawnedProcesses: SpawnedProcess[] = []
+    const cliLog = createLogger('cli')
+
+    // When DEBUG=1, tee the subprocess streams to the parent so the CLI's
+    // info/success boxes and progress messages appear live, while still
+    // letting execa buffer and return the captured output.
+    const runExeca = (bin: string, args: string[], execaOpts: ExecaOptions) => {
+      const subprocess = execa('node', [bin, ...args], execaOpts)
+      if (process.env.DEBUG === '1') {
+        subprocess.stdout?.pipe(process.stdout, {end: false})
+        subprocess.stderr?.pipe(process.stderr, {end: false})
+      }
+      return subprocess
+    }
 
     const cli: CLIProcess = {
       async exec(args, opts = {}) {
-        // 3 min default
-        const timeout = opts.timeout ?? 3 * 60 * 1000
+        const timeout = opts.timeout ?? CLI_TIMEOUT.medium
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
           env: {...env.processEnv, ...opts.env},
@@ -56,11 +78,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           reject: false,
         }
 
-        if (process.env.DEBUG === '1') {
-          console.log(`[e2e] exec: node ${executables.cli} ${args.join(' ')}`)
-        }
+        cliLog.log(env, `exec: node ${executables.cli}`)
+        cliLog.log(env, args.join(' '))
 
-        const result = await execa('node', [executables.cli, ...args], execaOpts)
+        const result = await runExeca(executables.cli, args, execaOpts)
 
         return {
           stdout: result.stdout ?? '',
@@ -70,8 +91,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
       },
 
       async execCreateApp(args, opts = {}) {
-        // 5 min default for scaffolding
-        const timeout = opts.timeout ?? 5 * 60 * 1000
+        const timeout = opts.timeout ?? CLI_TIMEOUT.long
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
           env: {...env.processEnv, ...opts.env},
@@ -79,11 +99,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           reject: false,
         }
 
-        if (process.env.DEBUG === '1') {
-          console.log(`[e2e] exec: node ${executables.createApp} ${args.join(' ')}`)
-        }
+        cliLog.log(env, `exec: node ${executables.createApp}`)
+        cliLog.log(env, `app init ${args.join(' ')}`)
 
-        const result = await execa('node', [executables.createApp, ...args], execaOpts)
+        const result = await runExeca(executables.createApp, args, execaOpts)
 
         return {
           stdout: result.stdout ?? '',
@@ -103,9 +122,8 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           }
         }
 
-        if (process.env.DEBUG === '1') {
-          console.log(`[e2e] spawn: node ${executables.cli} ${args.join(' ')}`)
-        }
+        cliLog.log(env, `spawn: node ${executables.cli}`)
+        cliLog.log(env, args.join(' '))
 
         const ptyProcess = nodePty.spawn('node', [executables.cli, ...args], {
           name: 'xterm-color',
@@ -124,13 +142,13 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
             process.stdout.write(data)
           }
 
-          // Check if any waiters are satisfied (check both raw and stripped output)
+          // Check if any waiters are satisfied (check both raw and stripped
+          // output). resolve() removes the waiter from outputWaiters internally,
+          // so we iterate over a snapshot to avoid index shifting during the loop.
           const stripped = stripAnsi(output)
-          for (let idx = outputWaiters.length - 1; idx >= 0; idx--) {
-            const waiter = outputWaiters[idx]
-            if (waiter && (stripped.includes(waiter.text) || output.includes(waiter.text))) {
+          for (const waiter of [...outputWaiters]) {
+            if (stripped.includes(waiter.text) || output.includes(waiter.text)) {
               waiter.resolve()
-              outputWaiters.splice(idx, 1)
             }
           }
         })
@@ -143,26 +161,39 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           if (exitResolve) {
             exitResolve(code)
           }
-          // Reject any remaining output waiters
-          for (const waiter of outputWaiters) {
+          // Reject any remaining output waiters. reject() removes each waiter
+          // from outputWaiters, so iterate over a snapshot to avoid skipping.
+          for (const waiter of [...outputWaiters]) {
             waiter.reject(new Error(`Process exited (code ${code}) while waiting for output: "${waiter.text}"`))
           }
-          outputWaiters.length = 0
         })
 
         const spawned: SpawnedProcess = {
           ptyProcess,
 
-          waitForOutput(text: string, timeoutMs = 3 * 60 * 1000) {
+          waitForOutput(text: string, opts: number | WaitForOutputOptions = {}) {
+            const {timeoutMs = CLI_TIMEOUT.medium, signal} =
+              typeof opts === 'number' ? {timeoutMs: opts, signal: undefined} : opts
+
             // Check if already in output (raw or stripped)
             if (stripAnsi(output).includes(text) || output.includes(text)) {
               return Promise.resolve()
             }
+            if (signal?.aborted) {
+              return Promise.reject(new Error(`Cancelled waiting for output: "${text}"`))
+            }
 
             return new Promise<void>((resolve, reject) => {
+              // eslint-disable-next-line prefer-const
+              let waiter: {text: string; resolve: () => void; reject: (err: Error) => void}
+
+              const removeWaiter = () => {
+                const idx = outputWaiters.indexOf(waiter)
+                if (idx >= 0) outputWaiters.splice(idx, 1)
+              }
+
               const timer = setTimeout(() => {
-                const waiterIdx = outputWaiters.findIndex((waiter) => waiter.text === text)
-                if (waiterIdx >= 0) outputWaiters.splice(waiterIdx, 1)
+                removeWaiter()
                 reject(
                   new Error(
                     `Timed out after ${timeoutMs}ms waiting for output: "${text}"\n\nCaptured output:\n${stripAnsi(
@@ -172,17 +203,32 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
                 )
               }, timeoutMs)
 
-              outputWaiters.push({
+              waiter = {
                 text,
                 resolve: () => {
                   clearTimeout(timer)
+                  removeWaiter()
                   resolve()
                 },
                 reject: (err) => {
                   clearTimeout(timer)
+                  removeWaiter()
                   reject(err)
                 },
-              })
+              }
+              outputWaiters.push(waiter)
+
+              if (signal) {
+                signal.addEventListener(
+                  'abort',
+                  () => {
+                    clearTimeout(timer)
+                    removeWaiter()
+                    reject(new Error(`Cancelled waiting for output: "${text}"`))
+                  },
+                  {once: true},
+                )
+              }
             })
           },
 
@@ -194,7 +240,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
             ptyProcess.write(`${line}\r`)
           },
 
-          waitForExit(timeoutMs = 60 * 1000) {
+          waitForExit(timeoutMs = CLI_TIMEOUT.short) {
             if (exitCode !== undefined) {
               return Promise.resolve(exitCode)
             }
@@ -238,5 +284,10 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
     }
   },
 })
+
+export interface CLIContext {
+  cli: CLIProcess
+  appDir: string
+}
 
 export {type E2EEnv}

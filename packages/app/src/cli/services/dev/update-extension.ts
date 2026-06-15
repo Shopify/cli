@@ -3,17 +3,11 @@ import {
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {AppConfiguration} from '../../models/app/app.js'
-import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
-import {relativizePath} from '@shopify/cli-kit/node/path'
-import {errorsToString as zodErrorsToString, zod} from '@shopify/cli-kit/node/schema'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -100,59 +94,5 @@ export async function updateExtensionDraft({
   } else {
     const draftUpdateSuccesMessage = extension.draftMessages.successMessage
     if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
-  }
-}
-
-interface UpdateExtensionConfigOptions {
-  extension: ExtensionInstance
-  stdout: Writable
-}
-
-export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOptions) {
-  const abort = (
-    errorMessage: OutputMessage,
-    _fallbackOutput?: unknown,
-    _path?: string,
-    rawErrors?: zod.ZodIssueBase[],
-  ) => {
-    let message = typeof errorMessage === 'string' ? errorMessage : errorMessage.value
-    if (rawErrors) message = zodErrorsToString(rawErrors)
-    throw new AbortError(message)
-  }
-
-  const tomlFile = await TomlFile.read(extension.configurationPath)
-  let configObject = tomlFile.content
-  const {extensions} = ExtensionsArraySchema.parse(configObject)
-
-  if (extensions) {
-    // If the config has an array, find our extension using the handle.
-    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configurationPath, abort)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
-    if (!extensionConfig) {
-      abort(
-        `ERROR: Invalid handle
-  - Expected handle: "${extension.handle}"
-  - Configuration file path: ${relativizePath(extension.configurationPath)}.
-  - Handles are immutable, you can't change them once they are set.`,
-      )
-    }
-
-    configObject = {...configuration, ...extensionConfig}
-  }
-
-  const newConfig = await parseConfigurationObjectAgainstSpecification(
-    extension.specification,
-    extension.configurationPath,
-    configObject,
-    abort,
-  )
-
-  const previousConfig = extension.configuration
-  extension.configuration = newConfig
-
-  return {
-    previousConfig,
-    newConfig,
   }
 }

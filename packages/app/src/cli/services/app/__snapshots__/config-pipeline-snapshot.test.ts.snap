@@ -38,12 +38,12 @@ api_version = "2024-01"
   compliance_topics = [ "customers/data_request", "customers/redact" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "orders/create" ]
   uri = "/webhooks/orders"
+  topics = [ "orders/create" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "products/create", "products/update" ]
   uri = "/webhooks/products"
+  topics = [ "products/create", "products/update" ]
 
 [app_proxy]
 url = "https://myapp.example.com/proxy"
@@ -109,9 +109,9 @@ redirect_urls = [
 api_version = "2024-01"
 
   [[webhooks.subscriptions]]
-  topics = [ "orders/create" ]
   uri = "/webhooks"
   compliance_topics = [ "customers/data_request", "customers/redact" ]
+  topics = [ "orders/create" ]
 
 [app_proxy]
 url = "https://myapp.example.com/proxy"
@@ -139,16 +139,16 @@ automatically_update_urls_on_dev = true
 dev_store_url = "test-store.myshopify.com"
 include_config_on_deploy = true
 
-[access.admin]
-direct_api_mode = "online"
-embedded_app_direct_api_access = true
-
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
+use_legacy_install_flow = false
 required_scopes = [ "read_products" ]
 optional_scopes = [ "write_orders" ]
-use_legacy_install_flow = false
+
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
 
 [auth]
 redirect_urls = [
@@ -160,13 +160,13 @@ redirect_urls = [
 api_version = "2024-01"
 
   [[webhooks.subscriptions]]
-  topics = [ "orders/create" ]
   uri = "/webhooks/orders"
+  topics = [ "orders/create" ]
   filter = "status:paid"
 
   [[webhooks.subscriptions]]
-  topics = [ "orders/update" ]
   uri = "/webhooks/orders"
+  topics = [ "orders/update" ]
   filter = "status:pending"
 
 [app_proxy]
@@ -195,16 +195,16 @@ automatically_update_urls_on_dev = true
 dev_store_url = "test-store.myshopify.com"
 include_config_on_deploy = true
 
-[access.admin]
-direct_api_mode = "online"
-embedded_app_direct_api_access = true
-
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
+use_legacy_install_flow = false
 required_scopes = [ "read_products" ]
 optional_scopes = [ "write_orders" ]
-use_legacy_install_flow = false
+
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
 
 [auth]
 redirect_urls = [
@@ -216,13 +216,13 @@ redirect_urls = [
 api_version = "2024-01"
 
   [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
   uri = "/webhooks/products"
+  topics = [ "products/create" ]
   include_fields = [ "id", "title" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "products/update" ]
   uri = "/webhooks/products"
+  topics = [ "products/update" ]
   include_fields = [ "id" ]
 
 [app_proxy]
@@ -251,16 +251,16 @@ automatically_update_urls_on_dev = true
 dev_store_url = "test-store.myshopify.com"
 include_config_on_deploy = true
 
-[access.admin]
-direct_api_mode = "online"
-embedded_app_direct_api_access = true
-
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
+use_legacy_install_flow = false
 required_scopes = [ "read_products" ]
 optional_scopes = [ "write_orders" ]
-use_legacy_install_flow = false
+
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
 
 [auth]
 redirect_urls = [
@@ -272,12 +272,12 @@ redirect_urls = [
 api_version = "2024-01"
 
   [[webhooks.subscriptions]]
-  topics = [ "orders/create", "orders/updated", "orders/cancelled" ]
   uri = "/webhooks/orders"
+  topics = [ "orders/create", "orders/updated", "orders/cancelled" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
   uri = "/webhooks/products"
+  topics = [ "products/create" ]
   include_fields = [ "id", "title" ]
 
   [[webhooks.subscriptions]]
@@ -285,8 +285,8 @@ api_version = "2024-01"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
   uri = "/webhooks/app"
+  topics = [ "app/uninstalled" ]
 
 [app_proxy]
 url = "https://myapp.example.com/proxy"
@@ -339,16 +339,16 @@ api_version = "2024-01"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
   uri = "/webhooks/app"
+  topics = [ "app/uninstalled" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "orders/cancelled", "orders/create", "orders/updated" ]
   uri = "/webhooks/orders"
+  topics = [ "orders/cancelled", "orders/create", "orders/updated" ]
 
   [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
   uri = "/webhooks/products"
+  topics = [ "products/create" ]
   include_fields = [ "id", "title" ]
 
 [app_proxy]

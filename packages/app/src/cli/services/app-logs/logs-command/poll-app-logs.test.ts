@@ -44,13 +44,13 @@ const EMPTY_FILTERS = {status: undefined, sources: undefined}
 const createMockResponse = (data: any, status = 200, statusText = 'OK') => {
   if (status !== 200 || data.errors) {
     return {
-      errors: data.errors || [`Error with status ${status}`],
+      errors: data.errors ?? [`Error with status ${status}`],
       status,
     }
   }
 
   return {
-    app_logs: data.app_logs || [],
+    app_logs: data.app_logs ?? [],
     cursor: data.cursor,
     status,
   }

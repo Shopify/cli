@@ -3,6 +3,7 @@ query fetchSpecifications($organizationId: ID!) {
     name
     identifier
     externalIdentifier
+    experience
     features
     uidStrategy {
       __typename

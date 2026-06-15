@@ -20,7 +20,13 @@ export type CreateAppVersionMutation = {
         handle: string
         config: JsonMapType
         target?: string | null
-        specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
+        specification: {
+          identifier: string
+          externalIdentifier: string
+          name: string
+          experience: string
+          managementExperience: string
+        }
       }[]
       metadata: {versionTag?: string | null; message?: string | null}
     } | null
@@ -161,6 +167,7 @@ export const CreateAppVersion = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'experience'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },

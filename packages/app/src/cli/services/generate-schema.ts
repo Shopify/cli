@@ -1,3 +1,4 @@
+import {prependSchemaVersionHeader} from './function/schema-version.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
@@ -22,7 +23,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   const apiKey = app.configuration.client_id
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
-  const definition = await (usingTargets
+  const fetchedDefinition = await (usingTargets
     ? generateSchemaFromTarget({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
@@ -40,6 +41,8 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
         version,
         orgId,
       }))
+
+  const definition = prependSchemaVersionHeader(fetchedDefinition, version)
 
   if (stdout) {
     outputResult(definition)

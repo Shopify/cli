@@ -65,6 +65,9 @@ const SECOND_EXEC_RESPONSE = {
 describe('useFunctionWatcher', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    // Prevent real chokidar/fsevents watchers from being created in tests.
+    // The hook only needs the AppEventWatcher as an EventEmitter, not real file watching.
+    vi.spyOn(AppEventWatcher.prototype, 'start').mockResolvedValue()
   })
 
   afterEach(() => {

@@ -1,5 +1,111 @@
 # @shopify/app
 
+## 4.1.0
+
+### Minor Changes
+
+- 8943b19: Update extension-only template to include app home by default
+
+### Patch Changes
+
+- 45b1884: Fix `shopify app init` leaving dangling `node_modules` symlinks on Windows when using `pnpm` (and similarly affected package managers). The scaffolded project is now moved to its final directory before dependencies are installed, so package-manager-managed symlinks/junctions resolve to the final location instead of the temporary scaffold path.
+- Updated dependencies [8943b19]
+- Updated dependencies [5156580]
+  - @shopify/cli-kit@4.1.0
+  - @shopify/plugin-cloudflare@4.1.0
+  - @shopify/theme@4.1.0
+
+## 4.0.0
+
+### Major Changes
+
+- 96281e6: Remove the deprecated `--force` (`-f`) flag and `SHOPIFY_FLAG_FORCE` environment variable from `shopify app deploy`. Use `--allow-updates` for CI/CD environments, or `--allow-updates --allow-deletes` if you also want to allow removals. The `--no-release` flag continues to work and implicitly allows updates and deletes.
+- ad69d29: Remove the deprecated `--type` (`-t`) flag and `SHOPIFY_FLAG_EXTENSION_TYPE` environment variable from `shopify app generate extension`. Use `--template` (`SHOPIFY_FLAG_EXTENSION_TEMPLATE`) instead.
+- f23fe6c: Remove the deprecated `shopify app generate schema` command. Use `shopify app function schema` instead.
+- c36d5c2: Remove the deprecated `--force` (`-f`) flag and `SHOPIFY_FLAG_FORCE` environment variable from `shopify app release`. Use `--allow-updates` for CI/CD environments, or `--allow-updates --allow-deletes` if you also want to allow removals. Passing both `--allow-updates` and `--allow-deletes` skips the confirmation prompt (matching the previous `--force` behavior).
+- ec867ef: Remove the deprecated `shopify app scaffold extension` command. Use `shopify app generate extension` instead. (The command was already unregistered from the CLI command map but the file remained on disk; this change deletes the orphaned source file.)
+- 60d2697: Remove the deprecated top-level `shopify webhook trigger` alias. Use `shopify app webhook trigger` instead.
+- 38ce793: Remove the deprecated `--shared-secret` flag and `SHOPIFY_FLAG_SHARED_SECRET` environment variable from `shopify app webhook trigger`. Use `--client-secret` (`SHOPIFY_FLAG_CLIENT_SECRET`) instead.
+- 0c35553: Drop support for Node 20
+
+### Patch Changes
+
+- 2520541: Fix Spawn ETXTBSY bug with multiple Functions using trampoline binaries
+- e4ec92b: Show Local URL in dev info when no App URL is available
+- f8eabc1: Detect files added during a running dev session
+- a7d448b: Handle modern Bun `bun.lock` files when cleaning up app templates so non-Bun projects do not keep stale Bun lockfiles or `.gitignore` entries.
+- e94c94e: Fix `shopify app build` intermittently failing with "Source and destination must not be the same" on UI extensions when the local esbuild output directory and the bundle output directory resolve to the same path but differ as strings (e.g. due to `.` segments, trailing slashes, or path joining quirks). The same-path guard now normalizes both paths via `resolvePath` before comparison.
+- 1bf342d: Fix `uid` being written outside the `[[extensions]]` block in single-entry array-of-tables TOMLs (the shape produced by `shopify app init` templates).
+- 926db8b: Guard app bundle uploads against oversized bundles and asset paths resolving outside the app directory
+- 8a9c5a1: Display a friendly error message instead of a stack trace when running `shopify app config link --client-id=<id>` against a Dev Dashboard app and the client ID does not exist.
+- 6cb484f: Hide the deprecated `remix` template from `shopify app init --template` help text and validation messages. The React Router template has replaced Remix as the supported choice. Passing `--template remix` continues to work for backwards compatibility.
+- c70e536: The CLI-generated `shopify.d.ts` now types the `shopify` binding as `Api & ShopifyGlobal` (intersection) for UI extension targets whose `.d.ts` re-exports a `ShopifyGlobal` type. Existing consumers who access the target API via `shopify.*` are unaffected; new host-level APIs like `shopify.addEventListener` now type-check automatically for opt-in targets (e.g. POS background extensions). Targets that do not re-export `ShopifyGlobal` emit the same output as before.
+- d5028b5: Fix unhelpful error when extension locale file has invalid UTF-8
+- Updated dependencies [67745ee]
+- Updated dependencies [a7d448b]
+- Updated dependencies [1e8963e]
+- Updated dependencies [c6a114d]
+- Updated dependencies [8f4e546]
+- Updated dependencies [2cb5f44]
+- Updated dependencies [a960ee9]
+- Updated dependencies [0c35553]
+  - @shopify/cli-kit@4.0.0
+  - @shopify/theme@4.0.0
+  - @shopify/plugin-cloudflare@4.0.0
+
+## 3.94.0
+
+### Minor Changes
+
+- 3d38f4a: Render footer links in `app dev` as hyperlinks, if supported by the terminal.
+- 66b41fd: Added a separate Dev Console link to the `app dev` output for non-embedded apps
+- dbcdf9f: report file size for extensions on build and dev
+
+### Patch Changes
+
+- 3e3c971: Bump Shopify/theme-tools packages
+  - @shopify/theme-check-node: 3.24.0 → 3.25.0
+  - @shopify/theme-language-server-node: 2.20.2 → 2.21.0
+
+  Includes ValidScopedCSSClass theme check, color_palette input support, and various fixes.
+
+- bb884b1: Avoid spurious config prompts:
+  - Skip TOML selection prompt when using --reset flag
+  - Use default shopify.app.toml without prompting when running `config link --client-id` with no existing TOML files
+- Updated dependencies [3e3c971]
+- Updated dependencies [b2fc8bc]
+- Updated dependencies [a95ee0f]
+- Updated dependencies [04b8492]
+  - @shopify/theme@3.94.0
+  - @shopify/cli-kit@3.94.0
+  - @shopify/plugin-cloudflare@3.94.0
+
+## 3.93.0
+
+### Minor Changes
+
+- f7c2de7: Add `shopify organization list` command to list Shopify organizations you have access to. Supports `--json` flag for structured output.
+- a52b36d: Add support for SHOPIFY_APP_AUTOMATION_TOKEN env var as a new name for SHOPIFY_CLI_PARTNERS_TOKEN
+
+### Patch Changes
+
+- f09f258: Deprecation warning for `--force` flag on `app deploy` and `app release`. The flag will be removed in the next major release. Use `--allow-updates` for CI/CD environments, or `--allow-updates --allow-deletes` if you also want to allow removals. The `SHOPIFY_FLAG_FORCE` environment variable is also deprecated.
+- 0bef4a6: Fix crash when organization is not found in app-management-client by throwing NoOrgError instead of accessing properties on undefined
+- 280da79: Enable non-interactive `app init` via a new `--organization-id` flag and not prompting to link to an existing app if `--name` is provided.
+- Updated dependencies [07d4304]
+- Updated dependencies [ae77bc6]
+- Updated dependencies [35ba22b]
+- Updated dependencies [a910517]
+- Updated dependencies [a52b36d]
+- Updated dependencies [f0db25b]
+- Updated dependencies [34e19bc]
+- Updated dependencies [9a39b44]
+- Updated dependencies [962e932]
+- Updated dependencies [5dd39d0]
+  - @shopify/cli-kit@3.93.0
+  - @shopify/theme@3.93.0
+  - @shopify/plugin-cloudflare@3.93.0
+
 ## 3.92.0
 
 ### Minor Changes
@@ -308,7 +414,6 @@
 - aebbc75: Fix: Pin GraphiQL CSS version to match JS version
 - c3a5189: Bug-fix: Handling mis-configured extension TOML files
 - acc904f: Bump Shopify/theme-tools packages to
-
   - Fix validation for static blocks in JSON templates
   - Introduce ability the disable theme checks for the next Liquid statement
 
@@ -833,7 +938,6 @@
 - ca218cd31: Use a random port for GraphiQL when the default one is not available
 - ca218cd31: Do not show api-key flag deprecation warning when using SHOPIFY_API_KEY
 - ca218cd31: Bump Shopify/theme-tools packages
-
   - TL;DR
     - (New) `ValidJson` check - JSON schema validation on `.json` files
     - (New) Section/block schema `t:` translation completion

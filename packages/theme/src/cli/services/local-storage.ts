@@ -22,42 +22,34 @@ let _replThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSch
 let _themeStorePasswordStorageInstance: LocalStorage<ThemeStorePasswordSchema> | undefined
 
 function themeLocalStorage() {
-  if (!_themeLocalStorageInstance) {
-    _themeLocalStorageInstance = new LocalStorage<ThemeLocalStorageSchema>({projectName: 'shopify-cli-theme-conf'})
-  }
+  _themeLocalStorageInstance ??= new LocalStorage<ThemeLocalStorageSchema>({projectName: 'shopify-cli-theme-conf'})
   return _themeLocalStorageInstance
 }
 
 function developmentThemeLocalStorage() {
-  if (!_developmentThemeLocalStorageInstance) {
-    _developmentThemeLocalStorageInstance = new LocalStorage<DevelopmentThemeLocalStorageSchema>({
-      projectName: 'shopify-cli-development-theme-config',
-    })
-  }
+  _developmentThemeLocalStorageInstance ??= new LocalStorage<DevelopmentThemeLocalStorageSchema>({
+    projectName: 'shopify-cli-development-theme-config',
+  })
   return _developmentThemeLocalStorageInstance
 }
 
 function replThemeLocalStorage() {
-  if (!_replThemeLocalStorageInstance) {
-    _replThemeLocalStorageInstance = new LocalStorage<DevelopmentThemeLocalStorageSchema>({
-      projectName: 'shopify-cli-repl-theme-config',
-    })
-  }
+  _replThemeLocalStorageInstance ??= new LocalStorage<DevelopmentThemeLocalStorageSchema>({
+    projectName: 'shopify-cli-repl-theme-config',
+  })
   return _replThemeLocalStorageInstance
 }
 
 function themeStorePasswordStorage() {
-  if (!_themeStorePasswordStorageInstance) {
-    _themeStorePasswordStorageInstance = new LocalStorage<ThemeStorePasswordSchema>({
-      projectName: 'shopify-cli-theme-store-password',
-    })
-  }
+  _themeStorePasswordStorageInstance ??= new LocalStorage<ThemeStorePasswordSchema>({
+    projectName: 'shopify-cli-theme-store-password',
+  })
   return _themeStorePasswordStorageInstance
 }
 
 export function getThemeStore(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
   const context = themeStoreContext.getStore()
-  return context?.store ? context.store : storage.get('themeStore')
+  return context?.store ?? storage.get('themeStore')
 }
 
 export function setThemeStore(store: string, storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {

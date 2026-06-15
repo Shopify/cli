@@ -1,4 +1,3 @@
-/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
 import VersionCommand from './cli/commands/version.js'
 import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
@@ -16,7 +15,11 @@ import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
+import AutoupgradeOff from './cli/commands/config/autoupgrade/off.js'
+import AutoupgradeOn from './cli/commands/config/autoupgrade/on.js'
+import AutoupgradeStatus from './cli/commands/config/autoupgrade/status.js'
 import {createGlobalProxyAgent} from 'global-agent'
+import StoreCommands from '@shopify/store'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
@@ -108,6 +111,12 @@ hydrogenCommands.forEach((command) => {
   ;(HydrogenCommands[command] as any).customPluginName = '@shopify/cli-hydrogen'
 })
 
+const storeCommands = Object.keys(StoreCommands) as (keyof typeof StoreCommands)[]
+storeCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(StoreCommands[command] as any).customPluginName = '@shopify/store'
+})
+
 const pluginCommandsCommands = Object.keys(PluginCommandsCommands) as (keyof typeof PluginCommandsCommands)[]
 pluginCommandsCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,6 +143,7 @@ export const COMMANDS: any = {
   ...DidYouMeanCommands,
   ...PluginCommandsCommands,
   ...HydrogenCommands,
+  ...StoreCommands,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,
@@ -151,6 +161,9 @@ export const COMMANDS: any = {
   'notifications:list': List,
   'notifications:generate': Generate,
   'cache:clear': ClearCache,
+  'config:autoupgrade:off': AutoupgradeOff,
+  'config:autoupgrade:on': AutoupgradeOn,
+  'config:autoupgrade:status': AutoupgradeStatus,
 }
 
 export default runShopifyCLI

@@ -2,7 +2,7 @@ name: cli
 
 up:
   - node:
-      version: 24.1.0
+      version: 26.1.0
       package_manager: pnpm@10.11.1
   - packages:
     - jq
@@ -20,6 +20,14 @@ up:
       name: 'Get GraphQL schemas'
       # Always fetch these on dev up
       met?: pnpm graphql-codegen:get-graphql-schemas
+      meet: 'true'
+  - custom:
+      name: 'Install Playwright Chromium'
+      met?: cd packages/e2e && pnpx playwright install chromium
+      meet: 'true'
+  - custom:
+      name: 'Rebuild node-pty'
+      met?: pnpm rebuild node-pty
       meet: 'true'
 
 env:

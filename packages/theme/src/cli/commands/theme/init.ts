@@ -60,7 +60,7 @@ export default class Init extends ThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(flags: InitFlags, _adminSession: AdminSession, _multiEnvironment: boolean, args: InitArgs) {
-    const name = args.name || (await this.promptName(flags.path))
+    const name = args.name ?? (await this.promptName(flags.path))
     const repoUrl = flags['clone-url']
     const destination = joinPath(flags.path, name)
 

@@ -170,30 +170,18 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-function getAppVars(
-  org: Organization,
-  name: string,
-  isLaunchable = true,
-  scopesArray?: string[],
-): CreateAppQueryVariables {
-  if (isLaunchable) {
-    return {
-      org: parseInt(org.id, 10),
-      title: name,
-      appUrl: 'https://example.com',
-      redir: ['https://example.com/api/auth'],
-      requestedAccessScopes: scopesArray ?? [],
-      type: 'undecided',
-    }
-  } else {
-    return {
-      org: parseInt(org.id, 10),
-      title: name,
-      appUrl: MAGIC_URL,
-      redir: [MAGIC_REDIRECT_URL],
-      requestedAccessScopes: scopesArray ?? [],
-      type: 'undecided',
-    }
+function getAppVars(org: Organization, options: CreateAppOptions): CreateAppQueryVariables {
+  const {name, isLaunchable = true, scopesArray} = options
+  const defaultAppUrl = isLaunchable ? 'https://example.com' : MAGIC_URL
+  const defaultRedirectUrl = isLaunchable ? 'https://example.com/api/auth' : MAGIC_REDIRECT_URL
+
+  return {
+    org: parseInt(org.id, 10),
+    title: name,
+    appUrl: defaultAppUrl,
+    redir: [defaultRedirectUrl],
+    requestedAccessScopes: scopesArray ?? [],
+    type: 'undecided',
   }
 }
 
@@ -214,9 +202,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   private static instance: PartnersClient | undefined
 
   static getInstance(session?: Session): PartnersClient {
-    if (!PartnersClient.instance) {
-      PartnersClient.instance = new PartnersClient(session)
-    }
+    PartnersClient.instance ??= new PartnersClient(session)
     return PartnersClient.instance
   }
 
@@ -356,13 +342,13 @@ export class PartnersClient implements DeveloperPlatformClient {
   async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const variables: ExtensionSpecificationsQueryVariables = {apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
-    // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
-    return result.extensionSpecifications.map((spec) => ({
+    // Partners API doesn't provide uidStrategy; derive it from experience.
+    return result.extensionSpecifications.map(({options, features, ...spec}) => ({
       ...spec,
-      options: {
-        ...spec.options,
-        uidIsClientProvided: true,
-      },
+      uidStrategy: spec.experience === 'extension' ? 'uuid' : 'single',
+      registrationLimit: options.registrationLimit,
+      managementExperience: options.managementExperience,
+      surface: features?.argo?.surface,
     }))
   }
 
@@ -397,7 +383,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
-    const variables: CreateAppQueryVariables = getAppVars(org, options.name, options.isLaunchable, options.scopesArray)
+    const variables: CreateAppQueryVariables = getAppVars(org, options)
     const result: CreateAppQuerySchema = await this.request(CreateAppQuery, variables)
     if (result.appCreate.userErrors.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
@@ -428,6 +414,11 @@ export class PartnersClient implements DeveloperPlatformClient {
   async appVersions({apiKey}: OrganizationApp): Promise<AppVersionsQuerySchema> {
     const variables: AppVersionsQueryVariables = {apiKey}
     return this.request(AppVersionsQuery, variables)
+  }
+
+  async appInstallCount(_app: MinimalAppIdentifiers): Promise<number> {
+    // Install count is not supported in partners client.
+    throw new Error('Unsupported operation')
   }
 
   async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionWithContext> {
@@ -676,7 +667,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     const url = `https://${await partnersFqdn()}/${org.id}/stores`
     return [
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard.`,
-      {link: {url, label: 'Create one now'}},
+      {link: {url, label: 'Create a store in Partner Dashboard'}},
     ]
   }
 

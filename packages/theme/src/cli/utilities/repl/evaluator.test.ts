@@ -225,7 +225,7 @@ function createMockResponse({
     status,
     text: vi.fn().mockResolvedValue(text),
     headers: {
-      get: vi.fn((header: string) => headers[header] || null),
+      get: vi.fn((header: string) => headers[header] ?? null),
     },
   }
 }

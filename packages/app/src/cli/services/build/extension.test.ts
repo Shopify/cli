@@ -1,16 +1,19 @@
 import {buildFunctionExtension} from './extension.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {buildGraphqlTypes, buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
+import {validateSchemaApiVersion} from '../function/schema-version.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
+vi.mock('../function/schema-version.js')
 vi.mock('proper-lockfile')
 vi.mock('@shopify/cli-kit/node/fs')
 
@@ -415,5 +418,47 @@ describe('buildFunctionExtension', () => {
     })
     expect(releaseLock).toHaveBeenCalled()
     expect(runWasmOpt).toHaveBeenCalled()
+  })
+
+  test('calls validateSchemaApiVersion with the values from the extension config', async () => {
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(validateSchemaApiVersion).toHaveBeenCalledWith({
+      directory: extension.directory,
+      localIdentifier: extension.localIdentifier,
+      apiVersion: extension.configuration.api_version,
+    })
+  })
+
+  test('does not rebundle when build.path stays in the default output directory', async () => {
+    // Given
+    extension.configuration.build!.path = 'dist/custom.wasm'
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(fileExistsSync).toHaveBeenCalledWith(joinPath(extension.directory, 'dist/custom.wasm'))
+    expect(touchFile).not.toHaveBeenCalled()
+    expect(writeFile).not.toHaveBeenCalled()
   })
 })

@@ -3,6 +3,7 @@ import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {Readable, Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -69,6 +70,23 @@ describe('runFunction', () => {
         stderr: options.stderr,
         input: options.input,
       },
+    )
+  })
+
+  test('uses build.path when configured', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue()
+    const functionExtension = await testFunctionExtension()
+    functionExtension.configuration.build!.path = 'dist/custom.wasm'
+
+    // When
+    await runFunction({functionExtension})
+
+    // Then
+    expect(exec).toHaveBeenCalledWith(
+      functionRunnerBinary().path,
+      ['-f', joinPath(functionExtension.directory, 'dist/custom.wasm')],
+      expect.objectContaining({cwd: functionExtension.directory}),
     )
   })
 })

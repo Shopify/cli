@@ -2,6 +2,7 @@ import {openURLSafely} from './dev.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {createThemePreview, updateThemePreview} from '../utilities/theme-previews/preview.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
@@ -17,6 +18,7 @@ interface DevWithOverrideFileOptions {
   previewIdentifier?: string
   open: boolean
   password?: string
+  json?: boolean
 }
 
 /**
@@ -53,16 +55,20 @@ export async function devWithOverrideFile(options: DevWithOverrideFileOptions) {
         themeId: options.themeId,
       })
 
-  renderSuccess({
-    body: [
-      {
-        list: {
-          title: options.previewIdentifier ? 'Preview updated' : 'Preview is ready',
-          items: [{link: {url: preview.url}}, `Preview ID: ${preview.preview_identifier}`],
+  if (options.json) {
+    outputInfo(JSON.stringify({url: preview.url, preview_identifier: preview.preview_identifier}))
+  } else {
+    renderSuccess({
+      body: [
+        {
+          list: {
+            title: options.previewIdentifier ? 'Preview updated' : 'Preview is ready',
+            items: [{link: {url: preview.url}}, `Preview ID: ${preview.preview_identifier}`],
+          },
         },
-      },
-    ],
-  })
+      ],
+    })
+  }
 
   if (options.open) {
     openURLSafely(preview.url, 'theme preview')

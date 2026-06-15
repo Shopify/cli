@@ -319,17 +319,19 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(9)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(10)
     // Minimum theme files start first
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(1, remoteTheme.id, MINIMUM_THEME_ASSETS, adminSession)
-    // Dependent assets start second
+    // settings_schema.json is uploaded first among dependent files so block / section /
+    // section-group / template validators can resolve dynamic-source defaults that
+    // reference theme-level settings declared in the schema.
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       2,
       remoteTheme.id,
-      [{key: 'layout/theme.liquid'}],
+      [{key: 'config/settings_schema.json'}],
       adminSession,
     )
-    // Independent assets start right after dependent assets start
+    // Independent assets fan out concurrently with the dependent chain.
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       3,
       remoteTheme.id,
@@ -346,15 +348,21 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
-    // Dependent assets continue after the first batch of dependent assets ends
+    // Layout files come after the schema is in place.
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       4,
+      remoteTheme.id,
+      [{key: 'layout/theme.liquid'}],
+      adminSession,
+    )
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
+      5,
       remoteTheme.id,
       [{key: 'blocks/block.liquid'}],
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      5,
+      6,
       remoteTheme.id,
       [
         {
@@ -365,7 +373,7 @@ describe('theme-uploader', () => {
     )
 
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      6,
+      7,
       remoteTheme.id,
       [
         {
@@ -376,7 +384,7 @@ describe('theme-uploader', () => {
     )
 
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      7,
+      8,
       remoteTheme.id,
       [
         {
@@ -387,7 +395,7 @@ describe('theme-uploader', () => {
     )
 
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      8,
+      9,
       remoteTheme.id,
       [
         {
@@ -397,17 +405,11 @@ describe('theme-uploader', () => {
       adminSession,
     )
 
+    // settings_data.json must be last
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      9,
+      10,
       remoteTheme.id,
-      [
-        {
-          key: 'config/settings_data.json',
-        },
-        {
-          key: 'config/settings_schema.json',
-        },
-      ],
+      [{key: 'config/settings_data.json'}],
       adminSession,
     )
   })

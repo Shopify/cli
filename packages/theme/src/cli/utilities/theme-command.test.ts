@@ -8,12 +8,18 @@ import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/environments')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/metadata', () => ({
+  addPublicMetadata: vi.fn(),
+  addSensitiveMetadata: vi.fn(),
+}))
 vi.mock('./theme-store.js')
 vi.mock('@shopify/cli-kit/node/fs')
 
@@ -227,6 +233,15 @@ describe('ThemeCommand', () => {
         args: {},
         context: undefined,
       })
+      const publicMetadata = vi.mocked(addPublicMetadata).mock.calls.map(([getMetadata]) => getMetadata())
+      expect(publicMetadata).toContainEqual(
+        expect.objectContaining({
+          store_fqdn_hash: hashString(mockSession.storeFqdn),
+          store_domain: mockSession.storeFqdn,
+        }),
+      )
+      const sensitiveMetadata = vi.mocked(addSensitiveMetadata).mock.calls.map(([getMetadata]) => getMetadata())
+      expect(sensitiveMetadata).toContainEqual({store_fqdn: mockSession.storeFqdn})
     })
 
     test('single environment provided but not found in TOML - throws AbortError', async () => {
@@ -316,6 +331,49 @@ describe('ThemeCommand', () => {
           ]),
           showTimestamps: true,
         }),
+      )
+    })
+
+    test('multiple environments provided - logs metadata for each authenticated session', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+      vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (store) => ({
+        token: 'test-token',
+        storeFqdn: store,
+      }))
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(['--environment', 'development', '--environment', 'staging'], CommandConfig)
+
+      // When
+      await command.run()
+
+      // Then
+      const publicMetadata = vi.mocked(addPublicMetadata).mock.calls.map(([getMetadata]) => getMetadata())
+      expect(publicMetadata).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            store_fqdn_hash: hashString('store1.myshopify.com'),
+            store_domain: 'store1.myshopify.com',
+          }),
+          expect.objectContaining({
+            store_fqdn_hash: hashString('store2.myshopify.com'),
+            store_domain: 'store2.myshopify.com',
+          }),
+        ]),
+      )
+      const sensitiveMetadata = vi.mocked(addSensitiveMetadata).mock.calls.map(([getMetadata]) => getMetadata())
+      expect(sensitiveMetadata).toEqual(
+        expect.arrayContaining([{store_fqdn: 'store1.myshopify.com'}, {store_fqdn: 'store2.myshopify.com'}]),
       )
     })
 

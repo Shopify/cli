@@ -34,14 +34,14 @@ export default class AppInfo extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppInfo)
 
-    const {app, remoteApp, organization, developerPlatformClient} = await linkedAppContext({
+    const {app, project, remoteApp, organization, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
-      unsafeReportMode: true,
+      unsafeTolerateErrors: true,
     })
-    const results = await info(app, remoteApp, organization, {
+    const results = await info(app, remoteApp, organization, project, {
       format: (flags.json ? 'json' : 'text') as Format,
       webEnv: flags['web-env'],
       configName: flags.config,
@@ -52,7 +52,7 @@ export default class AppInfo extends AppLinkedCommand {
     } else {
       renderInfo({customSections: results})
     }
-    if (app.errors) process.exit(2)
+    if (!app.errors.isEmpty()) process.exit(2)
 
     return {app}
   }

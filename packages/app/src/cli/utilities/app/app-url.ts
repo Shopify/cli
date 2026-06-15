@@ -13,6 +13,11 @@ export function buildAppURLForAdmin(storeFqdn: string, apiKey: string, adminDoma
   return `https://${adminDomain}/store/${storeName}/apps/${apiKey}?dev-console=show`
 }
 
+export function buildDevConsoleURL(storeFqdn: string) {
+  const normalizedFQDN = normalizeStoreFqdn(storeFqdn)
+  return `https://${normalizedFQDN}/admin?dev-console=show`
+}
+
 export function buildAppURLForMobile(storeFqdn: string, apiKey: string) {
   const normalizedFQDN = normalizeStoreFqdn(storeFqdn)
   const adminUrl = storeAdminUrl(normalizedFQDN)

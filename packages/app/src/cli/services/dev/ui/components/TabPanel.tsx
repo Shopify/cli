@@ -8,7 +8,7 @@ export interface Tab {
   action?: () => Promise<void>
 }
 
-interface TabShortcut {
+export interface TabShortcut {
   key: string
   condition?: () => boolean
   action: () => Promise<void>

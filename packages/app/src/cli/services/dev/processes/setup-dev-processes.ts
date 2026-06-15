@@ -9,7 +9,6 @@ import {DevSessionProcess, setupDevSessionProcess} from './dev-session/dev-sessi
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
 import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.js'
-import {resolveGraphiQLKey} from '../graphiql/server.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
@@ -21,6 +20,7 @@ import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
+import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
@@ -125,7 +125,15 @@ export async function setupDevProcesses({
     ? `http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(resolvedGraphiqlKey)}`
     : undefined
 
-  const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
+  const appEmbedded = reloadedApp.configuration.embedded
+  const hasExtensions = reloadedApp.nonConfigExtensions.length > 0
+  const devSessionStatusManager = new DevSessionStatusManager({
+    isReady: false,
+    previewURL,
+    graphiqlURL,
+    appEmbedded,
+    hasExtensions,
+  })
 
   const processes = [
     ...(await setupWebProcesses({
@@ -149,7 +157,7 @@ export async function setupDevProcesses({
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
-      allExtensions: reloadedApp.allExtensions,
+      allExtensions: reloadedApp.realExtensions,
       storeFqdn,
       storeId,
       apiKey,

@@ -710,7 +710,12 @@ function graphQLToAdminAccess(
   switch (access) {
     case 'MERCHANT_READ_WRITE':
       return 'merchant_read_write'
-    default:
+    case 'MERCHANT_READ':
+    case 'PRIVATE':
+    case 'PUBLIC_READ':
+    case 'PUBLIC_READ_WRITE':
+    case null:
+    case undefined:
       return undefined
   }
 }
@@ -721,7 +726,9 @@ function graphQLToStorefrontAccess(
   switch (access) {
     case 'PUBLIC_READ':
       return 'public_read'
-    default:
+    case 'NONE':
+    case null:
+    case undefined:
       return undefined
   }
 }
@@ -734,7 +741,9 @@ function graphQLToCustomerAccountAccess(
       return 'read'
     case 'READ_WRITE':
       return 'read_write'
-    default:
+    case 'NONE':
+    case null:
+    case undefined:
       return undefined
   }
 }

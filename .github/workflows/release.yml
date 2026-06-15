@@ -10,7 +10,7 @@ on:
   push:
     branches:
       - main
-      - stable/3.*
+      - stable/*
 
   # Trigger for manual/cron release functionality
   schedule:
@@ -49,7 +49,7 @@ jobs:
       # WARNING: DO NOT RUN ANY CUSTOM LOCAL SCRIPT BEFORE RUNNING THE SNAPIT ACTION
       # This action can be executed by 3rd party users and it should not be able to run arbitrary code from a PR.
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Setup deps
@@ -59,7 +59,7 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
-        uses: Shopify/snapit@ee98df3a4a2b221fc3f06d56b9a6b60996613102 # registry-and-package-manager
+        uses: Shopify/snapit@0fec17dd6a0ae66f2672738dc8086f394218436c # registry-and-package-manager
         with:
           comment_is_global: 'true'
           comment_packages: '@shopify/cli'
@@ -71,7 +71,6 @@ jobs:
             > If the versions don't match, you might have multiple global instances installed.
 
             > Use `which shopify` to find out which one you are running and uninstall it."
-          comment_package_manager: 'npm'
           comment_command_flags: '--@shopify:registry=https://registry.npmjs.org'
           build_script: "node bin/update-cli-kit-version.js && pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:
@@ -90,7 +89,7 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
           fetch-depth: 0
@@ -100,7 +99,7 @@ jobs:
           node-version: 24.12.0
       - name: Create Release Pull Request
         id: changesets
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
         with:
           version: pnpm changeset-manifests
           title: Version Packages - ${{ github.ref_name }}
@@ -117,6 +116,73 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
 
+      - name: Get version
+        id: version
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          VERSION=$(node -p "require('./packages/cli/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Create tag
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping"
+            exit 0
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "Created tag $TAG"
+
+      - name: Create stable branch
+        if: steps.changesets.outputs.hasChangesets == 'false' && github.ref_name == 'main' && endsWith(steps.version.outputs.version, '.0')
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          MINOR=${VERSION%.0}
+          BRANCH="stable/$MINOR"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "Branch $BRANCH already exists, skipping"
+            exit 0
+          fi
+          git push origin "HEAD:refs/heads/$BRANCH"
+          echo "Created branch $BRANCH"
+
+      - name: Create GitHub release
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # gh release create does not support the REST API's make_latest=legacy option.
+          RELEASE_ID="$(gh release view "$TAG" --json databaseId --jq .databaseId 2>/dev/null || true)"
+          if [ -n "$RELEASE_ID" ]; then
+            gh api \
+              --method PATCH \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" \
+              -f make_latest=legacy >/dev/null
+            echo "Release $TAG already exists; ensured make_latest=legacy"
+            exit 0
+          fi
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$GITHUB_REPOSITORY/releases" \
+            -f tag_name="$TAG" \
+            -f name="$TAG" \
+            -F generate_release_notes=true \
+            -f make_latest=legacy >/dev/null
+          echo "Created release $TAG"
+
   # Manual/Cron release job - runs on schedule or manual trigger with tag
   manual-cron-release:
     name: Manual & Cron Release
@@ -127,7 +193,7 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
           fetch-depth: 0

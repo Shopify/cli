@@ -205,6 +205,58 @@ describe('render', () => {
     )
   })
 
+  test('does not auto-follow 3xx responses on GET (preserves intermediate Set-Cookie)', async () => {
+    // Given
+    vi.mocked(fetch).mockResolvedValue(
+      new Response('redirected-body-should-not-be-returned', {
+        status: 302,
+        headers: {Location: 'https://store.myshopify.com/products/1'},
+      }),
+    )
+
+    // When
+    const response = await render(session, context)
+
+    // Then
+    expect(response.status).toEqual(302)
+    expect(response.headers.get('Location')).toEqual('https://store.myshopify.com/products/1')
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: 'GET',
+        redirect: 'manual',
+      }),
+    )
+  })
+
+  test('does not auto-follow 3xx responses on POST (replaceTemplates branch)', async () => {
+    // Given
+    vi.mocked(fetch).mockResolvedValue(
+      new Response('redirected-body-should-not-be-returned', {
+        status: 302,
+        headers: {Location: 'https://store.myshopify.com/products/1'},
+      }),
+    )
+
+    // When
+    const response = await render(session, {
+      ...context,
+      method: 'POST',
+      replaceTemplates: {'sections/header.liquid': '<div>hello</div>'},
+    })
+
+    // Then
+    expect(response.status).toEqual(302)
+    expect(response.headers.get('Location')).toEqual('https://store.myshopify.com/products/1')
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: 'POST',
+        redirect: 'manual',
+      }),
+    )
+  })
+
   test('renders using query parameters', async () => {
     // Given
     vi.mocked(fetch).mockResolvedValue(new Response())

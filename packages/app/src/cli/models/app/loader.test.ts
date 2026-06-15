@@ -3,17 +3,13 @@ import {
   getAppConfigurationFileName,
   loadApp,
   loadOpaqueApp,
-  loadDotEnv,
   parseConfigurationObject,
   checkFolderIsValidApp,
-  AppLoaderMode,
-  getAppConfigurationState,
+  getAppConfigurationContext,
   loadConfigForAppCreation,
   reloadApp,
-  loadHiddenConfig,
 } from './loader.js'
-import {parseHumanReadableError} from './error-parsing.js'
-import {App, AppConfiguration, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
+import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
@@ -26,25 +22,15 @@ import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_sc
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
-import {
-  installNodeModules,
-  yarnLockfile,
-  pnpmLockfile,
-  PackageJson,
-  pnpmWorkspaceFile,
-} from '@shopify/cli-kit/node/node-package-manager'
-import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
+import {installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-package-manager'
+import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {captureOutput} from '@shopify/cli-kit/node/system'
 
 vi.mock('../../services/local-storage.js')
-// Mock captureOutput to prevent executing `npm prefix` inside getPackageManager
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../services/app/config/use.js')
 vi.mock('@shopify/cli-kit/node/is-global')
@@ -61,7 +47,7 @@ describe('load', () => {
 
   let tmpDir: string
 
-  function loadTestingApp(extras?: {remoteFlags?: Flag[]; mode?: AppLoaderMode}) {
+  function loadTestingApp(extras?: {remoteFlags?: Flag[]; ignoreUnknownExtensions?: boolean}) {
     return loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined, ...extras})
   }
 
@@ -256,7 +242,7 @@ describe('load', () => {
 
       // When/Then
       await expect(loadApp({directory: tmp, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-        `Couldn't find directory ${tmp}`,
+        /Could not find a Shopify app configuration file/,
       )
     })
   })
@@ -267,7 +253,7 @@ describe('load', () => {
 
     // When/Then
     await expect(loadApp({directory: currentDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-      `Couldn't find an app toml file at ${currentDir}`,
+      /Could not find a Shopify app configuration file/,
     )
   })
 
@@ -356,72 +342,9 @@ describe('load', () => {
     expect(app.name).toBe('config-name')
   })
 
-  test('defaults to npm as the package manager when the configuration is valid', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
+  // packageManager is now owned by Project and tested in project.test.ts
 
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.packageManager).toBe('npm')
-  })
-
-  test('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    const yarnLockPath = joinPath(tmpDir, yarnLockfile)
-    await writeFile(yarnLockPath, '')
-    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.packageManager).toBe('yarn')
-  })
-
-  test('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
-    await writeFile(pnpmLockPath, '')
-    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.packageManager).toBe('pnpm')
-  })
-
-  test("identifies if the app doesn't use workspaces", async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.usesWorkspaces).toBe(false)
-  })
-
-  test('identifies if the app uses yarn or npm workspaces', async () => {
-    // Given
-    await writeConfig(appConfiguration, {
-      workspaces: ['packages/*'],
-      name: 'my_app',
-      dependencies: {},
-      devDependencies: {},
-    })
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.usesWorkspaces).toBe(true)
-  })
+  // usesWorkspaces is now owned by Project and tested in project.test.ts
 
   test('checks for multiple CLI installations', async () => {
     // Given
@@ -437,19 +360,6 @@ describe('load', () => {
 
     // Then
     expect(showMultipleCLIWarningIfNeeded).toHaveBeenCalled()
-  })
-
-  test('identifies if the app uses pnpm workspaces', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    const pnpmWorkspaceFilePath = joinPath(tmpDir, pnpmWorkspaceFile)
-    await writeFile(pnpmWorkspaceFilePath, '')
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.usesWorkspaces).toBe(true)
   })
 
   test('does not double-count webs defined in workspaces', async () => {
@@ -476,7 +386,6 @@ describe('load', () => {
     app = await loadTestingApp()
 
     // Then
-    expect(app.usesWorkspaces).toBe(true)
     expect(app.webs.length).toBe(1)
   }, 30000)
 
@@ -485,7 +394,7 @@ describe('load', () => {
     await makeBlockDir({name: 'my-extension'})
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Could not find a Shopify app configuration file/)
   })
 
   test('throws an error if the extension configuration file is invalid', async () => {
@@ -507,10 +416,12 @@ describe('load', () => {
     })
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Validation errors/)
+    const app = await loadTestingApp()
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
-  test('throws an error if the extension type is invalid', async () => {
+  test('collects an error if the extension type is invalid', async () => {
     // Given
     await writeConfig(appConfiguration, {
       workspaces: ['web'],
@@ -530,10 +441,12 @@ describe('load', () => {
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type "invalid_type"/)
+    const app = await loadTestingApp()
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
-  test('loads only known extension types when mode is local', async () => {
+  test('loads only known extension types when ignoreUnknownExtensions is true', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -559,77 +472,17 @@ describe('load', () => {
     await writeFile(joinPath(blockPath('my-unknown-extension'), 'index.js'), '')
 
     // When
-    const app = await loadTestingApp({mode: 'local'})
+    const app = await loadTestingApp({ignoreUnknownExtensions: true})
 
     // Then
     const realExtensions = getRealExtensions(app)
     expect(realExtensions).toHaveLength(1)
     expect(realExtensions[0]!.configuration.name).toBe('my_extension')
     expect(realExtensions[0]!.configuration.type).toBe('theme')
-    expect(app.errors).toBeUndefined()
+    expect(app.errors.isEmpty()).toBe(true)
   })
 
-  test('throws error for duplicated handles when mode is local', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    const blockConfiguration = `
-      api_version = "2022-07"
-
-      [[extensions]]
-      type = "checkout_post_purchase"
-      name = "my_extension_1"
-      handle = "handle-1"
-      description = "custom description"
-
-      [[extensions]]
-      type = "flow_action"
-      handle = "handle-1"
-      name = "my_extension_1_flow"
-      description = "custom description"
-      runtime_url = "https://example.com"
-      `
-    await writeBlockConfig({
-      blockConfiguration,
-      name: 'my_extension_1',
-    })
-    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
-
-    // When/Then
-    await expect(loadTestingApp({mode: 'local'})).rejects.toThrow(/Duplicated handle/)
-  })
-
-  test('does not throw error for duplicated handles when mode is report', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    const blockConfiguration = `
-      api_version = "2022-07"
-
-      [[extensions]]
-      type = "checkout_post_purchase"
-      name = "my_extension_1"
-      handle = "handle-1"
-      description = "custom description"
-
-      [[extensions]]
-      type = "flow_action"
-      handle = "handle-1"
-      name = "my_extension_1_flow"
-      description = "custom description"
-      runtime_url = "https://example.com"
-      `
-    await writeBlockConfig({
-      blockConfiguration,
-      name: 'my_extension_1',
-    })
-    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
-
-    // When/Then
-    await expect(loadTestingApp({mode: 'report'})).resolves.not.toThrow()
-  })
-
-  test('throws if 2 or more extensions have the same handle', async () => {
+  test('reports error for duplicated handles when ignoreUnknownExtensions is true', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -656,10 +509,76 @@ describe('load', () => {
     await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Duplicated handle/)
+    const app = await loadTestingApp({ignoreUnknownExtensions: true})
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
-  test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
+  test('collects duplicated handle errors without throwing', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+
+      [[extensions]]
+      type = "checkout_post_purchase"
+      name = "my_extension_1"
+      handle = "handle-1"
+      description = "custom description"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "handle-1"
+      name = "my_extension_1_flow"
+      description = "custom description"
+      runtime_url = "https://example.com"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp()
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
+  })
+
+  test('collects error if 2 or more extensions have the same handle', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+
+      [[extensions]]
+      type = "checkout_post_purchase"
+      name = "my_extension_1"
+      handle = "handle-1"
+      description = "custom description"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "handle-1"
+      name = "my_extension_1_flow"
+      description = "custom description"
+      runtime_url = "https://example.com"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp()
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
+  })
+
+  test('collects an error if the extension configuration is unified and doesnt include a handle', async () => {
     // Given
     await writeConfig(appConfiguration, {
       workspaces: ['web'],
@@ -681,10 +600,12 @@ describe('load', () => {
     })
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Missing handle for extension "my_extension"/)
+    const app = await loadTestingApp()
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
-  test('throws an error if the extension configuration is missing both extensions and type', async () => {
+  test('collects an error if the extension configuration is missing both extensions and type', async () => {
     // Given
     await writeConfig(appConfiguration, {
       workspaces: ['web'],
@@ -703,7 +624,9 @@ describe('load', () => {
     })
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type/)
+    const app = await loadTestingApp()
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
   test('loads the app with web blocks', async () => {
@@ -720,29 +643,21 @@ describe('load', () => {
     expect(web.configuration.roles).toEqual(['backend'])
   })
 
-  test('throws an error if there are multiple backends', async () => {
+  test('collects an error if there are multiple backends', async () => {
     // Given
     const {webDirectory} = await writeConfig(appConfiguration)
     const anotherWebDirectory = joinPath(webDirectory, '..', 'another_web_dir')
     await mkdir(anotherWebDirectory)
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'backend'})
 
-    // Then
-    try {
-      await loadTestingApp()
-      expect.fail('Expected loadTestingApp to throw an error')
-    } catch (error) {
-      if (!(error instanceof AbortError)) {
-        throw error
-      }
-      expect(error.message).toContain('You can only have one "web" configuration file with the [33mbackend[39m role')
-      expect(error.message).toContain('Conflicting configurations found at:')
-      expect(error.message).toContain(joinPath(webDirectory, configurationFileNames.web))
-      expect(error.message).toContain(joinPath(anotherWebDirectory, configurationFileNames.web))
-    }
+    // When
+    const app = await loadTestingApp()
+
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
-  test('throws an error if there are multiple frontends', async () => {
+  test('collects an error if there are multiple frontends', async () => {
     // Given
     const {webDirectory} = await writeConfig(appConfiguration)
     await writeWebConfiguration({webDirectory, role: 'frontend'})
@@ -750,19 +665,11 @@ describe('load', () => {
     await mkdir(anotherWebDirectory)
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'frontend'})
 
-    // Then
-    try {
-      await loadTestingApp()
-      expect.fail('Expected loadTestingApp to throw an error')
-    } catch (error) {
-      if (!(error instanceof AbortError)) {
-        throw error
-      }
-      expect(error.message).toContain('You can only have one "web" configuration file with the [33mfrontend[39m role')
-      expect(error.message).toContain('Conflicting configurations found at:')
-      expect(error.message).toContain(joinPath(webDirectory, configurationFileNames.web))
-      expect(error.message).toContain(joinPath(anotherWebDirectory, configurationFileNames.web))
-    }
+    // When
+    const app = await loadTestingApp()
+
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
   test('loads the app with custom located web blocks', async () => {
@@ -1020,26 +927,26 @@ describe('load', () => {
     await expect(loadTestingApp()).resolves.not.toBeUndefined()
   })
 
-  test(`throws an error if the extension doesn't have a source file`, async () => {
+  test(`collects an error if the extension doesn't have a source file`, async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
       type = "checkout_post_purchase"
       `
-    const {blockDir} = await writeBlockConfig({
+    await writeBlockConfig({
       blockConfiguration,
       name: 'my-extension',
     })
 
     // When
-    await expect(loadApp({directory: blockDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-      /Couldn't find an index.{js,jsx,ts,tsx} file in the directories/,
-    )
+    const app = await loadTestingApp()
+    // Then — errors are collected, not thrown
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
   test('throws an error if the extension has a type non included in the specs', async () => {
-    // Given
+    // Given — no app config written, so loadTestingApp throws at abort level
     const blockConfiguration = `
     name = "my-extension"
     type = "wrong_type"
@@ -1058,11 +965,11 @@ describe('load', () => {
     await makeBlockDir({name: 'my-functions'})
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Could not find a Shopify app configuration file/)
   })
 
   test('throws an error if the function configuration file is invalid', async () => {
-    // Given
+    // Given — no app config written, so loadTestingApp throws at abort level
     const blockConfiguration = `
       wrong = "my-function"
     `
@@ -1076,7 +983,7 @@ describe('load', () => {
   })
 
   test('throws an error if the function has a type non included in the specs', async () => {
-    // Given
+    // Given — no app config written, so loadTestingApp throws at abort level
     const blockConfiguration = `
     name = "my-function"
     type = "wrong_type"
@@ -2335,8 +2242,8 @@ describe('load', () => {
     // When
     const app = await loadTestingApp()
 
-    // Then
-    expect(app.allExtensions[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    // Then - outputPath always defaults to dist/index.wasm at load time; build.path is applied by buildFunctionExtension
+    expect(app.allExtensions[0]!.outputPath).toMatch(/dist\/index\.wasm/)
   })
 
   test(`defaults the function wasm path if not configured`, async () => {
@@ -2554,9 +2461,6 @@ describe('load', () => {
       },
     })
     expect(reloadedApp.name).toBe(app.name)
-    expect(reloadedApp.packageManager).toBe(app.packageManager)
-    expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
-    expect(reloadedApp.usesWorkspaces).toBe(app.usesWorkspaces)
   })
 
   test('call app.generateExtensionTypes', async () => {
@@ -2681,7 +2585,7 @@ describe('load', () => {
     )
   })
 
-  test('throws the correct error when multi-extension configuration is invalid', async () => {
+  test('collects an error when multi-extension configuration is invalid', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -2701,10 +2605,11 @@ describe('load', () => {
     })
     await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
 
-    await expect(loadTestingApp()).rejects.toThrow(AbortError)
+    const app = await loadTestingApp()
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
-  test('loads the app with an unsupported config property', async () => {
+  test('collects an error for unsupported config properties', async () => {
     const linkedAppConfigurationWithExtraConfig = `
     name = "for-testing"
     client_id = "1234567890"
@@ -2728,12 +2633,11 @@ describe('load', () => {
     `
     await writeConfig(linkedAppConfigurationWithExtraConfig)
 
-    await expect(loadTestingApp()).rejects.toThrow(
-      'Unsupported section(s) in app configuration: and_another, something_else',
-    )
+    const app = await loadTestingApp()
+    expect(app.errors.isEmpty()).toBe(false)
   })
 
-  test('does not throw unsupported config property error when mode is local', async () => {
+  test('does not throw unsupported config property error when ignoreUnknownExtensions is true', async () => {
     const linkedAppConfigurationWithExtraConfig = `
     name = "for-testing"
     client_id = "1234567890"
@@ -2757,7 +2661,7 @@ describe('load', () => {
     `
     await writeConfig(linkedAppConfigurationWithExtraConfig)
 
-    const app = await loadTestingApp({mode: 'local'})
+    const app = await loadTestingApp({ignoreUnknownExtensions: true})
 
     expect(app).toBeDefined()
     expect(app.name).toBe('for-testing')
@@ -2813,46 +2717,6 @@ describe('getAppConfigurationShorthand', () => {
   })
 })
 
-describe('loadDotEnv', () => {
-  test('it returns undefined if the env is missing', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // When
-      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.toml'))
-
-      // Then
-      expect(got).toBeUndefined()
-    })
-  })
-
-  test('it loads from the default env file', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      await writeFile(joinPath(tmp, '.env'), 'FOO="bar"')
-
-      // When
-      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.toml'))
-
-      // Then
-      expect(got).toBeDefined()
-      expect(got!.variables.FOO).toEqual('bar')
-    })
-  })
-
-  test('it loads from the config specific env file', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      await writeFile(joinPath(tmp, '.env.staging'), 'FOO="bar"')
-
-      // When
-      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.staging.toml'))
-
-      // Then
-      expect(got).toBeDefined()
-      expect(got!.variables.FOO).toEqual('bar')
-    })
-  })
-})
-
 describe('checkFolderIsValidApp', () => {
   test('throws an error if the folder does not contain a shopify.app.toml file', async () => {
     await inTemporaryDirectory(async (tmp) => {
@@ -2901,57 +2765,39 @@ describe('parseConfigurationObject', () => {
         message: 'Boolean is required',
       },
     ]
-    const expectedFormatted = outputContent`\n${outputToken.errorText(
-      'Validation errors',
-    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
-
-    const abortOrReport = vi.fn()
-
     const {schema} = await buildVersionedAppSchema()
-    await parseConfigurationObject(schema, 'tmp', configurationObject, abortOrReport)
-
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = parseConfigurationObject(schema, 'tmp', configurationObject)
+    expect(result.errors).toBeDefined()
   })
 
-  test('throws an error when client_id is missing in app schema TOML file', async () => {
+  test('returns errors when client_id is missing in app schema TOML file', async () => {
     const configurationObject = {
       scopes: [],
     }
 
-    const abortOrReport = vi.fn()
-    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
-
-    expect(abortOrReport).toHaveBeenCalledOnce()
-    const errorString = abortOrReport.mock.calls[0]![0].value
-    expect(errorString).toContain('[client_id]: Required')
+    const result = parseConfigurationObject(AppSchema, 'tmp', configurationObject)
+    expect(result.errors).toBeDefined()
+    expect(result.errors!.some((err) => err.message === 'Required' && err.path?.includes('client_id'))).toBe(true)
   })
 
-  test('throws an error if fields are missing in a frontend config web TOML file', async () => {
+  test('returns errors if fields are missing in a frontend config web TOML file', async () => {
     const configurationObject = {
       type: 11,
       commands: {dev: ''},
       roles: 1,
     }
 
-    const abortOrReport = vi.fn()
-    await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
-
-    // Verify the function was called and capture the actual error structure
-    expect(abortOrReport).toHaveBeenCalledOnce()
-    const callArgs = abortOrReport.mock.calls[0]!
-    const actualErrorMessage = callArgs[0]
-
-    // Convert TokenizedString to regular string for testing
-    const errorString = actualErrorMessage.value
+    const result = parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject)
+    expect(result.errors).toBeDefined()
 
     // The enhanced union handling should show only the most relevant errors
-    // instead of showing all variants, making it much more user-friendly
-    expect(errorString).toContain('[roles]: Expected array, received number')
+    const messages = result.errors!.map((err) => err.message)
+    expect(messages.some((msg) => msg.includes('Expected array, received number'))).toBe(true)
 
-    // Should NOT show the confusing union variant breakdown
-    expect(errorString).not.toContain('Union validation failed')
-    expect(errorString).not.toContain('Option 1:')
-    expect(errorString).not.toContain('Option 2:')
+    // Should NOT show confusing union variant breakdown
+    expect(messages.join('\n')).not.toContain('Union validation failed')
+    expect(messages.join('\n')).not.toContain('Option 1:')
+    expect(messages.join('\n')).not.toContain('Option 2:')
   })
 })
 
@@ -2973,8 +2819,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('removes trailing slashes on uri', async () => {
@@ -2983,10 +2829,10 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'https://example.com/', topics: ['products/create']}],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
     webhookConfig.subscriptions![0]!.uri = 'https://example.com'
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if uri is not a valid https URL, pubsub URI, or Eventbridge ARN', async () => {
@@ -3001,8 +2847,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('accepts an https uri', async () => {
@@ -3011,9 +2857,9 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'https://example.com', topics: ['products/create']}],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts a pub sub uri', async () => {
@@ -3022,9 +2868,9 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'pubsub://my-project-123:my-topic', topics: ['products/create']}],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts an ARN uri', async () => {
@@ -3038,9 +2884,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts combination of uris', async () => {
@@ -3092,9 +2938,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(expandedWebhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(expandedWebhookConfig)
   })
 
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {
@@ -3110,8 +2956,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if we have duplicate subscriptions in different topics array', async () => {
@@ -3130,8 +2976,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('removes trailing forward slash', async () => {
@@ -3145,10 +2991,10 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
     webhookConfig.subscriptions![0]!.uri = 'https://example.com'
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if uri is not an https uri', async () => {
@@ -3168,8 +3014,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('accepts a pub sub config with both project and topic', async () => {
@@ -3183,9 +3029,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if we have duplicate https subscriptions', async () => {
@@ -3210,8 +3056,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if we have duplicate pub sub subscriptions', async () => {
@@ -3236,8 +3082,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if we have duplicate arn subscriptions', async () => {
@@ -3264,8 +3110,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('does not allow identical topic and uri and filter in different subscriptions', async () => {
@@ -3292,8 +3138,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('shows multiple duplicate subscriptions in error message', async () => {
@@ -3330,8 +3176,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('allows identical topic and uri if filter is different', async () => {
@@ -3351,9 +3197,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if we have privacy_compliance section and subscriptions with compliance_topics', async () => {
@@ -3375,8 +3221,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if neither topics nor compliance_topics are added', async () => {
@@ -3394,8 +3240,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error when there are duplicated compliance topics', async () => {
@@ -3419,8 +3265,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('accepts webhook subscription with payload_query', async () => {
@@ -3434,9 +3280,9 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts webhook subscription with name', async () => {
@@ -3450,9 +3296,9 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts webhook subscription with actions', async () => {
@@ -3466,64 +3312,41 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
-    const err = Array.isArray(errorObj) ? errorObj : [errorObj]
-    const expectedFormatted = outputContent`\n${outputToken.errorText(
-      'Validation errors',
-    )} in tmp:\n\n${parseHumanReadableError(err)}`
-    const abortOrReport = vi.fn()
-
     const toParse = getWebhookConfig(webhookConfigOverrides)
-    const parsedConfiguration = await parseConfigurationObject(WebhooksSchema, 'tmp', toParse, abortOrReport)
-    return {abortOrReport, expectedFormatted, parsedConfiguration}
+    const result = parseConfigurationObject(WebhooksSchema, 'tmp', toParse)
+    if (result.errors) {
+      return {threw: true as const, parsedConfiguration: undefined as any, error: result.errors}
+    }
+    return {threw: false as const, parsedConfiguration: result.data, error: undefined}
   }
 })
 
-describe('getAppConfigurationState', () => {
+describe('getAppConfigurationContext', () => {
   test.each([
-    [
-      `client_id="abcdef"`,
-      {
-        basicConfiguration: {
-          client_id: 'abcdef',
-        },
-        isLinked: true,
-      },
-    ],
+    [`client_id="abcdef"`, {client_id: 'abcdef'}, true],
     [
       `client_id="abcdef"
       something_extra="keep"`,
-      {
-        basicConfiguration: {
-          client_id: 'abcdef',
-          something_extra: 'keep',
-        },
-        isLinked: true,
-      },
+      {client_id: 'abcdef', something_extra: 'keep'},
+      true,
     ],
-    [
-      `client_id=""`,
-      {
-        basicConfiguration: {
-          client_id: '',
-        },
-        isLinked: false,
-      },
-    ],
-  ])('loads from %s', async (content, resultShouldContain) => {
+    [`client_id=""`, {client_id: ''}, false],
+  ])('loads from %s', async (content, expectedContent, expectedIsLinked) => {
     await inTemporaryDirectory(async (tmpDir) => {
       const appConfigPath = joinPath(tmpDir, 'shopify.app.toml')
       const packageJsonPath = joinPath(tmpDir, 'package.json')
       await writeFile(appConfigPath, content)
       await writeFile(packageJsonPath, '{}')
 
-      const state = await getAppConfigurationState(tmpDir, undefined)
-      expect(state).toMatchObject(resultShouldContain)
+      const {activeConfig} = await getAppConfigurationContext(tmpDir, undefined)
+      expect(activeConfig.file.content).toMatchObject(expectedContent)
+      expect(activeConfig.isLinked).toBe(expectedIsLinked)
     })
   })
 
@@ -3535,10 +3358,10 @@ describe('getAppConfigurationState', () => {
       await writeFile(appConfigPath, content)
       await writeFile(packageJsonPath, '{}')
 
-      const result = await getAppConfigurationState(tmpDir, undefined)
+      const {activeConfig} = await getAppConfigurationContext(tmpDir, undefined)
 
-      expect(result.basicConfiguration.client_id).toBe('')
-      expect(result.isLinked).toBe(false)
+      expect(activeConfig.file.content.client_id).toBe('')
+      expect(activeConfig.isLinked).toBe(false)
     })
   })
 })
@@ -3683,117 +3506,6 @@ value = true
   })
 })
 
-describe('loadHiddenConfig', () => {
-  test('returns empty object if hidden config file does not exist', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: '12345',
-      } as AppConfiguration
-      await writeFile(joinPath(tmpDir, '.gitignore'), '')
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({})
-
-      // Verify empty config file was created
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      const fileContent = await readFile(hiddenConfigPath)
-      expect(JSON.parse(fileContent)).toEqual({})
-    })
-  })
-
-  test('returns config for client_id if hidden config file exists', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: '12345',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(
-        hiddenConfigPath,
-        JSON.stringify({
-          '12345': {someKey: 'someValue'},
-          'other-id': {otherKey: 'otherValue'},
-        }),
-      )
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({someKey: 'someValue'})
-    })
-  })
-
-  test('returns empty object if client_id not found in existing hidden config', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: 'not-found',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(
-        hiddenConfigPath,
-        JSON.stringify({
-          'other-id': {someKey: 'someValue'},
-        }),
-      )
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({})
-    })
-  })
-
-  test('returns config if hidden config has an old format with just a dev_store_url', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: 'not-found',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(
-        hiddenConfigPath,
-        JSON.stringify({
-          dev_store_url: 'https://dev-store.myshopify.com',
-        }),
-      )
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({dev_store_url: 'https://dev-store.myshopify.com'})
-    })
-  })
-
-  test('returns empty object if hidden config file is invalid JSON', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: '12345',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(hiddenConfigPath, 'invalid json')
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({})
-    })
-  })
-})
-
 describe('loadOpaqueApp', () => {
   let specifications: ExtensionSpecification[]
 
@@ -3823,7 +3535,6 @@ redirect_urls = ["https://example.com/callback"]
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
-        mode: 'report',
       })
 
       // Then
@@ -3860,7 +3571,6 @@ redirect_urls = ["https://example.com/callback"]
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
-        mode: 'report',
       })
 
       // Then
@@ -3889,11 +3599,9 @@ name = "Example"
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
       // When
-      // Strict mode will cause loadApp to fail due to extra config keys
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
-        mode: 'strict',
       })
 
       // Then
@@ -3926,7 +3634,6 @@ foo = "bar"
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
-        mode: 'strict',
       })
 
       // Then
@@ -3946,7 +3653,6 @@ foo = "bar"
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
-        mode: 'report',
       })
 
       // Then
@@ -3974,7 +3680,6 @@ type = "single_line_text_field"
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
-        mode: 'strict',
       })
 
       // Then
@@ -4013,7 +3718,6 @@ redirect_urls = ["https://example.com/callback"]
         directory: tmpDir,
         specifications,
         configName: 'shopify.app.staging.toml',
-        mode: 'report',
       })
 
       // Then
@@ -4041,7 +3745,6 @@ foo = "bar"
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
-        mode: 'strict',
       })
 
       // Then
@@ -4053,7 +3756,7 @@ foo = "bar"
     })
   })
 
-  test('defaults to report mode when mode is not specified', async () => {
+  test('loads app successfully when no mode is specified', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given - a valid config
       const config = `
@@ -4074,13 +3777,13 @@ redirect_urls = ["https://example.com/callback"]
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
-      // When - mode is not specified
+      // When
       const result = await loadOpaqueApp({
         directory: tmpDir,
         specifications,
       })
 
-      // Then - should still work (defaults to report mode)
+      // Then — loader always collects errors, valid app loads fine
       expect(result.state).toBe('loaded-app')
     })
   })

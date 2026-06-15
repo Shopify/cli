@@ -9,6 +9,7 @@ import {
   testOrganizationApp,
   testRemoteExtensionTemplates,
   testUIExtension,
+  testProject,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
@@ -38,6 +39,9 @@ vi.mock('../prompts/generate/extension.js')
 vi.mock('../services/generate/extension.js')
 vi.mock('../services/context.js')
 vi.mock('./local-storage.js')
+vi.mock('@shopify/cli-kit/node/is-global', () => ({
+  currentProcessIsGlobal: () => false,
+}))
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -60,7 +64,15 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({directory: '/', reset: false, app, remoteApp, specifications, developerPlatformClient})
+    await generate({
+      directory: '/',
+      reset: false,
+      app,
+      project: testProject(),
+      remoteApp,
+      specifications,
+      developerPlatformClient,
+    })
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -82,7 +94,15 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({directory: '/', reset: false, app, remoteApp, specifications, developerPlatformClient})
+    await generate({
+      directory: '/',
+      reset: false,
+      app,
+      project: testProject(),
+      remoteApp,
+      specifications,
+      developerPlatformClient,
+    })
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -104,7 +124,15 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({directory: '/', reset: false, app, remoteApp, specifications, developerPlatformClient})
+    await generate({
+      directory: '/',
+      reset: false,
+      app,
+      project: testProject(),
+      remoteApp,
+      specifications,
+      developerPlatformClient,
+    })
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -129,6 +157,7 @@ describe('generate', () => {
       directory: '/',
       reset: false,
       app,
+      project: testProject(),
       remoteApp,
       specifications,
       developerPlatformClient,
@@ -149,6 +178,7 @@ describe('generate', () => {
       directory: '/',
       reset: false,
       app,
+      project: testProject(),
       remoteApp,
       specifications,
       developerPlatformClient,
@@ -169,6 +199,7 @@ describe('generate', () => {
       directory: '/',
       reset: false,
       app,
+      project: testProject(),
       remoteApp,
       specifications,
       developerPlatformClient,
@@ -188,6 +219,7 @@ describe('generate', () => {
       directory: '/',
       reset: false,
       app,
+      project: testProject(),
       remoteApp,
       specifications,
       developerPlatformClient,

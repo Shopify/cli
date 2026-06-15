@@ -1,13 +1,13 @@
 import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
-import {getPartnersToken} from './environment.js'
+import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {
   exchangeCustomPartnerToken,
-  exchangeCliTokenForAppManagementAccessToken,
-  exchangeCliTokenForBusinessPlatformAccessToken,
+  exchangeAppAutomationTokenForAppManagementAccessToken,
+  exchangeAppAutomationTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
 import {
   AdminAPIScope,
@@ -41,6 +41,15 @@ export interface Session {
 }
 
 export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountInfo
+
+/**
+ * Records the user ID that should be attached to command analytics for this process.
+ *
+ * @param userId - User identifier to report on the command analytics event.
+ */
+export function setLastSeenUserId(userId: string): void {
+  setLastSeenUserIdAfterAuth(userId)
+}
 
 interface UserAccountInfo {
   type: 'UserAccount'
@@ -110,7 +119,7 @@ export async function ensureAuthenticatedPartners(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const envToken = getPartnersToken()
+  const envToken = getAppAutomationToken()
   if (envToken) {
     const result = await exchangeCustomPartnerToken(envToken)
     return {token: result.accessToken, userId: result.userId}
@@ -141,10 +150,10 @@ export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
 ${outputToken.json(appManagementScopes)}
 `)
 
-  const envToken = getPartnersToken()
+  const envToken = getAppAutomationToken()
   if (envToken) {
-    const appManagmentToken = await exchangeCliTokenForAppManagementAccessToken(envToken)
-    const businessPlatformToken = await exchangeCliTokenForBusinessPlatformAccessToken(envToken)
+    const appManagmentToken = await exchangeAppAutomationTokenForAppManagementAccessToken(envToken)
+    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken)
 
     return {
       appManagementToken: appManagmentToken.accessToken,

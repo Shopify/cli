@@ -18,6 +18,7 @@ import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopi
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 import EventEmitter from 'events'
@@ -33,6 +34,13 @@ vi.mock('./asset-ignore.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/analytics', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/analytics')>()
+  return {
+    ...actual,
+    recordError: vi.fn(),
+  }
+})
 vi.mock('./theme-environment/hot-reload/server.js')
 
 beforeEach(async () => {
@@ -465,7 +473,8 @@ describe('theme-fs', () => {
         otherLiquidFiles,
         templateJsonFiles,
         otherJsonFiles,
-        configFiles,
+        configSchemaFile,
+        configDataFile,
         staticAssetFiles,
         contextualizedJsonFiles,
         blockLiquidFiles,
@@ -481,10 +490,8 @@ describe('theme-fs', () => {
       ])
       expect(otherJsonFiles).toEqual([{key: 'locales/en.default.json', checksum: '6'}])
       expect(templateJsonFiles).toEqual([{key: 'templates/404.json', checksum: '7'}])
-      expect(configFiles).toEqual([
-        {key: 'config/settings_schema.json', checksum: '8'},
-        {key: 'config/settings_data.json', checksum: '9'},
-      ])
+      expect(configSchemaFile).toEqual([{key: 'config/settings_schema.json', checksum: '8'}])
+      expect(configDataFile).toEqual([{key: 'config/settings_data.json', checksum: '9'}])
       expect(staticAssetFiles).toEqual([
         {key: 'assets/base.css', checksum: '1'},
         {key: 'assets/sparkle.gif', checksum: '3'},
@@ -503,15 +510,23 @@ describe('theme-fs', () => {
       const files: Checksum[] = []
 
       // When
-      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
-        partitionThemeFiles(files)
+      const {
+        sectionLiquidFiles,
+        otherLiquidFiles,
+        templateJsonFiles,
+        otherJsonFiles,
+        configSchemaFile,
+        configDataFile,
+        staticAssetFiles,
+      } = partitionThemeFiles(files)
 
       // Then
       expect(sectionLiquidFiles).toEqual([])
       expect(otherLiquidFiles).toEqual([])
       expect(templateJsonFiles).toEqual([])
       expect(otherJsonFiles).toEqual([])
-      expect(configFiles).toEqual([])
+      expect(configSchemaFile).toEqual([])
+      expect(configDataFile).toEqual([])
       expect(staticAssetFiles).toEqual([])
     })
   })
@@ -848,6 +863,35 @@ describe('theme-fs', () => {
         headline: 'Failed to delete file "assets/base.css" from remote theme.',
         body: expect.any(String),
       })
+    })
+  })
+
+  describe('watcher error handling', () => {
+    const themeId = '123'
+    const adminSession = {token: 'token'} as AdminSession
+    const root = joinPath(locationOfThisFile, 'fixtures/theme')
+
+    beforeEach(() => {
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+    })
+
+    test('outputs a warning when the watcher emits an error', async () => {
+      // Given
+      const {outputWarn} = await import('@shopify/cli-kit/node/output')
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // When
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('error', new Error('EMFILE: too many open files'))
+
+      // Then
+      expect(outputWarn).toHaveBeenCalledWith('File watcher error: Error: EMFILE: too many open files')
+      expect(recordError).toHaveBeenCalledWith('theme-service:file-watcher:error')
     })
   })
 

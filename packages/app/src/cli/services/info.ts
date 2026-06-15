@@ -1,6 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
@@ -12,10 +13,10 @@ import {
   formatPackageManagerCommand,
   outputContent,
   shouldDisplayColors,
-  stringifyMessage,
 } from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {uniq} from '@shopify/cli-kit/common/array'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
@@ -30,12 +31,13 @@ export async function info(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
   organization: Organization,
+  project: Project,
   options: InfoOptions,
 ): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.webEnv) {
     return infoWeb(app, remoteApp, organization, options)
   } else {
-    return infoApp(app, remoteApp, options)
+    return infoApp(app, remoteApp, project, options)
   }
 }
 
@@ -51,12 +53,16 @@ async function infoWeb(
 async function infoApp(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
+  project: Project,
   options: InfoOptions,
 ): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
       ...app,
+      packageManager: project.packageManager,
+      nodeDependencies: project.nodeDependencies,
+      usesWorkspaces: project.usesWorkspaces,
       allExtensions: extensionsInfo,
     }
     if ('realExtensions' in appWithSupportedExtensions) {
@@ -82,7 +88,7 @@ async function infoApp(
       2,
     )}`
   } else {
-    const appInfo = new AppInfo(app, remoteApp, options)
+    const appInfo = new AppInfo(app, remoteApp, project, options)
     return appInfo.output()
   }
 }
@@ -114,11 +120,13 @@ const NOT_LOADED_TEXT = 'NOT LOADED'
 class AppInfo {
   private readonly app: AppLinkedInterface
   private readonly remoteApp: OrganizationApp
+  private readonly project: Project
   private readonly options: InfoOptions
 
-  constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, options: InfoOptions) {
+  constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, project: Project, options: InfoOptions) {
     this.app = app
     this.remoteApp = remoteApp
+    this.project = project
     this.options = options
   }
 
@@ -165,7 +173,7 @@ class AppInfo {
       {
         body: [
           '💡 To change these, run',
-          {command: formatPackageManagerCommand(this.app.packageManager, 'shopify app config link')},
+          {command: formatPackageManagerCommand(this.project.packageManager, 'shopify app config link')},
         ],
       },
     ]
@@ -188,7 +196,7 @@ class AppInfo {
   }
 
   webComponentsSection(): AlertCustomSection | undefined {
-    const errors: OutputMessage[] = []
+    const errors: string[] = []
     const sublevels: InlineToken[][] = []
     if (!this.app.webs[0]) return
     this.app.webs.forEach((web) => {
@@ -208,9 +216,9 @@ class AppInfo {
       } else {
         sublevels.push([{subdued: `  📂 ${UNKNOWN_TEXT}`}, {filePath: relativePath(this.app.directory, web.directory)}])
       }
-      if (this.app.errors) {
-        const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
-        if (error) errors.push(error)
+      if (!this.app.errors.isEmpty()) {
+        const fileErrors = this.app.errors.getErrors(`${web.directory}/${configurationFileNames.web}`)
+        errors.push(...fileErrors.map((err) => err.message))
       }
     })
 
@@ -223,7 +231,7 @@ class AppInfo {
 
   extensionsSections(): AlertCustomSection[] {
     const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
-    const types = Array.from(new Set(extensions.map((ext) => ext.type)))
+    const types = uniq(extensions.map((ext) => ext.type))
     return types
       .map((extensionType: string): AlertCustomSection | undefined => {
         const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
@@ -246,19 +254,18 @@ class AppInfo {
     if (config && 'metafields' in config && Array.isArray(config.metafields) && config.metafields.length > 0) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
-    const error = this.app.errors?.getError(extension.configurationPath)
-    if (error) {
-      details.push([{error: '     error'}, {error: this.formattedError(error)}])
+    const fileErrors = this.app.errors.getErrors(extension.configurationPath)
+    for (const error of fileErrors) {
+      details.push([{error: '     error'}, {error: this.formattedError(error.message)}])
     }
 
     return details
   }
 
-  formattedError(str: OutputMessage): string {
-    // Some errors have newlines at the beginning for no apparent reason
-    const rawErrorMessage = stringifyMessage(str).trim()
+  formattedError(str: string): string {
+    const rawErrorMessage = str.trim()
     if (shouldDisplayColors()) return rawErrorMessage
-    const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).trim().split('\n')
+    const [errorFirstLine, ...errorRemainingLines] = rawErrorMessage.split('\n')
     return [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)].join('\n')
   }
 
@@ -266,7 +273,7 @@ class AppInfo {
     const {platform, arch} = platformAndArch()
     return this.tableSection('Tooling and System', [
       ['Shopify CLI', CLI_KIT_VERSION],
-      ['Package manager', this.app.packageManager],
+      ['Package manager', this.project.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL ?? 'unknown'],
       ['Node version', process.version],

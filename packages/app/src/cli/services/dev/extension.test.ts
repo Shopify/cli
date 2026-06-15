@@ -33,7 +33,11 @@ describe('devUIExtensions()', () => {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    vi.spyOn(store, 'ExtensionsPayloadStore').mockImplementation(() => ({mock: 'payload-store'}))
+    vi.spyOn(store, 'ExtensionsPayloadStore').mockImplementation(function () {
+      return {
+        mock: 'payload-store',
+      } as unknown as store.ExtensionsPayloadStore
+    } as any)
     vi.spyOn(server, 'setupHTTPServer').mockReturnValue({
       mock: 'http-server',
       close: serverCloseSpy,
@@ -54,6 +58,7 @@ describe('devUIExtensions()', () => {
     expect(store.ExtensionsPayloadStore).toHaveBeenCalledWith(
       {mock: 'payload'},
       {...options, websocketURL: 'wss://mock.url/extensions'},
+      expect.any(Map),
     )
   })
 
@@ -67,7 +72,7 @@ describe('devUIExtensions()', () => {
     // THEN
     expect(server.setupHTTPServer).toHaveBeenCalledWith({
       devOptions: {...options, websocketURL: 'wss://mock.url/extensions'},
-      payloadStore: {mock: 'payload-store'},
+      payloadStore: expect.objectContaining({mock: 'payload-store'}),
       getExtensions: expect.any(Function),
     })
   })
@@ -94,7 +99,7 @@ describe('devUIExtensions()', () => {
     expect(websocket.setupWebsocketConnection).toHaveBeenCalledWith({
       ...options,
       httpServer: expect.objectContaining({mock: 'http-server'}),
-      payloadStore: {mock: 'payload-store'},
+      payloadStore: expect.objectContaining({mock: 'payload-store'}),
       websocketURL: 'wss://mock.url/extensions',
     })
   })

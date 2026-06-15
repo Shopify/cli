@@ -1,13 +1,19 @@
-#!/usr/bin/env node
+import * as url from 'url'
+import {promises as fs} from 'fs'
 
 import * as path from 'pathe'
 import fg from 'fast-glob'
-import * as url from 'url'
-import {promises as fs} from 'fs'
-import {createRequire} from 'module'
 
-const require = createRequire(import.meta.url)
-const colors = require('ansi-colors')
+const colors = {
+  bold: (string) => `\x1b[1m${string}\x1b[22m`,
+  dim: (string) => `\x1b[2m${string}\x1b[22m`,
+  green: Object.assign((string) => `\x1b[32m${string}\x1b[39m`, {
+    bold: (string) => `\x1b[1m\x1b[32m${string}\x1b[39m\x1b[22m`,
+  }),
+  red: Object.assign((string) => `\x1b[31m${string}\x1b[39m`, {
+    bold: (string) => `\x1b[1m\x1b[31m${string}\x1b[39m\x1b[22m`,
+  }),
+}
 
 const rootDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
 let exitCode = 0

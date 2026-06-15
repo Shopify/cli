@@ -7,6 +7,7 @@
 * [`shopify app config link`](#shopify-app-config-link)
 * [`shopify app config pull`](#shopify-app-config-pull)
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
+* [`shopify app config validate`](#shopify-app-config-validate)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
 * [`shopify app dev clean`](#shopify-app-dev-clean)
@@ -27,7 +28,6 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
-* [`shopify app validate`](#shopify-app-validate)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth login`](#shopify-auth-login)
@@ -36,6 +36,9 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
+* [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
+* [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
+* [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -73,6 +76,9 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify store auth`](#shopify-store-auth)
+* [`shopify store execute`](#shopify-store-execute)
+* [`shopify store info`](#shopify-store-info)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -306,21 +312,43 @@ DESCRIPTION
   be prompted to choose from the configuration files in your project.
 ```
 
+## `shopify app config validate`
+
+Validate your app configuration and extensions.
+
+```
+USAGE
+  $ shopify app config validate [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--verbose]
+
+FLAGS
+  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Validate your app configuration and extensions.
+
+  Validates the selected app configuration file and all extension configurations against their schemas and reports any
+  errors found.
+```
+
 ## `shopify app deploy`
 
 Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-build] [--no-color]
+  $ shopify app deploy [--client-id <value> | -c <value>] [--message <value>] [--no-build] [--no-color]
     [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ] [--source-control-url <value>]
     [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -f, --force                       [env: SHOPIFY_FLAG_FORCE] [Deprecated] Deploy without asking for confirmation.
-                                    Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD
-                                    environments instead.
       --allow-deletes               [env: SHOPIFY_FLAG_ALLOW_DELETES] Allows removing extensions and configuration
                                     without requiring user confirmation. For CI/CD environments, the recommended flag is
                                     --allow-updates.
@@ -377,7 +405,8 @@ FLAGS
       --checkout-cart-url=<value>         [env: SHOPIFY_FLAG_CHECKOUT_CART_URL] Resource URL for checkout UI extension.
                                           Format: "/cart/{productVariantID}:{productQuantity}"
       --client-id=<value>                 [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --localhost-port=<value>            [env: SHOPIFY_FLAG_LOCALHOST_PORT] Port to use for localhost.
+      --localhost-port=<value>            [env: SHOPIFY_FLAG_LOCALHOST_PORT] Port to use for localhost. Must be between
+                                          1 and 65535.
       --no-color                          [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --no-update                         [env: SHOPIFY_FLAG_NO_UPDATE] Uses the app URL from the toml file instead an
                                           autogenerated URL for dev.
@@ -391,7 +420,7 @@ FLAGS
       --subscription-product-url=<value>  [env: SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL] Resource URL for subscription UI
                                           extension. Format: "/products/{productId}"
       --theme-app-extension-port=<value>  [env: SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT] Local port of the theme app
-                                          extension development server.
+                                          extension development server. Must be between 1 and 65535.
       --tunnel-url=<value>                [env: SHOPIFY_FLAG_TUNNEL_URL] Use a custom tunnel, it must be running before
                                           executing dev. Format: "https://my-tunnel-url:port".
       --use-localhost                     [env: SHOPIFY_FLAG_USE_LOCALHOST] Service entry point will listen to
@@ -555,7 +584,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
@@ -587,7 +616,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -l, --log=<value>        [env: SHOPIFY_FLAG_LOG] Specifies a log identifier to replay instead of selecting from a
                            list. The identifier is provided in the output of `shopify app dev` and is the suffix of the
                            log file name.
@@ -620,7 +649,7 @@ FLAGS
   -e, --export=<value>     [env: SHOPIFY_FLAG_EXPORT] Name of the WebAssembly export to invoke.
   -i, --input=<value>      [env: SHOPIFY_FLAG_INPUT] The input JSON to pass to the function. If omitted, standard input
                            is used.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
@@ -695,13 +724,12 @@ Generate a new app Extension.
 USAGE
   $ shopify app generate extension [--client-id <value> | -c <value>] [--flavor
     vanilla-js|react|typescript|typescript-react|wasm|rust] [-n <value>] [--no-color] [--path <value>] [--reset | ] [-t
-    <value>] [-t <value>] [--verbose]
+    <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
   -n, --name=<value>       [env: SHOPIFY_FLAG_NAME] name of your Extension
   -t, --template=<value>   [env: SHOPIFY_FLAG_EXTENSION_TEMPLATE] Extension template
-  -t, --type=<value>       [env: SHOPIFY_FLAG_EXTENSION_TYPE] Deprecated. Please use --template
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --flavor=<option>    [env: SHOPIFY_FLAG_FLAVOR] Choose a starting template for your extension, where applicable
                            <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
@@ -781,7 +809,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
@@ -826,7 +854,7 @@ FLAGS
       --organization-id=<value>   [env: SHOPIFY_FLAG_ORGANIZATION_ID] The organization ID. Your organization ID can be
                                   found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>
       --template=<value>          [env: SHOPIFY_FLAG_TEMPLATE] The app template. Accepts one of the following:
-                                  - <reactRouter|remix|none>
+                                  - <reactRouter|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
@@ -843,7 +871,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>...   [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development or Shopify Plus sandbox
                            store.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
@@ -901,8 +929,6 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -f, --force              [env: SHOPIFY_FLAG_FORCE] [Deprecated] Release without asking for confirmation. Equivalent to
-                           --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.
       --allow-deletes      [env: SHOPIFY_FLAG_ALLOW_DELETES] Allows removing extensions and configuration without
                            requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.
       --allow-updates      [env: SHOPIFY_FLAG_ALLOW_UPDATES] Allows adding and updating extensions and configuration
@@ -920,29 +946,6 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
-## `shopify app validate`
-
-Validate your app configuration and extensions.
-
-```
-USAGE
-  $ shopify app validate [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
-
-FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
-
-DESCRIPTION
-  Validate your app configuration and extensions.
-
-  Validates the selected app configuration file and all extension configurations against their schemas and reports any
-  errors found.
-```
-
 ## `shopify app versions list`
 
 List deployed versions of your app.
@@ -954,7 +957,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
@@ -975,7 +978,7 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 USAGE
   $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-id <value> | -c <value>]
     [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>] [--reset |
-    ] [--shared-secret <value>] [--topic <value>]
+    ] [--topic <value>]
 
 FLAGS
   -c, --config=<value>
@@ -1013,9 +1016,6 @@ FLAGS
 
   --reset
       [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-
-  --shared-secret=<value>
-      [env: SHOPIFY_FLAG_SHARED_SECRET] Deprecated. Please use client-secret.
 
   --topic=<value>
       [env: SHOPIFY_FLAG_TOPIC] The requested webhook topic.
@@ -1156,6 +1156,61 @@ DESCRIPTION
   available.
 
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
+```
+
+## `shopify config autoupgrade off`
+
+Disable automatic upgrades for Shopify CLI.
+
+```
+USAGE
+  $ shopify config autoupgrade off
+
+DESCRIPTION
+  Disable automatic upgrades for Shopify CLI.
+
+  Disable automatic upgrades for Shopify CLI.
+
+  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.
+
+  To enable auto-upgrade, run `shopify config autoupgrade on`.
+```
+
+## `shopify config autoupgrade on`
+
+Enable automatic upgrades for Shopify CLI.
+
+```
+USAGE
+  $ shopify config autoupgrade on
+
+DESCRIPTION
+  Enable automatic upgrades for Shopify CLI.
+
+  Enable automatic upgrades for Shopify CLI.
+
+  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version
+  upgrades are skipped and must be done manually.
+
+  To disable auto-upgrade, run `shopify config autoupgrade off`.
+```
+
+## `shopify config autoupgrade status`
+
+Check whether auto-upgrade is enabled, disabled, or not yet configured.
+
+```
+USAGE
+  $ shopify config autoupgrade status
+
+DESCRIPTION
+  Check whether auto-upgrade is enabled, disabled, or not yet configured.
+
+  Check whether auto-upgrade is enabled, disabled, or not yet configured.
+
+  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
+
+  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
 ```
 
 ## `shopify help [command] [flags]`
@@ -1782,7 +1837,7 @@ USAGE
   $ shopify organization list [-j] [--no-color] [--verbose]
 
 FLAGS
-  -j, --json      [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json      [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --no-color  [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --verbose   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
@@ -2047,6 +2102,110 @@ EXAMPLES
       shopify search "<a search query separated by spaces>"
 ```
 
+## `shopify store auth`
+
+Authenticate an app against a store for store commands.
+
+```
+USAGE
+  $ shopify store auth --scopes <value> -s <value> [-j] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json            [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -s, --store=<value>   (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+      --no-color        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --scopes=<value>  (required) [env: SHOPIFY_FLAG_SCOPES] Comma-separated Admin API scopes to request for the app.
+      --verbose         [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Authenticate an app against a store for store commands.
+
+  Authenticates the app against the specified store for store commands and stores an online access token for later
+  reuse.
+
+  Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
+
+EXAMPLES
+  $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
+
+  $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
+```
+
+## `shopify store execute`
+
+Execute GraphQL queries and mutations on a store.
+
+```
+USAGE
+  $ shopify store execute -s <value> [--allow-mutations] [-j] [--no-color] [--output-file <value>] [-q <value>]
+    [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+
+FLAGS
+  -j, --json                   [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation, as a string.
+  -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+  -v, --variables=<value>      [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or
+                               mutation, in JSON format.
+      --allow-mutations        [env: SHOPIFY_FLAG_ALLOW_MUTATIONS] Allow GraphQL mutations to run against the target
+                               store.
+      --no-color               [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --output-file=<value>    [env: SHOPIFY_FLAG_OUTPUT_FILE] The file name where results should be written, instead of
+                               STDOUT.
+      --query-file=<value>     [env: SHOPIFY_FLAG_QUERY_FILE] Path to a file containing the GraphQL query or mutation.
+                               Can't be used with --query.
+      --variable-file=<value>  [env: SHOPIFY_FLAG_VARIABLE_FILE] Path to a file containing GraphQL variables in JSON
+                               format. Can't be used with --variables.
+      --verbose                [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --version=<value>        [env: SHOPIFY_FLAG_VERSION] The API version to use for the query or mutation. Defaults to
+                               the latest stable version.
+
+DESCRIPTION
+  Execute GraphQL queries and mutations on a store.
+
+  Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.
+
+  Run `shopify store auth` first to create stored auth for the store.
+
+  Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
+
+EXAMPLES
+  $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }"
+
+  $ shopify store execute --store shop.myshopify.com --query-file ./operation.graphql --variables '{"id":"gid://shopify/Product/1"}'
+
+  $ shopify store execute --store shop.myshopify.com --query "mutation { shop { id } }" --allow-mutations
+
+  $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }" --json
+```
+
+## `shopify store info`
+
+Surface metadata about a Shopify store.
+
+```
+USAGE
+  $ shopify store info -s <value> [-j] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json           [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -s, --store=<value>  (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+      --no-color       [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose        [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Surface metadata about a Shopify store.
+
+  Returns metadata about a store you have access to: id, display name, subdomain, organization, store owner, type, plan,
+  feature preview, and admin URL.
+
+  Use `--json` for machine-readable output.
+
+EXAMPLES
+  $ shopify store info --store shop.myshopify.com
+
+  $ shopify store info --store shop.myshopify.com --json
+```
+
 ## `shopify theme check`
 
 Validate the theme.
@@ -2230,7 +2389,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH] The path where you want to run the command. Defaults to the current working directory.
 
   --port=<value>
-      [env: SHOPIFY_FLAG_PORT] Local port to serve theme preview from.
+      [env: SHOPIFY_FLAG_PORT] Local port to serve theme preview from. Must be between 1 and 65535.
 
   --store-password=<value>
       [env: SHOPIFY_FLAG_STORE_PASSWORD] The password for storefronts with password protection.
@@ -2289,7 +2448,7 @@ FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -f, --force                   [env: SHOPIFY_FLAG_FORCE] Force the duplicate operation to run without prompts or
                                 confirmations.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -n, --name=<value>            [env: SHOPIFY_FLAG_NAME] Name of the newly duplicated theme.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2349,7 +2508,7 @@ USAGE
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Retrieve info from your development theme.
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
@@ -2428,7 +2587,7 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
       --id=<value>              [env: SHOPIFY_FLAG_ID] Only list theme with the given ID.
@@ -2548,14 +2707,15 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview --overrides <value> -t <value> [-e <value>...] [--no-color] [--open] [--password <value>]
-    [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
+  $ shopify theme preview --overrides <value> -t <value> [-e <value>...] [--json] [--no-color] [--open] [--password
+    <value>] [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           (required) [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --json                    [env: SHOPIFY_FLAG_JSON] Output the preview URL and identifier as JSON.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --open                    [env: SHOPIFY_FLAG_OPEN] Automatically launch the theme preview in your default web
                                 browser.
@@ -2588,7 +2748,7 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
@@ -2701,7 +2861,8 @@ FLAGS
   -d, --development                  [env: SHOPIFY_FLAG_DEVELOPMENT] Push theme files from your remote development
                                      theme.
   -e, --environment=<value>...       [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                         [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                         [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color
+                                     output.
   -l, --live                         [env: SHOPIFY_FLAG_LIVE] Push theme files from your remote live theme.
   -n, --nodelete                     [env: SHOPIFY_FLAG_NODELETE] Prevent deleting remote files that don't exist
                                      locally.
@@ -2829,16 +2990,16 @@ DESCRIPTION
 
 ## `shopify upgrade`
 
-Shows details on how to upgrade Shopify CLI.
+Upgrades Shopify CLI.
 
 ```
 USAGE
   $ shopify upgrade
 
 DESCRIPTION
-  Shows details on how to upgrade Shopify CLI.
+  Upgrades Shopify CLI.
 
-  Shows details on how to upgrade Shopify CLI.
+  Upgrades Shopify CLI using your package manager.
 ```
 
 ## `shopify version`

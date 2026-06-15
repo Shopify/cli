@@ -8,7 +8,6 @@ import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session/dev-session-process.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {launchAppWatcher} from './app-watcher-process.js'
-import {resolveGraphiQLKey} from '../graphiql/server.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -24,12 +23,14 @@ import {
   testAppLinked,
   testOrganization,
   testOrganizationStore,
+  testProject,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import * as loader from '../../../models/app/loader.js'
+import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
@@ -85,6 +86,7 @@ beforeEach(() => {
 
 const appContextResult = {
   app: testAppLinked(),
+  project: testProject(),
   remoteApp: testOrganizationApp(),
   developerPlatformClient: testDeveloperPlatformClient(),
   organization: testOrganization(),
@@ -218,7 +220,7 @@ describe('setup-dev-processes', () => {
       prefix: 'extensions',
       options: {
         apiKey: 'api-key',
-        previewableExtensions: [previewable],
+        allExtensions: expect.arrayContaining([previewable]),
         storeFqdn,
         proxyUrl: 'https://example.com/proxy',
         port: expect.any(Number),

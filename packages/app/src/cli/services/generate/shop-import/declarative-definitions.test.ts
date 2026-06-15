@@ -25,6 +25,22 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../../api/admin-as-app.js')
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/ui', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/ui')
+  return {
+    ...actual,
+    renderTasks: vi.fn(async (tasks: {task: () => Promise<unknown>}[]) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task()
+      }
+    }),
+    renderSingleTask: vi.fn(async (task: {task: () => Promise<unknown>}) => {
+      return task.task()
+    }),
+    renderInfo: vi.fn(),
+  }
+})
 
 const defaultMetaobjectFragment = {
   name: 'test',
@@ -1123,29 +1139,7 @@ describe('importDeclarativeDefinitions', () => {
       appConfiguration: {},
     } as any)
 
-    expect(outputMock.info()).toMatchInlineSnapshot(`
-      "╭─ info ───────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  Conversion to TOML complete.                                                │
-      │                                                                              │
-      │  Converted 0 metafields and 0 metaobjects from test-shop.myshopify.com into  │
-      │   TOML, ready for you to copy.                                               │
-      │                                                                              │
-      │  Next steps                                                                  │
-      │    1. Review the suggested TOML carefully before applying.                   │
-      │    2. Missing sections? Make sure your app has the required access scopes    │
-      │       to load metafields and metaobjects (e.g. \`read_customers\` to load      │
-      │       customer metafields, \`read_metaobject_definitions\` to load             │
-      │       metaobjects.)                                                          │
-      │    3. Missing definitions? Only metafields and metaobjects that are          │
-      │       app-reserved (using \`$app\` ) will be converted.                        │
-      │    4. When you're ready, add the generated TOML to your app's configuration  │
-      │       file and test out changes with the \`shopify app dev\` command.          │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-
-      "
-    `)
+    expect(outputMock.info()).toMatchInlineSnapshot(`""`)
     outputMock.clear()
   })
 
@@ -1328,27 +1322,7 @@ describe('importDeclarativeDefinitions', () => {
     } as any)
 
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "╭─ info ───────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  Conversion to TOML complete.                                                │
-      │                                                                              │
-      │  Converted 1 metafields and 1 metaobjects from test-shop.myshopify.com into  │
-      │   TOML, ready for you to copy.                                               │
-      │                                                                              │
-      │  Next steps                                                                  │
-      │    1. Review the suggested TOML carefully before applying.                   │
-      │    2. Missing sections? Make sure your app has the required access scopes    │
-      │       to load metafields and metaobjects (e.g. \`read_customers\` to load      │
-      │       customer metafields, \`read_metaobject_definitions\` to load             │
-      │       metaobjects.)                                                          │
-      │    3. Missing definitions? Only metafields and metaobjects that are          │
-      │       app-reserved (using \`$app\` ) will be converted.                        │
-      │    4. When you're ready, add the generated TOML to your app's configuration  │
-      │       file and test out changes with the \`shopify app dev\` command.          │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-
-      # type: $app:new
+      "# type: $app:new
       [metaobjects.app.new.fields]
       field = "single_line_text_field"
 
@@ -1365,27 +1339,7 @@ describe('importDeclarativeDefinitions', () => {
     } as any)
 
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "╭─ info ───────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  Conversion to TOML complete.                                                │
-      │                                                                              │
-      │  Converted 2 metafields and 2 metaobjects from test-shop.myshopify.com into  │
-      │   TOML, ready for you to copy.                                               │
-      │                                                                              │
-      │  Next steps                                                                  │
-      │    1. Review the suggested TOML carefully before applying.                   │
-      │    2. Missing sections? Make sure your app has the required access scopes    │
-      │       to load metafields and metaobjects (e.g. \`read_customers\` to load      │
-      │       customer metafields, \`read_metaobject_definitions\` to load             │
-      │       metaobjects.)                                                          │
-      │    3. Missing definitions? Only metafields and metaobjects that are          │
-      │       app-reserved (using \`$app\` ) will be converted.                        │
-      │    4. When you're ready, add the generated TOML to your app's configuration  │
-      │       file and test out changes with the \`shopify app dev\` command.          │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-
-      # type: $app:existing
+      "# type: $app:existing
       [metaobjects.app.existing.fields]
       field = "single_line_text_field"
 

@@ -19,7 +19,7 @@ import {outputContent, outputToken, outputDebug, outputCompleted} from '../../pu
 import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
-import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
+import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
 import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
@@ -35,7 +35,7 @@ async function fetchEmail(businessPlatformToken: string | undefined): Promise<st
 
   try {
     const userEmailResult = await businessPlatformRequest<UserEmailQuery>(UserEmailQueryString, businessPlatformToken)
-    return userEmailResult.currentUserAccount?.email
+    return userEmailResult.currentUserAccount?.email ?? undefined
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputDebug(outputContent`Failed to fetch user email: ${(error as Error).message ?? String(error)}`)
@@ -120,25 +120,27 @@ let userId: undefined | string
 let authMethod: AuthMethod = 'none'
 
 /**
- * Retrieves the user ID from the current session or returns 'unknown' if not found.
+ * Retrieves a stable user identifier for analytics, or `'unknown'` if none applies.
  *
- * This function performs the following steps:
- * 1. Checks for a cached user ID in memory (obtained in the current run).
- * 2. Attempts to fetch it from the local storage (from a previous auth session).
- * 3. Checks if a custom token was used (either as a theme password or partners token).
- * 4. If a custom token is present in the environment, generates a UUID and uses it as userId.
- * 5. If after all this we don't have a userId, then reports as 'unknown'.
+ * Evaluation order:
+ * 1. If an app automation token or theme token is used, returns a deterministic UUID
+ *    derived from that secret.
+ * 2. Otherwise, if `setLastSeenUserIdAfterAuth` was called (e.g. after OAuth), returns that value.
+ * 3. Otherwise, if a persisted CLI session id is available, returns it.
+ * 4. Otherwise returns `'unknown'`.
  *
  * @returns A Promise that resolves to the user ID as a string.
  */
 export async function getLastSeenUserIdAfterAuth(): Promise<string> {
+  const customToken = getAppAutomationToken() ?? themeToken()
+  if (customToken) return nonRandomUUID(customToken)
+
   if (userId) return userId
 
   const currentSessionId = getCurrentSessionId()
   if (currentSessionId) return currentSessionId
 
-  const customToken = getPartnersToken() ?? themeToken()
-  return customToken ? nonRandomUUID(customToken) : 'unknown'
+  return 'unknown'
 }
 
 export function setLastSeenUserIdAfterAuth(id: string) {
@@ -162,8 +164,8 @@ export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
 
   if (getCurrentSessionId()) return 'device_auth'
 
-  const partnersToken = getPartnersToken()
-  if (partnersToken) return 'partners_token'
+  const appAutomationToken = getAppAutomationToken()
+  if (appAutomationToken) return 'partners_token'
 
   const themePassword = themeToken()
   if (themePassword) {
@@ -230,7 +232,7 @@ ${outputToken.json(applications)}
   if (validationResult === 'needs_full_auth') {
     await throwOnNoPrompt(noPrompt)
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications)
+    newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
@@ -238,7 +240,7 @@ ${outputToken.json(applications)}
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         await throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications)
+        newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
         throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
@@ -263,8 +265,7 @@ ${outputToken.json(applications)}
 
   const tokens = await tokensFor(applications, completeSession)
 
-  // Overwrite partners token if using a custom CLI Token
-  const envToken = getPartnersToken()
+  const envToken = getAppAutomationToken()
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
@@ -289,9 +290,9 @@ The CLI is currently unable to prompt for reauthentication.`,
  * Execute the full authentication flow.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
- * @param alias - Optional alias to use for the session.
+ * @param existingAlias - Optional alias from a previous session to preserve if the email fetch fails.
  */
-async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
+async function executeCompleteFlow(applications: OAuthApplications, existingAlias?: string): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -318,9 +319,9 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
-  // Get the alias for the session (email or userId)
+  // Preserve existing alias if available, otherwise try fetching email
   const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
-  const alias = (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
+  const alias = existingAlias ?? (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
 
   const session: Session = {
     identity: {
@@ -352,7 +353,7 @@ async function refreshTokens(session: Session, applications: OAuthApplications):
   )
 
   return {
-    identity: identityToken,
+    identity: {...identityToken, alias: session.identity.alias},
     applications: applicationTokens,
   }
 }
@@ -447,6 +448,6 @@ function buildIdentityTokenFromEnv(
     ...identityTokenInformation,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     scopes,
-    alias: identityTokenInformation.userId,
+    alias: undefined,
   }
 }

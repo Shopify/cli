@@ -1,4 +1,4 @@
-import init, {InitOptions} from './init.js'
+import init, {InitOptions, visibleTemplates} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
@@ -15,7 +15,7 @@ describe('init', () => {
 
   test('it renders the label for the template options', async () => {
     const answers = {
-      template: 'https://github.com/Shopify/shopify-app-template-none',
+      template: 'https://github.com/Shopify/shopify-app-template-extension-only',
     }
     const options: InitOptions = {}
 
@@ -37,6 +37,16 @@ describe('init', () => {
     expect(got).toEqual({...options, ...answers, templateType: 'none', globalCLIResult})
   })
 
+  describe('visibleTemplates', () => {
+    test('omits the deprecated remix template so it is not advertised in --template help text', () => {
+      expect(visibleTemplates).not.toContain('remix')
+    })
+
+    test('exposes only the templates that are still actively offered', () => {
+      expect(visibleTemplates).toEqual(['reactRouter', 'none'])
+    })
+  })
+
   test('it renders branches for templates that have them', async () => {
     const answers = {
       template: 'https://github.com/Shopify/shopify-app-template-react-router#javascript-cli',
@@ -54,7 +64,10 @@ describe('init', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
         {label: 'Build a React Router app (recommended)', value: 'reactRouter'},
-        {label: 'Build an extension-only app', value: 'none'},
+        {
+          label: 'Build an extension-only app',
+          value: 'none',
+        },
       ],
       message: 'Get started building your app:',
       defaultValue: 'reactRouter',

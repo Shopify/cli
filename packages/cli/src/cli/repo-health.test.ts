@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
+import {uniq} from '@shopify/cli-kit/common/array'
 import {describe, test, expect} from 'vitest'
 import glob from 'fast-glob'
 import * as fs from 'fs/promises'
@@ -91,7 +92,7 @@ describe('Node dependency version sync', () => {
         }
       }
 
-      const uniqueVersions = [...new Set(depVersions.map((ver) => ver.version))]
+      const uniqueVersions = uniq(depVersions.map((ver) => ver.version))
       if (uniqueVersions.length > 1) {
         different.push({dep, versions: depVersions})
       }
@@ -107,5 +108,37 @@ describe('Node dependency version sync', () => {
     ].join('')
 
     expect(different, errorMessage).toHaveLength(0)
+  })
+})
+
+describe('oclif manifest packaging', () => {
+  test('packages that ship oclif.manifest.json regenerate it in prepack', async () => {
+    const packageJsonPaths = await glob('packages/*/package.json', {cwd: repoRoot, absolute: true})
+
+    const missingManifestRefresh: string[] = []
+
+    for (const packageJsonPath of packageJsonPaths) {
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8')) as {
+        files?: string[]
+        scripts?: {prepack?: string}
+      }
+
+      const shipsOclifManifest = packageJson.files?.some((file) =>
+        file.replace(/^\.?\//, '').endsWith('oclif.manifest.json'),
+      )
+      if (!shipsOclifManifest) continue
+      if (!/\boclif\s+manifest\b/.test(packageJson.scripts?.prepack ?? '')) {
+        missingManifestRefresh.push(path.relative(repoRoot, packageJsonPath))
+      }
+    }
+
+    expect(
+      missingManifestRefresh,
+      [
+        'The following packages publish oclif.manifest.json without regenerating it in prepack:\n',
+        ...missingManifestRefresh.map((packageJsonPath) => `  - ${packageJsonPath}\n`),
+        '\nAdd `pnpm oclif manifest` to the package prepack script so snapshot/nightly versions do not ship stale manifests.',
+      ].join(''),
+    ).toHaveLength(0)
   })
 })

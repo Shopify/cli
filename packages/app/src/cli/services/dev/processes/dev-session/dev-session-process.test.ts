@@ -13,7 +13,7 @@ import {
   testUIExtension,
   testWebhookExtensions,
 } from '../../../../models/app/app.test-data.js'
-import {getUploadURL} from '../../../bundle.js'
+import {getUploadURL, writeManifestToBundle} from '../../../bundle.js'
 import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
@@ -453,6 +453,86 @@ describe('pushUpdatesForDevSession', () => {
       // The unaffected extension is listed in inheritedModuleUids
       inheritedModuleUids: [unaffectedExtension.uid],
     })
+  })
+
+  test('writes full manifest to bundle on session update, not just create', async () => {
+    // Given
+    vi.mocked(readdir).mockResolvedValue([])
+    vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
+
+    const updatedExtension = await testUIExtension({handle: 'updated-ext', uid: 'updated-uid'})
+    updatedExtension.deployConfig = vi.fn().mockResolvedValue({})
+    const existingExtension = await testUIExtension({handle: 'existing-ext', uid: 'existing-uid'})
+    existingExtension.deployConfig = vi.fn().mockResolvedValue({})
+    const appWithMultipleExtensions = testAppLinked({
+      allExtensions: [updatedExtension, existingExtension],
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Capture manifests at call time (the object is mutated after writeManifestToBundle)
+    const capturedManifests: any[] = []
+    vi.mocked(writeManifestToBundle).mockImplementation(async (manifest: any) => {
+      capturedManifests.push(structuredClone(manifest))
+    })
+
+    // Emit UPDATE event with only one extension changed
+    appWatcher.emit('all', {
+      app: appWithMultipleExtensions,
+      extensionEvents: [{type: 'updated', extension: updatedExtension}],
+    })
+    await flushPromises()
+
+    // Then - writeManifestToBundle should have been called with ALL modules, not just the updated one
+    expect(capturedManifests).toHaveLength(1)
+    const moduleUids = capturedManifests[0].modules.map((mod: any) => mod.uid)
+    expect(moduleUids).toContain(updatedExtension.uid)
+    expect(moduleUids).toContain(existingExtension.uid)
+    expect(moduleUids.length).toBeGreaterThanOrEqual(2)
+  })
+
+  test('writes full manifest including new extension on created event', async () => {
+    // Given
+    vi.mocked(readdir).mockResolvedValue([])
+    vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
+
+    const existingExtension = await testUIExtension({handle: 'existing-ext', uid: 'existing-uid'})
+    existingExtension.deployConfig = vi.fn().mockResolvedValue({})
+    const newExtension = await testUIExtension({handle: 'new-ext', uid: 'new-uid'})
+    newExtension.deployConfig = vi.fn().mockResolvedValue({})
+
+    // The app after reload includes both the existing and newly created extension
+    const appAfterReload = testAppLinked({
+      allExtensions: [existingExtension, newExtension],
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Capture manifests at call time (the object is mutated after writeManifestToBundle)
+    const capturedManifests: any[] = []
+    vi.mocked(writeManifestToBundle).mockImplementation(async (manifest: any) => {
+      capturedManifests.push(structuredClone(manifest))
+    })
+
+    // Emit event with a new extension created mid-dev (simulates generate extension)
+    appWatcher.emit('all', {
+      app: appAfterReload,
+      extensionEvents: [{type: 'created', extension: newExtension}],
+    })
+    await flushPromises()
+
+    // Then - writeManifestToBundle should include ALL modules (existing + new)
+    expect(capturedManifests).toHaveLength(1)
+    const moduleUids = capturedManifests[0].modules.map((mod: any) => mod.uid)
+    expect(moduleUids).toContain(existingExtension.uid)
+    expect(moduleUids).toContain(newExtension.uid)
+    expect(moduleUids.length).toBeGreaterThanOrEqual(2)
   })
 
   test('assetsURL is only generated if affected extensions have assets', async () => {

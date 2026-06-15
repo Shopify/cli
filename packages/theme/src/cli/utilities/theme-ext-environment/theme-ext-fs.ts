@@ -56,7 +56,7 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
 
       unsyncedFileKeys.add(file.key)
 
-      return file.value || file.attachment || ''
+      return file.value ?? file.attachment ?? ''
     })
 
     sleep(5)

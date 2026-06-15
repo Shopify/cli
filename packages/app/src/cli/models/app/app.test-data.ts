@@ -8,6 +8,7 @@ import {
   WebType,
   getAppVersionedSchema,
 } from './app.js'
+import {AppErrors} from './loader.js'
 import {ExtensionTemplate} from './template.js'
 import {
   Organization,
@@ -74,12 +75,14 @@ import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/function
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
-import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {Project} from '../project/project.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
@@ -104,9 +107,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     name: app.name ?? 'App',
     directory: app.directory ?? '/tmp/project',
     configPath: app.configPath ?? '/tmp/project/shopify.app.toml',
-    packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
-    nodeDependencies: app.nodeDependencies ?? {},
     webs: app.webs ?? [
       {
         directory: '',
@@ -117,9 +118,8 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
       },
     ],
     modules: app.allExtensions ?? [],
-    usesWorkspaces: app.usesWorkspaces ?? false,
     dotenv: app.dotenv,
-    errors: app.errors,
+    errors: app.errors ?? new AppErrors(),
     specifications: app.specifications ?? [],
     configSchema: (app.configSchema ?? AppSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
@@ -127,9 +127,6 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     devApplicationURLs: app.devApplicationURLs,
   })
 
-  if (app.updateDependencies) {
-    Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
-  }
   if (app.extensionsForType) {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
   }
@@ -153,6 +150,34 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinked
   } as CurrentAppConfiguration
 
   return app
+}
+
+interface TestProjectOptions {
+  directory?: string
+  packageManager?: PackageManager
+  nodeDependencies?: Record<string, string>
+  usesWorkspaces?: boolean
+}
+
+/**
+ * Creates a minimal Project mock for testing.
+ * Use this when a service needs a Project for packageManager, usesWorkspaces, or directory.
+ */
+export function testProject(options: TestProjectOptions = {}): Project {
+  return {
+    directory: options.directory ?? '/tmp/project',
+    packageManager: options.packageManager ?? 'yarn',
+    nodeDependencies: options.nodeDependencies ?? {},
+    usesWorkspaces: options.usesWorkspaces ?? false,
+    appConfigFiles: [],
+    extensionConfigFiles: [],
+    webConfigFiles: [],
+    dotenvFiles: new Map(),
+    hiddenConfigRaw: {},
+    appConfigByName: () => undefined,
+    appConfigByClientId: () => undefined,
+    defaultAppConfig: undefined,
+  } as unknown as Project
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -669,16 +694,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'checkout_post_purchase_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
-    features: {
-      argo: {
-        surface: 'checkout',
-      },
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Online Store - App Theme Extension',
@@ -687,11 +705,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'theme_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Product Subscription',
@@ -700,16 +716,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'product_subscription_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
-    features: {
-      argo: {
-        surface: 'admin',
-      },
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
   },
   {
     name: 'UI Extension',
@@ -718,16 +727,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'ui_extension_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 50,
-      uidIsClientProvided: true,
-    },
-    features: {
-      argo: {
-        surface: 'all',
-      },
-    },
+    managementExperience: 'cli',
+    registrationLimit: 50,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Checkout Extension',
@@ -736,16 +738,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'checkout_ui_extension_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 5,
-      uidIsClientProvided: true,
-    },
-    features: {
-      argo: {
-        surface: 'checkout',
-      },
-    },
+    managementExperience: 'cli',
+    registrationLimit: 5,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Product Subscription',
@@ -756,16 +751,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'product_subscription_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
-    features: {
-      argo: {
-        surface: 'admin',
-      },
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Marketing Activity',
@@ -774,11 +762,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'marketing_activity_extension_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'dashboard',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'dashboard',
+    registrationLimit: 100,
+    uidStrategy: 'uuid',
   },
   {
     name: 'function',
@@ -787,16 +773,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'function',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
-    features: {
-      argo: {
-        surface: 'checkout',
-      },
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Editor extension collection',
@@ -805,11 +784,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'editor_extension_collection_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 100,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Flow Action',
@@ -818,11 +795,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'flow_action',
     gated: true,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 100,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Flow Template',
@@ -831,11 +806,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'flow_template',
     gated: true,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 300,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 300,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Flow Trigger',
@@ -844,11 +817,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'flow_trigger',
     gated: true,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 100,
+    uidStrategy: 'uuid',
   },
   {
     name: 'POS UI Extension',
@@ -857,11 +828,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'pos_ui_extension',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 50,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 50,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Web Pixel Extension',
@@ -870,11 +839,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'web_pixel_extension',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Branding',
@@ -883,11 +850,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'branding',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
   },
   {
     name: 'App access',
@@ -896,11 +861,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'app_access',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
   },
   {
     name: 'Webhooks',
@@ -909,11 +872,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'webhooks',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
   },
   {
     name: 'Privacy Compliance Webhooks',
@@ -922,11 +883,20 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'privacy_compliance_webhooks',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
+  },
+  {
+    name: 'Webhook Subscription',
+    externalName: 'Webhook Subscription',
+    externalIdentifier: 'webhook_subscription',
+    identifier: 'webhook_subscription',
+    gated: false,
+    experience: 'extension',
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
   },
   {
     name: 'App Proxy',
@@ -935,11 +905,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'app_proxy',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
   },
   {
     name: 'Point Of Sale Configuration',
@@ -948,11 +916,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'point_of_sale',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
   },
   {
     name: 'App Home',
@@ -961,11 +927,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'app_home',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
   },
   {
     name: 'Remote Extension Without Schema and Without local spec',
@@ -974,11 +938,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_without_schema_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
   },
   {
     name: 'Remote Extension With Schema, Without local spec, without localization',
@@ -987,11 +949,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_schema_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
     validationSchema: {
       jsonSchema:
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
@@ -1004,11 +964,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_schema_with_localization_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'uuid',
     validationSchema: {
       jsonSchema:
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"},"localization":{"type":"object","properties":{"marketing_channel":{"type":"string"}},"required":["marketing_channel"]}},"required":["pattern","localization"]}',
@@ -1021,11 +979,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_schema_config_style_external',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidStrategy: 'single',
     validationSchema: {
       jsonSchema:
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
@@ -1420,6 +1376,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
+    appInstallCount: (_app: MinimalAppIdentifiers) => Promise.resolve(0),
     templateSpecifications: (_app: MinimalAppIdentifiers) =>
       Promise.resolve({templates: testRemoteExtensionTemplates, groupOrder: []}),
     orgAndApps: (_orgId: string) =>
@@ -1482,7 +1439,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devSessionDelete: (_input: DevSessionDeleteOptions) => Promise.resolve({devSessionDelete: {userErrors: []}}),
     getCreateDevStoreLink: (org: Organization) =>
       Promise.resolve(
-        `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard. Create one now https://partners.shopify.com/1234/stores`,
+        `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard. Create a store in Partner Dashboard https://partners.shopify.com/1234/stores`,
       ),
     ...stubs,
   }
@@ -1526,5 +1483,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter(isAppConfigSpecification)
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
 }

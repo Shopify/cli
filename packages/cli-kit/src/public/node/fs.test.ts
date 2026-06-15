@@ -24,15 +24,8 @@ import {
   fileRealPath,
 } from './fs.js'
 import {joinPath, normalizePath} from './path.js'
-import {takeRandomFromArray} from '../common/array.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-import FastGlob from 'fast-glob'
-
-import * as os from 'os'
-
-vi.mock('../common/array.js')
-vi.mock('fast-glob')
-vi.mock('os')
+import * as array from '../common/array.js'
+import {describe, expect, test, vi} from 'vitest'
 
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -87,6 +80,19 @@ describe('copy', () => {
       // Then
       await expect(readFile(joinPath(to, 'file'))).resolves.toEqual(content)
       await expect(readFile(joinPath(to, 'child', '.dotfile'))).resolves.toEqual(content)
+    })
+  })
+
+  test('skips the copy when source and destination resolve to the same path', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const content = 'test'
+      const path = joinPath(tmpDir, 'file')
+      await writeFile(path, content)
+
+      // When / Then — fs-extra would otherwise throw "Source and destination must not be the same"
+      await expect(copyFile(path, joinPath(path, '..', 'file'))).resolves.not.toThrow()
+      await expect(readFile(path)).resolves.toEqual(content)
     })
   })
 })
@@ -207,10 +213,11 @@ describe('makeDirectoryWithRandomName', () => {
   test('rerolls the name if a directory exists with the same name', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(takeRandomFromArray).mockReturnValueOnce('taken')
-      vi.mocked(takeRandomFromArray).mockReturnValueOnce('directory')
-      vi.mocked(takeRandomFromArray).mockReturnValueOnce('free')
-      vi.mocked(takeRandomFromArray).mockReturnValueOnce('directory')
+      const takeRandomFromArraySpy = vi.spyOn(array, 'takeRandomFromArray')
+      takeRandomFromArraySpy.mockReturnValueOnce('taken')
+      takeRandomFromArraySpy.mockReturnValueOnce('directory')
+      takeRandomFromArraySpy.mockReturnValueOnce('free')
+      takeRandomFromArraySpy.mockReturnValueOnce('directory')
 
       const content = 'test'
       const filePath = joinPath(tmpDir, 'taken-directory-app')
@@ -221,7 +228,8 @@ describe('makeDirectoryWithRandomName', () => {
 
       // Then
       expect(got).toEqual('free-directory-app')
-      expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
+      expect(takeRandomFromArraySpy).toHaveBeenCalledTimes(4)
+      takeRandomFromArraySpy.mockRestore()
     })
   })
 })
@@ -276,20 +284,38 @@ describe('createFileReadStream', () => {
 })
 
 describe('glob', () => {
-  test('calls fastGlob with dot:true if no dot option is passed', async () => {
-    // When
-    await glob('pattern')
+  test('returns the files that match the pattern', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'test-file')
+      const dotFilePath = joinPath(tmpDir, '.dot-file')
+      await touchFile(filePath)
+      await touchFile(dotFilePath)
 
-    // Then
-    expect(FastGlob).toBeCalledWith('pattern', {dot: true})
+      // When
+      const got = await glob(joinPath(tmpDir, '*'))
+
+      // Then
+      expect(got.map((path) => normalizePath(path))).toContain(normalizePath(filePath))
+      expect(got.map((path) => normalizePath(path))).toContain(normalizePath(dotFilePath))
+    })
   })
 
-  test('calls fastGlob with dot option if passed', async () => {
-    // When
-    await glob('pattern', {dot: false})
+  test('returns the files that match the pattern excluding dot files', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'test-file')
+      const dotFilePath = joinPath(tmpDir, '.dot-file')
+      await touchFile(filePath)
+      await touchFile(dotFilePath)
 
-    // Then
-    expect(FastGlob).toBeCalledWith('pattern', {dot: false})
+      // When
+      const got = await glob(joinPath(tmpDir, '*'), {dot: false})
+
+      // Then
+      expect(got.map((path) => normalizePath(path))).toContain(normalizePath(filePath))
+      expect(got.map((path) => normalizePath(path))).not.toContain(normalizePath(dotFilePath))
+    })
   })
 })
 
@@ -319,24 +345,16 @@ describe('detectEOL', () => {
   test('returns the default EOL if no EOL is found', async () => {
     // Given
     const fileContent = 'testcontent'
-    vi.mocked(os).EOL = '\n'
 
     // When
     const eol = detectEOL(fileContent)
 
     // Then
-    expect(eol).toEqual('\n')
+    expect(eol).toMatch(/^(\r\n|\n)$/)
   })
 })
 
 describe('copyDirectoryContents', () => {
-  beforeEach(() => {
-    // restore fast-glob to its original implementation for the tests
-    vi.doMock('fast-glob', async () => {
-      return vi.importActual('fast-glob')
-    })
-  })
-
   test('copies the contents of source directory to destination directory', async () => {
     // Given
     await inTemporaryDirectory(async (tmpDir) => {

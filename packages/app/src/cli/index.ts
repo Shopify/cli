@@ -19,15 +19,13 @@ import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
-import GenerateSchema from './commands/app/generate/schema.js'
 import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
-import Validate from './commands/app/validate.js'
+import ConfigValidate from './commands/app/config/validate.js'
 import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
-import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
 import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
@@ -56,7 +54,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,
-  'app:validate': Validate,
+  'app:config:validate': ConfigValidate,
   'app:release': Release,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
@@ -65,7 +63,6 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:env:show': EnvShow,
   'app:execute': Execute,
   'app:bulk:execute': BulkExecute,
-  'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
   'app:function:replay': FunctionReplay,
   'app:function:run': FunctionRun,
@@ -75,7 +72,6 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
-  'webhook:trigger': WebhookTriggerDeprecated,
   'demo:watcher': DemoWatcher,
   'organization:list': OrganizationList,
 }

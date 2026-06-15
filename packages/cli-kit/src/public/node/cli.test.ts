@@ -1,4 +1,4 @@
-import {clearCache, runCLI, runCreateCLI} from './cli.js'
+import {clearCache, runCLI, runCreateCLI, portFlag} from './cli.js'
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as confStore from '../../private/node/conf-store.js'
@@ -17,6 +17,27 @@ describe('cli', () => {
     const launchCLI = vi.fn()
     const env = {} as any
     await runCLI({moduleURL: 'test', development: false}, launchCLI, ['--no-color'], env)
+    expect(env.FORCE_COLOR).toBe('0')
+  })
+
+  test('triggers no colour mode based on --json flag', async () => {
+    const launchCLI = vi.fn()
+    const env = {} as any
+    await runCLI({moduleURL: 'test', development: false}, launchCLI, ['--json'], env)
+    expect(env.FORCE_COLOR).toBe('0')
+  })
+
+  test('triggers no colour mode based on -j flag', async () => {
+    const launchCLI = vi.fn()
+    const env = {} as any
+    await runCLI({moduleURL: 'test', development: false}, launchCLI, ['-j'], env)
+    expect(env.FORCE_COLOR).toBe('0')
+  })
+
+  test('triggers no colour mode based on SHOPIFY_FLAG_JSON environment variable', async () => {
+    const launchCLI = vi.fn()
+    const env = {SHOPIFY_FLAG_JSON: 'TRUE'} as any
+    await runCLI({moduleURL: 'test', development: false}, launchCLI, [], env)
     expect(env.FORCE_COLOR).toBe('0')
   })
 
@@ -107,10 +128,23 @@ describe('cli', () => {
 })
 
 describe('clearCache', () => {
-  test('clears the cache', () => {
+  test('clears the cache', async () => {
     const spy = vi.spyOn(confStore, 'cacheClear')
-    clearCache()
+    await clearCache()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
+})
+
+describe('portFlag', () => {
+  const flag = portFlag()
+  test('parses a valid port to a number', async () => {
+    await expect(flag.parse('9292', {} as any, flag as any)).resolves.toBe(9292)
+  })
+  test.each(['13245574', '65536', '0', '-1', 'abc', '92.5', '', '0x10', '1e2', ' 9293 ', '+9292'])(
+    'rejects invalid port %s',
+    async (input) => {
+      await expect(flag.parse(input, {} as any, flag as any)).rejects.toThrowError(/Expected an integer/)
+    },
+  )
 })

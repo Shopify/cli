@@ -72,6 +72,7 @@ export function platformAndArch(
 function getEnvironmentVariable() {
   const {env} = process
 
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string env vars should fall through
   return env.SUDO_USER || env.C9_USER || env.LOGNAME || env.USER || env.LNAME || env.USERNAME
 }
 

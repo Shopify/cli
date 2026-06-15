@@ -1,7 +1,40 @@
-import {validateFieldShape, validateCustomConfigurationPageConfig, validateReturnTypeConfig} from './validation.js'
+import {
+  validateFieldShape,
+  validateFlowActionUrl,
+  validateCustomConfigurationPageConfig,
+  validateReturnTypeConfig,
+} from './validation.js'
 import {ConfigField} from './types.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
+
+describe('validateFlowActionUrl', () => {
+  const schema = validateFlowActionUrl(zod.string())
+
+  test('accepts absolute HTTPS URLs', () => {
+    expect(schema.safeParse('https://example.com/api/execute').success).toBe(true)
+  })
+
+  test('accepts relative URLs starting with /', () => {
+    expect(schema.safeParse('/api/execute').success).toBe(true)
+  })
+
+  test('rejects non-HTTPS absolute URLs', () => {
+    expect(schema.safeParse('http://example.com/api/execute').success).toBe(false)
+  })
+
+  test.each(['\n', '\r', '\t'])('rejects relative URLs containing %j', (controlCharacter) => {
+    expect(schema.safeParse(`/api/execute${controlCharacter}malicious-header: value`).success).toBe(false)
+  })
+
+  test.each(['\n', '\r', '\t'])('rejects absolute URLs containing %j', (controlCharacter) => {
+    expect(schema.safeParse(`https://example.com/api/execute${controlCharacter}malicious-header`).success).toBe(false)
+  })
+
+  test('rejects protocol-relative URLs', () => {
+    expect(schema.safeParse('//example.com/api/execute').success).toBe(false)
+  })
+})
 
 describe('validateFieldShape', () => {
   test('should return true when non-commerce object field has valid shape and is flow action', () => {

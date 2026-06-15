@@ -49,7 +49,7 @@ export async function handleInput(
     rl.close()
 
     if (error instanceof Error) {
-      outputDebug(error.stack || 'Error backtrace not found')
+      outputDebug(error.stack ?? 'Error backtrace not found')
       throw new AbortError(error.message)
     } else {
       throw new AbortError('An unknown error occurred. Please try again.')

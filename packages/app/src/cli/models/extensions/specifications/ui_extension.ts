@@ -1,9 +1,12 @@
 import {
   findAllImportedFiles,
+  createIntentsTypeDefinition,
   createTypeDefinition,
-  findNearestTsConfigDir,
-  parseApiVersion,
   createToolsTypeDefinition,
+  findNearestTsConfigDir,
+  getGeneratedTypesHelperImportPath,
+  IntentSchemaFileSchema,
+  parseApiVersion,
   ToolsFileSchema,
 } from './type-generation.js'
 import {Asset, AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
@@ -12,11 +15,13 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {formatContent} from '../../../utilities/file-formatter.js'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {copyFile, fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, dirname} from '@shopify/cli-kit/node/path'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -29,10 +34,10 @@ export interface BuildManifest {
     // Main asset is always required
     [AssetIdentifier.Main]: BuildAsset
     [AssetIdentifier.ShouldRender]?: BuildAsset
-    [AssetIdentifier.Tools]?: BuildAsset
-    [AssetIdentifier.Instructions]?: BuildAsset
   }
 }
+
+type GeneratedIntentTypeDefinition = Parameters<typeof createIntentsTypeDefinition>[0][number]
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
@@ -61,24 +66,6 @@ export const UIExtensionSchema = BaseSchema.extend({
                 },
               }
             : null),
-          ...(targeting.tools
-            ? {
-                [AssetIdentifier.Tools]: {
-                  filepath: `${config.handle}-${AssetIdentifier.Tools}-${basename(targeting.tools)}`,
-                  module: targeting.tools,
-                  static: true,
-                },
-              }
-            : null),
-          ...(targeting.instructions
-            ? {
-                [AssetIdentifier.Instructions]: {
-                  filepath: `${config.handle}-${AssetIdentifier.Instructions}-${basename(targeting.instructions)}`,
-                  module: targeting.instructions,
-                  static: true,
-                },
-              }
-            : null),
         },
       }
 
@@ -93,6 +80,8 @@ export const UIExtensionSchema = BaseSchema.extend({
         build_manifest: buildManifest,
         tools: targeting.tools,
         instructions: targeting.instructions,
+        intents: targeting.intents,
+        assets: targeting.assets,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -102,8 +91,54 @@ const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
-  buildConfig: {mode: 'ui'},
-  getOutputRelativePath: (extension: ExtensionInstance<UIExtensionConfigType>) => `dist/${extension.handle}.js`,
+  getOutputRelativePath: (extension: ExtensionInstance<UIExtensionConfigType>) => `${extension.handle}.js`,
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {
+          id: 'bundle-ui',
+          name: 'Bundle UI Extension',
+          type: 'bundle_ui',
+          config: {generatesAssetsManifest: true, bundleFolder: 'dist/'},
+        },
+        {
+          id: 'include-ui-extension-assets',
+          name: 'Include UI Extension Assets',
+          type: 'include_assets',
+          config: {
+            generatesAssetsManifest: true,
+            inclusions: [
+              {
+                type: 'configKey',
+                anchor: 'extension_points[]',
+                groupBy: 'target',
+                key: 'extension_points[].assets',
+              },
+              {
+                type: 'configKey',
+                anchor: 'extension_points[]',
+                groupBy: 'target',
+                key: 'extension_points[].tools',
+              },
+              {
+                type: 'configKey',
+                anchor: 'extension_points[]',
+                groupBy: 'target',
+                key: 'extension_points[].instructions',
+              },
+              {
+                type: 'configKey',
+                anchor: 'extension_points[]',
+                groupBy: 'target',
+                key: 'extension_points[].intents[].schema',
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'esbuild', 'generates_source_maps']
     const needsCart =
@@ -157,26 +192,6 @@ const uiExtensionSpec = createExtensionSpecification({
       ...(assetsArray.length ? {assets: assetsArray} : {}),
     }
   },
-  copyStaticAssets: async (config, directory, outputPath) => {
-    if (!isRemoteDomExtension(config)) return
-
-    await Promise.all(
-      config.extension_points.flatMap((extensionPoint) => {
-        if (!('build_manifest' in extensionPoint)) return []
-
-        return Object.entries(extensionPoint.build_manifest.assets).map(([_, asset]) => {
-          if (asset.static && asset.module) {
-            const sourceFile = joinPath(directory, asset.module)
-            const outputFilePath = joinPath(dirname(outputPath), asset.filepath)
-            return copyFile(sourceFile, outputFilePath).catch((error) => {
-              throw new Error(`Failed to copy static asset ${asset.module} to ${outputFilePath}: ${error.message}`)
-            })
-          }
-          return Promise.resolve()
-        })
-      }),
-    )
-  },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
       config.extension_points?.find((extensionPoint) => {
@@ -194,6 +209,7 @@ const uiExtensionSpec = createExtensionSpecification({
     // Track all files and their associated targets
     const fileToTargetsMap = new Map<string, string[]>()
     const fileToToolsMap = new Map<string, string>()
+    const fileToIntentsMap = new Map<string, NonNullable<NewExtensionPointSchemaType['intents']>>()
 
     // First pass: collect all entry point files and their targets
     for await (const extensionPoint of configuration.extension_points) {
@@ -209,6 +225,12 @@ const uiExtensionSpec = createExtensionSpecification({
       // Add tools module if present
       if (extensionPoint.tools) {
         fileToToolsMap.set(fullPath, extensionPoint.tools)
+      }
+      // Add intent schema files if present
+      if (extensionPoint.intents?.length) {
+        const currentIntents: NonNullable<NewExtensionPointSchemaType['intents']> = fileToIntentsMap.get(fullPath) ?? []
+        currentIntents.push(...extensionPoint.intents)
+        fileToIntentsMap.set(fullPath, currentIntents)
       }
       // Add should render module if present
       if (extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]?.module) {
@@ -267,28 +289,19 @@ const uiExtensionSpec = createExtensionSpecification({
       const typeFilePath = joinPath(tsConfigDir, 'shopify.d.ts')
 
       // Remove duplicates from targets
-      const uniqueTargets = [...new Set(targets)]
+      const uniqueTargets = uniq(targets)
+      const generatedTypesHelperImportPath = getGeneratedTypesHelperImportPath(uniqueTargets)
 
       try {
         const toolsDefinition = fileToToolsMap.get(filePath)
         let toolsTypeDefinition = ''
         if (toolsDefinition) {
           try {
-            const toolsFilePath = joinPath(extension.directory, toolsDefinition)
-            if (await fileExists(toolsFilePath)) {
-              // Read and parse the tools JSON file
-              const toolsContent = await readFile(toolsFilePath)
-              const tools = ToolsFileSchema.safeParse(JSON.parse(toolsContent))
-              if (tools.success) {
-                // Generate tools type definition
-                toolsTypeDefinition = await createToolsTypeDefinition(tools.data)
-              } else {
-                outputWarn(
-                  `Invalid tools definition in "${toolsDefinition}": ${tools.error.issues
-                    .map((issue) => issue.message)
-                    .join(', ')}`,
-                )
-              }
+            const tools = await readAndValidateJsonAsset(extension.directory, toolsDefinition, ToolsFileSchema)
+            if (tools.status === 'ok') {
+              toolsTypeDefinition = await createToolsTypeDefinition(tools.data)
+            } else if (tools.status === 'invalid') {
+              outputWarn(`Invalid tools definition in "${toolsDefinition}": ${tools.issues}`)
             }
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (error) {
@@ -299,12 +312,34 @@ const uiExtensionSpec = createExtensionSpecification({
             )
           }
         }
-        let typeDefinition = createTypeDefinition({
+
+        const intentsDefinitions = fileToIntentsMap.get(filePath)
+        let intentsTypeDefinition = ''
+        if (intentsDefinitions?.length) {
+          const parsedIntents = await parseIntentTypeDefinitions(extension.directory, intentsDefinitions)
+
+          if (parsedIntents.length > 0) {
+            try {
+              intentsTypeDefinition = await createIntentsTypeDefinition(parsedIntents, {generatedTypesHelperImportPath})
+            } catch (error) {
+              if (error instanceof AbortError) throw error
+
+              outputWarn(
+                `Failed to create intent type definition for intent schema files "${intentsDefinitions
+                  .map((intent) => intent.schema)
+                  .join(', ')}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+              )
+            }
+          }
+        }
+
+        let typeDefinition = await createTypeDefinition({
           fullPath: filePath,
           typeFilePath,
           targets: uniqueTargets,
           apiVersion: configuration.api_version,
           toolsTypeDefinition,
+          intentsTypeDefinition,
         })
         if (typeDefinition) {
           const currentTypes = typeDefinitionsByFile.get(typeFilePath) ?? new Set<string>()
@@ -349,6 +384,76 @@ function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest
   }
 }
 
+type JsonAssetResult<T> = {status: 'ok'; data: T} | {status: 'missing'} | {status: 'invalid'; issues: string}
+
+async function readAndValidateJsonAsset<T>(
+  extensionDirectory: string,
+  relativePath: string,
+  schema: zod.ZodType<T>,
+): Promise<JsonAssetResult<T>> {
+  const filePath = joinPath(extensionDirectory, relativePath)
+  const exists = await fileExists(filePath)
+  if (!exists) return {status: 'missing'}
+
+  const content = await readFile(filePath)
+  const parsed = schema.safeParse(JSON.parse(content))
+  if (!parsed.success) {
+    return {
+      status: 'invalid',
+      issues: parsed.error.issues.map((issue) => issue.message).join(', '),
+    }
+  }
+
+  return {status: 'ok', data: parsed.data}
+}
+
+async function parseIntentTypeDefinitions(
+  extensionDirectory: string,
+  intents: NonNullable<NewExtensionPointSchemaType['intents']>,
+): Promise<GeneratedIntentTypeDefinition[]> {
+  const parsedIntentDefinitions = await Promise.all(
+    intents.map(async (intent) => {
+      try {
+        const intentSchema = await readAndValidateJsonAsset(extensionDirectory, intent.schema, IntentSchemaFileSchema)
+        if (intentSchema.status === 'missing') {
+          outputWarn(`Intent schema file "${intent.schema}" was not found. Skipping intent type generation.`)
+          return null
+        }
+
+        if (intentSchema.status === 'invalid') {
+          outputWarn(`Invalid intent schema in "${intent.schema}": ${intentSchema.issues}`)
+          return null
+        }
+
+        return {
+          action: intent.action,
+          type: intent.type,
+          inputSchema: intentSchema.data.inputSchema,
+          valueSchema: intentSchema.data.value,
+          outputSchema: intentSchema.data.outputSchema,
+        }
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        outputWarn(
+          `Failed to create intent type definition for intent schema file "${intent.schema}": ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
+        )
+        return null
+      }
+    }),
+  )
+
+  const parsedIntents: GeneratedIntentTypeDefinition[] = []
+  for (const parsedIntentDefinition of parsedIntentDefinitions) {
+    if (parsedIntentDefinition) {
+      parsedIntents.push(parsedIntentDefinition)
+    }
+  }
+
+  return parsedIntents
+}
+
 async function checkForMissingPath(
   directory: string,
   assetModule: string | undefined,
@@ -379,31 +484,11 @@ async function validateUIExtensionPointConfig(
   }
 
   for await (const extensionPoint of extensionPoints) {
-    const {module, target, build_manifest: buildManifest} = extensionPoint
+    const {module, target} = extensionPoint
 
     const missingModuleError = await checkForMissingPath(directory, module, target, 'module')
     if (missingModuleError) {
       errors.push(missingModuleError)
-    }
-
-    const missingToolsError = await checkForMissingPath(
-      directory,
-      buildManifest?.assets[AssetIdentifier.Tools]?.module,
-      target,
-      AssetIdentifier.Tools,
-    )
-    if (missingToolsError) {
-      errors.push(missingToolsError)
-    }
-
-    const missingInstructionsError = await checkForMissingPath(
-      directory,
-      buildManifest?.assets[AssetIdentifier.Instructions]?.module,
-      target,
-      AssetIdentifier.Instructions,
-    )
-    if (missingInstructionsError) {
-      errors.push(missingInstructionsError)
     }
 
     if (uniqueTargets.includes(target)) {

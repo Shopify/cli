@@ -24,11 +24,11 @@ if ! $(/opt/dev/bin/dev github print-auth --password > /dev/null 2>&1); then
 fi
 
 # Create a PR to update homebrew
-./bin/create-homebrew-pr.js
+node ./bin/create-homebrew-pr.js
 
 # Create a PR to update the docs
-./bin/create-doc-pr.js
+node ./bin/create-doc-pr.js
 
 # Create a PR to add the release notification
-./bin/create-notification-pr.js
+node ./bin/create-notification-pr.js
 

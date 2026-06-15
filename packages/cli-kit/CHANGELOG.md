@@ -1,5 +1,50 @@
 # @shopify/cli-kit
 
+## 4.1.0
+
+### Minor Changes
+
+- 8943b19: Update extension-only template to include app home by default
+
+### Patch Changes
+
+- 5156580: Fix error reporting of cli-kit methods that try to run git when git is unavailable
+
+## 4.0.0
+
+### Major Changes
+
+- 0c35553: Drop support for Node 20
+
+### Patch Changes
+
+- 67745ee: Make the autocomplete prompt feel instant when filtering against in-memory choices.
+- a7d448b: Handle modern Bun `bun.lock` files when cleaning up app templates so non-Bun projects do not keep stale Bun lockfiles or `.gitignore` entries.
+- 2cb5f44: Also treat `OPT_OUT_INSTRUMENTATION=true` as an analytics opt-out, in addition to the existing `SHOPIFY_CLI_NO_ANALYTICS=1` environment variable.
+
+## 3.94.0
+
+### Patch Changes
+
+- 04b8492: Render task progress bars to stderr to reduce output noise in non-TTY environments
+
+## 3.93.0
+
+### Minor Changes
+
+- a52b36d: Add support for SHOPIFY_APP_AUTOMATION_TOKEN env var as a new name for SHOPIFY_CLI_PARTNERS_TOKEN
+- 9a39b44: Add `--development-context` flag to `theme push`
+
+  The new `--development-context` flag (short: `-c`) allows you to specify a unique identifier for a development theme context (e.g., PR number, branch name). This gives developers the ability to programmatically create or reuse named development themes; particularly useful when running `shopify theme push` in a CI environment where you might want to associate a particular development theme to a branch or pull request.
+
+### Patch Changes
+
+- 07d4304: Remove `custom-oclif-loader.ts` and use oclif's `Config` directly. The development-only shim for loading a local `@shopify/cli-hydrogen` plugin is no longer needed as the Hydrogen repo now handles this via its own patch scripts.
+- 35ba22b: Set the current theme in local development on create or find
+- 34e19bc: Change wording for current development theme in `theme list`
+
+  Previously you could only have one development theme at a time so we'd add `[yours]` beside the development theme that you were currently attached to. Now you can have multiple development themes so we're changing the language to `[current]` to show which theme you are actively connected to.
+
 ## 3.92.0
 
 ## 3.91.0
@@ -586,7 +631,6 @@
 - db5981a1e: Clean errors related to metrics requests on theme dev
 - 7f8a9436d: Add log information when graphql requests return an error
 - d2a352442: Added 2 new utilities on the git module:
-
   - git.ensureIsClean(directory?: string): Promise<void>: If the .git directory tree is not clean (has uncommitted changes) it throws an abort error.
   - git.isClean(directory?: string): Promise<boolean>: Returns true if the .git directory tree is clean (no uncommitted changes).
 

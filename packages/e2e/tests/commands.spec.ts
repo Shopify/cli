@@ -30,7 +30,7 @@ const normalize = (value: string) => value.replace(/\r\n/g, '\n').trimEnd()
 test.describe('Command snapshot', () => {
   test('shopify commands --tree matches snapshot', async ({cli}) => {
     const result = await cli.exec(['commands', '--tree'])
-    expect(result.exitCode).toBe(0)
+    expect(result.exitCode, `commands --tree failed:\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0)
 
     const snapshot = await fs.readFile(snapshotPath, {encoding: 'utf8'})
     expect(normalize(result.stdout), errorMessage).toBe(normalize(snapshot))

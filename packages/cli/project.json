@@ -25,6 +25,7 @@
     "bundle": {
       "executor": "nx:run-commands",
       "dependsOn": [
+        "build",
         "cli-kit:generate-version",
         "app:build",
         "theme:build"
@@ -37,14 +38,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.ts\" 'bin/*.js' ",
+        "command": "pnpm eslint src 'bin/*.js'",
         "cwd": "packages/cli"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.ts' 'bin/*.js' --fix",
+        "command": "pnpm eslint src 'bin/*.js' --fix",
         "cwd": "packages/cli"
       }
     },

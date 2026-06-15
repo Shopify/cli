@@ -233,8 +233,7 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
 }
 
 async function getLatestTagFromDirectory(directory: string, repoUrl: string): Promise<string> {
-  const stdout = await gitCommand(['describe', '--tags', '--abbrev=0'], directory)
-  const tag = stdout.trim()
+  const tag = await getLatestTag(directory)
 
   if (!tag) {
     throw new AbortError(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
@@ -350,7 +349,9 @@ export class OutsideGitDirectoryError extends AbortError {}
  * @param directory - The directory to check.
  */
 export async function ensureInsideGitDirectory(directory?: string): Promise<void> {
-  if (!(await insideGitDirectory(directory))) {
+  await ensureGitIsPresentOrAbort()
+
+  if (!(await checkIfInsideGitDirectory(directory))) {
     throw new OutsideGitDirectoryError(`${outputToken.path(directory ?? cwd())} is not a Git directory`)
   }
 }
@@ -362,6 +363,14 @@ export async function ensureInsideGitDirectory(directory?: string): Promise<void
  * @returns True if the directory is inside a .git directory tree.
  */
 export async function insideGitDirectory(directory?: string): Promise<boolean> {
+  if (!(await hasGit())) {
+    return false
+  }
+
+  return checkIfInsideGitDirectory(directory)
+}
+
+async function checkIfInsideGitDirectory(directory?: string): Promise<boolean> {
   try {
     await execa('git', ['rev-parse', '--git-dir'], {cwd: directory})
     return true

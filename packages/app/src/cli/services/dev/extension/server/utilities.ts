@@ -2,7 +2,8 @@ import {ExtensionInstance} from '../../../../models/extensions/extension-instanc
 import {getUIExtensionResourceURL} from '../../../../utilities/extensions/configuration.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
 import {ExtensionsPayloadStoreOptions} from '../payload/store.js'
-import {createError, H3Error, ServerResponse, sendError as h3SendError} from 'h3'
+import {createError, sendError as h3SendError} from 'h3'
+import type {H3Error, H3Event} from 'h3'
 
 export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionsPayloadStoreOptions): string {
   const {url: resourceUrl} = getUIExtensionResourceURL(extension.type, options)
@@ -103,6 +104,6 @@ export function getExtensionUrl(extension: ExtensionInstance, options: Extension
   return extensionUrl.toString()
 }
 
-export function sendError(response: ServerResponse, error: Partial<H3Error>) {
-  h3SendError(response.event, createError(error))
+export function sendError(event: H3Event, error: Partial<H3Error>) {
+  h3SendError(event, createError(error))
 }

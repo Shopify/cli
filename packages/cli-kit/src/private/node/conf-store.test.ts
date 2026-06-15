@@ -474,6 +474,7 @@ describe('runWithRateLimit', () => {
   test('throttles the task when the cache is populated recently', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
+      vi.useFakeTimers()
       const config = new LocalStorage<any>({cwd})
       for (let i = 0; i < limit; i++) {
         // eslint-disable-next-line no-await-in-loop
@@ -511,6 +512,7 @@ describe('runWithRateLimit', () => {
   test("runs the task as usual when the cache is populated recently but the rate limit isn't used up", async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
+      vi.useFakeTimers()
       const config = new LocalStorage<any>({cwd})
       // Run the task once, but the rate limit is 2
       await runWithRateLimit(

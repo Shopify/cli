@@ -1,6 +1,6 @@
 import {Localization} from '../localization.js'
-import {BuildManifest} from '../../../../models/extensions/specifications/ui_extension.js'
 import type {NewExtensionPointSchemaType, ApiVersionSchemaType} from '../../../../models/extensions/schemas.js'
+import type {BuildManifest} from '../../../../models/extensions/specifications/ui_extension.js'
 
 interface ExtensionsPayloadInterface {
   app: {
@@ -32,8 +32,7 @@ interface Asset {
   lastUpdated: number
 }
 
-export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType {
-  build_manifest: BuildManifest
+export interface DevNewExtensionPointSchema extends Omit<NewExtensionPointSchemaType, 'intents' | 'assets'> {
   assets: {
     [name: string]: Asset
   }
@@ -43,6 +42,14 @@ export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType 
   resource: {
     url: string
   }
+  build_manifest?: BuildManifest
+  intents?: {
+    type: string
+    action: string
+    name?: string
+    description?: string
+    schema: string | Asset
+  }[]
 }
 
 interface SupportedFeatures {

@@ -1,4 +1,4 @@
-import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
+import {updateExtensionDraft} from './update-extension.js'
 import {
   placeholderAppConfiguration,
   testFunctionExtension,
@@ -7,26 +7,16 @@ import {
   testThemeExtensions,
   testUIExtension,
 } from '../../models/app/app.test-data.js'
-import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('../../models/app/loader.js', async () => {
-  const actual: any = await vi.importActual('../../models/app/loader.js')
-  return {
-    ...actual,
-    parseConfigurationFile: vi.fn(),
-    parseConfigurationObjectAgainstSpecification: vi.fn(),
-  }
-})
 
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
@@ -288,7 +278,7 @@ describe('updateExtensionDraft()', () => {
       errors: [{message: 'Network error'}, {message: 'Timeout error'}],
     }
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -323,7 +313,7 @@ describe('updateExtensionDraft()', () => {
   test('handles system error with message string', async () => {
     const systemError = {message: 'API connection failed'}
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -358,7 +348,7 @@ describe('updateExtensionDraft()', () => {
   test('handles string error', async () => {
     const systemError = 'Connection timeout'
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -392,7 +382,7 @@ describe('updateExtensionDraft()', () => {
 
   test('handles null/undefined error with fallback message', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(null),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(null), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing null rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -425,7 +415,7 @@ describe('updateExtensionDraft()', () => {
   test('handles object error without errors or message properties', async () => {
     const systemError = {status: 500, code: 'INTERNAL_ERROR'}
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -452,66 +442,6 @@ describe('updateExtensionDraft()', () => {
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error updating extension draft for test-ui-extension: Unknown error')
-    })
-  })
-})
-
-describe('reloadExtensionConfig()', () => {
-  const runningOnWindows = platformAndArch().platform === 'windows'
-
-  test.skipIf(runningOnWindows)('reloads extension config', async () => {
-    // Given
-    await inTemporaryDirectory(async (tmpDir) => {
-      const configurationToml = `name = "test"
-type = "web_pixel_extension"
-runtime_context = "strict"
-[settings]
-type = "object"
-another = "setting"
-`
-
-      const parsedConfig = {
-        type: 'web_pixel_extension',
-        runtime_context: 'strict',
-        settings: {
-          type: 'object',
-          another: 'setting',
-        },
-      }
-
-      const configPath = joinPath(tmpDir, 'shopify.ui.extension.toml')
-      await writeFile(configPath, configurationToml)
-
-      const configuration = {
-        runtime_context: 'strict',
-        settings: {type: 'object'},
-        type: 'web_pixel_extension',
-        handle,
-      } as any
-
-      const mockExtension = await testUIExtension({
-        devUUID: '1',
-        configuration,
-        directory: tmpDir,
-      })
-
-      await mkdir(joinPath(tmpDir, 'dist'))
-
-      vi.mocked(parseConfigurationFile).mockResolvedValue({
-        type: 'web_pixel_extension',
-      } as any)
-
-      vi.mocked(parseConfigurationObjectAgainstSpecification).mockResolvedValue(parsedConfig)
-
-      await writeFile(mockExtension.outputPath, 'test content')
-
-      // When
-      const result = await reloadExtensionConfig({extension: mockExtension, stdout})
-
-      // Then
-      expect(mockExtension.configuration).toEqual(parsedConfig)
-      expect(result.newConfig).toEqual(parsedConfig)
-      expect(result.previousConfig).toEqual(configuration)
     })
   })
 })

@@ -22,12 +22,27 @@ import {
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
+import {packageManagerBinaryCommandForDirectory} from '@shopify/cli-kit/node/node-package-manager'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+  return {
+    ...actual,
+    packageManagerBinaryCommandForDirectory: vi.fn(),
+  }
+})
+
+vi.mock('./binaries.js', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    downloadBinary: vi.fn(),
+  }
+})
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
@@ -50,15 +65,26 @@ const derivedDeps = {
 const app = testApp({dotenv: {variables: {VAR_FROM_ENV_FILE: 'env_file_var'}, path: ''}})
 
 function createWasmModule(importModuleName: string): Buffer {
-  const importsModuleNameBytes = Array.from(importModuleName).map((char) => char.charCodeAt(0))
+  const importsModuleNameBytes = Buffer.from(importModuleName, 'utf8')
+  const moduleNameLength = importsModuleNameBytes.length
   // Module looks like:
   // (module
   //   (import "${importModuleName}" "foo" (func))
   // )
-  return Buffer.from([
-    ...[0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x01, 0x04, 0x01, 0x60, 0x00, 0x00, 0x02, 0x1b, 0x01, 0x13],
-    ...importsModuleNameBytes,
-    ...[0x03, 0x66, 0x6f, 0x6f, 0x00, 0x00],
+  const importSectionContent = Buffer.concat([
+    Buffer.from([0x01, moduleNameLength]),
+    importsModuleNameBytes,
+    Buffer.from([0x03, 0x66, 0x6f, 0x6f, 0x00, 0x00]),
+  ])
+
+  return Buffer.concat([
+    // Header
+    Buffer.from([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]),
+    // Type section
+    Buffer.from([0x01, 0x04, 0x01, 0x60, 0x00, 0x00]),
+    // Import section
+    Buffer.from([0x02, importSectionContent.length]),
+    importSectionContent,
   ])
 }
 
@@ -66,94 +92,140 @@ beforeEach(async () => {
   stderr = {write: vi.fn()}
   stdout = {write: vi.fn()}
   signal = vi.fn()
+  vi.mocked(packageManagerBinaryCommandForDirectory).mockResolvedValue({
+    command: 'npm',
+    args: ['exec', '--', 'graphql-code-generator', '--config', 'package.json'],
+  })
 })
 
 describe('buildGraphqlTypes', () => {
   test('generate types', {timeout: 20000}, async () => {
-    // Given
-    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
 
-    // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+      // When
+      const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
-      cwd: ourFunction.directory,
-      stderr,
-      signal,
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(packageManagerBinaryCommandForDirectory).toHaveBeenCalledTimes(1)
+      expect(packageManagerBinaryCommandForDirectory).toHaveBeenCalledWith(
+        ourFunction.directory,
+        'graphql-code-generator',
+        '--config',
+        'package.json',
+      )
+      expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+        cwd: ourFunction.directory,
+        stderr,
+        signal,
+      })
+    })
+  })
+
+  test('generate types executes the command returned by the shared helper', {timeout: 20000}, async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
+      vi.mocked(packageManagerBinaryCommandForDirectory).mockResolvedValue({
+        command: 'pnpm',
+        args: ['exec', 'graphql-code-generator', '--config', 'package.json'],
+      })
+
+      // When
+      const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).toHaveBeenCalledWith('pnpm', ['exec', 'graphql-code-generator', '--config', 'package.json'], {
+        cwd: ourFunction.directory,
+        stderr,
+        signal,
+      })
     })
   })
 
   test('errors if function is not a JS function and no typegen_command', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-    ourFunction.entrySourceFilePath = 'src/main.rs'
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir})
+      ourFunction.entrySourceFilePath = 'src/main.rs'
 
-    // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+      // When
+      const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
-    // Then
-    await expect(got).rejects.toThrow(/No typegen_command specified/)
+      // Then
+      await expect(got).rejects.toThrow(/No typegen_command specified/)
+      expect(packageManagerBinaryCommandForDirectory).not.toHaveBeenCalled()
+    })
   })
 
   test('runs custom typegen_command when provided', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension({
-      config: {
-        name: 'test function',
-        type: 'order_discounts',
-        build: {
-          command: 'zig build',
-          wasm_opt: true,
-          typegen_command: 'npx shopify-function-codegen --schema schema.graphql',
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({
+        dir: tmpDir,
+        config: {
+          name: 'test function',
+          type: 'order_discounts',
+          build: {
+            command: 'zig build',
+            wasm_opt: true,
+            typegen_command: 'npx shopify-function-codegen --schema schema.graphql',
+          },
+          configuration_ui: true,
+          api_version: '2024-01',
         },
-        configuration_ui: true,
-        api_version: '2024-01',
-      },
-    })
-    ourFunction.entrySourceFilePath = 'src/main.rs'
+      })
+      ourFunction.entrySourceFilePath = 'src/main.rs'
 
-    // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+      // When
+      const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith('npx', ['shopify-function-codegen', '--schema', 'schema.graphql'], {
-      cwd: ourFunction.directory,
-      stdout,
-      stderr,
-      signal,
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(packageManagerBinaryCommandForDirectory).not.toHaveBeenCalled()
+      expect(exec).toHaveBeenCalledWith('npx', ['shopify-function-codegen', '--schema', 'schema.graphql'], {
+        cwd: ourFunction.directory,
+        stdout,
+        stderr,
+        signal,
+      })
     })
   })
 
   test('runs custom typegen_command for JS functions when provided', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension({
-      entryPath: 'src/index.js',
-      config: {
-        name: 'test function',
-        type: 'order_discounts',
-        build: {
-          command: 'echo "hello"',
-          wasm_opt: true,
-          typegen_command: 'custom-typegen --output types.ts',
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({
+        dir: tmpDir,
+        entryPath: 'src/index.js',
+        config: {
+          name: 'test function',
+          type: 'order_discounts',
+          build: {
+            command: 'echo "hello"',
+            wasm_opt: true,
+            typegen_command: 'custom-typegen --output types.ts',
+          },
+          configuration_ui: true,
+          api_version: '2024-01',
         },
-        configuration_ui: true,
-        api_version: '2024-01',
-      },
-    })
+      })
 
-    // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+      // When
+      const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith('custom-typegen', ['--output', 'types.ts'], {
-      cwd: ourFunction.directory,
-      stdout,
-      stderr,
-      signal,
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(packageManagerBinaryCommandForDirectory).not.toHaveBeenCalled()
+      expect(exec).toHaveBeenCalledWith('custom-typegen', ['--output', 'types.ts'], {
+        cwd: ourFunction.directory,
+        stdout,
+        stderr,
+        signal,
+      })
     })
   })
 })
@@ -281,133 +353,141 @@ describe('bundleExtension', () => {
 
 describe('runJavy', () => {
   test('runs javy to compile JS into Wasm', {timeout: 20000}, async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir})
 
-    // When
-    const got = runJavy(ourFunction, {stdout, stderr, signal, app}, derivedDeps)
+      // When
+      const got = runJavy(ourFunction, {stdout, stderr, signal, app}, derivedDeps)
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(
-      javyBinary(derivedDeps.javy).path,
-      [
-        'build',
-        '-C',
-        'dynamic',
-        '-C',
-        `plugin=${javyPluginBinary(derivedDeps.javyPlugin).path}`,
-        '-o',
-        joinPath(ourFunction.directory, 'dist/index.wasm'),
-        'dist/function.js',
-      ],
-      {
-        cwd: ourFunction.directory,
-        stderr: 'inherit',
-        stdout: 'inherit',
-        signal,
-      },
-    )
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).toHaveBeenCalledWith(
+        javyBinary(derivedDeps.javy).path,
+        [
+          'build',
+          '-C',
+          'dynamic',
+          '-C',
+          `plugin=${javyPluginBinary(derivedDeps.javyPlugin).path}`,
+          '-o',
+          joinPath(ourFunction.directory, 'dist/index.wasm'),
+          'dist/function.js',
+        ],
+        {
+          cwd: ourFunction.directory,
+          stderr: 'inherit',
+          stdout: 'inherit',
+          signal,
+        },
+      )
+    })
   })
 })
 
 describe('runWasmOpt', () => {
   test('runs wasm-opt on the module', {timeout: 20000}, async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-    const modulePath = ourFunction.outputPath
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir})
+      const modulePath = ourFunction.outputPath
 
-    // When
-    const got = runWasmOpt(modulePath)
+      // When
+      const got = runWasmOpt(modulePath)
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(
-      'node',
-      [
-        wasmOptBinary().name,
-        modulePath,
-        '-Oz',
-        '--enable-bulk-memory',
-        '--enable-multimemory',
-        '--enable-nontrapping-float-to-int',
-        '--strip-debug',
-        '-o',
-        modulePath,
-      ],
-      {
-        cwd: dirname(wasmOptBinary().path),
-      },
-    )
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).toHaveBeenCalledWith(
+        'node',
+        [
+          wasmOptBinary().name,
+          modulePath,
+          '-Oz',
+          '--enable-bulk-memory',
+          '--enable-multimemory',
+          '--enable-nontrapping-float-to-int',
+          '--strip-debug',
+          '-o',
+          modulePath,
+        ],
+        {
+          cwd: dirname(wasmOptBinary().path),
+        },
+      )
+    })
   })
 })
 
 describe('runTrampoline', () => {
   test('does not run trampoline if no relevant imports', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-    const modulePath = ourFunction.outputPath
-    vi.mocked(readFileSync).mockReturnValue(createWasmModule('bar'))
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const modulePath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(modulePath, createWasmModule('bar'))
 
-    // When
-    const got = runTrampoline(modulePath)
+      // When
+      const got = runTrampoline(modulePath)
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).not.toHaveBeenCalled()
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).not.toHaveBeenCalled()
+    })
   })
 
   test('does not run trampoline if Wasm module is invalid', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-    const modulePath = ourFunction.outputPath
-    const invalidWasmModule = Buffer.from([])
-    vi.mocked(readFileSync).mockReturnValue(invalidWasmModule)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const modulePath = joinPath(tmpDir, 'index.wasm')
+      const invalidWasmModule = Buffer.from([])
+      await writeFile(modulePath, invalidWasmModule)
 
-    // When
-    const got = runTrampoline(modulePath)
+      // When
+      const got = runTrampoline(modulePath)
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).not.toHaveBeenCalled()
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).not.toHaveBeenCalled()
+    })
   })
 
   test('runs v1 trampoline on v1 module', {timeout: 20000}, async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-    const modulePath = ourFunction.outputPath
-    vi.mocked(readFileSync).mockReturnValue(createWasmModule('shopify_function_v1'))
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const modulePath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(modulePath, createWasmModule('shopify_function_v1'))
 
-    // When
-    const got = runTrampoline(modulePath)
+      // When
+      const got = runTrampoline(modulePath)
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(trampolineBinary(V1_TRAMPOLINE_VERSION).path, [
-      '-i',
-      modulePath,
-      '-o',
-      modulePath,
-    ])
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).toHaveBeenCalledWith(trampolineBinary(V1_TRAMPOLINE_VERSION).path, [
+        '-i',
+        modulePath,
+        '-o',
+        modulePath,
+      ])
+    })
   })
 
   test('runs v2 trampoline on v2 module', {timeout: 20000}, async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-    const modulePath = ourFunction.outputPath
-    vi.mocked(readFileSync).mockReturnValue(createWasmModule('shopify_function_v2'))
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const modulePath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(modulePath, createWasmModule('shopify_function_v2'))
 
-    // When
-    const got = runTrampoline(modulePath)
+      // When
+      const got = runTrampoline(modulePath)
 
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(trampolineBinary(V2_TRAMPOLINE_VERSION).path, [
-      '-i',
-      modulePath,
-      '-o',
-      modulePath,
-    ])
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).toHaveBeenCalledWith(trampolineBinary(V2_TRAMPOLINE_VERSION).path, [
+        '-i',
+        modulePath,
+        '-o',
+        modulePath,
+      ])
+    })
   })
 })
 
@@ -477,7 +557,7 @@ describe('ExportJavyBuilder', () => {
     test('runs javy with wit', {timeout: 20000}, async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        const ourFunction = await testFunctionExtension()
+        const ourFunction = await testFunctionExtension({dir: tmpDir})
 
         // When
         const got = builder.compile(ourFunction, {stdout, stderr, signal, app}, derivedDeps)

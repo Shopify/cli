@@ -164,25 +164,29 @@ describe('selectActiveConfig', () => {
     })
   })
 
-  test('throws when the only app config is malformed (no valid configs to fall back to)', async () => {
+  test('loads with errors when the only app config is malformed', async () => {
     await inTemporaryDirectory(async (dir) => {
-      // The only config is broken TOML — Project.load skips it and finds 0 valid configs
+      // The only config is broken TOML — Project.load includes it with errors
       await writeFile(joinPath(dir, 'shopify.app.toml'), '{{invalid toml')
 
-      await expect(Project.load(dir)).rejects.toThrow(/Could not find/)
+      const project = await Project.load(dir)
+      expect(project.appConfigFiles).toHaveLength(1)
+      expect(project.appConfigFiles[0]!.errors).toHaveLength(1)
+      expect(project.errors).toHaveLength(1)
+      expect(project.errors[0]!.path).toContain('shopify.app.toml')
     })
   })
 
-  test('surfaces parse error when selecting a broken config while a valid one exists', async () => {
+  test('selects a broken config and exposes its errors', async () => {
     await inTemporaryDirectory(async (dir) => {
-      // Two configs: one good, one broken. Selecting the broken one by name should
-      // surface the real parse error via the fallback re-read, not a generic "not found".
+      // Two configs: one good, one broken. Selecting the broken one succeeds
+      // but the selected file has errors.
       await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "good"')
       await writeFile(joinPath(dir, 'shopify.app.broken.toml'), '{{invalid toml')
 
       const project = await Project.load(dir)
-
-      await expect(selectActiveConfig(project, 'shopify.app.broken.toml')).rejects.toThrow()
+      const activeConfig = await selectActiveConfig(project, 'broken')
+      expect(activeConfig.file.errors).toHaveLength(1)
     })
   })
 

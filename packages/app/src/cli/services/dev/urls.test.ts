@@ -3,8 +3,6 @@ import {
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generateApplicationURLs,
-  ApplicationURLs,
-  validateApplicationURLs,
   FrontendURLOptions,
 } from './urls.js'
 import {
@@ -597,55 +595,5 @@ describe('generatePartnersURLs', () => {
         proxySubPathPrefix: 'prefix',
       },
     })
-  })
-})
-
-describe('validatePartnersURLs', () => {
-  test('does not throw any error when the URLs are valid', () => {
-    // Given
-    const applicationUrl = 'http://example.com'
-    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
-    const urls: ApplicationURLs = {
-      applicationUrl,
-      redirectUrlWhitelist,
-      appProxy: {proxyUrl: applicationUrl, proxySubPath: '', proxySubPathPrefix: ''},
-    }
-
-    // When/Then
-    validateApplicationURLs(urls)
-  })
-
-  test('it raises an error when the application URL is not valid', () => {
-    // Given
-    const applicationUrl = 'wrong'
-    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
-    const urls: ApplicationURLs = {applicationUrl, redirectUrlWhitelist}
-
-    // When/Then
-    expect(() => validateApplicationURLs(urls)).toThrow(/Invalid application URL/)
-  })
-
-  test('it raises an error when the redirection URLs are not valid', () => {
-    // Given
-    const applicationUrl = 'http://example.com'
-    const redirectUrlWhitelist = ['http://example.com/callback1', 'wrong']
-    const urls: ApplicationURLs = {applicationUrl, redirectUrlWhitelist}
-
-    // When/Then
-    expect(() => validateApplicationURLs(urls)).toThrow(/Invalid redirection URLs/)
-  })
-
-  test('it raises an error when the app proxy URL is not valid', () => {
-    // Given
-    const applicationUrl = 'http://example.com'
-    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
-    const urls: ApplicationURLs = {
-      applicationUrl,
-      redirectUrlWhitelist,
-      appProxy: {proxyUrl: 'wrong', proxySubPath: '', proxySubPathPrefix: ''},
-    }
-
-    // When/Then
-    expect(() => validateApplicationURLs(urls)).toThrow(/Invalid app proxy URL/)
   })
 })

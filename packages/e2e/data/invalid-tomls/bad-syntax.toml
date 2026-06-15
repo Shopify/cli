@@ -1,5 +1,5 @@
 # Invalid TOML: malformed syntax (missing closing quote)
-client_id = "__E2E_CLIENT_ID__"
+client_id = "1234567890"
 name = "Bad Syntax App
 application_url = "https://example.com"
 embedded = true

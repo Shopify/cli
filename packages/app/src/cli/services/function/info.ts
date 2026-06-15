@@ -1,5 +1,6 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {InlineToken, AlertCustomSection} from '@shopify/cli-kit/node/ui'
 
 type Format = 'json' | 'text'
@@ -14,6 +15,9 @@ interface FunctionConfiguration {
   handle?: string
   name?: string
   api_version?: string
+  build?: {
+    path?: string
+  }
   targeting?: {
     target: string
     input_query?: string
@@ -42,6 +46,7 @@ export function formatAsJson(
   config: FunctionConfiguration,
   targeting: {[key: string]: {inputQueryPath?: string; export?: string}},
   functionRunnerPath: string,
+  functionOutputPath: string,
   schemaPath?: string,
 ): string {
   return JSON.stringify(
@@ -51,7 +56,7 @@ export function formatAsJson(
       apiVersion: config.api_version,
       targeting,
       schemaPath,
-      wasmPath: ourFunction.outputPath,
+      wasmPath: functionOutputPath,
       functionRunnerPath,
     },
     null,
@@ -127,6 +132,7 @@ export function buildTextFormatSections(
   config: FunctionConfiguration,
   targeting: {[key: string]: {inputQueryPath?: string; export?: string}},
   functionRunnerPath: string,
+  functionOutputPath: string,
   schemaPath?: string,
 ): AlertCustomSection[] {
   const sections: AlertCustomSection[] = [buildConfigurationSection(config, ourFunction.name)]
@@ -136,7 +142,7 @@ export function buildTextFormatSections(
     sections.push(targetingSection)
   }
 
-  sections.push(buildBuildSection(ourFunction.outputPath, schemaPath), buildFunctionRunnerSection(functionRunnerPath))
+  sections.push(buildBuildSection(functionOutputPath, schemaPath), buildFunctionRunnerSection(functionRunnerPath))
 
   return sections
 }
@@ -150,9 +156,11 @@ export function functionInfo(
 
   const targeting = buildTargetingData(config, ourFunction.directory)
 
+  const functionOutputPath = joinPath(ourFunction.directory, config.build?.path ?? ourFunction.outputRelativePath)
+
   if (format === 'json') {
-    return formatAsJson(ourFunction, config, targeting, functionRunnerPath, schemaPath)
+    return formatAsJson(ourFunction, config, targeting, functionRunnerPath, functionOutputPath, schemaPath)
   }
 
-  return buildTextFormatSections(ourFunction, config, targeting, functionRunnerPath, schemaPath)
+  return buildTextFormatSections(ourFunction, config, targeting, functionRunnerPath, functionOutputPath, schemaPath)
 }

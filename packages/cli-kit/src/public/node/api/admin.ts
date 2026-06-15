@@ -76,9 +76,7 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
   const {query, session, variables, version, responseOptions, preferredBehaviour} = options
 
   let apiVersion = version ?? LatestApiVersionByFQDN.get(session.storeFqdn)
-  if (!apiVersion) {
-    apiVersion = await fetchLatestSupportedApiVersion(session, preferredBehaviour)
-  }
+  apiVersion ??= await fetchLatestSupportedApiVersion(session, preferredBehaviour)
   let storeDomain = session.storeFqdn
   const addedHeaders = themeAccessHeaders(session)
 

@@ -21,9 +21,7 @@ import {
 } from '../../private/node/content-tokens.js'
 import {tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 import {consoleLog, consoleWarn, output} from '../../private/node/output.js'
-
 import stripAnsi from 'strip-ansi'
-
 import {Writable} from 'stream'
 
 import type {Change} from 'diff'
@@ -127,6 +125,7 @@ export function formatPackageManagerCommand(
       }
       return pieces.join(' ')
     }
+    case 'homebrew':
     case 'unknown': {
       const pieces = [scriptName, ...scriptArgs]
       return pieces.join(' ')
@@ -194,8 +193,8 @@ function logLevelValue(level: LogLevel): number {
       return 50
     case 'fatal':
       return 60
-    default:
-      return 30
+    case 'silent':
+      return 70
   }
 }
 
@@ -231,6 +230,11 @@ function shouldOutput(logLevel: LogLevel): boolean {
 export let collectedLogs: Record<string, string[]> = {}
 
 /**
+ * Memoized value for the color check.
+ */
+let memoizedShouldDisplayColors: boolean | undefined
+
+/**
  * This is only used during UnitTesting.
  * If we are in a testing context, instead of printing the logs to the console,
  * we will store them in a variable that can be accessed from the tests.
@@ -239,12 +243,11 @@ export let collectedLogs: Record<string, string[]> = {}
  * @param content - The content of the log.
  */
 export function collectLog(key: string, content: OutputMessage): void {
-  const output = collectedLogs.output ?? []
-  const data = collectedLogs[key] ?? []
-  data.push(stripAnsi(stringifyMessage(content) ?? ''))
-  output.push(stripAnsi(stringifyMessage(content) ?? ''))
-  collectedLogs[key] = data
-  collectedLogs.output = output
+  const message = stripAnsi(stringifyMessage(content))
+  collectedLogs.output ??= []
+  collectedLogs[key] ??= []
+  collectedLogs.output.push(message)
+  collectedLogs[key].push(message)
 }
 
 export const clearCollectedLogs = (): void => {
@@ -314,6 +317,8 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  */
 export function outputDebug(content: OutputMessage, logger: Logger = consoleWarn): void {
   if (isUnitTest()) collectLog('debug', content)
+  if (!shouldOutput('debug')) return
+
   const message = colors.gray(stringifyMessage(content))
   outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
 }
@@ -401,6 +406,10 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
  * @returns The message without styles.
  */
 export function unstyled(message: string): string {
+  // Optimization: skip regex execution for strings that don't have ANSI escape codes.
+  // In high-frequency paths like terminal layout calculations, this can save significant CPU time.
+  if (!message.includes('\u001b')) return message
+
   return stripAnsi(message)
 }
 
@@ -411,12 +420,18 @@ export function unstyled(message: string): string {
  * @returns True if the console outputs should display colors, false otherwise.
  */
 export function shouldDisplayColors(_process = process): boolean {
-  const {env, stdout} = _process
-  if (Object.hasOwnProperty.call(env, 'FORCE_COLOR')) {
-    return isTruthy(env.FORCE_COLOR)
-  } else {
-    return Boolean(stdout.isTTY)
+  if (_process === process && memoizedShouldDisplayColors !== undefined) {
+    return memoizedShouldDisplayColors
   }
+
+  const {env, stdout} = _process
+  const result = Object.hasOwnProperty.call(env, 'FORCE_COLOR') ? isTruthy(env.FORCE_COLOR) : Boolean(stdout.isTTY)
+
+  if (_process === process) {
+    memoizedShouldDisplayColors = result
+  }
+
+  return result
 }
 
 /**

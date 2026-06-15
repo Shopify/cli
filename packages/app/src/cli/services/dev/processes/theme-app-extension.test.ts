@@ -14,6 +14,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {ensureValidPassword, isStorefrontPasswordProtected} from '@shopify/theme'
 
 vi.mock('../../../utilities/extensions/theme/host-theme-manager')
 vi.mock('@shopify/cli-kit/node/output')
@@ -22,9 +23,26 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/context/fqdn')
 vi.mock('@shopify/cli-kit/node/ui', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/ui')>()
-  const mockModule = {renderInfo: vi.fn()}
 
-  return {...realModule, ...mockModule}
+  return {
+    ...realModule,
+    renderInfo: vi.fn(),
+    renderTasks: vi.fn(async (tasks: any[]) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task({}, task)
+      }
+      return {}
+    }),
+  }
+})
+vi.mock('@shopify/theme', async (realImport) => {
+  const realModule = await realImport<typeof import('@shopify/theme')>()
+  return {
+    ...realModule,
+    ensureValidPassword: vi.fn(),
+    isStorefrontPasswordProtected: vi.fn(),
+  }
 })
 
 describe('setupPreviewThemeAppExtensionsProcess', () => {
@@ -166,6 +184,25 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
       ],
       orderedNextSteps: true,
     })
+  })
+
+  test('returns the validated storefront password when one is required', async () => {
+    const mockTheme = {id: 123} as Theme
+    const storefrontPassword = 'typed-password'
+    vi.mocked(fetchTheme).mockResolvedValue(mockTheme)
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
+    vi.mocked(ensureValidPassword).mockResolvedValue(storefrontPassword)
+
+    const result = await setupPreviewThemeAppExtensionsProcess({
+      localApp: testApp({allExtensions: [await testThemeExtensions()]}),
+      remoteApp: testOrganizationApp(),
+      storeFqdn: 'test.myshopify.com',
+      theme: '1',
+    })
+
+    expect(ensureValidPassword).toHaveBeenCalledOnce()
+    expect(ensureValidPassword).toHaveBeenCalledWith(undefined, 'test.myshopify.com')
+    expect(result!.options.storefrontPassword).toEqual(storefrontPassword)
   })
 })
 

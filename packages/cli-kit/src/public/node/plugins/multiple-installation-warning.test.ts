@@ -10,8 +10,8 @@ vi.mock('../version.js')
 vi.mock('../is-global.js')
 
 describe('showMultipleCLIWarningIfNeeded', () => {
-  beforeEach(() => {
-    clearCache()
+  beforeEach(async () => {
+    await clearCache()
   })
 
   test('shows warning if using global CLI but app has local dependency', async () => {
@@ -30,7 +30,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
         │                                                                              │
         │  Two Shopify CLI installations found – using global installation             │
         │                                                                              │
-        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were       │
+        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were        │
         │  detected.                                                                   │
         │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
         │  your package.json, unless you want to use different versions across         │
@@ -62,7 +62,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
         │                                                                              │
         │  Two Shopify CLI installations found – using local dependency                │
         │                                                                              │
-        │  A global installation (v3.70.0) and a local dependency (v${CLI_KIT_VERSION}) were       │
+        │  A global installation (v3.70.0) and a local dependency (v${CLI_KIT_VERSION}) were        │
         │  detected.                                                                   │
         │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
         │  your package.json, unless you want to use different versions across         │
@@ -95,7 +95,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
         │                                                                              │
         │  Two Shopify CLI installations found – using global installation             │
         │                                                                              │
-        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were       │
+        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were        │
         │  detected.                                                                   │
         │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
         │  your package.json, unless you want to use different versions across         │

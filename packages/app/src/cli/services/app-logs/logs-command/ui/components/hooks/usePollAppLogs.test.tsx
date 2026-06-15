@@ -7,6 +7,7 @@ import {
   POLLING_ERROR_RETRY_INTERVAL_MS,
   POLLING_INTERVAL_MS,
   POLLING_THROTTLE_RETRY_INTERVAL_MS,
+  MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES,
   parseFunctionRunPayload,
 } from '../../../../utils.js'
 import {
@@ -404,6 +405,11 @@ describe('usePollAppLogs', () => {
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
+    // Wait for the async polling function to execute
+    await waitForMockCalls(mockedPollAppLogs, 1)
+    // Flush React 19 batched state updates so hook.lastResult reflects the new state
+    await vi.advanceTimersByTimeAsync(0)
+
     // Initial invocation, 429 returned
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
@@ -445,6 +451,11 @@ describe('usePollAppLogs', () => {
     )
 
     // needed to await the render
+    await vi.advanceTimersByTimeAsync(0)
+
+    // Wait for the async polling function to execute
+    await waitForMockCalls(mockedPollAppLogs, 1)
+    // Flush React 19 batched state updates so hook.lastResult reflects the new state
     await vi.advanceTimersByTimeAsync(0)
 
     // Initial invocation, 422 returned
@@ -500,6 +511,46 @@ describe('usePollAppLogs', () => {
     // Flush React 19 batched state updates
     await vi.advanceTimersByTimeAsync(0)
     expect(hook.lastResult?.errors).toHaveLength(0)
+  })
+
+  test('stops polling after MAX consecutive resubscribe failures', async () => {
+    const mockedPollAppLogs = vi.fn().mockResolvedValue(POLL_APP_LOGS_FOR_LOGS_401_RESPONSE)
+    vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
+
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
+    const resubscribeCallback = vi.fn().mockRejectedValue(new Error('Session expired'))
+
+    const hook = renderHook(() =>
+      usePollAppLogs({
+        initialJwt: MOCKED_JWT_TOKEN,
+        filters: EMPTY_FILTERS,
+        resubscribeCallback,
+        storeNameById: STORE_NAME_BY_ID,
+        developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: MOCKED_ORGANIZATION_ID,
+      }),
+    )
+
+    // needed to await the render
+    await vi.advanceTimersByTimeAsync(0)
+
+    // Wait for the first poll
+    await waitForMockCalls(mockedPollAppLogs, 1)
+
+    // Advance through MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES - 1 more polls
+    for (let i = 1; i < MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await vi.advanceTimersToNextTimerAsync()
+      // eslint-disable-next-line no-await-in-loop
+      await waitForMockCalls(mockedPollAppLogs, i + 1)
+    }
+
+    // Flush React 19 batched state updates
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(hook.lastResult?.errors).toEqual(['App log streaming session has expired. Please restart your dev session.'])
+    // Polling should have stopped - no more timers scheduled
+    expect(vi.getTimerCount()).toEqual(0)
   })
 
   test("ignores logs from stores that don't have a matching shop name", async () => {

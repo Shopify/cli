@@ -10,6 +10,8 @@ import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import * as output from '@shopify/cli-kit/node/output'
+import type {NewExtensionPointSchemaType} from '../schemas.js'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -75,64 +77,6 @@ describe('ui_extension', async () => {
       configurationPath,
       entryPath: '',
     })
-  }
-
-  async function setupToolsExtension(
-    tmpDir: string,
-    options: {tools?: string; instructions?: string; createFiles?: boolean} = {},
-  ) {
-    await mkdir(joinPath(tmpDir, 'src'))
-    await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
-
-    if (options.createFiles) {
-      if (options.tools) {
-        await writeFile(joinPath(tmpDir, options.tools), '{"tools": []}')
-      }
-      if (options.instructions) {
-        await writeFile(joinPath(tmpDir, options.instructions), '# Instructions')
-      }
-    }
-
-    const allSpecs = await loadLocalExtensionsSpecifications()
-    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-
-    const targetConfig: any = {
-      target: 'EXTENSION::POINT::A',
-      module: './src/ExtensionPointA.js',
-    }
-
-    if (options.tools) targetConfig.tools = options.tools
-    if (options.instructions) targetConfig.instructions = options.instructions
-
-    const configuration = {
-      targeting: [targetConfig],
-      api_version: '2023-01' as const,
-      name: 'UI Extension',
-      description: 'This is an ordinary test extension',
-      type: 'ui_extension',
-      handle: 'test-ui-extension',
-      capabilities: {
-        block_progress: false,
-        network_access: false,
-        api_access: false,
-        collect_buyer_consent: {
-          customer_privacy: true,
-          sms_marketing: false,
-        },
-        iframe: {
-          sources: [],
-        },
-      },
-      settings: {},
-    }
-
-    const parsed = specification.parseConfigurationObject(configuration)
-    if (parsed.state !== 'ok') {
-      throw new Error("Couldn't parse configuration")
-    }
-
-    const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
-    return {result, tmpDir}
   }
 
   describe('validate()', () => {
@@ -208,6 +152,8 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
           instructions: undefined,
+          intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
@@ -275,6 +221,8 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
           instructions: undefined,
+          intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
@@ -338,6 +286,8 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
           instructions: undefined,
+          intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           urls: {},
@@ -401,6 +351,8 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
           instructions: undefined,
+          intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -467,6 +419,8 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
           instructions: undefined,
+          intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -535,6 +489,8 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
           instructions: undefined,
+          intents: undefined,
+          assets: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -603,6 +559,8 @@ describe('ui_extension', async () => {
           module: './src/ExtensionPointA.js',
           tools: './tools.json',
           instructions: undefined,
+          intents: undefined,
+          assets: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -612,11 +570,6 @@ describe('ui_extension', async () => {
               main: {
                 filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
-              },
-              tools: {
-                filepath: 'test-ui-extension-tools-tools.json',
-                module: './tools.json',
-                static: true,
               },
             },
           },
@@ -671,6 +624,8 @@ describe('ui_extension', async () => {
           module: './src/ExtensionPointA.js',
           tools: undefined,
           instructions: './instructions.md',
+          intents: undefined,
+          assets: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -681,10 +636,70 @@ describe('ui_extension', async () => {
                 filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
-              instructions: {
-                filepath: 'test-ui-extension-instructions-instructions.md',
-                module: './instructions.md',
-                static: true,
+            },
+          },
+          urls: {},
+        },
+      ])
+    })
+
+    test('targeting object passes through assets when configured', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            assets: './assets',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          tools: undefined,
+          instructions: undefined,
+          intents: undefined,
+          assets: './assets',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
               },
             },
           },
@@ -791,67 +806,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
       })
     })
 
-    test('shows an error when the tools file is missing', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        const {result} = await setupToolsExtension(tmpDir, {tools: './tools.json'})
-
-        const notFoundPath = joinPath(tmpDir, './tools.json')
-        expect(result).toEqual(
-          err(`Couldn't find ${notFoundPath}
-  Please check the tools path for EXTENSION::POINT::A
-
-Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
-        )
-      })
-    })
-
-    test('shows an error when the instructions file is missing', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        const {result} = await setupToolsExtension(tmpDir, {instructions: './instructions.md'})
-
-        const notFoundPath = joinPath(tmpDir, './instructions.md')
-        expect(result).toEqual(
-          err(`Couldn't find ${notFoundPath}
-  Please check the instructions path for EXTENSION::POINT::A
-
-Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
-        )
-      })
-    })
-
-    test('shows multiple errors when both tools and instructions files are missing', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        const {result} = await setupToolsExtension(tmpDir, {
-          tools: './tools.json',
-          instructions: './instructions.md',
-        })
-
-        const toolsNotFoundPath = joinPath(tmpDir, './tools.json')
-        const instructionsNotFoundPath = joinPath(tmpDir, './instructions.md')
-        expect(result).toEqual(
-          err(`Couldn't find ${toolsNotFoundPath}
-  Please check the tools path for EXTENSION::POINT::A
-
-Couldn't find ${instructionsNotFoundPath}
-  Please check the instructions path for EXTENSION::POINT::A
-
-Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
-        )
-      })
-    })
-
-    test('succeeds when both tools and instructions files exist', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        const {result} = await setupToolsExtension(tmpDir, {
-          tools: './tools.json',
-          instructions: './instructions.md',
-          createFiles: true,
-        })
-
-        expect(result).toStrictEqual(ok({}))
-      })
-    })
-
     test('build_manifest includes both tools and instructions when both are present', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
@@ -899,6 +853,8 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
           module: './src/ExtensionPointA.js',
           tools: './tools.json',
           instructions: './instructions.md',
+          intents: undefined,
+          assets: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -908,16 +864,6 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
               main: {
                 filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
-              },
-              tools: {
-                filepath: 'test-ui-extension-tools-tools.json',
-                module: './tools.json',
-                static: true,
-              },
-              instructions: {
-                filepath: 'test-ui-extension-instructions-instructions.md',
-                module: './instructions.md',
-                static: true,
               },
             },
           },
@@ -1301,18 +1247,33 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
     })
   })
 
+  interface TestUIExtensionPoint {
+    target: string
+    module: string
+    tools?: string
+    intents?: NonNullable<NewExtensionPointSchemaType['intents']>
+    build_manifest: {
+      assets: {
+        main: {module: string}
+        should_render?: {module: string}
+      }
+    }
+  }
+
   async function setupUIExtensionWithNodeModules({
     tmpDir,
     fileContent,
     shouldRenderFileContent,
     apiVersion,
     target = 'admin.product-details.action.render',
+    targetDtsContent,
   }: {
     tmpDir: string
     fileContent: string
     shouldRenderFileContent?: string
     apiVersion: string
     target?: string
+    targetDtsContent?: string
   }) {
     // Create extension files
     const srcDir = joinPath(tmpDir, 'src')
@@ -1325,9 +1286,21 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
     const nodeModulesPath = joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions')
     await mkdir(nodeModulesPath)
 
+    await Promise.all(
+      ['admin', 'checkout', 'point-of-sale', 'customer-account'].map(async (generatedTypesHelperSurface) => {
+        const generatedTypesHelperPath = joinPath(nodeModulesPath, generatedTypesHelperSurface)
+        await mkdir(generatedTypesHelperPath)
+        await writeFile(joinPath(generatedTypesHelperPath, 'index.js'), '// Mock generated types helper exports')
+      }),
+    )
+
     const targetPath = joinPath(nodeModulesPath, target)
     await mkdir(targetPath)
-    await writeFile(joinPath(targetPath, 'index.js'), '// Mock UI extension target')
+    // `require.resolve('@shopify/ui-extensions/<target>')` resolves to this file,
+    // and the CLI's ShopifyGlobal detector reads whatever path require.resolve
+    // returned. Injecting `targetDtsContent` here lets tests exercise the
+    // detection branch; defaults preserve the original placeholder.
+    await writeFile(joinPath(targetPath, 'index.js'), targetDtsContent ?? '// Mock UI extension target')
 
     let shouldRenderFilePath
     if (shouldRenderFileContent) {
@@ -1346,27 +1319,29 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
 
+    const extensionPoints: TestUIExtensionPoint[] = [
+      {
+        target,
+        module: `./src/index.jsx`,
+        build_manifest: {
+          assets: {
+            main: {
+              module: './src/index.jsx',
+            },
+            should_render: shouldRenderFilePath
+              ? {
+                  module: './src/condition/should-render.js',
+                }
+              : undefined,
+          },
+        },
+      },
+    ]
+
     const extension = new ExtensionInstance({
       configuration: {
         api_version: apiVersion,
-        extension_points: [
-          {
-            target,
-            module: `./src/index.jsx`,
-            build_manifest: {
-              assets: {
-                main: {
-                  module: './src/index.jsx',
-                },
-                should_render: shouldRenderFilePath
-                  ? {
-                      module: './src/condition/should-render.js',
-                    }
-                  : undefined,
-              },
-            },
-          },
-        ],
+        extension_points: extensionPoints,
         name: 'Test UI Extension',
         type: 'ui_extension',
         metafields: [],
@@ -1488,6 +1463,134 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
               new Set([
                 `//@ts-ignore\ndeclare module './should-render.js' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+          ]),
+        )
+      })
+    })
+
+    test('emits Api & ShopifyGlobal intersection when target re-exports ShopifyGlobal', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// JSX code',
+          // Remote DOM supported version
+          apiVersion: '2025-10',
+          // The target re-exports `ShopifyGlobal` via a named export specifier,
+          // which is the shape the AST helper detects. Any surface can opt in
+          // by emitting this shape from its target `.d.ts`.
+          targetDtsContent: `
+            interface _ShopifyGlobalInternal { addEventListener(type: string, listener: (event: unknown) => void): void }
+            export type {_ShopifyGlobalInternal as ShopifyGlobal}
+            export type Api = {placeholder: true}
+          `,
+        })
+
+        // Create tsconfig.json
+        const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(tsconfigPath, '// TypeScript config')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        // Then — prettier wraps the long intersection onto two lines.
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              shopifyDtsPath,
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api &
+    import('@shopify/ui-extensions/admin.product-details.action.render').ShopifyGlobal;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+          ]),
+        )
+      })
+    })
+
+    test('ShopifyGlobal detection is target-agnostic — any target with the re-export opts in', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // A fabricated target name belonging to no real surface. The detector
+        // is purely name-based on the public `ShopifyGlobal` export, so any
+        // surface's target can opt in by shipping this shape — there is no
+        // allowlist or hard-coded target in the CLI.
+        const genericTarget = 'fake-surface.any-target.render'
+
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// JSX code',
+          apiVersion: '2025-10',
+          target: genericTarget,
+          targetDtsContent: `
+            interface _FakeShopifyGlobal { someHostApi(): void }
+            export type {_FakeShopifyGlobal as ShopifyGlobal}
+            export type Api = {placeholder: true}
+          `,
+        })
+
+        const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(tsconfigPath, '// TypeScript config')
+
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              shopifyDtsPath,
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/${genericTarget}').Api &
+    import('@shopify/ui-extensions/${genericTarget}').ShopifyGlobal;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+          ]),
+        )
+      })
+    })
+
+    test('emits plain Api when target does not re-export ShopifyGlobal', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // No `targetDtsContent` — the helper writes the default placeholder,
+        // which contains no `ShopifyGlobal` export. This guards against the
+        // detection helper accidentally tripping on targets that don't opt in.
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// JSX code',
+          apiVersion: '2025-10',
+        })
+
+        const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(tsconfigPath, '// TypeScript config')
+
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              shopifyDtsPath,
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
   const globalThis: { shopify: typeof shopify };
 }\n`,
               ]),
@@ -2175,7 +2278,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
 
         // Update extension configuration to include tools
-        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+        extension.configuration.extension_points[0]!.tools = './tools.json'
 
         // Create tsconfig.json
         await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
@@ -2193,7 +2296,8 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         expect(typeDefinition).toContain('interface SearchProductsInput')
         expect(typeDefinition).toContain('interface SearchProductsOutput')
         expect(typeDefinition).toContain("name: 'search_products'")
-        expect(typeDefinition).toContain('tools: ShopifyTools')
+        expect(typeDefinition).toContain("import('@shopify/ui-extensions/admin').WithGeneratedTools<")
+        expect(typeDefinition).not.toContain('interface GeneratedToolsConstraint<Tools>')
       })
     })
 
@@ -2243,7 +2347,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
 
         // Update extension configuration to include tools
-        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+        extension.configuration.extension_points[0]!.tools = './tools.json'
 
         // Create tsconfig.json
         await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
@@ -2278,7 +2382,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         })
 
         // Update extension configuration to reference a non-existent tools file
-        ;(extension.configuration.extension_points[0] as any).tools = './non-existent-tools.json'
+        extension.configuration.extension_points[0]!.tools = './non-existent-tools.json'
 
         // Create tsconfig.json
         await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
@@ -2311,7 +2415,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         await writeFile(joinPath(tmpDir, 'tools.json'), 'not valid json {{{')
 
         // Update extension configuration to include tools
-        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+        extension.configuration.extension_points[0]!.tools = './tools.json'
 
         // Create tsconfig.json
         await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
@@ -2349,7 +2453,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         await writeFile(joinPath(tmpDir, 'tools.json'), invalidToolsContent)
 
         // Update extension configuration to include tools
-        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+        extension.configuration.extension_points[0]!.tools = './tools.json'
 
         // Create tsconfig.json
         await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
@@ -2396,7 +2500,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
 
         // Update extension configuration to include tools
-        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+        extension.configuration.extension_points[0]!.tools = './tools.json'
 
         // Create tsconfig.json
         await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
@@ -2413,11 +2517,309 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         // Entry point should have ShopifyTools
         const entryPointType = types.find((t) => t.includes('./src/index.jsx'))
         expect(entryPointType).toContain('ShopifyTools')
-        expect(entryPointType).toContain('tools: ShopifyTools')
+        expect(entryPointType).toContain("import('@shopify/ui-extensions/admin').WithGeneratedTools<")
 
         // Imported file should NOT have ShopifyTools
         const helperType = types.find((t) => t.includes('./src/utils/helper.js'))
         expect(helperType).not.toContain('ShopifyTools')
+      })
+    })
+
+    test('generates shopify.d.ts with generated intent request and response types when intent schema is present', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+          target: 'admin.app.intent.render',
+        })
+
+        const intentSchemaContent = JSON.stringify({
+          inputSchema: {
+            type: 'object',
+            properties: {
+              recipient: {type: 'string'},
+            },
+            required: ['recipient'],
+          },
+          outputSchema: {
+            type: 'object',
+            properties: {
+              success: {type: 'boolean'},
+            },
+          },
+        })
+        await writeFile(joinPath(tmpDir, 'intent-schema.json'), intentSchemaContent)
+        extension.configuration.extension_points[0]!.intents = [
+          {
+            action: 'create',
+            type: 'application/email',
+            schema: './intent-schema.json',
+          },
+        ]
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).toContain('interface CreateApplicationEmailIntentInput')
+        expect(typeDefinition).toContain('interface CreateApplicationEmailIntentRequest')
+        expect(typeDefinition).toContain(`action: 'create';`)
+        expect(typeDefinition).toContain(`type: 'application/email';`)
+        expect(typeDefinition).not.toContain('interface ShopifyGeneratedIntentResponse<Data = unknown>')
+        expect(typeDefinition).not.toContain('interface ShopifyGeneratedIntentsApi<')
+        expect(typeDefinition).toContain('type ShopifyGeneratedIntentVariants =')
+        expect(typeDefinition).toContain("import('@shopify/ui-extensions/admin').ShopifyGeneratedIntentVariant<")
+        expect(typeDefinition).toContain('CreateApplicationEmailIntentRequest')
+        expect(typeDefinition).toContain('CreateApplicationEmailIntentOutput')
+        expect(typeDefinition).toContain("import('@shopify/ui-extensions/admin').WithGeneratedIntents<")
+      })
+    })
+
+    test('uses the target surface package for generated helper types', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+          target: 'purchase.checkout.block.render',
+        })
+
+        const toolsContent = JSON.stringify([
+          {
+            name: 'my_tool',
+            description: 'A tool',
+            inputSchema: {type: 'object'},
+          },
+        ])
+        await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
+        extension.configuration.extension_points[0]!.tools = './tools.json'
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).toContain("import('@shopify/ui-extensions/checkout').WithGeneratedTools<")
+        expect(typeDefinition).not.toContain("import('@shopify/ui-extensions/admin').WithGeneratedTools<")
+      })
+    })
+
+    test('warns and skips intent type generation when the schema file is missing', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+      const outputWarnSpy = vi.spyOn(output, 'outputWarn').mockImplementation(() => {})
+
+      try {
+        await inTemporaryDirectory(async (tmpDir) => {
+          const {extension} = await setupUIExtensionWithNodeModules({
+            tmpDir,
+            fileContent: '// Extension code',
+            apiVersion: '2025-10',
+            target: 'admin.app.intent.render',
+          })
+
+          extension.configuration.extension_points[0]!.intents = [
+            {
+              action: 'create',
+              type: 'application/email',
+              schema: './missing-intent-schema.json',
+            },
+          ]
+
+          await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+          // When
+          await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+          const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+          const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+          // Then
+          expect(outputWarnSpy).toHaveBeenCalledWith(
+            'Intent schema file "./missing-intent-schema.json" was not found. Skipping intent type generation.',
+          )
+          expect(types).toHaveLength(1)
+          expect(types[0]).not.toContain('ShopifyGeneratedIntentVariants')
+        })
+      } finally {
+        outputWarnSpy.mockRestore()
+      }
+    })
+
+    test('throws when intent action/type pairs are duplicated for an entry point', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+          target: 'admin.app.intent.render',
+        })
+
+        const intentSchemaContent = JSON.stringify({
+          inputSchema: {
+            type: 'object',
+          },
+        })
+        await writeFile(joinPath(tmpDir, 'intent-schema.json'), intentSchemaContent)
+        extension.configuration.extension_points[0]!.intents = [
+          {
+            action: 'create',
+            type: 'application/email',
+            schema: './intent-schema.json',
+          },
+          {
+            action: 'create',
+            type: 'application/email',
+            schema: './intent-schema.json',
+          },
+        ]
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When/Then
+        await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).rejects.toThrow(
+          new AbortError(
+            'Intent "create:application/email" is defined multiple times. Intents must be unique within a target.',
+          ),
+        )
+      })
+    })
+
+    test('generates intent types only for entry point file, not for imported files', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: `
+            import './utils/helper.js';
+            // Main extension code
+          `,
+          apiVersion: '2025-10',
+          target: 'admin.app.intent.render',
+        })
+
+        const utilsDir = joinPath(tmpDir, 'src', 'utils')
+        await mkdir(utilsDir)
+        await writeFile(joinPath(utilsDir, 'helper.js'), 'export const helper = () => {};')
+
+        const intentSchemaContent = JSON.stringify({
+          inputSchema: {
+            type: 'object',
+            properties: {
+              recipient: {type: 'string'},
+            },
+          },
+        })
+        await writeFile(joinPath(tmpDir, 'intent-schema.json'), intentSchemaContent)
+        extension.configuration.extension_points[0]!.intents = [
+          {
+            action: 'create',
+            type: 'application/email',
+            schema: './intent-schema.json',
+          },
+        ]
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should have 2 type definitions (entry point and helper)
+        expect(types).toHaveLength(2)
+
+        const entryPointType = types.find((t) => t.includes('./src/index.jsx'))
+        expect(entryPointType).toContain('ShopifyGeneratedIntentVariants')
+        expect(entryPointType).toContain('CreateApplicationEmailIntentRequest')
+        expect(entryPointType).toContain("import('@shopify/ui-extensions/admin').WithGeneratedIntents<")
+
+        const helperType = types.find((t) => t.includes('./src/utils/helper.js'))
+        expect(helperType).not.toContain('ShopifyGeneratedIntentVariants')
+        expect(helperType).not.toContain('CreateApplicationEmailIntentRequest')
+      })
+    })
+
+    test('generates intent types from an intent schema file that declares a value schema', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+          target: 'admin.app.intent.render',
+        })
+
+        // Given an intent schema file that declares a root-level `value` schema
+        const intentSchemaContent = JSON.stringify({
+          value: {
+            type: 'object',
+            properties: {
+              productId: {type: 'string'},
+            },
+            required: ['productId'],
+          },
+          inputSchema: {
+            type: 'object',
+            properties: {
+              title: {type: 'string'},
+            },
+          },
+          outputSchema: {
+            type: 'object',
+            properties: {
+              id: {type: 'string'},
+            },
+          },
+        })
+        await writeFile(joinPath(tmpDir, 'intent-schema.json'), intentSchemaContent)
+        extension.configuration.extension_points[0]!.intents = [
+          {
+            action: 'edit',
+            type: 'shopify/Product',
+            schema: './intent-schema.json',
+          },
+        ]
+
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - the value schema is compiled into EditShopifyProductIntentValue
+        // and wired through the request type.
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).toContain('interface EditShopifyProductIntentValue')
+        expect(typeDefinition).toContain('productId: string;')
+        expect(typeDefinition).toContain('value?: EditShopifyProductIntentValue;')
+        // Sanity: the value type is not the `unknown` fallback used when no schema is provided.
+        expect(typeDefinition).not.toContain('type EditShopifyProductIntentValue = unknown')
       })
     })
   })

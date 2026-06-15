@@ -23,9 +23,7 @@ export type ExtensionFeature =
   | 'localization'
   | 'generates_source_maps'
 
-export interface TransformationConfig {
-  [key: string]: string
-}
+export type TransformationConfig = Record<string, string>
 
 export interface CustomTransformationConfig {
   forward?: (obj: object, appConfiguration: AppConfiguration, options?: {flags?: Flag[]}) => object
@@ -44,6 +42,7 @@ export enum AssetIdentifier {
   Main = 'main',
   Tools = 'tools',
   Instructions = 'instructions',
+  Intents = 'intents',
 }
 
 export interface Asset {
@@ -58,9 +57,9 @@ export interface BuildAsset {
   static?: boolean
 }
 
-type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'hosted_app_home'}
-  | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
+interface ExtensionDeployConfigContext {
+  appConfiguration: AppConfiguration
+}
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -76,7 +75,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   registrationLimit: number
   experience: ExtensionExperience
   clientSteps?: ClientSteps
-  buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
   getOutputRelativePath?: (extension: ExtensionInstance<TConfiguration>) => string
@@ -86,10 +84,11 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     directory: string,
     apiKey: string,
     moduleId?: string,
-  ) => Promise<{[key: string]: unknown} | undefined>
+    context?: ExtensionDeployConfigContext,
+  ) => Promise<Record<string, unknown> | undefined>
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
-  buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
+  buildValidation?: (extension: ExtensionInstance<TConfiguration>, outputPath: string) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
@@ -135,9 +134,18 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   ) => Promise<void>
 
   /**
-   * Copy static assets from the extension directory to the output path
+   * Custom watch configuration for dev sessions.
+   * Return a DevSessionWatchConfig with paths to watch and optionally paths to ignore,
+   * or undefined to watch all files in the extension directory.
    */
-  copyStaticAssets?: (configuration: TConfiguration, directory: string, outputPath: string) => Promise<void>
+  devSessionWatchConfig?: (extension: ExtensionInstance<TConfiguration>) => DevSessionWatchConfig | undefined
+}
+
+export interface DevSessionWatchConfig {
+  /** Absolute paths or globs to watch */
+  paths: string[]
+  /** Glob patterns to ignore. When provided, replaces the default ignore list entirely. */
+  ignore?: string[]
 }
 
 /**
@@ -212,7 +220,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     clientSteps: spec.clientSteps,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
   const merged = {...defaults, ...spec}
 
@@ -261,7 +268,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   identifier: string
   schema: ZodSchemaType<TConfiguration>
   clientSteps?: ClientSteps
-  buildConfig?: BuildConfig
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
@@ -280,7 +286,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     clientSteps: spec.clientSteps,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
@@ -289,16 +294,24 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: Pick<
     CreateExtensionSpecType<TConfiguration>,
-    'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy' | 'clientSteps'
+    | 'identifier'
+    | 'appModuleFeatures'
+    | 'uidStrategy'
+    | 'clientSteps'
+    | 'experience'
+    | 'transformRemoteToLocal'
+    | 'devSessionWatchConfig'
   >,
 ) {
   return createExtensionSpecification({
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
+    experience: spec.experience,
     clientSteps: spec.clientSteps,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
-    uidStrategy: spec.uidStrategy ?? 'single',
+    uidStrategy: spec.uidStrategy,
+    transformRemoteToLocal: spec.transformRemoteToLocal,
+    devSessionWatchConfig: spec.devSessionWatchConfig,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
@@ -324,7 +337,7 @@ function resolveReverseAppConfigTransform<T>(
   transformConfig?: TransformationConfig | CustomTransformationConfig,
 ) {
   if (!transformConfig)
-    return (content: object) => defaultAppConfigReverseTransform(schema, content as {[key: string]: unknown})
+    return (content: object) => defaultAppConfigReverseTransform(schema, content as Record<string, unknown>)
 
   if (Object.keys(transformConfig).includes('reverse')) {
     return (transformConfig as CustomTransformationConfig).reverse!
@@ -392,8 +405,8 @@ function appConfigTransform(
  * @returns The nested object
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
-  return Object.keys(schema._def.shape()).reduce((result: {[key: string]: unknown}, key: string) => {
+function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: Record<string, unknown>) {
+  return Object.keys(schema._def.shape()).reduce((result: Record<string, unknown>, key: string) => {
     let innerSchema = schema._def.shape()[key]
     if (innerSchema instanceof zod.ZodOptional) {
       innerSchema = innerSchema._def.innerType

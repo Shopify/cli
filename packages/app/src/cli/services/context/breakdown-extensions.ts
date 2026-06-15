@@ -314,7 +314,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   specs: ExtensionSpecification[],
   activeAppVersion?: AppVersion,
 ): Promise<ExtensionIdentifiersBreakdown | undefined> {
-  const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
+  const version = activeAppVersion ?? (await developerPlatformClient.activeAppVersion(remoteApp))
   if (!version) return
 
   const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
@@ -348,7 +348,10 @@ function loadExtensionsIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter((ext) => {
-    const spec = specs.find((spec) => spec.identifier === ext.specification?.identifier)
+    const spec = specs.find(
+      (spec) =>
+        spec.identifier === ext.specification?.identifier || spec.externalIdentifier === ext.specification?.identifier,
+    )
     return spec && !isAppConfigSpecification(spec)
   })
 

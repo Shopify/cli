@@ -20,8 +20,8 @@ export async function ensureValidPassword(password: string | undefined, store: s
   }
 
   let finalPassword =
-    password ||
-    getStorefrontPassword() ||
+    password ??
+    getStorefrontPassword() ??
     (await promptPassword([
       'Enter your',
       {

@@ -2,6 +2,7 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigLink extends AppLinkedCommand {
@@ -17,6 +18,11 @@ export default class ConfigLink extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    'organization-id': Flags.string({
+      hidden: true,
+      env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
+      exclusive: ['client-id'],
+    }),
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
@@ -25,6 +31,7 @@ export default class ConfigLink extends AppLinkedCommand {
     const options: LinkOptions = {
       directory: flags.path,
       apiKey: flags['client-id'],
+      organizationId: flags['organization-id'],
       configName: flags.config,
     }
 
@@ -34,7 +41,7 @@ export default class ConfigLink extends AppLinkedCommand {
       directory: flags.path,
       clientId: undefined,
       forceRelink: false,
-      userProvidedConfigName: result.state.configurationFileName,
+      userProvidedConfigName: result.configFileName,
     })
 
     return {app}

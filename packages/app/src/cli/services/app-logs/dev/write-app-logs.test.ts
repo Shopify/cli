@@ -1,12 +1,10 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {AppLogData, AppLogPayload, FunctionRunLog} from '../types.js'
+import camelcaseKeys from '../camelcase-keys.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {writeFile} from '@shopify/cli-kit/node/fs'
+import {readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
-
-vi.mock('@shopify/cli-kit/node/fs')
 
 const APP_LOG: AppLogData = {
   shop_id: 1,
@@ -34,7 +32,6 @@ const NEW_APP_LOG: AppLogData = {
 
 const FUNCTION_RUN_PAYLOAD = new FunctionRunLog(camelcaseKeys(JSON.parse(APP_LOG.payload)))
 const STORE_NAME = 'storeName'
-const TEST_LOGS_DIR = '/test/logs/dir'
 
 describe('writeAppLogsToFile', () => {
   let stdout: any
@@ -44,61 +41,64 @@ describe('writeAppLogsToFile', () => {
   })
 
   test('calls writeLog with the FunctionRunLog payload type', async () => {
-    // Given
-    // determine the fileName
-    const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      // determine the fileName
+      const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
 
-    // When
-    const returnedPath = await writeAppLogsToFile({
-      appLog: APP_LOG,
-      appLogPayload: FUNCTION_RUN_PAYLOAD,
-      stdout,
-      storeName: STORE_NAME,
-      logsDir: TEST_LOGS_DIR,
+      // When
+      const returnedPath = await writeAppLogsToFile({
+        appLog: APP_LOG,
+        appLogPayload: FUNCTION_RUN_PAYLOAD,
+        stdout,
+        storeName: STORE_NAME,
+        logsDir: tmpDir,
+      })
+
+      // Then
+      const expectedSaveData = {
+        shopId: APP_LOG.shop_id,
+        apiClientId: APP_LOG.api_client_id,
+        payload: {
+          logs: ['Line 1!', ' Line2!'],
+        },
+        logType: APP_LOG.log_type,
+        status: APP_LOG.status,
+        source: APP_LOG.source,
+        sourceNamespace: APP_LOG.source_namespace,
+        logTimestamp: APP_LOG.log_timestamp,
+        localTime: formatLocalDate(APP_LOG.log_timestamp),
+        storeName: STORE_NAME,
+      }
+      const expectedLogData = JSON.stringify(expectedSaveData, null, 2)
+
+      const writtenContent = await readFile(returnedPath.fullOutputPath)
+      expect(writtenContent).toEqual(expectedLogData)
+      expect(returnedPath.fullOutputPath).toEqual(expect.stringContaining(joinPath(tmpDir, fileName)))
     })
-
-    // Then
-    const expectedSaveData = {
-      shopId: APP_LOG.shop_id,
-      apiClientId: APP_LOG.api_client_id,
-      payload: {
-        logs: ['Line 1!', ' Line2!'],
-      },
-      logType: APP_LOG.log_type,
-      status: APP_LOG.status,
-      source: APP_LOG.source,
-      sourceNamespace: APP_LOG.source_namespace,
-      logTimestamp: APP_LOG.log_timestamp,
-      localTime: formatLocalDate(APP_LOG.log_timestamp),
-      storeName: STORE_NAME,
-    }
-    const expectedLogData = JSON.stringify(expectedSaveData, null, 2)
-
-    expect(writeFile).toHaveBeenCalledWith(expect.stringContaining(fileName), expectedLogData)
-    expect(returnedPath.fullOutputPath).toEqual(expect.stringContaining(joinPath(TEST_LOGS_DIR, fileName)))
-    expect(returnedPath.fullOutputPath).toEqual(expect.stringContaining(TEST_LOGS_DIR))
   })
 
   test('calls writeLog with strings when no matching payload type', async () => {
-    // Given
-    // determine the fileName
-    const fileName = `20240522_150641_827Z_${NEW_APP_LOG.source_namespace}_${NEW_APP_LOG.source}`
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      // determine the fileName
+      const fileName = `20240522_150641_827Z_${NEW_APP_LOG.source_namespace}_${NEW_APP_LOG.source}`
 
-    // When
-    const returnedPath = await writeAppLogsToFile({
-      appLog: NEW_APP_LOG,
-      appLogPayload: JSON.parse(NEW_APP_LOG.payload),
-      stdout,
-      storeName: STORE_NAME,
-      logsDir: TEST_LOGS_DIR,
+      // When
+      const returnedPath = await writeAppLogsToFile({
+        appLog: NEW_APP_LOG,
+        appLogPayload: JSON.parse(NEW_APP_LOG.payload),
+        stdout,
+        storeName: STORE_NAME,
+        logsDir: tmpDir,
+      })
+
+      // Then
+      const expectedLogData = expectedLogDataFromAppEvent(NEW_APP_LOG, JSON.parse(NEW_APP_LOG.payload))
+      const writtenContent = await readFile(returnedPath.fullOutputPath)
+      expect(writtenContent).toEqual(expectedLogData)
+      expect(returnedPath.fullOutputPath).toEqual(expect.stringContaining(joinPath(tmpDir, fileName)))
     })
-
-    // Then
-    expect(returnedPath.fullOutputPath).toEqual(expect.stringContaining(joinPath(TEST_LOGS_DIR, fileName)))
-    expect(writeFile).toHaveBeenCalledWith(
-      expect.stringContaining(fileName),
-      expectedLogDataFromAppEvent(NEW_APP_LOG, JSON.parse(NEW_APP_LOG.payload)),
-    )
   })
 })
 

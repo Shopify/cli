@@ -1,5 +1,5 @@
 import {Spinner} from './Spinner.js'
-import {TabPanel, Tab} from './TabPanel.js'
+import {TabPanel, Tab, TabShortcut} from './TabPanel.js'
 import metadata from '../../../../metadata.js'
 import {
   DevSessionStatus,
@@ -7,6 +7,7 @@ import {
   DevSessionStatusMessageType,
 } from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
+import {buildDevConsoleURL} from '../../../../utilities/app/app-url.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {Alert, ConcurrentOutput, Link, TabularData} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -14,12 +15,16 @@ import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, terminalSupportsHyperlinks} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {treeKill} from '@shopify/cli-kit/node/tree-kill'
-import {postRunHookHasCompleted} from '@shopify/cli-kit/node/hooks/postrun'
+import {waitForPostRunHookAndExit} from '@shopify/cli-kit/node/hooks/postrun'
 import {Writable} from 'stream'
+
+interface DevStatusShortcut extends TabShortcut {
+  shortcutLabel: string
+  linkLabel: string
+  url?: string
+}
 
 interface DevSesionUIProps {
   processes: OutputProcess[]
@@ -30,6 +35,7 @@ interface DevSesionUIProps {
   appName?: string
   organizationName?: string
   configPath?: string
+  localURL?: string
   onAbort: () => Promise<void>
 }
 
@@ -42,6 +48,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   appName,
   organizationName,
   configPath,
+  localURL,
   onAbort,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
@@ -61,18 +68,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       setIsShuttingDownMessage('Shutting down dev ...')
       await onAbort()
     }
-    if (isUnitTest()) return
-
-    // Wait for the post run hook to complete or timeout after 5 seconds.
-    let totalTime = 0
-    setInterval(() => {
-      if (postRunHookHasCompleted() || totalTime > 5000) {
-        treeKill(process.pid, 'SIGINT', false, () => {
-          process.exit(0)
-        })
-      }
-      totalTime += 100
-    }, 100)
+    waitForPostRunHookAndExit()
   })
 
   const errorHandledProcesses = useMemo(() => {
@@ -118,36 +114,59 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
     }
   }
 
+  const devStatusShortcuts: DevStatusShortcut[] = [
+    {
+      key: 'p',
+      shortcutLabel: 'Open app preview',
+      linkLabel: 'Preview',
+      url: status.previewURL,
+      condition: () => Boolean(status.isReady && status.previewURL),
+      action: async () => {
+        await metadata.addPublicMetadata(() => ({
+          cmd_dev_preview_url_opened: true,
+        }))
+        if (status.previewURL) {
+          await openURL(status.previewURL)
+        }
+      },
+    },
+    {
+      key: 'c',
+      shortcutLabel: 'Open Dev Console for extension previews',
+      linkLabel: 'Dev Console',
+      url: buildDevConsoleURL(shopFqdn),
+      condition: () => Boolean(status.isReady && status.appEmbedded === false && status.hasExtensions),
+      action: async () => {
+        await metadata.addPublicMetadata(() => ({
+          cmd_dev_preview_url_opened: true,
+        }))
+        await openURL(buildDevConsoleURL(shopFqdn))
+      },
+    },
+    {
+      key: 'g',
+      shortcutLabel: 'Open GraphiQL (Admin API)',
+      linkLabel: 'GraphiQL',
+      url: status.graphiqlURL,
+      condition: () => Boolean(status.isReady && status.graphiqlURL),
+      action: async () => {
+        await metadata.addPublicMetadata(() => ({
+          cmd_dev_graphiql_opened: true,
+        }))
+        if (status.graphiqlURL) {
+          await openURL(status.graphiqlURL)
+        }
+      },
+    },
+  ]
+
+  const activeShortcuts = devStatusShortcuts.filter((shortcut) => shortcut.condition?.() ?? true)
+
   const tabs: {[key: string]: Tab} = {
     // eslint-disable-next-line id-length
     d: {
       label: 'Dev status',
-      shortcuts: [
-        {
-          key: 'p',
-          condition: () => Boolean(status.previewURL && status.isReady),
-          action: async () => {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_preview_url_opened: true,
-            }))
-            if (status.previewURL) {
-              await openURL(status.previewURL)
-            }
-          },
-        },
-        {
-          key: 'g',
-          condition: () => Boolean(status.graphiqlURL && status.isReady),
-          action: async () => {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_graphiql_opened: true,
-            }))
-            if (status.graphiqlURL) {
-              await openURL(status.graphiqlURL)
-            }
-          },
-        },
-      ],
+      shortcuts: devStatusShortcuts,
       content: (
         <>
           {status.statusMessage && (
@@ -155,18 +174,18 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
             </Text>
           )}
-          {canUseShortcuts && (
+          {canUseShortcuts && activeShortcuts.length > 0 && (
             <Box marginTop={1} flexDirection="column">
-              {status.graphiqlURL && status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} <Text bold>(g)</Text> Open GraphiQL (Admin API) in your browser
+              {activeShortcuts.map((shortcut) => (
+                <Text key={shortcut.key}>
+                  {figures.pointerSmall} <Text bold>({shortcut.key})</Text>{' '}
+                  {terminalSupportsHyperlinks() && shortcut.url ? (
+                    <Link url={shortcut.url} label={shortcut.shortcutLabel} />
+                  ) : (
+                    shortcut.shortcutLabel
+                  )}
                 </Text>
-              ) : null}
-              {status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} <Text bold>(p)</Text> Preview in your browser
-                </Text>
-              ) : null}
+              ))}
             </Box>
           )}
           <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
@@ -174,18 +193,15 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               <Text>{isShuttingDownMessage}</Text>
             ) : (
               <>
-                {status.isReady && (
+                {status.isReady && !(canUseShortcuts && terminalSupportsHyperlinks()) && (
                   <>
-                    {status.previewURL ? (
-                      <Text>
-                        Preview URL: <Link url={status.previewURL} />
-                      </Text>
-                    ) : null}
-                    {status.graphiqlURL ? (
-                      <Text>
-                        GraphiQL URL: <Link url={status.graphiqlURL} />
-                      </Text>
-                    ) : null}
+                    {activeShortcuts
+                      .filter((shortcut) => shortcut.url)
+                      .map((shortcut) => (
+                        <Text key={shortcut.key}>
+                          {shortcut.linkLabel} URL: <Link url={shortcut.url!} />
+                        </Text>
+                      ))}
                   </>
                 )}
               </>
@@ -203,6 +219,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
             tabularData={[
               ['App:', appName ?? ''],
               ['App URL:', appURL ?? ''],
+              ['Local URL:', appURL ? '' : (localURL ?? '')],
               ['Config:', configPath?.split('/').pop() ?? ''],
               ['Org:', organizationName ?? ''],
             ].filter(([, value]) => value)}

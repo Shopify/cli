@@ -417,6 +417,11 @@ export async function renderAutocompletePrompt<T>(
 ): Promise<T> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
+  // The default search filters in-memory choices synchronously, so it doesn't need
+  // throttling. Skipping the throttle makes the keystroke-to-result latency feel
+  // instant. Callers that supply their own (typically remote/paginated) search keep
+  // the component's default throttle unless they opt out via `searchDebounceMs`.
+  const usingDefaultSearch = props.search === undefined
   const newProps = {
     search(term: string) {
       const lowerTerm = term.toLowerCase()
@@ -426,6 +431,7 @@ export async function renderAutocompletePrompt<T>(
         }),
       })
     },
+    ...(usingDefaultSearch ? {searchDebounceMs: 0} : {}),
     ...props,
   }
 
@@ -479,22 +485,29 @@ interface RenderTasksOptions {
 /**
  * Runs async tasks and displays their progress to the console.
  * @example
- * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Installing dependencies ...
  */
 
 export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
-) {
-  return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} noProgressBar={noProgressBar} />, {
+): Promise<TContext> {
+  let taskResult: TContext
+  await render(
+    <Tasks
+      tasks={tasks}
+      onComplete={(ctx) => {
+        taskResult = ctx
+      }}
+      noProgressBar={noProgressBar}
+    />,
+    {
+      stdout: process.stderr as unknown as NodeJS.WriteStream,
       ...renderOptions,
       exitOnCtrlC: false,
-    })
-      .then(() => {})
-      .catch(reject)
-  })
+    },
+  )
+  return taskResult!
 }
 
 export interface RenderSingleTaskOptions<T> {
@@ -512,7 +525,6 @@ export interface RenderSingleTaskOptions<T> {
  * @param options.renderOptions - Optional render configuration
  * @returns The result of the task
  * @example
- * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Loading app ...
  */
 export async function renderSingleTask<T>({
@@ -521,12 +533,23 @@ export async function renderSingleTask<T>({
   onAbort,
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    render(<SingleTask title={title} task={task} onComplete={resolve} onAbort={onAbort} />, {
+  let taskResult: T
+  await render(
+    <SingleTask
+      title={title}
+      task={task}
+      onComplete={(result) => {
+        taskResult = result
+      }}
+      onAbort={onAbort}
+    />,
+    {
+      stdout: process.stderr as unknown as NodeJS.WriteStream,
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
-  })
+    },
+  )
+  return taskResult!
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {
@@ -654,6 +677,7 @@ interface IsTTYOptions {
 }
 
 export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- false should fall through to stdin/terminalSupportsPrompting
   return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsPrompting())
 }
 

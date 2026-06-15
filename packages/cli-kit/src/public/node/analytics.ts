@@ -79,15 +79,15 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       }
     }
     const doOpenTelemetry = async () => {
-      const active = payload.public.cmd_all_timing_active_ms || 0
-      const network = payload.public.cmd_all_timing_network_ms || 0
-      const prompt = payload.public.cmd_all_timing_prompts_ms || 0
+      const active = payload.public.cmd_all_timing_active_ms ?? 0
+      const network = payload.public.cmd_all_timing_network_ms ?? 0
+      const prompt = payload.public.cmd_all_timing_prompts_ms ?? 0
 
       return recordMetrics(
         {
           skipMetricAnalytics,
           cliVersion: payload.public.cli_version,
-          owningPlugin: payload.public.cmd_all_plugin || '@shopify/cli',
+          owningPlugin: payload.public.cmd_all_plugin ?? '@shopify/cli',
           command: payload.public.command,
           exitMode: options.exitMode,
         },
@@ -117,8 +117,8 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
     outputDebug('Unable to log analytics event - no information on executed command')
     return
   }
-  const {startCommand, startArgs, startTime} = commandStartOptions
-  const currentTime = new Date().getTime()
+  const {startCommand, startArgs, startTime, endTime} = commandStartOptions
+  const currentTime = endTime ?? new Date().getTime()
 
   // All bundled plugins appear as `@shopify/cli` in the payload
   const {'@shopify/cli': internalPluginsPublic, ...externalPluginsPublic} = await fanoutHooks(
@@ -148,7 +148,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   const wallClockElapsed = currentTime - startTime
   const totalTimeWithoutSubtimers = wallClockElapsed - totalTimeFromSubtimers
 
-  let payload = {
+  const payload = {
     public: {
       command: startCommand,
       time_start: startTime,
@@ -191,9 +191,6 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       payload.public[metric] = Math.floor(current)
     }
   })
-
-  // strip undefined fields -- they make up the majority of payloads due to wide metadata structure.
-  payload = JSON.parse(JSON.stringify(payload))
 
   return sanitizePayload(payload)
 }

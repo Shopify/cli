@@ -4,7 +4,7 @@ import {joinPath, dirname} from './path.js'
 import {exec} from './system.js'
 import {describe, expect, test} from 'vitest'
 import StreamZip from 'node-stream-zip'
-import brotli from 'brotli'
+import {brotliDecompressSync} from 'zlib'
 
 import fs from 'fs'
 
@@ -92,8 +92,8 @@ describe('brotliCompress', () => {
       // Brotli files start with the bytes 0x1B...
       expect(compressedContent[0]).toBe(0x1b)
 
-      // Decompress using brotli library
-      const decompressed = brotli.decompress(compressedContent)
+      // Decompress using native zlib brotli
+      const decompressed = brotliDecompressSync(compressedContent)
       expect(decompressed).toBeTruthy()
     })
   })
@@ -125,7 +125,7 @@ describe('brotliCompress', () => {
 
       // Save compressed content to a file
       const compressedContent = fs.readFileSync(brotliPath)
-      const decompressed = brotli.decompress(compressedContent)
+      const decompressed = brotliDecompressSync(compressedContent)
       const tmpTarPath = joinPath(tmpDir, 'output.tar')
       fs.writeFileSync(tmpTarPath, decompressed)
 

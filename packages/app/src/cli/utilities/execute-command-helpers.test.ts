@@ -2,12 +2,12 @@ import {prepareAppStoreContext, prepareExecuteContext} from './execute-command-h
 import {linkedAppContext} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
 import {validateSingleOperation} from '../services/graphql/common.js'
-import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('../services/app-context.js')
 vi.mock('../services/store-context.js')
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../services/graphql/common.js', () => ({
   validateSingleOperation: vi.fn(),
@@ -160,43 +160,55 @@ describe('prepareExecuteContext', () => {
   })
 
   test('reads query from file when query-file flag is provided', async () => {
-    const queryFileContent = 'query { shop { name } }'
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readFile).mockResolvedValue(queryFileContent as any)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryFileContent = 'query { shop { name } }'
+      const queryFilePath = joinPath(tmpDir, 'query.graphql')
+      await writeFile(queryFilePath, queryFileContent)
 
-    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/query.graphql'}
-    const result = await prepareExecuteContext(flagsWithQueryFile)
+      const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': queryFilePath}
 
-    expect(fileExists).toHaveBeenCalledWith('/path/to/query.graphql')
-    expect(readFile).toHaveBeenCalledWith('/path/to/query.graphql', {encoding: 'utf8'})
-    expect(result.query).toBe(queryFileContent)
+      // When
+      const result = await prepareExecuteContext(flagsWithQueryFile)
+
+      // Then
+      expect(result.query).toBe(queryFileContent)
+    })
   })
 
   test('throws AbortError when query file does not exist', async () => {
-    vi.mocked(fileExists).mockResolvedValue(false)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryFilePath = joinPath(tmpDir, 'nonexistent.graphql')
+      const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': queryFilePath}
 
-    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/nonexistent.graphql'}
-
-    await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('Query file not found')
-    expect(readFile).not.toHaveBeenCalled()
+      // When/Then
+      await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('Query file not found')
+    })
   })
 
   test('throws AbortError when query file is empty', async () => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readFile).mockResolvedValue('' as any)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryFilePath = joinPath(tmpDir, 'empty.graphql')
+      await writeFile(queryFilePath, '')
+      const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': queryFilePath}
 
-    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/empty.graphql'}
-
-    await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('is empty')
+      // When/Then
+      await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('is empty')
+    })
   })
 
   test('throws AbortError when query file contains only whitespace', async () => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readFile).mockResolvedValue('   \n\t  ' as any)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const queryFilePath = joinPath(tmpDir, 'whitespace.graphql')
+      await writeFile(queryFilePath, '   \n\t  ')
+      const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': queryFilePath}
 
-    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/whitespace.graphql'}
-
-    await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('is empty')
+      // When/Then
+      await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('is empty')
+    })
   })
 
   test('validates GraphQL query using validateSingleOperation', async () => {

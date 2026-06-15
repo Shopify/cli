@@ -1,4 +1,3 @@
-import commondir from 'commondir'
 import {
   relative,
   dirname as patheDirname,
@@ -107,6 +106,23 @@ export function parsePath(path: string): {root: string; dir: string; base: strin
 }
 
 /**
+ * Returns the longest common parent directory of two absolute paths.
+ *
+ * @param first - First absolute path.
+ * @param second - Second absolute path.
+ * @returns The common parent directory, or '/' if they share only the root.
+ */
+export function commonParentDirectory(first: string, second: string): string {
+  const firstParts = first.split(/\/+|\\+/)
+  const secondParts = second.split(/\/+|\\+/)
+  let i = 0
+  while (i < firstParts.length && i < secondParts.length && firstParts[i] === secondParts[i]) {
+    i++
+  }
+  return i > 1 ? firstParts.slice(0, i).join('/') : '/'
+}
+
+/**
  * Given an absolute filesystem path, it makes it relative to
  * the current working directory. This is useful when logging paths
  * to allow the users to click on the file and let the OS open it
@@ -117,10 +133,8 @@ export function parsePath(path: string): {root: string; dir: string; base: strin
  * @returns Relativized path.
  */
 export function relativizePath(path: string, dir: string = cwd()): string {
-  const result = commondir([path, dir])
+  const result = commonParentDirectory(path, dir)
   const relativePath = relative(dir, path)
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   const relativeComponents = relativePath.split('/').filter((component) => component === '..').length
   if (result === '/' || relativePath === '' || relativeComponents > 2) {
     return path
@@ -162,7 +176,7 @@ export function moduleDirectory(moduleURL: string | URL): string {
  */
 export function cwd(): string {
   // eslint-disable-next-line @shopify/cli/no-process-cwd
-  return normalize(process.env.INIT_CWD ? process.env.INIT_CWD : process.cwd())
+  return normalize(process.env.INIT_CWD || process.cwd()) // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty env var should fall through
 }
 
 /**
@@ -190,4 +204,33 @@ export function sniffForPath(argv = process.argv): string | undefined {
  */
 export function sniffForJson(argv = process.argv): boolean {
   return argv.includes('--json') || argv.includes('-j')
+}
+
+/**
+ * Removes any `..` traversal segments from a relative path and calls `warn`
+ * if any were stripped. Normal `..` that cancel out within the path (e.g.
+ * `foo/../bar` → `bar`) are collapsed but never allowed to escape the root.
+ * Both `/` and `\` are treated as separators for cross-platform safety.
+ *
+ * @param input - The relative path to sanitize.
+ * @param warn - Called with a human-readable warning when traversal segments are removed.
+ * @returns The sanitized path (may be an empty string if all segments were traversal).
+ */
+export function sanitizeRelativePath(input: string, warn: (msg: string) => void): string {
+  const segments = input.replace(/\\/g, '/').split('/')
+  const stack: string[] = []
+  let stripped = false
+  for (const seg of segments) {
+    if (seg === '..') {
+      stripped = true
+      stack.pop()
+    } else if (seg !== '.') {
+      stack.push(seg)
+    }
+  }
+  const result = stack.join('/')
+  if (stripped) {
+    warn(`Warning: path '${input}' contains '..' traversal — sanitized to '${result || '.'}'\n`)
+  }
+  return result
 }

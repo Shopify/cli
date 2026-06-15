@@ -1,5 +1,8 @@
 import {
+  collectedLogs,
+  clearCollectedLogs,
   LogLevel,
+  outputDebug,
   outputWhereAppropriate,
   outputToken,
   shouldDisplayColors,
@@ -7,16 +10,25 @@ import {
 } from './output.js'
 
 import {currentProcessIsGlobal} from './is-global.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
+
+const isVerboseMock = vi.hoisted(() => vi.fn(() => false))
+const isUnitTestMock = vi.hoisted(() => vi.fn(() => false))
 
 vi.mock('./context/local.js', async () => {
   return {
-    isVerbose: () => false,
-    isUnitTest: () => false,
+    isVerbose: isVerboseMock,
+    isUnitTest: isUnitTestMock,
   }
 })
 vi.mock('./is-global.js')
+
+beforeEach(() => {
+  isVerboseMock.mockReturnValue(false)
+  isUnitTestMock.mockReturnValue(false)
+  clearCollectedLogs()
+})
 
 describe('Output helpers', () => {
   test('can format dependency manager commands with flags', () => {
@@ -84,6 +96,38 @@ describe('outputWhereAppropriate', () => {
     vi.spyOn(mockLogger, 'write')
     outputWhereAppropriate(logLevel, mockLogger, message)
     expect(mockLogger.write).toHaveBeenCalledWith(message)
+  })
+})
+
+describe('outputDebug', () => {
+  test('collects debug logs during unit tests', () => {
+    // Given
+    const logger = vi.fn()
+    isUnitTestMock.mockReturnValue(true)
+
+    // When
+    outputDebug('debug message', logger)
+
+    // Then
+    expect(collectedLogs.debug).toEqual(['debug message'])
+    expect(logger).not.toHaveBeenCalled()
+  })
+
+  test('skips timestamp and logger work when debug output is disabled', () => {
+    // Given
+    const logger = vi.fn()
+    const toISOStringSpy = vi.spyOn(Date.prototype, 'toISOString')
+
+    try {
+      // When
+      outputDebug('debug message', logger)
+
+      // Then
+      expect(toISOStringSpy).not.toHaveBeenCalled()
+      expect(logger).not.toHaveBeenCalled()
+    } finally {
+      toISOStringSpy.mockRestore()
+    }
   })
 })
 

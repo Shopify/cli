@@ -7,12 +7,12 @@ import {
   ErrorResponse,
   AppLogData,
 } from './types.js'
+import camelcaseKeys from './camelcase-keys.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../models/app/app.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
@@ -20,6 +20,7 @@ import {Writable} from 'stream'
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
 export const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
+export const MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES = 5
 export const ONE_MILLION = 1000000
 export const LOG_TYPE_FUNCTION_RUN = 'function_run'
 export const LOG_TYPE_FUNCTION_NETWORK_ACCESS = 'function_network_access'
@@ -83,11 +84,11 @@ export function parseNetworkAccessRequestExecutedPayload(payload: string): Netwo
   const parsedPayload = JSON.parse(payload)
   return new NetworkAccessRequestExecutedLog({
     attempt: parsedPayload.attempt,
-    connectTimeMs: parsedPayload.connect_time_ms || null,
-    writeReadTimeMs: parsedPayload.write_read_time_ms || null,
+    connectTimeMs: parsedPayload.connect_time_ms ?? null,
+    writeReadTimeMs: parsedPayload.write_read_time_ms ?? null,
     httpRequest: parsedPayload.http_request,
-    httpResponse: parsedPayload.http_response || null,
-    error: parsedPayload.error || null,
+    httpResponse: parsedPayload.http_response ?? null,
+    error: parsedPayload.error ?? null,
   })
 }
 
@@ -107,19 +108,31 @@ export interface AppLogsOptions {
   }
 }
 
+type ResubscribeResult = 'succeeded' | 'failed' | 'not_attempted'
+
 export const handleFetchAppLogsError = async (
   input: FetchAppLogsErrorOptions,
-): Promise<{retryIntervalMs: number; nextJwtToken: string | null}> => {
+): Promise<{retryIntervalMs: number; nextJwtToken: string | null; resubscribeResult: ResubscribeResult}> => {
   const {errors} = input.response
 
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = null
+  let resubscribeResult: ResubscribeResult = 'not_attempted'
 
   if (errors.length > 0) {
     outputDebug(`Errors: ${errors.map((error) => error.message).join(', ')}`)
 
     if (errors.some((error) => error.status === 401)) {
-      nextJwtToken = await input.onResubscribe()
+      try {
+        nextJwtToken = await input.onResubscribe()
+        resubscribeResult = 'succeeded'
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (resubscribeError) {
+        outputDebug(`Failed to resubscribe to app logs: ${resubscribeError}`)
+        retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
+        resubscribeResult = 'failed'
+        input.onThrottle(retryIntervalMs)
+      }
     } else if (errors.some((error) => error.status === 429)) {
       retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
       input.onThrottle(retryIntervalMs)
@@ -129,7 +142,7 @@ export const handleFetchAppLogsError = async (
     }
   }
 
-  return {retryIntervalMs, nextJwtToken}
+  return {retryIntervalMs, nextJwtToken, resubscribeResult}
 }
 
 export function sourcesForApp(app: AppInterface): string[] {

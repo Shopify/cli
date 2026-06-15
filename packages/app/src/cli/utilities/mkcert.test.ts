@@ -291,7 +291,7 @@ describe('mkcert', () => {
       await setup(tempDir)
 
       const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
+        ok: false,
         text: async () => 'LICENSE CONTENT',
       } as unknown as Response)
       const mockOutput = mockAndCaptureOutput()

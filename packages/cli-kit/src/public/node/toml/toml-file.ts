@@ -1,18 +1,20 @@
 import {JsonMapType, decodeToml, encodeToml} from './codec.js'
-import {readFile, writeFile} from '../fs.js'
+import {AbortError} from '../error.js'
+import {fileExists, readFile, writeFile} from '../fs.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 
 type TomlPatchValue = string | number | boolean | undefined | (string | number | boolean)[]
 
 /**
- * Thrown when a TOML file cannot be parsed. Includes the file path for context.
+ * An error on a TOML file — missing or malformed.
+ * Carries path and a clean message suitable for JSON output.
  */
-export class TomlParseError extends Error {
+export class TomlFileError extends AbortError {
   readonly path: string
 
-  constructor(path: string, cause: Error) {
-    super(`Fix the following error in ${path}:\n${cause.message}`)
-    this.name = 'TomlParseError'
+  constructor(path: string, message: string) {
+    super(message)
+    this.name = 'TomlFileError'
     this.path = path
   }
 }
@@ -31,13 +33,16 @@ export class TomlParseError extends Error {
  */
 export class TomlFile {
   /**
-   * Read and parse a TOML file from disk. Throws if the file doesn't exist or contains invalid TOML.
-   * Parse errors are wrapped in {@link TomlParseError} with the file path for context.
+   * Read and parse a TOML file from disk. Throws {@link TomlFileError} if the file
+   * doesn't exist or contains invalid TOML.
    *
    * @param path - Absolute path to the TOML file.
    * @returns A TomlFile instance with parsed content.
    */
   static async read(path: string): Promise<TomlFile> {
+    if (!(await fileExists(path))) {
+      throw new TomlFileError(path, `TOML file not found: ${path}`)
+    }
     const raw = await readFile(path)
     const file = new TomlFile(path, {})
     file.content = file.decode(raw)
@@ -46,6 +51,7 @@ export class TomlFile {
 
   readonly path: string
   content: JsonMapType
+  readonly errors: TomlFileError[] = []
 
   constructor(path: string, content: JsonMapType) {
     this.path = path
@@ -137,7 +143,8 @@ export class TomlFile {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err.line !== undefined && err.col !== undefined) {
-        throw new TomlParseError(this.path, err)
+        const description = String(err.message).split('\n')[0] ?? 'Invalid TOML'
+        throw new TomlFileError(this.path, `${description} at row ${err.line}, col ${err.col}`)
       }
       throw err
     }

@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 <a href="https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml">![badge](https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml/badge.svg)</a>
 
-With the Shopify command line interface (Shopify CLI 3.0), you can:
+With the Shopify command line interface (Shopify CLI), you can:
 - initialize, build, dev, and deploy Shopify apps, extensions, functions and themes
 - build custom storefronts and manage their hosting
 
@@ -39,7 +39,7 @@ To work with themes, the CLI needs to be installed globally with:
 
 - `npm install -g @shopify/cli`
 
-You can also use do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
+You can also install it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
 
 Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/storefronts/themes/tools/cli)
 

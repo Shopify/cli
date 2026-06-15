@@ -10,14 +10,15 @@ import {
   LOG_TYPE_REQUEST_EXECUTION,
   REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON,
   REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON,
+  MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES,
   handleFetchAppLogsError,
   AppLogsOptions,
 } from '../utils.js'
+import camelcaseKeys from '../camelcase-keys.js'
 import {AppLogData, FunctionRunLog} from '../types.js'
 import {AppLogsError, AppLogsSuccess, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import camelcaseKeys from 'camelcase-keys'
 import {Writable} from 'stream'
 
 export const pollAppLogs = async ({
@@ -29,6 +30,7 @@ export const pollAppLogs = async ({
   organizationId,
   abortSignal,
   logsDir,
+  consecutiveResubscribeFailures = 0,
 }: {
   stdout: Writable
   appLogsFetchInput: AppLogsOptions
@@ -38,6 +40,7 @@ export const pollAppLogs = async ({
   organizationId: string
   abortSignal?: AbortSignal
   logsDir: string
+  consecutiveResubscribeFailures?: number
 }) => {
   if (abortSignal?.aborted) {
     return
@@ -46,11 +49,13 @@ export const pollAppLogs = async ({
   try {
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
+    let nextConsecutiveResubscribeFailures = consecutiveResubscribeFailures
 
     const response = await developerPlatformClient.appLogs({jwtToken, cursor}, organizationId)
 
     const {errors, status} = response as AppLogsError
     if (status === 200) {
+      nextConsecutiveResubscribeFailures = 0
       const {app_logs: appLogs} = response as AppLogsSuccess
 
       for (const log of appLogs) {
@@ -102,6 +107,16 @@ export const pollAppLogs = async ({
         },
       })
 
+      if (result.resubscribeResult === 'failed') {
+        nextConsecutiveResubscribeFailures += 1
+        if (nextConsecutiveResubscribeFailures >= MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES) {
+          outputWarn('App log streaming session has expired. Please restart your dev session.', stdout)
+          return
+        }
+      } else if (result.resubscribeResult === 'succeeded') {
+        nextConsecutiveResubscribeFailures = 0
+      }
+
       if (result.nextJwtToken) {
         nextJwtToken = result.nextJwtToken
       }
@@ -115,7 +130,7 @@ export const pollAppLogs = async ({
         stdout,
         appLogsFetchInput: {
           jwtToken: nextJwtToken,
-          cursor: responseCursor || cursor,
+          cursor: responseCursor ?? cursor,
         },
         developerPlatformClient,
         resubscribeCallback,
@@ -123,6 +138,7 @@ export const pollAppLogs = async ({
         organizationId,
         abortSignal,
         logsDir,
+        consecutiveResubscribeFailures: nextConsecutiveResubscribeFailures,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })

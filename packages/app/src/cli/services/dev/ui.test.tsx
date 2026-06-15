@@ -73,6 +73,42 @@ describe('ui', () => {
       )
     })
 
+    test("shows preview and GraphiQL URLs when terminal doesn't support TTY", async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+      const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const concurrentProcess = {
+        prefix: 'prefix',
+        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
+      }
+
+      const abortController = new AbortController()
+
+      await renderDev({
+        processes: [concurrentProcess],
+        previewUrl: 'https://lala.cloudflare.io/',
+        graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
+        graphiqlPort: 1234,
+        app: {
+          canEnablePreviewMode: true,
+          developmentStorePreviewEnabled: false,
+          apiKey: '123',
+          id: '123',
+          developerPlatformClient,
+          extensions: [],
+        },
+        abortController,
+        developerPreview,
+        shopFqdn: 'mystore.shopify.io',
+        devSessionStatusManager,
+      })
+
+      const output = write.mock.calls.map(([message]) => message).join('')
+      expect(output).toContain('Preview URL: https://lala.cloudflare.io/')
+      expect(output).toContain('GraphiQL URL (Admin API): https://lala.cloudflare.io/graphiql')
+
+      write.mockRestore()
+    })
+
     test("enable dev preview when terminal doesn't support TTY and the app supports it", async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
       const concurrentProcess = {

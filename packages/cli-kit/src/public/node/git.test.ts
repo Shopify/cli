@@ -1,30 +1,11 @@
 import * as git from './git.js'
-import {
-  appendFileSync,
-  fileExists,
-  fileExistsSync,
-  glob,
-  inTemporaryDirectory,
-  isDirectory,
-  readFileSync,
-  writeFileSync,
-} from './fs.js'
+import {fileExistsSync, inTemporaryDirectory, mkdirSync, readFileSync, writeFileSync} from './fs.js'
 import {hasGit, isTerminalInteractive} from './context/local.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {execa} from 'execa'
 
 vi.mock('execa')
 vi.mock('./context/local.js')
-vi.mock('./fs.js', async () => {
-  const fs = await vi.importActual('./fs.js')
-  return {
-    ...fs,
-    appendFileSync: vi.fn(),
-    fileExists: vi.fn(),
-    isDirectory: vi.fn(),
-    glob: vi.fn(),
-  }
-})
 
 const mockedExeca = vi.mocked(execa)
 
@@ -133,60 +114,64 @@ describe('downloadRepository()', async () => {
   })
 
   test('throws when destination exists as a file', async () => {
-    await expect(async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
       const repoUrl = 'http://repoUrl'
-      const destination = 'destination'
-      vi.mocked(fileExists).mockResolvedValue(true)
-      vi.mocked(isDirectory).mockResolvedValue(false)
+      const destination = `${tmpDir}/file.txt`
+      writeFileSync(destination, '')
 
-      await git.downloadGitRepository({repoUrl, destination})
-    }).rejects.toThrowError(/Can't clone to/)
+      await expect(async () => {
+        await git.downloadGitRepository({repoUrl, destination})
+      }).rejects.toThrowError(/Can't clone to/)
+    })
   })
 
   test('throws when destination directory is not empty', async () => {
-    await expect(async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
       const repoUrl = 'http://repoUrl'
-      const destination = 'destination'
-      vi.mocked(fileExists).mockResolvedValue(true)
-      vi.mocked(isDirectory).mockResolvedValue(true)
-      vi.mocked(glob).mockResolvedValue(['file1.txt', 'file2.txt'])
+      const destination = `${tmpDir}/dir`
+      mkdirSync(destination)
+      writeFileSync(`${destination}/file1.txt`, '')
 
-      await git.downloadGitRepository({repoUrl, destination})
-    }).rejects.toThrowError(/already exists and is not empty/)
+      await expect(async () => {
+        await git.downloadGitRepository({repoUrl, destination})
+      }).rejects.toThrowError(/already exists and is not empty/)
+    })
   })
 
   test('throws when destination contains only hidden files', async () => {
-    await expect(async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
       const repoUrl = 'http://repoUrl'
-      const destination = 'destination'
-      vi.mocked(fileExists).mockResolvedValue(true)
-      vi.mocked(isDirectory).mockResolvedValue(true)
-      vi.mocked(glob).mockResolvedValue(['.git', '.DS_Store'])
+      const destination = `${tmpDir}/dir`
+      mkdirSync(destination)
+      writeFileSync(`${destination}/.git`, '')
 
-      await git.downloadGitRepository({repoUrl, destination})
-    }).rejects.toThrowError(/already exists and is not empty/)
+      await expect(async () => {
+        await git.downloadGitRepository({repoUrl, destination})
+      }).rejects.toThrowError(/already exists and is not empty/)
+    })
   })
 
   test('succeeds when destination directory is empty', async () => {
-    const repoUrl = 'http://repoUrl'
-    const destination = 'destination'
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(isDirectory).mockResolvedValue(true)
-    vi.mocked(glob).mockResolvedValue([])
+    await inTemporaryDirectory(async (tmpDir) => {
+      const repoUrl = 'http://repoUrl'
+      const destination = `${tmpDir}/dir`
+      mkdirSync(destination)
 
-    await git.downloadGitRepository({repoUrl, destination})
+      await git.downloadGitRepository({repoUrl, destination})
 
-    expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
+      expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
+    })
   })
 
   test('succeeds when destination does not exist', async () => {
-    const repoUrl = 'http://repoUrl'
-    const destination = 'destination'
-    vi.mocked(fileExists).mockResolvedValue(false)
+    await inTemporaryDirectory(async (tmpDir) => {
+      const repoUrl = 'http://repoUrl'
+      const destination = `${tmpDir}/nonexistent`
 
-    await git.downloadGitRepository({repoUrl, destination})
+      await git.downloadGitRepository({repoUrl, destination})
 
-    expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
+      expect(mockedExeca).toHaveBeenCalledWith('git', ['clone', '--recurse-submodules', repoUrl, destination])
+    })
   })
 })
 
@@ -203,18 +188,17 @@ describe('initializeRepository()', () => {
 
 describe('createGitIgnore()', () => {
   test('writes to a file in the provided directory', async () => {
-    const mockedAppendSync = vi.fn()
-    vi.mocked(appendFileSync).mockImplementation(mockedAppendSync)
-    const directory = '/unit/test'
-    const template = {
-      section: ['first', 'second'],
-    }
+    await inTemporaryDirectory(async (tmpDir) => {
+      const template = {
+        section: ['first', 'second'],
+      }
 
-    git.createGitIgnore(directory, template)
+      git.createGitIgnore(tmpDir, template)
 
-    expect(mockedAppendSync).toHaveBeenCalledOnce()
-    expect(mockedAppendSync.mock.lastCall?.[0]).toBe(`${directory}/.gitignore`)
-    expect(mockedAppendSync.mock.lastCall?.[1]).toBe('# section\nfirst\nsecond\n\n')
+      const gitIgnorePath = `${tmpDir}/.gitignore`
+      expect(fileExistsSync(gitIgnorePath)).toBe(true)
+      expect(readFileSync(gitIgnorePath).toString()).toBe('# section\nfirst\nsecond\n\n')
+    })
   })
 })
 
@@ -327,6 +311,16 @@ describe('ensurePresentOrAbort()', () => {
 })
 
 describe('ensureInsideGitDirectory()', () => {
+  test('throws a friendly error if git is not present', async () => {
+    // Given
+    vi.mocked(hasGit).mockResolvedValue(false)
+
+    // Then
+    await expect(() => git.ensureInsideGitDirectory()).rejects.toThrowError(
+      /Git is necessary in the environment to continue/,
+    )
+  })
+
   test('throws an error if not inside a git directory', async () => {
     const error = Object.assign(new Error('not a git repo'), {exitCode: 128})
     mockedExeca.mockRejectedValue(error)
@@ -342,6 +336,15 @@ describe('ensureInsideGitDirectory()', () => {
 })
 
 describe('insideGitDirectory()', () => {
+  test('returns false if git is not present', async () => {
+    // Given
+    vi.mocked(hasGit).mockResolvedValue(false)
+
+    // Then
+    await expect(git.insideGitDirectory()).resolves.toBe(false)
+    expect(mockedExeca).not.toHaveBeenCalled()
+  })
+
   test('returns true if inside a git directory', async () => {
     mockGitCommand('.git')
 

@@ -1,52 +1,152 @@
 import {validateApp} from './validate.js'
 import {testAppLinked} from '../models/app/app.test-data.js'
-import {AppErrors} from '../models/app/loader.js'
+import {AppErrors, formatConfigurationError} from '../models/app/loader.js'
+import metadata from '../metadata.js'
 import {describe, expect, test, vi} from 'vitest'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
+vi.mock('../metadata.js', () => ({default: {addPublicMetadata: vi.fn()}}))
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
+  return {
+    ...actual,
+    outputResult: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/ui')
+
+async function expectLastValidationMetadata(expected: {
+  cmd_app_validate_valid: boolean
+  cmd_app_validate_issue_count: number
+  cmd_app_validate_file_count: number
+}) {
+  const getMetadata = vi.mocked(metadata.addPublicMetadata).mock.calls.at(-1)?.[0]
+  expect(getMetadata).toBeDefined()
+  await expect(Promise.resolve(getMetadata!())).resolves.toEqual(expected)
+}
+
+describe('formatConfigurationError', () => {
+  test('returns plain message when no path', () => {
+    expect(formatConfigurationError({file: 'foo.toml', message: 'something broke'})).toBe('something broke')
+  })
+
+  test('includes field path when present', () => {
+    expect(formatConfigurationError({file: 'foo.toml', path: ['access', 'admin'], message: 'Required'})).toBe(
+      '[access.admin]: Required',
+    )
+  })
+})
 
 describe('validateApp', () => {
   test('renders success when there are no errors', async () => {
-    // Given
     const app = testAppLinked()
-
-    // When
     await validateApp(app)
-
-    // Then
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'App configuration is valid.'})
     expect(renderError).not.toHaveBeenCalled()
+    expect(outputResult).not.toHaveBeenCalled()
+    await expectLastValidationMetadata({
+      cmd_app_validate_valid: true,
+      cmd_app_validate_issue_count: 0,
+      cmd_app_validate_file_count: 0,
+    })
+  })
+
+  test('outputs json success when --json is enabled and there are no errors', async () => {
+    const app = testAppLinked()
+    await validateApp(app, {json: true})
+    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({valid: true, issues: []}, null, 2))
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(renderError).not.toHaveBeenCalled()
+    await expectLastValidationMetadata({
+      cmd_app_validate_valid: true,
+      cmd_app_validate_issue_count: 0,
+      cmd_app_validate_file_count: 0,
+    })
   })
 
   test('renders errors and throws when there are validation errors', async () => {
-    // Given
     const errors = new AppErrors()
-    errors.addError('/path/to/shopify.app.toml', 'client_id is required')
-    errors.addError('/path/to/extensions/my-ext/shopify.extension.toml', 'invalid type "unknown"')
+    errors.addError({file: '/path/to/shopify.app.toml', message: 'client_id is required'})
+    errors.addError({file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'})
     const app = testAppLinked()
     app.errors = errors
 
-    // When / Then
     await expect(validateApp(app)).rejects.toThrow(AbortSilentError)
     expect(renderError).toHaveBeenCalledWith({
       headline: 'Validation errors found.',
       body: expect.stringContaining('client_id is required'),
     })
     expect(renderSuccess).not.toHaveBeenCalled()
+    expect(outputResult).not.toHaveBeenCalled()
+    await expectLastValidationMetadata({
+      cmd_app_validate_valid: false,
+      cmd_app_validate_issue_count: 2,
+      cmd_app_validate_file_count: 2,
+    })
   })
 
-  test('renders success when errors object exists but is empty', async () => {
-    // Given
+  test('outputs structured json issues when --json is enabled and there are validation errors', async () => {
     const errors = new AppErrors()
+    errors.addError({file: '/path/to/shopify.app.toml', message: 'client_id is required'})
+    errors.addError({file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'})
     const app = testAppLinked()
     app.errors = errors
 
-    // When
-    await validateApp(app)
+    await expect(validateApp(app, {json: true})).rejects.toThrow(AbortSilentError)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          valid: false,
+          issues: [
+            {file: '/path/to/shopify.app.toml', message: 'client_id is required'},
+            {file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'},
+          ],
+        },
+        null,
+        2,
+      ),
+    )
+    expect(renderError).not.toHaveBeenCalled()
+    expect(renderSuccess).not.toHaveBeenCalled()
+    await expectLastValidationMetadata({
+      cmd_app_validate_valid: false,
+      cmd_app_validate_issue_count: 2,
+      cmd_app_validate_file_count: 2,
+    })
+  })
 
-    // Then
+  test('renders success when errors object exists but is empty', async () => {
+    const errors = new AppErrors()
+    const app = testAppLinked()
+    app.errors = errors
+    await validateApp(app)
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'App configuration is valid.'})
+    expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test('includes path and code in structured json issues', async () => {
+    const errors = new AppErrors()
+    errors.addError({file: '/path/to/shopify.app.toml', path: ['name'], message: 'Required', code: 'invalid_type'})
+    const app = testAppLinked()
+    app.errors = errors
+
+    await expect(validateApp(app, {json: true})).rejects.toThrow(AbortSilentError)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          valid: false,
+          issues: [{file: '/path/to/shopify.app.toml', message: 'Required', path: ['name'], code: 'invalid_type'}],
+        },
+        null,
+        2,
+      ),
+    )
+    await expectLastValidationMetadata({
+      cmd_app_validate_valid: false,
+      cmd_app_validate_issue_count: 1,
+      cmd_app_validate_file_count: 1,
+    })
   })
 })

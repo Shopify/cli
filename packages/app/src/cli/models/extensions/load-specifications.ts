@@ -27,6 +27,8 @@ import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 import channelSpecificationSpec from './specifications/channel.js'
+import orderAttributionConfigSpec from './specifications/order_attribution_config.js'
+import adminLinkSpec from './specifications/admin_link.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -78,6 +80,8 @@ function loadSpecifications() {
     webPixelSpec,
     editorExtensionCollectionSpecification,
     channelSpecificationSpec,
+    orderAttributionConfigSpec,
+    adminLinkSpec,
   ]
 
   return [...configModuleSpecs, ...moduleSpecs] as ExtensionSpecification[]

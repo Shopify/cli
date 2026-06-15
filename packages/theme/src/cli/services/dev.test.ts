@@ -1,4 +1,4 @@
-import {dev, openURLSafely, renderLinks, createKeypressHandler} from './dev.js'
+import {dev, openURLSafely, renderLinks, createKeypressHandler, reportDevAnalytics} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
@@ -6,54 +6,16 @@ import {isStorefrontPasswordProtected} from '../utilities/theme-environment/stor
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {ensureListingExists} from '../utilities/theme-listing.js'
-import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {openURL} from '@shopify/cli-kit/node/system'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
-
-vi.mock('../utilities/theme-fs.js', () => ({
-  hasRequiredThemeDirectories: vi.fn().mockResolvedValue(true),
-  mountThemeFileSystem: vi.fn().mockReturnValue({files: new Map(), uploadErrors: new Map()}),
-}))
-vi.mock('../utilities/theme-ui.js', () => ({
-  ensureDirectoryConfirmed: vi.fn().mockResolvedValue(true),
-}))
-vi.mock('../utilities/theme-environment/theme-environment.js', () => ({
-  setupDevServer: vi.fn(() => ({
-    workPromise: Promise.resolve(),
-    serverStart: vi.fn().mockResolvedValue({close: vi.fn().mockResolvedValue(undefined)}),
-    dispatchEvent: vi.fn(),
-    renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
-    backgroundJobPromise: Promise.resolve(undefined as never),
-  })),
-}))
-vi.mock('../utilities/theme-environment/storefront-session.js', () => ({
-  isStorefrontPasswordProtected: vi.fn().mockResolvedValue(false),
-}))
-vi.mock('../utilities/theme-environment/storefront-password-prompt.js', () => ({
-  ensureValidPassword: vi.fn(),
-}))
-vi.mock('../utilities/theme-fs-empty.js', () => ({
-  emptyThemeExtFileSystem: vi.fn(() => ({files: new Map()})),
-}))
-vi.mock('../utilities/theme-environment/dev-server-session.js', () => ({
-  initializeDevServerSession: vi.fn().mockResolvedValue({
-    token: 'token',
-    storefrontToken: 'storefront-token',
-    storeFqdn: 'my-store.myshopify.com',
-    sessionCookies: {},
-  }),
-}))
-vi.mock('../utilities/theme-listing.js', () => ({
-  ensureListingExists: vi.fn().mockResolvedValue(undefined),
-}))
-vi.mock('@shopify/cli-kit/node/tcp', () => ({
-  checkPortAvailability: vi.fn().mockResolvedValue(true),
-  getAvailableTCPPort: vi.fn().mockResolvedValue(9292),
-}))
+import {describe, expect, test, vi, beforeEach, afterEach, type MockInstance} from 'vitest'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {openURL} from '@shopify/cli-kit/node/system'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
+import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {getAvailableTCPPort, checkPortAvailability} from '@shopify/cli-kit/node/tcp'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {Config} from '@oclif/core'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/colors', () => ({
@@ -65,6 +27,42 @@ vi.mock('@shopify/cli-kit/node/colors', () => ({
 }))
 vi.mock('@shopify/cli-kit/node/system', () => ({
   openURL: vi.fn(),
+}))
+vi.mock('@shopify/cli-kit/node/analytics', () => ({
+  reportAnalyticsEvent: vi.fn(),
+}))
+vi.mock('@shopify/cli-kit/node/metadata', () => ({
+  addPublicMetadata: vi.fn(),
+  addSensitiveMetadata: vi.fn(),
+}))
+vi.mock('@shopify/cli-kit/node/tcp', () => ({
+  getAvailableTCPPort: vi.fn(),
+  checkPortAvailability: vi.fn(),
+}))
+vi.mock('../utilities/theme-environment/theme-environment.js', () => ({
+  setupDevServer: vi.fn(),
+}))
+vi.mock('../utilities/theme-fs.js', () => ({
+  hasRequiredThemeDirectories: vi.fn(),
+  mountThemeFileSystem: vi.fn().mockReturnValue({}),
+}))
+vi.mock('../utilities/theme-ui.js', () => ({
+  ensureDirectoryConfirmed: vi.fn(),
+}))
+vi.mock('../utilities/theme-fs-empty.js', () => ({
+  emptyThemeExtFileSystem: vi.fn().mockReturnValue({}),
+}))
+vi.mock('../utilities/theme-environment/storefront-session.js', () => ({
+  isStorefrontPasswordProtected: vi.fn(),
+}))
+vi.mock('../utilities/theme-environment/dev-server-session.js', () => ({
+  initializeDevServerSession: vi.fn(),
+}))
+vi.mock('../utilities/theme-environment/storefront-password-prompt.js', () => ({
+  ensureValidPassword: vi.fn(),
+}))
+vi.mock('../utilities/theme-listing.js', () => ({
+  ensureListingExists: vi.fn(),
 }))
 
 const store = 'my-store.myshopify.com'
@@ -92,68 +90,6 @@ beforeEach(() => {
   vi.mocked(ensureListingExists).mockResolvedValue(undefined)
   vi.mocked(checkPortAvailability).mockResolvedValue(true)
   vi.mocked(getAvailableTCPPort).mockResolvedValue(9292)
-})
-
-describe('dev', () => {
-  test('enables the standard events dev bundle by default', async () => {
-    const adminSession = {storeFqdn: store} as AdminSession
-
-    await dev({
-      adminSession,
-      directory: '/tmp/theme',
-      store,
-      open: false,
-      theme,
-      force: false,
-      'standard-events-inspector': false,
-      'theme-editor-sync': false,
-      'live-reload': 'hot-reload',
-      'error-overlay': 'default',
-      noDelete: false,
-      ignore: [],
-      only: [],
-    })
-
-    expect(setupDevServer).toHaveBeenCalledWith(
-      theme,
-      expect.objectContaining({
-        options: expect.objectContaining({
-          standardEventsDevBundle: true,
-          standardEventsInspector: false,
-        }),
-      }),
-    )
-  })
-
-  test('propagates the inspector option to the dev server context', async () => {
-    const adminSession = {storeFqdn: store} as AdminSession
-
-    await dev({
-      adminSession,
-      directory: '/tmp/theme',
-      store,
-      open: false,
-      theme,
-      force: false,
-      'standard-events-inspector': true,
-      'theme-editor-sync': false,
-      'live-reload': 'hot-reload',
-      'error-overlay': 'default',
-      noDelete: false,
-      ignore: [],
-      only: [],
-    })
-
-    expect(setupDevServer).toHaveBeenCalledWith(
-      theme,
-      expect.objectContaining({
-        options: expect.objectContaining({
-          standardEventsDevBundle: true,
-          standardEventsInspector: true,
-        }),
-      }),
-    )
-  })
 })
 
 describe('renderLinks', () => {
@@ -260,7 +196,7 @@ describe('createKeypressHandler', () => {
 
   test('opens localhost when "t" is pressed', () => {
     // Given
-    const handler = createKeypressHandler(urls, ctx)
+    const handler = createKeypressHandler(urls, ctx, vi.fn())
 
     // When
     handler('t', {name: 't'})
@@ -271,7 +207,7 @@ describe('createKeypressHandler', () => {
 
   test('opens theme preview when "p" is pressed', () => {
     // Given
-    const handler = createKeypressHandler(urls, ctx)
+    const handler = createKeypressHandler(urls, ctx, vi.fn())
 
     // When
     handler('p', {name: 'p'})
@@ -282,7 +218,7 @@ describe('createKeypressHandler', () => {
 
   test('opens theme editor when "e" is pressed', () => {
     // Given
-    const handler = createKeypressHandler(urls, ctx)
+    const handler = createKeypressHandler(urls, ctx, vi.fn())
 
     // When
     handler('e', {name: 'e'})
@@ -293,7 +229,7 @@ describe('createKeypressHandler', () => {
 
   test('opens gift card preview when "g" is pressed', () => {
     // Given
-    const handler = createKeypressHandler(urls, ctx)
+    const handler = createKeypressHandler(urls, ctx, vi.fn())
 
     // When
     handler('g', {name: 'g'})
@@ -305,7 +241,7 @@ describe('createKeypressHandler', () => {
   test('appends preview path to theme editor URL when lastRequestedPath is not "/"', () => {
     // Given
     const ctxWithPath = {lastRequestedPath: '/products/test-product'}
-    const handler = createKeypressHandler(urls, ctxWithPath)
+    const handler = createKeypressHandler(urls, ctxWithPath, vi.fn())
 
     // When
     handler('e', {name: 'e'})
@@ -318,7 +254,7 @@ describe('createKeypressHandler', () => {
 
   test('debounces rapid keypresses - only opens URL once during debounce window', () => {
     // Given
-    const handler = createKeypressHandler(urls, ctx)
+    const handler = createKeypressHandler(urls, ctx, vi.fn())
 
     // When
     handler('t', {name: 't'})
@@ -333,7 +269,7 @@ describe('createKeypressHandler', () => {
 
   test('allows keypresses after debounce period expires', () => {
     // Given
-    const handler = createKeypressHandler(urls, ctx)
+    const handler = createKeypressHandler(urls, ctx, vi.fn())
 
     // When
     handler('t', {name: 't'})
@@ -356,7 +292,7 @@ describe('createKeypressHandler', () => {
 
   test('debounces different keys during the same debounce window', () => {
     // Given
-    const handler = createKeypressHandler(urls, ctx)
+    const handler = createKeypressHandler(urls, ctx, vi.fn())
 
     // When
     handler('t', {name: 't'})
@@ -367,5 +303,203 @@ describe('createKeypressHandler', () => {
     // Then
     expect(openURL).toHaveBeenCalledTimes(1)
     expect(openURL).toHaveBeenCalledWith(urls.local)
+  })
+})
+
+describe('dev() Ctrl-C analytics', () => {
+  const mockConfig = {} as unknown as Config
+  const adminSession = {storeFqdn: 'test.myshopify.com', token: 'x'}
+
+  let exitSpy: MockInstance
+  let resolveBackgroundJob: () => void
+
+  const baseOptions = {
+    adminSession,
+    commandConfig: mockConfig,
+    directory: '/tmp/theme',
+    store: 'test.myshopify.com',
+    open: false,
+    theme,
+    force: false,
+    'standard-events-inspector': false,
+    'theme-editor-sync': false,
+    'live-reload': 'hot-reload' as const,
+    'error-overlay': 'default' as const,
+    noDelete: false,
+    ignore: [],
+    only: [],
+  }
+
+  beforeEach(() => {
+    vi.mocked(reportAnalyticsEvent).mockClear()
+    vi.mocked(addPublicMetadata).mockClear()
+    vi.mocked(addSensitiveMetadata).mockClear()
+    vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+    vi.mocked(initializeDevServerSession).mockResolvedValue({
+      storeFqdn: adminSession.storeFqdn,
+      token: adminSession.token,
+    } as any)
+    vi.mocked(getAvailableTCPPort).mockResolvedValue(9292)
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+
+    const backgroundJobPromise = new Promise<void>((resolve) => {
+      resolveBackgroundJob = resolve
+    })
+    vi.mocked(setupDevServer).mockReturnValue({
+      serverStart: vi.fn().mockResolvedValue(undefined),
+      renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
+      backgroundJobPromise,
+      resolveBackgroundJob: resolveBackgroundJob!,
+      dispatchEvent: vi.fn(),
+    } as any)
+
+    exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+  })
+
+  afterEach(() => {
+    exitSpy.mockRestore()
+  })
+
+  test('Ctrl-C path: reports analytics once, even if reportDevAnalytics is invoked again', async () => {
+    const devPromise = dev(baseOptions)
+
+    // Flush microtasks so the Promise.all is awaiting backgroundJobPromise.
+    await new Promise((resolve) => setImmediate(resolve))
+
+    // Simulate Ctrl-C by resolving the background job.
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith({config: mockConfig, exitMode: 'ok'})
+
+    expect(addPublicMetadata).toHaveBeenCalledTimes(1)
+    const publicMetadataFn = vi.mocked(addPublicMetadata).mock.calls[0]![0] as () => Record<string, unknown>
+    expect(publicMetadataFn()).toEqual({store_fqdn_hash: expect.any(String)})
+
+    expect(addSensitiveMetadata).toHaveBeenCalledTimes(1)
+    const sensitiveMetadataFn = vi.mocked(addSensitiveMetadata).mock.calls[0]![0] as () => Record<string, unknown>
+    expect(sensitiveMetadataFn()).toEqual({store_fqdn: adminSession.storeFqdn})
+
+    expect(exitSpy).toHaveBeenCalledWith(0)
+
+    const reportOrder = vi.mocked(reportAnalyticsEvent).mock.invocationCallOrder[0]!
+    const exitOrder = exitSpy.mock.invocationCallOrder[0]!
+    expect(reportOrder).toBeLessThan(exitOrder)
+
+    await reportDevAnalytics(mockConfig, adminSession as any)
+
+    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+  })
+
+  test('enables the standard events dev bundle by default', async () => {
+    const devPromise = dev({...baseOptions, 'standard-events-inspector': false})
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(setupDevServer).toHaveBeenCalledWith(
+      theme,
+      expect.objectContaining({
+        options: expect.objectContaining({
+          standardEventsDevBundle: true,
+          standardEventsInspector: false,
+        }),
+      }),
+    )
+  })
+
+  test('propagates the inspector option to the dev server context', async () => {
+    const devPromise = dev({...baseOptions, 'standard-events-inspector': true})
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(setupDevServer).toHaveBeenCalledWith(
+      theme,
+      expect.objectContaining({
+        options: expect.objectContaining({
+          standardEventsDevBundle: true,
+          standardEventsInspector: true,
+        }),
+      }),
+    )
+  })
+})
+
+describe('dev() port validation', () => {
+  const mockConfig = {} as unknown as Config
+  const adminSession = {storeFqdn: 'test.myshopify.com', token: 'x'}
+
+  let exitSpy: MockInstance
+  let resolveBackgroundJob: () => void
+
+  const baseOptions = {
+    adminSession,
+    commandConfig: mockConfig,
+    directory: '/tmp/theme',
+    store: 'test.myshopify.com',
+    open: false,
+    theme,
+    force: false,
+    'standard-events-inspector': false,
+    'theme-editor-sync': false,
+    'live-reload': 'hot-reload' as const,
+    'error-overlay': 'default' as const,
+    noDelete: false,
+    ignore: [],
+    only: [],
+  }
+
+  beforeEach(() => {
+    vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+    vi.mocked(initializeDevServerSession).mockResolvedValue({
+      storeFqdn: adminSession.storeFqdn,
+      token: adminSession.token,
+    } as any)
+    vi.mocked(getAvailableTCPPort).mockResolvedValue(9292)
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+
+    const backgroundJobPromise = new Promise<void>((resolve) => {
+      resolveBackgroundJob = resolve
+    })
+    vi.mocked(setupDevServer).mockReturnValue({
+      serverStart: vi.fn().mockResolvedValue(undefined),
+      renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
+      backgroundJobPromise,
+      resolveBackgroundJob: resolveBackgroundJob!,
+      dispatchEvent: vi.fn(),
+    } as any)
+
+    exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+  })
+
+  afterEach(() => {
+    exitSpy.mockRestore()
+  })
+
+  test('accepts a valid port and calls checkPortAvailability with it', async () => {
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+
+    const devPromise = dev({...baseOptions, port: 9293})
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(checkPortAvailability).toHaveBeenCalledWith(9293)
+  })
+
+  test('rejects a valid but unavailable port', async () => {
+    vi.mocked(checkPortAvailability).mockResolvedValue(false)
+
+    await expect(dev({...baseOptions, port: 9293})).rejects.toThrowError(/is not available/)
   })
 })

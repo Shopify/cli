@@ -2,7 +2,6 @@ import {InstantaneousMetricReader} from '../../export/InstantaneousMetricReader.
 import {OTLPMetricExporter, OTLPMetricExporterOptions} from '@opentelemetry/exporter-metrics-otlp-http'
 import {Resource} from '@opentelemetry/resources'
 import {AggregationTemporality, ConsoleMetricExporter, MeterProvider} from '@opentelemetry/sdk-metrics'
-import {SemanticResourceAttributes} from '@opentelemetry/semantic-conventions'
 
 export type Environment = 'production' | 'staging' | 'local'
 
@@ -19,7 +18,7 @@ export class DefaultMeterProvider extends MeterProvider {
   constructor({serviceName, env, throttleLimit, useXhr, otelEndpoint}: DefaultMeterProviderOptions) {
     super({
       resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+        ['service.name']: serviceName,
       }),
     })
 

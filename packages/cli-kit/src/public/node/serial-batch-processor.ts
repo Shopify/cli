@@ -12,9 +12,7 @@ export class SerialBatchProcessor<T> {
   enqueue(item: T): void {
     this.queue.push(item)
 
-    if (!this.processingPromise) {
-      this.processingPromise = this.startProcessing()
-    }
+    this.processingPromise ??= this.startProcessing()
   }
 
   async waitForCompletion(): Promise<void> {

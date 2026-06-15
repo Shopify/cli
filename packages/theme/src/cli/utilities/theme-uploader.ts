@@ -213,7 +213,8 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.blockLiquidFiles,
     ...fileSets.layoutFiles,
     ...fileSets.otherLiquidFiles,
-    ...fileSets.configFiles,
+    ...fileSets.configDataFile,
+    ...fileSets.configSchemaFile,
     ...fileSets.staticAssetFiles,
   ]
 }
@@ -311,13 +312,23 @@ function selectUploadableFiles(themeFileSystem: ThemeFileSystem, remoteChecksums
  * We use this 2d array to batch files of the same type together
  * while maintaining the order between file types. The files with
  * dependencies we have are:
- * 1. Layout files don't necessarily need to be the first, but they must uploaded before templates.
- * 2. Liquid blocks need to be uploaded before sections
- * 3. Liquid sections need to be uploaded afterwards
- * 4. JSON sections need to be uploaded after sections
- * 5. JSON templates need to be uploaded after all sections and layouts
- * 6. Contextualized templates should be uploaded after as they are variations of templates
- * 7. Config files must be the last ones, but we need to upload config/settings_schema.json first, followed by config/settings_data.json
+ *
+ * 1. config/settings_schema.json must be uploaded FIRST. It declares the
+ *    theme-level settings that block / section / section-group / template
+ *    validators resolve dynamic-source defaults against (e.g. defaults of
+ *    the form `{{ settings.<theme_setting>.<property> }}`).
+ * 2. Layout files don't necessarily need to be the first, but they must be
+ *    uploaded before templates.
+ * 3. Liquid blocks need to be uploaded before sections
+ * 4. Liquid sections need to be uploaded afterwards
+ * 5. JSON sections need to be uploaded after sections
+ * 6. JSON templates need to be uploaded after all sections and layouts
+ * 7. Contextualized templates should be uploaded after as they are
+ *    variations of templates
+ * 8. config/settings_data.json must be uploaded LAST. Its current and
+ *    presets are validated against the freshly-uploaded
+ *    settings_schema.json, and presets can reference sections and
+ *    templates uploaded in earlier steps.
  *
  * The files with no dependencies we have are:
  * - The other Liquid files (for example, snippets, and liquid templates)
@@ -336,13 +347,14 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
     independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
     // Follow order of dependencies:
     dependentFiles: [
+      fileSets.configSchemaFile,
       fileSets.layoutFiles,
       fileSets.blockLiquidFiles,
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,
       fileSets.templateJsonFiles,
       fileSets.contextualizedJsonFiles,
-      fileSets.configFiles,
+      fileSets.configDataFile,
     ],
   }
 }

@@ -76,7 +76,7 @@ describe('common API methods', () => {
     },
   )
 
-  test('sanitizedHeadersOutput removes the headers that include the token', () => {
+  test('sanitizedHeadersOutput removes sensitive headers', () => {
     // Given
     const headers = {
       'User-Agent': 'useragent',
@@ -85,6 +85,8 @@ describe('common API methods', () => {
       authorization: 'token',
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': 'token',
+      Cookie: 'session=123',
+      'Set-Cookie': 'session=456',
     }
 
     // When
@@ -96,6 +98,28 @@ describe('common API methods', () => {
        - Keep-Alive: timeout=30
        - Content-Type: application/json"
     `)
+  })
+
+  test('sanitizedHeadersOutput redacts AUTHORIZATION even when toLocaleLowerCase returns dotless i (Turkish locale simulation)', () => {
+    // Given
+    const headers = {
+      AUTHORIZATION: 'secret-token',
+    }
+
+    // Simulate Turkish locale where 'I' becomes 'ı' (dotless i)
+    // 'AUTHORIZATION'.toLocaleLowerCase() -> 'authorızatıon'
+    const toLocaleLowerCaseSpy = vi.spyOn(String.prototype, 'toLocaleLowerCase').mockReturnValue('authorızatıon')
+
+    try {
+      // When
+      const got = sanitizedHeadersOutput(headers)
+
+      // Then
+      expect(got).not.toContain('AUTHORIZATION: secret-token')
+      expect(got).not.toContain('secret-token')
+    } finally {
+      toLocaleLowerCaseSpy.mockRestore()
+    }
   })
 })
 

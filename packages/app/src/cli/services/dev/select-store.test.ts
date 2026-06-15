@@ -7,12 +7,15 @@ import {
 } from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ClientName} from '../../utilities/developer-platform-client.js'
+import {sleep} from '@shopify/cli-kit/node/system'
+import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../prompts/dev')
 vi.mock('./fetch')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/ui')
 
 const ORG1: Organization = {
   id: '1',
@@ -178,10 +181,18 @@ describe('selectStore', async () => {
 
   test('prompts user to create & reload, fetches 10 times and tries again if reload is true', async () => {
     // Given
+    vi.mocked(sleep).mockResolvedValue()
+    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task({}, task)
+      }
+      return {}
+    })
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
-    vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
-    vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
+    vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true).mockResolvedValueOnce(false)
     const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.Partners})
+    vi.mocked(developerPlatformClient.devStoresForOrg).mockResolvedValue({stores: [], hasMorePages: false})
 
     // When
     const got = selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient)
@@ -214,7 +225,7 @@ describe('selectStore', async () => {
       clientName: ClientName.AppManagement,
       getCreateDevStoreLink: (org: Organization) =>
         Promise.resolve(
-          `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard. Create one now https://dev.shopify.com/dashboard/1234/stores`,
+          `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard. Create a store in Dev Dashboard https://dev.shopify.com/dashboard/1234/stores`,
         ),
     })
 

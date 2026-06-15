@@ -8,6 +8,7 @@ import {
   createFocusAction,
   createUnfocusAction,
 } from '../actions'
+import {vi} from 'vitest'
 
 import type {ExtensionServerState} from './types'
 
@@ -92,8 +93,11 @@ describe('extensionServerReducer()', () => {
     })
   })
 
-  // eslint-disable-next-line vitest/no-disabled-tests
-  test.skip('refreshes extension url', async () => {
+  test('refreshes extension url', () => {
+    vi.useFakeTimers()
+    const time1 = 1000
+    vi.setSystemTime(time1)
+
     const extension = mockExtension()
     const previousState: ExtensionServerState = {
       store: 'test-store.com',
@@ -105,20 +109,21 @@ describe('extensionServerReducer()', () => {
     const state1 = extensionServerReducer(previousState, action)
 
     const url1 = new URL(state1.extensions[0].assets.main.url)
-    const timestamp1 = url1.searchParams.get('lastUpdated') ?? ''
+    const timestamp1 = url1.searchParams.get('lastUpdated')
 
-    expect(timestamp1.length).toBeGreaterThan(0)
+    expect(timestamp1).toBe(time1.toString())
 
-    // sleep 1ms to guarantee new timestamp
-    await new Promise((resolve) => setTimeout(resolve, 1))
+    const time2 = 2000
+    vi.setSystemTime(time2)
 
     const state2 = extensionServerReducer(state1, action)
 
     const url2 = new URL(state2.extensions[0].assets.main.url)
-    const timestamp2 = url2.searchParams.get('lastUpdated') ?? ''
+    const timestamp2 = url2.searchParams.get('lastUpdated')
 
-    expect(timestamp2.length).toBeGreaterThan(0)
-    expect(timestamp1).not.toStrictEqual(timestamp2)
+    expect(timestamp2).toBe(time2.toString())
+
+    vi.useRealTimers()
   })
 
   describe('focus', () => {

@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.4.1
+
+### Patch Changes
+
+- dbc91b4: Update types to include appassets and allowedDomains
+
 ## 5.4.0
 
 ### Minor Changes

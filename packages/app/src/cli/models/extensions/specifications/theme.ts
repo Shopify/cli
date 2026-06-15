@@ -12,7 +12,15 @@ const themeSpec = createExtensionSpecification({
   schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
-  buildConfig: {mode: 'theme'},
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'build-theme', name: 'Build Theme Extension', type: 'build_theme', config: {}},
+        {id: 'bundle-theme', name: 'Bundle Theme Extension', type: 'bundle_theme', config: {}},
+      ],
+    },
+  ],
   appModuleFeatures: (_) => {
     return ['theme']
   },

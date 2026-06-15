@@ -78,11 +78,9 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
-import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
-import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {
   DevSessionUpdate,
@@ -90,10 +88,7 @@ import {
   DevSessionUpdateMutationVariables,
 } from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
-import {
-  FetchStoreByDomain,
-  FetchStoreByDomainQueryVariables,
-} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
+import {FetchStoreByDomain} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
 import {
   ListAppDevStores,
   ListAppDevStoresQuery,
@@ -117,6 +112,7 @@ import {
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
+import {AppInstallCount} from '../../api/graphql/app-management/generated/app-install-count.js'
 import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
@@ -142,7 +138,8 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
-import {getPartnersToken} from '@shopify/cli-kit/node/environment'
+import {fetchOrganizations} from '@shopify/organizations'
+import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -162,6 +159,7 @@ import {
   BusinessPlatformRequestOptions,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {encodeGid, numericIdFromEncodedGid, numericIdFromGid} from '@shopify/cli-kit/common/gid'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -191,9 +189,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   private static instance: AppManagementClient | undefined
 
   static getInstance(session?: Session): AppManagementClient {
-    if (!AppManagementClient.instance) {
-      AppManagementClient.instance = new AppManagementClient(session)
-    }
+    AppManagementClient.instance ??= new AppManagementClient(session)
     return AppManagementClient.instance
   }
 
@@ -294,7 +290,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
       })
 
-      if (getPartnersToken() && userInfoResult.currentUserAccount) {
+      if (getAppAutomationToken() && userInfoResult.currentUserAccount) {
         const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
           name: org.name,
         }))
@@ -359,6 +355,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(apiKey)
+    if (!app) return undefined
     const {name, appModules} = app.activeRelease.version
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
     const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
@@ -370,18 +367,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
       organizationId: String(numberFromGid(app.organizationId)),
       grantedScopes: app.activeRoot.grantedShopifyApprovalScopes,
       applicationUrl: appHomeModule?.config?.app_url as string | undefined,
+      embedded: appHomeModule?.config?.embedded as boolean | undefined,
       flags: [],
       developerPlatformClient: this,
     }
   }
 
   async organizations(): Promise<Organization[]> {
-    const organizationsResult = await this.businessPlatformRequest({query: ListOrganizations})
-    if (!organizationsResult.currentUserAccount) return []
-    const orgs = organizationsResult.currentUserAccount.organizationsWithAccessToDestination.nodes
+    const orgs = await fetchOrganizations()
     return orgs.map((org) => ({
-      id: idFromEncodedGid(org.id),
-      businessName: org.name,
+      ...org,
       source: this.organizationSource,
     }))
   }
@@ -459,13 +454,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
         identifier: spec.identifier,
         externalIdentifier: spec.externalIdentifier,
         gated: false,
-        options: {
-          managementExperience: 'cli',
-          registrationLimit: spec.uidStrategy.appModuleLimit,
-          uidIsClientProvided: spec.uidStrategy.isClientProvided,
-          uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
-        },
-        experience: experience(spec.identifier),
+        managementExperience: 'cli',
+        registrationLimit: spec.uidStrategy.appModuleLimit,
+        uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
+        experience: normalizeExperience(spec.experience),
         validationSchema: spec.validationSchema,
       }),
     )
@@ -603,7 +595,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             }
           : undefined,
       }
-      if (CONFIG_EXTENSION_IDS.includes(registration.id)) {
+      if (mod.specification?.experience === 'configuration') {
         configurationRegistrations.push(registration)
       } else if (mod.specification?.options?.managementExperience === 'dashboard') {
         dashboardManagedExtensionRegistrations.push(registration)
@@ -652,6 +644,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
+  async appInstallCount({id}: MinimalAppIdentifiers): Promise<number> {
+    const query = AppInstallCount
+    const variables = {appId: id}
+    const result = await this.appManagementRequest({query, variables})
+    return result.app.installCount ?? 0
+  }
+
   async appVersionByTag(
     {id: appId, organizationId}: MinimalOrganizationApp,
     versionTag: string,
@@ -693,7 +692,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience: experience(mod.specification.identifier),
+          experience: normalizeExperience(mod.specification.experience),
           options: {
             managementExperience: 'cli',
           },
@@ -846,26 +845,30 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async storeByDomain(orgId: string, shopDomain: string, storeTypes: Store[]): Promise<OrganizationStore | undefined> {
-    const queryVariables: FetchStoreByDomainQueryVariables = {
-      domain: shopDomain,
-      storeTypes: storeTypes.map((t) => t.toLowerCase()).join(','),
-    }
-    const storesResult = await this.businessPlatformOrganizationsRequest({
-      query: FetchStoreByDomain,
-      organizationId: String(numberFromGid(orgId)),
-      variables: queryVariables,
-    })
+    const results = await Promise.all(
+      storeTypes.map((storeType) =>
+        this.businessPlatformOrganizationsRequest({
+          query: FetchStoreByDomain,
+          organizationId: String(numberFromGid(orgId)),
+          variables: {
+            domain: shopDomain,
+            filters: storeByDomainFilters(storeType),
+          },
+        }),
+      ),
+    )
 
-    const organization = storesResult.organization
-
-    if (!organization) {
+    const organizations = results.map((result) => result.organization).filter((org) => org != null)
+    if (organizations.length === 0) {
       throw new AbortError(`No organization found`)
     }
 
-    const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
-    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray, provisionable)
-    return storesArray[0]
+    const stores = organizations.flatMap((org) => {
+      const nodes = org.accessibleShops?.edges.map((edge) => edge.node) ?? []
+      const provisionable = isStoreProvisionable(org.currentUser?.organizationPermissions ?? [])
+      return mapBusinessPlatformStoresToOrganizationStores(nodes, provisionable)
+    })
+    return stores[0]
   }
 
   async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
@@ -1068,7 +1071,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const url = `https://${await developerDashboardFqdn()}/dashboard/${org.id}/stores`
     return [
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.`,
-      {link: {url, label: 'Create one now'}},
+      {link: {url, label: 'Create a store in Dev Dashboard'}},
     ]
   }
 
@@ -1208,6 +1211,9 @@ function createAppVars(
   apiVersion: string,
 ): CreateAppMutationVariables {
   const {isLaunchable, scopesArray, name} = options
+  const defaultAppUrl = isLaunchable ? 'https://example.com' : MAGIC_URL
+  const defaultRedirectUrl = isLaunchable ? 'https://example.com/api/auth' : MAGIC_REDIRECT_URL
+
   const source: AppVersionSource = {
     source: {
       name,
@@ -1215,7 +1221,7 @@ function createAppVars(
         {
           type: AppHomeSpecIdentifier,
           config: {
-            app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
+            app_url: defaultAppUrl,
             // Ext-only apps should be embedded = false, however we are hardcoding this to
             // match Partners behaviour for now
             // https://github.com/Shopify/develop-app-inner-loop/issues/2789
@@ -1233,7 +1239,7 @@ function createAppVars(
         {
           type: AppAccessSpecIdentifier,
           config: {
-            redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
+            redirect_url_allowlist: [defaultRedirectUrl],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
           },
         },
@@ -1261,7 +1267,7 @@ export function organizationGidForBP(id: string): string {
 
 // 1234 => gid://organization/Organization/1234 => base64
 export function encodedGidFromOrganizationIdForBP(id: string): string {
-  return Buffer.from(organizationGidForBP(id)).toString('base64')
+  return encodeGid(organizationGidForBP(id))
 }
 
 // App Managament uses a different GID format than Business Platform for organizationId.
@@ -1272,20 +1278,26 @@ function gidFromOrganizationIdForShopify(id: string): string {
 
 // 1234 => gid://organization/ShopifyShop/1234 => base64
 export function encodedGidFromShopId(id: string): string {
-  const gid = `gid://organization/ShopifyShop/${id}`
-  return Buffer.from(gid).toString('base64')
+  return encodeGid(`gid://organization/ShopifyShop/${id}`)
 }
 
 // base64 => gid://organization/Organization/1234 => 1234
 function idFromEncodedGid(gid: string): string {
-  const decodedGid = Buffer.from(gid, 'base64').toString('ascii')
-  return numberFromGid(decodedGid).toString()
+  const numeric = numericIdFromEncodedGid(gid)
+  if (numeric === undefined) {
+    throw new Error(`Invalid encoded GID: ${gid}`)
+  }
+  return numeric
 }
 
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
   if (gid.startsWith('gid://')) {
-    return Number(gid.match(/^gid.*\/(\d+)$/)![1])
+    const numeric = numericIdFromGid(gid)
+    if (numeric === undefined) {
+      throw new Error(`Invalid GID: ${gid}`)
+    }
+    return Number(numeric)
   }
   return Number(gid)
 }
@@ -1358,10 +1370,6 @@ export async function allowedTemplates(
   })
 }
 
-function experience(identifier: string): 'configuration' | 'extension' {
-  return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
-}
-
 /**
  * Maps the backend uidStrategy __typename to the CLI UidStrategy value.
  * The __typename is always present in the response because the GraphQL document
@@ -1369,7 +1377,25 @@ function experience(identifier: string): 'configuration' | 'extension' {
  *
  * Type names come from the app-management GraphQL schema's UidStrategy union.
  */
-export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' | undefined {
+type SpecificationExperience = 'extension' | 'configuration' | 'deprecated'
+
+/**
+ * Normalizes the raw experience string from the API into a known union value.
+ * Falls back to 'extension' for any unexpected/unknown values and logs a debug message.
+ */
+function normalizeExperience(raw: string): SpecificationExperience {
+  switch (raw) {
+    case 'extension':
+    case 'configuration':
+    case 'deprecated':
+      return raw
+    default:
+      outputDebug(`Unknown specification experience value "${raw}", defaulting to "extension"`)
+      return 'extension'
+  }
+}
+
+export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' {
   switch (typename) {
     case 'UidStrategiesDynamic':
       return 'dynamic'
@@ -1378,7 +1404,7 @@ export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' 
     case 'UidStrategiesClientProvided':
       return 'uuid'
     default:
-      return undefined
+      return 'uuid'
   }
 }
 
@@ -1415,7 +1441,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
       ...mod.specification,
       identifier: mod.specification.identifier,
       options: {managementExperience: mod.specification.managementExperience as 'cli' | 'custom' | 'dashboard'},
-      experience: experience(mod.specification.identifier),
+      experience: normalizeExperience(mod.specification.experience),
     },
   }
 }
@@ -1452,6 +1478,13 @@ function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErro
     details.push({extension_id: extensionId})
   }
   return {...err, details}
+}
+
+function storeByDomainFilters(storeType: Store) {
+  return [
+    {field: 'STORE_TYPE' as const, operator: 'EQUALS' as const, value: storeType.toLowerCase()},
+    {field: 'STORE_STATUS' as const, operator: 'EQUALS' as const, value: 'ACTIVE'},
+  ]
 }
 
 function isStoreProvisionable(permissions: string[]) {

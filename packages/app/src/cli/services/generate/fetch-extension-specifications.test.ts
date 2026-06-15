@@ -23,6 +23,19 @@ describe('fetchExtensionSpecifications', () => {
       ]),
     )
 
+    // Then
+    expect(got).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          externalName: 'Webhook Subscription',
+          identifier: 'webhook_subscription',
+          externalIdentifier: 'webhook_subscription',
+          registrationLimit: 1,
+          experience: 'configuration',
+        }),
+      ]),
+    )
+
     expect(got).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -30,7 +43,6 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'product_subscription',
           externalIdentifier: 'product_subscription_external',
           registrationLimit: 1,
-          surface: 'admin',
         }),
       ]),
     )
@@ -42,7 +54,6 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'ui_extension',
           externalIdentifier: 'ui_extension_external',
           registrationLimit: 50,
-          surface: 'all',
         }),
       ]),
     )
@@ -50,12 +61,10 @@ describe('fetchExtensionSpecifications', () => {
     expect(got).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Product Subscription',
           externalName: 'Subscription UI',
           identifier: 'product_subscription',
           externalIdentifier: 'product_subscription_external',
           registrationLimit: 1,
-          surface: 'admin',
         }),
       ]),
     )
@@ -63,12 +72,10 @@ describe('fetchExtensionSpecifications', () => {
     expect(got).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Online Store - App Theme Extension',
           externalName: 'Theme App Extension',
           identifier: 'theme',
           externalIdentifier: 'theme_external',
           registrationLimit: 1,
-          surface: undefined,
         }),
       ]),
     )

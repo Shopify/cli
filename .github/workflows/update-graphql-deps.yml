@@ -20,7 +20,7 @@ jobs:
     runs-on: macos-latest # Codegen uses a find command that needs to work on CI and macOS; using the same env keeps this simple
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
       - name: Checkout a new branch
@@ -28,7 +28,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: '22.11.0'
+          node-version: '26.1.0'
       - name: Get schemas for codegen
         env:
           GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}

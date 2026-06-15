@@ -851,3 +851,37 @@ function createPackageJson(tmpDir: string, type: string, version: string) {
   const dirPath = joinPath(tmpDir, 'node_modules', '@shopify', type)
   return mkdir(dirPath).then(() => writeFile(packagePath, JSON.stringify(packageJson)))
 }
+
+describe('preDeployValidation awaiting', () => {
+  test('awaits extension validation and catches rejections', async () => {
+    // Given
+    const extension = await testUIExtension()
+    vi.spyOn(extension, 'preDeployValidation').mockRejectedValue(new Error('Validation failed'))
+
+    const app = testApp({
+      allExtensions: [extension],
+    })
+
+    // When / Then
+    await expect(app.preDeployValidation()).rejects.toThrow('Validation failed')
+  })
+
+  test('awaits validation for multiple extensions and catches rejections', async () => {
+    // Given
+    const validExtension = await testUIExtension()
+    const invalidExtension = await testUIExtension()
+    const validPreDeployValidation = vi.spyOn(validExtension, 'preDeployValidation').mockResolvedValue()
+    const invalidPreDeployValidation = vi
+      .spyOn(invalidExtension, 'preDeployValidation')
+      .mockRejectedValue(new Error('Validation failed'))
+
+    const app = testApp({
+      allExtensions: [validExtension, invalidExtension],
+    })
+
+    // When / Then
+    await expect(app.preDeployValidation()).rejects.toThrow('Validation failed')
+    expect(validPreDeployValidation).toHaveBeenCalledOnce()
+    expect(invalidPreDeployValidation).toHaveBeenCalledOnce()
+  })
+})

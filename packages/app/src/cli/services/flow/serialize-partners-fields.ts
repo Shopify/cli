@@ -13,7 +13,7 @@ const serializeConfigField = (field: SerializedField, type: FlowPartnersExtensio
 
   const serializedField: ConfigField = {
     key: field.name,
-    description: field.description ? field.description : undefined,
+    description: field.description ?? undefined,
     type: fieldType,
   }
 

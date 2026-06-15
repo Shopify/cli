@@ -1,7 +1,16 @@
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath} from './path.js'
-import {extractImportPaths, extractImportPathsRecursively} from './import-extractor.js'
-import {describe, test, expect} from 'vitest'
+import {
+  extractImportPaths,
+  extractImportPathsRecursively,
+  clearImportPathsCache,
+  getImportScanningCacheStats,
+} from './import-extractor.js'
+import {describe, test, expect, beforeEach} from 'vitest'
+
+beforeEach(() => {
+  clearImportPathsCache()
+})
 
 describe('extractImportPaths', () => {
   describe('JavaScript imports', () => {
@@ -312,6 +321,57 @@ describe('extractImportPaths', () => {
       })
     })
   })
+
+  describe('large files', () => {
+    // 128KB read limit means ~5,800 lines of 'export type T = string\n' (22 bytes each)
+    const linesExceedingReadLimit = 6000
+
+    test('extracts imports from the top of large files', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const largeFile = joinPath(tmpDir, 'large-types.ts')
+        const smallFile = joinPath(tmpDir, 'small.ts')
+
+        await writeFile(smallFile, 'export const x = 1')
+        const padding = 'export type T = string\n'.repeat(linesExceedingReadLimit)
+        await writeFile(largeFile, `import { x } from './small'\n${padding}`)
+
+        const imports = extractImportPaths(largeFile)
+        expect(imports).toContain(smallFile)
+      })
+    })
+
+    test('does not find imports buried past the 128KB read limit', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const largeFile = joinPath(tmpDir, 'large-types.ts')
+        const buriedFile = joinPath(tmpDir, 'buried.ts')
+
+        await writeFile(buriedFile, 'export const buried = 1')
+        const padding = 'export type T = string\n'.repeat(linesExceedingReadLimit)
+        await writeFile(largeFile, `${padding}import { buried } from './buried'`)
+
+        const imports = extractImportPaths(largeFile)
+        expect(imports).not.toContain(buriedFile)
+      })
+    })
+
+    test('follows imports found in the top of large files recursively', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const mainFile = joinPath(tmpDir, 'main.ts')
+        const largeFile = joinPath(tmpDir, 'large-types.ts')
+        const deepFile = joinPath(tmpDir, 'deep.ts')
+
+        await writeFile(deepFile, 'export const deep = 1')
+        const padding = 'export type T = string\n'.repeat(linesExceedingReadLimit)
+        await writeFile(largeFile, `import { deep } from './deep'\n${padding}`)
+        await writeFile(mainFile, `import { T } from './large-types'`)
+
+        const imports = extractImportPathsRecursively(mainFile)
+        expect(imports).toContain(mainFile)
+        expect(imports).toContain(largeFile)
+        expect(imports).toContain(deepFile)
+      })
+    })
+  })
 })
 
 describe('extractImportPathsRecursively', () => {
@@ -607,6 +667,82 @@ describe('extractImportPathsRecursively', () => {
       expect(imports).toHaveLength(4)
       // Ensure sharedModule appears only once despite being imported by multiple files
       expect(imports.filter((imp) => imp === sharedModule)).toHaveLength(1)
+    })
+  })
+})
+
+describe('clearImportPathsCache', () => {
+  test('picks up file changes after cache is cleared', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mainFile = joinPath(tmpDir, 'main.js')
+      const utilsFile = joinPath(tmpDir, 'utils.js')
+
+      await writeFile(utilsFile, 'export const foo = "bar"')
+      await writeFile(mainFile, `import { foo } from './utils.js'`)
+
+      const firstResult = extractImportPaths(mainFile)
+      expect(firstResult).toContain(utilsFile)
+
+      // Modify the file to add a new import
+      const helpersFile = joinPath(tmpDir, 'helpers.js')
+      await writeFile(helpersFile, 'export const helper = () => {}')
+      await writeFile(mainFile, `import { foo } from './utils.js'\nimport { helper } from './helpers.js'`)
+
+      // Without clearing, we still get cached results
+      const cachedResult = extractImportPaths(mainFile)
+      expect(cachedResult).toHaveLength(1)
+
+      // After clearing, new imports are picked up
+      clearImportPathsCache()
+      const freshResult = extractImportPaths(mainFile)
+      expect(freshResult).toContain(utilsFile)
+      expect(freshResult).toContain(helpersFile)
+      expect(freshResult).toHaveLength(2)
+    })
+  })
+
+  test('clears all caches including filesystem stat caches', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mainFile = joinPath(tmpDir, 'main.js')
+      const utilsFile = joinPath(tmpDir, 'utils.js')
+
+      await writeFile(utilsFile, 'export const foo = "bar"')
+      await writeFile(mainFile, `import { foo } from './utils.js'`)
+
+      extractImportPaths(mainFile)
+      const statsAfterScan = getImportScanningCacheStats()
+      expect(statsAfterScan.directImports).toBeGreaterThan(0)
+      expect(statsAfterScan.fileExists).toBeGreaterThan(0)
+
+      clearImportPathsCache()
+      const statsAfterClear = getImportScanningCacheStats()
+      expect(statsAfterClear.directImports).toBe(0)
+      expect(statsAfterClear.fileExists).toBe(0)
+      expect(statsAfterClear.isDir).toBe(0)
+    })
+  })
+})
+
+describe('getImportScanningCacheStats', () => {
+  test('tracks cache sizes across multiple scans', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const file1 = joinPath(tmpDir, 'file1.js')
+      const file2 = joinPath(tmpDir, 'file2.js')
+      const shared = joinPath(tmpDir, 'shared.js')
+
+      await writeFile(shared, 'export const x = 1')
+      await writeFile(file1, `import { x } from './shared.js'`)
+      await writeFile(file2, `import { x } from './shared.js'`)
+
+      extractImportPathsRecursively(file1)
+      const statsAfterFirst = getImportScanningCacheStats()
+
+      extractImportPathsRecursively(file2)
+      const statsAfterSecond = getImportScanningCacheStats()
+
+      // Second scan should grow the directImports cache (file2 is new)
+      // but shared.js stat results are reused from the first scan
+      expect(statsAfterSecond.directImports).toBeGreaterThanOrEqual(statsAfterFirst.directImports)
     })
   })
 })

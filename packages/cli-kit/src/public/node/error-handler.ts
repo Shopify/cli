@@ -76,6 +76,11 @@ export async function sendErrorToBugsnag(
       return {reported: false, error, unhandled: undefined}
     }
 
+    if (exitMode === 'expected_error') {
+      outputDebug(`Skipping Bugsnag report for expected error`)
+      return {reported: false, error, unhandled: undefined}
+    }
+
     // If the error was unexpected, we flag it as "unhandled" in Bugsnag. This is a helpful distinction.
     const unhandled = exitMode === 'unexpected_error'
 
@@ -150,7 +155,7 @@ export async function sendErrorToBugsnag(
         }
         const errorHandler = (error: unknown) => {
           if (error) {
-            reject(error)
+            reject(error instanceof Error ? error : new Error(String(error)))
           } else {
             resolve(reportableError)
           }
@@ -187,7 +192,7 @@ export function cleanStackFrameFilePath({
     ? currentFilePath
     : path.joinPath(projectRoot, currentFilePath)
 
-  const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.startsWith(pluginPath))[0]
+  const matchingPluginPath = pluginLocations.find(({pluginPath}) => fullLocation.startsWith(pluginPath))
 
   if (matchingPluginPath !== undefined) {
     // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )

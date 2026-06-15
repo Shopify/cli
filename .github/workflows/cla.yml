@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.actor != 'cursoragent'
+      && github.actor != 'river'
       && (
         (github.event.issue.pull_request
           && !github.event.issue.pull_request.merged_at

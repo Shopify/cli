@@ -6,6 +6,8 @@
   "fixed": [[
     "@shopify/cli",
     "@shopify/app",
+    "@shopify/store",
+    "@shopify/organizations",
     "@shopify/create-app",
     "@shopify/cli-kit",
     "@shopify/theme",

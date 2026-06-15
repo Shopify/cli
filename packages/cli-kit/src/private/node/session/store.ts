@@ -1,7 +1,7 @@
 import {SessionsSchema} from './schema.js'
 import {getSessions, removeCurrentSessionId, removeSessions, setSessions} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import type {Sessions} from './schema.js'
+import type {Session, Sessions} from './schema.js'
 
 /**
  * Serializes the session as a JSON and stores it in the system.
@@ -54,6 +54,24 @@ export async function getSessionAlias(userId: string): Promise<string | undefine
   const fqdn = await identityFqdn()
   if (!sessions[fqdn] || !sessions[fqdn][userId]) return undefined
   return sessions[fqdn][userId].identity.alias
+}
+
+/**
+ * Sets the alias for a given user's session and persists it.
+ *
+ * @param userId - The user ID of the session to update.
+ * @param alias - The new alias to set.
+ */
+export async function setSessionAlias(userId: string, alias: string): Promise<void> {
+  const sessions = await fetch()
+  if (!sessions) return
+
+  const fqdn = await identityFqdn()
+  const session: Session | undefined = sessions[fqdn]?.[userId]
+  if (!session) return
+
+  session.identity.alias = alias
+  await store(sessions)
 }
 
 /**

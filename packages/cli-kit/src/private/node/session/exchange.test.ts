@@ -1,8 +1,8 @@
 import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
-  exchangeCliTokenForAppManagementAccessToken,
-  exchangeCliTokenForBusinessPlatformAccessToken,
+  exchangeAppAutomationTokenForAppManagementAccessToken,
+  exchangeAppAutomationTokenForBusinessPlatformAccessToken,
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
@@ -245,13 +245,13 @@ const tokenExchangeMethods = [
     expectedErrorName: 'Partners',
   },
   {
-    tokenExchangeMethod: exchangeCliTokenForAppManagementAccessToken,
+    tokenExchangeMethod: exchangeAppAutomationTokenForAppManagementAccessToken,
     expectedScopes: ['https://api.shopify.com/auth/organization.apps.manage'],
     expectedApi: 'app-management',
     expectedErrorName: 'App Management',
   },
   {
-    tokenExchangeMethod: exchangeCliTokenForBusinessPlatformAccessToken,
+    tokenExchangeMethod: exchangeAppAutomationTokenForBusinessPlatformAccessToken,
     expectedScopes: ['https://api.shopify.com/auth/destinations.readonly'],
     expectedApi: 'business-platform',
     expectedErrorName: 'Business Platform',
@@ -261,7 +261,7 @@ const tokenExchangeMethods = [
 describe.each(tokenExchangeMethods)(
   'Token exchange: %s',
   ({tokenExchangeMethod, expectedScopes, expectedApi, expectedErrorName}) => {
-    const cliToken = 'customToken'
+    const automationToken = 'customToken'
     // Generated from `customToken` using `nonRandomUUID()`
     const userId = 'eab16ac4-0690-5fed-9d00-71bd202a3c2b37259a8f'
 
@@ -271,8 +271,10 @@ describe.each(tokenExchangeMethods)(
     test(`Executing ${tokenExchangeMethod.name} returns access token and user ID for a valid CLI token`, async () => {
       // Given
       let capturedUrl = ''
+      let capturedInit: {method?: string; headers?: Record<string, string>; body?: string} = {}
       vi.mocked(shopifyFetch).mockImplementation(async (url, options) => {
         capturedUrl = url.toString()
+        capturedInit = (options ?? {}) as typeof capturedInit
         return Promise.resolve(
           new Response(
             JSON.stringify({
@@ -285,26 +287,35 @@ describe.each(tokenExchangeMethods)(
       })
 
       // When
-      const result = await tokenExchangeMethod(cliToken)
+      const result = await tokenExchangeMethod(automationToken)
 
       // Then
       expect(result).toEqual({accessToken: 'expected_access_token', userId})
       await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(userId)
       await expect(getLastSeenAuthMethod()).resolves.toBe('partners_token')
 
-      // Assert token exchange parameters are correct
+      // Request is sent as POST form-encoded body (not query string), so the
+      // URL must not contain any OAuth parameters.
       const actualUrl = new URL(capturedUrl)
       expect(actualUrl).toBeDefined()
-      expect(actualUrl.href).toContain('https://fqdn.com/oauth/token')
+      expect(actualUrl.href).toBe('https://fqdn.com/oauth/token')
+      expect(actualUrl.search).toBe('')
 
-      const params = actualUrl.searchParams
+      expect(capturedInit.method).toBe('POST')
+      expect(capturedInit.headers).toMatchObject({
+        'Content-Type': 'application/x-www-form-urlencoded',
+      })
+      expect(typeof capturedInit.body).toBe('string')
+
+      // Assert token exchange parameters are correct and sent in the body.
+      const params = new URLSearchParams(capturedInit.body)
       expect(params.get('grant_type')).toBe(grantType)
       expect(params.get('requested_token_type')).toBe(accessTokenType)
       expect(params.get('subject_token_type')).toBe(accessTokenType)
       expect(params.get('client_id')).toBe('clientId')
       expect(params.get('audience')).toBe(expectedApi)
       expect(params.get('scope')).toBe(expectedScopes.join(' '))
-      expect(params.get('subject_token')).toBe(cliToken)
+      expect(params.get('subject_token')).toBe(automationToken)
     })
 
     test(`Executing ${tokenExchangeMethod.name} throws AbortError if an error is caught`, async () => {
@@ -314,7 +325,7 @@ describe.each(tokenExchangeMethods)(
       })
 
       try {
-        await tokenExchangeMethod(cliToken)
+        await tokenExchangeMethod(automationToken)
       } catch (error) {
         if (error instanceof Error) {
           expect(error).toBeInstanceOf(AbortError)

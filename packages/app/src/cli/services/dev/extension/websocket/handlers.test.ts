@@ -11,9 +11,9 @@ import {ExtensionsEndpointPayload} from '../payload/models.js'
 import {vi, describe, test, expect, Mock} from 'vitest'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import WebSocket, {RawData, WebSocketServer} from 'ws'
-import {IncomingMessage} from 'h3'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/ui/components', () => ({

@@ -7,11 +7,26 @@ import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppConfigurationState, loadAppUsingConfigurationState, loadApp} from '../models/app/loader.js'
+import {
+  getAppConfigurationContext,
+  loadAppFromContext,
+  formatConfigurationError,
+  type ConfigurationError,
+} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {basename} from '@shopify/cli-kit/node/path'
+import type {ActiveConfig} from '../models/project/active-config.js'
+
+function styledConfigurationError(error: ConfigurationError) {
+  const formatted = formatConfigurationError(error)
+  return outputContent`${outputToken.errorText('Validation error')} in ${outputToken.path(error.file)}:\n\n${formatted}`
+}
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -19,6 +34,8 @@ export interface LoadedAppContextOutput {
   developerPlatformClient: DeveloperPlatformClient
   organization: Organization
   specifications: RemoteAwareExtensionSpecification[]
+  project: Project
+  activeConfig: ActiveConfig
 }
 
 /**
@@ -28,15 +45,15 @@ export interface LoadedAppContextOutput {
  * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
  * @param clientId - The client ID to use when linking the app or when fetching the remote app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
- * @param unsafeReportMode - DONT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. It means that the app loader will not throw an error when the app/extension configuration is invalid.
- * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
+ * @param unsafeTolerateErrors - When true, the loaded app may contain validation errors without throwing.
+ * Only use this for commands that explicitly handle invalid configs (e.g. `app info`, `app validate`).
  */
 interface LoadedAppContextOptions {
   directory: string
   forceRelink: boolean
   clientId: string | undefined
   userProvidedConfigName: string | undefined
-  unsafeReportMode?: boolean
+  unsafeTolerateErrors?: boolean
 }
 
 /**
@@ -44,13 +61,10 @@ interface LoadedAppContextOptions {
  *
  * @param directory - The directory containing the app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
- * @param unsafeReportMode - DONT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. It means that the app loader will not throw an error when the app/extension configuration is invalid.
- * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
  */
 interface LocalAppContextOptions {
   directory: string
   userProvidedConfigName?: string
-  unsafeReportMode?: boolean
 }
 
 /**
@@ -66,29 +80,47 @@ export async function linkedAppContext({
   clientId,
   forceRelink,
   userProvidedConfigName,
-  unsafeReportMode = false,
+  unsafeTolerateErrors = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
-  // Get current app configuration state
-  let configState = await getAppConfigurationState(directory, userProvidedConfigName)
+  let project: Project
+  let activeConfig: ActiveConfig
   let remoteApp: OrganizationApp | undefined
 
-  if (!configState.isLinked || forceRelink) {
-    const configName = forceRelink ? undefined : configState.configurationFileName
-    const result = await link({directory, apiKey: clientId, configName})
+  if (forceRelink) {
+    // Skip getAppConfigurationContext() when force-relinking — it may prompt the
+    // user to select a TOML file that will be immediately discarded by link().
+    const result = await link({directory, apiKey: clientId})
     remoteApp = result.remoteApp
-    configState = result.state
+    const reloaded = await getAppConfigurationContext(directory, result.configFileName)
+    project = reloaded.project
+    activeConfig = reloaded.activeConfig
+  } else {
+    const loaded = await getAppConfigurationContext(directory, userProvidedConfigName)
+    project = loaded.project
+    activeConfig = loaded.activeConfig
+
+    if (activeConfig.file.errors.length > 0) {
+      throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
+    }
+
+    if (!activeConfig.isLinked) {
+      const result = await link({directory, apiKey: clientId, configName: basename(activeConfig.file.path)})
+      remoteApp = result.remoteApp
+      const reloaded = await getAppConfigurationContext(directory, result.configFileName)
+      project = reloaded.project
+      activeConfig = reloaded.activeConfig
+    }
   }
 
-  // If the clientId is provided, update the configuration state with the new clientId
-  if (clientId && clientId !== configState.basicConfiguration.client_id) {
-    configState.basicConfiguration.client_id = clientId
+  // Determine the effective client ID
+  const configClientId = activeConfig.file.content.client_id
+  if (typeof configClientId !== 'string' || configClientId.length === 0) {
+    throw new BugError(`Active config at ${activeConfig.file.path} is marked as linked but has no client_id`)
   }
+  const effectiveClientId = clientId ?? configClientId
 
   // Fetch the remote app, using a different clientID if provided via flag.
-  if (!remoteApp) {
-    const apiKey = configState.basicConfiguration.client_id
-    remoteApp = await appFromIdentifiers({apiKey})
-  }
+  remoteApp ??= await appFromIdentifiers({apiKey: effectiveClientId})
   const developerPlatformClient = remoteApp.developerPlatformClient
 
   const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
@@ -96,12 +128,18 @@ export async function linkedAppContext({
   // Fetch the remote app's specifications
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
 
-  // Load the local app using the configuration state and the remote app's specifications
-  const localApp = await loadAppUsingConfigurationState(configState, {
+  // Load the local app using the pre-resolved context and the remote app's specifications
+  const localApp = await loadAppFromContext({
+    project,
+    activeConfig,
     specifications,
     remoteFlags: remoteApp.flags,
-    mode: unsafeReportMode ? 'report' : 'strict',
+    clientIdOverride: clientId && clientId !== configClientId ? clientId : undefined,
   })
+
+  if (!unsafeTolerateErrors && !localApp.errors.isEmpty()) {
+    throw new AbortError(styledConfigurationError(localApp.errors.getErrors()[0]!))
+  }
 
   // If the remoteApp is the same as the linked one, update the cached info.
   const cachedInfo = getCachedAppInfo(directory)
@@ -113,14 +151,12 @@ export async function linkedAppContext({
   await logMetadata(remoteApp, organization, forceRelink)
 
   // Add UIDs to extension TOML files if using app-management.
-  // If in unsafe report mode, it is possible the UIDs are not loaded in memory
-  // even if they are present in the file, so we can't be sure whether or not
-  // it's necessary.
-  if (!unsafeReportMode) {
+  // Only safe when there are no errors — errors may mean UIDs weren't loaded correctly.
+  if (localApp.errors.isEmpty()) {
     await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
   }
 
-  return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
+  return {project, activeConfig, app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 
 async function logMetadata(app: {apiKey: string}, organization: Organization, resetUsed: boolean) {
@@ -138,24 +174,33 @@ async function logMetadata(app: {apiKey: string}, organization: Organization, re
   }))
 }
 
+interface LocalAppContextOutput {
+  app: AppInterface
+  project: Project
+}
+
 /**
  * This function loads an app locally without making any network calls.
  * It uses local specifications and doesn't require the app to be linked.
  *
- * @returns The local app instance.
+ * @returns The local app and project instances.
  */
 export async function localAppContext({
   directory,
   userProvidedConfigName,
-}: LocalAppContextOptions): Promise<AppInterface> {
-  // Load local specifications only
-  const specifications = await loadLocalExtensionsSpecifications()
+}: LocalAppContextOptions): Promise<LocalAppContextOutput> {
+  const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
 
-  // Load the local app using the specifications
-  return loadApp({
-    directory,
-    userProvidedConfigName,
-    specifications,
-    mode: 'local',
-  })
+  if (activeConfig.file.errors.length > 0) {
+    throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
+  }
+
+  const specifications = await loadLocalExtensionsSpecifications()
+  const app = await loadAppFromContext({project, activeConfig, specifications, ignoreUnknownExtensions: true})
+
+  if (!app.errors.isEmpty()) {
+    throw new AbortError(styledConfigurationError(app.errors.getErrors()[0]!))
+  }
+
+  return {app, project}
 }

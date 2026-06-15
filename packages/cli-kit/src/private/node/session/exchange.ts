@@ -70,13 +70,13 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
 }
 
 /**
- * Given a custom CLI token passed as ENV variable  request a valid API access token
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * Given a custom app automation token passed as ENV variable, request a valid API access token.
  * @param apiName - The API to exchange for the access token
+ * @param token - The app automation token passed as ENV variable `SHOPIFY_APP_AUTOMATION_TOKEN`
  * @param scopes - The scopes to request with the access token
  * @returns An instance with the application access tokens.
  */
-async function exchangeCliTokenForAccessToken(
+async function exchangeAppAutomationTokenForAccessToken(
   apiName: API,
   token: string,
   scopes: string[],
@@ -100,35 +100,35 @@ async function exchangeCliTokenForAccessToken(
 }
 
 /**
- * Given a custom CLI token passed as ENV variable, request a valid Partners API token
+ * Given a custom app automation token passed as ENV variable, request a valid Partners API token.
  * This token does not accept extra scopes, just the cli one.
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * @param token - The app automation token passed as ENV variable `SHOPIFY_APP_AUTOMATION_TOKEN`
  * @returns An instance with the application access tokens.
  */
 export async function exchangeCustomPartnerToken(token: string): Promise<{accessToken: string; userId: string}> {
-  return exchangeCliTokenForAccessToken('partners', token, tokenExchangeScopes('partners'))
+  return exchangeAppAutomationTokenForAccessToken('partners', token, tokenExchangeScopes('partners'))
 }
 
 /**
- * Given a custom CLI token passed as ENV variable, request a valid App Management API token
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * Given a custom app automation token passed as ENV variable, request a valid App Management API token.
+ * @param token - The app automation token passed as ENV variable `SHOPIFY_APP_AUTOMATION_TOKEN`
  * @returns An instance with the application access tokens.
  */
-export async function exchangeCliTokenForAppManagementAccessToken(
+export async function exchangeAppAutomationTokenForAppManagementAccessToken(
   token: string,
 ): Promise<{accessToken: string; userId: string}> {
-  return exchangeCliTokenForAccessToken('app-management', token, tokenExchangeScopes('app-management'))
+  return exchangeAppAutomationTokenForAccessToken('app-management', token, tokenExchangeScopes('app-management'))
 }
 
 /**
- * Given a custom CLI token passed as ENV variable, request a valid Business Platform API token
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * Given a custom app automation token passed as ENV variable, request a valid Business Platform API token.
+ * @param token - The app automation token passed as ENV variable `SHOPIFY_APP_AUTOMATION_TOKEN`
  * @returns An instance with the application access tokens.
  */
-export async function exchangeCliTokenForBusinessPlatformAccessToken(
+export async function exchangeAppAutomationTokenForBusinessPlatformAccessToken(
   token: string,
 ): Promise<{accessToken: string; userId: string}> {
-  return exchangeCliTokenForAccessToken('business-platform', token, tokenExchangeScopes('business-platform'))
+  return exchangeAppAutomationTokenForAccessToken('business-platform', token, tokenExchangeScopes('business-platform'))
 }
 
 type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
@@ -226,10 +226,19 @@ async function tokenRequest(
   params: Record<string, string>,
 ): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
   const fqdn = await identityFqdn()
-  const url = new URL(`https://${fqdn}/oauth/token`)
-  url.search = new URLSearchParams(Object.entries(params)).toString()
+  const url = `https://${fqdn}/oauth/token`
 
-  const res = await shopifyFetch(url.href, {method: 'POST'})
+  // Send OAuth parameters in the request body (per RFC 6749) rather than the
+  // URL query string. This prevents sensitive credentials (subject_token,
+  // refresh_token, device_code, client_id, etc.) from being written to
+  // verbose CLI debug output or otherwise leaking through URLs.
+  const body = new URLSearchParams(Object.entries(params)).toString()
+
+  const res = await shopifyFetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body,
+  })
   try {
     const responseText = await res.text()
 

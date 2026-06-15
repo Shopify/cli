@@ -24,9 +24,7 @@ export class HostThemeManager extends ThemeManager {
 
   async findOrCreate(): Promise<Theme> {
     let theme = await this.fetch()
-    if (!theme) {
-      theme = this.devPreview ? await this.createHostTheme() : await this.create()
-    }
+    theme ??= this.devPreview ? await this.createHostTheme() : await this.create()
     return theme
   }
 

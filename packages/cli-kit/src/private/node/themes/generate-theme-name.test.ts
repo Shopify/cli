@@ -3,7 +3,10 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {hostname} from 'os'
 import {randomBytes} from 'crypto'
 
-vi.mock('os')
+vi.mock('os', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('os')>()
+  return {...actual, hostname: vi.fn()}
+})
 vi.mock('crypto')
 
 describe('generateThemeName', () => {

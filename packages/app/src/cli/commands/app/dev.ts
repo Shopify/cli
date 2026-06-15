@@ -7,7 +7,7 @@ import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends AppLinkedCommand {
@@ -57,7 +57,7 @@ export default class Dev extends AppLinkedCommand {
       default: false,
       exclusive: ['tunnel-url'],
     }),
-    'localhost-port': Flags.integer({
+    'localhost-port': portFlag({
       description: 'Port to use for localhost.',
       env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
     }),
@@ -66,7 +66,7 @@ export default class Dev extends AppLinkedCommand {
       description: 'Theme ID or name of the theme app extension host theme.',
       env: 'SHOPIFY_FLAG_THEME',
     }),
-    'theme-app-extension-port': Flags.integer({
+    'theme-app-extension-port': portFlag({
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
@@ -75,7 +75,7 @@ export default class Dev extends AppLinkedCommand {
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
     }),
-    'graphiql-port': Flags.integer({
+    'graphiql-port': portFlag({
       hidden: true,
       description: 'Local port of the GraphiQL development server.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_PORT',

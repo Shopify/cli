@@ -14,6 +14,7 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {BugError} from '@shopify/cli-kit/node/error'
+import {uniq} from '@shopify/cli-kit/common/array'
 
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
@@ -92,7 +93,7 @@ class TunnelClientInstance implements TunnelClient {
     setTimeout(() => {
       if (!resolved) {
         resolved = true
-        const lastErrors = [...new Set(errors)].slice(-5).join('\n')
+        const lastErrors = uniq(errors).slice(-5).join('\n')
         if (lastErrors === '') {
           this.currentStatus = {
             status: 'error',
@@ -112,7 +113,7 @@ class TunnelClientInstance implements TunnelClient {
       write(chunk, _, callback) {
         outputDebug(chunk.toString())
         if (resolved) return
-        if (!url) url = findUrl(chunk)
+        url ??= findUrl(chunk)
         if (findConnection(chunk)) connected = true
         if (connected) {
           if (url) {

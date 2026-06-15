@@ -16,7 +16,8 @@ env:
   BUNDLE_WITHOUT: 'test:development'
   GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
   GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
-  DEFAULT_NODE_VERSION: '24.1.0'
+  DEFAULT_NODE_VERSION: '26.1.0'
+  PLAYWRIGHT_NODE_VERSION: '24.1.0'
 
 jobs:
   type-check:
@@ -24,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -41,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -58,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -77,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -87,15 +88,18 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Run knip
-        run: pnpm knip
+        run: node bin/run-knip-ci.js
 
   graphql-schema:
-    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+    # Skip on dependabot PRs (no access to required secrets) and on PRs opened
+    # from forks (also no access to secrets), but always run on merge_group
+    # events since merge queue runs from the base repo.
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' && (github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository) }}
     name: 'Check graphql-codegen has been run'
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -118,7 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -153,41 +157,41 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '20.14.0', '22.2.0', '24.1.0' ]
+        node: [ '22.12.0', '24.1.0', '26.1.0' ]
         shard: [ '' ]
         include:
           # Add sharding for Windows jobs to reduce wall-clock time
           - os: windows-latest
-            node: '20.14.0'
+            node: '22.12.0'
             shard: '1/2'
           - os: windows-latest
-            node: '20.14.0'
-            shard: '2/2'
-          - os: windows-latest
-            node: '22.2.0'
-            shard: '1/2'
-          - os: windows-latest
-            node: '22.2.0'
+            node: '22.12.0'
             shard: '2/2'
           - os: windows-latest
             node: '24.1.0'
             shard: '1/2'
           - os: windows-latest
             node: '24.1.0'
+            shard: '2/2'
+          - os: windows-latest
+            node: '26.1.0'
+            shard: '1/2'
+          - os: windows-latest
+            node: '26.1.0'
             shard: '2/2'
         exclude:
           # Exclude the non-sharded Windows entries (replaced by sharded ones above)
           - os: windows-latest
-            node: '20.14.0'
-            shard: ''
-          - os: windows-latest
-            node: '22.2.0'
+            node: '22.12.0'
             shard: ''
           - os: windows-latest
             node: '24.1.0'
             shard: ''
+          - os: windows-latest
+            node: '26.1.0'
+            shard: ''
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -197,8 +201,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: pnpm vitest run ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
+        run: pnpm vitest run ${{ env.POOL_OPTIONS }} ${{ env.SHARD_OPTIONS }}
         env:
+          POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
+          SHARD_OPTIONS: ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
 
@@ -213,16 +219,18 @@ jobs:
         if: needs.unit-tests.result != 'success'
         run: exit 1
 
-  test-coverage-shard:
-    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
-    name: "Test Coverage (shard ${{ matrix.shard }})"
+  e2e-tests:
+    name: "E2E tests (shard ${{ matrix.shard }})"
+    if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         shard: ['1/2', '2/2']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
@@ -230,104 +238,34 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - name: Unit tests with coverage (shard)
-        run: pnpm vitest run --coverage --coverage.all=false --reporter=blob --outputFile=vitest-blob-reports/blob-${{ matrix.shard == '1/2' && '1' || '2' }}.json --shard ${{ matrix.shard }}
-        env:
-          VITEST_MIN_THREADS: "1"
-          VITEST_MAX_THREADS: "4"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: coverage-blob-${{ matrix.shard == '1/2' && '1' || '2' }}
-          path: vitest-blob-reports/
-          retention-days: 1
-
-  test-coverage-merge:
-    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
-    needs: test-coverage-shard
-    name: 'Test Coverage'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
-          fetch-depth: 1
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: coverage-blob-*
-          path: vitest-blob-reports
-          merge-multiple: true
-      - name: Merge coverage reports
-        run: pnpm vitest --mergeReports vitest-blob-reports --reporter=json --outputFile=./coverage/report.json --coverage --coverage.all=false
-      - name: Convert coverage to Jest
-        run: ./bin/save-coverage-file.js
-      - name: Take copy of report as new baseline for branch
-        run: cp ./report.json ./baseline-report.json
-      - name: Clean ref name
-        env:
-          SAFE_REF_NAME: "${{ github.head_ref }}"
-        run: |
-          SAFE_REF_NAME="${SAFE_REF_NAME//[\/.]/}"
-          echo "SAFE_REF_NAME=${SAFE_REF_NAME}" >> $GITHUB_ENV
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.SAFE_REF_NAME }}--coverage-report
-          path: ./baseline-report.json
-      - name: Download and publish test coverage
-        uses: ./.github/actions/download-and-publish-test-coverage
-        with:
-          base-branch-name: '${{ github.base_ref }}'
-
-  e2e-tests:
-    name: 'E2E tests'
-    if: github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
-          fetch-depth: 1
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+          node-version: ${{ env.PLAYWRIGHT_NODE_VERSION }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Install Playwright Chromium
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
         working-directory: packages/e2e
       - name: Rebuild node-pty
         run: pnpm rebuild node-pty
       - name: Run E2E tests
         working-directory: packages/e2e
         env:
-          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.E2E_CLIENT_ID }}
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
           E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
-          E2E_SECONDARY_CLIENT_ID: ${{ secrets.E2E_SECONDARY_CLIENT_ID }}
-        run: npx playwright test
+          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+        run: pnpm exec playwright test --shard ${{ matrix.shard }}
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ strategy.job-index }}
           path: packages/e2e/playwright-report/
           retention-days: 14
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-results
+          name: playwright-results-${{ strategy.job-index }}
           path: packages/e2e/test-results/
           retention-days: 14
 
@@ -337,7 +275,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         name: Checkout [main]
         with:
           fetch-depth: 1
@@ -357,3 +295,44 @@ jobs:
           header: Type-diff
           message: ${{ steps.type-diff.outputs.report }}
           recreate: true
+
+  major-change-check:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    name: 'Breaking change detection'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      has_breaking_changes: ${{ steps.check.outputs.has_breaking_changes }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          # Full history so `git merge-base origin/<base> HEAD` (used by
+          # major-change-check.js) can reach the divergence point.
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+      - name: Check for breaking changes
+        id: check
+        run: node workspace/src/major-change-check.js
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
+        if: steps.check.outputs.has_breaking_changes == 'true'
+        with:
+          header: Breaking-change-detection
+          message: ${{ steps.check.outputs.report }}
+          recreate: true
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
+        if: steps.check.outputs.has_breaking_changes != 'true'
+        with:
+          header: Breaking-change-detection
+          delete: true
+      - name: Fail if breaking changes detected
+        if: steps.check.outputs.has_breaking_changes == 'true'
+        run: |
+          echo '::error::Breaking changes detected. See the sticky comment on the PR for details.'
+          exit 1

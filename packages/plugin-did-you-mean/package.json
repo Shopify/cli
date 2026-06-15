@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-did-you-mean",
-  "version": "3.92.0",
+  "version": "4.1.0",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "bugs": {
@@ -17,8 +17,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "/dist",
-    "/oclif.manifest.json"
+    "/dist"
   ],
   "exports": {
     ".": {
@@ -41,15 +40,15 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "4.5.3",
-    "@shopify/cli-kit": "3.92.0",
+    "@oclif/core": "4.11.4",
+    "@shopify/cli-kit": "4.1.0",
     "n-gram": "2.0.2"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^3.1.4"
+    "@vitest/coverage-istanbul": "^3.2.6"
   },
   "engines": {
-    "node": ">=20.10.0"
+    "node": ">=22.12.0"
   },
   "os": [
     "darwin",

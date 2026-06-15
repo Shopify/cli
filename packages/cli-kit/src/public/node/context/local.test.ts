@@ -3,6 +3,7 @@ import {
   hasGit,
   isDevelopment,
   isShopify,
+  isTerminalInteractive,
   isUnitTest,
   analyticsDisabled,
   cloudEnvironment,
@@ -13,11 +14,61 @@ import {
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 
-import {expect, describe, vi, test} from 'vitest'
+import {afterEach, expect, describe, vi, test} from 'vitest'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
 vi.mock('../environment.js')
+
+describe('isTerminalInteractive', () => {
+  const originalIsTTY = process.stdout.isTTY
+  const originalEnv = {...process.env}
+
+  afterEach(() => {
+    process.stdout.isTTY = originalIsTTY
+    process.env.TERM = originalEnv.TERM
+    if (originalEnv.CI === undefined) {
+      delete process.env.CI
+    } else {
+      process.env.CI = originalEnv.CI
+    }
+  })
+
+  test('returns true when stdout is a TTY, TERM is not dumb, and not in CI', () => {
+    process.stdout.isTTY = true
+    delete process.env.CI
+    process.env.TERM = 'xterm-256color'
+    expect(isTerminalInteractive()).toBe(true)
+  })
+
+  test('returns false when stdout is not a TTY', () => {
+    process.stdout.isTTY = false
+    delete process.env.CI
+    process.env.TERM = 'xterm-256color'
+    expect(isTerminalInteractive()).toBe(false)
+  })
+
+  test('returns false when TERM is dumb', () => {
+    process.stdout.isTTY = true
+    delete process.env.CI
+    process.env.TERM = 'dumb'
+    expect(isTerminalInteractive()).toBe(false)
+  })
+
+  test('returns false when CI env var is set', () => {
+    process.stdout.isTTY = true
+    process.env.CI = 'true'
+    process.env.TERM = 'xterm-256color'
+    expect(isTerminalInteractive()).toBe(false)
+  })
+
+  test('returns false when CI env var is empty string (still set)', () => {
+    process.stdout.isTTY = true
+    process.env.CI = ''
+    process.env.TERM = 'xterm-256color'
+    expect(isTerminalInteractive()).toBe(false)
+  })
+})
 
 describe('isUnitTest', () => {
   test('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
@@ -99,6 +150,31 @@ describe('analitycsDisabled', () => {
   test('returns true when SHOPIFY_CLI_NO_ANALYTICS is truthy', () => {
     // Given
     const env = {SHOPIFY_CLI_NO_ANALYTICS: '1'}
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns true when OPT_OUT_INSTRUMENTATION is truthy', () => {
+    // Given
+    const env = {OPT_OUT_INSTRUMENTATION: 'true'}
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns true when either opt-out env var is truthy', () => {
+    // Given
+    const env = {
+      SHOPIFY_CLI_NO_ANALYTICS: '1',
+      OPT_OUT_INSTRUMENTATION: 'true',
+    }
 
     // When
     const got = analyticsDisabled(env)

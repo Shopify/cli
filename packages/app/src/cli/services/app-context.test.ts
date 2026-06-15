@@ -65,15 +65,18 @@ client_id="test-api-key"`
       // Then
       expect(result).toEqual({
         app: expect.objectContaining({
-          configuration: {
+          configPath: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+          configuration: expect.objectContaining({
             client_id: 'test-api-key',
             name: 'test-app',
-          },
+          }),
         }),
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
         specifications: [],
         organization: mockOrganization,
+        project: expect.any(Object),
+        activeConfig: expect.any(Object),
       })
       expect(link).not.toHaveBeenCalled()
     })
@@ -152,22 +155,12 @@ client_id="test-api-key"`
 
       vi.mocked(link).mockResolvedValue({
         remoteApp: mockRemoteApp,
-        state: {
-          appDirectory: tmp,
-          configurationPath: `${tmp}/shopify.app.toml`,
-          configSource: 'cached',
-          configurationFileName: 'shopify.app.toml',
-          isLinked: true,
-          basicConfiguration: {
-            client_id: 'test-api-key',
-          },
-        },
+        configFileName: 'shopify.app.toml',
         configuration: {
           client_id: 'test-api-key',
           name: 'test-app',
-          application_url: 'https://test-app.com',
-          embedded: false,
-        },
+          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+        } as any,
       })
 
       // When
@@ -180,6 +173,44 @@ client_id="test-api-key"`
 
       // Then
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
+    })
+  })
+
+  test('forceRelink skips config selection before link to avoid spurious TOML prompt', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given — no config file on disk, so getAppConfigurationContext would prompt for TOML selection
+      // if called before link. We verify link is called first (without a prior config load).
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+
+      const getAppConfigSpy = vi.spyOn(loader, 'getAppConfigurationContext')
+
+      vi.mocked(link).mockResolvedValue({
+        remoteApp: mockRemoteApp,
+        configFileName: 'shopify.app.toml',
+        configuration: {
+          client_id: 'test-api-key',
+          name: 'test-app',
+          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+        } as any,
+      })
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: true,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+      })
+
+      // Then — getAppConfigurationContext should only be called AFTER link, not before
+      const linkCallOrder = vi.mocked(link).mock.invocationCallOrder[0]!
+      const configCallOrders = getAppConfigSpy.mock.invocationCallOrder
+      expect(configCallOrders.every((order) => order > linkCallOrder)).toBe(true)
+
+      getAppConfigSpy.mockRestore()
     })
   })
 
@@ -211,14 +242,13 @@ client_id="test-api-key"`
     })
   })
 
-  test('uses unsafeReportMode when provided', async () => {
+  test('unsafeTolerateErrors skips throwIfErrors and addUidToTomlsIfNecessary', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `
 name = "test-app"
 client_id="test-api-key"`
       await writeAppConfig(tmp, content)
-      const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
 
       // When
       await linkedAppContext({
@@ -226,24 +256,48 @@ client_id="test-api-key"`
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        unsafeReportMode: true,
+        unsafeTolerateErrors: true,
       })
 
-      // Then
-      expect(vi.mocked(addUidToTomlsIfNecessary)).not.toHaveBeenCalled()
-      expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'report'}))
-      loadSpy.mockRestore()
+      // Then — addUidToTomlsIfNecessary is only called when errors are empty
+      // Since the mock app has no errors, it will still be called
+      expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
     })
   })
 
-  test('does not use unsafeReportMode when not provided', async () => {
+  test('throws when unsafeTolerateErrors is false and app has errors', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `
 name = "test-app"
 client_id="test-api-key"`
       await writeAppConfig(tmp, content)
-      const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
+      const loadSpy = vi.spyOn(loader, 'loadAppFromContext')
+      const {AppErrors} = await import('../models/app/loader.js')
+      const errors = new AppErrors()
+      errors.addError({file: 'test', message: 'some error'})
+      loadSpy.mockResolvedValue({errors} as any)
+
+      // When/Then
+      await expect(
+        linkedAppContext({
+          directory: tmp,
+          forceRelink: false,
+          userProvidedConfigName: undefined,
+          clientId: undefined,
+        }),
+      ).rejects.toThrow()
+      loadSpy.mockRestore()
+    })
+  })
+
+  test('does not throw when unsafeTolerateErrors is false and app has no errors', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
 
       // When
       await linkedAppContext({
@@ -255,8 +309,6 @@ client_id="test-api-key"`
 
       // Then
       expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
-      expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'strict'}))
-      loadSpy.mockRestore()
     })
   })
 })
@@ -290,14 +342,14 @@ describe('localAppContext', () => {
 
       // Then
       expect(result).toBeDefined()
-      expect(result.name).toEqual(expect.any(String))
-      expect(result.directory).toEqual(normalizePath(tmp))
-      expect(result.configuration).toEqual(
+      expect(result.app.name).toEqual(expect.any(String))
+      expect(result.app.directory).toEqual(normalizePath(tmp))
+      expect(result.app.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app',
         }),
       )
-      expect(result.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.toml')))
+      expect(result.app.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.toml')))
       // Verify no network calls were made
       expect(appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetchOrgFromId).not.toHaveBeenCalled()
@@ -330,12 +382,12 @@ describe('localAppContext', () => {
 
       // Then
       expect(result).toBeDefined()
-      expect(result.configuration).toEqual(
+      expect(result.app.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app-custom',
         }),
       )
-      expect(result.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.custom.toml')))
+      expect(result.app.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.custom.toml')))
     })
   })
 
@@ -435,7 +487,7 @@ describe('localAppContext', () => {
       })
 
       // Then
-      const realExtensions = result.allExtensions.filter((ext) => !ext.isAppConfigExtension)
+      const realExtensions = result.app.allExtensions.filter((ext) => ext.specification.experience !== 'configuration')
       expect(realExtensions).toHaveLength(1)
       expect(realExtensions[0]).toEqual(
         expect.objectContaining({

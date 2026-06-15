@@ -1,9 +1,9 @@
 import {LoadingBar} from './LoadingBar.js'
-import {handleCtrlC} from '../../ui.js'
+import {handleCtrlC, useComplete} from '../../ui.js'
 import {TokenizedString} from '../../../../public/node/output.js'
 import React, {useEffect, useState} from 'react'
 
-import {useApp, useInput, useStdin} from 'ink'
+import {useInput, useStdin} from 'ink'
 
 interface SingleTaskProps<T> {
   title: TokenizedString
@@ -16,7 +16,8 @@ interface SingleTaskProps<T> {
 const SingleTask = <T,>({task, title, onComplete, onAbort, noColor}: SingleTaskProps<T>) => {
   const [status, setStatus] = useState(title)
   const [isDone, setIsDone] = useState(false)
-  const {exit: unmountInk} = useApp()
+  const [taskResult, setTaskResult] = useState<{error?: Error} | null>(null)
+  const complete = useComplete()
   const {isRawModeSupported} = useStdin()
 
   useInput(
@@ -35,13 +36,19 @@ const SingleTask = <T,>({task, title, onComplete, onAbort, noColor}: SingleTaskP
       .then((result) => {
         setIsDone(true)
         onComplete?.(result)
-        unmountInk()
+        setTaskResult({})
       })
       .catch((error) => {
         setIsDone(true)
-        unmountInk(error)
+        setTaskResult({error})
       })
-  }, [task, unmountInk, onComplete])
+  }, [task, onComplete])
+
+  useEffect(() => {
+    if (taskResult !== null) {
+      complete(taskResult.error)
+    }
+  }, [taskResult, complete])
 
   if (isDone) {
     // clear things once done

@@ -21,6 +21,8 @@ export const environmentVariables = {
   env: 'SHOPIFY_CLI_ENV',
   firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
   noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
+  optOutInstrumentation: 'OPT_OUT_INSTRUMENTATION',
+  appAutomationToken: 'SHOPIFY_APP_AUTOMATION_TOKEN',
   partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
   runAsUser: 'SHOPIFY_RUN_AS_USER',
   serviceEnv: 'SHOPIFY_SERVICE_ENV',
@@ -46,6 +48,7 @@ export const environmentVariables = {
   neverUsePartnersApi: 'SHOPIFY_CLI_NEVER_USE_PARTNERS_API',
   skipNetworkLevelRetry: 'SHOPIFY_CLI_SKIP_NETWORK_LEVEL_RETRY',
   maxRequestTimeForNetworkCalls: 'SHOPIFY_CLI_MAX_REQUEST_TIME_FOR_NETWORK_CALLS',
+  disableImportScanning: 'SHOPIFY_CLI_DISABLE_IMPORT_SCANNING',
 }
 
 export const defaultThemeKitAccessDomain = 'theme-kit-access.shopifyapps.com'

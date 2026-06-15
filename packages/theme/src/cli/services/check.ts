@@ -2,6 +2,7 @@ import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {
   Severity,
   applyFixToString,
@@ -135,12 +136,9 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
   const offensesByFile = offenses.reduce((acc: OffenseMap, offense: Offense) => {
     const {uri} = offense
     const filePath = pathUtils.fsPath(uri)
-    if (!acc[filePath]) {
-      acc[filePath] = []
-    }
+    acc[filePath] ??= []
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    acc[filePath]!.push(offense)
+    acc[filePath].push(offense)
     return acc
   }, {})
 
@@ -295,7 +293,7 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string,
 
     // Depending on how the configs were merged during loadConfig, there may be
     // duplicate patterns to ignore. We can clean them before outputting.
-    ignore: [...new Set(ignore)],
+    ignore: uniq(ignore ?? []),
 
     rootUri,
 
@@ -310,7 +308,7 @@ export async function outputActiveChecks(root: string, configPath?: string, envi
   const {settings, ignore, checks} = await loadConfig(configPath, root)
   // Depending on how the configs were merged during loadConfig, there may be
   // duplicate patterns to ignore. We can clean them before outputting.
-  const ignorePatterns = [...new Set(ignore)]
+  const ignorePatterns = uniq(ignore ?? [])
 
   const checkCodes = Object.keys(settings)
 
