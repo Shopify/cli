@@ -6,7 +6,7 @@ This library provides components and utilities for connecting to the UI Extensio
 
 When consumed in a project, the command `ui-extensions-server-kit` becomes available to the project. The command can be used to build UI Extensions.
 
-To install this package in an UI Extension project, run:
+To install this package in a UI Extension project, run:
 
 ```sh
 npm install @shopify/ui-extensions-server-kit
@@ -20,12 +20,12 @@ yarn add @shopify/ui-extensions-server-kit
 
 ## Connecting to the Dev Server
 
-Import the `ExtensionServerProvider` component and pass a the Dev Server's websocket url. Once this is set, child components inside the `ExtensionServerProvider` can use the `useExtensionServerContext` hook to connect to the Dev Server and fetch the locally running extensions.
+Import the `ExtensionServerProvider` component and pass the Dev Server's websocket URL. Once this is set, child components inside the `ExtensionServerProvider` can use the `useExtensionServerContext` hook to connect to the Dev Server and fetch the locally running extensions.
 
 ```tsx
 import {ExtensionServerProvider, useExtensionServerContext} from '@shopify/ui-extensions-server-kit';
 
-function LocalExensionsComponent() {
+function LocalExtensionsComponent() {
   const {state: {extensions}} = useExtensionServerContext();
 
   // TODO: Something with the extensions
@@ -48,7 +48,7 @@ function App() {
   }, []);
 
   return (<ExtensionServerProvider options={connectionOptions}>
-            <LocalExensionsComponent/>
+            <LocalExtensionsComponent/>
           </ExtensionServerProvider>);
 }
 ```
@@ -58,7 +58,7 @@ function App() {
 The `useExtensionServerContext` hook provides a client you can use to subscribe to events dispatched by the Extension Server. You most likely don't need to subscribe to events manually but this is documented for completion.
 
 ```tsx
-function LocalExensionsComponent() {
+function LocalExtensionsComponent() {
   const {client} = useExtensionServerContext();
 
   useEffect(() => {
@@ -75,7 +75,7 @@ function LocalExensionsComponent() {
       'update',
       async ({app, extensions}) => {
          /**
-         * Dispatched everytime an extension has been updated. Update events can happen as a result of the following:
+         * Dispatched every time an extension has been updated. Update events can happen as a result of the following:
          * - extension script has changed
          * - localization JSON has changed
          * - clicking on the show/hide button in the Dev Console
@@ -91,7 +91,7 @@ function LocalExensionsComponent() {
 
 ## Auto-update of extensions
 
-By default the `useExtensionServerContext` handles different events and keep the extension state up to date so you don't have to manually subscribe to events:
+By default the `useExtensionServerContext` handles different events and keeps the extension state up to date so you don't have to manually subscribe to events:
 
 - Live reloading: The asset urls for extensions are appended with a new timestamp whenever the JS bundle is rebuilt and an `update` event is dispatched
 - Focus: The `focused` property is set to to `true` when a `focus` event is dispatched
@@ -104,7 +104,7 @@ By default the `useExtensionServerContext` handles different events and keep the
 The `useExtensionServerContext` hook provides a client you can use to mutate the data for the current app or extensions. This is used to provide new data to the Dev Server that can only be set by the runtime context of the extension.
 
 ```tsx
-function LocalExensionsComponent() {
+function LocalExtensionsComponent() {
   const {client} = useExtensionServerContext();
 
   // Call this function to persist data changes to the Dev Server
@@ -121,7 +121,7 @@ function LocalExensionsComponent() {
 }
 ```
 
-## Emiting short-lived events
+## Emitting short-lived events
 
 The `useExtensionServerContext` hook provides a client you can use to emit transient events to the Dev Server that can be dispatched to all listeners. Here is an example of how the Dev Console work with Admin to handle the navigation event on an extension:
 
@@ -136,7 +136,7 @@ function DevConsole() {
   return <button onClick={navigateToExtension}>Navigate to the extension</button>
 }
 
-function AdminLocalExensionsComponent() {
+function AdminLocalExtensionsComponent() {
   const {client} = useExtensionServerContext();
 
    useEffect(() => {
