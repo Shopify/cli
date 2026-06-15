@@ -66,6 +66,21 @@ describe('listStoredStoreAuthSummaries', () => {
     })
   })
 
+  test('sorts stores alphabetically when auth timestamps match', async () => {
+    await inTemporaryDirectory((cwd) => {
+      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const acquiredAt = '2026-03-27T00:00:00.000Z'
+
+      setStoredStoreAppSession(buildSession({store: 'b-shop.myshopify.com', acquiredAt}), storage as any)
+      setStoredStoreAppSession(buildSession({store: 'a-shop.myshopify.com', acquiredAt}), storage as any)
+
+      expect(listStoredStoreAuthSummaries(storage as any).map((summary) => summary.store)).toEqual([
+        'a-shop.myshopify.com',
+        'b-shop.myshopify.com',
+      ])
+    })
+  })
+
   test('projects associated user metadata without exposing tokens', async () => {
     await inTemporaryDirectory((cwd) => {
       const storage = new LocalStorage<Record<string, unknown>>({cwd})

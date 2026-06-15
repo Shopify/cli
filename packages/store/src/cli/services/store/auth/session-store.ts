@@ -1,5 +1,6 @@
 import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './config.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
+import {type JsonMapType} from '@shopify/cli-kit/node/toml'
 
 /**
  * Discriminator for a stored store auth session.
@@ -61,6 +62,8 @@ interface StoredStoreAppSessionBucket {
 interface StoreSessionSchema {
   [key: string]: StoredStoreAppSessionBucket
 }
+
+type RawStoreSessionStorage = JsonMapType
 
 let _storeSessionStorage: LocalStorage<StoreSessionSchema> | undefined
 
@@ -205,8 +208,8 @@ function readStoredStoreAppSessionBucket(
 // `conf` persists dotted keys as nested objects. Store-auth callers should not
 // learn that layout directly; this helper keeps the current traversal private to
 // the persistence seam while higher-level code projects summaries instead.
-function readRawStoreSessionStorage(storage: LocalStorage<StoreSessionSchema>): Record<string, unknown> {
-  return (storage as unknown as {config: {store: Record<string, unknown>}}).config.store ?? {}
+function readRawStoreSessionStorage(storage: LocalStorage<StoreSessionSchema>): RawStoreSessionStorage {
+  return (storage as unknown as {config?: {store?: RawStoreSessionStorage}}).config?.store ?? {}
 }
 
 function collectCurrentStoredStoreAppSessions(
@@ -224,7 +227,7 @@ function collectCurrentStoredStoreAppSessions(
     return
   }
 
-  for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+  for (const [childKey, childValue] of Object.entries(value as RawStoreSessionStorage)) {
     collectCurrentStoredStoreAppSessions(storage, `${store}.${childKey}`, childValue, sessions)
   }
 }
