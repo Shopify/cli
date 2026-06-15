@@ -37,7 +37,8 @@
     "test": "pnpm vitest run",
     "type-check:affected": "nx affected --target=type-check",
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
-    "update-bugsnag": "bin/update-bugsnag.js"
+    "update-bugsnag": "bin/update-bugsnag.js",
+    "verify:generated": "node bin/verify-generated.js"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
