@@ -3,6 +3,7 @@ packages:
   - workspace
 autoInstallPeers: true
 linkWorkspacePackages: true
+lockfileIncludeTarballUrl: true
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
