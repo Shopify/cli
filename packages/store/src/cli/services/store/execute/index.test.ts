@@ -1,10 +1,12 @@
 import {executeStoreOperation} from './index.js'
-import {prepareStoreExecuteRequest} from './request.js'
+import {prepareStoreExecuteRequest, type PreparedStoreExecuteRequest} from './request.js'
 import {getStoreGraphQLTarget} from './targets.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {parse, type OperationDefinitionNode} from 'graphql'
+import type {AdminStoreGraphQLContext} from './admin-context.js'
 
 vi.mock('./request.js')
 vi.mock('./targets.js')
@@ -12,22 +14,34 @@ vi.mock('../attribution.js')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('executeStoreOperation', () => {
-  const request = {
+  const request: PreparedStoreExecuteRequest = {
     query: 'query { shop { name } }',
-    parsedOperation: {operationDefinition: {operation: 'query'}},
+    parsedOperation: {operationDefinition: parse('query { shop { name } }').definitions[0] as OperationDefinitionNode},
     parsedVariables: {id: 'gid://shopify/Shop/1'},
     requestedVersion: '2025-10',
-  } as any
-  const context = {kind: 'admin-context'} as any
+  }
+  const context: AdminStoreGraphQLContext = {
+    adminSession: {token: 'token', storeFqdn: 'shop.myshopify.com'},
+    version: '2025-10',
+    session: {
+      store: 'shop.myshopify.com',
+      clientId: 'client-id',
+      userId: 'user-id',
+      accessToken: 'token',
+      scopes: [],
+      acquiredAt: '2026-06-15T00:00:00Z',
+    },
+  }
   const result = {data: {shop: {name: 'Test shop'}}}
   const target = {
+    id: 'admin',
     prepareContext: vi.fn(),
     execute: vi.fn(),
-  }
+  } satisfies ReturnType<typeof getStoreGraphQLTarget>
 
   beforeEach(() => {
     vi.mocked(prepareStoreExecuteRequest).mockResolvedValue(request)
-    vi.mocked(getStoreGraphQLTarget).mockReturnValue(target as any)
+    vi.mocked(getStoreGraphQLTarget).mockReturnValue(target)
     target.prepareContext.mockResolvedValue(context)
     target.execute.mockResolvedValue(result)
     vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
