@@ -5942,6 +5942,14 @@
       "descriptionWithMarkdown": "Creates a new app development store in your organization.",
       "enableJsonFlag": false,
       "flags": {
+        "feature-preview": {
+          "description": "The handle of a feature preview to enable on the new development store.",
+          "env": "SHOPIFY_FLAG_STORE_FEATURE_PREVIEW",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "feature-preview",
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -5976,12 +5984,34 @@
           "name": "organization-id",
           "type": "option"
         },
+        "plan": {
+          "description": "The Shopify plan to use for the new development store.",
+          "env": "SHOPIFY_FLAG_STORE_PLAN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "plan",
+          "options": [
+            "basic",
+            "grow",
+            "advanced",
+            "plus"
+          ],
+          "required": true,
+          "type": "option"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
+          "type": "boolean"
+        },
+        "with-demo-data": {
+          "allowNo": false,
+          "description": "Populate the new development store with demo data.",
+          "env": "SHOPIFY_FLAG_STORE_WITH_DEMO_DATA",
+          "name": "with-demo-data",
           "type": "boolean"
         }
       },

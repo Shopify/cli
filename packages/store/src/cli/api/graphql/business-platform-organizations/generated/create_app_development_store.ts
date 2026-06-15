@@ -7,6 +7,7 @@ export type CreateAppDevelopmentStoreMutationVariables = Types.Exact<{
   shopName: Types.Scalars['String']['input']
   priceLookupKey: Types.Scalars['String']['input']
   prepopulateTestData?: Types.InputMaybe<Types.Scalars['Boolean']['input']>
+  developerPreviewHandle?: Types.InputMaybe<Types.Scalars['String']['input']>
 }>
 
 export type CreateAppDevelopmentStoreMutation = {
@@ -40,6 +41,11 @@ export const CreateAppDevelopmentStore = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'prepopulateTestData'}},
           type: {kind: 'NamedType', name: {kind: 'Name', value: 'Boolean'}},
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'developerPreviewHandle'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -62,6 +68,11 @@ export const CreateAppDevelopmentStore = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'prepopulateTestData'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'prepopulateTestData'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'developerPreviewHandle'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'developerPreviewHandle'}},
               },
             ],
             selectionSet: {

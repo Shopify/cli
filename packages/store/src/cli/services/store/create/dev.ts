@@ -1,4 +1,5 @@
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {DEV_STORE_PLANS, DevStorePlan} from '../constants.js'
 import {CreateAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/create_app_development_store.js'
 import {
   PollStoreCreation,
@@ -17,7 +18,10 @@ const POLL_TIMEOUT_MS = 5 * 60 * 1000
 
 interface CreateDevStoreOptions {
   name: string
+  plan: DevStorePlan
   organizationId?: number
+  featurePreview?: string
+  withDemoData?: boolean
   json: boolean
 }
 
@@ -57,8 +61,9 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
     organizationId: org.id,
     variables: {
       shopName: options.name,
-      priceLookupKey: 'SHOPIFY_PLUS_APP_DEVELOPMENT',
-      prepopulateTestData: false,
+      priceLookupKey: DEV_STORE_PLANS[options.plan],
+      prepopulateTestData: options.withDemoData ?? false,
+      developerPreviewHandle: options.featurePreview,
     },
     unauthorizedHandler,
   })
@@ -125,6 +130,9 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
             name: options.name,
             domain: shopDomain,
             adminUrl: shopAdminUrl,
+            plan: options.plan,
+            ...(options.featurePreview ? {featurePreview: options.featurePreview} : {}),
+            demoData: options.withDemoData ?? false,
           },
           organization: {
             id: org.id,
@@ -138,7 +146,13 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
   } else {
     renderSuccess({
       headline: `Development store "${options.name}" created successfully.`,
-      body: [`Domain: ${shopDomain}`, `Admin: ${shopAdminUrl ?? 'N/A'}`],
+      body: [
+        `Domain: ${shopDomain}`,
+        `Admin: ${shopAdminUrl ?? 'N/A'}`,
+        `Plan: ${options.plan}`,
+        ...(options.featurePreview ? [`Feature preview: ${options.featurePreview}`] : []),
+        `Demo data: ${options.withDemoData ? 'enabled' : 'disabled'}`,
+      ],
     })
   }
 }
