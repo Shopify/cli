@@ -96,11 +96,6 @@ export interface Schemas {
       cmd_app_linked_config_source?: Optional<string>
       cmd_app_linked_config_uses_cli_managed_urls?: Optional<boolean>
       cmd_app_warning_api_key_deprecation_displayed?: Optional<boolean>
-      // How the app context (api_key, project_type, app_*, …) on this event was resolved:
-      // "current_directory" when the app was loaded from the command's working directory,
-      // "last_used" when it was replayed from the most-recently-used app because the command
-      // ran outside any app directory.
-      cmd_app_context_source?: Optional<string>
       cmd_app_deployment_mode?: Optional<string>
       cmd_app_validate_json?: Optional<boolean>
       cmd_app_validate_valid?: Optional<boolean>
