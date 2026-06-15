@@ -5785,7 +5785,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6097,12 +6097,11 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "organization-id",
-          "required": false,
           "type": "option"
         },
         "verbose": {

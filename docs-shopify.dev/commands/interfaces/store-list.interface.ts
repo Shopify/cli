@@ -17,7 +17,7 @@ export interface storelist {
   '--no-color'?: ''
 
   /**
-   * Filters the store list by organization. If omitted and you belong to more than one organization, you will be prompted to choose one.
+   * The numeric organization ID. Auto-selects if you belong to a single organization.
    * @environment SHOPIFY_FLAG_ORGANIZATION_ID
    */
   '--organization-id <value>'?: string

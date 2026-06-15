@@ -2221,8 +2221,8 @@ FLAGS
   -j, --json                     [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color
                                  output.
       --no-color                 [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --organization-id=<value>  [env: SHOPIFY_FLAG_ORGANIZATION_ID] Filters the store list by organization. If omitted
-                                 and you belong to more than one organization, you will be prompted to choose one.
+      --organization-id=<value>  [env: SHOPIFY_FLAG_ORGANIZATION_ID] The numeric organization ID. Auto-selects if you
+                                 belong to a single organization.
       --verbose                  [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
