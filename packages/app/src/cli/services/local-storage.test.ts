@@ -1,9 +1,12 @@
 import {
+  AppContextLocalStorageSchema,
   AppLocalStorageSchema,
   clearCachedAppInfo,
   clearCurrentConfigFile,
   getCachedAppInfo,
+  getMostRecentlyUsedAppContext,
   setCachedAppInfo,
+  setMostRecentlyUsedAppContext,
 } from './local-storage.js'
 import {describe, expect, test} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
@@ -137,6 +140,56 @@ describe('clearCurrentConfigFile', async () => {
 
       // Then
       expect(got).toBeUndefined()
+    })
+  })
+})
+
+describe('mostRecentlyUsedAppContext', async () => {
+  const snapshot = {
+    public: {api_key: 'mru-client-id', project_type: 'node', app_scopes: '["read_products"]'},
+    sensitive: {app_name: 'my-app'},
+  }
+
+  test('returns undefined before anything is stored', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const storage = new LocalStorage<AppContextLocalStorageSchema>({cwd})
+
+      // When
+      const got = getMostRecentlyUsedAppContext(storage)
+
+      // Then
+      expect(got).toBeUndefined()
+    })
+  })
+
+  test('round-trips the full app context snapshot', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const storage = new LocalStorage<AppContextLocalStorageSchema>({cwd})
+
+      // When
+      setMostRecentlyUsedAppContext(snapshot, storage)
+      const got = getMostRecentlyUsedAppContext(storage)
+
+      // Then
+      expect(got).toEqual(snapshot)
+    })
+  })
+
+  test('overwrites the previously stored app context', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const storage = new LocalStorage<AppContextLocalStorageSchema>({cwd})
+      setMostRecentlyUsedAppContext(snapshot, storage)
+
+      // When
+      const next = {public: {api_key: 'new-client-id'}, sensitive: {}}
+      setMostRecentlyUsedAppContext(next, storage)
+      const got = getMostRecentlyUsedAppContext(storage)
+
+      // Then
+      expect(got).toEqual(next)
     })
   })
 })

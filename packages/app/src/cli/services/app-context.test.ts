@@ -517,25 +517,53 @@ describe('logAppContextMetadataIfAuthenticated', () => {
     api_version = "2024-01"
   `
 
+  let getMruSpy: ReturnType<typeof vi.spyOn>
+  let setMruSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     vi.mocked(loadLocalExtensionsSpecifications).mockResolvedValue([])
     vi.mocked(sessionExists).mockResolvedValue(true)
+    // Stub the MRU store so tests never touch the real on-disk LocalStorage.
+    getMruSpy = vi.spyOn(localStorage, 'getMostRecentlyUsedAppContext').mockReturnValue(undefined)
+    setMruSpy = vi.spyOn(localStorage, 'setMostRecentlyUsedAppContext').mockImplementation(() => {})
   })
 
-  test('attaches api_key for an authenticated user inside an app project', async () => {
+  test('tags current_directory and records the full snapshot when loading from the app directory', async () => {
     await inTemporaryDirectory(async (tmp) => {
-      // Given
-      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
+      // Given — the loader (driven by localAppContext) populates the app_* block; we model
+      // its end state. The first read (the identity short-circuit) must see no api_key.
+      const loadedPublic = {
+        api_key: 'test-client-id',
+        project_type: 'node',
+        app_scopes: '["read_products"]',
+        cmd_app_linked_config_name: 'shopify.app.toml',
+        cmd_app_warning_api_key_deprecation_displayed: false,
+      }
+      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValueOnce({}).mockReturnValue(loadedPublic)
+      vi.spyOn(metadata, 'getAllSensitiveMetadata').mockReturnValue({app_name: 'test-app'})
       const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
       await writeAppConfig(tmp, linkedAppToml)
 
       // When
       await logAppContextMetadataIfAuthenticated(tmp)
 
-      // Then — the local app load emits its own metadata too, so find the call
-      // carrying the api_key (only this helper emits it in the local-load path).
+      // Then — emits api_key tagged as a real directory load (the local load adds its own
+      // metadata too, so find the call carrying api_key + the source tag).
       const payloads = await Promise.all(addSpy.mock.calls.map((call) => call[0]()))
-      expect(payloads).toContainEqual(expect.objectContaining({api_key: 'test-client-id'}))
+      expect(payloads).toContainEqual(
+        expect.objectContaining({api_key: 'test-client-id', cmd_app_context_source: 'current_directory'}),
+      )
+      // And snapshots the full app-context block — keeping app identity/shape fields,
+      // dropping per-run flags like cmd_app_warning_*, plus the sensitive app_name.
+      expect(setMruSpy).toHaveBeenCalledWith({
+        public: {
+          api_key: 'test-client-id',
+          project_type: 'node',
+          app_scopes: '["read_products"]',
+          cmd_app_linked_config_name: 'shopify.app.toml',
+        },
+        sensitive: {app_name: 'test-app'},
+      })
     })
   })
 
@@ -555,24 +583,64 @@ describe('logAppContextMetadataIfAuthenticated', () => {
     })
   })
 
-  test('short-circuits without checking the session when api_key is already set', async () => {
-    // Given — a command like `app dev` already populated identity
-    vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({api_key: 'already-set'})
+  test('records the snapshot and short-circuits without checking the session when api_key is already set', async () => {
+    // Given — a command like `app dev` already populated the full app context
+    const loadedPublic = {
+      api_key: 'already-set',
+      project_type: 'node',
+      app_scopes: '["x"]',
+      cmd_app_warning_api_key_deprecation_displayed: false,
+    }
+    vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue(loadedPublic)
+    vi.spyOn(metadata, 'getAllSensitiveMetadata').mockReturnValue({app_name: 'already-app'})
     const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
 
     // When
     await logAppContextMetadataIfAuthenticated('/does/not/matter')
 
-    // Then
+    // Then — only tags the source, does no load, and records the full snapshot.
+    const payloads = await Promise.all(addSpy.mock.calls.map((call) => call[0]()))
+    expect(payloads).toEqual([{cmd_app_context_source: 'current_directory'}])
     expect(sessionExists).not.toHaveBeenCalled()
-    expect(addSpy).not.toHaveBeenCalled()
+    expect(setMruSpy).toHaveBeenCalledWith({
+      public: {api_key: 'already-set', project_type: 'node', app_scopes: '["x"]'},
+      sensitive: {app_name: 'already-app'},
+    })
   })
 
-  test('never throws and adds nothing when the directory is not an app project', async () => {
+  test('replays the full most-recently-used context tagged last_used when the directory is not an app project', async () => {
     await inTemporaryDirectory(async (tmp) => {
-      // Given — no shopify.app.toml on disk
+      // Given — no shopify.app.toml on disk, but we have a remembered app
       vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
       const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
+      const addSensitiveSpy = vi.spyOn(metadata, 'addSensitiveMetadata')
+      getMruSpy.mockReturnValue({
+        public: {api_key: 'mru-key', project_type: 'node', app_scopes: '["read_products"]'},
+        sensitive: {app_name: 'mru-app'},
+      })
+
+      // When
+      await logAppContextMetadataIfAuthenticated(tmp)
+
+      // Then — replays the whole public block tagged as deduced, plus the sensitive app_name.
+      const payloads = await Promise.all(addSpy.mock.calls.map((call) => call[0]()))
+      expect(payloads).toContainEqual({
+        api_key: 'mru-key',
+        project_type: 'node',
+        app_scopes: '["read_products"]',
+        cmd_app_context_source: 'last_used',
+      })
+      const sensitivePayloads = await Promise.all(addSensitiveSpy.mock.calls.map((call) => call[0]()))
+      expect(sensitivePayloads).toContainEqual({app_name: 'mru-app'})
+    })
+  })
+
+  test('never throws and adds nothing when the directory is not an app project and there is no MRU', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given — no shopify.app.toml on disk and no remembered app
+      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
+      const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
+      getMruSpy.mockReturnValue(undefined)
 
       // When / Then
       await expect(logAppContextMetadataIfAuthenticated(tmp)).resolves.toBeUndefined()
