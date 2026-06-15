@@ -46,7 +46,7 @@ function renderTextResult(result: ListStoresResult): void {
   }
 
   renderOrganizationTable(result.stores)
-  outputInfo('To list stores authenticated directly with `shopify store auth`, run `shopify auth list`.')
+  outputInfo('To list stores authenticated directly with `shopify store auth`, run `shopify store auth list`.')
 }
 
 function renderOrganizationTable(stores: StoreListEntry[]): void {
@@ -71,7 +71,7 @@ function emptyStateMessage(result: ListStoresResult): string {
     return [
       'No stores were returned for the current CLI session.',
       '',
-      'Run `shopify auth list` to list stores authenticated directly with `shopify store auth`.',
+      'Run `shopify store auth list` to list stores authenticated directly with `shopify store auth`.',
     ].join('\n')
   }
 
@@ -82,7 +82,7 @@ function emptyStateMessage(result: ListStoresResult): string {
   return [
     'No stores found in your Shopify organization.',
     '',
-    'Run `shopify auth list` to list stores authenticated directly with `shopify store auth`.',
+    'Run `shopify store auth list` to list stores authenticated directly with `shopify store auth`.',
   ].join('\n')
 }
 

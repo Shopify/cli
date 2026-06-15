@@ -30,7 +30,6 @@
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
-* [`shopify auth list`](#shopify-auth-list)
 * [`shopify auth login`](#shopify-auth-login)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
@@ -1046,33 +1045,6 @@ DESCRIPTION
   - Trigger requests are rate-limited using the "Partner API rate limit"
   (https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
-```
-
-## `shopify auth list`
-
-List stores authenticated directly with store auth.
-
-```
-USAGE
-  $ shopify auth list [-j] [--no-color] [--verbose]
-
-FLAGS
-  -j, --json      [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-      --no-color  [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --verbose   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
-
-DESCRIPTION
-  List stores authenticated directly with store auth.
-
-  Lists stores authenticated directly on this machine with `shopify store auth`.
-
-  Use this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.
-  To list stores in a Shopify organization, run `shopify store list`.
-
-EXAMPLES
-  $ shopify auth list
-
-  $ shopify auth list --json
 ```
 
 ## `shopify auth login`

@@ -2577,44 +2577,6 @@
       "value": "export interface appwebhooktrigger {\n  /**\n   * The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:\n   * @environment SHOPIFY_FLAG_ADDRESS\n   */\n  '--address <value>'?: string\n\n  /**\n   * The API Version of the webhook topic.\n   * @environment SHOPIFY_FLAG_API_VERSION\n   */\n  '--api-version <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.\n   * @environment SHOPIFY_FLAG_CLIENT_SECRET\n   */\n  '--client-secret <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Method chosen to deliver the topic payload. If not passed, it's inferred from the address.\n   * @environment SHOPIFY_FLAG_DELIVERY_METHOD\n   */\n  '--delivery-method <value>'?: string\n\n  /**\n   * This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.\n   * @environment SHOPIFY_FLAG_HELP\n   */\n  '--help'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The requested webhook topic.\n   * @environment SHOPIFY_FLAG_TOPIC\n   */\n  '--topic <value>'?: string\n}"
     }
   },
-  "authlist": {
-    "docs-shopify.dev/commands/interfaces/auth-list.interface.ts": {
-      "filePath": "docs-shopify.dev/commands/interfaces/auth-list.interface.ts",
-      "name": "authlist",
-      "description": "The following flags are available for the `auth list` command:",
-      "isPublicDocs": true,
-      "members": [
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/auth-list.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "--no-color",
-          "value": "''",
-          "description": "Disable color output.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/auth-list.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "--verbose",
-          "value": "''",
-          "description": "Increase the verbosity of the output.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/auth-list.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "-j, --json",
-          "value": "''",
-          "description": "Output the result as JSON. Automatically disables color output.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_JSON"
-        }
-      ],
-      "value": "export interface authlist {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
-    }
-  },
   "authlogin": {
     "docs-shopify.dev/commands/interfaces/auth-login.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",

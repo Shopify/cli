@@ -7,7 +7,7 @@ describe('writeStoreAuthListResult', () => {
     mockAndCaptureOutput().clear()
   })
 
-  test('renders direct store-auth sessions with subdomain, account, scopes, and connected date', () => {
+  test('renders direct store-auth sessions with subdomain and connected date', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreAuthListResult(
@@ -26,14 +26,14 @@ describe('writeStoreAuthListResult', () => {
       'text',
     )
 
-    expect(output.info()).toContain('Stores authenticated directly with `shopify store auth`')
-    expect(output.info()).toContain('Store')
+    expect(output.info()).toContain('Subdomain')
+    expect(output.info()).toContain('Connected')
     expect(output.info()).toContain('my-shop')
     expect(output.info()).not.toContain('my-shop.myshopify.com')
-    expect(output.info()).toContain('merchant@example.com')
-    expect(output.info()).toContain('read_products, write_products')
     expect(output.info()).toContain('May 22, 2026')
-    expect(output.info()).toContain('shopify store list')
+    expect(output.info()).not.toContain('merchant@example.com')
+    expect(output.info()).not.toContain('read_products, write_products')
+    expect(output.info()).not.toContain('shopify store list')
   })
 
   test('renders an empty state with auth and organization-list guidance', () => {
@@ -46,22 +46,48 @@ describe('writeStoreAuthListResult', () => {
     expect(output.info()).toContain('shopify store list')
   })
 
-  test('writes a deterministic JSON document', () => {
+  test('writes a deterministic JSON document with only subdomain and connected date', () => {
     const output = mockAndCaptureOutput()
-    const result = {
+
+    writeStoreAuthListResult(
+      {
+        sessions: [
+          {
+            kind: 'store',
+            store: 'shop.myshopify.com',
+            userId: '42',
+            scopes: ['read_products'],
+            connectedAt: '2026-05-22T00:00:00Z',
+            associatedUser: {id: 42, email: 'merchant@example.com'},
+          },
+        ],
+      },
+      'json',
+    )
+
+    expect(JSON.parse(output.output())).toEqual({
       sessions: [
         {
-          kind: 'store' as const,
-          store: 'shop.myshopify.com',
-          userId: '42',
-          scopes: ['read_products'],
-          connectedAt: '2026-05-22T00:00:00Z',
+          subdomain: 'shop',
+          connected: 'May 22, 2026',
         },
       ],
-    }
+    })
+  })
 
-    writeStoreAuthListResult(result, 'json')
+  test('includes empty-state guidance in JSON output when there are no sessions', () => {
+    const output = mockAndCaptureOutput()
 
-    expect(JSON.parse(output.output())).toEqual(result)
+    writeStoreAuthListResult({sessions: []}, 'json')
+
+    expect(JSON.parse(output.output())).toEqual({
+      sessions: [],
+      message: [
+        'No stores are authenticated directly with `shopify store auth`.',
+        '',
+        'Run `shopify store auth --store <domain> --scopes <scopes>` to authenticate a store.',
+        'Run `shopify store list` to list stores in a Shopify organization.',
+      ].join('\n'),
+    })
   })
 })
