@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
+import {uniq} from '@shopify/cli-kit/common/array'
 import {describe, test, expect} from 'vitest'
 import glob from 'fast-glob'
 import * as fs from 'fs/promises'
@@ -91,7 +92,7 @@ describe('Node dependency version sync', () => {
         }
       }
 
-      const uniqueVersions = [...new Set(depVersions.map((ver) => ver.version))]
+      const uniqueVersions = uniq(depVersions.map((ver) => ver.version))
       if (uniqueVersions.length > 1) {
         different.push({dep, versions: depVersions})
       }
