@@ -14,7 +14,6 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {getAvailableTCPPort, checkPortAvailability} from '@shopify/cli-kit/node/tcp'
-import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -75,9 +74,10 @@ beforeEach(() => {
   vi.mocked(setupDevServer).mockReturnValue({
     workPromise: Promise.resolve(),
     serverStart: vi.fn().mockResolvedValue({close: vi.fn().mockResolvedValue(undefined)}),
-    dispatchEvent: vi.fn(),
+    dispatchEvent: vi.fn() as ReturnType<typeof setupDevServer>['dispatchEvent'],
     renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
     backgroundJobPromise: Promise.resolve(undefined as never),
+    resolveBackgroundJob: vi.fn(),
   })
   vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
   vi.mocked(emptyThemeExtFileSystem).mockReturnValue({files: new Map()} as never)

@@ -72,6 +72,8 @@ describe('createDevelopmentExtensionServer', () => {
       host: '127.0.0.1',
       port: 9293,
       liveReload: 'hot-reload',
+      standardEventsDevBundle: false,
+      standardEventsInspector: false,
       open: false,
       themeEditorSync: false,
       errorOverlay: 'default',
