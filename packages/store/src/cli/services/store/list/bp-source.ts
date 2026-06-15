@@ -1,5 +1,6 @@
 import {STORE_LIST_LIMIT} from './constants.js'
 import {type StoreListEntry} from './types.js'
+import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
 import {storeTypeHandle} from '../store-type.js'
 import {
   ListAccessibleShops,
@@ -7,8 +8,6 @@ import {
 } from '../../../api/graphql/business-platform-organizations/generated/list_accessible_shops.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {extractHost} from '@shopify/cli-kit/common/url'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import {type UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {type Organization} from '@shopify/organizations'
 
 interface ListBusinessPlatformStoresOptions {
@@ -19,7 +18,7 @@ interface ListBusinessPlatformStoresOptions {
 interface BusinessPlatformStoreListResult {
   entries: StoreListEntry[]
   // True when the selected organization had more stores than we fetched (server-side limited).
-  hasMore?: boolean
+  hasMore: boolean
 }
 
 export async function listBusinessPlatformStores(
@@ -29,7 +28,7 @@ export async function listBusinessPlatformStores(
 
   return {
     entries: entries.sort(byCreatedAtDescending),
-    ...(hasMore ? {hasMore: true} : {}),
+    hasMore,
   }
 }
 
@@ -39,10 +38,7 @@ async function fetchOrganizationStores(
   token: string,
   organization: Organization,
 ): Promise<{entries: StoreListEntry[]; hasMore: boolean}> {
-  const unauthorizedHandler: UnauthorizedHandler = {
-    type: 'token_refresh',
-    handler: async () => ({token: await ensureAuthenticatedBusinessPlatform()}),
-  }
+  const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
   const result = await businessPlatformOrganizationsRequestDoc({
     query: ListAccessibleShops,

@@ -4,7 +4,8 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../u
 import {OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt} from '../../../prompts/dev.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {selectOrganizationFromList} from '@shopify/organizations'
+import {fetchOrganizations} from '../../dev/fetch.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -21,6 +22,9 @@ vi.mock('../../../models/app/validation/multi-cli-warning.js')
 beforeEach(async () => {
   // Default mock for selectConfigName - tests that need a specific value can override
   vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
+  vi.mocked(fetchOrganizations).mockResolvedValue([
+    {id: '12345', businessName: 'test', source: OrganizationSource.BusinessPlatform},
+  ])
 })
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
@@ -83,7 +87,7 @@ api_version = "2024-01"
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('A user provided name')
-      vi.mocked(selectOrganizationFromList).mockResolvedValue({
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
         id: '12345',
         businessName: 'test',
       })
@@ -176,7 +180,7 @@ api_version = "2025-07"
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('My App')
-      vi.mocked(selectOrganizationFromList).mockResolvedValue({
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
         id: '12345',
         businessName: 'test',
       })
@@ -224,7 +228,7 @@ required = true
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('My App')
-      vi.mocked(selectOrganizationFromList).mockResolvedValue({
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
         id: '12345',
         businessName: 'test',
       })

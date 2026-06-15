@@ -65,17 +65,3 @@ export function extractMyshopifyHandle(value: string | null | undefined): string
   const match = host.match(/^([^.]+)\.myshopify\.com$/)
   return match ? match[1] : undefined
 }
-
-/**
- * Extracts the leading subdomain label from a URL or host, across environments — e.g.
- * `acme.myshopify.com`, `acme.shop.dev`, or local development hosts — rather than assuming a
- * `*.myshopify.com` domain.
- *
- * @param value - A URL or host string, possibly null/undefined.
- * @returns The first DNS label, or undefined when no host can be extracted.
- */
-export function extractSubdomain(value: string | null | undefined): string | undefined {
-  const host = extractHost(value)
-  if (!host) return undefined
-  return host.split('.')[0]
-}

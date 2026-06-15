@@ -1,10 +1,10 @@
-import {listBusinessPlatformStores} from './bp-source.js'
-import {STORE_LIST_LIMIT} from './constants.js'
-import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './types.js'
+import {listBusinessPlatformStores} from './list/bp-source.js'
+import {STORE_LIST_LIMIT} from './list/constants.js'
+import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './list/types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import {isTTY} from '@shopify/cli-kit/node/ui'
-import {fetchOrganizationsWithAccessInfo, selectOrganizationFromList, type Organization} from '@shopify/organizations'
+import {isTTY, renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {fetchOrganizationsWithAccessInfo, type Organization} from '@shopify/organizations'
 
 interface ListStoresOptions {
   organizationId?: number
@@ -33,13 +33,13 @@ export async function listStores(options: ListStoresOptions = {}): Promise<ListS
     )
   }
 
-  const selectedOrganization = await selectOrganizationFromList(
+  const selectedOrganization = await selectStoreListOrganization(
     organizationsResult.organizations,
-    options.organizationId?.toString(),
+    options.organizationId,
   )
 
   const result = await listBusinessPlatformStores({token, organization: selectedOrganization})
-  const {stores, truncated} = limitEntries(result.entries, result.hasMore ?? false)
+  const {stores, truncated} = limitEntries(result.entries, result.hasMore)
 
   return {
     stores,
@@ -47,6 +47,40 @@ export async function listStores(options: ListStoresOptions = {}): Promise<ListS
     organization: storeListOrganization(selectedOrganization),
     ...(truncated ? {truncated: true} : {}),
   }
+}
+
+async function selectStoreListOrganization(
+  organizations: Organization[],
+  organizationId?: number,
+): Promise<Organization> {
+  if (organizationId) {
+    const selectedOrganization = organizations.find((organization) => organization.id === organizationId.toString())
+    if (!selectedOrganization) {
+      throw new AbortError(
+        `Organization with ID ${organizationId} not found.`,
+        `Available organizations: ${organizations
+          .map((organization) => `${organization.businessName} (${organization.id})`)
+          .join(', ')}`,
+      )
+    }
+    return selectedOrganization
+  }
+
+  if (organizations.length === 1) {
+    return organizations[0]!
+  }
+
+  const uniqueNames = new Set(organizations.map((organization) => organization.businessName))
+  const hasDuplicateNames = uniqueNames.size < organizations.length
+  const selectedOrganizationId = await renderAutocompletePrompt({
+    message: 'Which organization do you want to use?',
+    choices: organizations.map((organization) => ({
+      label: hasDuplicateNames ? `${organization.businessName} (${organization.id})` : organization.businessName,
+      value: organization.id,
+    })),
+  })
+
+  return organizations.find((organization) => organization.id === selectedOrganizationId)!
 }
 
 function storeListOrganization(organization: Organization): StoreListOrganization {

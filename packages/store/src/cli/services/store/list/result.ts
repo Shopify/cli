@@ -1,10 +1,9 @@
 import {STORE_LIST_LIMIT} from './constants.js'
 import {type ListStoresResult, type StoreListEntry} from './types.js'
+import {extractSubdomain, formatShortDate} from '../display.js'
 import {storeTypeLabel} from '../store-type.js'
 import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderTable} from '@shopify/cli-kit/node/ui'
-import {extractSubdomain} from '@shopify/cli-kit/common/url'
-import {formatShortDate} from '@shopify/cli-kit/common/string'
 
 export function writeStoreListResult(result: ListStoresResult, format: 'text' | 'json'): void {
   // Human diagnostics always go to stderr so they never corrupt the JSON document on stdout, and so
@@ -17,8 +16,8 @@ export function writeStoreListResult(result: ListStoresResult, format: 'text' | 
       JSON.stringify(
         {
           stores: result.stores,
-          source: result.source,
           ...(result.organization ? {organization: result.organization} : {}),
+          ...(result.notice ? {notice: result.notice} : {}),
           ...(result.truncated ? {truncated: true} : {}),
         },
         null,

@@ -1,7 +1,6 @@
 import {
   formatDate,
   formatLocalDate,
-  formatShortDate,
   getRandomName,
   joinWithAnd,
   linesToColumns,
@@ -106,24 +105,6 @@ describe('formatDate', () => {
 
     // Then
     expect(str).toBe('2020-01-01 00:00:00')
-  })
-})
-
-describe('formatShortDate', () => {
-  test('formats an ISO timestamp as MMM DD, YYYY in UTC', () => {
-    expect(formatShortDate('2026-05-22T16:26:20Z')).toBe('May 22, 2026')
-  })
-
-  test('zero-pads the day and uses UTC', () => {
-    expect(formatShortDate('2026-01-05T23:59:59Z')).toBe('Jan 05, 2026')
-  })
-
-  test('accepts a Date instance', () => {
-    expect(formatShortDate(new Date('2025-12-15T12:00:00Z'))).toBe('Dec 15, 2025')
-  })
-
-  test('returns an empty string for an unparseable value', () => {
-    expect(formatShortDate('not-a-date')).toBe('')
   })
 })
 

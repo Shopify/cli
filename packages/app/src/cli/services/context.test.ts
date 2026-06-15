@@ -33,7 +33,7 @@ import {
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {selectOrganizationFromList} from '@shopify/organizations'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -145,7 +145,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-  vi.mocked(selectOrganizationFromList).mockResolvedValue(ORG1)
+  vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])

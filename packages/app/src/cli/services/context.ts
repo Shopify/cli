@@ -23,7 +23,7 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
-import {selectOrganizationFromList} from '@shopify/organizations'
+import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
@@ -320,8 +320,10 @@ export async function fetchOrCreateOrganizationApp(
  */
 export async function selectOrg(): Promise<Organization> {
   const orgs = await fetchOrganizations()
-  const org = await selectOrganizationFromList(orgs)
-  return org
+  if (orgs.length === 0) {
+    throw new AbortError('No organizations found.', 'Make sure you have access to a Shopify organization.')
+  }
+  return selectOrganizationPrompt(orgs)
 }
 
 interface ReusedValuesOptions {

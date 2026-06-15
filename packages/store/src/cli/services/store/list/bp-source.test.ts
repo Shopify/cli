@@ -79,6 +79,7 @@ describe('listBusinessPlatformStores', () => {
           type: 'production',
         },
       ],
+      hasMore: false,
     })
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({token: 'bp-token', organizationId: '1234', variables: {first: 250}}),
@@ -105,7 +106,7 @@ describe('listBusinessPlatformStores', () => {
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
 
-    expect(result).toEqual({entries: []})
+    expect(result).toEqual({entries: [], hasMore: false})
   })
 
   test('fetches a single bounded page for the selected organization and orders newest first', async () => {
@@ -219,6 +220,6 @@ describe('listBusinessPlatformStores', () => {
     const requestOptions = vi.mocked(businessPlatformOrganizationsRequestDoc).mock.calls[0]?.[0] as any
     await requestOptions.unauthorizedHandler.handler()
 
-    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith()
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: undefined})
   })
 })

@@ -1,9 +1,9 @@
 import StoreList from './list.js'
-import {listStores} from '../../services/store/list/index.js'
+import {listStores} from '../../services/store/list.js'
 import {writeStoreListResult} from '../../services/store/list/result.js'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('../../services/store/list/index.js')
+vi.mock('../../services/store/list.js')
 vi.mock('../../services/store/list/result.js')
 vi.mock('../../services/store/attribution.js')
 

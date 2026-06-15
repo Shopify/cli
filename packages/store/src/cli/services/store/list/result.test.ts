@@ -96,7 +96,7 @@ describe('writeStoreListResult', () => {
     expect(output.info()).toContain('No stores found in your Shopify organization.')
   })
 
-  test('emits a {stores, source, organization} JSON document on stdout', () => {
+  test('emits a {stores, organization} JSON document on stdout', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult(
@@ -130,9 +130,27 @@ describe('writeStoreListResult', () => {
           type: 'dev',
         },
       ],
-      source: 'organization',
       organization,
     })
+  })
+
+  test('includes unresolved-session notices in JSON output', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        stores: [],
+        notice: "Couldn't resolve a Shopify account for the current CLI session.",
+      },
+      'json',
+    )
+
+    expect(JSON.parse(output.output().slice(output.output().indexOf('{')))).toEqual({
+      stores: [],
+      notice: "Couldn't resolve a Shopify account for the current CLI session.",
+    })
+    expect(output.warn()).toContain("Couldn't resolve a Shopify account for the current CLI session.")
   })
 
   test('warns on stderr when the listing was truncated, in both text and json', () => {

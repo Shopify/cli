@@ -191,6 +191,7 @@ packages/ui-extensions-server-kit/index.*
 packages/ui-extensions-server-kit/testing.*
 packages/ui-extensions-server-kit/dist
 packages/app/src/cli/api/graphql/*/*_schema.graphql
+packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql
 packages/ui-extensions-test-utils/*.d.ts
 packages/ui-extensions-test-utils/!typings.d.ts
 packages/ui-extensions-test-utils/dist

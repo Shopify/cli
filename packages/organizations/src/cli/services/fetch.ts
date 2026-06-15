@@ -22,8 +22,6 @@ export async function fetchOrganizationsWithAccessInfo(
   const unauthorizedHandler = {
     type: 'token_refresh' as const,
     handler: async () => {
-      if (token) return {}
-
       const newToken = await ensureAuthenticatedBusinessPlatform()
       return {token: newToken}
     },

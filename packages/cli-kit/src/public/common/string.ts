@@ -375,27 +375,6 @@ export function formatLocalDate(dateString: string): string {
   return formatDate(localDate)
 }
 
-const SHORT_DATE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-/**
- * Formats a date as a short calendar date like "May 22, 2026" (`MMM DD, YYYY`) in UTC.
- *
- * UTC keeps the output deterministic regardless of the machine timezone. Returns an empty string
- * when the value cannot be parsed into a valid date.
- *
- * @param value - A Date, epoch milliseconds, or a date string such as an ISO 8601 timestamp.
- * @returns The formatted date, or an empty string when the value is invalid.
- */
-export function formatShortDate(value: Date | number | string): string {
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-
-  const month = SHORT_DATE_MONTHS[date.getUTCMonth()]
-  if (!month) return ''
-
-  return `${month} ${String(date.getUTCDate()).padStart(2, '0')}, ${date.getUTCFullYear()}`
-}
-
 /**
  * Given a list of items, it returns a string with the items joined by commas and the last item joined by "and".
  * All items are wrapped in double quotes.

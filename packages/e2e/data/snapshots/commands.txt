@@ -95,8 +95,7 @@
 ├─ store
 │  ├─ auth
 │  ├─ execute
-│  ├─ info
-│  └─ list
+│  └─ info
 ├─ theme
 │  ├─ check
 │  ├─ console

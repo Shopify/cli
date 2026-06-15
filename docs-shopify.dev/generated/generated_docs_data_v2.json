@@ -4339,53 +4339,6 @@
       "value": "export interface storeinfo {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
-  "storelist": {
-    "docs-shopify.dev/commands/interfaces/store-list.interface.ts": {
-      "filePath": "docs-shopify.dev/commands/interfaces/store-list.interface.ts",
-      "name": "storelist",
-      "description": "The following flags are available for the `store list` command:",
-      "isPublicDocs": true,
-      "members": [
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/store-list.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "--no-color",
-          "value": "''",
-          "description": "Disable color output.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/store-list.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "--organization-id <value>",
-          "value": "string",
-          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_ORGANIZATION_ID"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/store-list.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "--verbose",
-          "value": "''",
-          "description": "Increase the verbosity of the output.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/store-list.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "-j, --json",
-          "value": "''",
-          "description": "Output the result as JSON. Automatically disables color output.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_JSON"
-        }
-      ],
-      "value": "export interface storelist {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The numeric organization ID. Auto-selects if you belong to a single organization.\n   * @environment SHOPIFY_FLAG_ORGANIZATION_ID\n   */\n  '--organization-id <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
-    }
-  },
   "themecheck": {
     "docs-shopify.dev/commands/interfaces/theme-check.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",

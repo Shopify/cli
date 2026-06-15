@@ -6071,8 +6071,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nRun `shopify organization list` to find organization IDs.",
-      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, provide `--organization-id`.\n\nRun `shopify organization list` to find organization IDs.",
+      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
+      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
       "examples": [
         "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --organization-id 1234567",
@@ -6114,6 +6114,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:list",

@@ -103,8 +103,8 @@ describe('fetchOrganizationsWithAccessInfo', () => {
     expect(businessPlatformRequestDoc).toHaveBeenCalledWith(expect.objectContaining({token: 'pre-resolved-token'}))
   })
 
-  test('does not replace a provided token with ambient local auth on unauthorized', async () => {
-    vi.mocked(ensureAuthenticatedBusinessPlatform).mockClear()
+  test('refreshes a provided token on unauthorized without authenticating before the first request', async () => {
+    vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('refreshed-token')
     vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
       currentUserAccount: {
         uuid: 'user-uuid',
@@ -118,8 +118,9 @@ describe('fetchOrganizationsWithAccessInfo', () => {
     await fetchOrganizationsWithAccessInfo('pre-resolved-token')
 
     const requestOptions = vi.mocked(businessPlatformRequestDoc).mock.calls[0]?.[0] as any
-    await expect(requestOptions.unauthorizedHandler.handler()).resolves.toEqual({})
     expect(ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
+    await expect(requestOptions.unauthorizedHandler.handler()).resolves.toEqual({token: 'refreshed-token'})
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledOnce()
   })
 
   test('refreshes ambient local auth on unauthorized when no token is provided', async () => {

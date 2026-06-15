@@ -1,10 +1,10 @@
-import {listStores} from './index.js'
-import * as bpSource from './bp-source.js'
+import {listStores} from './list.js'
+import * as bpSource from './list/bp-source.js'
 import {describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {isTTY} from '@shopify/cli-kit/node/ui'
-import {fetchOrganizationsWithAccessInfo, selectOrganizationFromList} from '@shopify/organizations'
+import {isTTY, renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {fetchOrganizationsWithAccessInfo} from '@shopify/organizations'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -29,26 +29,17 @@ function mockOrganizations(organizations = [acme]) {
     organizations,
     currentUserResolved: true,
   })
-  vi.mocked(selectOrganizationFromList).mockImplementation(async (availableOrganizations, organizationId) => {
-    if (organizationId) {
-      const organization = availableOrganizations.find((candidate) => candidate.id === organizationId)
-      if (!organization) throw new AbortError(`Organization with ID ${organizationId} not found.`)
-      return organization
-    }
-
-    return availableOrganizations[0]!
-  })
 }
 
 describe('listStores', () => {
   test('returns organization results for the only available organization', async () => {
     mockOrganizations([acme])
-    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [orgEntry]})
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [orgEntry], hasMore: false})
 
     const result = await listStores()
 
     expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: acme})
-    expect(selectOrganizationFromList).toHaveBeenCalledWith([acme], undefined)
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
     expect(result).toEqual({
       stores: [orgEntry],
       source: 'organization',
@@ -58,23 +49,29 @@ describe('listStores', () => {
 
   test('uses the requested organization id when provided', async () => {
     mockOrganizations([acme, beta])
-    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: []})
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [], hasMore: false})
 
     await listStores({organizationId: 5678})
 
     expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: beta})
-    expect(selectOrganizationFromList).toHaveBeenCalledWith([acme, beta], '5678')
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
   })
 
-  test('uses the shared organization selector when multiple are available and no id is provided', async () => {
+  test('prompts for an organization when multiple are available and no id is provided', async () => {
     mockOrganizations([acme, beta])
     vi.mocked(isTTY).mockReturnValue(true)
-    vi.mocked(selectOrganizationFromList).mockResolvedValue(beta)
-    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: []})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('5678')
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [], hasMore: false})
 
     const result = await listStores()
 
-    expect(selectOrganizationFromList).toHaveBeenCalledWith([acme, beta], undefined)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which organization do you want to use?',
+      choices: [
+        {label: 'Acme', value: '1234'},
+        {label: 'Beta', value: '5678'},
+      ],
+    })
     expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: beta})
     expect(result.organization).toEqual({id: '5678', name: 'Beta'})
   })
@@ -85,7 +82,7 @@ describe('listStores', () => {
     vi.mocked(isTTY).mockReturnValue(false)
 
     await expect(listStores()).rejects.toThrow('An organization ID is required to list stores non-interactively.')
-    expect(selectOrganizationFromList).not.toHaveBeenCalled()
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
     expect(spy).not.toHaveBeenCalled()
   })
 
@@ -93,7 +90,7 @@ describe('listStores', () => {
     const spy = vi.spyOn(bpSource, 'listBusinessPlatformStores')
     mockOrganizations([acme, beta])
     vi.mocked(isTTY).mockReturnValue(true)
-    vi.mocked(selectOrganizationFromList).mockRejectedValue(new AbortError('User cancelled'))
+    vi.mocked(renderAutocompletePrompt).mockRejectedValue(new AbortError('User cancelled'))
 
     await expect(listStores()).rejects.toThrow('User cancelled')
     expect(spy).not.toHaveBeenCalled()
@@ -147,7 +144,7 @@ describe('listStores', () => {
       organizationId: '1234',
       organizationName: 'Acme',
     }))
-    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries})
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries, hasMore: false})
 
     const result = await listStores()
 
@@ -176,6 +173,7 @@ describe('listStores', () => {
       entries: [
         {store: 'shop.myshopify.com', createdAt: '2026-01-15T00:00:00Z', organizationId: '1', organizationName: 'Acme'},
       ],
+      hasMore: false,
     })
 
     const result = await listStores()
