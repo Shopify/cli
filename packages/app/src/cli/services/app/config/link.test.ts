@@ -115,6 +115,33 @@ describe('link', () => {
     })
   })
 
+  test('passes hidden organization and app name flags when creating a new linked app', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        organizationId: 'org-id',
+        newAppName: 'Secondary App',
+        developerPlatformClient,
+      }
+      await mockLoadOpaqueAppWithApp(tmp)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+
+      // When
+      await link(options)
+
+      // Then
+      expect(fetchOrCreateOrganizationApp).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-id',
+          name: 'Secondary App',
+          nameProvidedAsFlag: true,
+        }),
+      )
+    })
+  })
+
   test('does not ask for a name when the selected app is already linked', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given

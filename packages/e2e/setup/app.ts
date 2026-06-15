@@ -8,26 +8,6 @@ import * as fs from 'fs'
 import type {CLIContext, CLIProcess, ExecResult} from './cli.js'
 import type {Page} from '@playwright/test'
 
-/**
- * Race the given promise builders. When the winner resolves, losers are
- * cancelled via `AbortController.abort()` so their timers and `outputWaiters`
- * entries inside `waitForOutput` are freed immediately rather than lingering
- * until they hit their own timeout. Loser rejections are swallowed so they
- * don't surface as unhandled promise rejections.
- */
-async function raceWaiters<T>(build: (signal: AbortSignal) => Promise<T>[]): Promise<T> {
-  const ctrl = new AbortController()
-  const promises = build(ctrl.signal)
-  promises.forEach((promise) => {
-    promise.catch(() => {})
-  })
-  try {
-    return await Promise.race(promises)
-  } finally {
-    ctrl.abort()
-  }
-}
-
 // ---------------------------------------------------------------------------
 // CLI helpers — thin wrappers around cli.exec()
 // ---------------------------------------------------------------------------
@@ -231,24 +211,14 @@ export async function versionsList(
  * Run `app config link` to create a brand-new app on Shopify interactively.
  * Answers the prompts:
  *   --organization-id flag skips the organization picker
- *   "Create this project as a new app on Shopify?" → Yes (default)
- *   "App name" → appName
+ *   --new-app-name flag skips the create/select and app-name prompts
  *   "Configuration file name" → skipped via `--config` flag
  *
- * Env overrides (via PTY spawn):
- *   CI=undefined                        — drop the key so prompts render.
- *                                         Fixture default is CI=1; Ink's `is-in-ci`
- *                                         treats `'CI' in env` as CI even when ''.
- *                                         In CI mode Ink suppresses prompt frames
- *                                         (only emitted on unmount), so waitForOutput
- *                                         hangs until the process is killed.
- *   SHOPIFY_CLI_NEVER_USE_PARTNERS_API=1 — skip Partners client in fetchOrganizations.
- *                                         Without this, fetchOrganizations iterates
- *                                         AppManagement AND Partners sequentially.
+ * Env overrides:
+ *   SHOPIFY_CLI_NEVER_USE_PARTNERS_API=1 — keep the command on AppManagement.
  *                                         Partners requires SHOPIFY_CLI_PARTNERS_TOKEN
- *                                         (not set in OAuth-auth'd tests) and hangs
- *                                         for minutes trying to authenticate. The e2e
- *                                         test org (161686155) lives in AppManagement.
+ *                                         (not set in OAuth-auth'd tests) and can hang
+ *                                         for minutes trying to authenticate.
  */
 export async function configLink(
   ctx: CLIContext & {
@@ -257,60 +227,16 @@ export async function configLink(
     configName?: string
   },
 ): Promise<ExecResult> {
-  const args = ['app', 'config', 'link', '--organization-id', ctx.orgId]
+  const args = ['app', 'config', 'link', '--organization-id', ctx.orgId, '--new-app-name', ctx.appName]
   // Pass configName as --config flag. link.ts → loadConfigurationFileName skips
-  // the "Configuration file name" prompt when options.configName is set, which
-  // also side-steps a painful interactive quirk: that prompt uses
-  // `initialAnswer = remoteApp.title`, so any text we write would be appended
-  // to the app name rather than replacing it.
+  // the "Configuration file name" prompt when options.configName is set.
   if (ctx.configName) args.push('--config', ctx.configName)
   args.push('--path', ctx.appDir)
 
-  const proc = await ctx.cli.spawn(args, {
-    env: {
-      CI: undefined,
-      SHOPIFY_CLI_NEVER_USE_PARTNERS_API: '1',
-    },
+  return ctx.cli.exec(args, {
+    env: {SHOPIFY_CLI_NEVER_USE_PARTNERS_API: '1'},
+    timeout: CLI_TIMEOUT.long,
   })
-
-  // Short sleep so Ink's useInput hooks attach before we start writing.
-  // Without this, an Enter press arrives mid-mount and a subsequent render can
-  // flip the prompt state unexpectedly (e.g. turning a select into search mode).
-  const settle = (ms = 50) => new Promise<void>((resolve) => setTimeout(resolve, ms))
-
-  try {
-    // With --organization-id, the first prompt is either "Create this project"
-    // when the org has existing apps, or "App name" when it does not. Race both;
-    // the loser waitForOutput call is cancelled via AbortSignal so its timer and
-    // outputWaiter entry are freed immediately when the winner resolves.
-    const firstPrompt = await raceWaiters((signal) => [
-      proc
-        .waitForOutput('Create this project as a new app', {timeoutMs: CLI_TIMEOUT.medium, signal})
-        .then(() => 'create' as const),
-      proc.waitForOutput('App name', {timeoutMs: CLI_TIMEOUT.medium, signal}).then(() => 'appName' as const),
-    ])
-
-    if (firstPrompt === 'create') {
-      await settle()
-      proc.sendKey('\r')
-    }
-
-    // Wait for "App name" text prompt and submit the desired name.
-    // Important: Ink parses each PTY data event as ONE keypress. If we write
-    // "name\r" in one call, parseKeypress sees the whole string and treats
-    // it as text (not Enter), so the prompt never submits. We must write the
-    // text, wait for it to be consumed, then write \r separately.
-    await proc.waitForOutput('App name', CLI_TIMEOUT.medium)
-    await settle()
-    proc.ptyProcess.write(ctx.appName)
-    await settle()
-    proc.sendKey('\r')
-
-    const exitCode = await proc.waitForExit(CLI_TIMEOUT.long)
-    return {exitCode, stdout: proc.getOutput(), stderr: ''}
-  } finally {
-    proc.kill()
-  }
 }
 
 // ---------------------------------------------------------------------------

@@ -92,6 +92,21 @@ describe('selectOrCreateApp', () => {
     expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, {name: 'app-name'})
   })
 
+  test('creates a new app without prompts when the name was provided as a flag', async () => {
+    // When
+    const {developerPlatformClient} = mockDeveloperPlatformClient()
+    const got = await selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {
+      name: 'flag-app-name',
+      nameProvidedAsFlag: true,
+    })
+
+    // Then
+    expect(got).toEqual({...APP1, newApp: true})
+    expect(createAsNewAppPrompt).not.toHaveBeenCalled()
+    expect(appNamePrompt).not.toHaveBeenCalled()
+    expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, {name: 'flag-app-name'})
+  })
+
   test('retries when selectAppPrompt returns undefined and succeeds on next attempt', async () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(undefined).mockResolvedValueOnce(APPS[0])

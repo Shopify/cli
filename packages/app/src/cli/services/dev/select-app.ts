@@ -36,15 +36,16 @@ export async function selectOrCreateApp(
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
-  options: CreateAppOptions,
+  options: CreateAppOptions & {nameProvidedAsFlag?: boolean},
 ): Promise<OrganizationApp> {
-  let createNewApp = apps.length === 0
+  let createNewApp = apps.length === 0 || Boolean(options.nameProvidedAsFlag)
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    const name = await appNamePrompt(options.name)
-    return developerPlatformClient.createApp(org, {...options, name})
+    const {nameProvidedAsFlag: _nameProvidedAsFlag, ...createAppOptions} = options
+    const name = options.nameProvidedAsFlag ? options.name : await appNamePrompt(options.name)
+    return developerPlatformClient.createApp(org, {...createAppOptions, name})
   } else {
     // Capture app selection context
     const cachedData = getCachedCommandInfo()

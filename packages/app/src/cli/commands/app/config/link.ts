@@ -23,6 +23,11 @@ export default class ConfigLink extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
       exclusive: ['client-id'],
     }),
+    'new-app-name': Flags.string({
+      hidden: true,
+      env: 'SHOPIFY_FLAG_NEW_APP_NAME',
+      exclusive: ['client-id'],
+    }),
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
@@ -32,6 +37,7 @@ export default class ConfigLink extends AppLinkedCommand {
       directory: flags.path,
       apiKey: flags['client-id'],
       organizationId: flags['organization-id'],
+      newAppName: flags['new-app-name'],
       configName: flags.config,
     }
 

@@ -299,7 +299,7 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
 }
 
 export async function fetchOrCreateOrganizationApp(
-  options: CreateAppOptions & {organizationId?: string},
+  options: CreateAppOptions & {organizationId?: string; nameProvidedAsFlag?: boolean},
 ): Promise<OrganizationApp> {
   const org = options.organizationId
     ? await fetchOrgFromId(options.organizationId, selectDeveloperPlatformClient())

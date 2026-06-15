@@ -35,6 +35,7 @@ export interface LinkOptions {
   apiKey?: string
   appId?: string
   organizationId?: string
+  newAppName?: string
   configName?: string
   developerPlatformClient?: DeveloperPlatformClient
   isNewApp?: boolean
@@ -124,6 +125,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
 
   const remoteApp = await fetchOrCreateOrganizationApp({
     ...creationOptions,
+    ...(options.newAppName ? {name: options.newAppName, nameProvidedAsFlag: true} : {}),
     directory: appDirectory,
     organizationId: options.organizationId,
   })
