@@ -101,6 +101,12 @@ export interface themedev {
   '--port <value>'?: string
 
   /**
+   * Inject the standard events inspector into storefront HTML.
+   * @environment SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR
+   */
+  '--standard-events-inspector'?: ''
+
+  /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
    * @environment SHOPIFY_FLAG_STORE
    */

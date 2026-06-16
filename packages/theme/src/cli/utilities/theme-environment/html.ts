@@ -183,7 +183,10 @@ async function tryProxyRequest(event: H3Event, ctx: DevServerContext, response: 
   if (proxyResponse.status < 400) {
     outputDebug(`Proxy status: ${proxyResponse.status}. Returning proxy response.`)
 
-    if (ctx.options.standardEventsInspector && (proxyResponse.headers.get('content-type') ?? '').includes('text/html')) {
+    if (
+      ctx.options.standardEventsInspector &&
+      (proxyResponse.headers.get('content-type') ?? '').includes('text/html')
+    ) {
       return patchRenderingResponse(ctx, proxyResponse)
     }
 

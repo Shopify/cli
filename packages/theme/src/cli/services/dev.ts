@@ -156,7 +156,7 @@ export async function dev(options: DevOptions) {
     backgroundJobPromise,
     renderDevSetupProgress()
       .then(serverStart)
-      .then(async () => {
+      .then(() => {
         if (process.stdin.isTTY) {
           process.stdin.setRawMode(true)
         }
