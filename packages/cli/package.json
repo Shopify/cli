@@ -59,14 +59,14 @@
   "devDependencies": {
     "@oclif/core": "4.8.3",
     "@oclif/plugin-commands": "4.1.57",
-    "@oclif/plugin-plugins": "5.4.47",
+    "@oclif/plugin-plugins": "5.4.74",
     "@shopify/app": "4.2.0",
     "@shopify/store": "4.2.0",
     "@shopify/cli-kit": "4.2.0",
     "@shopify/plugin-cloudflare": "4.2.0",
     "@shopify/plugin-did-you-mean": "4.2.0",
     "@shopify/theme": "4.2.0",
-    "@shopify/cli-hydrogen": "11.1.10",
+    "@shopify/cli-hydrogen": "11.1.16",
     "@types/global-agent": "3.0.0",
     "@vitest/coverage-istanbul": "^3.2.6",
     "esbuild-plugin-copy": "^2.1.1"
