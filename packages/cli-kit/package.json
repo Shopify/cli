@@ -106,7 +106,7 @@
     "@bugsnag/js": "8.9.0",
     "@graphql-typed-document-node/core": "3.2.0",
     "@iarna/toml": "2.2.5",
-    "@oclif/core": "4.11.4",
+    "@oclif/core": "4.8.3",
     "@shopify/polaris": "12.27.0",
     "@shopify/polaris-icons": "8.11.1",
     "@shopify/toml-patch": "0.3.0",

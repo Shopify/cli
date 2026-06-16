@@ -171,8 +171,8 @@ importers:
         specifier: 3.8.1
         version: 3.8.1(esbuild@0.28.0)(graphql-tag@2.12.6(graphql@16.14.2))(graphql@16.14.2)
       '@oclif/core':
-        specifier: 4.11.4
-        version: 4.11.4
+        specifier: 4.8.3
+        version: 4.8.3
       '@shopify/cli-kit':
         specifier: 4.1.0
         version: link:../cli-kit
@@ -263,8 +263,8 @@ importers:
         version: 3.0.0
     devDependencies:
       '@oclif/core':
-        specifier: 4.11.4
-        version: 4.11.4
+        specifier: 4.8.3
+        version: 4.8.3
       '@oclif/plugin-commands':
         specifier: 4.1.57
         version: 4.1.57
@@ -317,8 +317,8 @@ importers:
         specifier: 2.2.5
         version: 2.2.5
       '@oclif/core':
-        specifier: 4.11.4
-        version: 4.11.4
+        specifier: 4.8.3
+        version: 4.8.3
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
@@ -639,8 +639,8 @@ importers:
   packages/plugin-cloudflare:
     dependencies:
       '@oclif/core':
-        specifier: 4.11.4
-        version: 4.11.4
+        specifier: 4.8.3
+        version: 4.8.3
       '@shopify/cli-kit':
         specifier: 4.1.0
         version: link:../cli-kit
@@ -652,8 +652,8 @@ importers:
   packages/plugin-did-you-mean:
     dependencies:
       '@oclif/core':
-        specifier: 4.11.4
-        version: 4.11.4
+        specifier: 4.8.3
+        version: 4.8.3
       '@shopify/cli-kit':
         specifier: 4.1.0
         version: link:../cli-kit
@@ -671,8 +671,8 @@ importers:
         specifier: 3.2.0
         version: 3.2.0(graphql@16.14.2)
       '@oclif/core':
-        specifier: 4.11.4
-        version: 4.11.4
+        specifier: 4.8.3
+        version: 4.8.3
       '@shopify/cli-kit':
         specifier: 4.1.0
         version: link:../cli-kit
@@ -687,8 +687,8 @@ importers:
   packages/theme:
     dependencies:
       '@oclif/core':
-        specifier: 4.11.4
-        version: 4.11.4
+        specifier: 4.8.3
+        version: 4.8.3
       '@shopify/cli-kit':
         specifier: 4.1.0
         version: link:../cli-kit
@@ -3051,6 +3051,10 @@ packages:
 
   '@oclif/core@4.11.4':
     resolution: {integrity: sha512-URwiQ5ALx/sJ2iH4vzXEd+H4K6NAI7LRs6Jag3hrgKEpGmaE6alfRC8qjO4GIgb6A3ACaJumqP9twi/M9ywdHQ==, tarball: https://registry.npmjs.org/@oclif/core/-/core-4.11.4.tgz}
+    engines: {node: '>=18.0.0'}
+
+  '@oclif/core@4.8.3':
+    resolution: {integrity: sha512-f7Rc1JBZO0wNMyDmNzP5IFOv5eM97S9pO4JUFdu2OLyk73YeBI9wog1Yyf666NOQvyptkbG1xh8inzMDQLNTyQ==, tarball: https://registry.npmjs.org/@oclif/core/-/core-4.8.3.tgz}
     engines: {node: '>=18.0.0'}
 
   '@oclif/core@4.9.0':
@@ -8124,11 +8128,6 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  semver@7.8.1:
-    resolution: {integrity: sha512-rkVq3IXh+4FDGch+KwzX3aV9W3kO54GyEgpvBzSyctDA6Xtd7RJQV1xmXbeQp5v7+VzLOfVqiutSE6GICgPFvg==, tarball: https://registry.npmjs.org/semver/-/semver-7.8.1.tgz}
-    engines: {node: '>=10'}
-    hasBin: true
-
   semver@7.8.4:
     resolution: {integrity: sha512-rUCObTnP32Q08R2uuIrt7r9PlEonuTmtuXYcW6s5kjdlj3xbnwe+21yXptAUYcMAABLkYYTtnmzb3w3EDZfueA==, tarball: https://registry.npmjs.org/semver/-/semver-7.8.4.tgz}
     engines: {node: '>=10'}
@@ -12229,7 +12228,28 @@ snapshots:
       is-wsl: 2.2.0
       lilconfig: 3.1.3
       minimatch: 10.2.5
-      semver: 7.8.1
+      semver: 7.8.4
+      string-width: 4.2.3
+      supports-color: 8.1.1
+      tinyglobby: 0.2.16
+      widest-line: 3.1.0
+      wordwrap: 1.0.0
+      wrap-ansi: 7.0.0
+
+  '@oclif/core@4.8.3':
+    dependencies:
+      ansi-escapes: 4.3.2
+      ansis: 3.17.0
+      clean-stack: 3.0.1
+      cli-spinners: 2.9.2
+      debug: 4.4.3(supports-color@8.1.1)
+      ejs: 3.1.10
+      get-package-type: 0.1.0
+      indent-string: 4.0.0
+      is-wsl: 2.2.0
+      lilconfig: 3.1.3
+      minimatch: 10.2.5
+      semver: 7.8.4
       string-width: 4.2.3
       supports-color: 8.1.1
       tinyglobby: 0.2.16
@@ -12260,7 +12280,7 @@ snapshots:
 
   '@oclif/plugin-commands@4.1.57':
     dependencies:
-      '@oclif/core': 4.11.4
+      '@oclif/core': 4.8.3
       '@oclif/table': 0.5.9
       lodash: 4.18.1
       object-treeify: 4.0.1
@@ -12271,7 +12291,7 @@ snapshots:
 
   '@oclif/plugin-help@6.2.45':
     dependencies:
-      '@oclif/core': 4.11.4
+      '@oclif/core': 4.8.3
 
   '@oclif/plugin-not-found@3.2.81(@types/node@18.19.130)':
     dependencies:
@@ -12284,7 +12304,7 @@ snapshots:
 
   '@oclif/plugin-plugins@5.4.47':
     dependencies:
-      '@oclif/core': 4.11.4
+      '@oclif/core': 4.8.3
       ansis: 3.17.0
       debug: 4.4.0
       npm: 10.9.4
@@ -12300,7 +12320,7 @@ snapshots:
 
   '@oclif/plugin-warn-if-update-available@3.1.61':
     dependencies:
-      '@oclif/core': 4.11.4
+      '@oclif/core': 4.8.3
       ansis: 3.17.0
       debug: 4.4.3(supports-color@8.1.1)
       http-call: 5.3.0
@@ -18086,8 +18106,6 @@ snapshots:
   semver@7.6.3: {}
 
   semver@7.7.4: {}
-
-  semver@7.8.1: {}
 
   semver@7.8.4: {}
 
