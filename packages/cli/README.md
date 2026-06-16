@@ -2321,8 +2321,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 USAGE
   $ shopify theme dev [-a] [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...]
     [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...]
-    [--open] [--password <value>] [--path <value>] [--port <value>] [-s <value>] [--store-password <value>] [-t <value>]
-    [--theme-editor-sync] [--verbose]
+    [--open] [--password <value>] [--path <value>] [--port <value>] [--standard-events-inspector] [-s <value>]
+    [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -2390,6 +2390,9 @@ FLAGS
 
   --port=<value>
       [env: SHOPIFY_FLAG_PORT] Local port to serve theme preview from. Must be between 1 and 65535.
+
+  --standard-events-inspector
+      [env: SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR] Inject the standard events inspector into storefront HTML.
 
   --store-password=<value>
       [env: SHOPIFY_FLAG_STORE_PASSWORD] The password for storefronts with password protection.

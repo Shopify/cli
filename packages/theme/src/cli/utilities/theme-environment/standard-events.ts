@@ -1,6 +1,6 @@
 const headTagRE = /<head(\s[^>]*)?>/i
 
-export const standardEventsBaseUrl = 'https://cdn.shopify.com/storefront'
+const standardEventsBaseUrl = 'https://cdn.shopify.com/storefront'
 export const standardEventsRuntimeUrl = `${standardEventsBaseUrl}/standard-events.js`
 export const standardEventsRuntimeDevUrl = `${standardEventsBaseUrl}/standard-events.dev.js`
 export const standardEventsInspectorUrl = `${standardEventsBaseUrl}/standard-events-inspector.js`
