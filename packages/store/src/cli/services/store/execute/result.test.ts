@@ -1,10 +1,10 @@
 import {writeOrOutputStoreExecuteResult} from './result.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/ui')
 
 function captureStandardStreams() {
@@ -42,12 +42,16 @@ describe('writeOrOutputStoreExecuteResult', () => {
   })
 
   test('writes results to a file when outputFile is provided', async () => {
-    await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, '/tmp/results.json')
+    await inTemporaryDirectory(async (tmpDir) => {
+      const outputPath = joinPath(tmpDir, 'results.json')
+      await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, outputPath)
 
-    expect(writeFile).toHaveBeenCalledWith('/tmp/results.json', expect.stringContaining('Test shop'))
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Operation succeeded.',
-      body: 'Results written to /tmp/results.json',
+      const content = await readFile(outputPath)
+      expect(content).toContain('Test shop')
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'Operation succeeded.',
+        body: `Results written to ${outputPath}`,
+      })
     })
   })
 
@@ -86,9 +90,13 @@ describe('writeOrOutputStoreExecuteResult', () => {
   })
 
   test('suppresses success rendering when writing a file in json mode', async () => {
-    await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, '/tmp/results.json', 'json')
+    await inTemporaryDirectory(async (tmpDir) => {
+      const outputPath = joinPath(tmpDir, 'results.json')
+      await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, outputPath, 'json')
 
-    expect(writeFile).toHaveBeenCalledWith('/tmp/results.json', expect.stringContaining('Test shop'))
-    expect(renderSuccess).not.toHaveBeenCalled()
+      const content = await readFile(outputPath)
+      expect(content).toContain('Test shop')
+      expect(renderSuccess).not.toHaveBeenCalled()
+    })
   })
 })
