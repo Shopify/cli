@@ -57,7 +57,7 @@
     "@vitest/coverage-istanbul": "^3.2.6",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.0",
     "eslint-plugin-jsdoc": "50.8.0",
     "eslint": "^9.39.4",
     "execa": "^7.2.0",
