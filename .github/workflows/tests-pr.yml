@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Type check
-        run: pnpm nx run-many --all --skip-nx-cache --target=type-check --output-style=stream
+        run: pnpm nx run-many --all --target=type-check --output-style=stream
 
   lint:
     name: 'Lint'
@@ -52,7 +52,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Lint
-        run: pnpm nx run-many --all --skip-nx-cache --target=lint --output-style=stream
+        run: pnpm nx run-many --all --target=lint --output-style=stream
 
   bundle:
     name: 'Bundle'
@@ -69,9 +69,9 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: 'Build'
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: 'Bundle'
-        run: pnpm nx run-many --all --skip-nx-cache --target=bundle --output-style=stream
+        run: pnpm nx run-many --all --target=bundle --output-style=stream
 
   knip:
     name: 'Knip (unused code check)'
@@ -156,9 +156,9 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '22.12.0', '24.1.0', '26.1.0' ]
-        shard: [ '' ]
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        node: ['22.12.0', '24.1.0', '26.1.0']
+        shard: ['']
         include:
           # Add sharding for Windows jobs to reduce wall-clock time
           - os: windows-latest
@@ -205,11 +205,11 @@ jobs:
         env:
           POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
           SHARD_OPTIONS: ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
-          VITEST_MIN_THREADS: "1"
-          VITEST_MAX_THREADS: "4"
+          VITEST_MIN_THREADS: '1'
+          VITEST_MAX_THREADS: '4'
 
   unit-tests-gate:
-    name: "Unit tests"
+    name: 'Unit tests'
     needs: unit-tests
     if: always()
     runs-on: ubuntu-latest
@@ -220,7 +220,7 @@ jobs:
         run: exit 1
 
   e2e-tests:
-    name: "E2E tests (shard ${{ matrix.shard }})"
+    name: 'E2E tests (shard ${{ matrix.shard }})'
     if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -240,7 +240,7 @@ jobs:
         with:
           node-version: ${{ env.PLAYWRIGHT_NODE_VERSION }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium
         working-directory: packages/e2e
@@ -284,7 +284,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: Type-diff
         working-directory: workspace
         id: type-diff
@@ -316,7 +316,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: Check for breaking changes
         id: check
         run: node workspace/src/major-change-check.js

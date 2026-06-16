@@ -23,13 +23,11 @@ const rootDirectory = dirname(binDirectory)
 const nodeVersion = process.version;
 
 const {stdout: typescriptCompilerVersion} = await execa(join(rootDirectory, "node_modules/.bin/tsc"), ['--version'], {cwd: rootDirectory});
-const {stdout: gitSha} = await execa("git", ['rev-parse', '--short', 'HEAD'], {cwd: rootDirectory});
 const pnpmLockfileContent = (await readFile(join(rootDirectory, "pnpm-lock.yaml"))).toString();
 
 const hashableInputs = [
   nodeVersion.trim(),
   typescriptCompilerVersion.trim(),
-  gitSha.trim(),
   crypto.createHash('md5').update(pnpmLockfileContent).digest("hex")
 ]
 
