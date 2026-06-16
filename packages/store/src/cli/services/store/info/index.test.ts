@@ -5,6 +5,7 @@ import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '../auth/session-store.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
+import {claimPreviewStore} from '../create/preview/client.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -24,6 +25,7 @@ vi.mock('./organization-shop.js')
 vi.mock('../auth/session-lifecycle.js')
 vi.mock('../auth/session-store.js')
 vi.mock('../attribution.js')
+vi.mock('../create/preview/client.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
@@ -126,6 +128,7 @@ describe('getStoreInfo', () => {
     expect(fetchOrganizationShop).toHaveBeenCalledWith({store: SHOP, organizationId: '149572536', noPrompt: false})
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
     expect(graphqlRequest).not.toHaveBeenCalled()
+    expect(claimPreviewStore).not.toHaveBeenCalled()
     expect(result).toEqual({
       id: 'gid://shopify/Shop/72193245184',
       displayName: 'My Shop (Org)',
@@ -160,6 +163,45 @@ describe('getStoreInfo', () => {
       plan: 'grow',
       featurePreview: 'extended_variants',
       adminUrl: 'https://admin.shopify.com/store/shop',
+    })
+    expect(claimPreviewStore).not.toHaveBeenCalled()
+  })
+
+  test('returns a save URL for locally stored preview stores', async () => {
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
+      store: SHOP,
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: 'preview:placeholder-uuid',
+      accessToken: 'shpat_preview_token',
+      scopes: [],
+      acquiredAt: '2026-06-08T12:00:00.000Z',
+      kind: 'preview',
+      preview: {
+        placeholderAccountUuid: 'placeholder-uuid',
+        shopId: '123',
+        name: 'Lavender Candles',
+        createdAt: '2026-06-08T12:00:00.000Z',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
+      },
+    })
+    vi.mocked(claimPreviewStore).mockResolvedValueOnce({
+      claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
+    })
+
+    const result = await getStoreInfo({store: SHOP})
+
+    expect(fetchDestinationsContext).not.toHaveBeenCalled()
+    expect(fetchOrganizationShop).not.toHaveBeenCalled()
+    expect(claimPreviewStore).toHaveBeenCalledWith({
+      shopId: '123',
+      adminApiToken: 'shpat_preview_token',
+    })
+    expect(result).toEqual({
+      id: 'gid://shopify/Shop/123',
+      displayName: 'Lavender Candles',
+      subdomain: SHOP,
+      adminUrl: 'https://admin.shopify.com/store/shop',
+      saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
     })
   })
 

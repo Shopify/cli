@@ -6012,8 +6012,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization, store owner, type, plan, feature preview, and admin URL.\n\nSome details may be omitted when they are not available for the store.\n\nUse `--json` for machine-readable output.",
-      "descriptionWithMarkdown": "Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization, store owner, type, plan, feature preview, and admin URL.\n\nSome details may be omitted when they are not available for the store.\n\nUse `--json` for machine-readable output.",
+      "description": "Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization, store owner, type, plan, feature preview, admin URL, and save URL for preview stores.\n\nSome details may be omitted when they are not available for the store.\n\nUse `--json` for machine-readable output.",
+      "descriptionWithMarkdown": "Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization, store owner, type, plan, feature preview, admin URL, and save URL for preview stores.\n\nSome details may be omitted when they are not available for the store.\n\nUse `--json` for machine-readable output.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --json"

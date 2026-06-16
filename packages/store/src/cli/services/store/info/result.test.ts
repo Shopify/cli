@@ -35,6 +35,7 @@ describe('renderStoreInfoResult', () => {
         plan: 'grow',
         featurePreview: 'extended_variants',
         adminUrl: 'https://admin.shopify.com/store/acme-widgets',
+        saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
       }),
       'json',
     )
@@ -52,6 +53,7 @@ describe('renderStoreInfoResult', () => {
       plan: 'grow',
       featurePreview: 'extended_variants',
       adminUrl: 'https://admin.shopify.com/store/acme-widgets',
+      saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
     })
     expect(renderInfo).not.toHaveBeenCalled()
   })
@@ -73,6 +75,7 @@ describe('renderStoreInfoResult', () => {
         plan: 'grow',
         featurePreview: 'extended_variants',
         adminUrl: 'https://admin.shopify.com/store/acme-widgets',
+        saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
       }),
       'text',
     )
@@ -86,6 +89,7 @@ describe('renderStoreInfoResult', () => {
     expect(items).toContain('Plan: Grow')
     expect(items).toContain('Feature Preview: extended_variants')
     expect(items).toContain('Admin URL: https://admin.shopify.com/store/acme-widgets')
+    expect(items).toContain('Save URL: https://admin.shopify.com/store-transfer/accept/claim-token')
   })
 
   test('formats the store owner as "name (email)" when both are present', () => {
@@ -110,5 +114,6 @@ describe('renderStoreInfoResult', () => {
     expect(items.some((item) => item.startsWith('Store owner'))).toBe(false)
     expect(items.some((item) => item.startsWith('Type'))).toBe(false)
     expect(items.some((item) => item.startsWith('Plan'))).toBe(false)
+    expect(items.some((item) => item.startsWith('Save URL'))).toBe(false)
   })
 })
