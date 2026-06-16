@@ -1,9 +1,9 @@
 const headTagRE = /<head(\s[^>]*)?>/i
 
-export const standardEventsBaseUrl = 'https://standard-events.quick.shopify.io'
+export const standardEventsBaseUrl = 'https://cdn.shopify.com/storefront'
 export const standardEventsRuntimeUrl = `${standardEventsBaseUrl}/standard-events.js`
 export const standardEventsRuntimeDevUrl = `${standardEventsBaseUrl}/standard-events.dev.js`
-export const standardEventsInspectorUrl = `${standardEventsBaseUrl}/events-inspector.js`
+export const standardEventsInspectorUrl = `${standardEventsBaseUrl}/standard-events-inspector.js`
 export const standardEventsInspectorScriptId = 'shopify-cli-standard-events-inspector'
 const standardEventsInspectorScriptRE = new RegExp(
   `<script\\b[^>]*(?:\\bid=["']${escapeRegExp(standardEventsInspectorScriptId)}["']|\\bsrc=["']${escapeRegExp(
