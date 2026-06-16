@@ -69,7 +69,7 @@
     "@shopify/toml-patch": "0.3.0",
     "chokidar": "3.6.0",
     "diff": "5.2.2",
-    "esbuild": "0.28.0",
+    "esbuild": "0.28.1",
     "graphql-request": "6.1.0",
     "h3": "1.15.11",
     "http-proxy-node16": "1.0.6",
