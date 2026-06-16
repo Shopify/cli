@@ -1,5 +1,39 @@
 # @shopify/app
 
+## 4.2.0
+
+### Minor Changes
+
+- e9e8ed7: Allow Flow action extension URLs to be written as relative paths that are resolved against the application URL during dev and deploy
+
+### Patch Changes
+
+- 16d24c5: `app dev` now shows a clear error when `--localhost-port`, `--theme-app-extension-port`, or `--graphiql-port` is given an invalid value. The port must be a number between 1 and 65535.
+- 6ac3a7e: Fix `app env pull --env-file` with absolute paths.
+- 9dca5eb: Fix `app deploy` reusing signed upload URLs across apps in the same organization.
+- 2070cf2: Fix `app dev` always prompting for storefront password
+- 59df0bc: `runThemeCheck` now respects a user's `.theme-check.yml` in the theme app extension root. When present, theme-check-node auto-discovery is used; otherwise the bundled `theme-check:theme-app-extension` config is applied as before. This lets extensions ignore source directories (e.g. a `src/` folder containing uncompiled Liquid templates) without forking the CLI.
+- edcb122: Bump Shopify/theme-tools packages:
+
+  - @shopify/theme-check-node: 3.26.0 → 3.26.1
+  - @shopify/theme-language-server-node: 2.21.2 → 2.21.3
+
+- Updated dependencies [e50cf1c]
+- Updated dependencies [38bc94a]
+- Updated dependencies [ef14e49]
+- Updated dependencies [334e2d4]
+- Updated dependencies [30895ae]
+- Updated dependencies [c9c2faa]
+- Updated dependencies [16d24c5]
+- Updated dependencies [f2c1f50]
+- Updated dependencies [16d24c5]
+- Updated dependencies [89535d6]
+- Updated dependencies [edcb122]
+  - @shopify/theme@4.2.0
+  - @shopify/cli-kit@4.2.0
+  - @shopify/organizations@4.2.0
+  - @shopify/plugin-cloudflare@4.2.0
+
 ## 4.1.0
 
 ### Minor Changes
