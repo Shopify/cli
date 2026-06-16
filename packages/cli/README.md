@@ -2196,7 +2196,7 @@ DESCRIPTION
   Surface metadata about a Shopify store.
 
   Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization,
-  store owner, type, plan, feature preview, admin URL, and save URL for preview stores.
+  store owner, type, plan, feature preview, admin URL, and access and save URLs for preview stores.
 
   Some details may be omitted when they are not available for the store.
 

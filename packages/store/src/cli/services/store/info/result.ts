@@ -26,6 +26,7 @@ function storeDetailItems(result: StoreInfoResult): string[] {
   push(items, 'Plan', result.plan ? capitalizeWords(result.plan) : undefined)
   push(items, 'Feature Preview', result.featurePreview)
   push(items, 'Admin URL', result.adminUrl)
+  push(items, 'Access URL', result.accessUrl)
   push(items, 'Save URL', result.saveUrl)
   return items
 }

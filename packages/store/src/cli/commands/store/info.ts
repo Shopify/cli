@@ -7,7 +7,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 export default class StoreInfo extends StoreCommand {
   static summary = 'Surface metadata about a Shopify store.'
 
-  static descriptionWithMarkdown = `Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization, store owner, type, plan, feature preview, admin URL, and save URL for preview stores.
+  static descriptionWithMarkdown = `Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization, store owner, type, plan, feature preview, admin URL, and access and save URLs for preview stores.
 
 Some details may be omitted when they are not available for the store.
 

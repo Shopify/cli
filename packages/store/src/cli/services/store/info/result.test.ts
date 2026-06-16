@@ -35,6 +35,7 @@ describe('renderStoreInfoResult', () => {
         plan: 'grow',
         featurePreview: 'extended_variants',
         adminUrl: 'https://admin.shopify.com/store/acme-widgets',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
         saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
       }),
       'json',
@@ -53,6 +54,7 @@ describe('renderStoreInfoResult', () => {
       plan: 'grow',
       featurePreview: 'extended_variants',
       adminUrl: 'https://admin.shopify.com/store/acme-widgets',
+      accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
       saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
     })
     expect(renderInfo).not.toHaveBeenCalled()
@@ -75,6 +77,7 @@ describe('renderStoreInfoResult', () => {
         plan: 'grow',
         featurePreview: 'extended_variants',
         adminUrl: 'https://admin.shopify.com/store/acme-widgets',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
         saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
       }),
       'text',
@@ -89,6 +92,7 @@ describe('renderStoreInfoResult', () => {
     expect(items).toContain('Plan: Grow')
     expect(items).toContain('Feature Preview: extended_variants')
     expect(items).toContain('Admin URL: https://admin.shopify.com/store/acme-widgets')
+    expect(items).toContain('Access URL: https://app.shopify.com/auth/preview-store?token=access-token')
     expect(items).toContain('Save URL: https://admin.shopify.com/store-transfer/accept/claim-token')
   })
 
@@ -114,6 +118,7 @@ describe('renderStoreInfoResult', () => {
     expect(items.some((item) => item.startsWith('Store owner'))).toBe(false)
     expect(items.some((item) => item.startsWith('Type'))).toBe(false)
     expect(items.some((item) => item.startsWith('Plan'))).toBe(false)
+    expect(items.some((item) => item.startsWith('Access URL'))).toBe(false)
     expect(items.some((item) => item.startsWith('Save URL'))).toBe(false)
   })
 })
