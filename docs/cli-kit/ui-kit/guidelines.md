@@ -17,6 +17,6 @@ These guidelines should guide you when choosing your style of communication with
 
 ## Content in banners:
 - Each of the banner elements can support robust messaging with a next steps section and a reference section with links. The prompt components can also be customized with, for example, headings to group selection options.
-- For info banners: Use present perfect tense to describe a significant display (“The REST API has been deprecated").
+- For info banners: Use present perfect tense to describe a significant display (“The REST API has been deprecated”).
 - For error messages: Use the present tense to describe what’s happening in the error message context (“Can’t connect to the Storefront API”)
 - More examples in the CLI example page. Run <PACKAGEMANAGER> shopify kitchen-sink all
