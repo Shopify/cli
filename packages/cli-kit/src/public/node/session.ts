@@ -270,13 +270,17 @@ ${outputToken.json(scopes)}
  * Ensure that we have a valid session to access the Business Platform API.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param options - Optional extra options to use.
  * @returns The access token for the Business Platform API.
  */
-export async function ensureAuthenticatedBusinessPlatform(scopes: BusinessPlatformScope[] = []): Promise<string> {
+export async function ensureAuthenticatedBusinessPlatform(
+  scopes: BusinessPlatformScope[] = [],
+  options: EnsureAuthenticatedAdditionalOptions = {},
+): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env)
+  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, options)
   if (!tokens.businessPlatform) {
     throw new BugError('No business-platform token found after ensuring authenticated')
   }

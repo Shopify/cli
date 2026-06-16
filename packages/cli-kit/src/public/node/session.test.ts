@@ -216,6 +216,17 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
     expect(got).toEqual('business_platform')
   })
 
+  test('passes additional auth options through to the shared authenticator', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
+
+    // When
+    await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
+
+    // Then
+    expect(ensureAuthenticated).toHaveBeenCalledWith({businessPlatformApi: {scopes: []}}, process.env, {noPrompt: true})
+  })
+
   test('throws error if there is no business_platform token', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})

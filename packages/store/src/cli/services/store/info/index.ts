@@ -1,16 +1,54 @@
-import {fetchDestinationsContext} from './destinations.js'
+import {StoreInfoBusinessPlatformStoreNotFoundError, fetchDestinationsContext} from './destinations.js'
 import {fetchOrganizationShop} from './organization-shop.js'
 import {mapPlanToPublicHandle} from './plan.js'
+import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
+import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
+import {getCurrentStoredStoreAppSession} from '../auth/session-store.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {adminUrl} from '@shopify/cli-kit/node/api/admin'
+import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {compact} from '@shopify/cli-kit/common/object'
 import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
+import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {Store} from '../../../api/graphql/business-platform-organizations/generated/types.js'
 import type {DestinationsContext, OrganizationShopFields, StoreInfoResult, StoreInfoStoreOwner} from './types.js'
+import type {StoredStoreAppSession} from '../auth/session-store.js'
 
 interface GetStoreInfoOptions {
   store?: string
 }
+
+interface AdminStoreInfoResponse {
+  shop?: {
+    id?: string
+    name?: string
+    myshopifyDomain?: string
+    email?: string
+    shopOwnerName?: string
+    plan?: {
+      publicDisplayName?: string
+      partnerDevelopment?: boolean
+    }
+  }
+}
+
+const StoreInfoAdminShopQuery = `#graphql
+  query StoreInfoAdminShop {
+    shop {
+      id
+      name
+      myshopifyDomain
+      email
+      shopOwnerName
+      plan {
+        publicDisplayName
+        partnerDevelopment
+      }
+    }
+  }
+`
 
 export async function getStoreInfo(options: GetStoreInfoOptions): Promise<StoreInfoResult> {
   const store = options.store
@@ -21,15 +59,70 @@ export async function getStoreInfo(options: GetStoreInfoOptions): Promise<StoreI
     )
   }
 
-  const destinationsCtx = await fetchDestinationsContext({store})
-  const orgShop = await safeFetchOrganizationShop(destinationsCtx, store)
+  const hasStoredStoreAuth = Boolean(getCurrentStoredStoreAppSession(store))
 
-  return buildResult({store, destinationsCtx, orgShop})
+  try {
+    return await getBusinessPlatformStoreInfo(store, {noPrompt: hasStoredStoreAuth})
+  } catch (error) {
+    if (!hasStoredStoreAuth || !isBusinessPlatformFallbackError(error)) {
+      throw error
+    }
+
+    outputDebug(`BP store info lookup failed; falling back to stored store auth: ${errorMessage(error)}`)
+    return getAdminStoreInfo(store)
+  }
+}
+
+async function getAdminStoreInfo(store: string): Promise<StoreInfoResult> {
+  const session = await loadStoredStoreSession(store)
+  await recordStoreFqdnMetadata(session.store, true)
+  setLastSeenUserId(session.userId)
+  const shop = await fetchAdminShopInfo(session)
+
+  return buildAdminResult({store: session.store, shop})
+}
+
+async function getBusinessPlatformStoreInfo(
+  store: string,
+  options: {noPrompt?: boolean} = {},
+): Promise<StoreInfoResult> {
+  const destinationsCtx = await fetchDestinationsContext({store, noPrompt: options.noPrompt})
+  const orgShop = await safeFetchOrganizationShop(destinationsCtx, store, {noPrompt: options.noPrompt})
+
+  return buildBusinessPlatformResult({store, destinationsCtx, orgShop})
+}
+
+async function fetchAdminShopInfo(
+  session: StoredStoreAppSession,
+): Promise<NonNullable<AdminStoreInfoResponse['shop']>> {
+  try {
+    const response = await graphqlRequest<AdminStoreInfoResponse>({
+      query: StoreInfoAdminShopQuery,
+      api: 'Admin',
+      url: adminUrl(session.store, 'unstable'),
+      token: session.accessToken,
+      responseOptions: {handleErrors: false},
+    })
+
+    if (!response.shop) {
+      throw new AbortError(`Shopify did not return store information for ${session.store}.`)
+    }
+
+    return response.shop
+  } catch (error) {
+    throwIfStoredStoreAuthIsInvalid(error, session)
+
+    const classified = classifyAdminApiError(error, session.store)
+    if (classified) throw classified
+
+    throw error
+  }
 }
 
 async function safeFetchOrganizationShop(
   ctx: DestinationsContext,
   store: string,
+  options: {noPrompt?: boolean} = {},
 ): Promise<OrganizationShopFields | undefined> {
   if (!ctx.owningOrg?.id) {
     // Without an org id we can't address the BP Organizations API, so the shop-level fields
@@ -39,7 +132,7 @@ async function safeFetchOrganizationShop(
     return undefined
   }
   try {
-    return await fetchOrganizationShop({store, organizationId: ctx.owningOrg.id})
+    return await fetchOrganizationShop({store, organizationId: ctx.owningOrg.id, noPrompt: options.noPrompt})
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputDebug(`BP Organizations shop lookup failed: ${error instanceof Error ? error.message : String(error)}`)
@@ -47,13 +140,47 @@ async function safeFetchOrganizationShop(
   }
 }
 
-interface BuildResultArgs {
+function isBusinessPlatformFallbackError(error: unknown): boolean {
+  return error instanceof StoreInfoBusinessPlatformStoreNotFoundError || isNoPromptAuthenticationError(error)
+}
+
+function isNoPromptAuthenticationError(error: unknown): boolean {
+  return error instanceof AbortError && error.message.includes('unable to prompt for reauthentication')
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
+interface BuildAdminResultArgs {
+  store: string
+  shop: NonNullable<AdminStoreInfoResponse['shop']>
+}
+
+function buildAdminResult(args: BuildAdminResultArgs): StoreInfoResult {
+  const {store, shop} = args
+  const subdomain = shop.myshopifyDomain ?? store
+
+  const fields: Partial<StoreInfoResult> = {
+    id: shop.id,
+    displayName: shop.name,
+    storeOwner: buildAdminStoreOwner(shop),
+    type: shop.plan?.partnerDevelopment ? 'dev' : undefined,
+    plan: shop.plan?.publicDisplayName,
+    adminUrl: buildAdminUrl(extractMyshopifyHandle(subdomain)),
+  }
+
+  return {...compact(fields), subdomain} as StoreInfoResult
+}
+
+interface BuildBusinessPlatformResultArgs {
   store: string
   destinationsCtx: DestinationsContext
   orgShop: OrganizationShopFields | undefined
 }
 
-function buildResult(args: BuildResultArgs): StoreInfoResult {
+function buildBusinessPlatformResult(args: BuildBusinessPlatformResultArgs): StoreInfoResult {
   const {store, destinationsCtx, orgShop} = args
 
   const fields: Partial<StoreInfoResult> = {
@@ -61,7 +188,7 @@ function buildResult(args: BuildResultArgs): StoreInfoResult {
     displayName: orgShop?.name,
     organizationId: destinationsCtx.owningOrg?.id,
     organizationName: destinationsCtx.owningOrg?.name,
-    storeOwner: buildStoreOwner(orgShop),
+    storeOwner: buildBusinessPlatformStoreOwner(orgShop),
     type: mapStoreType(orgShop?.storeType),
     plan: mapPlanToPublicHandle(orgShop?.planName),
     featurePreview: orgShop?.developerPreviewHandle,
@@ -77,7 +204,12 @@ function buildShopGid(shopifyShopId: string | undefined): string | undefined {
   return `gid://shopify/Shop/${shopifyShopId}`
 }
 
-function buildStoreOwner(orgShop: OrganizationShopFields | undefined): StoreInfoStoreOwner | undefined {
+function buildAdminStoreOwner(shop: NonNullable<AdminStoreInfoResponse['shop']>): StoreInfoStoreOwner | undefined {
+  const owner = compact({name: shop.shopOwnerName, email: shop.email}) as StoreInfoStoreOwner
+  return Object.keys(owner).length > 0 ? owner : undefined
+}
+
+function buildBusinessPlatformStoreOwner(orgShop: OrganizationShopFields | undefined): StoreInfoStoreOwner | undefined {
   if (!orgShop) return undefined
   const owner = compact({name: orgShop.ownerName, email: orgShop.ownerEmail}) as StoreInfoStoreOwner
   return Object.keys(owner).length > 0 ? owner : undefined

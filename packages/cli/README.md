@@ -2195,8 +2195,10 @@ FLAGS
 DESCRIPTION
   Surface metadata about a Shopify store.
 
-  Returns metadata about a store you have access to: id, display name, subdomain, organization, store owner, type, plan,
-  feature preview, and admin URL.
+  Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization,
+  store owner, type, plan, feature preview, and admin URL.
+
+  Some details may be omitted when they are not available for the store.
 
   Use `--json` for machine-readable output.
 
