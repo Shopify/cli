@@ -86,14 +86,25 @@ describe('local-storage', () => {
 
         const results: Record<string, string | undefined> = {}
 
+        let resolveStore1Ready!: () => void
+        let resolveStore1!: () => void
+        const store1Ready = new Promise<void>((resolve) => {
+          resolveStore1Ready = resolve
+        })
+        const releaseStore1 = new Promise<void>((resolve) => {
+          resolveStore1 = resolve
+        })
+
         await Promise.all([
           useThemeStoreContext('store1.myshopify.com', async () => {
-            await new Promise((resolve) => setTimeout(resolve, 10))
+            resolveStore1Ready()
+            await releaseStore1
             results.env1 = getThemeStore(storage)
           }),
           useThemeStoreContext('store2.myshopify.com', async () => {
-            await new Promise((resolve) => setTimeout(resolve, 5))
+            await store1Ready
             results.env2 = getThemeStore(storage)
+            resolveStore1()
           }),
           useThemeStoreContext('store3.myshopify.com', async () => {
             results.env3 = getThemeStore(storage)
