@@ -39,6 +39,7 @@ interface DevOptions {
   host?: string
   port?: number
   force: boolean
+  'standard-events-inspector': boolean
   'theme-editor-sync': boolean
   'live-reload': LiveReload
   'error-overlay': ErrorOverlayMode
@@ -132,6 +133,8 @@ export async function dev(options: DevOptions) {
       port,
       open: options.open,
       liveReload: options['live-reload'],
+      standardEventsDevBundle: true,
+      standardEventsInspector: options['standard-events-inspector'],
       noDelete: options.noDelete,
       ignore: options.ignore,
       only: options.only,

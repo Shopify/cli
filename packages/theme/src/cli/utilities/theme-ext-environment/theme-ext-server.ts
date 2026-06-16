@@ -95,6 +95,8 @@ async function contextDevServerContext(
       host,
       port,
       liveReload: 'hot-reload',
+      standardEventsDevBundle: false,
+      standardEventsInspector: false,
       open: false,
       errorOverlay: 'default',
     },

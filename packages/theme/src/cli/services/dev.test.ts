@@ -3,8 +3,8 @@ import {setupDevServer} from '../utilities/theme-environment/theme-environment.j
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
-import {describe, expect, test, vi, beforeEach, afterEach, type MockInstance} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {describe, expect, test, vi, beforeEach, afterEach, type MockInstance} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
@@ -284,6 +284,7 @@ describe('dev() Ctrl-C analytics', () => {
     open: false,
     theme,
     force: false,
+    'standard-events-inspector': false,
     'theme-editor-sync': false,
     'live-reload': 'hot-reload' as const,
     'error-overlay': 'default' as const,
@@ -351,6 +352,44 @@ describe('dev() Ctrl-C analytics', () => {
 
     expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
   })
+
+  test('enables the standard events dev bundle by default', async () => {
+    const devPromise = dev({...baseOptions, 'standard-events-inspector': false})
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(setupDevServer).toHaveBeenCalledWith(
+      theme,
+      expect.objectContaining({
+        options: expect.objectContaining({
+          standardEventsDevBundle: true,
+          standardEventsInspector: false,
+        }),
+      }),
+    )
+  })
+
+  test('propagates the inspector option to the dev server context', async () => {
+    const devPromise = dev({...baseOptions, 'standard-events-inspector': true})
+
+    await new Promise((resolve) => setImmediate(resolve))
+
+    resolveBackgroundJob()
+    await devPromise
+
+    expect(setupDevServer).toHaveBeenCalledWith(
+      theme,
+      expect.objectContaining({
+        options: expect.objectContaining({
+          standardEventsDevBundle: true,
+          standardEventsInspector: true,
+        }),
+      }),
+    )
+  })
 })
 
 describe('dev() port validation', () => {
@@ -368,6 +407,7 @@ describe('dev() port validation', () => {
     open: false,
     theme,
     force: false,
+    'standard-events-inspector': false,
     'theme-editor-sync': false,
     'live-reload': 'hot-reload' as const,
     'error-overlay': 'default' as const,

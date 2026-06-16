@@ -3,6 +3,11 @@ import {setupDevServer} from './theme-environment.js'
 import {render} from './storefront-renderer.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {hotReloadScriptId} from './hot-reload/server.js'
+import {
+  standardEventsInspectorScriptId,
+  standardEventsRuntimeDevUrl,
+  standardEventsRuntimeUrl,
+} from './standard-events.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
@@ -118,6 +123,14 @@ describe('setupDevServer', () => {
         value: 'const x = "Hello\u00A0World";',
       },
     ],
+    [
+      'assets/file-standard-events.js',
+      {
+        checksum: '1',
+        key: 'assets/file-standard-events.js',
+        value: `window.__standardEventsRuntime__ = "${standardEventsRuntimeUrl}";`,
+      },
+    ],
   ])
 
   const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
@@ -141,6 +154,8 @@ describe('setupDevServer', () => {
       host: '127.0.0.1',
       port: 9292,
       liveReload: 'hot-reload',
+      standardEventsDevBundle: false,
+      standardEventsInspector: false,
       open: false,
       themeEditorSync: false,
       errorOverlay: 'default',
@@ -369,6 +384,25 @@ describe('setupDevServer', () => {
       expect(res.getHeader('content-length')).toEqual(25)
     })
 
+    test('rewrites standard events runtime URLs in served local JS assets when enabled', async () => {
+      const standardEventsContext: DevServerContext = {
+        ...defaultServerContext,
+        options: {
+          ...defaultServerContext.options,
+          standardEventsDevBundle: true,
+        },
+      }
+      const standardEventsServer = setupDevServer(developmentTheme, standardEventsContext)
+
+      const {res, body} = await dispatchEvent(standardEventsServer, '/assets/file-standard-events.js', {
+        host: defaultHost,
+      })
+
+      expect(res.getHeader('content-type')).toEqual('application/javascript')
+      expect(body.toString()).toContain(standardEventsRuntimeDevUrl)
+      expect(body.toString()).not.toContain(standardEventsRuntimeUrl)
+    })
+
     test('serves compiled_assets/styles.css by aggregating liquid stylesheets in a fault tolerant way', async () => {
       const sectionFile = {
         key: 'sections/test-section.liquid',
@@ -519,7 +553,6 @@ describe('setupDevServer', () => {
                     /* blocks/another-block.liquid */
 
                       console.log('This is another block script');
-                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -531,7 +564,6 @@ describe('setupDevServer', () => {
                     /* blocks/test-block.liquid */
 
                       console.log('This is block script');
-                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -606,7 +638,6 @@ describe('setupDevServer', () => {
                     /* snippets/another-snippet.liquid */
 
                       console.log('This is another snippet script');
-                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -618,7 +649,6 @@ describe('setupDevServer', () => {
                     /* snippets/test-snippet.liquid */
 
                       console.log('This is snippet script');
-                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -690,7 +720,6 @@ describe('setupDevServer', () => {
                     /* sections/another-section.liquid */
 
                       console.log('This is another section script');
-                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -702,7 +731,6 @@ describe('setupDevServer', () => {
                     /* sections/test-section.liquid */
 
                       console.log('This is section script');
-                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -906,6 +934,35 @@ describe('setupDevServer', () => {
       await expect(eventPromise).resolves.toHaveProperty('status', 302)
     })
 
+    test('patches HTML proxy fallback responses with standard events when enabled', async () => {
+      const standardEventsContext: DevServerContext = {
+        ...defaultServerContext,
+        options: {
+          ...defaultServerContext.options,
+          standardEventsDevBundle: true,
+          standardEventsInspector: true,
+        },
+      }
+      const standardEventsServer = setupDevServer(developmentTheme, standardEventsContext)
+
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      fetchStub.mockResolvedValueOnce(
+        new Response(`<html><head><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`, {
+          status: 200,
+          headers: {'content-type': 'text/html; charset=utf-8'},
+        }),
+      )
+      vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
+
+      const {body, status} = await dispatchEvent(standardEventsServer, '/non-renderable-path', {host: defaultHost})
+
+      expect(status).toBe(200)
+      expect(body).toMatch(standardEventsInspectorScriptId)
+      expect(body).toMatch(standardEventsRuntimeDevUrl)
+      expect(body).not.toMatch(standardEventsRuntimeUrl)
+    })
+
     test('forwards rendering error after proxy failure', async () => {
       const fetchStub = vi.fn()
       vi.stubGlobal('fetch', fetchStub)
@@ -1010,6 +1067,25 @@ describe('setupDevServer', () => {
       const {res, body} = await eventPromise
       expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
       expect(body).toMatch(/<title>Failed to render storefront with status 502/i)
+      expect(body).toMatch(hotReloadScriptId)
+    })
+
+    test('renders error page with the standard events inspector when enabled', async () => {
+      const standardEventsContext: DevServerContext = {
+        ...defaultServerContext,
+        options: {
+          ...defaultServerContext.options,
+          standardEventsInspector: true,
+        },
+      }
+      const standardEventsServer = setupDevServer(developmentTheme, standardEventsContext)
+
+      vi.mocked(render).mockRejectedValueOnce(new Error('Network error'))
+
+      const {res, body} = await dispatchEvent(standardEventsServer, '/', {host: defaultHost})
+
+      expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
+      expect(body).toMatch(standardEventsInspectorScriptId)
       expect(body).toMatch(hotReloadScriptId)
     })
 

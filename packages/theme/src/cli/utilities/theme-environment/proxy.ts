@@ -1,5 +1,6 @@
 import {cleanHeader, defaultHeaders} from './storefront-utils.js'
 import {buildCookies} from './storefront-renderer.js'
+import {injectStandardEventsInspector, rewriteStandardEventsRuntimeReferences} from './standard-events.js'
 import {logRequestLine} from '../log-request-line.js'
 
 import {createFetchError, extractFetchErrorInfo} from '../errors.js'
@@ -169,6 +170,10 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
     return matchedUrl
   })
 
+  if (ctx.options.standardEventsDevBundle) {
+    content = rewriteStandardEventsRuntimeReferences(content)
+  }
+
   return content
 }
 
@@ -213,6 +218,7 @@ export async function patchRenderingResponse(
   let html = await response.text()
   html = injectCdnProxy(html, ctx)
   html = patchBaseUrlAttributes(html, ctx)
+  if (ctx.options.standardEventsInspector) html = injectStandardEventsInspector(html)
   if (patchCallback) html = patchCallback(html) ?? html
 
   return new Response(html, response)
