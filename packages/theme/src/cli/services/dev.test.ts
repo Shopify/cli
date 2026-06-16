@@ -1,11 +1,8 @@
 import {dev, openURLSafely, renderLinks, createKeypressHandler, reportDevAnalytics} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
+import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
-import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
-import {ensureListingExists} from '../utilities/theme-listing.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {describe, expect, test, vi, beforeEach, afterEach, type MockInstance} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
@@ -45,9 +42,6 @@ vi.mock('../utilities/theme-fs.js', () => ({
   hasRequiredThemeDirectories: vi.fn(),
   mountThemeFileSystem: vi.fn().mockReturnValue({}),
 }))
-vi.mock('../utilities/theme-ui.js', () => ({
-  ensureDirectoryConfirmed: vi.fn(),
-}))
 vi.mock('../utilities/theme-fs-empty.js', () => ({
   emptyThemeExtFileSystem: vi.fn().mockReturnValue({}),
 }))
@@ -57,40 +51,9 @@ vi.mock('../utilities/theme-environment/storefront-session.js', () => ({
 vi.mock('../utilities/theme-environment/dev-server-session.js', () => ({
   initializeDevServerSession: vi.fn(),
 }))
-vi.mock('../utilities/theme-environment/storefront-password-prompt.js', () => ({
-  ensureValidPassword: vi.fn(),
-}))
-vi.mock('../utilities/theme-listing.js', () => ({
-  ensureListingExists: vi.fn(),
-}))
 
 const store = 'my-store.myshopify.com'
 const theme = buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!
-
-beforeEach(() => {
-  vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
-  vi.mocked(mountThemeFileSystem).mockReturnValue({files: new Map(), uploadErrors: new Map()} as never)
-  vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(true)
-  vi.mocked(setupDevServer).mockReturnValue({
-    workPromise: Promise.resolve(),
-    serverStart: vi.fn().mockResolvedValue({close: vi.fn().mockResolvedValue(undefined)}),
-    dispatchEvent: vi.fn() as ReturnType<typeof setupDevServer>['dispatchEvent'],
-    renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
-    backgroundJobPromise: Promise.resolve(undefined as never),
-    resolveBackgroundJob: vi.fn(),
-  })
-  vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
-  vi.mocked(emptyThemeExtFileSystem).mockReturnValue({files: new Map()} as never)
-  vi.mocked(initializeDevServerSession).mockResolvedValue({
-    token: 'token',
-    storefrontToken: 'storefront-token',
-    storeFqdn: 'my-store.myshopify.com',
-    sessionCookies: {},
-  } as never)
-  vi.mocked(ensureListingExists).mockResolvedValue(undefined)
-  vi.mocked(checkPortAvailability).mockResolvedValue(true)
-  vi.mocked(getAvailableTCPPort).mockResolvedValue(9292)
-})
 
 describe('renderLinks', () => {
   test('renders "dev" command links', async () => {
@@ -331,9 +294,6 @@ describe('dev() Ctrl-C analytics', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(reportAnalyticsEvent).mockClear()
-    vi.mocked(addPublicMetadata).mockClear()
-    vi.mocked(addSensitiveMetadata).mockClear()
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
     vi.mocked(initializeDevServerSession).mockResolvedValue({
