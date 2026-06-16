@@ -11,6 +11,8 @@ const log = createLogger('browser')
 interface TeardownCtx {
   browserPage: Page
   appName: string
+  /** Direct Dev Dashboard app URL. Prefer this when available to avoid slow org-wide pagination. */
+  appUrl?: string
   orgId?: string
   workerIndex?: number
   /** If set, uninstalls app from store + deletes store before deleting the app */
@@ -124,7 +126,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
   let stillHasInstalls = false
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const appUrl = await findAppOnDevDashboard(page, ctx.appName, ctx.orgId)
+      const appUrl = ctx.appUrl ?? (await findAppOnDevDashboard(page, ctx.appName, ctx.orgId))
       if (!appUrl) {
         // null could mean "app not in the list" OR "pagination ended on a stuck error page"
         // — findAppOnDevDashboard's refresh-on-error doesn't cover every iteration.
