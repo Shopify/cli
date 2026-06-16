@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 4.2.0
+
+### Minor Changes
+
+- 16d24c5: Add a reusable `--port` flag that validates the value is a number between 1 and 65535, for commands that accept a port.
+
+### Patch Changes
+
+- ef14e49: Improve the error shown when theme commands use an Admin API token that is missing required theme access scopes.
+- 334e2d4: Open the browser immediately when starting an interactive login flow instead of waiting for a keypress.
+
 ## 4.1.0
 
 ### Minor Changes
