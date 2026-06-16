@@ -8,6 +8,8 @@ export const TEST_TIMEOUT = {
   default: 3 * 60_000,
   /** 10 min — tests with create + deploy + teardown */
   long: 10 * 60_000,
+  /** 20 min — full Apps QA flow with extension generation, dev, and deploy */
+  qaFlow: 20 * 60_000,
 } as const
 
 /** CLI command execution timeouts */

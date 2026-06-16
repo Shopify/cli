@@ -203,16 +203,40 @@ export async function appInfo(ctx: CLIContext): Promise<{
 }
 
 export async function functionBuild(ctx: CLIContext): Promise<ExecResult> {
-  return ctx.cli.exec(['app', 'function', 'build', '--path', ctx.appDir], {timeout: CLI_TIMEOUT.medium})
+  return ctx.cli.exec(['app', 'function', 'build', '--path', ctx.appDir], {timeout: CLI_TIMEOUT.long})
 }
 
 export async function functionRun(
   ctx: CLIContext & {
     inputPath: string
+    json?: boolean
   },
 ): Promise<ExecResult> {
-  return ctx.cli.exec(['app', 'function', 'run', '--input', ctx.inputPath, '--path', ctx.appDir], {
+  const args = ['app', 'function', 'run', '--input', ctx.inputPath, '--path', ctx.appDir]
+  if (ctx.json) args.push('--json')
+  return ctx.cli.exec(args, {
     timeout: CLI_TIMEOUT.short,
+  })
+}
+
+export async function executeGraphQL(
+  ctx: CLIContext & {
+    query: string
+    storeFqdn: string
+  },
+): Promise<ExecResult> {
+  return ctx.cli.exec(['app', 'execute', '--query', ctx.query, '--store', ctx.storeFqdn, '--path', ctx.appDir], {
+    timeout: CLI_TIMEOUT.medium,
+  })
+}
+
+export async function devClean(
+  ctx: CLIContext & {
+    storeFqdn: string
+  },
+): Promise<ExecResult> {
+  return ctx.cli.exec(['app', 'dev', 'clean', '--store', ctx.storeFqdn, '--path', ctx.appDir], {
+    timeout: CLI_TIMEOUT.medium,
   })
 }
 

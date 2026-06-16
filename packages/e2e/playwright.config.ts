@@ -17,7 +17,7 @@ export default defineConfig({
   maxFailures: isCI ? 3 : 0, // Stop early in CI after 3 failures
   reporter: isCI ? [['html', {open: 'never'}], ['list']] : [['list']],
   timeout: TEST_TIMEOUT.default, // Heavy tests override via test.setTimeout()
-  globalTimeout: 20 * 60 * 1000,
+  globalTimeout: TEST_TIMEOUT.qaFlow + TEST_TIMEOUT.long,
 
   use: {
     trace: isCI ? 'on' : 'off',
