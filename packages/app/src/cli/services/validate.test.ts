@@ -79,10 +79,14 @@ describe('formatConfigurationError', () => {
       },
     ])
 
+    const schemaError = schemaParsed.errors?.[0]
+    expect(schemaError).toBeDefined()
+    expect(schemaError?.message).toBe('Expected object, received array')
     expect(
       formatConfigurationError({
         file: 'shopify.app.toml',
-        ...schemaParsed.errors![0],
+        path: schemaError!.path,
+        message: schemaError!.message!,
       }),
     ).toBe(
       '[events.0.metrics]: Expected object, received array. Use a TOML table instead of an array. [table] defines a single table; [[table]] defines an array of tables.',
