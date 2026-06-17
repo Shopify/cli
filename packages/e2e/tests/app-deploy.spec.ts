@@ -38,6 +38,11 @@ function assertDeployAnalytics(opts: {output: string; appName: string; step: str
   expect(output, `${opts.step} - expected deploy analytics app name`).toContain(`"app_name": "${opts.appName}"`)
 }
 
+function devDashboardAppUrlFromOutput(output: string): string | undefined {
+  const match = stripAnsi(output).match(/https:\/\/dev\.shopify\.com\/dashboard\/\d+\/apps\/\d+/)
+  return match?.[0]
+}
+
 /**
  * Asserts a `versions list --json` result shows:
  *   - `expectedTag` is present and `active`
@@ -77,6 +82,9 @@ test.describe('App deploy', () => {
     const appName = `E2E-deploy1-${Date.now()}`
     const secondaryAppName = `E2E-deploy2-${Date.now()}`
 
+    let primaryAppUrl: string | undefined
+    let secondaryAppUrl: string | undefined
+
     try {
       // Step 1: Create primary app (React Router template)
       const initResult = await createApp({
@@ -112,6 +120,7 @@ test.describe('App deploy', () => {
       )
       const deployOutput = deployResult.stdout + deployResult.stderr
       expect(deployResult.exitCode, `Step 2 - deploy failed:\n${deployOutput}`).toBe(0)
+      primaryAppUrl = devDashboardAppUrlFromOutput(deployOutput)
       assertDeployAnalytics({output: deployOutput, appName, step: 'Step 2'})
 
       // Step 3: Verify the primary tag is active and no other version is stuck active.
@@ -151,6 +160,7 @@ test.describe('App deploy', () => {
       })
       const secondaryDeployOutput = secondaryDeployResult.stdout + secondaryDeployResult.stderr
       expect(secondaryDeployResult.exitCode, `Step 5 - secondary deploy failed:\n${secondaryDeployOutput}`).toBe(0)
+      secondaryAppUrl = devDashboardAppUrlFromOutput(secondaryDeployOutput)
 
       // Step 6: Verify the secondary deploy hit the secondary app (not a silent
       // fallback to primary). Checks the secondary tag is active, no other
@@ -170,12 +180,14 @@ test.describe('App deploy', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl: primaryAppUrl,
           orgId: env.orgId,
           workerIndex: env.workerIndex,
         })
         await teardownAll({
           browserPage,
           appName: secondaryAppName,
+          appUrl: secondaryAppUrl,
           orgId: env.orgId,
           workerIndex: env.workerIndex,
         })
