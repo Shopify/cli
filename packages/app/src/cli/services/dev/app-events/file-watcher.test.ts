@@ -13,7 +13,6 @@ import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {sleep} from '@shopify/cli-kit/node/system'
 import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 
 // Mock the import extractor - will be configured per test
@@ -338,27 +337,23 @@ describe('file-watcher events', () => {
       await flushPromises()
 
       if (eventHandler) {
-        // For unlink or add, that include timeouts, directly call onChange with the expected event
+        // For unlink or add, that include timeouts, directly call onChange with the expected event.
         if (
           (fileSystemEvent === 'unlink' && !path.endsWith('.toml')) ||
           (fileSystemEvent === 'add' && path.endsWith('.toml') && path.includes('ui_extension_3'))
         ) {
-          setTimeout(() => {
-            onChange([
-              {
-                type: expectedEvent!.type,
-                path: expectedEvent!.path,
-                extensionPath: expectedEvent!.extensionPath,
-                startTime: [Date.now(), 0] as [number, number],
-              },
-            ])
-          }, 100)
+          onChange([
+            {
+              type: expectedEvent!.type,
+              path: expectedEvent!.path,
+              extensionPath: expectedEvent!.extensionPath,
+              startTime: [Date.now(), 0] as [number, number],
+            },
+          ])
         } else {
           // Normal event handling
           await eventHandler(fileSystemEvent, path, undefined)
         }
-        // Wait for processing
-        await sleep(0.15)
       }
 
       if (expectedEvent) {
@@ -394,11 +389,8 @@ describe('file-watcher events', () => {
         )
       } else {
         // For events that should not trigger
-        await sleep(0.1)
-        if (onChange.mock.calls.length > 0) {
-          const hasNonEmptyCall = onChange.mock.calls.some((call) => call[0].length > 0)
-          expect(hasNonEmptyCall).toBe(false)
-        }
+        const hasNonEmptyCall = onChange.mock.calls.some((call) => call[0].length > 0)
+        expect(hasNonEmptyCall).toBe(false)
       }
     },
   )
@@ -433,17 +425,14 @@ describe('file-watcher events', () => {
 
         // For both multi-event cases, we need to manually trigger the expected event
         if (expectedEvent) {
-          setTimeout(() => {
-            onChange([
-              {
-                type: expectedEvent.type,
-                path: expectedEvent.path,
-                extensionPath: expectedEvent.extensionPath,
-                startTime: [Date.now(), 0] as [number, number],
-              },
-            ])
-          }, 100)
-          await sleep(0.15)
+          onChange([
+            {
+              type: expectedEvent.type,
+              path: expectedEvent.path,
+              extensionPath: expectedEvent.extensionPath,
+              startTime: [Date.now(), 0] as [number, number],
+            },
+          ])
         }
 
         // Verify results
@@ -707,29 +696,14 @@ describe('file-watcher events', () => {
       fileWatcher.onChange(onChange)
       await fileWatcher.start()
 
-      // Create a timeout to ensure we don't hang
-      const timeout = setTimeout(() => {
-        throw new Error('Test timed out - possible infinite loop')
-      }, 5000)
-
-      try {
-        // Trigger multiple rapid changes - testing debounce doesn't hang
-        if (eventHandler) {
-          await eventHandler('change', '/shopify.app.toml')
-          await eventHandler('change', '/shopify.app.toml')
-          await eventHandler('change', '/shopify.app.toml')
-        }
-
-        // Wait for debounced events
-        await new Promise((resolve) => setTimeout(resolve, 30))
-
-        // Test passes if we reach here without hanging
-        clearTimeout(timeout)
-        expect(true).toBe(true)
-      } catch (error) {
-        clearTimeout(timeout)
-        throw error
+      // Trigger multiple rapid changes - testing debounce doesn't hang
+      if (eventHandler) {
+        await eventHandler('change', '/shopify.app.toml')
+        await eventHandler('change', '/shopify.app.toml')
+        await eventHandler('change', '/shopify.app.toml')
       }
+
+      await vi.waitFor(() => expect(events.length).toBeGreaterThan(0), {timeout: 1000, interval: 50})
     })
   })
 
@@ -846,7 +820,6 @@ describe('file-watcher events', () => {
 
       // When: a file the extension didn't pre-register is created on disk
       await eventHandler('add', '/extensions/ui_extension_1/runtime-added.js', undefined)
-      await sleep(0.15)
 
       // Then: it's attributed to the owning extensions and emitted
       await vi.waitFor(
@@ -899,7 +872,6 @@ describe('file-watcher events', () => {
       await flushPromises()
 
       await eventHandler('add', '/some/random/path/file.js', undefined)
-      await sleep(0.15)
 
       const hasNonEmptyCall = onChange.mock.calls.some((call) => call[0].length > 0)
       expect(hasNonEmptyCall).toBe(false)
@@ -939,12 +911,18 @@ describe('file-watcher events', () => {
 
       // Discover the file via 'add'
       await eventHandler('add', '/extensions/ui_extension_1/runtime-added.js', undefined)
-      await sleep(0.1)
+      await vi.waitFor(
+        () => {
+          const events = onChange.mock.calls.find((call) => call[0].length > 0)?.[0]
+          if (!events) throw new Error('no add events emitted')
+          expect(events.some((event: WatcherEvent) => event.type === 'file_created')).toBe(true)
+        },
+        {timeout: 1000, interval: 50},
+      )
 
       // Now fire a 'change' on the same path; should produce a file_updated event
       onChange.mockClear()
       await eventHandler('change', '/extensions/ui_extension_1/runtime-added.js', undefined)
-      await sleep(0.1)
 
       await vi.waitFor(
         () => {
