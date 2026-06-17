@@ -92,32 +92,35 @@ describe('install-cloudflare', () => {
     })
   })
 
-  test('installMacos is no longer vulnerable to command injection via binTarget', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      // A malicious path that attempts to escape the tar command and execute 'touch exploit'
-      const binPath = joinPath(tmpDir, '"; touch exploit; #')
-      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
-      mockFetch()
-      vi.mocked(childProcess.execFileSync).mockImplementation((command, args, options) => {
-        if (command === 'tar') {
-          const cwd = options?.cwd as string
-          writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
-        }
-        return Buffer.from('')
+  test.skipIf(process.platform === 'win32')(
+    'installMacos is no longer vulnerable to command injection via binTarget',
+    async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        // A malicious path that attempts to escape the tar command and execute 'touch exploit'
+        const binPath = joinPath(tmpDir, '"; touch exploit; #')
+        const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+        mockFetch()
+        vi.mocked(childProcess.execFileSync).mockImplementation((command, args, options) => {
+          if (command === 'tar') {
+            const cwd = options?.cwd as string
+            writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+          }
+          return Buffer.from('')
+        })
+
+        // When
+        await install(env, 'darwin', 'x64')
+
+        // Then
+        expect(childProcess.execFileSync).toHaveBeenCalledWith(
+          'tar',
+          expect.arrayContaining(['-xzf', expect.stringContaining('; touch exploit; #')]),
+          expect.anything(),
+        )
       })
-
-      // When
-      await install(env, 'darwin', 'x64')
-
-      // Then
-      expect(childProcess.execFileSync).toHaveBeenCalledWith(
-        'tar',
-        expect.arrayContaining(['-xzf', expect.stringContaining('; touch exploit; #')]),
-        expect.anything(),
-      )
-    })
-  })
+    },
+  )
 
   test('downloads the correct binary for linux', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
