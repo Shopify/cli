@@ -353,6 +353,18 @@ describe('isStdinPiped', () => {
   })
 })
 
+describe('isWsl', () => {
+  test('memoizes the result', async () => {
+    // When
+    const result1 = system.isWsl()
+    const result2 = system.isWsl()
+
+    // Then
+    expect(result1).toBe(result2)
+    await expect(result1).resolves.toBeTypeOf('boolean')
+  })
+})
+
 describe('readStdinString', () => {
   test('returns undefined when stdin is not piped', async () => {
     // Given
