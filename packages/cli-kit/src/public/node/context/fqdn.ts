@@ -139,7 +139,7 @@ export function normalizeStoreFqdn(store: string): string {
     }
   }
   const containDomain = (storeFqdn: string) =>
-    storeFqdn.endsWith('.myshopify.com') || storeFqdn.endsWith('shopify.io') || storeFqdn.endsWith('.shop.dev')
+    storeFqdn.endsWith('.myshopify.com') || storeFqdn.endsWith('.myshopify.io') || storeFqdn.endsWith('.shop.dev')
   return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
 }
 
