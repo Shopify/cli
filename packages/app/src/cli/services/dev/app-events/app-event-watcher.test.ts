@@ -383,23 +383,17 @@ describe('app-event-watcher', () => {
 
           await flushPromises()
 
-          // Wait until emitSpy has been called at least once
-          // We need this because there are I/O operations that make the test finish before the event is emitted
-          await new Promise<void>((resolve, reject) => {
-            const initialTime = Date.now()
-            const checkEmitSpy = () => {
+          // Wait until emitSpy has been called at least once.
+          // We need this because there are I/O operations that make the test finish before the event is emitted.
+          await vi.waitFor(
+            () => {
               const allCalled = emitSpy.mock.calls.some((call) => call[0] === 'all')
               const readyCalled = emitSpy.mock.calls.some((call) => call[0] === 'ready')
-              if (allCalled && readyCalled) {
-                resolve()
-              } else if (Date.now() - initialTime < 3000) {
-                setTimeout(checkEmitSpy, 100)
-              } else {
-                reject(new Error('Timeout waiting for emitSpy to be called'))
-              }
-            }
-            checkEmitSpy()
-          })
+              expect(allCalled).toBe(true)
+              expect(readyCalled).toBe(true)
+            },
+            {timeout: 3000, interval: 100},
+          )
 
           expect(emitSpy).toHaveBeenCalledWith('all', {
             app: expect.objectContaining({realExtensions: finalExtensions}),
