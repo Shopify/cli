@@ -158,7 +158,7 @@ export async function claimPreviewStore(
   options: PreviewStoreRequestOptions = {},
 ): Promise<PreviewStoreClaimResponse> {
   const fqdn = await appManagementFqdn()
-  const url = `https://${fqdn}/services/preview-stores/${request.shopId}/claim`
+  const url = `https://${fqdn}/services/preview-stores/${encodeURIComponent(request.shopId)}/claim`
   const body = JSON.stringify({...(request.email ? {email: request.email} : {})})
 
   const response = await shopifyFetch(url, {
