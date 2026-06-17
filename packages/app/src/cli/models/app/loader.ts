@@ -77,7 +77,7 @@ function tomlObjectArrayHint(error: ConfigurationError): string | undefined {
   if (!error.file.endsWith('.toml')) return undefined
   if (error.message !== 'Expected object, received array') return undefined
 
-  return 'Use a single TOML table instead of an array of tables. [table] defines one table; [[table]] defines an array of tables.'
+  return 'Use a TOML table instead of an array. [table] defines a single table; [[table]] defines an array of tables.'
 }
 
 export function formatConfigurationError(error: ConfigurationError): string {

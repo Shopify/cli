@@ -253,7 +253,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
     const dottedSchemaPath = unionError.schemaPath.replace('#/', '').replace(/\//g, '.')
     const unionSchemas = getPathValue<SchemaObject[]>(schema, dottedSchemaPath)
     // and the slice of the subject that caused the issue
-    const subjectValue = getPathValue(subject, unionError.instancePath.split('/').slice(1).join('.'))
+    const subjectValue = getJsonSchemaErrorValue(subject, unionError.instancePath.split('/').slice(1))
 
     if (unionSchemas !== undefined && subjectValue !== undefined) {
       // we know that none of the union schemas are correct, but for each of them we can measure how wrong they are
@@ -268,7 +268,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
             const candidatesObjectProperties = Object.keys(candidateSchemaFromUnion.properties)
             score = candidatesObjectProperties.reduce((acc, propertyName) => {
               const subSchema = candidateSchemaFromUnion.properties[propertyName] as SchemaObject
-              const subjectValueSlice = getPathValue(subjectValue, propertyName)
+              const subjectValueSlice = getJsonSchemaErrorValue(subjectValue as object, [propertyName])
 
               const subValidator = createAjvValidator('fail', subSchema)
               if (subValidator(subjectValueSlice)) {
