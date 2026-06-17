@@ -173,9 +173,6 @@ test.describe('Dev hot reload', () => {
         writeFlowTriggerExtension(appDir, 'doomed-ext')
         await proc.waitForOutput('Extension created', CLI_TIMEOUT.medium)
 
-        // Wait for the dev session to settle before deleting
-        await new Promise((resolve) => setTimeout(resolve, 5000))
-
         fs.rmSync(path.join(appDir, 'extensions', 'doomed-ext'), {recursive: true, force: true})
 
         await proc.waitForOutput('Extension deleted', CLI_TIMEOUT.medium)
