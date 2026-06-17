@@ -42,10 +42,12 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
-        // Simulate tar extracting the file
-        const cwd = options?.cwd as string
-        writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+      vi.mocked(childProcess.execFileSync).mockImplementation((command, args, options) => {
+        if (command === 'tar') {
+          // Simulate tar extracting the file
+          const cwd = options?.cwd as string
+          writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+        }
         return Buffer.from('')
       })
 
@@ -69,9 +71,11 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
-        const cwd = options?.cwd as string
-        writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+      vi.mocked(childProcess.execFileSync).mockImplementation((command, args, options) => {
+        if (command === 'tar') {
+          const cwd = options?.cwd as string
+          writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+        }
         return Buffer.from('')
       })
 
@@ -85,6 +89,33 @@ describe('install-cloudflare', () => {
         'slow-request',
       )
       await expect(fileExists(binPath)).resolves.toBe(true)
+    })
+  })
+
+  test('installMacos is no longer vulnerable to command injection via binTarget', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      // A malicious path that attempts to escape the tar command and execute 'touch exploit'
+      const binPath = joinPath(tmpDir, '"; touch exploit; #')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      mockFetch()
+      vi.mocked(childProcess.execFileSync).mockImplementation((command, args, options) => {
+        if (command === 'tar') {
+          const cwd = options?.cwd as string
+          writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+        }
+        return Buffer.from('')
+      })
+
+      // When
+      await install(env, 'darwin', 'x64')
+
+      // Then
+      expect(childProcess.execFileSync).toHaveBeenCalledWith(
+        'tar',
+        expect.arrayContaining(['-xzf', expect.stringContaining('; touch exploit; #')]),
+        expect.anything(),
+      )
     })
   })
 
