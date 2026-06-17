@@ -20,6 +20,21 @@ describe('store auth PKCE helpers', () => {
     expect(computeCodeChallenge(verifier)).toBe(expected)
   })
 
+  test('buildStoreAuthUrl includes signup JWT when provided', () => {
+    const url = new URL(
+      buildStoreAuthUrl({
+        store: 'shop.myshopify.com',
+        scopes: ['read_products'],
+        state: 'state-123',
+        redirectUri: 'http://127.0.0.1:13387/auth/callback',
+        codeChallenge: 'test-challenge-value',
+        signup: 'signed.signup.jwt',
+      }),
+    )
+
+    expect(url.searchParams.get('signup')).toBe('signed.signup.jwt')
+  })
+
   test('buildStoreAuthUrl includes PKCE params and response_type=code', () => {
     const url = new URL(
       buildStoreAuthUrl({
@@ -40,6 +55,7 @@ describe('store auth PKCE helpers', () => {
     expect(url.searchParams.get('response_type')).toBe('code')
     expect(url.searchParams.get('code_challenge')).toBe('test-challenge-value')
     expect(url.searchParams.get('code_challenge_method')).toBe('S256')
+    expect(url.searchParams.get('signup')).toBeNull()
     expect(url.searchParams.get('grant_options[]')).toBeNull()
   })
 })
