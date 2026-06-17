@@ -318,14 +318,21 @@ export async function configLink(
 // ---------------------------------------------------------------------------
 
 /** Search dev dashboard for an app by name. Returns the app URL or null. */
-export async function findAppOnDevDashboard(page: Page, appName: string, orgId?: string): Promise<string | null> {
+export async function findAppOnDevDashboard(
+  page: Page,
+  appName: string,
+  orgId?: string,
+  options: {timeoutMs?: number} = {},
+): Promise<string | null> {
   const org = orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
   const email = process.env.E2E_ACCOUNT_EMAIL
+  const deadline = options.timeoutMs ? Date.now() + options.timeoutMs : undefined
 
   await navigateToDashboard({browserPage: page, email, orgId: org})
 
   // Scan current page + pagination for the app
   while (true) {
+    if (deadline && Date.now() > deadline) return null
     const allLinks = await page.locator('a[href*="/apps/"]').all()
     for (const link of allLinks) {
       const text = (await link.textContent()) ?? ''
@@ -337,7 +344,8 @@ export async function findAppOnDevDashboard(page: Page, appName: string, orgId?:
 
     // Check for next page
     const nextLink = page.locator('a[href*="next_cursor"]').first()
-    if (!(await isVisibleWithin(nextLink, BROWSER_TIMEOUT.medium))) break
+    const remainingMs = deadline ? Math.max(deadline - Date.now(), 0) : BROWSER_TIMEOUT.medium
+    if (!(await isVisibleWithin(nextLink, Math.min(BROWSER_TIMEOUT.medium, remainingMs)))) break
     const nextHref = await nextLink.getAttribute('href')
     if (!nextHref) break
     const nextUrl = nextHref.startsWith('http') ? nextHref : `https://dev.shopify.com${nextHref}`

@@ -7,6 +7,7 @@ import {uninstallAppFromStore, deleteStore, isStoreAppsEmpty, dismissDevConsole}
 import type {Page} from '@playwright/test'
 
 const log = createLogger('browser')
+const APP_DELETE_TEARDOWN_TIMEOUT_MS = 90_000
 
 interface TeardownCtx {
   browserPage: Page
@@ -15,6 +16,10 @@ interface TeardownCtx {
   workerIndex?: number
   /** If set, uninstalls app from store + deletes store before deleting the app */
   storeFqdn?: string
+}
+
+function isBrowserClosedError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('Target page, context or browser has been closed')
 }
 
 /**
@@ -122,13 +127,33 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
   log.log(wCtx, 'deleting app')
   let appDeleted = false
   let stillHasInstalls = false
+  let browserClosed = false
+  let timedOut = false
+  const deadline = Date.now() + APP_DELETE_TEARDOWN_TIMEOUT_MS
   for (let attempt = 1; attempt <= 3; attempt++) {
+    const remainingMs = deadline - Date.now()
+    if (remainingMs <= 0) {
+      log.log(wCtx, 'app delete skipped — teardown time budget exhausted, run `pnpm test:e2e-cleanup-apps` after')
+      timedOut = true
+      break
+    }
+    if (page.isClosed()) {
+      log.log(wCtx, 'app delete skipped — browser page is closed')
+      browserClosed = true
+      break
+    }
+
     try {
-      const appUrl = await findAppOnDevDashboard(page, ctx.appName, ctx.orgId)
+      const appUrl = await findAppOnDevDashboard(page, ctx.appName, ctx.orgId, {timeoutMs: remainingMs})
       if (!appUrl) {
         // null could mean "app not in the list" OR "pagination ended on a stuck error page"
         // — findAppOnDevDashboard's refresh-on-error doesn't cover every iteration.
         // Detect and retry so we don't misclassify an error page as "already deleted".
+        if (Date.now() >= deadline) {
+          log.log(wCtx, 'app delete skipped — teardown time budget exhausted, run `pnpm test:e2e-cleanup-apps` after')
+          timedOut = true
+          break
+        }
         if (await refreshIfPageError(page)) {
           log.log(wCtx, `page error, refreshing...`)
           continue
@@ -154,10 +179,15 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
         stillHasInstalls = true
         break
       }
+      if (isBrowserClosedError(err)) {
+        log.log(wCtx, 'app delete skipped — browser page is closed')
+        browserClosed = true
+        break
+      }
       log.log(wCtx, `(${attempt}/3) app deletion failed: ${err instanceof Error ? err.message : err}`)
     }
   }
-  if (!appDeleted && !stillHasInstalls) {
+  if (!appDeleted && !stillHasInstalls && !browserClosed && !timedOut) {
     log.error(wCtx, 'app deletion failed after 3 attempts')
   }
 }
