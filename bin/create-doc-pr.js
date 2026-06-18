@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-import * as path from "pathe"
 import {fileURLToPath} from "node:url"
 import {createRequire} from 'node:module'
+
+import * as path from "pathe"
 import {findUp} from "find-up"
+
 import {withOctokit} from './github-utils.js'
 
 const require = createRequire(import.meta.url)
@@ -15,7 +17,7 @@ async function createPR() {
 
   const generatedDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../docs-shopify.dev/generated")
 
-  const fileNames = ['generated_category_pages.json', 'generated_docs_data.json', 'generated_docs_data_v2.json', 'generated_static_pages.json']
+  const fileNames = ['generated_docs_data_v2.json']
 
   const files = {}
   for (const fileName of fileNames) {
