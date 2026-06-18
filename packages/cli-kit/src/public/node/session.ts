@@ -28,6 +28,7 @@ import {isThemeAccessSession} from '../../private/node/api/rest.js'
 export interface AdminSession {
   token: string
   storeFqdn: string
+  sessionId?: string
 }
 
 /**
@@ -49,6 +50,16 @@ export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountI
  */
 export function setLastSeenUserId(userId: string): void {
   setLastSeenUserIdAfterAuth(userId)
+}
+
+/**
+ * Finds a stored Shopify account session by alias without changing the current session.
+ *
+ * @param alias - The account alias to find.
+ * @returns The matching session ID, or undefined if no session matches.
+ */
+export async function findSessionIdByAlias(alias: string): Promise<string | undefined> {
+  return sessionStore.findSessionByAlias(alias)
 }
 
 interface UserAccountInfo {
@@ -233,7 +244,10 @@ ${outputToken.json(scopes)}
   if (!tokens.admin) {
     throw new BugError('No admin token found after ensuring authenticated')
   }
-  return tokens.admin
+  return {
+    ...tokens.admin,
+    ...(options.sessionId ? {sessionId: tokens.userId} : {}),
+  }
 }
 
 /**

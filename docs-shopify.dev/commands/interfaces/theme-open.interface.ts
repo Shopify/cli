@@ -5,6 +5,12 @@
  */
 export interface themeopen {
   /**
+   * Alias of the Shopify account to use for authentication.
+   * @environment SHOPIFY_FLAG_AUTH_ALIAS
+   */
+  '--alias <value>'?: string
+
+  /**
    * Open your development theme.
    * @environment SHOPIFY_FLAG_DEVELOPMENT
    */

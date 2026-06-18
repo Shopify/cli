@@ -2,7 +2,7 @@ import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedThemes, findSessionIdByAlias} from '@shopify/cli-kit/node/session'
 import {
   getCurrentStoredStoreAppSession,
   listCurrentStoredStoreAppSessions,
@@ -41,6 +41,9 @@ class TestThemeCommand extends ThemeCommand {
     }),
     password: Flags.string({
       env: 'SHOPIFY_FLAG_PASSWORD',
+    }),
+    alias: Flags.string({
+      env: 'SHOPIFY_FLAG_AUTH_ALIAS',
     }),
     path: Flags.string({
       env: 'SHOPIFY_FLAG_PATH',
@@ -192,6 +195,7 @@ describe('ThemeCommand', () => {
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(undefined)
     vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([])
+    vi.mocked(findSessionIdByAlias).mockResolvedValue(undefined)
     vi.mocked(fileExistsSync).mockReturnValue(true)
   })
 
@@ -424,6 +428,35 @@ describe('ThemeCommand', () => {
       const command = new TestThemeCommand([], CommandConfig)
 
       await expect(command.run()).rejects.toThrow('cache read failed')
+    })
+
+    test('passes a resolved account alias to authentication without selecting it globally', async () => {
+      // Given
+      vi.mocked(findSessionIdByAlias).mockResolvedValue('user-id-for-work')
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(['--store', 'test-store.myshopify.com', '--alias', 'work'], CommandConfig)
+
+      // When
+      await command.run()
+
+      // Then
+      expect(findSessionIdByAlias).toHaveBeenCalledWith('work')
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', undefined, [], {
+        sessionId: 'user-id-for-work',
+      })
+      expect(command.commandCalls).toHaveLength(1)
+    })
+
+    test('throws when account alias does not match a stored session', async () => {
+      // Given
+      vi.mocked(findSessionIdByAlias).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(['--store', 'test-store.myshopify.com', '--alias', 'missing'], CommandConfig)
+
+      // When/Then
+      await expect(command.run()).rejects.toThrow('No authenticated account found for alias')
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
     })
 

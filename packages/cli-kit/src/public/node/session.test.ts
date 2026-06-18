@@ -6,6 +6,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
+  findSessionIdByAlias,
   setLastSeenUserId,
 } from './session.js'
 
@@ -13,6 +14,7 @@ import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import * as sessionStore from '../../private/node/session/store.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
@@ -32,6 +34,7 @@ const partnersToken: ApplicationToken = {
 
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
+vi.mock('../../private/node/session/store.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
 
@@ -40,6 +43,20 @@ describe('store command analytics session helpers', () => {
     setLastSeenUserId('store-user-id')
 
     expect(setLastSeenUserIdAfterAuth).toHaveBeenCalledWith('store-user-id')
+  })
+})
+
+describe('findSessionIdByAlias', () => {
+  test('returns the matching session ID without selecting it', async () => {
+    // Given
+    vi.mocked(sessionStore.findSessionByAlias).mockResolvedValueOnce('user-id')
+
+    // When
+    const got = await findSessionIdByAlias('work')
+
+    // Then
+    expect(got).toEqual('user-id')
+    expect(sessionStore.findSessionByAlias).toHaveBeenCalledWith('work')
   })
 })
 
@@ -171,6 +188,23 @@ describe('ensureAuthenticatedTheme', () => {
     expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
     expect(setLastSeenAuthMethod).not.toBeCalled()
     expect(setLastSeenUserIdAfterAuth).not.toBeCalled()
+  })
+
+  test('passes additional auth options through to the shared authenticator', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({
+      admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
+      userId: '1234-5678',
+    })
+
+    // When
+    const got = await ensureAuthenticatedThemes('mystore', undefined, [], {sessionId: 'user-id'})
+
+    // Then
+    expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com', sessionId: '1234-5678'})
+    expect(ensureAuthenticated).toHaveBeenCalledWith({adminApi: {scopes: [], storeFqdn: 'mystore'}}, process.env, {
+      sessionId: 'user-id',
+    })
   })
 
   test('throws error if there is no token when no password is provided', async () => {

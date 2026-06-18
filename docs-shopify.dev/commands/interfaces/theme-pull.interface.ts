@@ -5,6 +5,12 @@
  */
 export interface themepull {
   /**
+   * Alias of the Shopify account to use for authentication.
+   * @environment SHOPIFY_FLAG_AUTH_ALIAS
+   */
+  '--alias <value>'?: string
+
+  /**
    * Pull theme files from your remote development theme.
    * @environment SHOPIFY_FLAG_DEVELOPMENT
    */

@@ -5,7 +5,12 @@ import {useThemeStoreContext} from '../services/local-storage.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
-import {AdminSession, ensureAuthenticatedThemes, setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {
+  AdminSession,
+  ensureAuthenticatedThemes,
+  findSessionIdByAlias,
+  setLastSeenUserId,
+} from '@shopify/cli-kit/node/session'
 import {
   getCurrentStoredStoreAppSession,
   listCurrentStoredStoreAppSessions,
@@ -23,6 +28,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -349,11 +355,15 @@ export default abstract class ThemeCommand extends Command {
   private async createSession(flags: FlagValues, storeAuthSession?: AdminSession) {
     const store = ensureThemeStore({store: flags.store as string | undefined})
     const password = flags.password as string | undefined
+    const alias = flags.alias as string | undefined
+    const sessionId = !password && alias ? await this.sessionIdFromAlias(alias) : undefined
     const session = password
       ? await ensureAuthenticatedThemes(store, password)
-      : (storeAuthSession ??
-        (await this.storeAuthSessionForTheme({store})) ??
-        (await ensureAuthenticatedThemes(store, password)))
+      : sessionId
+        ? await ensureAuthenticatedThemes(store, password, [], {sessionId})
+        : (storeAuthSession ??
+          (await this.storeAuthSessionForTheme({store})) ??
+          (await ensureAuthenticatedThemes(store, password)))
 
     return session
   }
@@ -436,6 +446,17 @@ export default abstract class ThemeCommand extends Command {
 
     const expandedScopes = this.expandImpliedStoreAuthScopes(scopes)
     return this.storeAuthScopes().every((scope) => expandedScopes.has(scope))
+  }
+
+  private async sessionIdFromAlias(alias: string): Promise<string> {
+    const sessionId = await findSessionIdByAlias(alias)
+    if (!sessionId) {
+      throw new AbortError(
+        outputContent`No authenticated account found for alias ${outputToken.yellow(alias)}.`,
+        outputContent`Run ${outputToken.genericShellCommand(`shopify auth login --alias ${alias}`)} first.`,
+      )
+    }
+    return sessionId
   }
 
   /**
