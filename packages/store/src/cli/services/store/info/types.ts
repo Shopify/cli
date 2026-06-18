@@ -22,8 +22,7 @@ export interface StoreInfoResult {
   organizationName?: string
   storeOwner?: StoreInfoStoreOwner
   type?: string
-  // Public plan handle (basic | grow | advanced | plus), mapped from the raw BP plan name.
-  // Unrecognized plans are omitted. See `plan.ts`.
+  // Admin API public display name for store-auth stores, or public plan handle for BP-backed stores.
   plan?: string
   featurePreview?: string
   adminUrl?: string

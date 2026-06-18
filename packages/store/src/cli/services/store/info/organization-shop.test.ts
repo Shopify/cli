@@ -74,6 +74,16 @@ describe('fetchOrganizationShop', () => {
     expect(ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
   })
 
+  test('passes noPrompt through when authenticating', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
+      organization: {id: 'gid', name: 'Acme', accessibleShops: {edges: [{node: shopNode()}]}},
+    } as never)
+
+    await fetchOrganizationShop({store: SHOP, organizationId: ORG_ID, noPrompt: true})
+
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true})
+  })
+
   test('throws when organization is missing', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({organization: null} as never)
     await expect(fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})).rejects.toBeInstanceOf(BugError)

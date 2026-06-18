@@ -13,14 +13,15 @@ interface FetchOrganizationShopOptions {
   store: string
   organizationId: string
   token?: string
+  noPrompt?: boolean
 }
 
 export async function fetchOrganizationShop(options: FetchOrganizationShopOptions): Promise<OrganizationShopFields> {
-  const token = options.token ?? (await ensureAuthenticatedBusinessPlatform())
+  const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
   const unauthorizedHandler = {
     type: 'token_refresh' as const,
     handler: async () => {
-      const newToken = await ensureAuthenticatedBusinessPlatform()
+      const newToken = await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt})
       return {token: newToken}
     },
   }

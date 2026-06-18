@@ -23,14 +23,17 @@ type DestinationNodeFromQuery = NonNullable<
 interface FetchDestinationsContextOptions {
   store: string
   token?: string
+  noPrompt?: boolean
 }
 
+export class StoreInfoBusinessPlatformStoreNotFoundError extends AbortError {}
+
 export async function fetchDestinationsContext(options: FetchDestinationsContextOptions): Promise<DestinationsContext> {
-  const token = options.token ?? (await ensureAuthenticatedBusinessPlatform())
+  const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
   const unauthorizedHandler = {
     type: 'token_refresh' as const,
     handler: async () => {
-      const newToken = await ensureAuthenticatedBusinessPlatform()
+      const newToken = await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt})
       return {token: newToken}
     },
   }
@@ -56,7 +59,7 @@ export async function fetchDestinationsContext(options: FetchDestinationsContext
   const matchedNode = nodes.find((node) => matchesStore(node, targetHost))
 
   if (!matchedNode) {
-    throw new AbortError(
+    throw new StoreInfoBusinessPlatformStoreNotFoundError(
       `Couldn't find a store with domain ${options.store} for the current account.`,
       'Verify the domain (must be the canonical `myshopify.com` FQDN) and that you are signed in to an account with access to the store. Inactive shops are not searchable.',
     )

@@ -146,4 +146,17 @@ describe('fetchDestinationsContext', () => {
     expect(ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
     expect(vi.mocked(businessPlatformRequestDoc).mock.calls[0]?.[0].token).toBe('preset')
   })
+
+  test('passes noPrompt through when authenticating', async () => {
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
+      currentUserAccount: {destinations: {nodes: [destinationNode()]}},
+    } as never)
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
+      currentUserAccount: {organizationForDestination: {id: 'gid', name: 'O'}},
+    } as never)
+
+    await fetchDestinationsContext({store: SHOP, noPrompt: true})
+
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true})
+  })
 })
