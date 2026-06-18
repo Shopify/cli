@@ -1,0 +1,1 @@
+shopify app deploy [flags]

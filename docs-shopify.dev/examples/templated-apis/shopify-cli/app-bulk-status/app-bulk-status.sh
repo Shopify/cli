@@ -1,0 +1,1 @@
+shopify app bulk status [flags]

@@ -1,0 +1,1 @@
+shopify theme check [flags]

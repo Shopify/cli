@@ -9,9 +9,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, closed]
     paths:
-      - 'docs-shopify.dev/generated/generated_docs_data.json'
-      - 'docs-shopify.dev/generated/generated_static_pages.json'
-      - 'docs-shopify.dev/generated/generated_category_pages.json'
+      - 'docs-shopify.dev/**'
 
 concurrency:
   group: shopify-dev-docs-sync-${{ github.head_ref }}
@@ -48,24 +46,12 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          # Define the files we're monitoring
-          MONITORED_FILES=(
-            "docs-shopify.dev/generated/generated_docs_data.json"
-            "docs-shopify.dev/generated/generated_static_pages.json"
-            "docs-shopify.dev/generated/generated_category_pages.json"
-          )
-
           # Get the list of changed files in this PR using explicit SHAs
           echo "Comparing $BASE_SHA...$HEAD_SHA"
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
 
-          # Filter to only include our monitored files
-          MATCHING_FILES=()
-          for file in "${MONITORED_FILES[@]}"; do
-            if echo "$CHANGED_FILES" | grep -Fxq "$file"; then
-              MATCHING_FILES+=("$file")
-            fi
-          done
+          # Filter to only include generated shopify.dev docs files
+          mapfile -t MATCHING_FILES < <(echo "$CHANGED_FILES" | grep '^docs-shopify\.dev/' || true)
 
           # Convert to JSON array
           if [ ${#MATCHING_FILES[@]} -eq 0 ]; then
