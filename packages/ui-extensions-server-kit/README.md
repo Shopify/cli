@@ -28,8 +28,7 @@ import {ExtensionServerProvider, useExtensionServerContext} from '@shopify/ui-ex
 function LocalExtensionsComponent() {
   const {state: {extensions}} = useExtensionServerContext();
 
-  // TODO: Something with the extensions
-  return null;
+  return <div>{extensions.length} local extensions running</div>;
 }
 
 function App() {
