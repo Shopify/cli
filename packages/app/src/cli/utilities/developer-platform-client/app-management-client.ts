@@ -12,6 +12,7 @@ import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
+  TemplateSpecificationsOptions,
   Paginateable,
   AppVersion,
   AppVersionWithContext,
@@ -464,7 +465,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplatesResult> {
+  async templateSpecifications(
+    {organizationId}: MinimalAppIdentifiers,
+    options: TemplateSpecificationsOptions = {},
+  ): Promise<ExtensionTemplatesResult> {
     let templates: GatedExtensionTemplate[]
     const {templatesJsonPath} = environmentVariableNames
     const overrideFile = process.env[templatesJsonPath]
@@ -491,9 +495,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     // in the static JSON file. This can be removed once PartnersClient, which
     // uses sortPriority, is gone.
     let counter = 0
+    const requestedTemplates = options.requestedTemplate
+      ? templates.filter((template) => template.identifier === options.requestedTemplate)
+      : undefined
+    const templatesToFilter = requestedTemplates && requestedTemplates.length > 0 ? requestedTemplates : templates
     const filteredTemplates = (
       await allowedTemplates(
-        templates,
+        templatesToFilter,
         async (betaFlags: string[]) => this.organizationBetaFlags(organizationId, betaFlags),
         async (expFlags: string[]) => this.organizationExpFlags(organizationId, expFlags),
       )

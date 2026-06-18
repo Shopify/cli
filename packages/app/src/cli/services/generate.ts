@@ -46,6 +46,7 @@ async function generate(options: GenerateOptions) {
     developerPlatformClient,
     remoteApp,
     availableSpecifications,
+    {requestedTemplate: template},
   )
 
   const promptOptions = await buildPromptOptions(extensionTemplates, groupOrder, specifications, app, options)

@@ -257,6 +257,126 @@ describe('templateSpecifications', () => {
     expect(groupOrder).toEqual(['GroupA', 'GroupB', 'GroupC'])
   })
 
+  test('does not fetch flags for unrelated templates when a template is requested', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const requestedTemplate: GatedExtensionTemplate = {
+      ...templateWithoutRules,
+      identifier: 'discount',
+    }
+    const templateWithBetaFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      identifier: 'app_action_link',
+      organizationBetaFlags: ['unrelated_beta_flag'],
+    }
+    const templateWithExpFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[2]!,
+      identifier: 'app_action',
+      organizationExpFlags: ['unrelated_exp_flag'],
+    }
+    const templates: GatedExtensionTemplate[] = [requestedTemplate, templateWithBetaFlag, templateWithExpFlag]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    // When
+    const client = AppManagementClient.getInstance()
+    const {templates: got} = await client.templateSpecifications(orgApp, {requestedTemplate: 'discount'})
+
+    // Then
+    expect(vi.mocked(businessPlatformOrganizationsRequest)).not.toHaveBeenCalled()
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).not.toHaveBeenCalled()
+    expect(got.map((template) => template.identifier)).toEqual(['discount'])
+  })
+
+  test('fetches flags for the requested template when the requested template is gated', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templateWithBetaFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      identifier: 'app_action_link',
+      organizationBetaFlags: ['requested_beta_flag'],
+    }
+    const templateWithExpFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[2]!,
+      identifier: 'app_action',
+      organizationExpFlags: ['unrelated_exp_flag'],
+    }
+    const templates: GatedExtensionTemplate[] = [templateWithoutRules, templateWithBetaFlag, templateWithExpFlag]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+        flag_requested_beta_flag: true,
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
+
+    // When
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const {templates: got} = await client.templateSpecifications(orgApp, {requestedTemplate: 'app_action_link'})
+
+    // Then
+    expect(vi.mocked(businessPlatformOrganizationsRequest)).toHaveBeenCalledWith({
+      query: expect.stringContaining('flag_requested_beta_flag: hasFeatureFlag(handle: "requested_beta_flag")'),
+      token: 'business-platform-token',
+      organizationId: orgApp.organizationId,
+      variables: {
+        organizationId: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+      },
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).not.toHaveBeenCalled()
+    expect(got.map((template) => template.identifier)).toEqual(['app_action_link'])
+  })
+
+  test('falls back to the full template list when the requested template is unknown', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templateWithBetaFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      organizationBetaFlags: ['allowed_flag'],
+    }
+    const templateWithDisallowedBetaFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[2]!,
+      organizationBetaFlags: ['not_allowed_flag'],
+    }
+    const templates: GatedExtensionTemplate[] = [
+      templateWithoutRules,
+      templateWithBetaFlag,
+      templateWithDisallowedBetaFlag,
+    ]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+        flag_allowed_flag: true,
+        flag_not_allowed_flag: false,
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
+
+    // When
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const {templates: got} = await client.templateSpecifications(orgApp, {requestedTemplate: 'unknown_template'})
+
+    // Then
+    expect(vi.mocked(businessPlatformOrganizationsRequest)).toHaveBeenCalled()
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).not.toHaveBeenCalled()
+    expect(got.map((template) => template.identifier)).toEqual([
+      templateWithoutRules.identifier,
+      templateWithBetaFlag.identifier,
+    ])
+  })
+
   test('fetches and filters templates by exp flags using enabledFlags', async () => {
     // Given
     const orgApp = testOrganizationApp()

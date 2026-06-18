@@ -5,6 +5,7 @@ import {
   AssetUrlSchema,
   AppVersionIdentifiers,
   DeveloperPlatformClient,
+  TemplateSpecificationsOptions,
   Paginateable,
   filterDisabledFlags,
   ClientName,
@@ -352,7 +353,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     }))
   }
 
-  async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplatesResult> {
+  async templateSpecifications(
+    {apiKey}: MinimalAppIdentifiers,
+    _options: TemplateSpecificationsOptions = {},
+  ): Promise<ExtensionTemplatesResult> {
     const variables: RemoteTemplateSpecificationsVariables = {apiKey}
     const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
     const templates = result.templateSpecifications.map((template) => {
