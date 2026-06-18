@@ -5663,7 +5663,10 @@
           "name": "query"
         }
       },
-      "description": "Starts a search on shopify.dev.",
+      "deprecationOptions": {
+        "to": "doc search"
+      },
+      "description": "Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive, human use. Deprecated: if you are an agent or need results programmatically, use `doc search` instead, which returns the matching documentation as JSON.",
       "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
@@ -5677,6 +5680,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "state": "deprecated",
       "strict": true,
       "usage": "search [query]"
     },

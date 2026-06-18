@@ -3,7 +3,14 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {Args} from '@oclif/core'
 
 export default class Search extends Command {
-  static description = 'Starts a search on shopify.dev.'
+  static description =
+    'Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive, human use. Deprecated: if you are an agent or need results programmatically, use `doc search` instead, which returns the matching documentation as JSON.'
+
+  // Deprecated in favor of `doc search`, which returns JSON for programmatic use.
+  // The browser behavior is intentionally preserved so existing usage doesn't break;
+  // oclif emits a runtime deprecation warning pointing to `doc search`.
+  static state = 'deprecated'
+  static deprecationOptions = {to: 'doc search'}
 
   static usage = `search [query]`
 

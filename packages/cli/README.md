@@ -2084,14 +2084,16 @@ DESCRIPTION
 
 ## `shopify search [query]`
 
-Starts a search on shopify.dev.
+Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive, human use. Deprecated: if you are an agent or need results programmatically, use `doc search` instead, which returns the matching documentation as JSON.
 
 ```
 USAGE
   $ shopify search [query]
 
 DESCRIPTION
-  Starts a search on shopify.dev.
+  Opens shopify.dev in your browser to search the documentation using the on-site search. Intended for interactive,
+  human use. Deprecated: if you are an agent or need results programmatically, use `doc search` instead, which returns
+  the matching documentation as JSON.
 
 EXAMPLES
   # open the search modal on Shopify.dev
