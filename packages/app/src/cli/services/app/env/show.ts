@@ -21,16 +21,17 @@ export async function outputEnv(
 ): Promise<OutputMessage> {
   await logMetadataForLoadedContext(remoteApp, organization.source)
 
+  const redactedApiSecret = remoteApp.apiSecretKeys[0]?.secret ? '******' : ''
   if (format === 'json') {
     return outputContent`${outputToken.json({
       SHOPIFY_API_KEY: remoteApp.apiKey,
-      SHOPIFY_API_SECRET: remoteApp.apiSecretKeys[0]?.secret,
+      SHOPIFY_API_SECRET: redactedApiSecret,
       SCOPES: getAppScopes(app.configuration),
     })}`
   } else {
     return outputContent`
     ${outputToken.green('SHOPIFY_API_KEY')}=${remoteApp.apiKey}
-    ${outputToken.green('SHOPIFY_API_SECRET')}=${remoteApp.apiSecretKeys[0]?.secret ?? ''}
+    ${outputToken.green('SHOPIFY_API_SECRET')}=${redactedApiSecret}
     ${outputToken.green('SCOPES')}=${getAppScopes(app.configuration)}
   `
   }
