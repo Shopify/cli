@@ -227,6 +227,10 @@ interface ErrorDetail {
   [key: string]: unknown
 }
 
+export interface TemplateSpecificationsOptions {
+  requestedTemplate?: string
+}
+
 export interface DeveloperPlatformClient {
   readonly clientName: ClientName
   readonly webUiName: string
@@ -250,7 +254,10 @@ export interface DeveloperPlatformClient {
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
-  templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplatesResult>
+  templateSpecifications: (
+    app: MinimalAppIdentifiers,
+    options?: TemplateSpecificationsOptions,
+  ) => Promise<ExtensionTemplatesResult>
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
   storeByDomain: (orgId: string, shopDomain: string, storeTypes: Store[]) => Promise<OrganizationStore | undefined>

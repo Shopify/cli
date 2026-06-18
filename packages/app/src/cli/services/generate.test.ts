@@ -149,6 +149,28 @@ describe('generate', () => {
     `)
   })
 
+  test('passes the requested template when fetching extension templates', async () => {
+    // Given
+    await mockSuccessfulCommandExecution('cart_checkout_validation')
+    const templateSpecifications = vi.fn().mockResolvedValue({templates: testRemoteExtensionTemplates, groupOrder: []})
+    developerPlatformClient = testDeveloperPlatformClient({templateSpecifications})
+
+    // When
+    await generate({
+      directory: '/',
+      reset: false,
+      app,
+      project: testProject(),
+      remoteApp,
+      specifications,
+      developerPlatformClient,
+      template: 'cart_checkout_validation',
+    })
+
+    // Then
+    expect(templateSpecifications).toHaveBeenCalledWith(remoteApp, {requestedTemplate: 'cart_checkout_validation'})
+  })
+
   test('throws error if trying to generate a non existing type', async () => {
     await mockSuccessfulCommandExecution('subscription_ui')
 

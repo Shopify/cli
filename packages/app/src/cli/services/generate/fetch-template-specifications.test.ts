@@ -1,7 +1,7 @@
 import {fetchExtensionTemplates} from './fetch-template-specifications.js'
 import {ExtensionFlavorValue} from './extension.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 describe('fetchTemplateSpecifications', () => {
   test('returns the remote specs', async () => {
@@ -25,6 +25,20 @@ describe('fetchTemplateSpecifications', () => {
 
     // Since the ui_extension specification is not enabled, this template should not be included.
     expect(identifiers).not.toContain('ui_extension')
+  })
+
+  test('passes the requested template to the developer platform client', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templateSpecifications = vi.fn().mockResolvedValue({templates: [], groupOrder: []})
+
+    // When
+    await fetchExtensionTemplates(testDeveloperPlatformClient({templateSpecifications}), orgApp, ['function'], {
+      requestedTemplate: 'discount',
+    })
+
+    // Then
+    expect(templateSpecifications).toHaveBeenCalledWith(orgApp, {requestedTemplate: 'discount'})
   })
 
   describe('ui_extension', () => {

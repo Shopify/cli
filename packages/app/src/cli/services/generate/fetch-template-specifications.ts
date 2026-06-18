@@ -1,13 +1,14 @@
 import {ExtensionTemplatesResult} from '../../models/app/template.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, TemplateSpecificationsOptions} from '../../utilities/developer-platform-client.js'
 
 export async function fetchExtensionTemplates(
   developerPlatformClient: DeveloperPlatformClient,
   app: MinimalAppIdentifiers,
   availableSpecifications: string[],
+  options: TemplateSpecificationsOptions = {},
 ): Promise<ExtensionTemplatesResult> {
-  const {templates: remoteTemplates, groupOrder} = await developerPlatformClient.templateSpecifications(app)
+  const {templates: remoteTemplates, groupOrder} = await developerPlatformClient.templateSpecifications(app, options)
 
   const filteredTemplates = remoteTemplates.filter(
     (template) =>
