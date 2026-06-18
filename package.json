@@ -221,7 +221,8 @@
         ],
         "ignoreDependencies": [
           "@graphql-typed-document-node/core",
-          "@shopify/plugin-cloudflare"
+          "@shopify/plugin-cloudflare",
+          "http-proxy-node16"
         ],
         "vite": {
           "config": [
@@ -369,13 +370,20 @@
           "**/scripts/*.ts!",
           "**/src/testing/index.ts"
         ],
-        "project": "**/*.{ts,tsx}!"
+        "project": "**/*.{ts,tsx}!",
+        "ignoreDependencies": [
+          "react-dom"
+        ]
       },
       "packages/ui-extensions-test-utils": {
         "entry": [
           "**/src/index.ts"
         ],
-        "project": "**/*.{ts,tsx}"
+        "project": "**/*.{ts,tsx}",
+        "ignoreDependencies": [
+          "@types/react-dom",
+          "react-dom"
+        ]
       }
     }
   }
