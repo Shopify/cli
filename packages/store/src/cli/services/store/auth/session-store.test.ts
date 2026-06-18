@@ -144,6 +144,42 @@ describe('store session storage', () => {
     })
   })
 
+  test('round-trips preview store session metadata', () => {
+    const storage = inMemoryStorage()
+    const previewSession = buildSession({
+      userId: 'preview:placeholder-uuid',
+      scopes: [],
+      kind: 'preview',
+      preview: {
+        placeholderAccountUuid: 'placeholder-uuid',
+        shopId: '123',
+        name: 'Lavender Candles',
+        country: 'US',
+        createdAt: '2026-06-08T12:00:00.000Z',
+      },
+    })
+
+    setStoredStoreAppSession(previewSession, storage as any)
+
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(previewSession)
+  })
+
+  test('rejects preview store sessions with malformed metadata', () => {
+    const storage = inMemoryStorage()
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
+      currentUserId: 'preview:placeholder-uuid',
+      sessionsByUserId: {
+        'preview:placeholder-uuid': {
+          ...buildSession({userId: 'preview:placeholder-uuid', kind: 'preview'}),
+          preview: {placeholderAccountUuid: 'placeholder-uuid'},
+        },
+      },
+    })
+
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
+    expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
+  })
+
   test('overwrites a malformed bucket when writing a new session', () => {
     const storage = inMemoryStorage()
     storage.set(storeAuthSessionKey('shop.myshopify.com'), {
