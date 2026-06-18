@@ -192,14 +192,17 @@ You can run this command only in a directory that matches the [default Shopify t
       notify: flags.notify,
     })
 
-    await metafieldsPull({
-      path: flags.path,
-      password: flags.password,
-      store: flags.store,
-      force: flags.force,
-      verbose: flags.verbose,
-      noColor: flags['no-color'],
-      silent: true,
-    })
+    await metafieldsPull(
+      {
+        path: flags.path,
+        password: flags.password,
+        store: flags.store,
+        force: flags.force,
+        verbose: flags.verbose,
+        noColor: flags['no-color'],
+        silent: true,
+      },
+      adminSession,
+    )
   }
 }

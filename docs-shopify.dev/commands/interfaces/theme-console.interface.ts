@@ -5,6 +5,12 @@
  */
 export interface themeconsole {
   /**
+   * Alias of the Shopify account to use for authentication.
+   * @environment SHOPIFY_FLAG_AUTH_ALIAS
+   */
+  '--alias <value>'?: string
+
+  /**
    * The environment to apply to the current command.
    * @environment SHOPIFY_FLAG_ENVIRONMENT
    */

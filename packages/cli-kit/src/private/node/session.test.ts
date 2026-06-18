@@ -19,7 +19,7 @@ import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
-import {getCurrentSessionId} from './conf-store.js'
+import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
@@ -313,6 +313,33 @@ describe('when existing session is valid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
+  test('uses an explicitly selected session without reading the current session ID', async () => {
+    // Given
+    const selectedUserId = 'selected-user-id'
+    const sessions: Sessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+        [selectedUserId]: {
+          identity: {...validIdentityToken, userId: selectedUserId},
+          applications: appTokens,
+        },
+      },
+    }
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
+    vi.mocked(fetchSessions).mockResolvedValue(sessions)
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, {sessionId: selectedUserId})
+
+    // Then
+    expect(getCurrentSessionId).not.toHaveBeenCalled()
+    expect(validateSession).toHaveBeenCalledWith(expect.any(Array), expect.any(Object), sessions[fqdn]![selectedUserId])
+    expect(got).toEqual({...validTokens, userId: selectedUserId})
+  })
+
   test('overwrites partners token if provided with a custom CLI token', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
@@ -349,6 +376,31 @@ describe('when existing session is valid', () => {
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
+  })
+
+  test('refreshes an explicitly selected session without changing the current session ID', async () => {
+    // Given
+    const selectedUserId = 'selected-user-id'
+    const sessions: Sessions = {
+      [fqdn]: {
+        [selectedUserId]: {
+          identity: {...validIdentityToken, userId: selectedUserId},
+          applications: appTokens,
+        },
+      },
+    }
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(sessions)
+    vi.mocked(refreshAccessToken).mockResolvedValueOnce({...validIdentityToken, userId: selectedUserId})
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, {sessionId: selectedUserId})
+
+    // Then
+    expect(refreshAccessToken).toHaveBeenCalled()
+    expect(storeSessions).toHaveBeenCalledWith(sessions)
+    expect(setCurrentSessionId).not.toHaveBeenCalled()
+    expect(got).toEqual({...validTokens, userId: selectedUserId})
   })
 })
 
