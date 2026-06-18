@@ -105,6 +105,22 @@ export function jsonSchemaValidate(
 }
 
 /**
+ * Get a more precise type name for JSON Schema error messages.
+ *
+ * @param value - The value to get the type of.
+ * @returns A string representing the type (e.g., 'array', 'null', 'object').
+ */
+function getJsonSchemaValueType(value: unknown): string {
+  if (Array.isArray(value)) return 'array'
+  if (value === null) return 'null'
+  return typeof value
+}
+
+function getJsonSchemaErrorValue(subject: object, path: string[]): unknown {
+  return path.length === 0 ? subject : getPathValue(subject, path)
+}
+
+/**
  * Converts errors from Ajv into a zod-like format.
  *
  * @param rawErrors - JSON Schema errors taken directly from Ajv.
@@ -128,8 +144,8 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
       const expectedType = Array.isArray(error.params.type)
         ? error.params.type.join(', ')
         : (error.params.type as string)
-      const actualType = getPathValue(subject, path.join('.'))
-      return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
+      const actualType = getJsonSchemaErrorValue(subject, path)
+      return {path, message: `Expected ${expectedType}, received ${getJsonSchemaValueType(actualType)}`}
     }
 
     if (error.keyword === 'anyOf' || error.keyword === 'oneOf') {
@@ -138,7 +154,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
 
     if (error.params.allowedValues) {
       const allowedValues = error.params.allowedValues as string[]
-      const actualValue = getPathValue(subject, path.join('.'))
+      const actualValue = getJsonSchemaErrorValue(subject, path)
       return {
         path,
         message: `Invalid enum value. Expected ${allowedValues
@@ -150,7 +166,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     if (error.params.comparison) {
       const comparison = error.params.comparison as string
       const limit = error.params.limit
-      const actualValue = getPathValue(subject, path.join('.'))
+      const actualValue = getJsonSchemaErrorValue(subject, path)
 
       let comparisonText = comparison
       switch (comparison) {
@@ -237,7 +253,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
     const dottedSchemaPath = unionError.schemaPath.replace('#/', '').replace(/\//g, '.')
     const unionSchemas = getPathValue<SchemaObject[]>(schema, dottedSchemaPath)
     // and the slice of the subject that caused the issue
-    const subjectValue = getPathValue(subject, unionError.instancePath.split('/').slice(1).join('.'))
+    const subjectValue = getJsonSchemaErrorValue(subject, unionError.instancePath.split('/').slice(1))
 
     if (unionSchemas !== undefined && subjectValue !== undefined) {
       // we know that none of the union schemas are correct, but for each of them we can measure how wrong they are
@@ -252,7 +268,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
             const candidatesObjectProperties = Object.keys(candidateSchemaFromUnion.properties)
             score = candidatesObjectProperties.reduce((acc, propertyName) => {
               const subSchema = candidateSchemaFromUnion.properties[propertyName] as SchemaObject
-              const subjectValueSlice = getPathValue(subjectValue, propertyName)
+              const subjectValueSlice = getJsonSchemaErrorValue(subjectValue as object, [propertyName])
 
               const subValidator = createAjvValidator('fail', subSchema)
               if (subValidator(subjectValueSlice)) {

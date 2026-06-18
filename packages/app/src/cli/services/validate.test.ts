@@ -6,6 +6,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {jsonSchemaValidate} from '@shopify/cli-kit/node/json-schema'
 
 vi.mock('../metadata.js', () => ({default: {addPublicMetadata: vi.fn()}}))
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
@@ -36,6 +37,80 @@ describe('formatConfigurationError', () => {
     expect(formatConfigurationError({file: 'foo.toml', path: ['access', 'admin'], message: 'Required'})).toBe(
       '[access.admin]: Required',
     )
+  })
+
+  test('adds a TOML table hint for object array type mismatches', () => {
+    expect(
+      formatConfigurationError({
+        file: 'shopify.app.toml',
+        path: ['events', '1', 'metrics'],
+        message: 'Expected object, received array',
+      }),
+    ).toBe(
+      '[events.1.metrics]: Expected object, received array. Use a TOML table instead of an array. [table] defines a single table; [[table]] defines an array of tables.',
+    )
+  })
+
+  test('adds a TOML table hint to JSON Schema object array type mismatches', () => {
+    const schemaParsed = jsonSchemaValidate(
+      {events: [{metrics: []}]},
+      {
+        type: 'object',
+        properties: {
+          events: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                metrics: {type: 'object'},
+              },
+            },
+          },
+        },
+      },
+      'strip',
+    )
+
+    expect(schemaParsed.state).toBe('error')
+    expect(schemaParsed.errors).toEqual([
+      {
+        path: ['events', '0', 'metrics'],
+        message: 'Expected object, received array',
+      },
+    ])
+
+    const schemaError = schemaParsed.errors?.[0]
+    expect(schemaError).toBeDefined()
+    expect(schemaError?.message).toBe('Expected object, received array')
+    expect(
+      formatConfigurationError({
+        file: 'shopify.app.toml',
+        path: schemaError!.path,
+        message: schemaError!.message!,
+      }),
+    ).toBe(
+      '[events.0.metrics]: Expected object, received array. Use a TOML table instead of an array. [table] defines a single table; [[table]] defines an array of tables.',
+    )
+  })
+
+  test('does not add a TOML table hint for non-TOML files', () => {
+    expect(
+      formatConfigurationError({
+        file: 'config.json',
+        path: ['events', '1', 'metrics'],
+        message: 'Expected object, received array',
+      }),
+    ).toBe('[events.1.metrics]: Expected object, received array')
+  })
+
+  test('does not add a TOML table hint for other type mismatches', () => {
+    expect(
+      formatConfigurationError({
+        file: 'shopify.app.toml',
+        path: ['events', '1', 'metrics'],
+        message: 'Expected object, received string',
+      }),
+    ).toBe('[events.1.metrics]: Expected object, received string')
   })
 })
 
