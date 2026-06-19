@@ -1,4 +1,5 @@
 import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -8,6 +9,7 @@ import {
   applyFixToString,
   autofix,
   loadConfig,
+  ThemeCheckConfigError,
   type FixApplicator,
   type Offense,
   type Theme,
@@ -244,6 +246,21 @@ export function handleExit(offenses: Offense[], failLevel: FailLevel) {
   process.exit(shouldFail ? 1 : 0)
 }
 
+export async function runWithThemeCheckConfigErrors<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    if (error instanceof ThemeCheckConfigError) {
+      throw new AbortError(error.message)
+    }
+    throw error
+  }
+}
+
+export async function loadThemeCheckConfig(configPath: string | undefined, root: string) {
+  return runWithThemeCheckConfigErrors(() => loadConfig(configPath, root))
+}
+
 /**
  * Adds a '#' character at the start of each line in a string.
  */
@@ -285,7 +302,7 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
 }
 
 export async function outputActiveConfig(themeRoot: string, configPath?: string, environment?: string) {
-  const {ignore, settings, rootUri} = await loadConfig(configPath, themeRoot)
+  const {ignore, settings, rootUri} = await loadThemeCheckConfig(configPath, themeRoot)
 
   const config = {
     // loadConfig flattens all configs, it doesn't extend anything
@@ -305,7 +322,7 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string,
 }
 
 export async function outputActiveChecks(root: string, configPath?: string, environment?: string) {
-  const {settings, ignore, checks} = await loadConfig(configPath, root)
+  const {settings, ignore, checks} = await loadThemeCheckConfig(configPath, root)
   // Depending on how the configs were merged during loadConfig, there may be
   // duplicate patterns to ignore. We can clean them before outputting.
   const ignorePatterns = uniq(ignore ?? [])

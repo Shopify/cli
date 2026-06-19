@@ -1,9 +1,23 @@
 import Check from './check.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config} from '@oclif/core'
-import {themeCheckRun, Theme, Config as ThemeConfig, Offense} from '@shopify/theme-check-node'
+import {
+  themeCheckRun,
+  ThemeCheckConfigError,
+  Theme,
+  Config as ThemeConfig,
+  Offense,
+} from '@shopify/theme-check-node'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
-vi.mock('@shopify/theme-check-node')
+vi.mock('@shopify/theme-check-node', async () => {
+  const actual = await vi.importActual<typeof import('@shopify/theme-check-node')>('@shopify/theme-check-node')
+  return {
+    ...actual,
+    themeCheckRun: vi.fn(),
+    loadConfig: vi.fn(),
+  }
+})
 const CommandConfig = new Config({root: __dirname})
 
 describe('Check', () => {
@@ -77,6 +91,22 @@ describe('Check', () => {
       })
 
       await run([`--config=${expectedConfig}`])
+    })
+
+    test('surfaces an invalid config as an AbortError instead of crashing', async () => {
+      vi.mocked(themeCheckRun).mockRejectedValueOnce(
+        new ThemeCheckConfigError("Failed to load Theme Check configuration from './.theme-check.yml'"),
+      )
+
+      await expect(run(['--config=./.theme-check.yml'])).rejects.toThrowError(AbortError)
+    })
+
+    test('rethrows errors from the check itself so genuine bugs are still reported', async () => {
+      const bug = new Error('Something unexpected blew up inside a check')
+      vi.mocked(themeCheckRun).mockRejectedValue(bug)
+
+      await expect(run([])).rejects.toThrowError(bug)
+      await expect(run([])).rejects.not.toThrowError(AbortError)
     })
   })
 })
