@@ -380,6 +380,71 @@ describe('analytics/storage', () => {
     })
   })
 
+  describe('string length bounding', () => {
+    const maxFieldLength = 512
+
+    test('truncates long event names', () => {
+      // When
+      recordEvent('e'.repeat(maxFieldLength + 1000))
+
+      // Then
+      const data = compileData()
+      expect(data.events[0]?.name.length).toBe(maxFieldLength)
+    })
+
+    test('truncates long timing event names', () => {
+      // Given
+      const longEvent = 't'.repeat(maxFieldLength + 1000)
+
+      // When
+      recordTiming(longEvent)
+      recordTiming(longEvent)
+
+      // Then
+      const data = compileData()
+      expect(data.timings[0]?.event.length).toBe(maxFieldLength)
+    })
+
+    test('truncates long retry urls and operations', () => {
+      // When
+      recordRetry('u'.repeat(maxFieldLength + 1000), 'o'.repeat(maxFieldLength + 1000))
+
+      // Then
+      const data = compileData()
+      expect(data.retries[0]?.url.length).toBe(maxFieldLength)
+      expect(data.retries[0]?.operation.length).toBe(maxFieldLength)
+    })
+
+    test('counts retry attempts consistently when fields are truncated', () => {
+      // Given
+      const longUrl = 'u'.repeat(maxFieldLength + 1000)
+      const longOperation = 'o'.repeat(maxFieldLength + 1000)
+
+      // When
+      recordRetry(longUrl, longOperation)
+      recordRetry(longUrl, longOperation)
+
+      // Then
+      const data = compileData()
+      expect(data.retries.length).toBe(2)
+      expect(data.retries[0]?.attempts).toBe(1)
+      expect(data.retries[1]?.attempts).toBe(2)
+    })
+
+    test('keeps compiled data serializable with many oversized entries', () => {
+      // Given
+      const oversized = 'x'.repeat(maxFieldLength + 1000)
+      for (let index = 0; index < 2000; index++) {
+        recordEvent(oversized)
+        recordRetry(oversized, oversized)
+      }
+
+      // When / Then
+      const data = compileData()
+      expect(() => JSON.stringify(data)).not.toThrow()
+    })
+  })
+
   describe('integration tests', () => {
     test('handles complete workflow with all data types', () => {
       // Given

@@ -39,6 +39,21 @@ const _runtimeAnalyticsStore = {
   events: new BArray<EventEntry>(),
 }
 
+/**
+ * Caps the length of individual string fields stored in analytics entries.
+ *
+ * Entry counts are bounded by BArray, but a single entry can still carry an
+ * arbitrarily large string (e.g. a retry operation derived from a network error
+ * message). Without this cap, serializing the collected data with JSON.stringify
+ * can exceed V8's maximum string length and throw a `RangeError`
+ * ("Invalid string length"), surfacing as an unhandled error from command analytics.
+ */
+const MAX_FIELD_LENGTH = 512
+
+function truncateField(value: string): string {
+  return value.length > MAX_FIELD_LENGTH ? value.substring(0, MAX_FIELD_LENGTH) : value
+}
+
 export function recordTiming(eventName: string): void {
   const now = Date.now()
 
@@ -54,7 +69,7 @@ export function recordTiming(eventName: string): void {
   const duration = now - startTime
 
   _runtimeAnalyticsStore.timings.push({
-    event: eventName,
+    event: truncateField(eventName),
     duration,
   })
 
@@ -84,24 +99,27 @@ export function recordError(error: unknown): void {
 }
 
 export function recordRetry(url: string, operation: string): void {
+  const truncatedUrl = truncateField(url)
+  const truncatedOperation = truncateField(operation)
+
   const existingEntries = _runtimeAnalyticsStore.retries.filter(
-    (entry) => entry.url === url && entry.operation === operation,
+    (entry) => entry.url === truncatedUrl && entry.operation === truncatedOperation,
   )
   const attemptCount = existingEntries.length + 1
 
   _runtimeAnalyticsStore.retries.push({
-    url,
-    operation,
+    url: truncatedUrl,
+    operation: truncatedOperation,
     attempts: attemptCount,
     timestamp: Date.now(),
   })
 
-  recordEvent(`retry:${operation}:attempt:${attemptCount}`)
+  recordEvent(`retry:${truncatedOperation}:attempt:${attemptCount}`)
 }
 
 export function recordEvent(eventName: string): void {
   _runtimeAnalyticsStore.events.push({
-    name: eventName,
+    name: truncateField(eventName),
     timestamp: Date.now(),
   })
 }
