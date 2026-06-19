@@ -5,7 +5,7 @@ import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-e
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {getCurrentStoredStoreAppSession} from '../auth/session-store.js'
-import {claimPreviewStore} from '../create/preview/client.js'
+import {claimPreviewStore, getPreviewStore} from '../create/preview/client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -63,10 +63,11 @@ export async function getStoreInfo(options: GetStoreInfoOptions): Promise<StoreI
   const storedSession = getCurrentStoredStoreAppSession(store)
 
   if (isPreviewStoreSession(storedSession)) {
+    const previewStoreUrls = await fetchPreviewStoreUrls(storedSession)
     return buildPreviewStoreResult({
       store,
       previewSession: storedSession,
-      saveUrl: await fetchPreviewStoreSaveUrl(storedSession),
+      previewStoreUrls,
     })
   }
 
@@ -139,12 +140,21 @@ function isPreviewStoreSession(session: StoredStoreAppSession | undefined): sess
   return session?.kind === 'preview' && session.preview !== undefined
 }
 
-async function fetchPreviewStoreSaveUrl(previewSession: PreviewStoreSession): Promise<string> {
-  const claim = await claimPreviewStore({
+interface PreviewStoreUrls {
+  accessUrl: string
+  saveUrl: string
+}
+
+async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promise<PreviewStoreUrls> {
+  const request = {
     shopId: previewSession.preview.shopId,
     adminApiToken: previewSession.accessToken,
-  })
-  return claim.claimUrl
+  }
+  const [claim, previewStore] = await Promise.all([claimPreviewStore(request), getPreviewStore(request)])
+  return {
+    accessUrl: previewStore.accessUrl,
+    saveUrl: claim.claimUrl,
+  }
 }
 
 async function safeFetchOrganizationShop(
@@ -229,14 +239,15 @@ function buildBusinessPlatformResult(args: BuildBusinessPlatformResultArgs): Sto
 function buildPreviewStoreResult(args: {
   store: string
   previewSession: PreviewStoreSession
-  saveUrl: string
+  previewStoreUrls: PreviewStoreUrls
 }): StoreInfoResult {
-  const {store, previewSession, saveUrl} = args
+  const {store, previewSession, previewStoreUrls} = args
   const fields: Partial<StoreInfoResult> = {
     id: buildShopGid(previewSession.preview.shopId),
     displayName: previewSession.preview.name,
     adminUrl: buildAdminUrl(extractMyshopifyHandle(store)),
-    saveUrl,
+    accessUrl: previewStoreUrls.accessUrl,
+    saveUrl: previewStoreUrls.saveUrl,
   }
 
   return {...compact(fields), subdomain: store} as StoreInfoResult

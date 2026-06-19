@@ -26,6 +26,7 @@ export interface StoreInfoResult {
   plan?: string
   featurePreview?: string
   adminUrl?: string
+  accessUrl?: string
   saveUrl?: string
 }
 

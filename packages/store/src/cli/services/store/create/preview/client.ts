@@ -70,6 +70,21 @@ interface RawPreviewStoreClaimResponse {
   claim_url?: unknown
 }
 
+interface PreviewStoreGetRequest {
+  shopId: string
+  adminApiToken: string
+}
+
+interface PreviewStoreGetResponse {
+  shop: PreviewStoreResponseShop
+  accessUrl: string
+}
+
+interface RawPreviewStoreGetResponse {
+  shop?: RawPreviewStoreResponseShop
+  access_url?: unknown
+}
+
 interface RawPreviewStoreErrorResponse {
   error_code?: string
   message?: string
@@ -187,6 +202,38 @@ export async function claimPreviewStore(
   return narrowClaimResponse(parsed)
 }
 
+export async function getPreviewStore(
+  request: PreviewStoreGetRequest,
+  options: PreviewStoreRequestOptions = {},
+): Promise<PreviewStoreGetResponse> {
+  const fqdn = await appManagementFqdn()
+  const url = `https://${fqdn}/services/preview-stores/${request.shopId}`
+
+  const response = await shopifyFetch(url, {
+    method: 'GET',
+    headers: previewStoreClaimHeaders(getOrCreateCliInstanceId(options.storage), request.adminApiToken),
+  })
+
+  const rawText = await response.text()
+  if (!response.ok) {
+    const error = previewStoreGetError(response.status, rawText)
+    throw new AbortError(error.message, error.tryMessage)
+  }
+
+  let parsed: RawPreviewStoreGetResponse
+  try {
+    parsed = JSON.parse(rawText) as RawPreviewStoreGetResponse
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    throw new AbortError(
+      'Preview store lookup returned a non-JSON response.',
+      `Parse error: ${message}. Body (truncated): ${rawText.slice(0, 500)}`,
+    )
+  }
+
+  return narrowGetResponse(parsed)
+}
+
 function previewStoreError(status: number, rawText: string): {message: string; tryMessage?: string} {
   const parsed = parseErrorBody(rawText)
   const errorCode = parsed.error_code
@@ -256,6 +303,14 @@ function previewStoreClaimError(status: number, rawText: string): {message: stri
   }
 }
 
+function previewStoreGetError(status: number, rawText: string): {message: string; tryMessage?: string} {
+  const parsed = parseErrorBody(rawText)
+  return {
+    message: `Preview store lookup failed with HTTP ${status}.`,
+    tryMessage: parsed.message ?? (rawText.length > 0 ? rawText.slice(0, 1000) : 'No response body returned.'),
+  }
+}
+
 function narrowCreateResponse(parsed: RawPreviewStoreCreateResponse): PreviewStoreCreateResponse {
   const shop = parsed.shop
   const id = typeof shop?.id === 'string' || typeof shop?.id === 'number' ? String(shop.id) : undefined
@@ -294,6 +349,26 @@ function narrowClaimResponse(parsed: RawPreviewStoreClaimResponse): PreviewStore
   return {claimUrl}
 }
 
+function narrowGetResponse(parsed: RawPreviewStoreGetResponse): PreviewStoreGetResponse {
+  const shop = parsed.shop
+  const id = typeof shop?.id === 'string' || typeof shop?.id === 'number' ? String(shop.id) : undefined
+  const name = typeof shop?.name === 'string' ? shop.name : undefined
+  const domain = typeof shop?.domain === 'string' ? normalizeStoreFqdn(shop.domain) : undefined
+  const accessUrl = typeof parsed.access_url === 'string' ? parsed.access_url : undefined
+
+  if (!id || !name || !domain || !accessUrl) {
+    throw new AbortError(
+      'Preview store lookup response is missing required fields.',
+      `Got: ${JSON.stringify(redactPreviewStoreGetResponse(parsed)).slice(0, 500)}`,
+    )
+  }
+
+  return {
+    shop: {id, name, domain},
+    accessUrl,
+  }
+}
+
 function redactPreviewStoreResponse(parsed: RawPreviewStoreCreateResponse): RawPreviewStoreCreateResponse {
   return {
     ...parsed,
@@ -314,4 +389,11 @@ function redactPreviewStoreRawText(rawText: string): string {
     .replace(/(["']?(?:admin_api_token|adminApiToken)["']?\s*:\s*["'])[^"']+/gi, '$1[REDACTED]')
     .replace(/(["']?(?:access_url|accessUrl|claim_url|claimUrl)["']?\s*:\s*["'])[^"']+/gi, '$1[REDACTED]')
     .replace(/([?&](?:token|access_token)=)[^&\s"'<>]+/gi, '$1[REDACTED]')
+}
+
+function redactPreviewStoreGetResponse(parsed: RawPreviewStoreGetResponse): RawPreviewStoreGetResponse {
+  return {
+    ...parsed,
+    ...(parsed.access_url ? {access_url: '[REDACTED]'} : {}),
+  }
 }
