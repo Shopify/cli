@@ -604,6 +604,20 @@ describe('retryAwareRequest', () => {
   })
 })
 
+function clientErrorWithUploadPayload(fileBody: string): ClientError {
+  // Mirrors a failed theme file upload: graphql-request embeds the full request
+  // (including uploaded file bodies) and response into ClientError.message.
+  const response = {
+    status: 500,
+    headers: new Map(),
+    errors: [{message: 'Internal Server Error'}],
+  } as unknown as ClientError['response']
+  return new ClientError(response, {
+    query: 'mutation themeFilesUpsert { ... }',
+    variables: {files: [{filename: 'assets/theme.js', body: {type: 'TEXT', value: fileBody}}]},
+  })
+}
+
 describe('isTransientNetworkError', () => {
   test('identifies transient network errors that should be retried', () => {
     const transientErrors = [
@@ -673,6 +687,21 @@ describe('isTransientNetworkError', () => {
     expect(isTransientNetworkError(undefined)).toBe(false)
     expect(isTransientNetworkError({message: 'ENOTFOUND'})).toBe(false)
   })
+
+  test('does not classify a ClientError as transient even when its payload contains transient keywords', () => {
+    // A benign "setTimeout" in uploaded theme JS must not be read as a network timeout.
+    const error = clientErrorWithUploadPayload('window.addEventListener("load", () => setTimeout(boot, 1000))')
+    expect(error.message.toLowerCase()).toContain('timeout')
+    expect(isTransientNetworkError(error)).toBe(false)
+  })
+
+  test('identifies transient errors by structured code even when the message does not match', () => {
+    const reset = Object.assign(new Error('connection problem'), {code: 'ECONNRESET'})
+    expect(isTransientNetworkError(reset)).toBe(true)
+
+    const undiciTimeout = Object.assign(new Error('fetch failed'), {cause: {code: 'UND_ERR_CONNECT_TIMEOUT'}})
+    expect(isTransientNetworkError(undiciTimeout)).toBe(true)
+  })
 })
 
 describe('isNetworkError', () => {
@@ -718,5 +747,11 @@ describe('isNetworkError', () => {
     expect(isNetworkError(null)).toBe(false)
     expect(isNetworkError(undefined)).toBe(false)
     expect(isNetworkError({message: 'certificate error'})).toBe(false)
+  })
+
+  test('does not classify a ClientError as a network error even when its payload contains certificate keywords', () => {
+    const error = clientErrorWithUploadPayload('const CONFIG = {label: "TLS certificate settings"}')
+    expect(error.message.toLowerCase()).toContain('certificate')
+    expect(isNetworkError(error)).toBe(false)
   })
 })
