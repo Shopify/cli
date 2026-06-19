@@ -24,4 +24,15 @@ describe('store command attribution', () => {
     })
     expect(hashString).toHaveBeenCalledWith('shop.myshopify.com')
   })
+
+  test('records the numeric store id when provided', async () => {
+    await recordStoreFqdnMetadata('shop.myshopify.com', true, '123')
+
+    expect(vi.mocked(addPublicMetadata).mock.calls[0]![0]()).toEqual({
+      store_fqdn_hash: 'hashed-store',
+      store_fqdn_validated: true,
+      store_domain: 'shop.myshopify.com',
+      store_id: 123,
+    })
+  })
 })

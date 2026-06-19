@@ -173,6 +173,7 @@ describe('getStoreInfo', () => {
 
     expect(fetchDestinationsContext).not.toHaveBeenCalled()
     expect(fetchOrganizationShop).not.toHaveBeenCalled()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(SHOP, true, '123')
     expect(claimPreviewStore).toHaveBeenCalledWith({
       shopId: '123',
       adminApiToken: 'shpat_preview_token',
