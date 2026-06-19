@@ -158,6 +158,21 @@ describe('theme-fs', () => {
       expect(watchedPaths.some((path) => path.includes('listings'))).toBe(false)
     })
 
+    test('ignores editor atomic-write tmp files in the watcher', async () => {
+      // Given
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      const watchSpy = vi.spyOn(chokidar, 'watch')
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+
+      // Then
+      const watchOptions = watchSpy.mock.calls[0]?.[1] as {ignored: string[]}
+      expect(watchOptions.ignored).toContain('**/*.tmp.*')
+    })
+
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
       const root = joinPath(locationOfThisFile, 'fixtures/theme')
