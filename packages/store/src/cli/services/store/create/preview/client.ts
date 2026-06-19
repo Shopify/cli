@@ -12,6 +12,10 @@ interface PreviewStoreClientStorageSchema {
   cliInstanceId?: string
 }
 
+interface PreviewStoreRequestOptions {
+  storage?: LocalStorage<PreviewStoreClientStorageSchema>
+}
+
 let _clientStorage: LocalStorage<PreviewStoreClientStorageSchema> | undefined
 
 function clientStorage() {
@@ -19,9 +23,7 @@ function clientStorage() {
   return _clientStorage
 }
 
-export interface PreviewStoreClientOptions {
-  storage?: LocalStorage<PreviewStoreClientStorageSchema>
-}
+export interface PreviewStoreClientOptions extends PreviewStoreRequestOptions {}
 
 interface PreviewStoreCreateRequest {
   name?: string
@@ -54,6 +56,20 @@ interface RawPreviewStoreCreateResponse {
   access_url?: unknown
 }
 
+interface PreviewStoreClaimRequest {
+  shopId: string
+  adminApiToken: string
+  email?: string
+}
+
+interface PreviewStoreClaimResponse {
+  claimUrl: string
+}
+
+interface RawPreviewStoreClaimResponse {
+  claim_url?: unknown
+}
+
 interface RawPreviewStoreErrorResponse {
   error_code?: string
   message?: string
@@ -70,13 +86,25 @@ export function getOrCreateCliInstanceId(
   return next
 }
 
-export function previewStoreCreateHeaders(cliInstanceId: string): Record<string, string> {
+function previewStoreBaseHeaders(cliInstanceId: string): Record<string, string> {
   return {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
     [CLI_INSTANCE_HEADER]: cliInstanceId,
     [CLI_VERSION_HEADER]: CLI_KIT_VERSION,
+  }
+}
+
+export function previewStoreCreateHeaders(cliInstanceId: string): Record<string, string> {
+  return previewStoreBaseHeaders(cliInstanceId)
+}
+
+export function previewStoreClaimHeaders(cliInstanceId: string, adminApiToken: string): Record<string, string> {
+  return {
+    ...previewStoreBaseHeaders(cliInstanceId),
+    authorization: adminApiToken,
+    'X-Shopify-Access-Token': adminApiToken,
   }
 }
 
@@ -122,7 +150,41 @@ export async function createPreviewStore(
     )
   }
 
-  return narrowResponse(parsed)
+  return narrowCreateResponse(parsed)
+}
+
+export async function claimPreviewStore(
+  request: PreviewStoreClaimRequest,
+  options: PreviewStoreRequestOptions = {},
+): Promise<PreviewStoreClaimResponse> {
+  const fqdn = await appManagementFqdn()
+  const url = `https://${fqdn}/services/preview-stores/${encodeURIComponent(request.shopId)}/claim`
+  const body = JSON.stringify({...(request.email ? {email: request.email} : {})})
+
+  const response = await shopifyFetch(url, {
+    method: 'POST',
+    headers: previewStoreClaimHeaders(getOrCreateCliInstanceId(options.storage), request.adminApiToken),
+    body,
+  })
+
+  const rawText = await response.text()
+  if (!response.ok) {
+    const error = previewStoreClaimError(response.status, rawText)
+    throw new AbortError(error.message, error.tryMessage)
+  }
+
+  let parsed: RawPreviewStoreClaimResponse
+  try {
+    parsed = JSON.parse(rawText) as RawPreviewStoreClaimResponse
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    throw new AbortError(
+      'Preview store claim URL request returned a non-JSON response.',
+      `Parse error: ${message}. Body (truncated): ${redactPreviewStoreRawText(rawText).slice(0, 500)}`,
+    )
+  }
+
+  return narrowClaimResponse(parsed)
 }
 
 function previewStoreError(status: number, rawText: string): {message: string; tryMessage?: string} {
@@ -183,7 +245,18 @@ function parseErrorBody(rawText: string): RawPreviewStoreErrorResponse {
   }
 }
 
-function narrowResponse(parsed: RawPreviewStoreCreateResponse): PreviewStoreCreateResponse {
+function previewStoreClaimError(status: number, rawText: string): {message: string; tryMessage?: string} {
+  const parsed = parseErrorBody(rawText)
+  const redactedRawText = redactPreviewStoreRawText(rawText)
+
+  return {
+    message: `Preview store claim URL request failed with HTTP ${status}.`,
+    tryMessage:
+      parsed.message ?? (redactedRawText.length > 0 ? redactedRawText.slice(0, 1000) : 'No response body returned.'),
+  }
+}
+
+function narrowCreateResponse(parsed: RawPreviewStoreCreateResponse): PreviewStoreCreateResponse {
   const shop = parsed.shop
   const id = typeof shop?.id === 'string' || typeof shop?.id === 'number' ? String(shop.id) : undefined
   const name = typeof shop?.name === 'string' ? shop.name : undefined
@@ -208,6 +281,19 @@ function narrowResponse(parsed: RawPreviewStoreCreateResponse): PreviewStoreCrea
   }
 }
 
+function narrowClaimResponse(parsed: RawPreviewStoreClaimResponse): PreviewStoreClaimResponse {
+  const claimUrl = typeof parsed.claim_url === 'string' ? parsed.claim_url : undefined
+
+  if (!claimUrl) {
+    throw new AbortError(
+      'Preview store claim URL response is missing required fields.',
+      `Got: ${JSON.stringify(redactPreviewStoreClaimResponse(parsed)).slice(0, 500)}`,
+    )
+  }
+
+  return {claimUrl}
+}
+
 function redactPreviewStoreResponse(parsed: RawPreviewStoreCreateResponse): RawPreviewStoreCreateResponse {
   return {
     ...parsed,
@@ -216,9 +302,16 @@ function redactPreviewStoreResponse(parsed: RawPreviewStoreCreateResponse): RawP
   }
 }
 
+function redactPreviewStoreClaimResponse(parsed: RawPreviewStoreClaimResponse): RawPreviewStoreClaimResponse {
+  return {
+    ...parsed,
+    ...(parsed.claim_url ? {claim_url: '[REDACTED]'} : {}),
+  }
+}
+
 function redactPreviewStoreRawText(rawText: string): string {
   return rawText
     .replace(/(["']?(?:admin_api_token|adminApiToken)["']?\s*:\s*["'])[^"']+/gi, '$1[REDACTED]')
-    .replace(/(["']?(?:access_url|accessUrl)["']?\s*:\s*["'])[^"']+/gi, '$1[REDACTED]')
+    .replace(/(["']?(?:access_url|accessUrl|claim_url|claimUrl)["']?\s*:\s*["'])[^"']+/gi, '$1[REDACTED]')
     .replace(/([?&](?:token|access_token)=)[^&\s"'<>]+/gi, '$1[REDACTED]')
 }
