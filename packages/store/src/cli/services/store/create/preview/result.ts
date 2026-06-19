@@ -40,16 +40,20 @@ function previewStoreNextSteps(result: CreatePreviewStoreResult): PreviewStoreNe
       text: ['Create ', {link: {label: 'an account', url: result.store.saveUrl}}, ' for free to save progress.'],
     },
     {
-      json: 'Use `shopify store execute` to add products, collections, pages, and more.',
-      text: ['Use ', {command: 'shopify store execute'}, ' to add products, collections, pages, and more.'],
-    },
-    {
-      json: 'Use `shopify theme pull` and `shopify theme push` to edit your store design.',
+      json: `Use \`shopify store execute --store ${result.store.subdomain}\` to add products, collections, pages, and more.`,
       text: [
         'Use ',
-        {command: 'shopify theme pull'},
+        {command: `shopify store execute --store ${result.store.subdomain}`},
+        ' to add products, collections, pages, and more.',
+      ],
+    },
+    {
+      json: `Use \`shopify theme pull --store ${result.store.subdomain}\` and \`shopify theme push --store ${result.store.subdomain}\` to edit your store design.`,
+      text: [
+        'Use ',
+        {command: `shopify theme pull --store ${result.store.subdomain}`},
         ' and ',
-        {command: 'shopify theme push'},
+        {command: `shopify theme push --store ${result.store.subdomain}`},
         ' to edit your store design.',
       ],
     },
@@ -64,10 +68,7 @@ function renderTextResult(result: CreatePreviewStoreResult): void {
     customSections: [
       {
         body: {
-          tabularData: [
-            ['Name', result.store.name],
-            ['Domain', result.store.subdomain],
-          ],
+          tabularData: [['Name', result.store.name]],
           firstColumnSubdued: true,
         },
       },
