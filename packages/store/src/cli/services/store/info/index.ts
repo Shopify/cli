@@ -242,10 +242,10 @@ function buildPreviewStoreResult(args: {
   previewStoreUrls: PreviewStoreUrls
 }): StoreInfoResult {
   const {store, previewSession, previewStoreUrls} = args
+  // The admin URL is intentionally omitted: it doesn't resolve for an unclaimed preview store yet.
   const fields: Partial<StoreInfoResult> = {
     id: buildShopGid(previewSession.preview.shopId),
     displayName: previewSession.preview.name,
-    adminUrl: buildAdminUrl(extractMyshopifyHandle(store)),
     accessUrl: previewStoreUrls.accessUrl,
     saveUrl: previewStoreUrls.saveUrl,
   }

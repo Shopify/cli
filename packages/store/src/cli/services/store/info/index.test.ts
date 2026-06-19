@@ -185,10 +185,11 @@ describe('getStoreInfo', () => {
       id: 'gid://shopify/Shop/123',
       displayName: 'Lavender Candles',
       subdomain: SHOP,
-      adminUrl: 'https://admin.shopify.com/store/shop',
       accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
       saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
     })
+    // The admin URL doesn't resolve for an unclaimed preview store, so it's deliberately omitted.
+    expect(result.adminUrl).toBeUndefined()
   })
 
   test('prefers BP when store auth exists and BP can resolve the store', async () => {
