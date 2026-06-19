@@ -67,6 +67,11 @@ describe('extractHost', () => {
     expect(extractHost('shop.myshopify.com/admin')).toBe('shop.myshopify.com')
   })
 
+  test('returns the host for a bare host with a port (opaque URL guard)', () => {
+    expect(extractHost('my-shop.shop.dev:9292/admin')).toBe('my-shop.shop.dev')
+    expect(extractHost('localhost:3000')).toBe('localhost')
+  })
+
   test('returns undefined for null/undefined/empty input', () => {
     expect(extractHost(null)).toBeUndefined()
     expect(extractHost(undefined)).toBeUndefined()

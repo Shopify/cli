@@ -4,6 +4,7 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../u
 import {OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt} from '../../../prompts/dev.js'
 import {selectConfigName} from '../../../prompts/config.js'
+import {fetchOrganizations} from '../../dev/fetch.js'
 import {selectOrganizationPrompt} from '@shopify/organizations'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -21,6 +22,9 @@ vi.mock('../../../models/app/validation/multi-cli-warning.js')
 beforeEach(async () => {
   // Default mock for selectConfigName - tests that need a specific value can override
   vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
+  vi.mocked(fetchOrganizations).mockResolvedValue([
+    {id: '12345', businessName: 'test', source: OrganizationSource.BusinessPlatform},
+  ])
 })
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {

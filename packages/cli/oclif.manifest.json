@@ -5785,7 +5785,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6064,6 +6064,65 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Surface metadata about a Shopify store."
+    },
+    "store:list": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
+      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --organization-id 1234567",
+        "<%= config.bin %> <%= command.id %> --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "organization-id": {
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
+          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "organization-id",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "store:list",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "List stores in a Shopify organization."
     },
     "theme:check": {
       "aliases": [

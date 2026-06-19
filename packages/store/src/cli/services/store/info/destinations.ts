@@ -1,3 +1,4 @@
+import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
 import {StoreInfoDestinations} from '../../../api/graphql/business-platform-destinations/generated/store-info-destinations.js'
 import {StoreInfoOwningOrg} from '../../../api/graphql/business-platform-destinations/generated/store-info-owning-org.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -15,6 +16,7 @@ import type {
   StoreInfoOwningOrgQueryVariables,
 } from '../../../api/graphql/business-platform-destinations/generated/store-info-owning-org.js'
 import type {DestinationsContext, OwningOrgInternal} from './types.js'
+import type {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 type DestinationNodeFromQuery = NonNullable<
   StoreInfoDestinationsQuery['currentUserAccount']
@@ -30,13 +32,7 @@ export class StoreInfoBusinessPlatformStoreNotFoundError extends AbortError {}
 
 export async function fetchDestinationsContext(options: FetchDestinationsContextOptions): Promise<DestinationsContext> {
   const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
-  const unauthorizedHandler = {
-    type: 'token_refresh' as const,
-    handler: async () => {
-      const newToken = await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt})
-      return {token: newToken}
-    },
-  }
+  const unauthorizedHandler = businessPlatformTokenRefreshHandler({noPrompt: options.noPrompt})
 
   // `options.store` is already a normalized FQDN; extractHost canonicalizes it (lowercased,
   // scheme/path stripped) so it lines up with the hosts BP returns.
@@ -73,7 +69,7 @@ export async function fetchDestinationsContext(options: FetchDestinationsContext
 async function fetchOwningOrg(
   destinationPublicId: string,
   token: string,
-  unauthorizedHandler: {type: 'token_refresh'; handler: () => Promise<{token: string}>},
+  unauthorizedHandler: UnauthorizedHandler,
 ): Promise<OwningOrgInternal | undefined> {
   try {
     const orgResponse = await businessPlatformRequestDoc<StoreInfoOwningOrgQuery, StoreInfoOwningOrgQueryVariables>({

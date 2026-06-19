@@ -1,3 +1,4 @@
+import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
 import {StoreInfoShop} from '../../../api/graphql/business-platform-organizations/generated/store-info-shop.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
@@ -18,13 +19,7 @@ interface FetchOrganizationShopOptions {
 
 export async function fetchOrganizationShop(options: FetchOrganizationShopOptions): Promise<OrganizationShopFields> {
   const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
-  const unauthorizedHandler = {
-    type: 'token_refresh' as const,
-    handler: async () => {
-      const newToken = await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt})
-      return {token: newToken}
-    },
-  }
+  const unauthorizedHandler = businessPlatformTokenRefreshHandler({noPrompt: options.noPrompt})
 
   const response = await businessPlatformOrganizationsRequestDoc<StoreInfoShopQuery, StoreInfoShopQueryVariables>({
     query: StoreInfoShop,

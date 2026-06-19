@@ -1,3 +1,4 @@
+import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
 import {CreateAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/create_app_development_store.js'
 import {
   PollStoreCreation,
@@ -48,13 +49,7 @@ function friendlyStatus(status: StoreCreationStatus): string {
 export async function createDevStore(options: CreateDevStoreOptions): Promise<void> {
   const org = await selectOrg(options.organizationId?.toString())
   const token = await ensureAuthenticatedBusinessPlatform()
-  const unauthorizedHandler = {
-    type: 'token_refresh' as const,
-    handler: async () => {
-      const newToken = await ensureAuthenticatedBusinessPlatform()
-      return {token: newToken}
-    },
-  }
+  const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
   const mutationResult = await businessPlatformOrganizationsRequestDoc({
     query: CreateAppDevelopmentStore,

@@ -320,8 +320,10 @@ export async function fetchOrCreateOrganizationApp(
  */
 export async function selectOrg(): Promise<Organization> {
   const orgs = await fetchOrganizations()
-  const org = await selectOrganizationPrompt(orgs)
-  return org
+  if (orgs.length === 0) {
+    throw new AbortError('No organizations found.', 'Make sure you have access to a Shopify organization.')
+  }
+  return selectOrganizationPrompt(orgs)
 }
 
 interface ReusedValuesOptions {

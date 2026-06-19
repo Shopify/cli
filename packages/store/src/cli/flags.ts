@@ -27,7 +27,7 @@ export const storeFlags = {
     required: true,
   }),
   'organization-id': Flags.integer({
-    description: 'The organization to create the store in (numeric ID). Auto-selects if you belong to a single org.',
+    description: 'The numeric organization ID. Auto-selects if you belong to a single organization.',
     env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
   }),
 }

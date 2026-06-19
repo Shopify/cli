@@ -23,7 +23,16 @@ export async function fetch(): Promise<Sessions | undefined> {
   if (!content) {
     return undefined
   }
-  const contentJson = JSON.parse(content)
+
+  let contentJson: unknown
+  try {
+    contentJson = JSON.parse(content)
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error
+    await remove()
+    return undefined
+  }
+
   const parsedSessions = await SessionsSchema.safeParseAsync(contentJson)
   if (parsedSessions.success) {
     return parsedSessions.data
