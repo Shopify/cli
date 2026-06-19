@@ -212,26 +212,6 @@ function readRawStoreSessionStorage(storage: LocalStorage<StoreSessionSchema>): 
   return (storage as unknown as {config?: {store?: RawStoreSessionStorage}}).config?.store ?? {}
 }
 
-function collectCurrentStoredStoreAppSessions(
-  storage: LocalStorage<StoreSessionSchema>,
-  store: string,
-  value: unknown,
-  sessions: StoredStoreAppSession[],
-): void {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return
-
-  const bucket = sanitizeStoredStoreAppSessionBucket(store, value, storage)
-  if (bucket) {
-    const session = bucket.sessionsByUserId[bucket.currentUserId]
-    if (session) sessions.push(session)
-    return
-  }
-
-  for (const [childKey, childValue] of Object.entries(value as RawStoreSessionStorage)) {
-    collectCurrentStoredStoreAppSessions(storage, `${store}.${childKey}`, childValue, sessions)
-  }
-}
-
 /**
  * Internal persistence helper for projecting the current session for every
  * store that has locally stored store auth.
@@ -244,7 +224,10 @@ export function listCurrentStoredStoreAppSessions(
 
   for (const [key, value] of Object.entries(readRawStoreSessionStorage(storage))) {
     if (!key.startsWith(keyPrefix)) continue
-    collectCurrentStoredStoreAppSessions(storage, key.slice(keyPrefix.length), value, sessions)
+
+    const bucket = sanitizeStoredStoreAppSessionBucket(key.slice(keyPrefix.length), value, storage)
+    const session = bucket?.sessionsByUserId[bucket.currentUserId]
+    if (session) sessions.push(session)
   }
 
   return sessions

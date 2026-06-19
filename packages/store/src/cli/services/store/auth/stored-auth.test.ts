@@ -66,6 +66,39 @@ describe('listStoredStoreAuthSummaries', () => {
     })
   })
 
+  test('persists dotted store domains as a single top-level key', async () => {
+    await inTemporaryDirectory((cwd) => {
+      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+
+      setStoredStoreAppSession(buildSession(), storage as any)
+
+      const rawStorage = (storage as unknown as {config: {store: Record<string, unknown>}}).config.store
+      expect(Object.keys(rawStorage)).toContain(`${STORE_AUTH_APP_CLIENT_ID}::shop.myshopify.com`)
+      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([
+        {
+          store: 'shop.myshopify.com',
+          userId: '42',
+          scopes: ['read_products'],
+          acquiredAt: '2026-03-27T00:00:00.000Z',
+        },
+      ])
+    })
+  })
+
+  test('ignores legacy nested buckets written with unescaped dotted domains', async () => {
+    await inTemporaryDirectory((cwd) => {
+      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      storage.set(`${STORE_AUTH_APP_CLIENT_ID}::legacy.myshopify.com`, {
+        currentUserId: '42',
+        sessionsByUserId: {
+          '42': buildSession({store: 'legacy.myshopify.com'}),
+        },
+      })
+
+      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([])
+    })
+  })
+
   test('sorts stores alphabetically when auth timestamps match', async () => {
     await inTemporaryDirectory((cwd) => {
       const storage = new LocalStorage<Record<string, unknown>>({cwd})
