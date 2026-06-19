@@ -1,3 +1,4 @@
+import StoreAuthList from './cli/commands/store/auth/list.js'
 import StoreAuth from './cli/commands/store/auth.js'
 import StoreCreateDev from './cli/commands/store/create/dev.js'
 import StoreCreatePreview from './cli/commands/store/create/preview.js'
@@ -6,6 +7,7 @@ import StoreInfo from './cli/commands/store/info.js'
 import StoreList from './cli/commands/store/list.js'
 
 const COMMANDS = {
+  'store:auth:list': StoreAuthList,
   'store:auth': StoreAuth,
   'store:create:dev': StoreCreateDev,
   'store:create:preview': StoreCreatePreview,
