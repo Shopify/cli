@@ -7,7 +7,11 @@ export function storeAuthRedirectUri(port: number): string {
 }
 
 export function storeAuthSessionKey(store: string): string {
-  return `${STORE_AUTH_APP_CLIENT_ID}::${store}`
+  return `${STORE_AUTH_APP_CLIENT_ID}::${escapeStoreAuthSessionKeySegment(store)}`
+}
+
+function escapeStoreAuthSessionKeySegment(value: string): string {
+  return value.replace(/\./g, '\\.')
 }
 
 export function maskToken(token: string): string {
