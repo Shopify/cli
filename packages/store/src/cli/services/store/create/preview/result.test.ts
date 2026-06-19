@@ -47,8 +47,8 @@ describe('preview store create result presenter', () => {
           next_steps: [
             'Open your store (https://x12y45z.myshopify.com/?foo=bar) to preview the storefront.',
             'Create an account (https://admin.shopify.com/store-transfer/accept/claim-token) for free to save progress.',
-            'Use `shopify store execute` to add products, collections, pages, and more.',
-            'Use `shopify theme pull` and `shopify theme push` to edit your store design.',
+            'Use `shopify store execute --store x12y45z.myshopify.com` to add products, collections, pages, and more.',
+            'Use `shopify theme pull --store x12y45z.myshopify.com` and `shopify theme push --store x12y45z.myshopify.com` to edit your store design.',
           ],
         },
         null,
@@ -66,10 +66,7 @@ describe('preview store create result presenter', () => {
         customSections: [
           {
             body: {
-              tabularData: [
-                ['Name', 'Lavender Candles'],
-                ['Domain', 'x12y45z.myshopify.com'],
-              ],
+              tabularData: [['Name', 'Lavender Candles']],
               firstColumnSubdued: true,
             },
           },
@@ -101,12 +98,16 @@ describe('preview store create result presenter', () => {
                     },
                     ' for free to save progress.',
                   ],
-                  ['Use ', {command: 'shopify store execute'}, ' to add products, collections, pages, and more.'],
                   [
                     'Use ',
-                    {command: 'shopify theme pull'},
+                    {command: 'shopify store execute --store x12y45z.myshopify.com'},
+                    ' to add products, collections, pages, and more.',
+                  ],
+                  [
+                    'Use ',
+                    {command: 'shopify theme pull --store x12y45z.myshopify.com'},
                     ' and ',
-                    {command: 'shopify theme push'},
+                    {command: 'shopify theme push --store x12y45z.myshopify.com'},
                     ' to edit your store design.',
                   ],
                 ],
