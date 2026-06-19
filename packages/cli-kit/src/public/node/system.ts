@@ -355,13 +355,28 @@ export function isCI(): boolean {
 }
 
 /**
+ * Memoized promise for the WSL check.
+ */
+let memoizedIsWsl: Promise<boolean> | undefined
+
+/**
  * Check if the current environment is a WSL environment.
  *
  * @returns True if the current environment is a WSL environment.
  */
-export async function isWsl(): Promise<boolean> {
-  const wsl = await import('is-wsl')
-  return wsl.default
+export function isWsl(): Promise<boolean> {
+  return (memoizedIsWsl ??= (async () => {
+    const wsl = await import('is-wsl')
+    return wsl.default
+  })())
+}
+
+/**
+ * Reset the memoized WSL check.
+ * This is used for testing purposes.
+ */
+export function _resetIsWsl(): void {
+  memoizedIsWsl = undefined
 }
 
 /**

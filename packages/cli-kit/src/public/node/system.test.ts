@@ -393,3 +393,43 @@ describe('readStdinString', () => {
     await expect(got).rejects.toThrow('Stdin input exceeded the maximum allowed size.')
   })
 })
+
+describe('isWsl', () => {
+  test('returns true when is-wsl is true', async () => {
+    // Given
+    system._resetIsWsl()
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // When
+    const got = await system.isWsl()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false when is-wsl is false', async () => {
+    // Given
+    system._resetIsWsl()
+    vi.doMock('is-wsl', () => ({default: false}))
+
+    // When
+    const got = await system.isWsl()
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    system._resetIsWsl()
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // When
+    const result1 = system.isWsl()
+    const result2 = system.isWsl()
+
+    // Then
+    expect(result1).toBe(result2)
+    await expect(result1).resolves.toBe(true)
+  })
+})
