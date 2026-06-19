@@ -6,6 +6,8 @@ const pubSubRegex = /^pubsub:\/\/(?<gcp_project_id>[^:]+):(?<gcp_topic>.+)$/
 // example Eventbridge ARN - arn:aws:events:{region}::event-source/aws.partner/shopify.com/{app_id}/{path}
 const arnRegex =
   /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/
+// example Kafka URI - kafka://{topic}. Restricted to internal apps; the platform enforces authorization.
+const kafkaRegex = /^kafka:\/\/(?<kafka_topic>[a-zA-Z0-9_.-]+)$/
 
 export function removeTrailingSlash(arg: string): string
 export function removeTrailingSlash(arg: unknown): unknown {
@@ -16,10 +18,10 @@ export const WebhookSubscriptionUriValidation = zod.string({invalid_type_error: 
   (uri) => {
     if (uri.startsWith('/')) return true
 
-    return httpsRegex.test(uri) || pubSubRegex.test(uri) || arnRegex.test(uri)
+    return httpsRegex.test(uri) || pubSubRegex.test(uri) || arnRegex.test(uri) || kafkaRegex.test(uri)
   },
   {
     message:
-      "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+      "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id}, kafka://{topic-id} or Eventbridge ARN",
   },
 )
