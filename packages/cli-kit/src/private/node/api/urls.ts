@@ -21,9 +21,17 @@ const SENSITIVE_QUERY_PARAMS = [
  */
 export function sanitizeURL(url: string): string {
   const parsedUrl = new URL(url)
-  for (const param of SENSITIVE_QUERY_PARAMS) {
-    if (parsedUrl.searchParams.has(param)) {
-      parsedUrl.searchParams.set(param, '****')
+  if (parsedUrl.username) {
+    parsedUrl.username = '****'
+  }
+  if (parsedUrl.password) {
+    parsedUrl.password = '****'
+  }
+
+  const sensitiveParams = new Set(SENSITIVE_QUERY_PARAMS.map((param) => param.toLowerCase()))
+  for (const [key] of parsedUrl.searchParams.entries()) {
+    if (sensitiveParams.has(key.toLowerCase())) {
+      parsedUrl.searchParams.set(key, '****')
     }
   }
   return parsedUrl.toString()
