@@ -13,6 +13,7 @@ jobs:
     if: |
       github.actor != 'cursoragent'
       && github.actor != 'river'
+      && github.actor != 'google-labs-jules[bot]'
       && (
         (github.event.issue.pull_request
           && !github.event.issue.pull_request.merged_at
