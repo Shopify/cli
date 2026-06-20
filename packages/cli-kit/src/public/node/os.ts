@@ -6,10 +6,22 @@ import {userInfo as osUserInfo} from 'os'
 // because adding it as a transtive dependency causes conflicts with other
 // packages that haven't been yet migrated to the latest version.
 /**
+ * Memoized value for the username check.
+ */
+let memoizedUsername: Promise<string | null> | undefined
+
+/**
  * @param platform - The platform to get the username for. Defaults to the current platform.
  * @returns The username of the current user.
  */
-export async function username(platform: typeof process.platform = process.platform): Promise<string | null> {
+export function username(platform: typeof process.platform = process.platform): Promise<string | null> {
+  if (platform === process.platform) {
+    return (memoizedUsername ??= usernameImplementation(platform))
+  }
+  return usernameImplementation(platform)
+}
+
+async function usernameImplementation(platform: typeof process.platform): Promise<string | null> {
   outputDebug(outputContent`Obtaining user name...`)
   const environmentVariable = getEnvironmentVariable()
   if (environmentVariable) {
@@ -42,6 +54,13 @@ export async function username(platform: typeof process.platform = process.platf
   } catch {
     return null
   }
+}
+
+/**
+ * Resets the memoized username.
+ */
+export function _resetUsername(): void {
+  memoizedUsername = undefined
 }
 
 type PlatformArch = Exclude<typeof process.arch, 'x64' | 'ia32'> | 'amd64' | '386'

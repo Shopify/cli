@@ -1,7 +1,64 @@
-import {platformAndArch} from './os.js'
-import {describe, test, expect, vi} from 'vitest'
+import {platformAndArch, username, _resetUsername} from './os.js'
+import {describe, test, expect, vi, beforeEach} from 'vitest'
+import * as os from 'os'
 
 vi.mock('node:process')
+vi.mock('os', async () => {
+  const actual: any = await vi.importActual('os')
+  return {
+    ...actual,
+    userInfo: vi.fn(),
+  }
+})
+
+describe('username', () => {
+  const originalEnv = process.env
+
+  beforeEach(() => {
+    process.env = {
+      ...originalEnv,
+      SUDO_USER: undefined,
+      C9_USER: undefined,
+      LOGNAME: undefined,
+      USER: undefined,
+      LNAME: undefined,
+      USERNAME: undefined,
+    }
+    _resetUsername()
+    vi.mocked(os.userInfo).mockReturnValue({
+      username: 'testuser',
+      uid: 1,
+      gid: 1,
+      shell: 'shell',
+      homedir: 'home',
+    } as any)
+  })
+
+  test('memoizes the username', async () => {
+    // When
+    const firstCall = username()
+    const secondCall = username()
+
+    // Then
+    await expect(firstCall).resolves.toEqual('testuser')
+    await expect(secondCall).resolves.toEqual('testuser')
+    expect(firstCall).toBe(secondCall)
+    expect(os.userInfo).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not memoize if platform is different', async () => {
+    // When
+    const differentPlatform = process.platform === 'win32' ? 'linux' : 'win32'
+    const firstCall = username(differentPlatform)
+    const secondCall = username(differentPlatform)
+
+    // Then
+    await expect(firstCall).resolves.toEqual('testuser')
+    await expect(secondCall).resolves.toEqual('testuser')
+    expect(firstCall).not.toBe(secondCall)
+    expect(os.userInfo).toHaveBeenCalledTimes(2)
+  })
+})
 
 describe('platformAndArch', () => {
   test("returns the right architecture when it's x64", () => {
