@@ -31,10 +31,7 @@ export const DEFAULT_IGNORE_PATTERNS = [
   '**/config.yml',
   '**/node_modules/',
   '.prettierrc.json',
-  // Atomic-write temp files (e.g. blocks/foo.liquid.tmp.93809.4dbd82e0b95a): created and
-  // deleted within milliseconds, but Shopify's watcher sees the add before the delete and
-  // tries to upload an invalid key, crashing the dev server.
-  '**/*.tmp.*',
+  '**/*.tmp.*', // Atomic-write temp files (e.g. blocks/foo.liquid.tmp.93809.4dbd82e0b95a)
 ]
 
 export const MAX_GRAPHQL_THEME_FILES = 50
