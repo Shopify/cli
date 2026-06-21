@@ -9,9 +9,22 @@ import type {List, ValueIteratee} from 'lodash'
  * @returns A random element from the array.
  */
 export function takeRandomFromArray<T>(array: T[]): T {
+  if (array.length === 0) return undefined as T
+
   // We use a cryptographically secure PRNG to ensure the selection is non-predictable.
-  const randomIndex = globalThis.crypto.getRandomValues(new Uint32Array(1))[0]! % array.length
-  return array[randomIndex]!
+  // We use rejection sampling to eliminate modulo bias.
+  const arrayLength = array.length
+  const range = 4294967296
+  const limit = range - (range % arrayLength)
+
+  const buffer = new Uint32Array(1)
+  let randomIndex
+  do {
+    globalThis.crypto.getRandomValues(buffer)
+    randomIndex = buffer[0]!
+  } while (randomIndex >= limit)
+
+  return array[randomIndex % arrayLength]!
 }
 
 /**
