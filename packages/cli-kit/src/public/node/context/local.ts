@@ -45,6 +45,11 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the isShopify check.
+ */
+let memoizedIsShopify: Promise<boolean> | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -76,12 +81,26 @@ export function isVerbose(env = process.env): boolean {
  * @param env - The environment variables from the environment of the current process.
  * @returns True if the CLI is used in a Shopify environment.
  */
-export async function isShopify(env = process.env): Promise<boolean> {
-  if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
-    return !isTruthy(env[environmentVariables.runAsUser])
+export function isShopify(env = process.env): Promise<boolean> {
+  const isShopifyLogic = async () => {
+    if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
+      return !isTruthy(env[environmentVariables.runAsUser])
+    }
+    return lazyFileExists(pathConstants.executables.dev)
   }
-  const devInstalled = await lazyFileExists(pathConstants.executables.dev)
-  return devInstalled
+
+  if (env === process.env) {
+    return (memoizedIsShopify ??= isShopifyLogic())
+  }
+
+  return isShopifyLogic()
+}
+
+/**
+ * Resets the memoized value for the isShopify check.
+ */
+export function _resetIsShopify(): void {
+  memoizedIsShopify = undefined
 }
 
 /**

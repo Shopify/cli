@@ -3,6 +3,7 @@ import {
   hasGit,
   isDevelopment,
   isShopify,
+  _resetIsShopify,
   isTerminalInteractive,
   isUnitTest,
   analyticsDisabled,
@@ -119,6 +120,32 @@ describe('isShopify', () => {
 
     // When
     await expect(isShopify()).resolves.toBe(true)
+  })
+
+  test('memoizes the result when using process.env', async () => {
+    // Given
+    _resetIsShopify()
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await isShopify()
+    await isShopify()
+
+    // Then
+    expect(fileExists).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not memoize the result when using a custom env', async () => {
+    // Given
+    _resetIsShopify()
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await isShopify({})
+    await isShopify({})
+
+    // Then
+    expect(fileExists).toHaveBeenCalledTimes(2)
   })
 })
 
