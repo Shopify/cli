@@ -217,4 +217,37 @@ describe('normalizeStore', () => {
     // Then
     expect(got).toEqual('example.myshopify.com')
   })
+
+  test('preserves local dev store names ending in .myshopify.io', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+
+    // When
+    const got = normalizeStoreFqdn('example.myshopify.io')
+
+    // Then
+    expect(got).toEqual('example.myshopify.io')
+  })
+
+  test('does not treat other domains ending in shopify.io as already normalized', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
+
+    // When
+    const got = normalizeStoreFqdn('exampleshopify.io')
+
+    // Then
+    expect(got).toEqual('exampleshopify.io.myshopify.com')
+  })
+
+  test('does not treat nested domains ending in shopify.io as already normalized', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
+
+    // When
+    const got = normalizeStoreFqdn('example.exampleshopify.io')
+
+    // Then
+    expect(got).toEqual('example.exampleshopify.io.myshopify.com')
+  })
 })
