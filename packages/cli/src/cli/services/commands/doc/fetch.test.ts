@@ -22,7 +22,7 @@ describe('docFetchService', () => {
     await docFetchService('https://shopify.dev/docs/api/shopify-cli')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
-      headers: {Accept: 'text/markdown'},
+      headers: {Accept: 'text/markdown', 'X-Shopify-Surface': 'cli'},
     })
     expect(outputResult).toHaveBeenCalledWith('# Doc')
   })

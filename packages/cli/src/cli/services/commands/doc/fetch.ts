@@ -8,6 +8,11 @@ import {dirname, resolvePath} from '@shopify/cli-kit/node/path'
 // parseable content agents want — so we always request it.
 const MARKDOWN_CONTENT_TYPE = 'text/markdown'
 
+// Identifies the CLI as the calling surface to shopify.dev, so traffic
+// originating from the CLI can be attributed as such.
+const SURFACE_HEADER = 'X-Shopify-Surface'
+const SURFACE = 'cli'
+
 // Hosts whose documents are allowed to be fetched. A URL matches when its
 // hostname is one of these or a subdomain of one of these.
 const ALLOWED_HOSTS = ['shopify.dev']
@@ -26,7 +31,7 @@ export async function docFetchService(url: string, outputPath?: string) {
     throw new AbortError(`Only documents from the following hosts can be fetched: ${ALLOWED_HOSTS.join(', ')}.`)
   }
 
-  const response = await fetch(url, {headers: {Accept: MARKDOWN_CONTENT_TYPE}})
+  const response = await fetch(url, {headers: {Accept: MARKDOWN_CONTENT_TYPE, [SURFACE_HEADER]: SURFACE}})
 
   if (!response.ok) {
     throw new AbortError(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
