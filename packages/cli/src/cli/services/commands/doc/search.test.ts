@@ -31,7 +31,7 @@ describe('docSearchService', () => {
     await docSearchService('webhooks')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/assistant/search?query=webhooks', {
-      headers: {Accept: 'application/json'},
+      headers: {Accept: 'application/json', 'X-Shopify-Surface': 'cli'},
     })
     expect(outputResult).toHaveBeenCalledWith(resultsBody)
   })
@@ -41,7 +41,7 @@ describe('docSearchService', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       'https://shopify.dev/assistant/search?query=create+a+product&api_name=admin&api_version=latest',
-      {headers: {Accept: 'application/json'}},
+      {headers: {Accept: 'application/json', 'X-Shopify-Surface': 'cli'}},
     )
   })
 
@@ -49,7 +49,7 @@ describe('docSearchService', () => {
     await docSearchService('a & b?')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/assistant/search?query=a+%26+b%3F', {
-      headers: {Accept: 'application/json'},
+      headers: {Accept: 'application/json', 'X-Shopify-Surface': 'cli'},
     })
   })
 
