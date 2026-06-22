@@ -7,7 +7,7 @@ import {
   isMutation,
 } from './common.js'
 import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {BULK_OPERATIONS_MIN_API_VERSION} from '../bulk-operations/constants.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from '@shopify/cli-kit/node/api/bulk-operations'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {describe, test, expect, vi, beforeEach} from 'vitest'

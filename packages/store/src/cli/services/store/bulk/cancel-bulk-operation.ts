@@ -1,5 +1,5 @@
-import {formatOperationInfo, createAdminSessionAsApp} from '../graphql/common.js'
-import {OrganizationApp, Organization} from '../../models/organization.js'
+import {formatOperationInfo} from './common.js'
+import {prepareBulkAdminContext} from './bulk-admin-context.js'
 import {
   cancelBulkOperationRequest,
   renderBulkOperationUserErrors,
@@ -9,27 +9,25 @@ import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cl
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 interface CancelBulkOperationOptions {
-  organization: Organization
-  storeFqdn: string
+  store: string
   operationId: string
-  remoteApp: OrganizationApp
 }
 
 export async function cancelBulkOperation(options: CancelBulkOperationOptions): Promise<void> {
-  const {organization, storeFqdn, operationId, remoteApp} = options
+  const {store, operationId} = options
+
+  const {adminSession} = await prepareBulkAdminContext(store)
 
   renderInfo({
     headline: 'Canceling bulk operation.',
     body: [
       {
         list: {
-          items: [`ID: ${operationId}`, ...formatOperationInfo({organization, remoteApp, storeFqdn})],
+          items: [`ID: ${operationId}`, ...formatOperationInfo({storeFqdn: adminSession.storeFqdn})],
         },
       },
     ],
   })
-
-  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
   const bulkOperationCancel = await cancelBulkOperationRequest({adminSession, operationId})
 
@@ -40,7 +38,7 @@ export async function cancelBulkOperation(options: CancelBulkOperationOptions): 
 
   const operation = bulkOperationCancel?.bulkOperation
   if (operation) {
-    const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
+    const result = formatBulkOperationCancellationResult(operation, 'shopify store bulk status')
     const renderOptions = {
       headline: result.headline,
       ...(result.body && {body: result.body}),

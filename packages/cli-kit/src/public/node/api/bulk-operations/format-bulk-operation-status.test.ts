@@ -3,9 +3,9 @@ import {
   renderBulkOperationUserErrors,
   formatBulkOperationCancellationResult,
 } from './format-bulk-operation-status.js'
-import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {GetBulkOperationByIdQuery} from '../../../../cli/api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {mockAndCaptureOutput} from '../../testing/output.js'
 import {describe, test, expect, afterEach} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
 
@@ -147,7 +147,7 @@ describe('formatBulkOperationCancellationResult', () => {
       id: 'gid://shopify/BulkOperation/6578182226092',
       status: 'CANCELING',
     })
-    const result = formatBulkOperationCancellationResult(operation)
+    const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
 
     expect(result.headline).toBe('Bulk operation is being cancelled.')
     expect(result.body).toEqual([
@@ -191,7 +191,7 @@ describe('formatBulkOperationCancellationResult', () => {
     'formats $status status with $renderType render type',
     ({status, headline, body, renderType, hasCustomSections}) => {
       const operation = createMockOperation({status})
-      const result = formatBulkOperationCancellationResult(operation)
+      const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
 
       expect(result.headline).toContain(headline)
       expect(result.body).toBe(body)
@@ -210,7 +210,7 @@ describe('formatBulkOperationCancellationResult', () => {
       status: 'CANCELED',
       createdAt: '2024-01-01T00:00:00Z',
     })
-    const result = formatBulkOperationCancellationResult(operation)
+    const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
 
     const items = result.customSections?.[0]?.body[0]?.list.items ?? []
     expect(items.some((item) => item.includes('gid://shopify/BulkOperation/999'))).toBe(true)
@@ -223,7 +223,7 @@ describe('formatBulkOperationCancellationResult', () => {
       status: 'CANCELED',
       completedAt: '2024-01-01T01:00:00Z',
     })
-    const result = formatBulkOperationCancellationResult(operation)
+    const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
 
     const items = result.customSections?.[0]?.body[0]?.list.items ?? []
     expect(items.some((item) => item.includes('Completed at'))).toBe(true)
@@ -231,7 +231,7 @@ describe('formatBulkOperationCancellationResult', () => {
 
   test('does not include completedAt when operation has no completedAt', () => {
     const operation = createMockOperation({status: 'CANCELED', completedAt: null})
-    const result = formatBulkOperationCancellationResult(operation)
+    const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
 
     const items = result.customSections?.[0]?.body[0]?.list.items ?? []
     expect(items.some((item) => item.includes('Completed at'))).toBe(false)

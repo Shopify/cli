@@ -3,9 +3,9 @@ import {
   BulkOperationRunMutation as BulkOperationRunMutationDoc,
   BulkOperationRunMutationMutation,
   BulkOperationRunMutationMutationVariables,
-} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+} from '../../../../cli/api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
+import {adminRequestDoc} from '../admin.js'
+import {AdminSession} from '../../session.js'
 
 interface BulkOperationRunMutationOptions {
   adminSession: AdminSession
@@ -14,6 +14,12 @@ interface BulkOperationRunMutationOptions {
   version?: string
 }
 
+/**
+ * Stages a JSONL variables file then starts a bulk mutation operation on the store.
+ *
+ * @param options - The admin session, mutation, JSONL variables, and optional API version.
+ * @returns The bulkOperationRunMutation result, including the created operation and any user errors.
+ */
 export async function runBulkOperationMutation(
   options: BulkOperationRunMutationOptions,
 ): Promise<BulkOperationRunMutationMutation['bulkOperationRunMutation']> {

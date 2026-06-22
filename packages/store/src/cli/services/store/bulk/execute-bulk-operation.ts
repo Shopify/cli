@@ -1,11 +1,5 @@
-import {
-  createAdminSessionAsApp,
-  formatOperationInfo,
-  resolveApiVersion,
-  validateMutationStore,
-  isMutation,
-} from '../graphql/common.js'
-import {OrganizationApp, Organization, OrganizationStore} from '../../models/organization.js'
+import {formatOperationInfo, validateMutationsAllowed} from './common.js'
+import {prepareBulkAdminContext} from './bulk-admin-context.js'
 import {
   runBulkOperationQuery,
   runBulkOperationMutation,
@@ -13,6 +7,8 @@ import {
   shortBulkOperationPoll,
   formatBulkOperationStatus,
   downloadBulkOperationResults,
+  resolveApiVersion,
+  isMutation,
   extractBulkOperationId,
   BULK_OPERATIONS_MIN_API_VERSION,
   type BulkOperation,
@@ -31,15 +27,14 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
-  organization: Organization
-  remoteApp: OrganizationApp
-  store: OrganizationStore
+  store: string
   query: string
   variables?: string[]
   variableFile?: string
   watch?: boolean
   outputFile?: string
   version?: string
+  allowMutations?: boolean
 }
 
 async function parseVariablesToJsonl(variables?: string[], variableFile?: string): Promise<string | undefined> {
@@ -61,8 +56,6 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
   const {
-    organization,
-    remoteApp,
     store,
     query,
     variables,
@@ -70,12 +63,15 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     outputFile,
     watch = false,
     version: userSpecifiedVersion,
+    allowMutations = false,
   } = input
+
+  validateMutationsAllowed(query, allowMutations)
 
   const {adminSession, version} = await renderSingleTask({
     title: outputContent`Authenticating`,
     task: async () => {
-      const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
+      const {adminSession} = await prepareBulkAdminContext(store)
       const version = await resolveApiVersion({
         adminSession,
         userSpecifiedVersion,
@@ -89,14 +85,13 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
   validateBulkOperationVariables(query, variablesJsonl)
-  validateMutationStore(query, store)
 
   renderInfo({
     headline: 'Starting bulk operation.',
     body: [
       {
         list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn: store.shopDomain, version}),
+          items: formatOperationInfo({storeFqdn: adminSession.storeFqdn, version}),
         },
       },
     ],
@@ -257,6 +252,6 @@ function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl
 function statusCommandHelpMessage(operationId: string): TokenItem {
   return [
     'Monitor its progress with:\n',
-    {command: `shopify app bulk status --id=${extractBulkOperationId(operationId)}`},
+    {command: `shopify store bulk status --id=${extractBulkOperationId(operationId)}`},
   ]
 }

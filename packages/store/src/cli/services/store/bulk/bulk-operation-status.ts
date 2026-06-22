@@ -1,54 +1,46 @@
-import {formatOperationInfo, resolveApiVersion} from '../graphql/common.js'
-import {OrganizationApp, Organization} from '../../models/organization.js'
+import {formatOperationInfo} from './common.js'
+import {prepareBulkAdminContext} from './bulk-admin-context.js'
 import {
   BULK_OPERATIONS_MIN_API_VERSION,
   fetchBulkOperationById,
   fetchRecentBulkOperations,
   formatBulkOperationStatus,
+  resolveApiVersion,
   normalizeBulkOperationId,
   extractBulkOperationId,
   type BulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {renderInfo, renderSuccess, renderError, renderTable} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputNewline} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
-import {BugError} from '@shopify/cli-kit/node/error'
 import colors from '@shopify/cli-kit/node/colors'
 
 export {normalizeBulkOperationId, extractBulkOperationId}
 
 interface GetBulkOperationStatusOptions {
-  organization: Organization
-  storeFqdn: string
+  store: string
   operationId: string
-  remoteApp: OrganizationApp
 }
 
 interface ListBulkOperationsOptions {
-  organization: Organization
-  storeFqdn: string
-  remoteApp: OrganizationApp
+  store: string
 }
 
 export async function getBulkOperationStatus(options: GetBulkOperationStatusOptions): Promise<void> {
-  const {organization, storeFqdn, operationId, remoteApp} = options
+  const {store, operationId} = options
+
+  const {adminSession} = await prepareBulkAdminContext(store)
 
   renderInfo({
     headline: 'Checking bulk operation status.',
     body: [
       {
         list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn}),
+          items: formatOperationInfo({storeFqdn: adminSession.storeFqdn}),
         },
       },
     ],
   })
-
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
-  const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
 
   const operation = await fetchBulkOperationById({
     adminSession,
@@ -70,23 +62,20 @@ export async function getBulkOperationStatus(options: GetBulkOperationStatusOpti
 }
 
 export async function listBulkOperations(options: ListBulkOperationsOptions): Promise<void> {
-  const {organization, storeFqdn, remoteApp} = options
+  const {store} = options
+
+  const {adminSession} = await prepareBulkAdminContext(store)
 
   renderInfo({
     headline: 'Listing bulk operations.',
     body: [
       {
         list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn}),
+          items: formatOperationInfo({storeFqdn: adminSession.storeFqdn}),
         },
       },
     ],
   })
-
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
-  const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
 
   const nodes = await fetchRecentBulkOperations({
     adminSession,
