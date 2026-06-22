@@ -39,7 +39,7 @@
 * [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
 * [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
-* [`shopify doc search [query]`](#shopify-doc-search-query)
+* [`shopify doc search <query>`](#shopify-doc-search-query)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -1214,13 +1214,13 @@ DESCRIPTION
   Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
 ```
 
-## `shopify doc search [query]`
+## `shopify doc search <query>`
 
 Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.
 
 ```
 USAGE
-  $ shopify doc search [query]
+  $ shopify doc search <query>
 
 ARGUMENTS
   QUERY  The search query.

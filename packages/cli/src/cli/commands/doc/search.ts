@@ -7,7 +7,7 @@ export default class DocSearch extends Command {
   static description =
     'Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.'
 
-  static usage = `doc search [query]`
+  static usage = `doc search <query>`
 
   static examples = [
     `# search shopify.dev for a topic

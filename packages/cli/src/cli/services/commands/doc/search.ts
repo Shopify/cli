@@ -1,4 +1,4 @@
-import {fetch} from '@shopify/cli-kit/node/http'
+import {shopifyFetch, type Response} from '@shopify/cli-kit/node/http'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -16,9 +16,20 @@ export async function docSearchService(query: string, apiName?: string, apiVersi
   if (apiName) params.append('api_name', apiName)
   if (apiVersion) params.append('api_version', apiVersion)
 
-  const response = await fetch(`${SEARCH_URL}?${params.toString()}`, {
-    headers: {Accept: 'application/json', [SURFACE_HEADER]: SURFACE},
-  })
+  let response: Response
+  try {
+    response = await shopifyFetch(`${SEARCH_URL}?${params.toString()}`, {
+      headers: {Accept: 'application/json', [SURFACE_HEADER]: SURFACE},
+    })
+  } catch {
+    // shopifyFetch retries transient failures; reaching here means the request
+    // could not complete (offline, DNS failure, TLS error, timeout, etc.).
+    throw new AbortError(
+      'Could not reach shopify.dev to run the search.',
+      'Check your network connection and try again.',
+    )
+  }
+
   const body = await response.text()
 
   if (!response.ok) {

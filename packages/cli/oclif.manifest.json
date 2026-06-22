@@ -3492,7 +3492,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "usage": "doc search [query]"
+      "usage": "doc search <query>"
     },
     "docs:generate": {
       "aliases": [
