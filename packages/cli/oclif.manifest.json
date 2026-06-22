@@ -3439,17 +3439,12 @@
       "aliases": [
       ],
       "args": {
-        "url": {
-          "description": "The shopify.dev URL to fetch.",
-          "name": "url",
-          "required": true
-        }
       },
       "description": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
       "enableJsonFlag": false,
       "examples": [
-        "# fetch the Markdown version of a Shopify.dev page\nshopify doc fetch https://shopify.dev/docs/api/shopify-cli",
-        "# save the document to a file instead of printing it\nshopify doc fetch https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md"
+        "# fetch the Markdown version of a Shopify.dev page\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli",
+        "# save the document to a file instead of printing it\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md"
       ],
       "flags": {
         "no-color": {
@@ -3461,12 +3456,20 @@
           "type": "boolean"
         },
         "output": {
-          "char": "o",
           "description": "Write the document to this file path instead of printing it to stdout.",
           "env": "SHOPIFY_FLAG_OUTPUT",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "output",
+          "type": "option"
+        },
+        "url": {
+          "description": "The shopify.dev URL to fetch.",
+          "env": "SHOPIFY_FLAG_URL",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "url",
+          "required": true,
           "type": "option"
         },
         "verbose": {
@@ -3485,8 +3488,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
-      "usage": "doc fetch [URL]"
+      "strict": true
     },
     "docs:generate": {
       "aliases": [
