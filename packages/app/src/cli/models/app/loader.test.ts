@@ -2815,7 +2815,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message:
-        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id}, kafka://{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2835,7 +2835,7 @@ describe('WebhooksSchema', () => {
     expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('throws an error if uri is not a valid https URL, pubsub URI, or Eventbridge ARN', async () => {
+  test('throws an error if uri is not a valid https URL, pubsub URI, kafka URI, or Eventbridge ARN', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
@@ -2843,7 +2843,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message:
-        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id}, kafka://{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2889,6 +2889,33 @@ describe('WebhooksSchema', () => {
     expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
+  test('accepts a kafka uri', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [{uri: 'kafka://my_topic.name-1', topics: ['products/create']}],
+    }
+
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('throws an error if kafka topic contains invalid characters', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [{uri: 'kafka://invalid topic!', topics: ['products/create']}],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message:
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id}, kafka://{topic-id} or Eventbridge ARN",
+      path: ['webhooks', 'subscriptions', 0, 'uri'],
+    }
+
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
+  })
+
   test('accepts combination of uris', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
@@ -2903,6 +2930,10 @@ describe('WebhooksSchema', () => {
         },
         {
           uri: 'pubsub://my-project-123:my-topic',
+          topics: ['products/create', 'products/update'],
+        },
+        {
+          uri: 'kafka://my-topic',
           topics: ['products/create', 'products/update'],
         },
       ],
@@ -2925,6 +2956,14 @@ describe('WebhooksSchema', () => {
         },
         {
           uri: 'https://example.com',
+          topics: ['products/update'],
+        },
+        {
+          uri: 'kafka://my-topic',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'kafka://my-topic',
           topics: ['products/update'],
         },
         {
@@ -2997,7 +3036,7 @@ describe('WebhooksSchema', () => {
     expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('throws an error if uri is not an https uri', async () => {
+  test('throws an error for http:// uri in subscription (rejects insecure scheme)', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
@@ -3010,7 +3049,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message:
-        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id}, kafka://{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
