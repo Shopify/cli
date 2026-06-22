@@ -184,8 +184,13 @@ describe('javy', () => {
     const blockDownload = new Promise<void>((resolve) => {
       resolveDownload = resolve
     })
+    let resolveFetchStarted!: () => void
+    const fetchStarted = new Promise<void>((resolve) => {
+      resolveFetchStarted = resolve
+    })
 
     vi.mocked(fetch).mockImplementation(async () => {
+      resolveFetchStarted()
       await blockDownload
       return new Response(gzipSync('javy binary'))
     })
@@ -194,8 +199,8 @@ describe('javy', () => {
     // Start first download — will block at fetch
     const firstDownload = downloadBinary(javy)
 
-    // Allow first download to reach fetch and register in downloadsInProgress
-    await new Promise((resolve) => setTimeout(resolve, 1))
+    // Wait for first download to reach fetch and register in downloadsInProgress
+    await fetchStarted
 
     // Simulate file appearing on disk (e.g., non-atomic moveFile creating the destination
     // while the download is still tracked as in-progress)
@@ -206,7 +211,7 @@ describe('javy', () => {
     const secondDownload = downloadBinary(javy).then(() => {
       secondResolved = true
     })
-    await new Promise((resolve) => setTimeout(resolve, 1))
+    await Promise.resolve()
 
     // Then — second download should be blocked waiting for first
     expect(secondResolved).toBe(false)
