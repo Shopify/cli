@@ -1,5 +1,6 @@
 import {allAPIs, API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
+import {uniq} from '../../../public/common/array.js'
 
 /**
  * Generate a flat array with all the default scopes for all the APIs plus
@@ -8,9 +9,9 @@ import {BugError} from '../../../public/node/error.js'
  * @returns Array of scopes
  */
 export function allDefaultScopes(extraScopes: string[] = []): string[] {
-  let scopes = allAPIs.map((api) => defaultApiScopes(api)).flat()
+  let scopes = allAPIs.flatMap(defaultApiScopes)
   scopes = ['openid', ...scopes, ...extraScopes].map(scopeTransform)
-  return Array.from(new Set(scopes))
+  return uniq(scopes)
 }
 
 /**
@@ -22,7 +23,7 @@ export function allDefaultScopes(extraScopes: string[] = []): string[] {
  */
 export function apiScopes(api: API, extraScopes: string[] = []): string[] {
   const scopes = [...defaultApiScopes(api), ...extraScopes.map(scopeTransform)].map(scopeTransform)
-  return Array.from(new Set(scopes))
+  return uniq(scopes)
 }
 
 /**
