@@ -1,8 +1,14 @@
-import {extractBulkOperationId} from './bulk-operation-status.js'
-import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
-import {renderError, TokenItem} from '@shopify/cli-kit/node/ui'
+import {extractBulkOperationId} from './helpers.js'
+import {GetBulkOperationByIdQuery} from '../../../../cli/api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {outputContent, outputToken, TokenizedString} from '../../output.js'
+import {renderError, TokenItem} from '../../ui.js'
 
+/**
+ * Produces a human-readable status line for a bulk operation.
+ *
+ * @param operation - The bulk operation.
+ * @returns A tokenized status string.
+ */
 export function formatBulkOperationStatus(
   operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,
 ): TokenizedString {
@@ -39,6 +45,12 @@ interface UserError {
   message: string
 }
 
+/**
+ * Renders a list of bulk operation user errors.
+ *
+ * @param userErrors - The user errors to render.
+ * @param headline - The headline for the error block.
+ */
 export function renderBulkOperationUserErrors(userErrors: UserError[], headline: string): void {
   const errorMessages = userErrors
     .map((error) => outputContent`${error.field?.join('.') ?? 'unknown'}: ${error.message}`.value)
@@ -50,15 +62,23 @@ export function renderBulkOperationUserErrors(userErrors: UserError[], headline:
   })
 }
 
-interface BulkOperationCancellationResult {
+export interface BulkOperationCancellationResult {
   headline: string
   body?: TokenItem
   customSections?: {body: {list: {items: string[]}}[]}[]
   renderType: 'success' | 'warning' | 'info'
 }
 
+/**
+ * Builds the rendering payload describing the outcome of a cancellation request.
+ *
+ * @param operation - The bulk operation after the cancel request.
+ * @param statusCommand - The CLI command users run to check status (e.g. "shopify store bulk status").
+ * @returns The headline, body, sections, and render type to use.
+ */
 export function formatBulkOperationCancellationResult(
   operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,
+  statusCommand: string,
 ): BulkOperationCancellationResult {
   const headline = formatBulkOperationStatus(operation).value
 
@@ -68,7 +88,7 @@ export function formatBulkOperationCancellationResult(
         headline: 'Bulk operation is being cancelled.',
         body: [
           'This may take a few moments. Check the status with:\n',
-          {command: `shopify app bulk status --id=${extractBulkOperationId(operation.id)}`},
+          {command: `${statusCommand} --id=${extractBulkOperationId(operation.id)}`},
         ],
         renderType: 'success',
       }

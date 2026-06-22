@@ -1,8 +1,8 @@
 import {runBulkOperationQuery} from './run-query.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {adminRequestDoc} from '../admin.js'
 import {describe, test, expect, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('../admin.js')
 
 describe('runBulkOperationQuery', () => {
   const mockSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}

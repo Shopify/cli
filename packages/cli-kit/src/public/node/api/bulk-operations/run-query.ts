@@ -1,9 +1,9 @@
 import {
   BulkOperationRunQuery,
   BulkOperationRunQueryMutation,
-} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+} from '../../../../cli/api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
+import {adminRequestDoc} from '../admin.js'
+import {AdminSession} from '../../session.js'
 
 interface BulkOperationRunQueryOptions {
   adminSession: AdminSession
@@ -11,6 +11,12 @@ interface BulkOperationRunQueryOptions {
   version?: string
 }
 
+/**
+ * Starts a bulk query operation on the store.
+ *
+ * @param options - The admin session, query, and optional API version.
+ * @returns The bulkOperationRunQuery result, including the created operation and any user errors.
+ */
 export async function runBulkOperationQuery(
   options: BulkOperationRunQueryOptions,
 ): Promise<BulkOperationRunQueryMutation['bulkOperationRunQuery']> {

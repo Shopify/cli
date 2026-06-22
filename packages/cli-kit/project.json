@@ -107,11 +107,13 @@
         }
       ],
       "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
+        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts",
+        "{projectRoot}/src/cli/api/graphql/bulk-operations/generated/**/*.ts"
       ],
       "options": {
         "commands": [
-          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix"
+          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix",
+          "pnpm eslint 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}' --fix"
         ],
         "cwd": "packages/cli-kit"
       }
@@ -132,10 +134,27 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "graphql-codegen:generate:bulk-operations": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "{workspaceRoot}/graphql.config.ts",
+        "{projectRoot}/src/cli/api/graphql/bulk-operations/**/*.graphql"
+      ],
+      "outputs": [
+        "{projectRoot}/src/cli/api/graphql/bulk-operations/generated/**/*.ts"
+      ],
+      "options": {
+        "commands": [
+          "pnpm exec graphql-codegen --project=bulkOperations"
+        ],
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "graphql-codegen:postfix": {
       "executor": "nx:run-commands",
       "dependsOn": [
-        "graphql-codegen:generate:admin"
+        "graphql-codegen:generate:admin",
+        "graphql-codegen:generate:bulk-operations"
       ],
       "inputs": [
         {
@@ -143,11 +162,13 @@
         }
       ],
       "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
+        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts",
+        "{projectRoot}/src/cli/api/graphql/bulk-operations/generated/**/*.ts"
       ],
       "options": {
         "commands": [
-          "find ./packages/cli-kit/src/cli/api/graphql/admin/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
+          "find ./packages/cli-kit/src/cli/api/graphql/admin/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
+          "find ./packages/cli-kit/src/cli/api/graphql/bulk-operations/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
         ],
         "cwd": "{workspaceRoot}"
       }

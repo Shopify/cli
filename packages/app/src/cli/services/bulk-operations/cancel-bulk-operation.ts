@@ -1,16 +1,12 @@
-import {renderBulkOperationUserErrors, formatBulkOperationCancellationResult} from './format-bulk-operation-status.js'
-import {
-  BulkOperationCancel,
-  BulkOperationCancelMutation,
-  BulkOperationCancelMutationVariables,
-} from '../../api/graphql/bulk-operations/generated/bulk-operation-cancel.js'
 import {formatOperationInfo, createAdminSessionAsApp} from '../graphql/common.js'
 import {OrganizationApp, Organization} from '../../models/organization.js'
+import {
+  cancelBulkOperationRequest,
+  renderBulkOperationUserErrors,
+  formatBulkOperationCancellationResult,
+} from '@shopify/cli-kit/node/api/bulk-operations'
 import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-
-const API_VERSION = '2026-01'
 
 interface CancelBulkOperationOptions {
   organization: Organization
@@ -35,21 +31,16 @@ export async function cancelBulkOperation(options: CancelBulkOperationOptions): 
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
-  const response = await adminRequestDoc<BulkOperationCancelMutation, BulkOperationCancelMutationVariables>({
-    query: BulkOperationCancel,
-    session: adminSession,
-    variables: {id: operationId},
-    version: API_VERSION,
-  })
+  const bulkOperationCancel = await cancelBulkOperationRequest({adminSession, operationId})
 
-  if (response.bulkOperationCancel?.userErrors?.length) {
-    renderBulkOperationUserErrors(response.bulkOperationCancel.userErrors, 'Failed to cancel bulk operation.')
+  if (bulkOperationCancel?.userErrors?.length) {
+    renderBulkOperationUserErrors(bulkOperationCancel.userErrors, 'Failed to cancel bulk operation.')
     return
   }
 
-  const operation = response.bulkOperationCancel?.bulkOperation
+  const operation = bulkOperationCancel?.bulkOperation
   if (operation) {
-    const result = formatBulkOperationCancellationResult(operation)
+    const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
     const renderOptions = {
       headline: result.headline,
       ...(result.body && {body: result.body}),

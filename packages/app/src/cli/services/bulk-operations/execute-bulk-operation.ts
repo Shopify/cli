@@ -1,10 +1,3 @@
-import {runBulkOperationQuery} from './run-query.js'
-import {runBulkOperationMutation} from './run-mutation.js'
-import {watchBulkOperation, shortBulkOperationPoll, type BulkOperation} from './watch-bulk-operation.js'
-import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
-import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {extractBulkOperationId} from './bulk-operation-status.js'
-import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {
   createAdminSessionAsApp,
   formatOperationInfo,
@@ -13,6 +6,17 @@ import {
   isMutation,
 } from '../graphql/common.js'
 import {OrganizationApp, Organization, OrganizationStore} from '../../models/organization.js'
+import {
+  runBulkOperationQuery,
+  runBulkOperationMutation,
+  watchBulkOperation,
+  shortBulkOperationPoll,
+  formatBulkOperationStatus,
+  downloadBulkOperationResults,
+  extractBulkOperationId,
+  BULK_OPERATIONS_MIN_API_VERSION,
+  type BulkOperation,
+} from '@shopify/cli-kit/node/api/bulk-operations'
 import {
   renderSuccess,
   renderInfo,
