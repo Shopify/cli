@@ -12,7 +12,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 const onNotify = vi.fn()
 const capturedEventHandler = vi.fn()
-let lastBugsnagEvent: {addMetadata: ReturnType<typeof vi.fn>} | undefined
+let lastBugsnagEvent: {addMetadata: ReturnType<typeof vi.fn>; groupingHash?: string} | undefined
 
 vi.mock('process')
 vi.mock('@bugsnag/js', () => {
@@ -174,15 +174,6 @@ describe('skips sending errors to Bugsnag', () => {
     expect(onNotify).not.toHaveBeenCalled()
     expect(mockOutput.debug()).toMatch('Skipping Bugsnag report')
   })
-
-  test('when error is expected', async () => {
-    const mockOutput = mockAndCaptureOutput()
-    const res = await sendErrorToBugsnag(new error.AbortError('In test'), 'expected_error')
-    expect(res.reported).toEqual(false)
-    expect(res.unhandled).toBeUndefined()
-    expect(onNotify).not.toHaveBeenCalled()
-    expect(mockOutput.debug()).toMatch('Skipping Bugsnag report for expected error')
-  })
 })
 
 describe('sends errors to Bugsnag', () => {
@@ -206,6 +197,13 @@ describe('sends errors to Bugsnag', () => {
     expect(res.reported).toEqual(true)
     const {error} = res as any
     expect(error.stack).toMatch(/^Error: In test/)
+    expect(onNotify).toHaveBeenCalledWith(res.error)
+  })
+
+  test('processes AbortErrors as handled', async () => {
+    const res = await sendErrorToBugsnag(new error.AbortError('In test'), 'expected_error')
+    expect(res.reported).toEqual(true)
+    expect(res.unhandled).toEqual(false)
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
@@ -302,5 +300,92 @@ describe('sends errors to Bugsnag', () => {
 
     expect(lastBugsnagEvent).toBeDefined()
     expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('custom', {slice_name: 'cli'})
+  })
+
+  test('sets groupingHash using the command slice and analytics error taxonomy', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'app deploy', startArgs: []},
+    }))
+
+    await sendErrorToBugsnag(
+      new Error(
+        'The App Management GraphQL API responded unsuccessfully with the HTTP status 403 and errors: Unauthorized',
+      ),
+      'unexpected_error',
+    )
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.groupingHash).toMatch(/^app:authentication:/)
+  })
+
+  test('normalizes GraphQL ClientError JSON dumps before setting groupingHash', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'theme dev', startArgs: []},
+    }))
+    const payload = {
+      response: {
+        status: 200,
+        errors: [
+          {
+            message: 'Access denied for themes field. Required access: read_themes access scope.',
+            extensions: {code: 'ACCESS_DENIED'},
+          },
+        ],
+      },
+      request: {query: 'query Theme { themes { nodes { id } } }'},
+    }
+
+    await sendErrorToBugsnag(new Error(`GraphQL Error (Code: 200): ${JSON.stringify(payload)}`), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.groupingHash).toMatch(/^theme:permission:/)
+    expect(lastBugsnagEvent!.groupingHash).not.toContain(':network:')
+  })
+
+  test('groups GraphQL authentication failures separately from permission failures', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'store info', startArgs: []},
+    }))
+    const payload = {
+      response: {
+        status: 401,
+        errors: [{message: 'Service is not valid for authentication'}],
+      },
+      request: {query: 'query Shop { shop { id } }'},
+    }
+
+    await sendErrorToBugsnag(new Error(`GraphQL Error (Code: 401): ${JSON.stringify(payload)}`), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.groupingHash).toMatch(/^store:authentication:/)
+  })
+
+  test('groups GraphQL throttling failures as rate limits', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'theme pull', startArgs: []},
+    }))
+    const payload = {
+      response: {
+        status: 200,
+        errors: [{message: 'Too many requests', extensions: {code: 'THROTTLED'}}],
+      },
+      request: {query: 'query ThemeFiles { theme { files { nodes { filename } } } }'},
+    }
+
+    await sendErrorToBugsnag(new Error(`GraphQL Error (Code: 200): ${JSON.stringify(payload)}`), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.groupingHash).toMatch(/^theme:rate_limit:/)
+  })
+
+  test('sets groupingHash with cli slice when startCommand is missing', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: undefined as unknown as string, startArgs: []},
+    }))
+
+    await sendErrorToBugsnag(new Error('boom'), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.groupingHash).toBe('cli:unknown:boom')
   })
 })

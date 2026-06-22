@@ -12,6 +12,7 @@ import {
 } from './error.js'
 import {outputDebug, outputInfo} from './output.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
+import {categorizeError, formatErrorMessage} from '../../private/node/analytics/error-categorizer.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -27,6 +28,72 @@ import {realpath} from 'fs/promises'
 // Allowed slice names for error analytics grouping.
 // Hardcoded list per product slices to keep analytics consistent.
 const ALLOWED_SLICE_NAMES = new Set<string>(['app', 'theme', 'hydrogen', 'store'])
+
+function sliceNameFromStartCommand(startCommand: string | undefined): string {
+  if (!startCommand) return 'cli'
+
+  const firstWord = startCommand.trim().split(/\s+/)[0] ?? 'cli'
+  return ALLOWED_SLICE_NAMES.has(firstWord) ? firstWord : 'cli'
+}
+
+interface GraphQLErrorPayload {
+  response?: {
+    status?: number
+    errors?: {
+      message?: string
+      extensions?: {
+        code?: string
+      }
+    }[]
+  }
+}
+
+function errorForGrouping(error: Error): Error {
+  const graphQLError = graphQLErrorForGrouping(error.message)
+  if (graphQLError) return graphQLError
+
+  const messageWithoutJsonDump = error.message.split(': {')[0] ?? error.message
+  return new Error(messageWithoutJsonDump)
+}
+
+function graphQLErrorForGrouping(message: string): Error | undefined {
+  const jsonStart = message.indexOf('{')
+  if (jsonStart === -1) return undefined
+
+  let payload: GraphQLErrorPayload
+  try {
+    payload = JSON.parse(message.slice(jsonStart)) as GraphQLErrorPayload
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
+
+  const {response} = payload
+  if (!response) return undefined
+
+  const firstError = response.errors?.[0]
+  const code = firstError?.extensions?.code
+  const firstErrorMessage = firstError?.message?.replace(/too many requests/gi, 'rate limit exceeded')
+
+  const parts: string[] = []
+  if (response.status === 401 && !firstErrorMessage?.match(/auth|credential|token|unauthorized/i)) {
+    parts.push('Unauthorized')
+  }
+  if (response.status === 403 && !firstErrorMessage?.match(/access|denied|forbidden|permission|unauthorized/i)) {
+    parts.push('Forbidden')
+  }
+  if (response.status) parts.push(`HTTP ${response.status}`)
+  if (code) parts.push(code)
+  if (firstErrorMessage) parts.push(firstErrorMessage)
+
+  return new Error(parts.length > 0 ? parts.join(' ') : (message.split(': {')[0] ?? message))
+}
+
+function bugsnagGroupingHash(error: Error, sliceName: string): string {
+  const groupingError = errorForGrouping(error)
+  const category = categorizeError(groupingError)
+  return `${sliceName}:${category.toLowerCase()}:${formatErrorMessage(groupingError, category)}`
+}
 
 export async function errorHandler(
   error: Error & {exitCode?: number | undefined},
@@ -73,11 +140,6 @@ export async function sendErrorToBugsnag(
   try {
     if (isLocalEnvironment() || settings.debug) {
       outputDebug(`Skipping Bugsnag report`)
-      return {reported: false, error, unhandled: undefined}
-    }
-
-    if (exitMode === 'expected_error') {
-      outputDebug(`Skipping Bugsnag report for expected error`)
       return {reported: false, error, unhandled: undefined}
     }
 
@@ -147,15 +209,15 @@ export async function sendErrorToBugsnag(
           // Attach command metadata so we know which CLI command triggered the error
           const {commandStartOptions} = metadata.getAllSensitiveMetadata()
           const {startCommand} = commandStartOptions ?? {}
+          const sliceName = sliceNameFromStartCommand(startCommand)
+          event.groupingHash = bugsnagGroupingHash(reportableError, sliceName)
           if (startCommand) {
-            const firstWord = startCommand.trim().split(/\s+/)[0] ?? 'cli'
-            const sliceName = ALLOWED_SLICE_NAMES.has(firstWord) ? firstWord : 'cli'
             event.addMetadata('custom', {slice_name: sliceName})
           }
         }
         const errorHandler = (error: unknown) => {
           if (error) {
-            reject(error instanceof Error ? error : new Error(String(error)))
+            reject(error)
           } else {
             resolve(reportableError)
           }
@@ -192,7 +254,7 @@ export function cleanStackFrameFilePath({
     ? currentFilePath
     : path.joinPath(projectRoot, currentFilePath)
 
-  const matchingPluginPath = pluginLocations.find(({pluginPath}) => fullLocation.startsWith(pluginPath))
+  const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.startsWith(pluginPath))[0]
 
   if (matchingPluginPath !== undefined) {
     // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
