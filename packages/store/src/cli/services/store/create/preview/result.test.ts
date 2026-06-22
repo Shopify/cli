@@ -22,12 +22,11 @@ const result = {
     subdomain: 'x12y45z.myshopify.com',
     country: 'US',
     storefrontUrl: 'https://x12y45z.myshopify.com/?foo=bar',
-    saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
   },
 }
 
 describe('preview store create result presenter', () => {
-  test('writes JSON output with the storefront and save URLs', () => {
+  test('writes JSON output with the storefront URL', () => {
     writeCreatePreviewStoreResult(result, 'json')
 
     expect(outputResult).toHaveBeenCalledWith(
@@ -42,11 +41,9 @@ describe('preview store create result presenter', () => {
             subdomain: 'x12y45z.myshopify.com',
             country: 'US',
             storefrontUrl: 'https://x12y45z.myshopify.com/?foo=bar',
-            saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
           },
           next_steps: [
             'Open your store (https://x12y45z.myshopify.com/?foo=bar) to preview the storefront.',
-            'Create an account (https://admin.shopify.com/store-transfer/accept/claim-token) for free to save progress.',
             'Use `shopify store execute --store x12y45z.myshopify.com` to add products, collections, pages, and more.',
             'Use `shopify theme pull --store x12y45z.myshopify.com` and `shopify theme push --store x12y45z.myshopify.com` to edit your store design.',
           ],
@@ -87,16 +84,6 @@ describe('preview store create result presenter', () => {
                       },
                     },
                     ' to preview the storefront.',
-                  ],
-                  [
-                    'Create ',
-                    {
-                      link: {
-                        label: 'an account',
-                        url: 'https://admin.shopify.com/store-transfer/accept/claim-token',
-                      },
-                    },
-                    ' for free to save progress.',
                   ],
                   [
                     'Use ',

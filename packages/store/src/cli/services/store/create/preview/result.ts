@@ -36,10 +36,6 @@ function previewStoreNextSteps(result: CreatePreviewStoreResult): PreviewStoreNe
       text: ['Open ', {link: {label: 'your store', url: result.store.storefrontUrl}}, ' to preview the storefront.'],
     },
     {
-      json: `Create an account (${result.store.saveUrl}) for free to save progress.`,
-      text: ['Create ', {link: {label: 'an account', url: result.store.saveUrl}}, ' for free to save progress.'],
-    },
-    {
       json: `Use \`shopify store execute --store ${result.store.subdomain}\` to add products, collections, pages, and more.`,
       text: [
         'Use ',
