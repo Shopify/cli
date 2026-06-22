@@ -1,33 +1,28 @@
 import {docSearchService} from '../../services/commands/doc/search.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {Args, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 
 export default class DocSearch extends Command {
   static description =
     'Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.'
 
-  static usage = `doc search <query>`
-
   static examples = [
     `# search shopify.dev for a topic
-    shopify doc search "subscribe to webhooks"
+    shopify doc search --query "subscribe to webhooks"
 
     # narrow the search to a specific API and version
-    shopify doc search "create a product" --api-name admin --api-version latest
+    shopify doc search --query "create a product" --api-name admin --api-version latest
     `,
   ]
 
-  static args = {
-    query: Args.string({
-      name: 'query',
-      required: true,
-      description: 'The search query.',
-    }),
-  }
-
   static flags = {
     ...globalFlags,
+    query: Flags.string({
+      description: 'The search query.',
+      env: 'SHOPIFY_FLAG_QUERY',
+      required: true,
+    }),
     'api-name': Flags.string({
       description:
         'Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are ignored.',
@@ -40,7 +35,7 @@ export default class DocSearch extends Command {
   }
 
   async run(): Promise<void> {
-    const {args, flags} = await this.parse(DocSearch)
-    await docSearchService(args.query, flags['api-name'], flags['api-version'])
+    const {flags} = await this.parse(DocSearch)
+    await docSearchService(flags.query, flags['api-name'], flags['api-version'])
   }
 }
