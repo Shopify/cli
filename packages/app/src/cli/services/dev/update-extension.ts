@@ -6,7 +6,8 @@ import {AppConfiguration} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
-import {readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
@@ -32,8 +33,8 @@ export async function updateExtensionDraft({
   bundlePath,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
-  const outputPath = extension.getOutputPathForDirectory(bundlePath)
   if (extension.features.includes('esbuild')) {
+    const outputPath = await getDraftScriptOutputPath(extension, bundlePath)
     const content = await readFile(outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')
@@ -94,5 +95,26 @@ export async function updateExtensionDraft({
   } else {
     const draftUpdateSuccesMessage = extension.draftMessages.successMessage
     if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
+  }
+}
+
+async function getDraftScriptOutputPath(extension: ExtensionInstance, bundlePath: string): Promise<string> {
+  const fallbackOutputPath = extension.getOutputPathForDirectory(bundlePath)
+  const buildDirectory = dirname(fallbackOutputPath)
+  const manifestPath = joinPath(buildDirectory, 'manifest.json')
+
+  if (!(await fileExists(manifestPath))) return fallbackOutputPath
+
+  try {
+    const manifest = JSON.parse(await readFile(manifestPath)) as Record<string, {main?: unknown}>
+    const mainPath = Object.values(manifest).find((entry) => typeof entry?.main === 'string')?.main
+
+    return typeof mainPath === 'string' ? joinPath(buildDirectory, mainPath) : fallbackOutputPath
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid manifest.json in ${buildDirectory}: ${error.message}`)
+    }
+
+    throw error
   }
 }

@@ -27,6 +27,7 @@ export interface BundleUIStep extends BaseStep {
   readonly config?: {
     readonly generatesAssetsManifest?: boolean
     readonly bundleFolder?: string
+    readonly skipAssetsManifestWithoutConfigAssetsInProduction?: boolean
   }
 }
 

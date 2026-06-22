@@ -110,4 +110,133 @@ describe('executeBundleUIStep', () => {
       expect(generateManifest.createOrUpdateManifestFile).not.toHaveBeenCalled()
     })
   })
+
+  test('skips production manifest generation when there are no config-driven assets', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleDir = joinPath(tmpDir, 'bundle')
+      const bundleOutputDir = joinPath(bundleDir, 'handle', 'dist')
+
+      await mkdir(localOutputDir)
+      await writeFile(joinPath(localOutputDir, 'handle.js'), 'console.log("hello")')
+
+      const stepWithManifestGate: BundleUIStep = {
+        id: 'bundle-ui',
+        name: 'Bundle UI Extension',
+        type: 'bundle_ui',
+        config: {
+          generatesAssetsManifest: true,
+          bundleFolder: 'dist/',
+          skipAssetsManifestWithoutConfigAssetsInProduction: true,
+        },
+      }
+
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleDir, 'handle', 'handle.js')
+      mockContext.extension.configuration = {
+        extension_points: [
+          {target: 'admin.product-details.action.render', build_manifest: {assets: {main: {filepath: 'handle.js'}}}},
+        ],
+      } as ExtensionInstance['configuration']
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When
+      await executeBundleUIStep(stepWithManifestGate, mockContext)
+
+      // Then
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle.js'))).resolves.toBe(true)
+      expect(generateManifest.createOrUpdateManifestFile).not.toHaveBeenCalled()
+    })
+  })
+
+  test('keeps production manifest generation when config-driven assets exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleDir = joinPath(tmpDir, 'bundle')
+
+      await mkdir(localOutputDir)
+      await writeFile(joinPath(localOutputDir, 'handle.js'), 'console.log("hello")')
+
+      const stepWithManifestGate: BundleUIStep = {
+        id: 'bundle-ui',
+        name: 'Bundle UI Extension',
+        type: 'bundle_ui',
+        config: {
+          generatesAssetsManifest: true,
+          bundleFolder: 'dist/',
+          skipAssetsManifestWithoutConfigAssetsInProduction: true,
+        },
+      }
+
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleDir, 'handle', 'handle.js')
+      mockContext.extension.configuration = {
+        extension_points: [
+          {
+            target: 'admin.product-details.action.render',
+            tools: './tools.json',
+            build_manifest: {assets: {main: {filepath: 'handle.js'}}},
+          },
+        ],
+      } as ExtensionInstance['configuration']
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When
+      await executeBundleUIStep(stepWithManifestGate, mockContext)
+
+      // Then
+      expect(generateManifest.createOrUpdateManifestFile).toHaveBeenCalledWith(mockContext, {
+        'admin.product-details.action.render': {
+          main: 'dist/handle.js',
+        },
+      })
+    })
+  })
+
+  test('keeps development manifest generation even when there are no config-driven assets', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleDir = joinPath(tmpDir, 'bundle')
+
+      await mkdir(localOutputDir)
+      await writeFile(joinPath(localOutputDir, 'handle.js'), 'console.log("hello")')
+
+      const stepWithManifestGate: BundleUIStep = {
+        id: 'bundle-ui',
+        name: 'Bundle UI Extension',
+        type: 'bundle_ui',
+        config: {
+          generatesAssetsManifest: true,
+          bundleFolder: 'dist/',
+          skipAssetsManifestWithoutConfigAssetsInProduction: true,
+        },
+      }
+
+      mockContext.options.environment = 'development'
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleDir, 'handle', 'handle.js')
+      mockContext.extension.configuration = {
+        extension_points: [
+          {target: 'admin.product-details.action.render', build_manifest: {assets: {main: {filepath: 'handle.js'}}}},
+        ],
+      } as ExtensionInstance['configuration']
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When
+      await executeBundleUIStep(stepWithManifestGate, mockContext)
+
+      // Then
+      expect(generateManifest.createOrUpdateManifestFile).toHaveBeenCalledWith(mockContext, {
+        'admin.product-details.action.render': {
+          main: 'dist/handle.js',
+        },
+      })
+    })
+  })
 })

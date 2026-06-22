@@ -14,9 +14,8 @@ interface ExtensionPointWithBuildManifest {
  * Executes a bundle_ui build step.
  *
  * Bundles the UI extension using esbuild into the extension's local directory
- * and copies the output to the bundle. When `generatesAssetsManifest` is true,
- * writes built asset entries (from build_manifest) into manifest.json so
- * downstream steps can merge on top.
+ * and copies the output to the bundle. When enabled, writes built asset entries
+ * (from build_manifest) into manifest.json so downstream steps can merge on top.
  */
 export async function executeBundleUIStep(step: BundleUIStep, context: BuildContext): Promise<void> {
   const config = context.extension.configuration
@@ -32,7 +31,7 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
 
   await copyFile(localOutputDir, bundleOutputDir)
 
-  if (!step.config?.generatesAssetsManifest) return
+  if (!shouldGenerateAssetsManifest(step, context)) return
 
   if (!Array.isArray(config.extension_points)) return
 
@@ -44,6 +43,37 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   if (Object.keys(entries).length > 0) {
     await createOrUpdateManifestFile(context, entries)
   }
+}
+
+function shouldGenerateAssetsManifest(step: BundleUIStep, context: BuildContext): boolean {
+  if (!step.config?.generatesAssetsManifest) return false
+  if (context.options.environment !== 'production') return true
+  if (!step.config.skipAssetsManifestWithoutConfigAssetsInProduction) return true
+
+  return hasConfigDrivenManifestAssets(context.extension.configuration.extension_points)
+}
+
+function hasConfigDrivenManifestAssets(extensionPoints: unknown): boolean {
+  if (!Array.isArray(extensionPoints)) return false
+
+  return extensionPoints.some((extensionPoint) => {
+    if (!extensionPoint || typeof extensionPoint !== 'object' || Array.isArray(extensionPoint)) return false
+
+    const point = extensionPoint as Record<string, unknown>
+    return (
+      hasManifestAssetValue(point.assets) ||
+      hasManifestAssetValue(point.tools) ||
+      hasManifestAssetValue(point.instructions) ||
+      hasManifestAssetValue(point.intents)
+    )
+  })
+}
+
+function hasManifestAssetValue(value: unknown): boolean {
+  if (typeof value === 'string') return value.length > 0
+  if (Array.isArray(value)) return value.some(hasManifestAssetValue)
+  if (value && typeof value === 'object') return Object.values(value).some(hasManifestAssetValue)
+  return false
 }
 
 /**

@@ -75,6 +75,53 @@ describe('updateExtensionDraft()', () => {
     })
   })
 
+  test('uses manifest main path when updating an esbuild extension draft', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configuration = {
+        runtime_context: 'strict',
+        settings: {type: 'object'},
+        type: 'web_pixel_extension',
+        handle,
+        uid: 'uid1',
+      } as any
+
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        configuration,
+        directory: tmpDir,
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      await writeFile(
+        joinPath(tmpDir, 'uid1', 'manifest.json'),
+        JSON.stringify({'admin.product-details.action.render': {main: 'dist/mock-handle.js'}}),
+      )
+      await writeFile(joinPath(tmpDir, 'uid1', 'dist', 'mock-handle.js'), 'manifest script content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
+        apiKey,
+        context: '',
+        handle,
+        registrationId,
+        config:
+          '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object"},"serialized_script":"bWFuaWZlc3Qgc2NyaXB0IGNvbnRlbnQ="}',
+      })
+    })
+  })
+
   test('updates draft successfully with context for extension with target', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const mockExtension = await testPaymentExtensions()
