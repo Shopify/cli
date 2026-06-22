@@ -8,6 +8,7 @@ import {
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
+  _resetMacAddress,
   getThemeKitAccessDomain,
   opentelemetryDomain,
 } from './local.js'
@@ -207,12 +208,38 @@ describe('analitycsDisabled', () => {
 })
 
 describe('macAddress', () => {
+  afterEach(() => {
+    _resetMacAddress()
+  })
+
   test('returns any mac address value', async () => {
     // When
     const got = await macAddress()
 
     // Then
     expect(got).not.toBeUndefined()
+  })
+
+  test('memoizes the mac address', async () => {
+    // When
+    const got1 = macAddress()
+    const got2 = macAddress()
+
+    // Then
+    expect(got1).toBe(got2)
+    await expect(got1).resolves.toBe(await got2)
+  })
+
+  test('resets the memoized mac address', async () => {
+    // Given
+    const got1 = macAddress()
+    _resetMacAddress()
+
+    // When
+    const got2 = macAddress()
+
+    // Then
+    expect(got1).not.toBe(got2)
   })
 })
 
