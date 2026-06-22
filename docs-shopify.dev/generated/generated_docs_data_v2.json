@@ -4184,6 +4184,206 @@
       "value": "export interface storeauth {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Comma-separated Admin API scopes to request for the app.\n   * @environment SHOPIFY_FLAG_SCOPES\n   */\n  '--scopes <value>': string\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
+  "storebulkcancel": {
+    "docs-shopify.dev/commands/interfaces/store-bulk-cancel.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-cancel.interface.ts",
+      "name": "storebulkcancel",
+      "description": "The following flags are available for the `store bulk cancel` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-cancel.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--id <value>",
+          "value": "string",
+          "description": "The bulk operation ID to cancel (numeric ID or full GID).",
+          "environmentValue": "SHOPIFY_FLAG_ID"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-cancel.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-cancel.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-cancel.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-s, --store <value>",
+          "value": "string",
+          "description": "The myshopify.com domain of the store.",
+          "environmentValue": "SHOPIFY_FLAG_STORE"
+        }
+      ],
+      "value": "export interface storebulkcancel {\n  /**\n   * The bulk operation ID to cancel (numeric ID or full GID).\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
+  "storebulkexecute": {
+    "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+      "name": "storebulkexecute",
+      "description": "The following flags are available for the `store bulk execute` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--allow-mutations",
+          "value": "''",
+          "description": "Allow GraphQL mutations to run against the target store.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_ALLOW_MUTATIONS"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--output-file <value>",
+          "value": "string",
+          "description": "The file path where results should be written if --watch is specified. If not specified, results will be written to STDOUT.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_OUTPUT_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--query-file <value>",
+          "value": "string",
+          "description": "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_QUERY_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--variable-file <value>",
+          "value": "string",
+          "description": "Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VARIABLE_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--version <value>",
+          "value": "string",
+          "description": "The API version to use for the bulk operation. If not specified, uses the latest stable version.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERSION"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--watch",
+          "value": "''",
+          "description": "Wait for bulk operation results before exiting. Defaults to false.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_WATCH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-q, --query <value>",
+          "value": "string",
+          "description": "The GraphQL query or mutation to run as a bulk operation.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_QUERY"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-s, --store <value>",
+          "value": "string",
+          "description": "The myshopify.com domain of the store.",
+          "environmentValue": "SHOPIFY_FLAG_STORE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-v, --variables <value>",
+          "value": "string",
+          "description": "The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VARIABLES"
+        }
+      ],
+      "value": "export interface storebulkexecute {\n  /**\n   * Allow GraphQL mutations to run against the target store.\n   * @environment SHOPIFY_FLAG_ALLOW_MUTATIONS\n   */\n  '--allow-mutations'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The file path where results should be written if --watch is specified. If not specified, results will be written to STDOUT.\n   * @environment SHOPIFY_FLAG_OUTPUT_FILE\n   */\n  '--output-file <value>'?: string\n\n  /**\n   * The GraphQL query or mutation to run as a bulk operation.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '-q, --query <value>'?: string\n\n  /**\n   * Path to a file containing the GraphQL query or mutation. Can't be used with --query.\n   * @environment SHOPIFY_FLAG_QUERY_FILE\n   */\n  '--query-file <value>'?: string\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.\n   * @environment SHOPIFY_FLAG_VARIABLE_FILE\n   */\n  '--variable-file <value>'?: string\n\n  /**\n   * The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use for the bulk operation. If not specified, uses the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n\n  /**\n   * Wait for bulk operation results before exiting. Defaults to false.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
+    }
+  },
+  "storebulkstatus": {
+    "docs-shopify.dev/commands/interfaces/store-bulk-status.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-status.interface.ts",
+      "name": "storebulkstatus",
+      "description": "The following flags are available for the `store bulk status` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--id <value>",
+          "value": "string",
+          "description": "The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations on this store in the last 7 days.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_ID"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/store-bulk-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-s, --store <value>",
+          "value": "string",
+          "description": "The myshopify.com domain of the store.",
+          "environmentValue": "SHOPIFY_FLAG_STORE"
+        }
+      ],
+      "value": "export interface storebulkstatus {\n  /**\n   * The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations on this store in the last 7 days.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "storeexecute": {
     "docs-shopify.dev/commands/interfaces/store-execute.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",

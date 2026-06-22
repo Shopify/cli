@@ -77,6 +77,9 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
+* [`shopify store bulk cancel`](#shopify-store-bulk-cancel)
+* [`shopify store bulk execute`](#shopify-store-bulk-execute)
+* [`shopify store bulk status`](#shopify-store-bulk-status)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify store info`](#shopify-store-info)
 * [`shopify theme check`](#shopify-theme-check)
@@ -2129,6 +2132,117 @@ EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
+```
+
+## `shopify store bulk cancel`
+
+Cancel a bulk operation on a store.
+
+```
+USAGE
+  $ shopify store bulk cancel --id <value> -s <value> [--no-color] [--verbose]
+
+FLAGS
+  -s, --store=<value>  (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+      --id=<value>     (required) [env: SHOPIFY_FLAG_ID] The bulk operation ID to cancel (numeric ID or full GID).
+      --no-color       [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose        [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Cancel a bulk operation on a store.
+
+  Cancels a running bulk operation by ID, using previously stored app authentication.
+
+  Run `shopify store auth` first to create stored auth for the store.
+
+EXAMPLES
+  $ shopify store bulk cancel --store shop.myshopify.com --id 123456789
+```
+
+## `shopify store bulk execute`
+
+Execute bulk operations on a store.
+
+```
+USAGE
+  $ shopify store bulk execute -s <value> [--allow-mutations] [--no-color] [--output-file <value> --watch] [-q <value>]
+    [--query-file <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
+
+FLAGS
+  -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation to run as a bulk operation.
+  -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+  -v, --variables=<value>...   [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your mutation, in
+                               JSON format. Can be specified multiple times.
+      --allow-mutations        [env: SHOPIFY_FLAG_ALLOW_MUTATIONS] Allow GraphQL mutations to run against the target
+                               store.
+      --no-color               [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --output-file=<value>    [env: SHOPIFY_FLAG_OUTPUT_FILE] The file path where results should be written if --watch
+                               is specified. If not specified, results will be written to STDOUT.
+      --query-file=<value>     [env: SHOPIFY_FLAG_QUERY_FILE] Path to a file containing the GraphQL query or mutation.
+                               Can't be used with --query.
+      --variable-file=<value>  [env: SHOPIFY_FLAG_VARIABLE_FILE] Path to a file containing GraphQL variables in JSONL
+                               format (one JSON object per line). Can't be used with --variables.
+      --verbose                [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --version=<value>        [env: SHOPIFY_FLAG_VERSION] The API version to use for the bulk operation. If not
+                               specified, uses the latest stable version.
+      --watch                  [env: SHOPIFY_FLAG_WATCH] Wait for bulk operation results before exiting. Defaults to
+                               false.
+
+DESCRIPTION
+  Execute bulk operations on a store.
+
+  Executes an Admin API GraphQL query or mutation on the specified store as a bulk operation, using previously stored
+  app authentication.
+
+  Run `shopify store auth` first to create stored auth for the store.
+
+  Bulk operations allow you to process large amounts of data asynchronously. Learn more about "bulk query operations"
+  (https://shopify.dev/docs/api/usage/bulk-operations/queries) and "bulk mutation operations"
+  (https://shopify.dev/docs/api/usage/bulk-operations/imports).
+
+  Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
+
+  Use "`store bulk status`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-status) to check the status of
+  your bulk operations.
+
+EXAMPLES
+  $ shopify store bulk execute --store shop.myshopify.com --query "query { products { edges { node { id } } } }"
+
+  $ shopify store bulk execute --store shop.myshopify.com --query-file ./operation.graphql --watch
+
+  $ shopify store bulk execute --store shop.myshopify.com --query-file ./mutation.graphql --variable-file ./variables.jsonl --allow-mutations
+```
+
+## `shopify store bulk status`
+
+Check the status of bulk operations on a store.
+
+```
+USAGE
+  $ shopify store bulk status -s <value> [--id <value>] [--no-color] [--verbose]
+
+FLAGS
+  -s, --store=<value>  (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+      --id=<value>     [env: SHOPIFY_FLAG_ID] The bulk operation ID (numeric ID or full GID). If not provided, lists all
+                       bulk operations on this store in the last 7 days.
+      --no-color       [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose        [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Check the status of bulk operations on a store.
+
+  Check the status of a specific bulk operation by ID, or list all bulk operations on this store in the last 7 days,
+  using previously stored app authentication.
+
+  Run `shopify store auth` first to create stored auth for the store.
+
+  Use "`store bulk execute`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk
+  operation.
+
+EXAMPLES
+  $ shopify store bulk status --store shop.myshopify.com
+
+  $ shopify store bulk status --store shop.myshopify.com --id 123456789
 ```
 
 ## `shopify store execute`
