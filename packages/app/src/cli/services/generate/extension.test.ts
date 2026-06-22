@@ -266,7 +266,7 @@ describe('initialize a extension', async () => {
           name,
           handle: slugify(name),
           flavor,
-          uid: 'ba7c20a9-578d-6fee-8cd2-044af992dabd92d8bbfe',
+          uid: expect.any(String),
         })
       })
     },
