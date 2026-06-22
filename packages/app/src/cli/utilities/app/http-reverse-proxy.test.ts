@@ -83,17 +83,20 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type, Authorization')
   })
 
-  test('closes the server when aborted', {retry: 2}, async ({setup}) => {
+  test('closes the server when aborted', async ({setup}) => {
     setup.abortController.abort()
-    // Try the assertion immediately, and if it fails, wait and retry
-    try {
-      await expect(fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {agent})).rejects.toThrow()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      // If the assertion fails, wait a bit and try again
-      await new Promise((resolve) => setTimeout(resolve, 10))
-      await expect(fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {agent})).rejects.toThrow()
-    }
+
+    await expect
+      .poll(async () => {
+        try {
+          await fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {agent})
+          return 'open'
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          return 'closed'
+        }
+      })
+      .toBe('closed')
   })
 })
 
