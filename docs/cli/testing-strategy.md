@@ -37,7 +37,7 @@ pnpm test path/to/my.test.ts
 ```
 
 ### Filesystem I/O and temporary directories
-If the subject under testing does a filesystem I/O operation, we recommend not stubbing that behavior instead of hitting the filesystem. Create a temporary directory whose lifecycle is tied to the lifecycle of the test:
+If the subject under test performs filesystem I/O, prefer using a temporary directory instead of stubbing the filesystem. Create a temporary directory whose lifecycle is tied to the lifecycle of the test:
 
 ```ts
 import {file, path} from "@shopify/cli-kit"
