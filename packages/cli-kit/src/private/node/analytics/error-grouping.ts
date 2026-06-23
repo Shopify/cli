@@ -9,7 +9,7 @@ import {ClientError} from 'graphql-request'
  * for reporting), so we group on facts the error already carries rather than by re-parsing a
  * stringified message.
  */
-export interface ErrorGroupingSignals {
+interface ErrorGroupingSignals {
   httpStatus?: number
   code?: string
   errorClass?: string
