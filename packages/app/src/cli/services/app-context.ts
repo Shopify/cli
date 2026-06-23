@@ -207,32 +207,3 @@ export async function localAppContext({
 
   return {app, project}
 }
-
-const APP_CONTEXT_METADATA_TIMEOUT_MS = 3000
-
-/**
- * Best-effort, non-interactive enrichment of command analytics with app context.
- *
- * It only reads from disk, never prompts, never makes network requests, and never
- * surfaces errors because it runs while collecting metadata for every command.
- *
- * @param directory - The working directory to inspect for an app.
- */
-export async function logAppContextMetadata(directory: string): Promise<void> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  try {
-    if (metadata.getAllPublicMetadata().api_key !== undefined) return
-
-    await Promise.race([
-      localAppContext({directory, skipPrompts: true}),
-      new Promise<void>((resolve) => {
-        timer = setTimeout(resolve, APP_CONTEXT_METADATA_TIMEOUT_MS)
-      }),
-    ])
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    // Telemetry is strictly best-effort: never surface errors or affect the command.
-  } finally {
-    if (timer) clearTimeout(timer)
-  }
-}

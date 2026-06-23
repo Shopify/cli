@@ -1,4 +1,4 @@
-import {linkedAppContext, localAppContext, logAppContextMetadata} from './app-context.js'
+import {linkedAppContext, localAppContext} from './app-context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import link from './app/config/link.js'
@@ -497,65 +497,6 @@ describe('localAppContext', () => {
           }),
         }),
       )
-    })
-  })
-})
-
-describe('logAppContextMetadata', () => {
-  const linkedAppToml = `
-    name = "test-app"
-    client_id = "test-client-id"
-    application_url = "https://example.com"
-    embedded = true
-
-    [auth]
-    redirect_urls = ["https://example.com/callback"]
-
-    [webhooks]
-    api_version = "2024-01"
-  `
-
-  beforeEach(() => {
-    vi.mocked(loadLocalExtensionsSpecifications).mockResolvedValue([])
-  })
-
-  test('attaches api_key inside an app project', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
-      const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
-      await writeAppConfig(tmp, linkedAppToml)
-
-      // When
-      await logAppContextMetadata(tmp)
-
-      // Then — the local load adds its own metadata too, so find the call carrying api_key.
-      const payloads = await Promise.all(addSpy.mock.calls.map((call) => call[0]()))
-      expect(payloads).toContainEqual(expect.objectContaining({api_key: 'test-client-id'}))
-    })
-  })
-
-  test('short-circuits when api_key is already set', async () => {
-    // Given — a command like `app dev` already loaded the app and set api_key
-    vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({api_key: 'already-set'})
-    const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
-
-    // When
-    await logAppContextMetadata('/does/not/matter')
-
-    // Then
-    expect(addSpy).not.toHaveBeenCalled()
-  })
-
-  test('never throws and adds nothing when the directory is not an app project', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given — no shopify.app.toml on disk
-      vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
-      const addSpy = vi.spyOn(metadata, 'addPublicMetadata')
-
-      // When / Then
-      await expect(logAppContextMetadata(tmp)).resolves.toBeUndefined()
-      expect(addSpy).not.toHaveBeenCalled()
     })
   })
 })

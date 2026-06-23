@@ -1,5 +1,5 @@
 import gatherPublicMetadata from './public_metadata.js'
-import {logAppContextMetadata} from '../services/app-context.js'
+import {localAppContext} from '../services/app-context.js'
 import metadata from '../metadata.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {cwd} from '@shopify/cli-kit/node/path'
@@ -9,30 +9,46 @@ vi.mock('@shopify/cli-kit/node/path')
 
 describe('gatherPublicMetadata', () => {
   beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.clearAllMocks()
     vi.mocked(cwd).mockReturnValue('/some/app/dir')
+    vi.mocked(localAppContext).mockResolvedValue({} as Awaited<ReturnType<typeof localAppContext>>)
   })
 
   test('opportunistically enriches metadata from the current directory and returns the public metadata', async () => {
     // Given
-    await metadata.addPublicMetadata(() => ({api_key: 'from-helper'}))
+    vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValueOnce({}).mockReturnValue({api_key: 'from-loader'})
 
     // When
     const result = await (gatherPublicMetadata as () => Promise<unknown>)()
 
     // Then
-    expect(logAppContextMetadata).toHaveBeenCalledWith('/some/app/dir')
+    expect(localAppContext).toHaveBeenCalledWith({directory: '/some/app/dir', skipPrompts: true})
     expect(result).toEqual(metadata.getAllPublicMetadata())
   })
 
-  test('still returns metadata when the best-effort enrichment is a no-op', async () => {
-    // Given the helper does nothing (e.g. not in an app project)
-    vi.mocked(logAppContextMetadata).mockResolvedValue()
+  test('skips local app loading when api_key is already set', async () => {
+    // Given
+    vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({api_key: 'already-set'})
 
     // When
     const result = await (gatherPublicMetadata as () => Promise<unknown>)()
 
     // Then
-    expect(logAppContextMetadata).toHaveBeenCalledOnce()
-    expect(result).toBeTypeOf('object')
+    expect(localAppContext).not.toHaveBeenCalled()
+    expect(result).toEqual(metadata.getAllPublicMetadata())
+  })
+
+  test('still returns metadata when best-effort app loading fails', async () => {
+    // Given
+    vi.spyOn(metadata, 'getAllPublicMetadata').mockReturnValue({})
+    vi.mocked(localAppContext).mockRejectedValue(new Error('not an app'))
+
+    // When
+    const result = await (gatherPublicMetadata as () => Promise<unknown>)()
+
+    // Then
+    expect(localAppContext).toHaveBeenCalledOnce()
+    expect(result).toEqual(metadata.getAllPublicMetadata())
   })
 })
