@@ -6,13 +6,11 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
-  sessionExists,
   setLastSeenUserId,
 } from './session.js'
 
 import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
-import * as sessionStore from '../../private/node/session/store.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
@@ -33,29 +31,8 @@ const partnersToken: ApplicationToken = {
 
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
-vi.mock('../../private/node/session/store.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
-
-describe('sessionExists', () => {
-  test('returns true when the local session store has at least one session', async () => {
-    vi.mocked(sessionStore.fetch).mockResolvedValue({'accounts.shopify.com': {}} as any)
-
-    await expect(sessionExists()).resolves.toBe(true)
-  })
-
-  test('returns false when the local session store is empty', async () => {
-    vi.mocked(sessionStore.fetch).mockResolvedValue({} as any)
-
-    await expect(sessionExists()).resolves.toBe(false)
-  })
-
-  test('returns false when there is no stored session', async () => {
-    vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
-
-    await expect(sessionExists()).resolves.toBe(false)
-  })
-})
 
 describe('store command analytics session helpers', () => {
   test('sets last seen user id through the public session helper', () => {

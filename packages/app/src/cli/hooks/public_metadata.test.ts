@@ -1,5 +1,5 @@
 import gatherPublicMetadata from './public_metadata.js'
-import {logAppContextMetadataIfAuthenticated} from '../services/app-context.js'
+import {logAppContextMetadata} from '../services/app-context.js'
 import metadata from '../metadata.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {cwd} from '@shopify/cli-kit/node/path'
@@ -20,19 +20,19 @@ describe('gatherPublicMetadata', () => {
     const result = await (gatherPublicMetadata as () => Promise<unknown>)()
 
     // Then
-    expect(logAppContextMetadataIfAuthenticated).toHaveBeenCalledWith('/some/app/dir')
+    expect(logAppContextMetadata).toHaveBeenCalledWith('/some/app/dir')
     expect(result).toEqual(metadata.getAllPublicMetadata())
   })
 
   test('still returns metadata when the best-effort enrichment is a no-op', async () => {
-    // Given the helper does nothing (e.g. not authenticated)
-    vi.mocked(logAppContextMetadataIfAuthenticated).mockResolvedValue()
+    // Given the helper does nothing (e.g. not in an app project)
+    vi.mocked(logAppContextMetadata).mockResolvedValue()
 
     // When
     const result = await (gatherPublicMetadata as () => Promise<unknown>)()
 
     // Then
-    expect(logAppContextMetadataIfAuthenticated).toHaveBeenCalledOnce()
+    expect(logAppContextMetadata).toHaveBeenCalledOnce()
     expect(result).toBeTypeOf('object')
   })
 })

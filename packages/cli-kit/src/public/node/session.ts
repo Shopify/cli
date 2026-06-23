@@ -86,26 +86,6 @@ export function isServiceAccount(account: AccountInfo): account is ServiceAccoun
 }
 
 /**
- * Reports whether the CLI already has stored credentials, without prompting the
- * user, opening a browser, or making any network request.
- *
- * This is a passive, side-effect-free check: it reads the local session store and
- * returns `true` when at least one valid session is present. Unlike the
- * `ensureAuthenticated*` functions, it never triggers a login flow and never logs
- * the user out. Because it does not contact the network, it cannot tell whether the
- * stored token is currently valid/unexpired — only that credentials exist locally.
- *
- * Intended for best-effort, opportunistic behaviour (for example, enriching
- * telemetry only for users who are already logged in).
- *
- * @returns True if local credentials exist, false otherwise.
- */
-export async function sessionExists(): Promise<boolean> {
-  const sessions = await sessionStore.fetch()
-  return sessions !== undefined && Object.keys(sessions).length > 0
-}
-
-/**
  * Ensure that we have a valid session with no particular scopes.
  *
  * @param env - Optional environment variables to use.

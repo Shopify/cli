@@ -18,7 +18,6 @@ import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {sessionExists} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
@@ -219,11 +218,10 @@ const APP_CONTEXT_METADATA_TIMEOUT_MS = 3000
  * When `directory` is inside an app project, this loads the app from disk and attaches
  * `api_key` to the public Monorail metadata — the load also drives the app loader, which
  * emits the same `project_type` / `app_*` / `cmd_app_linked_config_*` block that running a
- * `shopify app …` command would. The effect: any command run within an app path is
- * attributed to that app, not just app commands, for authenticated users.
+ * `shopify app …` command would. The effect: any command run within an app path is attributed
+ * to that app, not just app commands.
  *
  * It is designed to run on the postrun of every CLI command, so it:
- *   - does nothing unless the user is already logged in (so we never enrich anonymous usage),
  *   - short-circuits when `api_key` is already set (an app command already loaded the app),
  *   - never prompts, never makes a network request,
  *   - is bounded by a short timeout so it can't delay command exit, and
@@ -231,10 +229,9 @@ const APP_CONTEXT_METADATA_TIMEOUT_MS = 3000
  *
  * @param directory - The working directory to inspect for an app.
  */
-export async function logAppContextMetadataIfAuthenticated(directory: string): Promise<void> {
+export async function logAppContextMetadata(directory: string): Promise<void> {
   try {
     if (metadata.getAllPublicMetadata().api_key !== undefined) return
-    if (!(await sessionExists())) return
 
     let timer: ReturnType<typeof setTimeout> | undefined
     const deadline = new Promise<void>((resolve) => {
