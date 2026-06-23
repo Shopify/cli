@@ -9,8 +9,6 @@ vi.mock('@shopify/cli-kit/node/path')
 
 describe('gatherPublicMetadata', () => {
   beforeEach(() => {
-    vi.restoreAllMocks()
-    vi.clearAllMocks()
     vi.mocked(cwd).mockReturnValue('/some/app/dir')
     vi.mocked(localAppContext).mockResolvedValue({} as Awaited<ReturnType<typeof localAppContext>>)
   })
