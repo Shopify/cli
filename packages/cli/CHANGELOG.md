@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 4.3.0
+
+### Minor Changes
+
+- ce73b7b: Add `shopify doc fetch` to download Markdown documents from shopify.dev.
+- 03d54ea: Add `shopify doc search` to return relevant shopify.dev documentation chunks as JSON.
+- 57c26ac: Add `shopify auth list` to list stores authenticated directly with `shopify store auth`.
+- 9aecd52: Add `shopify store create preview` to create preview stores and persist their Admin API token in local store auth.
+- 2b3d2e2: Add `shopify store list` to list the stores in the Shopify organizations available to the current CLI account.
+
 ## 4.2.0
 
 ### Minor Changes

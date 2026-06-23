@@ -1,5 +1,18 @@
 # @shopify/organizations
 
+## 4.3.0
+
+### Minor Changes
+
+- 2b3d2e2: Add `shopify store list` to list the stores in the Shopify organizations available to the current CLI account.
+
+### Patch Changes
+
+- Updated dependencies [08eb0ad]
+- Updated dependencies [d22ad61]
+- Updated dependencies [2b3d2e2]
+  - @shopify/cli-kit@4.3.0
+
 ## 4.2.0
 
 ### Patch Changes
