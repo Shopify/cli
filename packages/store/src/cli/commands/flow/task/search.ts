@@ -37,6 +37,8 @@ interface SearchResult {
 }
 
 export default class FlowTaskSearch extends StoreCommand {
+  static hidden = true
+
   static summary = 'Search Flow tasks (triggers, conditions, actions, etc.).'
 
   static descriptionWithMarkdown = `Finds Flow tasks (triggers, conditions, actions, foreach, wait) by natural-language query. Pass each goal as a separate positional argument.

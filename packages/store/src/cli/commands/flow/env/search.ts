@@ -11,6 +11,8 @@ const DATA_TYPE_FILTERS = ['LIST', 'ALL'] as const
 type DataTypeFilter = (typeof DATA_TYPE_FILTERS)[number]
 
 export default class FlowEnvSearch extends StoreCommand {
+  static hidden = true
+
   static summary = 'Discover Flow environment field paths.'
 
   static descriptionWithMarkdown = `Searches the Flow environment for field paths under a given Admin API root type. Use this before writing conditions, Liquid, or task config that reference \`{{ order.customer.email }}\`-style paths.

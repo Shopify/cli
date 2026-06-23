@@ -9,6 +9,8 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowWorkflowValidate extends StoreCommand {
+  static hidden = true
+
   static summary = 'Validate a Flow workflow JSON file against a shop without persisting.'
 
   static descriptionWithMarkdown =

@@ -8,6 +8,8 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowShopifyqlColumns extends StoreCommand {
+  static hidden = true
+
   static summary = 'Resolve the columns a ShopifyQL query produces.'
 
   static descriptionWithMarkdown =

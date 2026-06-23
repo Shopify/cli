@@ -9,6 +9,8 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowWorkflowDiff extends StoreCommand {
+  static hidden = true
+
   static summary = 'Show the diff between a local workflow file and the remote workflow.'
 
   static descriptionWithMarkdown = `Compares a local Flow workflow file against the remote workflow on the shop. Both sides are normalized (sorted keys, stable indent) so the diff reflects real changes, not formatting noise.

@@ -30,6 +30,8 @@ const RESOURCE_TYPES = [
 ] as const
 
 export default class FlowResourceSearch extends StoreCommand {
+  static hidden = true
+
   static summary = 'Search for a Shopify resource by query (Sidekick-routed).'
 
   static descriptionWithMarkdown = `Searches the Admin API for a specific resource type. Returns title, GID, and path. \`PRODUCT_VARIANT\` also returns inventory_item_id; \`LOCATION\` also returns inventory_group_id and inventory_group_name.

@@ -8,6 +8,8 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowTypeShow extends StoreCommand {
+  static hidden = true
+
   static summary = "Show a GraphQL type's structure (fields, arguments, return types)."
 
   static descriptionWithMarkdown =

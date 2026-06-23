@@ -9,6 +9,8 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowWorkflowPush extends StoreCommand {
+  static hidden = true
+
   static summary = 'Push a Flow workflow JSON file to a shop and write a lockfile.'
 
   static descriptionWithMarkdown =

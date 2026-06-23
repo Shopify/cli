@@ -8,6 +8,8 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 
 export default class FlowWorkflowList extends StoreCommand {
+  static hidden = true
+
   static summary = 'List remote workflows on a shop.'
 
   static descriptionWithMarkdown = `Prints every workflow on the shop with id, name, hidden flag, and last-updated timestamp. Doesn't read or modify any local files.
