@@ -4,6 +4,8 @@
 
 This project uses [Changesets](https://github.com/changesets/changesets) to manage versions and changelogs. Every user-facing change requires a changeset file.
 
+Changesets are published in public changelogs and release notes. Only add one when the change is user-facing and ready to announce publicly. Do not add changesets for tests, refactors, linting, CI, internal tooling, or other changes with no user-visible impact.
+
 ```
 pnpm changeset add
 ```
