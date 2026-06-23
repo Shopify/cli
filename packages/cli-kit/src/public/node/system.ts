@@ -13,6 +13,7 @@ import which from 'which'
 import {delimiter} from 'pathe'
 
 import {fstatSync} from 'fs'
+import {setTimeout} from 'node:timers/promises'
 import type {Writable, Readable} from 'stream'
 
 /**
@@ -319,9 +320,7 @@ function checkCommandSafety(command: string, _options: {cwd: string}): void {
  * @returns A Promise resolving after the number of seconds.
  */
 export async function sleep(seconds: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, 1000 * seconds)
-  })
+  await setTimeout(1000 * seconds)
 }
 
 /**
