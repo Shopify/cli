@@ -10,7 +10,14 @@ import {
 } from './theme-fs.js'
 import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
-import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {
+  writeFile,
+  inTemporaryDirectory,
+  copyDirectoryContents,
+  fileExists,
+  readFile,
+  mkdir,
+} from '@shopify/cli-kit/node/fs'
 import * as fsKit from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
@@ -24,12 +31,6 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
 
-vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
-  const realModule = await realImport<typeof import('@shopify/cli-kit/node/fs')>()
-  const mockModule = {removeFile: vi.fn(), writeFile: vi.fn()}
-
-  return {...realModule, ...mockModule}
-})
 vi.mock('./asset-ignore.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -54,348 +55,397 @@ describe('theme-fs', () => {
 
   describe('mountThemeFileSystem', async () => {
     test('mounts the local theme file system when the directory is valid', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
 
-      // Then
-      expect(themeFileSystem.root).toBe(root)
-      expect(themeFileSystem.files.size).toBe(10)
-      expect(themeFileSystem.unsyncedFileKeys).toEqual(new Set())
-      expect(themeFileSystem.uploadErrors).toEqual(new Map())
+        // Then
+        expect(themeFileSystem.root).toBe(root)
+        expect(themeFileSystem.files.size).toBe(10)
+        expect(themeFileSystem.unsyncedFileKeys).toEqual(new Set())
+        expect(themeFileSystem.uploadErrors).toEqual(new Map())
 
-      // Check that all expected files are present with correct checksums
-      const expectedFiles = [
-        {checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'},
-        {checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'},
-        {checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'},
-        {checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'},
-        {checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'},
-        {checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'},
-        {checksum: '0b2f0aa705a4eb2b4740e2ed68bc043f', key: 'locales/en.default.json'},
-        {checksum: '3e8fecc3fb5e886f082e12357beb5d56', key: 'sections/announcement-bar.liquid'},
-        {checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'},
-        {checksum: '64caf742bd427adcf497bffab63df30c', key: 'templates/404.json'},
-      ]
+        // Check that all expected files are present with correct checksums
+        const expectedFiles = [
+          {checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'},
+          {checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'},
+          {checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'},
+          {checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'},
+          {checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'},
+          {checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'},
+          {checksum: '0b2f0aa705a4eb2b4740e2ed68bc043f', key: 'locales/en.default.json'},
+          {checksum: '3e8fecc3fb5e886f082e12357beb5d56', key: 'sections/announcement-bar.liquid'},
+          {checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'},
+          {checksum: '64caf742bd427adcf497bffab63df30c', key: 'templates/404.json'},
+        ]
 
-      for (const expectedFile of expectedFiles) {
-        const file = themeFileSystem.files.get(expectedFile.key)
-        expect(file).toBeDefined()
-        expect(file!.key).toBe(expectedFile.key)
-        expect(file!.checksum).toBe(expectedFile.checksum)
-        expect(typeof file!.value).toBe('string')
-        expect(typeof file!.attachment).toBe('string')
-        expect(typeof file!.stats?.size).toBe('number')
-        expect(typeof file!.stats?.mtime).toBe('number')
-      }
+        for (const expectedFile of expectedFiles) {
+          const file = themeFileSystem.files.get(expectedFile.key)
+          expect(file).toBeDefined()
+          expect(file!.key).toBe(expectedFile.key)
+          expect(file!.checksum).toBe(expectedFile.checksum)
+          expect(typeof file!.value).toBe('string')
+          expect(typeof file!.attachment).toBe('string')
+          expect(typeof file!.stats?.size).toBe('number')
+          expect(typeof file!.stats?.mtime).toBe('number')
+        }
 
-      // Check functions exist
-      expect(typeof themeFileSystem.ready).toBe('function')
-      expect(typeof themeFileSystem.delete).toBe('function')
-      expect(typeof themeFileSystem.write).toBe('function')
-      expect(typeof themeFileSystem.read).toBe('function')
-      expect(typeof themeFileSystem.applyIgnoreFilters).toBe('function')
-      expect(typeof themeFileSystem.addEventListener).toBe('function')
-      expect(typeof themeFileSystem.startWatcher).toBe('function')
+        // Check functions exist
+        expect(typeof themeFileSystem.ready).toBe('function')
+        expect(typeof themeFileSystem.delete).toBe('function')
+        expect(typeof themeFileSystem.write).toBe('function')
+        expect(typeof themeFileSystem.read).toBe('function')
+        expect(typeof themeFileSystem.applyIgnoreFilters).toBe('function')
+        expect(typeof themeFileSystem.addEventListener).toBe('function')
+        expect(typeof themeFileSystem.startWatcher).toBe('function')
+      })
     })
 
     test('mounts an empty file system when the directory is invalid', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'invalid-directory')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = joinPath(tmpDir, 'invalid-directory')
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
 
-      // Then
-      expect(themeFileSystem).toEqual({
-        root,
-        files: new Map(),
-        unsyncedFileKeys: new Set(),
-        uploadErrors: new Map(),
-        ready: expect.any(Function),
-        delete: expect.any(Function),
-        write: expect.any(Function),
-        read: expect.any(Function),
-        applyIgnoreFilters: expect.any(Function),
-        addEventListener: expect.any(Function),
-        startWatcher: expect.any(Function),
+        // Then
+        expect(themeFileSystem).toEqual({
+          root,
+          files: new Map(),
+          unsyncedFileKeys: new Set(),
+          uploadErrors: new Map(),
+          ready: expect.any(Function),
+          delete: expect.any(Function),
+          write: expect.any(Function),
+          read: expect.any(Function),
+          applyIgnoreFilters: expect.any(Function),
+          addEventListener: expect.any(Function),
+          startWatcher: expect.any(Function),
+        })
       })
     })
 
     test('includes listing directory in watched directories when listing is specified', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const watchSpy = vi.spyOn(chokidar, 'watch')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const watchSpy = vi.spyOn(chokidar, 'watch')
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
-      await themeFileSystem.ready()
-      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+        // When
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        await themeFileSystem.startWatcher('123', {token: 'token'} as any)
 
-      // Then
-      expect(watchSpy).toHaveBeenCalledWith(
-        expect.arrayContaining([joinPath(root, 'listings', 'modern')]),
-        expect.any(Object),
-      )
+        // Then
+        expect(watchSpy).toHaveBeenCalledWith(
+          expect.arrayContaining([joinPath(root, 'listings', 'modern')]),
+          expect.any(Object),
+        )
+      })
     })
 
     test('does not include listing directory when no listing is specified', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const watchSpy = vi.spyOn(chokidar, 'watch')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const watchSpy = vi.spyOn(chokidar, 'watch')
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        await themeFileSystem.startWatcher('123', {token: 'token'} as any)
 
-      // Then
-      const watchedPaths = watchSpy.mock.calls[0]?.[0] as string[]
-      expect(watchedPaths.some((path) => path.includes('listings'))).toBe(false)
+        // Then
+        const watchedPaths = watchSpy.mock.calls[0]?.[0] as string[]
+        expect(watchedPaths.some((path) => path.includes('listings'))).toBe(false)
+      })
     })
 
     test('"delete" removes the file from the local disk and updates the file map', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      await themeFileSystem.delete('assets/base.css')
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        await themeFileSystem.delete('assets/base.css')
 
-      // Then
-      expect(removeFile).toBeCalledWith(`${root}/assets/base.css`)
-      expect(themeFileSystem.files.has('assets/base.css')).toBe(false)
+        // Then
+        await expect(fileExists(joinPath(root, 'assets/base.css'))).resolves.toBe(false)
+        expect(themeFileSystem.files.has('assets/base.css')).toBe(false)
+      })
     })
   })
 
   describe('themeFileSystem.delete', () => {
     test('"delete" removes the file from the local disk and updates the file map', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      expect(themeFileSystem.files.has('assets/base.css')).toBe(true)
-      await themeFileSystem.delete('assets/base.css')
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        expect(themeFileSystem.files.has('assets/base.css')).toBe(true)
+        await themeFileSystem.delete('assets/base.css')
 
-      // Then
-      expect(removeFile).toBeCalledWith(`${root}/assets/base.css`)
-      expect(themeFileSystem.files.has('assets/base.css')).toBe(false)
+        // Then
+        await expect(fileExists(joinPath(root, 'assets/base.css'))).resolves.toBe(false)
+        expect(themeFileSystem.files.has('assets/base.css')).toBe(false)
+      })
     })
 
     test('does nothing when the theme file does not exist on local disk', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      await themeFileSystem.delete('assets/nonexistent.css')
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        await themeFileSystem.delete('assets/nonexistent.css')
 
-      // Then
-      expect(removeFile).not.toBeCalled()
-      expect(themeFileSystem.files.has('assets/nonexistent.css')).toBe(false)
+        // Then
+        expect(themeFileSystem.files.has('assets/nonexistent.css')).toBe(false)
+      })
     })
 
     test('delete updates files map before the async removeFile call', async () => {
-      // Given
-      const fileKey = 'assets/base.css'
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const fileKey = 'assets/base.css'
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
 
-      let filesUpdated = false
-      vi.mocked(removeFile).mockImplementationOnce(() => {
-        filesUpdated = !themeFileSystem.files.has(fileKey)
-        return Promise.resolve()
+        let filesUpdated = false
+        // We use vi.spyOn to intercept the call while still performing it.
+        const removeFileSpy = vi.spyOn(fsKit, 'removeFile').mockImplementationOnce(async (path) => {
+          filesUpdated = !themeFileSystem.files.has(fileKey)
+          await fsKit.removeFile(path)
+        })
+
+        // When
+        expect(themeFileSystem.files.has(fileKey)).toBe(true)
+        await themeFileSystem.delete(fileKey)
+
+        // Then
+        expect(filesUpdated).toBe(true)
+        removeFileSpy.mockRestore()
       })
-
-      // When
-      expect(themeFileSystem.files.has(fileKey)).toBe(true)
-      await themeFileSystem.delete(fileKey)
-
-      // Then
-      expect(filesUpdated).toBe(true)
     })
   })
 
   describe('themeFileSystem.write', () => {
     test('"write" creates a file on the local disk and updates the file map', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      expect(themeFileSystem.files.get('assets/new_file.css')).toBeUndefined()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        expect(themeFileSystem.files.get('assets/new_file.css')).toBeUndefined()
 
-      await themeFileSystem.write({key: 'assets/new_file.css', checksum: '1010', value: 'content'})
+        await themeFileSystem.write({key: 'assets/new_file.css', checksum: '1010', value: 'content'})
 
-      // Then
-      expect(writeFile).toBeCalledWith(`${root}/assets/new_file.css`, 'content')
-      expect(themeFileSystem.files.get('assets/new_file.css')).toEqual({
-        key: 'assets/new_file.css',
-        checksum: '1010',
-        value: 'content',
-        stats: {size: 7, mtime: expect.any(Number)},
-        attachment: '',
+        // Then
+        await expect(readFile(joinPath(root, 'assets/new_file.css'))).resolves.toBe('content')
+        expect(themeFileSystem.files.get('assets/new_file.css')).toEqual({
+          key: 'assets/new_file.css',
+          checksum: '1010',
+          value: 'content',
+          stats: {size: 7, mtime: expect.any(Number)},
+          attachment: '',
+        })
       })
     })
 
     test('"write" creates an image file on the local disk and updates the file map', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const attachment = '0x123!'
-      const buffer = Buffer.from(attachment, 'base64')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const attachment = '0x123!'
+        const buffer = Buffer.from(attachment, 'base64')
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      expect(themeFileSystem.files.get('assets/new_image.gif')).toBeUndefined()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        expect(themeFileSystem.files.get('assets/new_image.gif')).toBeUndefined()
 
-      await themeFileSystem.write({key: 'assets/new_image.gif', checksum: '1010', attachment})
+        await themeFileSystem.write({key: 'assets/new_image.gif', checksum: '1010', attachment})
 
-      // Then
-      expect(writeFile).toBeCalledWith(`${root}/assets/new_image.gif`, buffer, {encoding: 'base64'})
-      expect(themeFileSystem.files.get('assets/new_image.gif')).toEqual({
-        key: 'assets/new_image.gif',
-        checksum: '1010',
-        attachment,
-        value: '',
-        stats: {size: 6, mtime: expect.any(Number)},
+        // Then
+        await expect(readFile(joinPath(root, 'assets/new_image.gif'), {})).resolves.toEqual(buffer)
+        expect(themeFileSystem.files.get('assets/new_image.gif')).toEqual({
+          key: 'assets/new_image.gif',
+          checksum: '1010',
+          attachment,
+          value: '',
+          stats: {size: 6, mtime: expect.any(Number)},
+        })
       })
     })
 
     test('write updates files map before the async writeFile call', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures')
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
 
-      const newAsset = {key: 'assets/new_file.css', checksum: '1010', value: 'content'}
+        const newAsset = {key: 'assets/new_file.css', checksum: '1010', value: 'content'}
 
-      let filesUpdated = false
-      vi.mocked(writeFile).mockImplementationOnce(() => {
-        expect(themeFileSystem.files.get(newAsset.key)).toEqual({
-          ...newAsset,
-          attachment: '',
-          stats: {size: 7, mtime: expect.any(Number)},
+        let filesUpdated = false
+        const writeFileSpy = vi.spyOn(fsKit, 'writeFile').mockImplementationOnce(async (path, data, options) => {
+          const file = themeFileSystem.files.get(newAsset.key)
+          if (
+            file?.key === newAsset.key &&
+            file.checksum === newAsset.checksum &&
+            file.value === newAsset.value &&
+            file.stats?.size === 7
+          ) {
+            filesUpdated = true
+          }
+          await fsKit.writeFile(path, data, options)
         })
-        filesUpdated = true
 
-        return Promise.resolve()
+        // When
+        expect(themeFileSystem.files.has(newAsset.key)).toBe(false)
+        await themeFileSystem.write(newAsset)
+
+        // Then
+        expect(filesUpdated).toBe(true)
+        writeFileSpy.mockRestore()
       })
-
-      // When
-      expect(themeFileSystem.files.has(newAsset.key)).toBe(false)
-      await themeFileSystem.write(newAsset)
-
-      // Then
-      expect(filesUpdated).toBe(true)
     })
   })
 
   describe('themeFileSystem.read', async () => {
     test('"read" returns the content from the local disk and updates the file map', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const key = 'templates/404.json'
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      const file = themeFileSystem.files.get(key)
-      expect(file?.key).toBe('templates/404.json')
-      expect(file?.checksum).toBe('64caf742bd427adcf497bffab63df30c')
-      expect(file?.attachment).toBe('')
-      expect(typeof file?.value).toBe('string')
-      expect(typeof file?.stats?.size).toBe('number')
-      expect(typeof file?.stats?.mtime).toBe('number')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const key = 'templates/404.json'
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        const file = themeFileSystem.files.get(key)
+        expect(file?.key).toBe('templates/404.json')
+        expect(file?.checksum).toBe('64caf742bd427adcf497bffab63df30c')
+        expect(file?.attachment).toBe('')
+        expect(typeof file?.value).toBe('string')
+        expect(typeof file?.stats?.size).toBe('number')
+        expect(typeof file?.stats?.mtime).toBe('number')
 
-      // When
-      delete file?.value
-      const content = await themeFileSystem.read(key)
+        // When
+        delete file?.value
+        const content = await themeFileSystem.read(key)
 
-      // Then
-      const updatedFile = themeFileSystem.files.get(key)
-      expect(updatedFile?.key).toBe('templates/404.json')
-      expect(updatedFile?.checksum).toBe('64caf742bd427adcf497bffab63df30c')
-      expect(updatedFile?.value).toBe(content)
-      expect(updatedFile?.attachment).toBe('')
-      expect(updatedFile?.stats?.size).toBe(content?.length)
-      expect(typeof updatedFile?.stats?.mtime).toBe('number')
+        // Then
+        const updatedFile = themeFileSystem.files.get(key)
+        expect(updatedFile?.key).toBe('templates/404.json')
+        expect(updatedFile?.checksum).toBe('64caf742bd427adcf497bffab63df30c')
+        expect(updatedFile?.value).toBe(content)
+        expect(updatedFile?.attachment).toBe('')
+        expect(updatedFile?.stats?.size).toBe(content?.length)
+        expect(typeof updatedFile?.stats?.mtime).toBe('number')
+      })
     })
   })
 
   describe('themeFileSystem.applyIgnoreFilters', async () => {
     test('applies ignore filters to the theme files', async () => {
-      const root = joinPath(locationOfThisFile, 'fixtures')
-      const files = [{key: 'assets/file.css'}, {key: 'assets/file.json'}]
-      const options = {filters: {ignore: ['assets/*.css']}}
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = tmpDir
+        const files = [{key: 'assets/file.css'}, {key: 'assets/file.json'}]
+        const options = {filters: {ignore: ['assets/*.css']}}
 
-      const themeFileSystem = mountThemeFileSystem(root, options)
-      await themeFileSystem.ready()
+        const themeFileSystem = mountThemeFileSystem(root, options)
+        await themeFileSystem.ready()
 
-      expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
-      expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
-      expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
-        ignore: options.filters.ignore,
-        only: [],
-        ignoreFromFile: [],
+        expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
+        expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
+        expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
+          ignore: options.filters.ignore,
+          only: [],
+          ignoreFromFile: [],
+        })
       })
     })
   })
 
   describe('readThemeFile', () => {
     test('reads theme file when it exists', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const key = 'templates/404.json'
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const key = 'templates/404.json'
 
-      // When
-      const content = await readThemeFile(root, key)
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      const contentJson = JSON.parse(content?.toString() || '')
+        // When
+        const content = await readThemeFile(root, key)
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        const contentJson = JSON.parse(content?.toString() || '')
 
-      // Then
-      expect(contentJson).toEqual({
-        sections: {
-          main: {
-            type: 'main-404',
-            settings: {},
+        // Then
+        expect(contentJson).toEqual({
+          sections: {
+            main: {
+              type: 'main-404',
+              settings: {},
+            },
           },
-        },
-        order: ['main'],
+          order: ['main'],
+        })
       })
     })
 
     test(`returns undefined when theme file doesn't exist`, async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const key = 'templates/invalid.json'
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const key = 'templates/invalid.json'
 
-      // When
-      const content = await readThemeFile(root, key)
+        // When
+        const content = await readThemeFile(root, key)
 
-      // Then
-      expect(content).toBeUndefined()
+        // Then
+        expect(content).toBeUndefined()
+      })
     })
 
     test('returns Buffer for image files', async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
-      const key = 'assets/sparkle.gif'
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const key = 'assets/sparkle.gif'
 
-      // When
-      const content = await readThemeFile(root, key)
+        // When
+        const content = await readThemeFile(root, key)
 
-      // Then
-      expect(content).toBeDefined()
-      expect(Buffer.isBuffer(content)).toBe(true)
+        // Then
+        expect(content).toBeDefined()
+        expect(Buffer.isBuffer(content)).toBe(true)
+      })
     })
   })
 
@@ -553,32 +603,36 @@ describe('theme-fs', () => {
 
   describe('hasRequiredThemeDirectories', () => {
     test(`returns true when directory has all required theme directories`, async () => {
-      // Given
-      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
 
-      // When
-      const result = await hasRequiredThemeDirectories(root)
+        // When
+        const result = await hasRequiredThemeDirectories(root)
 
-      // Then
-      expect(result).toBeTruthy()
+        // Then
+        expect(result).toBeTruthy()
+      })
     })
 
     test(`returns false when directory doesn't have all required theme directories`, async () => {
-      // Given
-      const root = locationOfThisFile
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
 
-      // When
-      const result = await hasRequiredThemeDirectories(root)
+        // When
+        const result = await hasRequiredThemeDirectories(root)
 
-      // Then
-      expect(result).toBeFalsy()
+        // Then
+        expect(result).toBeFalsy()
+      })
     })
   })
 
   describe('listing functionality', () => {
     const themeId = '123'
     const adminSession = {token: 'token'} as AdminSession
-    const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
     beforeEach(() => {
       const mockWatcher = new EventEmitter()
@@ -588,120 +642,153 @@ describe('theme-fs', () => {
     })
 
     test('handles listing file changes as base theme file changes', async () => {
-      // Given
-      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
-      await themeFileSystem.ready()
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
 
-      const changeEventPromise = new Promise<void>((resolve) => {
-        themeFileSystem.addEventListener('change', (event) => {
-          if (event.fileKey === 'templates/index.json') {
-            setImmediate(resolve)
-          }
+        const changeEventPromise = new Promise<void>((resolve) => {
+          themeFileSystem.addEventListener('change', (event) => {
+            if (event.fileKey === 'templates/index.json') {
+              setImmediate(resolve)
+            }
+          })
         })
+
+        await themeFileSystem.startWatcher(themeId, adminSession)
+
+        // When
+        const listingFilePath = joinPath(root, 'listings', 'modern', 'templates', 'index.json')
+        const watcher = chokidar.watch('') as EventEmitter
+        watcher.emit('change', listingFilePath)
+
+        // Then
+        await changeEventPromise
       })
-
-      await themeFileSystem.startWatcher(themeId, adminSession)
-
-      // When
-      const listingFilePath = joinPath(root, 'listings', 'modern', 'templates', 'index.json')
-      const watcher = chokidar.watch('') as EventEmitter
-      watcher.emit('change', listingFilePath)
-
-      // Then
-      await changeEventPromise
     })
 
     test('writes template JSON into base when listing file does not exist', async () => {
-      // Given
-      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
-      await themeFileSystem.ready()
-      const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
-      vi.mocked(writeFile).mockClear()
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
 
-      // When
-      await themeFileSystem.write(asset)
+        // When
+        await themeFileSystem.write(asset)
 
-      // Then: with Smart behavior, if overlay file does NOT exist yet, write to base
-      expect(writeFile).toHaveBeenCalledWith(`${root}/templates/index.json`, asset.value)
+        // Then: with Smart behavior, if overlay file does NOT exist yet, write to base
+        await expect(readFile(joinPath(root, 'templates/index.json'))).resolves.toBe(asset.value)
+      })
     })
 
     test('writes template JSON into listing folder when listing file already exists', async () => {
-      // Given
-      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
-      await themeFileSystem.ready()
-      const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
-      // Simulate existing overlay file by making fileExists return true for the overlay check
-      vi.spyOn(fsKit, 'fileExists').mockResolvedValueOnce(true)
-      vi.mocked(writeFile).mockClear()
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
 
-      // When
-      await themeFileSystem.write(asset)
+        // Simulate existing overlay file by creating it
+        const listingAbsolutePath = joinPath(root, 'listings/modern/templates/index.json')
+        await mkdir(dirname(listingAbsolutePath))
+        await writeFile(listingAbsolutePath, '{}')
 
-      // Then: writes to overlay
-      expect(writeFile).toHaveBeenCalledWith(`${root}/listings/modern/templates/index.json`, asset.value)
+        // When
+        await themeFileSystem.write(asset)
+
+        // Then: writes to overlay
+        await expect(readFile(listingAbsolutePath)).resolves.toBe(asset.value)
+      })
     })
 
     test('writes section JSON into listing folder when listing is active', async () => {
-      // Given
-      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
-      await themeFileSystem.ready()
-      const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
-      vi.mocked(writeFile).mockClear()
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
 
-      // When
-      await themeFileSystem.write(asset)
+        // When
+        await themeFileSystem.write(asset)
 
-      // Then: Smart behavior writes to base if overlay does not exist
-      expect(writeFile).toHaveBeenCalledWith(`${root}/sections/header.json`, asset.value)
+        // Then: Smart behavior writes to base if overlay does not exist
+        await expect(readFile(joinPath(root, 'sections/header.json'))).resolves.toBe(asset.value)
+      })
     })
 
     test('writes section JSON into listing folder when listing file already exists', async () => {
-      // Given
-      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
-      await themeFileSystem.ready()
-      const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
-      // Simulate existing overlay file by making fileExists return true for the overlay check
-      vi.spyOn(fsKit, 'fileExists').mockResolvedValueOnce(true)
-      vi.mocked(writeFile).mockClear()
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
 
-      // When
-      await themeFileSystem.write(asset)
+        // Simulate existing overlay file by creating it
+        const listingAbsolutePath = joinPath(root, 'listings/modern/sections/header.json')
+        await mkdir(dirname(listingAbsolutePath))
+        await writeFile(listingAbsolutePath, '{}')
 
-      // Then: writes to overlay
-      expect(writeFile).toHaveBeenCalledWith(`${root}/listings/modern/sections/header.json`, asset.value)
+        // When
+        await themeFileSystem.write(asset)
+
+        // Then: writes to overlay
+        await expect(readFile(listingAbsolutePath)).resolves.toBe(asset.value)
+      })
     })
 
     test('writes non-JSON files to base when listing is active', async () => {
-      // Given
-      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
-      await themeFileSystem.ready()
-      const asset = {key: 'sections/announcement-bar.liquid', checksum: 'abc2', value: '{% comment %}x{% endcomment %}'}
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        const asset = {
+          key: 'sections/announcement-bar.liquid',
+          checksum: 'abc2',
+          value: '{% comment %}x{% endcomment %}',
+        }
 
-      // When
-      await themeFileSystem.write(asset as any)
+        // When
+        await themeFileSystem.write(asset as any)
 
-      // Then
-      expect(writeFile).toHaveBeenCalledWith(`${root}/sections/announcement-bar.liquid`, asset.value)
+        // Then
+        await expect(readFile(joinPath(root, 'sections/announcement-bar.liquid'))).resolves.toBe(asset.value)
+      })
     })
 
     test('writes template JSON to base when no listing is specified', async () => {
-      // Given
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      const asset = {key: 'templates/index.json', checksum: 'ef01', value: '{"sections":{}}'}
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        const asset = {key: 'templates/index.json', checksum: 'ef01', value: '{"sections":{}}'}
 
-      // When
-      await themeFileSystem.write(asset)
+        // When
+        await themeFileSystem.write(asset)
 
-      // Then
-      expect(writeFile).toHaveBeenCalledWith(`${root}/templates/index.json`, asset.value)
+        // Then
+        await expect(readFile(joinPath(root, 'templates/index.json'))).resolves.toBe(asset.value)
+      })
     })
   })
 
   describe('handleFileDelete', () => {
     const themeId = '1'
     const adminSession = {token: 'token', storeFqdn: 'store.myshopify.com'}
-    const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
     beforeEach(() => {
       const mockWatcher = new EventEmitter()
@@ -711,157 +798,173 @@ describe('theme-fs', () => {
     })
 
     test('deletes file from remote theme', async () => {
-      // Given
-      vi.mocked(fetchThemeAssets).mockResolvedValue([
-        {
-          key: 'assets/base.css',
-          checksum: '1',
-          value: 'content',
-          attachment: '',
-          stats: {size: 100, mtime: 100},
-        },
-      ])
-      vi.mocked(deleteThemeAssets).mockResolvedValue([
-        {key: 'assets/base.css', success: true, operation: Operation.Delete},
-      ])
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        vi.mocked(fetchThemeAssets).mockResolvedValue([
+          {
+            key: 'assets/base.css',
+            checksum: '1',
+            value: 'content',
+            attachment: '',
+            stats: {size: 100, mtime: 100},
+          },
+        ])
+        vi.mocked(deleteThemeAssets).mockResolvedValue([
+          {key: 'assets/base.css', success: true, operation: Operation.Delete},
+        ])
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
 
-      const deleteOperationPromise = new Promise<void>((resolve) => {
-        themeFileSystem.addEventListener('unlink', () => {
-          setImmediate(resolve)
+        const deleteOperationPromise = new Promise<void>((resolve) => {
+          themeFileSystem.addEventListener('unlink', () => {
+            setImmediate(resolve)
+          })
         })
+
+        await themeFileSystem.startWatcher(themeId, adminSession)
+
+        // Explicitly emit the 'unlink' event
+        const watcher = chokidar.watch('') as EventEmitter
+        watcher.emit('unlink', `${root}/assets/base.css`)
+
+        await deleteOperationPromise
+
+        // Then
+        expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
       })
-
-      await themeFileSystem.startWatcher(themeId, adminSession)
-
-      // Explicitly emit the 'unlink' event
-      const watcher = chokidar.watch('') as EventEmitter
-      watcher.emit('unlink', `${root}/assets/base.css`)
-
-      await deleteOperationPromise
-
-      // Then
-      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
     })
 
     test('clears any entries in uploadErrors when a file is deleted', async () => {
-      // Given
-      const fileKey = 'assets/base.css'
-      vi.mocked(fetchThemeAssets).mockResolvedValue([
-        {
-          key: fileKey,
-          checksum: '1',
-          value: 'content',
-          attachment: '',
-          stats: {size: 100, mtime: 100},
-        },
-      ])
-      vi.mocked(deleteThemeAssets).mockResolvedValue([{key: fileKey, success: true, operation: Operation.Delete}])
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const fileKey = 'assets/base.css'
+        vi.mocked(fetchThemeAssets).mockResolvedValue([
+          {
+            key: fileKey,
+            checksum: '1',
+            value: 'content',
+            attachment: '',
+            stats: {size: 100, mtime: 100},
+          },
+        ])
+        vi.mocked(deleteThemeAssets).mockResolvedValue([{key: fileKey, success: true, operation: Operation.Delete}])
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
 
-      // Add an error to the uploadErrors map
-      themeFileSystem.uploadErrors.set(fileKey, ['Some upload error'])
-      expect(themeFileSystem.uploadErrors.has(fileKey)).toBe(true)
+        // Add an error to the uploadErrors map
+        themeFileSystem.uploadErrors.set(fileKey, ['Some upload error'])
+        expect(themeFileSystem.uploadErrors.has(fileKey)).toBe(true)
 
-      const deleteOperationPromise = new Promise<void>((resolve) => {
-        themeFileSystem.addEventListener('unlink', () => {
-          setImmediate(resolve)
+        const deleteOperationPromise = new Promise<void>((resolve) => {
+          themeFileSystem.addEventListener('unlink', () => {
+            setImmediate(resolve)
+          })
         })
+
+        await themeFileSystem.startWatcher(themeId, adminSession)
+
+        // Explicitly emit the 'unlink' event
+        const watcher = chokidar.watch('') as EventEmitter
+        watcher.emit('unlink', `${root}/${fileKey}`)
+
+        await deleteOperationPromise
+
+        // Then
+        expect(themeFileSystem.uploadErrors.has(fileKey)).toBe(false)
+        expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), [fileKey], adminSession)
       })
-
-      await themeFileSystem.startWatcher(themeId, adminSession)
-
-      // Explicitly emit the 'unlink' event
-      const watcher = chokidar.watch('') as EventEmitter
-      watcher.emit('unlink', `${root}/${fileKey}`)
-
-      await deleteOperationPromise
-
-      // Then
-      expect(themeFileSystem.uploadErrors.has(fileKey)).toBe(false)
-      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), [fileKey], adminSession)
     })
 
     test('does not delete file from remote when options.noDelete is true', async () => {
-      // Given
-      vi.mocked(fetchThemeAssets).mockResolvedValue([
-        {
-          key: 'assets/base.css',
-          checksum: '1',
-          value: 'content',
-          attachment: '',
-          stats: {size: 100, mtime: 100},
-        },
-      ])
-      vi.mocked(deleteThemeAssets).mockResolvedValue([
-        {key: 'assets/base.css', success: true, operation: Operation.Delete},
-      ])
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        vi.mocked(fetchThemeAssets).mockResolvedValue([
+          {
+            key: 'assets/base.css',
+            checksum: '1',
+            value: 'content',
+            attachment: '',
+            stats: {size: 100, mtime: 100},
+          },
+        ])
+        vi.mocked(deleteThemeAssets).mockResolvedValue([
+          {key: 'assets/base.css', success: true, operation: Operation.Delete},
+        ])
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root, {noDelete: true})
-      await themeFileSystem.ready()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root, {noDelete: true})
+        await themeFileSystem.ready()
 
-      const deleteOperationPromise = new Promise<void>((resolve) => {
-        themeFileSystem.addEventListener('unlink', () => {
-          setImmediate(resolve)
+        const deleteOperationPromise = new Promise<void>((resolve) => {
+          themeFileSystem.addEventListener('unlink', () => {
+            setImmediate(resolve)
+          })
         })
+
+        await themeFileSystem.startWatcher(themeId, adminSession)
+
+        // Explicitly emit the 'unlink' event
+        const watcher = chokidar.watch('') as EventEmitter
+        watcher.emit('unlink', `${root}/assets/base.css`)
+
+        await deleteOperationPromise
+
+        // Then
+        expect(deleteThemeAssets).not.toHaveBeenCalled()
       })
-
-      await themeFileSystem.startWatcher(themeId, adminSession)
-
-      // Explicitly emit the 'unlink' event
-      const watcher = chokidar.watch('') as EventEmitter
-      watcher.emit('unlink', `${root}/assets/base.css`)
-
-      await deleteOperationPromise
-
-      // Then
-      expect(deleteThemeAssets).not.toHaveBeenCalled()
     })
 
     test('renders a warning to debug if the file deletion fails', async () => {
-      // Given
-      vi.mocked(fetchThemeAssets).mockResolvedValue([
-        {
-          key: 'assets/base.css',
-          value: 'file content',
-          checksum: '1',
-          stats: {size: 100, mtime: 100},
-        },
-      ])
-      vi.mocked(deleteThemeAssets).mockResolvedValue([
-        {key: 'assets/base.css', success: false, operation: Operation.Delete},
-      ])
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        vi.mocked(fetchThemeAssets).mockResolvedValue([
+          {
+            key: 'assets/base.css',
+            value: 'file content',
+            checksum: '1',
+            stats: {size: 100, mtime: 100},
+          },
+        ])
+        vi.mocked(deleteThemeAssets).mockResolvedValue([
+          {key: 'assets/base.css', success: false, operation: Operation.Delete},
+        ])
 
-      // When
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
+        // When
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
 
-      const deleteOperationPromise = new Promise<void>((resolve) => {
-        themeFileSystem.addEventListener('unlink', () => {
-          setImmediate(resolve)
+        const deleteOperationPromise = new Promise<void>((resolve) => {
+          themeFileSystem.addEventListener('unlink', () => {
+            setImmediate(resolve)
+          })
         })
-      })
 
-      await themeFileSystem.startWatcher(themeId, adminSession)
+        await themeFileSystem.startWatcher(themeId, adminSession)
 
-      // Explicitly emit the 'unlink' event
-      const watcher = chokidar.watch('') as EventEmitter
-      watcher.emit('unlink', `${root}/assets/base.css`)
+        // Explicitly emit the 'unlink' event
+        const watcher = chokidar.watch('') as EventEmitter
+        watcher.emit('unlink', `${root}/assets/base.css`)
 
-      await deleteOperationPromise
+        await deleteOperationPromise
 
-      // Then
-      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
-      expect(renderError).toHaveBeenCalledWith({
-        headline: 'Failed to delete file "assets/base.css" from remote theme.',
-        body: expect.any(String),
+        // Then
+        expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
+        expect(renderError).toHaveBeenCalledWith({
+          headline: 'Failed to delete file "assets/base.css" from remote theme.',
+          body: expect.any(String),
+        })
       })
     })
   })
@@ -869,7 +972,6 @@ describe('theme-fs', () => {
   describe('watcher error handling', () => {
     const themeId = '123'
     const adminSession = {token: 'token'} as AdminSession
-    const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
     beforeEach(() => {
       const mockWatcher = new EventEmitter()
@@ -879,19 +981,23 @@ describe('theme-fs', () => {
     })
 
     test('outputs a warning when the watcher emits an error', async () => {
-      // Given
-      const {outputWarn} = await import('@shopify/cli-kit/node/output')
-      const themeFileSystem = mountThemeFileSystem(root)
-      await themeFileSystem.ready()
-      await themeFileSystem.startWatcher(themeId, adminSession)
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const {outputWarn} = await import('@shopify/cli-kit/node/output')
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        await themeFileSystem.startWatcher(themeId, adminSession)
 
-      // When
-      const watcher = chokidar.watch('') as EventEmitter
-      watcher.emit('error', new Error('EMFILE: too many open files'))
+        // When
+        const watcher = chokidar.watch('') as EventEmitter
+        watcher.emit('error', new Error('EMFILE: too many open files'))
 
-      // Then
-      expect(outputWarn).toHaveBeenCalledWith('File watcher error: Error: EMFILE: too many open files')
-      expect(recordError).toHaveBeenCalledWith('theme-service:file-watcher:error')
+        // Then
+        expect(outputWarn).toHaveBeenCalledWith('File watcher error: Error: EMFILE: too many open files')
+        expect(recordError).toHaveBeenCalledWith('theme-service:file-watcher:error')
+      })
     })
   })
 
