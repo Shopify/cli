@@ -1,0 +1,46 @@
+{
+  "name": "@shopify/flow-cli",
+  "version": "0.0.1",
+  "description": "Standalone Shopify Flow CLI — prototype",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "flow": "./bin/run.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "oclif.manifest.json"
+  ],
+  "oclif": {
+    "bin": "flow",
+    "commands": {
+      "strategy": "explicit",
+      "target": "./dist/index.js",
+      "identifier": "COMMANDS"
+    },
+    "topics": {
+      "workflow": {
+        "description": "Manage Flow workflows"
+      }
+    }
+  },
+  "dependencies": {
+    "@oclif/core": "4.8.3",
+    "@shopify/cli-kit": "4.3.0"
+  },
+  "devDependencies": {
+    "typescript": "5.8.2"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist",
+    "oclif:manifest": "oclif manifest"
+  },
+  "engines": {
+    "node": ">=18.20.0"
+  }
+}
