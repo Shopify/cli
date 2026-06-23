@@ -108,12 +108,10 @@ describe('bundleAndBuildExtensions', () => {
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
 
       const functionExtension = await testFunctionExtension()
-      const extensionBuildMock = vi.fn()
-      const extensionCopyIntoBundleMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
+      const extensionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
         file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
       })
       functionExtension.buildForBundle = extensionBuildMock
-      functionExtension.copyIntoBundle = extensionCopyIntoBundleMock
       const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
 
       const extensions: {[key: string]: string} = {}
@@ -139,8 +137,11 @@ describe('bundleAndBuildExtensions', () => {
       })
 
       // Then
-      expect(extensionBuildMock).not.toHaveBeenCalled()
-      expect(extensionCopyIntoBundleMock).toHaveBeenCalledTimes(1)
+      expect(extensionBuildMock).toHaveBeenCalledWith(
+        expect.objectContaining({app, environment: 'production', skipBuild: true}),
+        joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        functionExtension.localIdentifier,
+      )
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
   })
@@ -152,10 +153,10 @@ describe('bundleAndBuildExtensions', () => {
       const mockInstallJavy = vi.mocked(functionBuild.installJavy)
 
       const functionExtension = await testFunctionExtension()
-      const extensionCopyIntoBundleMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
+      const extensionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
         file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
       })
-      functionExtension.copyIntoBundle = extensionCopyIntoBundleMock
+      functionExtension.buildForBundle = extensionBuildMock
       const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
 
       const identifiers = {
@@ -178,6 +179,11 @@ describe('bundleAndBuildExtensions', () => {
 
       // Then
       expect(mockInstallJavy).not.toHaveBeenCalled()
+      expect(extensionBuildMock).toHaveBeenCalledWith(
+        expect.objectContaining({app, environment: 'production', skipBuild: true}),
+        joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        functionExtension.localIdentifier,
+      )
     })
   })
 
@@ -217,21 +223,18 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
-  test('handles theme extensions correctly with skipBuild', async () => {
+  test('passes skipBuild to theme extensions', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
 
       const themeExtension = await testThemeExtensions()
-      const extensionBuildMock = vi.fn()
-      const extensionCopyIntoBundleMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
-        // Theme extensions would typically copy theme files here
+      const extensionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
         const themeDir = joinPath(bundleDirectory, themeExtension.uid)
         await file.mkdir(themeDir)
         file.writeFileSync(joinPath(themeDir, 'theme-file.liquid'), '<h1>Theme</h1>')
       })
       themeExtension.buildForBundle = extensionBuildMock
-      themeExtension.copyIntoBundle = extensionCopyIntoBundleMock
 
       const app = testApp({allExtensions: [themeExtension], directory: tmpDir})
 
@@ -254,8 +257,11 @@ describe('bundleAndBuildExtensions', () => {
       })
 
       // Then
-      expect(extensionBuildMock).not.toHaveBeenCalled()
-      expect(extensionCopyIntoBundleMock).toHaveBeenCalledTimes(1)
+      expect(extensionBuildMock).toHaveBeenCalledWith(
+        expect.objectContaining({app, environment: 'production', skipBuild: true}),
+        joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        themeExtension.localIdentifier,
+      )
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
   })
@@ -270,29 +276,22 @@ describe('bundleAndBuildExtensions', () => {
       const themeExtension = await testThemeExtensions()
       const uiExtension = await testUIExtension({type: 'checkout_ui_extension'})
 
-      // Set up mocks for each extension
-      const functionBuildMock = vi.fn()
-      const functionCopyMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
+      const functionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
         file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
       })
       functionExtension.buildForBundle = functionBuildMock
-      functionExtension.copyIntoBundle = functionCopyMock
 
-      const themeBuildMock = vi.fn()
-      const themeCopyMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
+      const themeBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
         const themeDir = joinPath(bundleDirectory, themeExtension.uid)
         await file.mkdir(themeDir)
         file.writeFileSync(joinPath(themeDir, 'theme.liquid'), '')
       })
       themeExtension.buildForBundle = themeBuildMock
-      themeExtension.copyIntoBundle = themeCopyMock
 
-      const uiBuildMock = vi.fn()
-      const uiCopyMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
+      const uiBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
         file.writeFileSync(joinPath(bundleDirectory, 'ui.js'), '')
       })
       uiExtension.buildForBundle = uiBuildMock
-      uiExtension.copyIntoBundle = uiCopyMock
 
       const app = testApp({
         allExtensions: [functionExtension, themeExtension, uiExtension],
@@ -321,15 +320,21 @@ describe('bundleAndBuildExtensions', () => {
         isDevDashboardApp: false,
       })
 
-      // Then - verify none of the build methods were called
-      expect(functionBuildMock).not.toHaveBeenCalled()
-      expect(themeBuildMock).not.toHaveBeenCalled()
-      expect(uiBuildMock).not.toHaveBeenCalled()
-
-      // Verify all copy methods were called
-      expect(functionCopyMock).toHaveBeenCalledTimes(1)
-      expect(themeCopyMock).toHaveBeenCalledTimes(1)
-      expect(uiCopyMock).toHaveBeenCalledTimes(1)
+      expect(functionBuildMock).toHaveBeenCalledWith(
+        expect.objectContaining({app, environment: 'production', skipBuild: true}),
+        joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        functionExtension.localIdentifier,
+      )
+      expect(themeBuildMock).toHaveBeenCalledWith(
+        expect.objectContaining({app, environment: 'production', skipBuild: true}),
+        joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        themeExtension.localIdentifier,
+      )
+      expect(uiBuildMock).toHaveBeenCalledWith(
+        expect.objectContaining({app, environment: 'production', skipBuild: true}),
+        joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        uiExtension.localIdentifier,
+      )
 
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
