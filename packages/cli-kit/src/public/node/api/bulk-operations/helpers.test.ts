@@ -47,6 +47,10 @@ describe('isMutation', () => {
     expect(isMutation('query { foo }')).toBe(false)
     expect(isMutation('{ foo }')).toBe(false)
   })
+
+  test('throws an AbortError on invalid syntax', () => {
+    expect(() => isMutation('mutation {')).toThrow(AbortError)
+  })
 })
 
 describe('validateSingleOperation', () => {

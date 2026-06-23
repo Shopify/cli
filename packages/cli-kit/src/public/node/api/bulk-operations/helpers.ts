@@ -67,9 +67,19 @@ export function validateSingleOperation(graphqlOperation: string): void {
  *
  * @param graphqlOperation - The GraphQL query or mutation string to check.
  * @returns True if the operation is a mutation, false otherwise.
+ * @throws AbortError if the operation has invalid GraphQL syntax.
  */
 export function isMutation(graphqlOperation: string): boolean {
-  const document = parse(graphqlOperation)
+  let document
+  try {
+    document = parse(graphqlOperation)
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new AbortError(`Invalid GraphQL syntax: ${error.message}`)
+    }
+    throw error
+  }
+
   const operationDefinition = document.definitions.find((def) => def.kind === 'OperationDefinition')
 
   return operationDefinition?.operation === 'mutation'
