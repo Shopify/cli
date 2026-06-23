@@ -208,24 +208,13 @@ export async function localAppContext({
   return {app, project}
 }
 
-// Upper bound on the best-effort app-context load below. It runs on the postrun of
-// every command, so it must never delay process exit, even on a pathological project.
 const APP_CONTEXT_METADATA_TIMEOUT_MS = 3000
 
 /**
  * Best-effort, non-interactive enrichment of command analytics with app context.
  *
- * When `directory` is inside an app project, this loads the app from disk and attaches
- * `api_key` to the public Monorail metadata — the load also drives the app loader, which
- * emits the same `project_type` / `app_*` / `cmd_app_linked_config_*` block that running a
- * `shopify app …` command would. The effect: any command run within an app path is attributed
- * to that app, not just app commands.
- *
- * It is designed to run on the postrun of every CLI command, so it:
- *   - short-circuits when `api_key` is already set (an app command already loaded the app),
- *   - never prompts, never makes a network request,
- *   - is bounded by a short timeout so it can't delay command exit, and
- *   - swallows all errors (a directory that isn't an app, an invalid config, etc.).
+ * It only reads from disk, never prompts, never makes network requests, and never
+ * surfaces errors because it runs while collecting metadata for every command.
  *
  * @param directory - The working directory to inspect for an app.
  */
@@ -234,22 +223,13 @@ export async function logAppContextMetadata(directory: string): Promise<void> {
     if (metadata.getAllPublicMetadata().api_key !== undefined) return
 
     let timer: ReturnType<typeof setTimeout> | undefined
-    const deadline = new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, APP_CONTEXT_METADATA_TIMEOUT_MS)
-    })
-
-    const load = (async () => {
-      // localAppContext drives the app loader, which populates project_type and the app_*
-      // block. It does not emit api_key (that comes from the remote app), so add it here.
-      const {app} = await localAppContext({directory, skipPrompts: true})
-      const clientId = app.configuration.client_id
-      if (typeof clientId === 'string' && clientId.length > 0) {
-        await metadata.addPublicMetadata(() => ({api_key: clientId}))
-      }
-    })()
-
     try {
-      await Promise.race([load, deadline])
+      await Promise.race([
+        localAppContext({directory, skipPrompts: true}),
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, APP_CONTEXT_METADATA_TIMEOUT_MS)
+        }),
+      ])
     } finally {
       if (timer) clearTimeout(timer)
     }
