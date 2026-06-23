@@ -3,6 +3,7 @@ import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 
 import {Errors} from '@oclif/core'
+import {ClientError} from 'graphql-request'
 
 import type {AlertCustomSection} from './ui.js'
 
@@ -193,6 +194,12 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
   if (!isFatal(error)) {
     // this means its not one of the CLI wrapped errors
     if (error instanceof Error) {
+      // Raw API errors that slip through unwrapped (e.g. the handleErrors:false path) are
+      // transient/environmental, not CLI bugs: rate limiting (429/THROTTLED) and unauthenticated
+      // requests (401). Treat them as expected so they don't pollute crash reporting.
+      if (isTransientApiError(error)) {
+        return false
+      }
       const message = error.message
       return !errorMessageImpliesEnvironmentIssue(message)
     }
@@ -200,6 +207,33 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
   }
   if (error.type === FatalErrorType.Bug) {
     return true
+  }
+  return false
+}
+
+/**
+ * Detects raw graphql-request `ClientError`s that are transient/environmental rather than CLI
+ * bugs: HTTP 401 (unauthenticated), 429 (rate limited), or a GraphQL `THROTTLED` code. These reach
+ * the reporter as plain `Error`s (not `FatalError`s) and would otherwise be reported as unexpected.
+ *
+ * Scoped to the external `ClientError` type only — importing the cli-kit `GraphQLClientError`
+ * wrapper here would create an `error.ts → headers.ts → error.ts` import cycle.
+ *
+ * @param error - Error to be checked.
+ * @returns A boolean indicating if the error is a known-transient API error.
+ */
+function isTransientApiError(error: Error): boolean {
+  if (!(error instanceof ClientError)) {
+    return false
+  }
+  const status = error.response?.status
+  if (status === 401 || status === 429) {
+    return true
+  }
+  const errors = error.response?.errors
+  if (Array.isArray(errors)) {
+    const code = (errors[0] as {extensions?: {code?: unknown}} | undefined)?.extensions?.code
+    return code === 'THROTTLED'
   }
   return false
 }
