@@ -19,6 +19,8 @@ function previewEndpoint(): string {
 }
 
 export default class FlowWorkflowPreview extends StoreCommand {
+  static hidden = true
+
   static summary = 'Transform a local workflow JSON file into the preview payload used by the MCP preview iframe.'
 
   static descriptionWithMarkdown = `Reads a local \`.flow.json\` file, calls the Flow MCP preview transform endpoint, and prints the resulting JSON. The output is the payload the \`/public/mcp-preview\` iframe expects via \`postMessage({type: "mcp-workflow-preview", workflow: <result>})\`.

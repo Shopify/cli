@@ -17,6 +17,8 @@ const STATUS_LABEL: Record<WorkflowStatus, string> = {
 }
 
 export default class FlowWorkflowStatus extends StoreCommand {
+  static hidden = true
+
   static summary = 'Show drift between local workflow files and the shop.'
 
   static descriptionWithMarkdown = `Walks the project's workflows directory and classifies every workflow:

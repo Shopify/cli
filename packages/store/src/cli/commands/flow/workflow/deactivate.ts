@@ -9,6 +9,8 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowWorkflowDeactivate extends StoreCommand {
+  static hidden = true
+
   static summary = 'Deactivate a workflow on a shop.'
 
   static descriptionWithMarkdown =

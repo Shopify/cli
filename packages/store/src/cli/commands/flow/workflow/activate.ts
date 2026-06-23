@@ -9,6 +9,8 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowWorkflowActivate extends StoreCommand {
+  static hidden = true
+
   static summary = 'Activate a workflow on a shop.'
 
   static descriptionWithMarkdown = `Activates a workflow definition. Three input modes:

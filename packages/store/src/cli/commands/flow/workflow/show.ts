@@ -8,6 +8,8 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowWorkflowShow extends StoreCommand {
+  static hidden = true
+
   static summary = 'Print a remote workflow definition as normalized JSON.'
 
   static descriptionWithMarkdown = `Fetches a workflow from the shop and prints its full definition (sorted keys, 2-space indent) to stdout. Doesn't write any files. Use this to inspect a remote workflow without committing to a local file.

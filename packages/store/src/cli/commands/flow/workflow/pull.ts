@@ -9,6 +9,8 @@ import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
 
 export default class FlowWorkflowPull extends StoreCommand {
+  static hidden = true
+
   static summary = 'Pull a Flow workflow definition (or all of them) into local files with lockfiles.'
 
   static descriptionWithMarkdown = `Without \`--all\`: fetches a single workflow + leading definition from the shop and writes it to \`--out\` (normalized JSON). Sibling \`.flow.lock.json\` is also written.

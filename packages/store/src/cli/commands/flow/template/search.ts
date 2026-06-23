@@ -8,6 +8,8 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowTemplateSearch extends StoreCommand {
+  static hidden = true
+
   static summary = 'Search Flow templates by business goal.'
 
   static descriptionWithMarkdown = `Searches Flow's template catalog for workflows matching one or more business goals. Pass each goal as a separate positional argument.

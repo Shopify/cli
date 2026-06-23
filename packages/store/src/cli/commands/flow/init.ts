@@ -8,6 +8,8 @@ import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {Args, Flags} from '@oclif/core'
 
 export default class FlowInit extends StoreCommand {
+  static hidden = true
+
   static summary = 'Initialize a Flow IaC project (creates the directory and writes flow.toml).'
 
   static descriptionWithMarkdown = `Writes a \`flow.toml\` with the store handle and workflow directory. Pass a path to create (or use) a project directory; defaults to the current directory.

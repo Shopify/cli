@@ -19,6 +19,8 @@ interface TemplateLookupResponseJson {
 }
 
 export default class FlowTemplateSave extends StoreCommand {
+  static hidden = true
+
   static summary = 'Save a Flow template into your IaC project as a new workflow.'
 
   static descriptionWithMarkdown = `Fetches the template by ID (always the leading version) and writes its \`workflow_json\` to \`<workflows-dir>/<slug>/workflow.flow.json\`. Sets \`root.workflow_name\` to the template's title — rename it before push if you want a different name.

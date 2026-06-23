@@ -94,6 +94,8 @@ function needsValueWrapper(field: ConfigField): boolean {
 }
 
 export default class FlowTaskDescribe extends StoreCommand {
+  static hidden = true
+
   static summary = 'Describe one or more Flow tasks: configuration and return schemas.'
 
   static descriptionWithMarkdown = `Returns the full configuration schema and return-field definitions for one or more Flow tasks.
