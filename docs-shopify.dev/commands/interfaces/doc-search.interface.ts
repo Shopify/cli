@@ -23,6 +23,12 @@ export interface docsearch {
   '--no-color'?: ''
 
   /**
+   * The search query.
+   * @environment SHOPIFY_FLAG_QUERY
+   */
+  '--query <value>': string
+
+  /**
    * Increase the verbosity of the output.
    * @environment SHOPIFY_FLAG_VERBOSE
    */
