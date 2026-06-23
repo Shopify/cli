@@ -9,6 +9,8 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {executeStep, BuildContext} from '../../services/build/client-steps.js'
+import {copyPrebuiltBundleUIStep} from '../../services/build/steps/copy-prebuilt-bundle-ui-step.js'
+import {executeIncludeAssetsStep} from '../../services/build/steps/include-assets-step.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -364,20 +366,37 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
-    const defaultOutputPath = this.outputPath
+    const defaultOutputPath = await getPrebuiltOutputPathForBundle(this)
 
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
     } else if (this.hasDeploySteps) {
-      outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
-      if (await fileExists(defaultOutputPath)) {
-        await copyFile(defaultOutputPath, this.outputPath)
+      const context: BuildContext = {
+        extension: this,
+        options,
+        stepResults: new Map(),
+      }
+      const steps = this.specification.clientSteps?.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
 
-        if (this.isFunctionExtension) {
-          await bundleFunctionExtension(this.outputPath, this.outputPath)
+      for (const step of steps) {
+        if (step.type === 'bundle_ui') {
+          // eslint-disable-next-line no-await-in-loop
+          await copyPrebuiltBundleUIStep(step, context, defaultOutputPath)
+        } else if (step.type === 'include_assets') {
+          // eslint-disable-next-line no-await-in-loop
+          await executeIncludeAssetsStep(step, context)
         }
+      }
+
+      if (await fileExists(defaultOutputPath)) {
+        outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
+        await copyFile(defaultOutputPath, this.outputPath)
+      }
+
+      if (this.isFunctionExtension && (await fileExists(this.outputPath))) {
+        await bundleFunctionExtension(this.outputPath, this.outputPath)
       }
     }
   }
@@ -576,6 +595,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         }
     }
   }
+}
+
+async function getPrebuiltOutputPathForBundle(extension: ExtensionInstance) {
+  if (!extension.isFunctionExtension) return extension.outputPath
+
+  const functionConfiguration = extension.configuration as unknown as FunctionConfigType
+  const configuredOutputPath = functionConfiguration.build?.path
+    ? joinPath(extension.directory, functionConfiguration.build.path)
+    : undefined
+
+  if (configuredOutputPath && (await fileExists(configuredOutputPath))) return configuredOutputPath
+
+  return extension.outputPath
 }
 
 interface ExtensionDeployConfigOptions {

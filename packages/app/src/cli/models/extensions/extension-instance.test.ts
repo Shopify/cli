@@ -204,6 +204,123 @@ describe('build', async () => {
       expect(fileExistsSync(outputProductPath)).toBe(true)
     })
   })
+
+  test('copies pre-built function artifacts into the deploy bundle', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDir = joinPath(tmpDir, 'function')
+      const bundleDirectory = joinPath(tmpDir, 'bundle')
+      await mkdir(joinPath(extensionDir, 'dist'))
+      await mkdir(bundleDirectory)
+      await writeFile(joinPath(extensionDir, 'dist', 'index.wasm'), 'wasm')
+
+      const extension = await testFunctionExtension({dir: extensionDir})
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: vi.fn()}),
+        stderr: new Writable({write: vi.fn()}),
+        app: testApp({directory: tmpDir}),
+        environment: 'production',
+      }
+
+      await extension.copyIntoBundle(options, bundleDirectory, 'uuid')
+
+      const bundleOutputPath = joinPath(bundleDirectory, 'uuid', 'dist', 'index.wasm')
+      expect(fileExistsSync(bundleOutputPath)).toBe(true)
+      await expect(readFile(bundleOutputPath)).resolves.toBe('d2FzbQ==')
+    })
+  })
+
+  test('copies pre-built function artifacts from build.path into the deploy bundle', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDir = joinPath(tmpDir, 'function')
+      const bundleDirectory = joinPath(tmpDir, 'bundle')
+      await mkdir(joinPath(extensionDir, 'dist'))
+      await mkdir(bundleDirectory)
+      await writeFile(joinPath(extensionDir, 'dist', 'custom.wasm'), 'wasm')
+
+      const extension = await testFunctionExtension({
+        dir: extensionDir,
+        config: {
+          name: 'foo',
+          type: 'function',
+          api_version: '2023-07',
+          configuration_ui: true,
+          build: {
+            wasm_opt: true,
+            path: 'dist/custom.wasm',
+          },
+        },
+      })
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: vi.fn()}),
+        stderr: new Writable({write: vi.fn()}),
+        app: testApp({directory: tmpDir}),
+        environment: 'production',
+      }
+
+      await extension.copyIntoBundle(options, bundleDirectory, 'uuid')
+
+      const bundleOutputPath = joinPath(bundleDirectory, 'uuid', 'dist', 'index.wasm')
+      expect(fileExistsSync(bundleOutputPath)).toBe(true)
+      await expect(readFile(bundleOutputPath)).resolves.toBe('d2FzbQ==')
+    })
+  })
+
+  test('copies pre-built generic UI extension artifacts into the deploy bundle', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const bundleDirectory = joinPath(tmpDir, 'bundle')
+      await mkdir(joinPath(extensionDir, 'dist'))
+      await mkdir(bundleDirectory)
+      await writeFile(joinPath(extensionDir, 'dist', 'test-ui-extension.js'), 'console.log("built")')
+      await writeFile(joinPath(extensionDir, 'tools.json'), '{}')
+
+      const extension = await testUIExtension({
+        type: 'ui_extension',
+        directory: extensionDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          extension_points: [
+            {
+              target: 'admin.product-details.action.render',
+              module: './src/index.js',
+              tools: './tools.json',
+              build_manifest: {
+                assets: {
+                  main: {
+                    module: './src/index.js',
+                    filepath: 'test-ui-extension.js',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      })
+
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: vi.fn()}),
+        stderr: new Writable({write: vi.fn()}),
+        app: testApp({directory: tmpDir}),
+        environment: 'production',
+      }
+
+      await extension.copyIntoBundle(options, bundleDirectory, 'uuid')
+
+      const bundleOutputDir = joinPath(bundleDirectory, 'uuid')
+      expect(fileExistsSync(joinPath(bundleOutputDir, 'dist', 'test-ui-extension.js'))).toBe(true)
+      expect(fileExistsSync(joinPath(bundleOutputDir, 'tools.json'))).toBe(true)
+
+      const manifest = JSON.parse(await readFile(joinPath(bundleOutputDir, 'manifest.json')))
+      expect(manifest).toEqual({
+        'admin.product-details.action.render': {
+          main: 'dist/test-ui-extension.js',
+          tools: 'tools.json',
+        },
+      })
+    })
+  })
 })
 
 describe('deployConfig', async () => {
