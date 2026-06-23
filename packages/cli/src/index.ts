@@ -10,6 +10,7 @@ import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import KitchenSink from './cli/commands/kitchen-sink/index.js'
 import Doctor from './cli/commands/doctor-release/doctor-release.js'
 import DoctorTheme from './cli/commands/doctor-release/theme/index.js'
+import DocFetch from './cli/commands/doc/fetch.js'
 import DocSearch from './cli/commands/doc/search.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
@@ -158,6 +159,7 @@ export const COMMANDS: any = {
   'kitchen-sink:static': KitchenSinkStatic,
   'doctor-release': Doctor,
   'doctor-release:theme': DoctorTheme,
+  'doc:fetch': DocFetch,
   'doc:search': DocSearch,
   'docs:generate': DocsGenerate,
   'notifications:list': List,

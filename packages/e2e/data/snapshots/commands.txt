@@ -50,6 +50,7 @@
 │     ├─ on
 │     └─ status
 ├─ doc
+│  ├─ fetch
 │  └─ search
 ├─ help
 ├─ hydrogen
