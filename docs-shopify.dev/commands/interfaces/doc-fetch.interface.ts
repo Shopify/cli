@@ -14,7 +14,13 @@ export interface docfetch {
    * Write the document to this file path instead of printing it to stdout.
    * @environment SHOPIFY_FLAG_OUTPUT
    */
-  '-o, --output <value>'?: string
+  '--output <value>'?: string
+
+  /**
+   * The shopify.dev URL to fetch.
+   * @environment SHOPIFY_FLAG_URL
+   */
+  '--url <value>': string
 
   /**
    * Increase the verbosity of the output.
