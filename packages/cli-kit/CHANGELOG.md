@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 4.3.0
+
+### Minor Changes
+
+- 2b3d2e2: Add `shopify store list` to list the stores in the Shopify organizations available to the current CLI account.
+
+### Patch Changes
+
+- 08eb0ad: Improve JSON Schema validation error messages for arrays and add a TOML table hint for object/array mismatches.
+- d22ad61: Only treat `.myshopify.io` (not any `shopify.io` suffix) as an already-normalized store FQDN
+
 ## 4.2.0
 
 ### Minor Changes
