@@ -2742,6 +2742,61 @@
       "value": "export interface configautoupgradestatus {\n\n}"
     }
   },
+  "docsearch": {
+    "docs-shopify.dev/commands/interfaces/doc-search.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/doc-search.interface.ts",
+      "name": "docsearch",
+      "description": "The following flags are available for the `doc search` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--api-name <value>",
+          "value": "string",
+          "description": "Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are ignored.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_API_NAME"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--api-version <value>",
+          "value": "string",
+          "description": "Limit results to a specific API version (for example: 2025-10, latest, current).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_API_VERSION"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--query <value>",
+          "value": "string",
+          "description": "The search query.",
+          "environmentValue": "SHOPIFY_FLAG_QUERY"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        }
+      ],
+      "value": "export interface docsearch {\n  /**\n   * Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are ignored.\n   * @environment SHOPIFY_FLAG_API_NAME\n   */\n  '--api-name <value>'?: string\n\n  /**\n   * Limit results to a specific API version (for example: 2025-10, latest, current).\n   * @environment SHOPIFY_FLAG_API_VERSION\n   */\n  '--api-version <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The search query.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '--query <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "help": {
     "docs-shopify.dev/commands/interfaces/help.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
