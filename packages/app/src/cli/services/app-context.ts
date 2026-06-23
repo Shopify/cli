@@ -61,10 +61,12 @@ interface LoadedAppContextOptions {
  *
  * @param directory - The directory containing the app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param skipPrompts - When true, never prompts the user (e.g. to re-select a config). Required for non-interactive callers such as telemetry.
  */
 interface LocalAppContextOptions {
   directory: string
   userProvidedConfigName?: string
+  skipPrompts?: boolean
 }
 
 /**
@@ -188,8 +190,9 @@ interface LocalAppContextOutput {
 export async function localAppContext({
   directory,
   userProvidedConfigName,
+  skipPrompts = false,
 }: LocalAppContextOptions): Promise<LocalAppContextOutput> {
-  const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
+  const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName, {skipPrompts})
 
   if (activeConfig.file.errors.length > 0) {
     throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))

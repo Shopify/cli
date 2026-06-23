@@ -1025,6 +1025,7 @@ async function logMetadataForLoadedApp(
 
   const appName = app.name
   const appDirectory = app.directory
+  const clientId = app.configuration.client_id
   const sortedAppScopes = getAppScopesArray(app.configuration).sort()
 
   await logMetadataForLoadedAppUsingRawValues(
@@ -1033,6 +1034,7 @@ async function logMetadataForLoadedApp(
     loadingStrategy,
     appName,
     appDirectory,
+    clientId,
     sortedAppScopes,
     usesWorkspaces,
   )
@@ -1044,6 +1046,7 @@ async function logMetadataForLoadedAppUsingRawValues(
   loadingStrategy: {usedCustomLayoutForWeb: boolean; usedCustomLayoutForExtensions: boolean},
   appName: string,
   appDirectory: string,
+  clientId: string,
   sortedAppScopes: string[],
   appUsesWorkspaces: boolean,
 ) {
@@ -1071,6 +1074,7 @@ async function logMetadataForLoadedAppUsingRawValues(
     }
 
     return {
+      api_key: clientId,
       project_type: projectType,
       app_extensions_any: extensionTotalCount > 0,
       app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),

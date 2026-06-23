@@ -2276,6 +2276,7 @@ describe('load', () => {
     await loadTestingApp()
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
+      api_key: 'test-client-id',
       project_type: 'node',
       env_package_manager_workspaces: false,
       cmd_app_all_configs_any: true,
