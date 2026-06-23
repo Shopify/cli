@@ -7,20 +7,44 @@ export const NotProvidedStoreFQDNError = new AbortError(
   "Couldn't obtain the Shopify FQDN because the store FQDN was not provided.",
 )
 
+let memoizedPartnersFqdn: Promise<string> | undefined
+let memoizedAdminFqdn: Promise<string> | undefined
+let memoizedAppManagementFqdn: Promise<string> | undefined
+let memoizedDeveloperDashboardFqdn: Promise<string> | undefined
+let memoizedBusinessPlatformFqdn: Promise<string> | undefined
+let memoizedIdentityFqdn: Promise<string> | undefined
+
+/**
+ * This function is used to reset the memoized values of the FQDNs.
+ * It's only used for testing purposes.
+ */
+export function _resetFqdns() {
+  memoizedPartnersFqdn = undefined
+  memoizedAdminFqdn = undefined
+  memoizedAppManagementFqdn = undefined
+  memoizedDeveloperDashboardFqdn = undefined
+  memoizedBusinessPlatformFqdn = undefined
+  memoizedIdentityFqdn = undefined
+}
+
 /**
  * It returns the Partners' API service we should interact with.
  *
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
-export async function partnersFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'partners.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServer('partners').host()
-    default:
-      return productionFqdn
-  }
+export function partnersFqdn(): Promise<string> {
+  if (memoizedPartnersFqdn) return memoizedPartnersFqdn
+  memoizedPartnersFqdn = (async () => {
+    const environment = serviceEnvironment()
+    const productionFqdn = 'partners.shopify.com'
+    switch (environment) {
+      case 'local':
+        return new DevServer('partners').host()
+      default:
+        return productionFqdn
+    }
+  })()
+  return memoizedPartnersFqdn
 }
 
 /**
@@ -28,15 +52,19 @@ export async function partnersFqdn(): Promise<string> {
  *
  * @returns Fully-qualified domain of the Admin service we should interact with.
  */
-export async function adminFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'admin.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServerCore().host('admin')
-    default:
-      return productionFqdn
-  }
+export function adminFqdn(): Promise<string> {
+  if (memoizedAdminFqdn) return memoizedAdminFqdn
+  memoizedAdminFqdn = (async () => {
+    const environment = serviceEnvironment()
+    const productionFqdn = 'admin.shopify.com'
+    switch (environment) {
+      case 'local':
+        return new DevServerCore().host('admin')
+      default:
+        return productionFqdn
+    }
+  })()
+  return memoizedAdminFqdn
 }
 
 /**
@@ -44,15 +72,19 @@ export async function adminFqdn(): Promise<string> {
  *
  * @returns Fully-qualified domain of the App Management service we should interact with.
  */
-export async function appManagementFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'app.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServerCore().host('app')
-    default:
-      return productionFqdn
-  }
+export function appManagementFqdn(): Promise<string> {
+  if (memoizedAppManagementFqdn) return memoizedAppManagementFqdn
+  memoizedAppManagementFqdn = (async () => {
+    const environment = serviceEnvironment()
+    const productionFqdn = 'app.shopify.com'
+    switch (environment) {
+      case 'local':
+        return new DevServerCore().host('app')
+      default:
+        return productionFqdn
+    }
+  })()
+  return memoizedAppManagementFqdn
 }
 
 /**
@@ -75,15 +107,19 @@ export async function appDevFqdn(storeFqdn: string): Promise<string> {
  *
  * @returns Fully-qualified domain of the Developer Dashboard we should interact with.
  */
-export async function developerDashboardFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'dev.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServerCore().host('dev')
-    default:
-      return productionFqdn
-  }
+export function developerDashboardFqdn(): Promise<string> {
+  if (memoizedDeveloperDashboardFqdn) return memoizedDeveloperDashboardFqdn
+  memoizedDeveloperDashboardFqdn = (async () => {
+    const environment = serviceEnvironment()
+    const productionFqdn = 'dev.shopify.com'
+    switch (environment) {
+      case 'local':
+        return new DevServerCore().host('dev')
+      default:
+        return productionFqdn
+    }
+  })()
+  return memoizedDeveloperDashboardFqdn
 }
 
 /**
@@ -91,15 +127,19 @@ export async function developerDashboardFqdn(): Promise<string> {
  *
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
-export async function businessPlatformFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'destinations.shopifysvc.com'
-  switch (environment) {
-    case 'local':
-      return new DevServer('business-platform').host()
-    default:
-      return productionFqdn
-  }
+export function businessPlatformFqdn(): Promise<string> {
+  if (memoizedBusinessPlatformFqdn) return memoizedBusinessPlatformFqdn
+  memoizedBusinessPlatformFqdn = (async () => {
+    const environment = serviceEnvironment()
+    const productionFqdn = 'destinations.shopifysvc.com'
+    switch (environment) {
+      case 'local':
+        return new DevServer('business-platform').host()
+      default:
+        return productionFqdn
+    }
+  })()
+  return memoizedBusinessPlatformFqdn
 }
 
 /**
@@ -107,15 +147,19 @@ export async function businessPlatformFqdn(): Promise<string> {
  *
  * @returns Fully-qualified domain of the Identity service we should interact with.
  */
-export async function identityFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'accounts.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServer('identity').host()
-    default:
-      return productionFqdn
-  }
+export function identityFqdn(): Promise<string> {
+  if (memoizedIdentityFqdn) return memoizedIdentityFqdn
+  memoizedIdentityFqdn = (async () => {
+    const environment = serviceEnvironment()
+    const productionFqdn = 'accounts.shopify.com'
+    switch (environment) {
+      case 'local':
+        return new DevServer('identity').host()
+      default:
+        return productionFqdn
+    }
+  })()
+  return memoizedIdentityFqdn
 }
 
 /**

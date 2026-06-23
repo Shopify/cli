@@ -6,11 +6,16 @@ import {
   businessPlatformFqdn,
   appDevFqdn,
   adminFqdn,
+  _resetFqdns,
 } from './fqdn.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
-import {expect, describe, test, vi} from 'vitest'
+import {expect, describe, test, vi, beforeEach} from 'vitest'
 
 vi.mock('../../../private/node/context/service.js')
+
+beforeEach(() => {
+  _resetFqdns()
+})
 
 vi.mock('../vendor/dev_server/index.js', () => {
   return {
