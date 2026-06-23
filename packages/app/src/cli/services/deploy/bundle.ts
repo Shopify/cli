@@ -45,19 +45,11 @@ export async function bundleAndBuildExtensions(options: BundleOptions): Promise<
         ? undefined
         : options.identifiers?.extensions[extension.localIdentifier]
 
-      if (options.skipBuild) {
-        await extension.copyIntoBundle(
-          {stderr, stdout, signal, app: options.app, environment: 'production'},
-          bundleDirectory,
-          outputId,
-        )
-      } else {
-        await extension.buildForBundle(
-          {stderr, stdout, signal, app: options.app, environment: 'production'},
-          bundleDirectory,
-          outputId,
-        )
-      }
+      await extension.buildForBundle(
+        {stderr, stdout, signal, app: options.app, environment: 'production', skipBuild: options.skipBuild},
+        bundleDirectory,
+        outputId,
+      )
     },
   }))
 

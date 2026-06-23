@@ -54,6 +54,12 @@ export interface ExtensionBuildOptions {
    * The URL where the app is running.
    */
   appURL?: string
+
+  /**
+   * Dry run, do everything except the actual building.
+   * Useful when running `deploy --no-build`
+   */
+  skipBuild?: boolean
 }
 
 /**
@@ -74,54 +80,56 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   const localOutputPath = joinPath(extension.directory, buildDirectory, extension.outputRelativePath)
 
   const {main, assets} = extension.getBundleExtensionStdinContent()
-
   const startTime = performance.now()
-  try {
-    await bundleExtension({
-      minify: true,
-      outputPath: localOutputPath,
-      stdin: {
-        contents: main,
-        resolveDir: extension.directory,
-        loader: 'tsx',
-      },
-      environment: options.environment,
-      env,
-      stderr: options.stderr,
-      stdout: options.stdout,
-      sourceMaps: extension.isSourceMapGeneratingExtension,
-    })
-    if (assets) {
-      await Promise.all(
-        assets.map(async (asset) => {
-          await bundleExtension({
-            minify: true,
-            outputPath: joinPath(dirname(localOutputPath), asset.outputFileName),
-            stdin: {
-              contents: asset.content,
-              resolveDir: extension.directory,
-              loader: 'tsx',
-            },
-            environment: options.environment,
-            env,
-            stderr: options.stderr,
-            stdout: options.stdout,
-          })
-        }),
+
+  if (!options.skipBuild) {
+    try {
+      await bundleExtension({
+        minify: true,
+        outputPath: localOutputPath,
+        stdin: {
+          contents: main,
+          resolveDir: extension.directory,
+          loader: 'tsx',
+        },
+        environment: options.environment,
+        env,
+        stderr: options.stderr,
+        stdout: options.stdout,
+        sourceMaps: extension.isSourceMapGeneratingExtension,
+      })
+      if (assets) {
+        await Promise.all(
+          assets.map(async (asset) => {
+            await bundleExtension({
+              minify: true,
+              outputPath: joinPath(dirname(localOutputPath), asset.outputFileName),
+              stdin: {
+                contents: asset.content,
+                resolveDir: extension.directory,
+                loader: 'tsx',
+              },
+              environment: options.environment,
+              env,
+              stderr: options.stderr,
+              stdout: options.stdout,
+            })
+          }),
+        )
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (extensionBundlingError: any) {
+      // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
+      // Preserve esbuild errors array so the dev watcher can format actionable error messages
+      const errorMessage = (extensionBundlingError as Error).message ?? 'Unknown error occurred'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newError: any = new AbortError(
+        `Failed to bundle extension ${extension.localIdentifier}. Please check the extension source code for errors.`,
+        errorMessage,
       )
+      newError.errors = extensionBundlingError.errors
+      throw newError
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (extensionBundlingError: any) {
-    // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
-    // Preserve esbuild errors array so the dev watcher can format actionable error messages
-    const errorMessage = (extensionBundlingError as Error).message ?? 'Unknown error occurred'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const newError: any = new AbortError(
-      `Failed to bundle extension ${extension.localIdentifier}. Please check the extension source code for errors.`,
-      errorMessage,
-    )
-    newError.errors = extensionBundlingError.errors
-    throw newError
   }
 
   await extension.buildValidation({outputPath: localOutputPath})
@@ -169,19 +177,21 @@ export async function buildFunctionExtension(
       apiVersion: functionConfiguration.api_version,
     })
 
-    if (extension.isJavaScript) {
-      await runCommandOrBuildJSFunction(extension, options)
-    } else {
-      await buildOtherFunction(extension, options)
-    }
+    if (!options.skipBuild) {
+      if (extension.isJavaScript) {
+        await runCommandOrBuildJSFunction(extension, options)
+      } else {
+        await buildOtherFunction(extension, options)
+      }
 
-    const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.wasm_opt
-    if (fileExistsSync(extension.outputPath) && wasmOpt) {
-      await runWasmOpt(extension.outputPath)
-    }
+      const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.wasm_opt
+      if (fileExistsSync(extension.outputPath) && wasmOpt) {
+        await runWasmOpt(extension.outputPath)
+      }
 
-    if (fileExistsSync(extension.outputPath)) {
-      await runTrampoline(extension.outputPath)
+      if (fileExistsSync(extension.outputPath)) {
+        await runTrampoline(extension.outputPath)
+      }
     }
 
     const projectOutputPath = joinPath(extension.directory, extension.outputRelativePath)
@@ -216,7 +226,7 @@ export async function buildFunctionExtension(
   }
 }
 
-export async function bundleFunctionExtension(wasmPath: string, bundlePath: string) {
+async function bundleFunctionExtension(wasmPath: string, bundlePath: string) {
   outputDebug(`Converting WASM from ${wasmPath} to base64 in ${bundlePath}`)
   const base64Contents = await readFile(wasmPath, {encoding: 'base64'})
   await touchFile(bundlePath)

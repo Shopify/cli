@@ -2,8 +2,7 @@ import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './sch
 import {FunctionConfigType} from './specifications/function.js'
 import {DevSessionWatchConfig, ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {ExtensionBuildOptions, bundleFunctionExtension} from '../../services/build/extension.js'
-import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
@@ -14,7 +13,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, normalizePath, resolvePath, relativePath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, moveFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, moveFile, glob, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {
@@ -361,25 +360,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
-  }
-
-  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
-    const defaultOutputPath = this.outputPath
-
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
-
-    if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    } else if (this.hasDeploySteps) {
-      outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
-      if (await fileExists(defaultOutputPath)) {
-        await copyFile(defaultOutputPath, this.outputPath)
-
-        if (this.isFunctionExtension) {
-          await bundleFunctionExtension(this.outputPath, this.outputPath)
-        }
-      }
-    }
   }
 
   getOutputPathForDirectory(directory: string, outputId?: string) {
