@@ -9,6 +9,7 @@ import {
   type BulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -106,7 +107,6 @@ describe('executeBulkOperation', () => {
 
   test('points users at the store bulk status command', async () => {
     vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: createdOperation, userErrors: []})
-    const {renderSuccess} = await import('@shopify/cli-kit/node/ui')
 
     await executeBulkOperation({store, query: '{ products { edges { node { id } } } }'})
 

@@ -4,11 +4,6 @@ import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {StoredStoreAppSession} from '../auth/session-store.js'
 
-export interface BulkAdminContext {
-  adminSession: AdminSession
-  session: StoredStoreAppSession
-}
-
 /**
  * Loads previously stored store authentication and builds an Admin API session for it.
  *
@@ -17,7 +12,9 @@ export interface BulkAdminContext {
  * @param store - The store domain to load stored auth for.
  * @returns The Admin session and the full stored auth session.
  */
-export async function prepareBulkAdminContext(store: string): Promise<BulkAdminContext> {
+export async function prepareBulkAdminContext(
+  store: string,
+): Promise<{adminSession: AdminSession; session: StoredStoreAppSession}> {
   const session = await loadStoredStoreSession(store)
   await recordStoreFqdnMetadata(session.store, true)
   setLastSeenUserId(session.userId)

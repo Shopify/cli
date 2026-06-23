@@ -15,7 +15,7 @@ import {outputContent, outputToken, outputNewline} from '@shopify/cli-kit/node/o
 import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
 import colors from '@shopify/cli-kit/node/colors'
 
-export {normalizeBulkOperationId, extractBulkOperationId}
+export {normalizeBulkOperationId}
 
 interface GetBulkOperationStatusOptions {
   store: string
