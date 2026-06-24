@@ -4,7 +4,7 @@ import {logMetadataForLoadedContext} from '../../context.js'
 
 import {Organization, OrganizationApp} from '../../../models/organization.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {diffLines} from 'diff'
+import {diffLines, Change} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
@@ -36,11 +36,11 @@ export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOp
       const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
       return outputContent`Updated ${outputToken.path(envFile)} to be:
 
-${updatedEnvFileContent}
+${maskSecret(updatedEnvFileContent)}
 
 Here's what changed:
 
-${outputToken.linesDiff(diff)}
+${outputToken.linesDiff(maskDiff(diff))}
   `
     }
   } else {
@@ -50,7 +50,26 @@ ${outputToken.linesDiff(diff)}
 
     return outputContent`Created ${outputToken.path(envFile)}:
 
-${newEnvFileContent}
+${maskSecret(newEnvFileContent)}
 `
   }
+}
+
+function maskSecret(envFileContent: string): string {
+  return envFileContent.replace(/SHOPIFY_API_SECRET=.*/g, (match) => {
+    const index = match.indexOf('=')
+    if (index === -1) return match
+    const key = match.substring(0, index)
+    const value = match.substring(index + 1)
+    return `${key}=${outputToken.mask(value).output()}`
+  })
+}
+
+function maskDiff(diff: Change[]): Change[] {
+  return diff.map((part) => {
+    return {
+      ...part,
+      value: maskSecret(part.value),
+    }
+  })
 }

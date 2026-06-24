@@ -129,3 +129,11 @@ export class ItalicContentToken extends ContentToken<OutputMessage> {
     return colors.italic(stringifyMessage(this.value))
   }
 }
+
+export class MaskContentToken extends ContentToken<string> {
+  output(): string {
+    if (this.value.length === 0) return ''
+    if (this.value.length <= 20) return '***'
+    return `${this.value.substring(0, 10)}***`
+  }
+}
