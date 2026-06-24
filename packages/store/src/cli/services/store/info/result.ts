@@ -12,6 +12,7 @@ export function renderStoreInfoResult(result: StoreInfoResult, format: StoreInfo
   }
   renderInfo({
     customSections: [{title: 'Store details', body: {tabularData: storeDetailRows(result), firstColumnSubdued: true}}],
+    nextSteps: storeActions(result),
   })
 }
 
@@ -25,10 +26,15 @@ function storeDetailRows(result: StoreInfoResult): InlineToken[][] {
   push(rows, 'Type', result.type ? capitalizeWords(result.type) : undefined)
   push(rows, 'Plan', result.plan ? capitalizeWords(result.plan) : undefined)
   push(rows, 'Feature Preview', result.featurePreview)
-  pushLink(rows, 'Admin URL', result.adminUrl)
-  pushLink(rows, 'Access URL', result.accessUrl)
-  pushLink(rows, 'Save URL', result.saveUrl)
   return rows
+}
+
+function storeActions(result: StoreInfoResult): InlineToken[] {
+  const actions: InlineToken[] = []
+  pushAction(actions, result.adminUrl, 'Manage this store in the Shopify admin.')
+  pushAction(actions, result.accessUrl, 'View the storefront.')
+  pushAction(actions, result.saveUrl, 'Save your progress on this store.')
+  return actions
 }
 
 function formatOwner(owner: StoreInfoStoreOwner | undefined): string | undefined {
@@ -41,6 +47,6 @@ function push(rows: InlineToken[][], label: string, value: string | undefined): 
   if (value) rows.push([label, value])
 }
 
-function pushLink(rows: InlineToken[][], label: string, url: string | undefined): void {
-  if (url) rows.push([label, {link: {label: 'Link', url}}])
+function pushAction(actions: InlineToken[], url: string | undefined, label: string): void {
+  if (url) actions.push({link: {label, url}})
 }

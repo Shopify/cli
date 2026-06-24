@@ -23,11 +23,14 @@ function storeDetailRows(): unknown[][] {
   return section?.body.tabularData ?? []
 }
 
-// The labels of rows whose value cell is a plain string (i.e. not a link token).
-function stringRowLabels(): string[] {
-  return storeDetailRows()
-    .filter((row) => typeof row[1] === 'string')
-    .map((row) => row[0] as string)
+function storeActions(): unknown[] {
+  const opts = vi.mocked(renderInfo).mock.calls[0]?.[0] as {nextSteps?: unknown[]}
+  return opts.nextSteps ?? []
+}
+
+// The labels of the detail rows (first cell of each row).
+function rowLabels(): string[] {
+  return storeDetailRows().map((row) => row[0] as string)
 }
 
 describe('renderStoreInfoResult', () => {
@@ -83,9 +86,6 @@ describe('renderStoreInfoResult', () => {
         type: 'dev',
         plan: 'grow',
         featurePreview: 'extended_variants',
-        adminUrl: 'https://admin.shopify.com/store/acme-widgets',
-        accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
-        saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
       }),
       'text',
     )
@@ -98,33 +98,45 @@ describe('renderStoreInfoResult', () => {
     expect(rows).toContainEqual(['Type', 'Dev'])
     expect(rows).toContainEqual(['Plan', 'Grow'])
     expect(rows).toContainEqual(['Feature Preview', 'extended_variants'])
-    expect(rows).toContainEqual([
-      'Admin URL',
+  })
+
+  test('renders store URLs as next-step action links', () => {
+    renderStoreInfoResult(
+      baseResult({
+        adminUrl: 'https://admin.shopify.com/store/acme-widgets',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
+        saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
+      }),
+      'text',
+    )
+
+    const actions = storeActions()
+    expect(actions).toEqual([
+      {link: {label: 'Manage this store in the Shopify admin.', url: 'https://admin.shopify.com/store/acme-widgets'}},
+      {link: {label: 'View the storefront.', url: 'https://app.shopify.com/auth/preview-store?token=access-token'}},
       {
         link: {
-          label: 'Link',
-          url: 'https://admin.shopify.com/store/acme-widgets',
-        },
-      },
-    ])
-    expect(rows).toContainEqual([
-      'Access URL',
-      {
-        link: {
-          label: 'Link',
-          url: 'https://app.shopify.com/auth/preview-store?token=access-token',
-        },
-      },
-    ])
-    expect(rows).toContainEqual([
-      'Save URL',
-      {
-        link: {
-          label: 'Link',
+          label: 'Save your progress on this store.',
           url: 'https://admin.shopify.com/store-transfer/accept/claim-token',
         },
       },
     ])
+    // URLs are no longer rendered as detail rows.
+    expect(rowLabels()).not.toContain('Admin URL')
+    expect(rowLabels()).not.toContain('Access URL')
+    expect(rowLabels()).not.toContain('Save URL')
+  })
+
+  test('omits action links for URLs that are not present', () => {
+    renderStoreInfoResult(baseResult({adminUrl: 'https://admin.shopify.com/store/acme-widgets'}), 'text')
+    expect(storeActions()).toEqual([
+      {link: {label: 'Manage this store in the Shopify admin.', url: 'https://admin.shopify.com/store/acme-widgets'}},
+    ])
+  })
+
+  test('omits next steps entirely when no URLs are present', () => {
+    renderStoreInfoResult(baseResult(), 'text')
+    expect(storeActions()).toEqual([])
   })
 
   test('formats the store owner as "name (email)" when both are present', () => {
@@ -144,7 +156,7 @@ describe('renderStoreInfoResult', () => {
 
   test('omits fields that are not present', () => {
     renderStoreInfoResult(baseResult(), 'text')
-    const labels = stringRowLabels()
+    const labels = rowLabels()
     expect(labels).not.toContain('Feature Preview')
     expect(labels).not.toContain('Store owner')
     expect(labels).not.toContain('Type')
