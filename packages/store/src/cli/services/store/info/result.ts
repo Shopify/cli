@@ -1,5 +1,5 @@
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderInfo, type InlineToken, type LinkToken} from '@shopify/cli-kit/node/ui'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
 import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
 
@@ -10,25 +10,34 @@ export function renderStoreInfoResult(result: StoreInfoResult, format: StoreInfo
     outputResult(JSON.stringify(result, null, 2))
     return
   }
+  const actions = storeActions(result)
   renderInfo({
-    customSections: [{title: 'Store details', body: {list: {items: storeDetailItems(result)}}}],
+    customSections: [
+      {title: 'Store details', body: {tabularData: storeDetailRows(result), firstColumnSubdued: true}},
+      ...(actions.length > 0 ? [{body: {list: {title: {bold: 'Next steps'}, items: actions}}}] : []),
+    ],
   })
 }
 
-function storeDetailItems(result: StoreInfoResult): string[] {
-  const items: string[] = []
-  push(items, 'ID', result.id)
-  push(items, 'Display Name', result.displayName)
-  push(items, 'Subdomain', result.subdomain)
-  push(items, 'Organization', result.organizationName)
-  push(items, 'Store owner', formatOwner(result.storeOwner))
-  push(items, 'Type', result.type ? capitalizeWords(result.type) : undefined)
-  push(items, 'Plan', result.plan ? capitalizeWords(result.plan) : undefined)
-  push(items, 'Feature Preview', result.featurePreview)
-  push(items, 'Admin URL', result.adminUrl)
-  push(items, 'Access URL', result.accessUrl)
-  push(items, 'Save URL', result.saveUrl)
-  return items
+function storeDetailRows(result: StoreInfoResult): InlineToken[][] {
+  const rows: InlineToken[][] = []
+  push(rows, 'ID', result.id)
+  push(rows, 'Display Name', result.displayName)
+  push(rows, 'Subdomain', result.subdomain)
+  push(rows, 'Organization', result.organizationName)
+  push(rows, 'Store owner', formatOwner(result.storeOwner))
+  push(rows, 'Type', result.type ? capitalizeWords(result.type) : undefined)
+  push(rows, 'Plan', result.plan ? capitalizeWords(result.plan) : undefined)
+  push(rows, 'Feature Preview', result.featurePreview)
+  return rows
+}
+
+function storeActions(result: StoreInfoResult): LinkToken[] {
+  const actions: LinkToken[] = []
+  pushAction(actions, result.adminUrl, 'Manage this store in the Shopify admin')
+  pushAction(actions, result.accessUrl, 'View the storefront')
+  pushAction(actions, result.saveUrl, 'Save your progress on this store')
+  return actions
 }
 
 function formatOwner(owner: StoreInfoStoreOwner | undefined): string | undefined {
@@ -37,6 +46,10 @@ function formatOwner(owner: StoreInfoStoreOwner | undefined): string | undefined
   return owner.name ?? owner.email
 }
 
-function push(items: string[], label: string, value: string | undefined): void {
-  if (value) items.push(`${label}: ${value}`)
+function push(rows: InlineToken[][], label: string, value: string | undefined): void {
+  if (value) rows.push([label, value])
+}
+
+function pushAction(actions: LinkToken[], url: string | undefined, label: string): void {
+  if (url) actions.push({link: {label, url}})
 }
