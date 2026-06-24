@@ -74,9 +74,73 @@ type VerboseResponse<T> =
   | UnauthorizedErrorResponse
 
 /**
+ * Connection-level error codes (from Node, node-fetch, or undici) that indicate a
+ * transient network failure worth retrying. Matching on a structured code is far more
+ * reliable than substring-matching an error message, which can also embed unrelated
+ * request/response payloads.
+ */
+const TRANSIENT_NETWORK_ERROR_CODES = new Set([
+  'ECONNRESET',
+  'ECONNABORTED',
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'ETIMEDOUT',
+  'EPIPE',
+  'EAI_AGAIN',
+  'EPROTO',
+  'ABORT_ERR',
+  'UND_ERR_CONNECT_TIMEOUT',
+  'UND_ERR_HEADERS_TIMEOUT',
+  'UND_ERR_BODY_TIMEOUT',
+  'UND_ERR_SOCKET',
+])
+
+/**
+ * Message fragments that indicate a transient network failure, used as a fallback when
+ * an error does not expose a structured code.
+ */
+const TRANSIENT_NETWORK_ERROR_MESSAGES = [
+  'socket hang up',
+  'econnreset',
+  'econnaborted',
+  'enotfound',
+  'enetunreach',
+  'network socket disconnected',
+  'etimedout',
+  'econnrefused',
+  'eai_again',
+  'epipe',
+  'the operation was aborted',
+  'timeout',
+  'premature close',
+  'getaddrinfo',
+]
+
+/**
+ * Reads a transient connection-level error code from an error or its `cause`.
+ */
+function transientNetworkErrorCode(error: Error): string | undefined {
+  const candidates: unknown[] = [error, (error as {cause?: unknown}).cause]
+  for (const candidate of candidates) {
+    const code = (candidate as {code?: unknown} | null | undefined)?.code
+    if (typeof code === 'string' && TRANSIENT_NETWORK_ERROR_CODES.has(code.toUpperCase())) {
+      return code
+    }
+  }
+  return undefined
+}
+
+/**
  * Checks if an error is a transient network error that is likely to recover with retries.
  *
  * Use this function for retry logic. Use isNetworkError for error classification.
+ *
+ * Only connection-level failures (no HTTP response received) are treated as transient. A
+ * `ClientError` carries an HTTP response, so it is an application/HTTP-level failure, not a
+ * connection error — and its message embeds the full request/response payload, which must
+ * not be matched against. HTTP-level retryability is handled separately by the caller.
  *
  * Examples of transient errors (worth retrying):
  * - Connection timeouts, resets, and aborts
@@ -85,29 +149,18 @@ type VerboseResponse<T> =
  * - Premature connection closes
  */
 export function isTransientNetworkError(error: unknown): boolean {
-  if (error instanceof Error) {
-    const transientErrorMessages = [
-      'socket hang up',
-      'econnreset',
-      'econnaborted',
-      'enotfound',
-      'enetunreach',
-      'network socket disconnected',
-      'etimedout',
-      'econnrefused',
-      'eai_again',
-      'epipe',
-      'the operation was aborted',
-      'timeout',
-      'premature close',
-      'getaddrinfo',
-    ]
-    const errorMessage = error.message.toLowerCase()
-    const anyMatches = transientErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
-    const missingReason = /^request to .* failed, reason:\s*$/.test(errorMessage)
-    return anyMatches || missingReason
+  if (!(error instanceof Error) || error instanceof ClientError) {
+    return false
   }
-  return false
+
+  if (transientNetworkErrorCode(error)) {
+    return true
+  }
+
+  const errorMessage = error.message.toLowerCase()
+  const anyMatches = TRANSIENT_NETWORK_ERROR_MESSAGES.some((issueMessage) => errorMessage.includes(issueMessage))
+  const missingReason = /^request to .* failed, reason:\s*$/.test(errorMessage)
+  return anyMatches || missingReason
 }
 
 /**
@@ -127,14 +180,17 @@ export function isNetworkError(error: unknown): boolean {
     return true
   }
 
-  // Then check for permanent network errors (SSL/TLS/certificate issues)
-  if (error instanceof Error) {
-    const permanentNetworkErrorMessages = ['certificate', 'cert', 'tls', 'ssl', 'altnames']
-    const errorMessage = error.message.toLowerCase()
-    return permanentNetworkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
+  // A ClientError carries an HTTP response, so it is an application/HTTP-level failure
+  // rather than a network error — even if its embedded payload happens to contain words
+  // like "cert" or "ssl".
+  if (!(error instanceof Error) || error instanceof ClientError) {
+    return false
   }
 
-  return false
+  // Then check for permanent network errors (SSL/TLS/certificate issues)
+  const permanentNetworkErrorMessages = ['certificate', 'cert', 'tls', 'ssl', 'altnames']
+  const errorMessage = error.message.toLowerCase()
+  return permanentNetworkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
 }
 
 async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; status: number}>(
