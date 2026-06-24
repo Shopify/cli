@@ -25,7 +25,10 @@ export {
   QUICK_WATCH_POLL_INTERVAL_MS,
   type BulkOperation,
 } from './bulk-operations/watch-bulk-operation.js'
-export {downloadBulkOperationResults} from './bulk-operations/download-bulk-operation-results.js'
+export {
+  downloadBulkOperationResults,
+  resultsContainUserErrors,
+} from './bulk-operations/download-bulk-operation-results.js'
 export {
   formatBulkOperationStatus,
   renderBulkOperationUserErrors,

@@ -13,6 +13,7 @@ import {
   shortBulkOperationPoll,
   formatBulkOperationStatus,
   downloadBulkOperationResults,
+  resultsContainUserErrors,
   extractBulkOperationId,
   BULK_OPERATIONS_MIN_API_VERSION,
   type BulkOperation,
@@ -223,17 +224,6 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
       renderError({headline, customSections})
       break
   }
-}
-
-function resultsContainUserErrors(results: string): boolean {
-  const lines = results.trim().split('\n')
-
-  return lines.some((line) => {
-    const parsed = JSON.parse(line)
-    if (!parsed.data) return false
-    const result = Object.values(parsed.data)[0] as {userErrors?: unknown[]} | undefined
-    return result?.userErrors !== undefined && result.userErrors.length > 0
-  })
 }
 
 function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl?: string): void {
