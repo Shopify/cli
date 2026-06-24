@@ -4,8 +4,9 @@ import {
   cancelBulkOperationRequest,
   renderBulkOperationUserErrors,
   formatBulkOperationCancellationResult,
+  extractBulkOperationId,
 } from '@shopify/cli-kit/node/api/bulk-operations'
-import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderError, renderSuccess, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 interface CancelBulkOperationOptions {
@@ -40,10 +41,18 @@ export async function cancelBulkOperation(options: CancelBulkOperationOptions): 
 
   const operation = bulkOperationCancel?.bulkOperation
   if (operation) {
-    const result = formatBulkOperationCancellationResult(operation, 'shopify app bulk status')
+    const result = formatBulkOperationCancellationResult(operation)
+    // The engine is command-agnostic; this command writes its own "check status" hint.
+    const body: TokenItem | undefined =
+      operation.status === 'CANCELING'
+        ? [
+            'This may take a few moments. Check the status with:\n',
+            {command: `shopify app bulk status --id=${extractBulkOperationId(operation.id)}`},
+          ]
+        : result.body
     const renderOptions = {
       headline: result.headline,
-      ...(result.body && {body: result.body}),
+      ...(body && {body}),
       ...(result.customSections && {customSections: result.customSections}),
     }
 

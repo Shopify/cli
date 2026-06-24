@@ -90,6 +90,12 @@ describe('resolveApiVersion', () => {
     expect(version).toBe('2026-01')
   })
 
+  test('prefers a newer supported version over an older minimum default', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([{handle: '2025-10', supported: true}])
+    const version = await resolveApiVersion({adminSession, minimumDefaultVersion: '2024-01'})
+    expect(version).toBe('2025-10')
+  })
+
   test('returns a valid user-specified version', async () => {
     vi.mocked(fetchApiVersions).mockResolvedValue([{handle: '2025-10', supported: true}])
     const version = await resolveApiVersion({adminSession, userSpecifiedVersion: '2025-10'})

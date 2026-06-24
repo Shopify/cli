@@ -1,4 +1,3 @@
-import {extractBulkOperationId} from './helpers.js'
 import {GetBulkOperationByIdQuery} from '../../../../cli/api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
 import {outputContent, outputToken, TokenizedString} from '../../output.js'
 import {renderError, TokenItem} from '../../ui.js'
@@ -70,15 +69,17 @@ export interface BulkOperationCancellationResult {
 }
 
 /**
- * Builds the rendering payload describing the outcome of a cancellation request.
+ * Classifies the outcome of a cancellation request into a renderable payload.
+ *
+ * The engine intentionally stays command-agnostic: for an in-progress cancellation it returns just
+ * the headline and render type, leaving each command to append its own "check status" hint (which
+ * references that command's own `bulk status` invocation).
  *
  * @param operation - The bulk operation after the cancel request.
- * @param statusCommand - The CLI command users run to check status (e.g. "shopify store bulk status").
  * @returns The headline, body, sections, and render type to use.
  */
 export function formatBulkOperationCancellationResult(
   operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,
-  statusCommand: string,
 ): BulkOperationCancellationResult {
   const headline = formatBulkOperationStatus(operation).value
 
@@ -86,10 +87,6 @@ export function formatBulkOperationCancellationResult(
     case 'CANCELING':
       return {
         headline: 'Bulk operation is being cancelled.',
-        body: [
-          'This may take a few moments. Check the status with:\n',
-          {command: `${statusCommand} --id=${extractBulkOperationId(operation.id)}`},
-        ],
         renderType: 'success',
       }
     case 'CANCELED':
