@@ -10,6 +10,7 @@ import {
   sortOffenses,
   isExtendedWriteStream,
   handleExit,
+  runWithThemeCheckConfigErrors,
   type FailLevel,
 } from '../../services/check.js'
 import {themeFlags} from '../../flags.js'
@@ -151,11 +152,13 @@ export default class Check extends ThemeCommand {
 }
 
 export async function runThemeCheck(path: string, outputFormat: string, config?: string, environment?: string) {
-  const {offenses, theme} = await themeCheckRun(path, config, (message) => {
-    if (process.env.SHOPIFY_TMP_FLAG_DEBUG) {
-      outputDebug(message)
-    }
-  })
+  const {offenses, theme} = await runWithThemeCheckConfigErrors(() =>
+    themeCheckRun(path, config, (message) => {
+      if (process.env.SHOPIFY_TMP_FLAG_DEBUG) {
+        outputDebug(message)
+      }
+    }),
+  )
 
   const offensesByFile = sortOffenses(offenses)
 

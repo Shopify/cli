@@ -4,15 +4,18 @@ import {
   formatSummary,
   handleExit,
   initConfig,
+  loadThemeCheckConfig,
   renderOffensesText,
   sortOffenses,
 } from './check.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {
   Severity,
   SourceCodeType,
+  ThemeCheckConfigError,
   loadConfig,
   path as pathUtils,
   type Offense,
@@ -26,10 +29,14 @@ vi.mock('@shopify/cli-kit/node/fs', async () => ({
   readFileSync: vi.fn(),
 }))
 
-vi.mock('@shopify/cli-kit/node/output', async () => ({
-  outputInfo: vi.fn(),
-  outputSuccess: vi.fn(),
-}))
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
+  return {
+    ...actual,
+    outputInfo: vi.fn(),
+    outputSuccess: vi.fn(),
+  }
+})
 
 vi.mock('@shopify/theme-check-node', async () => {
   const actual: any = await vi.importActual('@shopify/theme-check-node')
@@ -402,5 +409,35 @@ describe('initConfig', () => {
     expect(loadConfig).toHaveBeenCalledWith(undefined, '/path/to/root')
     expect(writeFile).toHaveBeenCalledWith('/path/to/root/.theme-check.yml', expect.any(String))
     expect(outputSuccess).toHaveBeenCalledWith('Created .theme-check.yml at /path/to/root')
+  })
+})
+
+describe('loadThemeCheckConfig', () => {
+  let loadConfigMock: Mock
+
+  beforeEach(() => {
+    loadConfigMock = loadConfig as Mock
+  })
+
+  test('returns the resolved configuration when loading succeeds', async () => {
+    const config = {settings: {}, ignore: [], checks: []}
+    loadConfigMock.mockResolvedValue(config)
+
+    await expect(loadThemeCheckConfig('.theme-check.yml', '/root')).resolves.toBe(config)
+  })
+
+  test('wraps a ThemeCheckConfigError in an AbortError', async () => {
+    loadConfigMock.mockRejectedValue(
+      new ThemeCheckConfigError("Failed to load Theme Check configuration from './.theme-check.yml'"),
+    )
+
+    await expect(loadThemeCheckConfig('./.theme-check.yml', '/root')).rejects.toThrowError(AbortError)
+  })
+
+  test('rethrows a non-configuration error unchanged', async () => {
+    const bug = new Error('Something unexpected blew up')
+    loadConfigMock.mockRejectedValue(bug)
+
+    await expect(loadThemeCheckConfig('.theme-check.yml', '/root')).rejects.toThrowError(bug)
   })
 })
