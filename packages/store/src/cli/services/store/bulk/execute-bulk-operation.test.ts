@@ -4,12 +4,14 @@ import {
   runBulkOperationQuery,
   runBulkOperationMutation,
   shortBulkOperationPoll,
+  watchBulkOperation,
+  downloadBulkOperationResults,
   resolveApiVersion,
   BULK_OPERATIONS_MIN_API_VERSION,
   type BulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning, renderError} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -53,7 +55,7 @@ const createdOperation: BulkOperation = {
 }
 
 beforeEach(() => {
-  vi.mocked(prepareBulkAdminContext).mockResolvedValue({adminSession, session: {} as never})
+  vi.mocked(prepareBulkAdminContext).mockResolvedValue(adminSession)
   vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
   vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdOperation)
 })
@@ -115,5 +117,75 @@ describe('executeBulkOperation', () => {
         body: ['Monitor its progress with:\n', {command: 'shopify store bulk status --id=123'}],
       }),
     )
+  })
+
+  describe('--watch result rendering', () => {
+    const completedOperation: BulkOperation = {
+      ...createdOperation,
+      status: 'COMPLETED',
+      objectCount: '2',
+      completedAt: '2024-01-01T00:05:00Z',
+      url: 'https://example.com/results.jsonl',
+    }
+
+    beforeEach(() => {
+      vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: createdOperation, userErrors: []})
+    })
+
+    test('downloads results and renders success for a completed operation', async () => {
+      vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+      vi.mocked(downloadBulkOperationResults).mockResolvedValue('{"data":{"products":{"edges":[]}}}')
+      const output = mockAndCaptureOutput()
+
+      await executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true})
+
+      expect(downloadBulkOperationResults).toHaveBeenCalledWith('https://example.com/results.jsonl')
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({headline: expect.stringContaining('Bulk operation succeeded')}),
+      )
+      expect(output.output()).toContain('products')
+    })
+
+    test('does not crash on an empty result file', async () => {
+      vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+      vi.mocked(downloadBulkOperationResults).mockResolvedValue('')
+
+      await expect(
+        executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true}),
+      ).resolves.not.toThrow()
+
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({headline: expect.stringContaining('Bulk operation succeeded')}),
+      )
+    })
+
+    test('renders a warning when the results contain user errors', async () => {
+      vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+      vi.mocked(downloadBulkOperationResults).mockResolvedValue(
+        '{"data":{"productUpdate":{"product":null,"userErrors":[{"message":"Invalid"}]}}}',
+      )
+
+      await executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true})
+
+      expect(renderWarning).toHaveBeenCalledWith(
+        expect.objectContaining({headline: 'Bulk operation completed with errors.'}),
+      )
+    })
+
+    test('renders an error for a failed operation', async () => {
+      vi.mocked(watchBulkOperation).mockResolvedValue({
+        ...createdOperation,
+        status: 'FAILED',
+        errorCode: 'INTERNAL_SERVER_ERROR',
+        completedAt: '2024-01-01T00:05:00Z',
+      })
+
+      await executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true})
+
+      expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({headline: expect.stringContaining('Bulk operation failed')}),
+      )
+    })
   })
 })

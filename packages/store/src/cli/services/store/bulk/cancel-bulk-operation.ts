@@ -17,7 +17,7 @@ interface CancelBulkOperationOptions {
 export async function cancelBulkOperation(options: CancelBulkOperationOptions): Promise<void> {
   const {store, operationId} = options
 
-  const {adminSession} = await prepareBulkAdminContext(store)
+  const adminSession = await prepareBulkAdminContext(store)
 
   renderInfo({
     headline: 'Canceling bulk operation.',

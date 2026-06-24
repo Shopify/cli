@@ -7,6 +7,7 @@ import {
   shortBulkOperationPoll,
   formatBulkOperationStatus,
   downloadBulkOperationResults,
+  resultsContainUserErrors,
   resolveApiVersion,
   isMutation,
   extractBulkOperationId,
@@ -71,7 +72,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   const {adminSession, version} = await renderSingleTask({
     title: outputContent`Authenticating`,
     task: async () => {
-      const {adminSession} = await prepareBulkAdminContext(store)
+      const adminSession = await prepareBulkAdminContext(store)
       const version = await resolveApiVersion({
         adminSession,
         userSpecifiedVersion,
@@ -218,17 +219,6 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
       renderError({headline, customSections})
       break
   }
-}
-
-function resultsContainUserErrors(results: string): boolean {
-  const lines = results.trim().split('\n')
-
-  return lines.some((line) => {
-    const parsed = JSON.parse(line)
-    if (!parsed.data) return false
-    const result = Object.values(parsed.data)[0] as {userErrors?: unknown[]} | undefined
-    return result?.userErrors !== undefined && result.userErrors.length > 0
-  })
 }
 
 function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl?: string): void {

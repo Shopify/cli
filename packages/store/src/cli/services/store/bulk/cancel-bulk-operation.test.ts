@@ -20,7 +20,7 @@ const operationId = 'gid://shopify/BulkOperation/123'
 const adminSession = {token: 'token', storeFqdn: store}
 
 beforeEach(() => {
-  vi.mocked(prepareBulkAdminContext).mockResolvedValue({adminSession, session: {} as never})
+  vi.mocked(prepareBulkAdminContext).mockResolvedValue(adminSession)
 })
 
 afterEach(() => {

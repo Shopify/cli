@@ -29,7 +29,7 @@ interface ListBulkOperationsOptions {
 export async function getBulkOperationStatus(options: GetBulkOperationStatusOptions): Promise<void> {
   const {store, operationId} = options
 
-  const {adminSession} = await prepareBulkAdminContext(store)
+  const adminSession = await prepareBulkAdminContext(store)
 
   renderInfo({
     headline: 'Checking bulk operation status.',
@@ -64,7 +64,7 @@ export async function getBulkOperationStatus(options: GetBulkOperationStatusOpti
 export async function listBulkOperations(options: ListBulkOperationsOptions): Promise<void> {
   const {store} = options
 
-  const {adminSession} = await prepareBulkAdminContext(store)
+  const adminSession = await prepareBulkAdminContext(store)
 
   renderInfo({
     headline: 'Listing bulk operations.',

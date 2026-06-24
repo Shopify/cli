@@ -30,9 +30,6 @@ describe('prepareBulkAdminContext', () => {
     expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
-    expect(result).toEqual({
-      adminSession: {token: 'token', storeFqdn: store},
-      session: storedSession,
-    })
+    expect(result).toEqual({token: 'token', storeFqdn: store})
   })
 })
