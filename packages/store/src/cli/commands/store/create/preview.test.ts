@@ -33,7 +33,7 @@ describe('store create preview command', () => {
     await StoreCreatePreview.run(['--name', 'Lavender Candles', '--country', 'us', '--json'])
 
     expect(renderSingleTask).toHaveBeenCalledWith({
-      title: expect.objectContaining({value: 'Creating store…'}),
+      title: expect.objectContaining({value: 'Creating store'}),
       task: expect.any(Function),
     })
     expect(createPreviewStoreCommand).toHaveBeenCalledWith({name: 'Lavender Candles', country: 'US'})
