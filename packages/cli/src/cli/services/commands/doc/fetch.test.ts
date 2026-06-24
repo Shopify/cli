@@ -3,12 +3,11 @@ import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {dirname, resolvePath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/fs')
 
 const okResponse = (body: string) =>
   ({ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(body)}) as any
@@ -44,12 +43,18 @@ describe('docFetchService', () => {
   })
 
   test('writes the document to the output path instead of stdout', async () => {
-    await docFetchService('https://shopify.dev/docs/api/shopify-cli', 'docs/shopify-cli.md')
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputPath = joinPath(tmpDir, 'docs/shopify-cli.md')
 
-    const expectedPath = resolvePath('docs/shopify-cli.md')
-    expect(mkdir).toHaveBeenCalledWith(dirname(expectedPath))
-    expect(writeFile).toHaveBeenCalledWith(expectedPath, '# Doc')
-    expect(outputResult).not.toHaveBeenCalled()
+      // When
+      await docFetchService('https://shopify.dev/docs/api/shopify-cli', outputPath)
+
+      // Then
+      expect(fileExistsSync(outputPath)).toBe(true)
+      await expect(readFile(outputPath)).resolves.toBe('# Doc')
+      expect(outputResult).not.toHaveBeenCalled()
+    })
   })
 
   test('throws when the response is not ok', async () => {
