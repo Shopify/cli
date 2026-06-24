@@ -26,23 +26,22 @@ describe('showMultipleCLIWarningIfNeeded', () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-        "╭─ info ───────────────────────────────────────────────────────────────────────╮
-        │                                                                              │
-        │  Two Shopify CLI installations found – using global installation             │
-        │                                                                              │
-        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were        │
-        │  detected.                                                                   │
-        │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
-        │  your package.json, unless you want to use different versions across         │
-        │  multiple apps.                                                              │
-        │                                                                              │
-        │  See Shopify CLI documentation. [1]                                          │
-        │                                                                              │
-        ╰──────────────────────────────────────────────────────────────────────────────╯
-        [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executab
-        le-or-local-dependency
-        "
-      `)
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Two Shopify CLI installations found – using global installation             │
+      │                                                                              │
+      │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were        │
+      │  detected.                                                                   │
+      │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
+      │  your package.json, unless you want to use different versions across         │
+      │  multiple apps.                                                              │
+      │                                                                              │
+      │  See Shopify CLI documentation. [1]                                          │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executable-or-local-dependency
+      "
+    `)
     mockOutput.clear()
   })
 
@@ -58,23 +57,22 @@ describe('showMultipleCLIWarningIfNeeded', () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-        "╭─ info ───────────────────────────────────────────────────────────────────────╮
-        │                                                                              │
-        │  Two Shopify CLI installations found – using local dependency                │
-        │                                                                              │
-        │  A global installation (v3.70.0) and a local dependency (v${CLI_KIT_VERSION}) were        │
-        │  detected.                                                                   │
-        │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
-        │  your package.json, unless you want to use different versions across         │
-        │  multiple apps.                                                              │
-        │                                                                              │
-        │  See Shopify CLI documentation. [1]                                          │
-        │                                                                              │
-        ╰──────────────────────────────────────────────────────────────────────────────╯
-        [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executab
-        le-or-local-dependency
-        "
-      `)
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Two Shopify CLI installations found – using local dependency                │
+      │                                                                              │
+      │  A global installation (v3.70.0) and a local dependency (v${CLI_KIT_VERSION}) were        │
+      │  detected.                                                                   │
+      │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
+      │  your package.json, unless you want to use different versions across         │
+      │  multiple apps.                                                              │
+      │                                                                              │
+      │  See Shopify CLI documentation. [1]                                          │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executable-or-local-dependency
+      "
+    `)
     mockOutput.clear()
   })
 
@@ -91,23 +89,22 @@ describe('showMultipleCLIWarningIfNeeded', () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-        "╭─ info ───────────────────────────────────────────────────────────────────────╮
-        │                                                                              │
-        │  Two Shopify CLI installations found – using global installation             │
-        │                                                                              │
-        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were        │
-        │  detected.                                                                   │
-        │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
-        │  your package.json, unless you want to use different versions across         │
-        │  multiple apps.                                                              │
-        │                                                                              │
-        │  See Shopify CLI documentation. [1]                                          │
-        │                                                                              │
-        ╰──────────────────────────────────────────────────────────────────────────────╯
-        [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executab
-        le-or-local-dependency
-        "
-      `)
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Two Shopify CLI installations found – using global installation             │
+      │                                                                              │
+      │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were        │
+      │  detected.                                                                   │
+      │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
+      │  your package.json, unless you want to use different versions across         │
+      │  multiple apps.                                                              │
+      │                                                                              │
+      │  See Shopify CLI documentation. [1]                                          │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executable-or-local-dependency
+      "
+    `)
   })
 
   test('does not show a warning if there is no local dependency', async () => {

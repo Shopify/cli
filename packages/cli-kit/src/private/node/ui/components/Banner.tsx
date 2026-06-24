@@ -32,9 +32,18 @@ const Footnotes = () => {
 
   return linkIds.length > 0 ? (
     <Box marginBottom={1} marginTop={-1} flexDirection="column">
-      {linkIds.map((id) => (
-        <Text key={id}>{`[${id}] ${links[id]?.url}`}</Text>
-      ))}
+      {linkIds.map((id) => {
+        const line = `[${id}] ${links[id]?.url}`
+        // Render each footnote on a Box wide enough to fit the whole line so
+        // Ink doesn't hard-wrap long URLs (which inserts newline characters and
+        // breaks copy-paste/clickability). The terminal soft-wraps the overflow
+        // at display time without mutating the underlying text.
+        return (
+          <Box key={id} width={line.length}>
+            <Text>{line}</Text>
+          </Box>
+        )
+      })}
     </Box>
   ) : null
 }
