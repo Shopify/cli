@@ -39,7 +39,13 @@ describe('cancelBulkOperation', () => {
     expect(prepareBulkAdminContext).toHaveBeenCalledWith(store)
     expect(cancelBulkOperationRequest).toHaveBeenCalledWith({adminSession, operationId})
     expect(renderSuccess).toHaveBeenCalledWith(
-      expect.objectContaining({headline: 'Bulk operation is being cancelled.'}),
+      expect.objectContaining({
+        headline: 'Bulk operation is being cancelled.',
+        body: [
+          'This may take a few moments. Check the status with:\n',
+          {command: 'shopify store bulk status --id=123'},
+        ],
+      }),
     )
   })
 
