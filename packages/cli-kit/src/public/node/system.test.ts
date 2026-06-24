@@ -393,3 +393,32 @@ describe('readStdinString', () => {
     await expect(got).rejects.toThrow('Stdin input exceeded the maximum allowed size.')
   })
 })
+
+describe('isWsl', () => {
+  test('memoizes the result', async () => {
+    // Given
+    // We need to use the real isWsl but since it's already exported from system.js
+    // we can check if it returns the same promise.
+
+    // When
+    const promise1 = system.isWsl()
+    const promise2 = system.isWsl()
+
+    // Then
+    expect(promise1).toBe(promise2)
+    await promise1
+  })
+
+  test('can be reset', async () => {
+    // Given
+    const promise1 = system.isWsl()
+
+    // When
+    ;(system as any)._resetIsWsl()
+    const promise2 = system.isWsl()
+
+    // Then
+    expect(promise1).not.toBe(promise2)
+    await Promise.all([promise1, promise2])
+  })
+})
