@@ -41,7 +41,7 @@ export default class StoreCreatePreview extends StoreCommand {
     }
 
     const result = await renderSingleTask<CreatePreviewStoreResult>({
-      title: outputContent`Creating store…`,
+      title: outputContent`Creating store`,
       task: async () => createPreviewStoreCommand({name: flags.name, country: flags.country}),
     })
 
