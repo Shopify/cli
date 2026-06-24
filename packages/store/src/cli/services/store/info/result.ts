@@ -1,5 +1,5 @@
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo, type InlineToken} from '@shopify/cli-kit/node/ui'
+import {renderInfo, type InlineToken, type LinkToken} from '@shopify/cli-kit/node/ui'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
 import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
 
@@ -10,9 +10,12 @@ export function renderStoreInfoResult(result: StoreInfoResult, format: StoreInfo
     outputResult(JSON.stringify(result, null, 2))
     return
   }
+  const actions = storeActions(result)
   renderInfo({
-    customSections: [{title: 'Store details', body: {tabularData: storeDetailRows(result), firstColumnSubdued: true}}],
-    nextSteps: storeActions(result),
+    customSections: [
+      {title: 'Store details', body: {tabularData: storeDetailRows(result), firstColumnSubdued: true}},
+      ...(actions.length > 0 ? [{body: {list: {title: {bold: 'Next steps'}, items: actions}}}] : []),
+    ],
   })
 }
 
@@ -29,11 +32,11 @@ function storeDetailRows(result: StoreInfoResult): InlineToken[][] {
   return rows
 }
 
-function storeActions(result: StoreInfoResult): InlineToken[] {
-  const actions: InlineToken[] = []
-  pushAction(actions, result.adminUrl, 'Manage this store in the Shopify admin.')
-  pushAction(actions, result.accessUrl, 'View the storefront.')
-  pushAction(actions, result.saveUrl, 'Save your progress on this store.')
+function storeActions(result: StoreInfoResult): LinkToken[] {
+  const actions: LinkToken[] = []
+  pushAction(actions, result.adminUrl, 'Manage this store in the Shopify admin')
+  pushAction(actions, result.accessUrl, 'View the storefront')
+  pushAction(actions, result.saveUrl, 'Save your progress on this store')
   return actions
 }
 
@@ -47,6 +50,6 @@ function push(rows: InlineToken[][], label: string, value: string | undefined): 
   if (value) rows.push([label, value])
 }
 
-function pushAction(actions: InlineToken[], url: string | undefined, label: string): void {
+function pushAction(actions: LinkToken[], url: string | undefined, label: string): void {
   if (url) actions.push({link: {label, url}})
 }

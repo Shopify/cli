@@ -24,8 +24,11 @@ function storeDetailRows(): unknown[][] {
 }
 
 function storeActions(): unknown[] {
-  const opts = vi.mocked(renderInfo).mock.calls[0]?.[0] as {nextSteps?: unknown[]}
-  return opts.nextSteps ?? []
+  const opts = vi.mocked(renderInfo).mock.calls[0]?.[0] as {
+    customSections: {title?: string; body: {list?: {items: unknown[]}}}[]
+  }
+  const section = opts.customSections.find((sec) => sec.body?.list)
+  return section?.body.list?.items ?? []
 }
 
 // The labels of the detail rows (first cell of each row).
@@ -112,11 +115,11 @@ describe('renderStoreInfoResult', () => {
 
     const actions = storeActions()
     expect(actions).toEqual([
-      {link: {label: 'Manage this store in the Shopify admin.', url: 'https://admin.shopify.com/store/acme-widgets'}},
-      {link: {label: 'View the storefront.', url: 'https://app.shopify.com/auth/preview-store?token=access-token'}},
+      {link: {label: 'Manage this store in the Shopify admin', url: 'https://admin.shopify.com/store/acme-widgets'}},
+      {link: {label: 'View the storefront', url: 'https://app.shopify.com/auth/preview-store?token=access-token'}},
       {
         link: {
-          label: 'Save your progress on this store.',
+          label: 'Save your progress on this store',
           url: 'https://admin.shopify.com/store-transfer/accept/claim-token',
         },
       },
@@ -130,7 +133,7 @@ describe('renderStoreInfoResult', () => {
   test('omits action links for URLs that are not present', () => {
     renderStoreInfoResult(baseResult({adminUrl: 'https://admin.shopify.com/store/acme-widgets'}), 'text')
     expect(storeActions()).toEqual([
-      {link: {label: 'Manage this store in the Shopify admin.', url: 'https://admin.shopify.com/store/acme-widgets'}},
+      {link: {label: 'Manage this store in the Shopify admin', url: 'https://admin.shopify.com/store/acme-widgets'}},
     ])
   })
 
