@@ -170,7 +170,9 @@ describe('theme-fs', () => {
 
       // Then
       const watchOptions = watchSpy.mock.calls[0]?.[1] as {ignored: string[]}
-      expect(watchOptions.ignored).toContain('**/*.tmp.*')
+      expect(watchOptions.ignored).toContain('**/{blocks,layouts,snippets}/**/*.liquid.tmp.*')
+      expect(watchOptions.ignored).toContain('**/{config,locales}/**/*.json.tmp.*')
+      expect(watchOptions.ignored).toContain('**/{sections,templates}/**/*.{liquid,json}.tmp.*')
     })
 
     test('"delete" removes the file from the local disk and updates the file map', async () => {
