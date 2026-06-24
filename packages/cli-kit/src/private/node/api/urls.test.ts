@@ -79,4 +79,26 @@ describe('sanitizeURL', () => {
       'https://example.com/?access_token=****&refresh_token=****&device_code=****&subject_token=****&other=keep',
     )
   })
+
+  test('sanitizes credentials in the URL', () => {
+    // Given
+    const url = 'https://username:password@example.com/path'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://****:****@example.com/path')
+  })
+
+  test('sanitizes sensitive query parameters regardless of case', () => {
+    // Given
+    const url = 'https://example.com?Token=abc123&ACCESS_TOKEN=def456'
+
+    // When
+    const sanitizedUrl = sanitizeURL(url)
+
+    // Then
+    expect(sanitizedUrl).toBe('https://example.com/?Token=****&ACCESS_TOKEN=****')
+  })
 })
