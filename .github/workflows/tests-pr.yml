@@ -19,6 +19,9 @@ env:
   DEFAULT_NODE_VERSION: '26.1.0'
   PLAYWRIGHT_NODE_VERSION: '24.1.0'
 
+permissions:
+  contents: read
+
 jobs:
   type-check:
     name: 'Type check'
