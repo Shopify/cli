@@ -1,8 +1,7 @@
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderInfo, type InlineToken} from '@shopify/cli-kit/node/ui'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
 import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
-import type {InlineToken, TokenItem} from '@shopify/cli-kit/node/ui'
 
 type StoreInfoOutputFormat = 'text' | 'json'
 
@@ -12,24 +11,24 @@ export function renderStoreInfoResult(result: StoreInfoResult, format: StoreInfo
     return
   }
   renderInfo({
-    customSections: [{title: 'Store details', body: {list: {items: storeDetailItems(result)}}}],
+    customSections: [{title: 'Store details', body: {tabularData: storeDetailRows(result), firstColumnSubdued: true}}],
   })
 }
 
-function storeDetailItems(result: StoreInfoResult): TokenItem<InlineToken>[] {
-  const items: TokenItem<InlineToken>[] = []
-  push(items, 'ID', result.id)
-  push(items, 'Display Name', result.displayName)
-  push(items, 'Subdomain', result.subdomain)
-  push(items, 'Organization', result.organizationName)
-  push(items, 'Store owner', formatOwner(result.storeOwner))
-  push(items, 'Type', result.type ? capitalizeWords(result.type) : undefined)
-  push(items, 'Plan', result.plan ? capitalizeWords(result.plan) : undefined)
-  push(items, 'Feature Preview', result.featurePreview)
-  pushLink(items, 'Admin URL', result.adminUrl)
-  pushLink(items, 'Access URL', result.accessUrl)
-  pushLink(items, 'Save URL', result.saveUrl)
-  return items
+function storeDetailRows(result: StoreInfoResult): InlineToken[][] {
+  const rows: InlineToken[][] = []
+  push(rows, 'ID', result.id)
+  push(rows, 'Display Name', result.displayName)
+  push(rows, 'Subdomain', result.subdomain)
+  push(rows, 'Organization', result.organizationName)
+  push(rows, 'Store owner', formatOwner(result.storeOwner))
+  push(rows, 'Type', result.type ? capitalizeWords(result.type) : undefined)
+  push(rows, 'Plan', result.plan ? capitalizeWords(result.plan) : undefined)
+  push(rows, 'Feature Preview', result.featurePreview)
+  pushLink(rows, 'Admin URL', result.adminUrl)
+  pushLink(rows, 'Access URL', result.accessUrl)
+  pushLink(rows, 'Save URL', result.saveUrl)
+  return rows
 }
 
 function formatOwner(owner: StoreInfoStoreOwner | undefined): string | undefined {
@@ -38,13 +37,10 @@ function formatOwner(owner: StoreInfoStoreOwner | undefined): string | undefined
   return owner.name ?? owner.email
 }
 
-function push(items: TokenItem<InlineToken>[], label: string, value: string | undefined): void {
-  if (value) items.push(`${label}: ${value}`)
+function push(rows: InlineToken[][], label: string, value: string | undefined): void {
+  if (value) rows.push([label, value])
 }
 
-// Render URLs as link tokens so they don't wrap awkwardly inside the bordered
-// box. The UI kit renders link tokens as a compact footnote reference within
-// the box and prints the full URL outside it, where it can wrap freely.
-function pushLink(items: TokenItem<InlineToken>[], label: string, url: string | undefined): void {
-  if (url) items.push([`${label}:`, {link: {label: url, url}}])
+function pushLink(rows: InlineToken[][], label: string, url: string | undefined): void {
+  if (url) rows.push([label, {link: {label: 'Link', url}}])
 }
