@@ -1,10 +1,23 @@
 import {createRuntimeMetadataContainer} from './metadata.js'
 import * as errorHandler from './error-handler.js'
-import {sleep} from './system.js'
 import {describe, expect, test, vi} from 'vitest'
 import {performance} from 'node:perf_hooks'
 
 vi.mock('./error-handler.js')
+
+function mockPerformanceClock() {
+  let currentTime = 0
+  const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => currentTime)
+
+  return {
+    advanceBy(milliseconds: number) {
+      currentTime += milliseconds
+    },
+    restore() {
+      nowSpy.mockRestore()
+    },
+  }
+}
 
 describe('runtime metadata', () => {
   test('can manage data', async () => {
@@ -88,22 +101,31 @@ describe('runtime metadata', () => {
      */
     const container = createRuntimeMetadataContainer<{a: number; b: number; c: number; d: number; e: number}, {}>()
     performance.clearMeasures()
+    const clock = mockPerformanceClock()
 
-    await container.runWithTimer('a')(async () => {
-      await sleep(0.01)
-      await container.runWithTimer('b')(async () => {
-        await sleep(0.01)
-        await container.runWithTimer('c')(async () => {
-          await sleep(0.01)
-        })
-        await container.runWithTimer('d')(async () => {
-          await sleep(0.01)
-          await container.runWithTimer('e')(async () => {
-            await sleep(0.01)
+    try {
+      await container.runWithTimer('a')(async () => {
+        clock.advanceBy(10)
+        await container.runWithTimer('b')(async () => {
+          clock.advanceBy(10)
+          await container.runWithTimer('c')(async () => {
+            clock.advanceBy(10)
           })
+          clock.advanceBy(10)
+          await container.runWithTimer('d')(async () => {
+            clock.advanceBy(10)
+            await container.runWithTimer('e')(async () => {
+              clock.advanceBy(10)
+            })
+            clock.advanceBy(10)
+          })
+          clock.advanceBy(10)
         })
+        clock.advanceBy(10)
       })
-    })
+    } finally {
+      clock.restore()
+    }
 
     // eslint-disable-next-line id-length
     const {a, b, c, d, e} = container.getAllPublicMetadata() as any
@@ -134,6 +156,7 @@ describe('runtime metadata', () => {
   test('can handle when a nested timer fails', async () => {
     const container = createRuntimeMetadataContainer<{a: number; b: number}, {}>()
     performance.clearMeasures()
+    const clock = mockPerformanceClock()
 
     let errorOccurred = false
 
@@ -141,15 +164,17 @@ describe('runtime metadata', () => {
     // inside a timed section, we wouldn't want that to count as active time
     try {
       await container.runWithTimer('a')(async () => {
-        await sleep(0.01)
+        clock.advanceBy(10)
         await container.runWithTimer('b')(async () => {
-          await sleep(0.01)
+          clock.advanceBy(10)
           throw new Error('error inside a nested timed section')
         })
       })
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       errorOccurred = true
+    } finally {
+      clock.restore()
     }
 
     expect(errorOccurred).toBe(true)
