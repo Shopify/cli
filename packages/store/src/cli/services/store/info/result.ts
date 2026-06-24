@@ -2,6 +2,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
 import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
+import type {InlineToken, TokenItem} from '@shopify/cli-kit/node/ui'
 
 type StoreInfoOutputFormat = 'text' | 'json'
 
@@ -15,8 +16,8 @@ export function renderStoreInfoResult(result: StoreInfoResult, format: StoreInfo
   })
 }
 
-function storeDetailItems(result: StoreInfoResult): string[] {
-  const items: string[] = []
+function storeDetailItems(result: StoreInfoResult): TokenItem<InlineToken>[] {
+  const items: TokenItem<InlineToken>[] = []
   push(items, 'ID', result.id)
   push(items, 'Display Name', result.displayName)
   push(items, 'Subdomain', result.subdomain)
@@ -25,9 +26,9 @@ function storeDetailItems(result: StoreInfoResult): string[] {
   push(items, 'Type', result.type ? capitalizeWords(result.type) : undefined)
   push(items, 'Plan', result.plan ? capitalizeWords(result.plan) : undefined)
   push(items, 'Feature Preview', result.featurePreview)
-  push(items, 'Admin URL', result.adminUrl)
-  push(items, 'Access URL', result.accessUrl)
-  push(items, 'Save URL', result.saveUrl)
+  pushLink(items, 'Admin URL', result.adminUrl)
+  pushLink(items, 'Access URL', result.accessUrl)
+  pushLink(items, 'Save URL', result.saveUrl)
   return items
 }
 
@@ -37,6 +38,13 @@ function formatOwner(owner: StoreInfoStoreOwner | undefined): string | undefined
   return owner.name ?? owner.email
 }
 
-function push(items: string[], label: string, value: string | undefined): void {
+function push(items: TokenItem<InlineToken>[], label: string, value: string | undefined): void {
   if (value) items.push(`${label}: ${value}`)
+}
+
+// Render URLs as link tokens so they don't wrap awkwardly inside the bordered
+// box. The UI kit renders link tokens as a compact footnote reference within
+// the box and prints the full URL outside it, where it can wrap freely.
+function pushLink(items: TokenItem<InlineToken>[], label: string, url: string | undefined): void {
+  if (url) items.push([`${label}:`, {link: {label: url, url}}])
 }
