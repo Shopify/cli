@@ -254,6 +254,16 @@ jobs:
           E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
         run: pnpm exec playwright test --shard ${{ matrix.shard }}
+      - name: Cleanup current-run E2E apps
+        if: ${{ always() }}
+        continue-on-error: true
+        env:
+          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
+          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
+          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+        run: |
+          RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
+          pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern "r${RUN_TOKEN}a${GITHUB_RUN_ATTEMPT}"
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
