@@ -1,7 +1,7 @@
 import {appTestFixture as test, createApp, deployApp, versionsList, configLink} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
-import {requireEnv} from '../setup/env.js'
+import {e2eAppName, requireEnv} from '../setup/env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -79,8 +79,8 @@ test.describe('App deploy', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-deploy1-${Date.now()}`
-    const secondaryAppName = `E2E-deploy2-${Date.now()}`
+    const appName = e2eAppName('deploy1')
+    const secondaryAppName = e2eAppName('deploy2')
 
     let primaryAppUrl: string | undefined
     let secondaryAppUrl: string | undefined

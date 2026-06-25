@@ -3,7 +3,7 @@
 import {createApp, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
-import {requireEnv} from '../setup/env.js'
+import {e2eAppName, requireEnv} from '../setup/env.js'
 import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -19,7 +19,7 @@ test.describe('TOML config regression', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-toml-deploy-${Date.now()}`
+    const appName = e2eAppName('toml-deploy')
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
@@ -53,7 +53,7 @@ test.describe('TOML config regression', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-toml-dev-${Date.now()}`
+    const appName = e2eAppName('toml-dev')
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})

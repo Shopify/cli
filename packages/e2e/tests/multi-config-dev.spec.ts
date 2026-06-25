@@ -3,7 +3,7 @@
 import {createApp, extractClientId, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
-import {requireEnv} from '../setup/env.js'
+import {e2eAppName, requireEnv} from '../setup/env.js'
 import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -19,7 +19,7 @@ test.describe('Multi-config dev', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-multi-cfg-${Date.now()}`
+    const appName = e2eAppName('multi-cfg')
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
@@ -106,7 +106,7 @@ extensions_summary = "E2E staging app extensions"
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-mcfg-def-${Date.now()}`
+    const appName = e2eAppName('mcfg-def')
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
