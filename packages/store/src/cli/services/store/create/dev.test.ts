@@ -64,7 +64,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
       })
 
-    await createDevStore({name: 'test-store', json: false})
+    await createDevStore({name: 'test-store', plan: 'plus', json: false})
 
     expect(selectOrg).toHaveBeenCalledWith(undefined)
     expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
@@ -77,6 +77,7 @@ describe('createDevStore', () => {
           shopName: 'test-store',
           priceLookupKey: 'SHOPIFY_PLUS_APP_DEVELOPMENT',
           prepopulateTestData: false,
+          developerPreviewHandle: undefined,
         },
       }),
     )
@@ -87,6 +88,79 @@ describe('createDevStore', () => {
     )
   })
 
+  test.each([
+    ['basic', 'BASIC_APP_DEVELOPMENT'],
+    ['grow', 'PROFESSIONAL_APP_DEVELOPMENT'],
+    ['advanced', 'UNLIMITED_APP_DEVELOPMENT'],
+    ['plus', 'SHOPIFY_PLUS_APP_DEVELOPMENT'],
+  ] as const)('maps the %s plan to the %s price lookup key', async (plan, priceLookupKey) => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', plan, json: false})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: expect.objectContaining({priceLookupKey}),
+      }),
+    )
+  })
+
+  test('passes the feature preview as developerPreviewHandle', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', plan: 'plus', featurePreview: 'extended_variants', json: false})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: expect.objectContaining({developerPreviewHandle: 'extended_variants'}),
+      }),
+    )
+  })
+
+  test('passes prepopulateTestData when --with-demo-data is set', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', plan: 'plus', withDemoData: true, json: false})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: expect.objectContaining({prepopulateTestData: true}),
+      }),
+    )
+  })
+
+  test('includes plan, feature preview, and demo data in JSON output', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({
+      name: 'test-store',
+      plan: 'basic',
+      featurePreview: 'extended_variants',
+      withDemoData: true,
+      json: true,
+    })
+
+    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"plan": "basic"'))
+    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"featurePreview": "extended_variants"'))
+    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"demoData": true'))
+  })
+
   test('outputs JSON when --json flag is set', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc)
       .mockResolvedValueOnce(defaultMutationResult)
@@ -94,7 +168,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
       })
 
-    await createDevStore({name: 'test-store', json: true})
+    await createDevStore({name: 'test-store', plan: 'plus', json: true})
 
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"domain": "test-store.myshopify.com"'))
     expect(renderSuccess).not.toHaveBeenCalled()
@@ -105,7 +179,9 @@ describe('createDevStore', () => {
       createAppDevelopmentStore: null,
     })
 
-    await expect(createDevStore({name: 'test-store', json: false})).rejects.toThrow('unexpected empty response')
+    await expect(createDevStore({name: 'test-store', plan: 'plus', json: false})).rejects.toThrow(
+      'unexpected empty response',
+    )
   })
 
   test('throws AbortError when mutation returns userErrors', async () => {
@@ -117,7 +193,7 @@ describe('createDevStore', () => {
       },
     })
 
-    await expect(createDevStore({name: 'test-store', json: false})).rejects.toThrow('Name is taken')
+    await expect(createDevStore({name: 'test-store', plan: 'plus', json: false})).rejects.toThrow('Name is taken')
   })
 
   test('throws AbortError when mutation returns no shopDomain', async () => {
@@ -129,7 +205,9 @@ describe('createDevStore', () => {
       },
     })
 
-    await expect(createDevStore({name: 'test-store', json: false})).rejects.toThrow('no shop domain was returned')
+    await expect(createDevStore({name: 'test-store', plan: 'plus', json: false})).rejects.toThrow(
+      'no shop domain was returned',
+    )
   })
 
   test('throws AbortError when polling returns FAILED status', async () => {
@@ -139,7 +217,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'FAILED'}},
       })
 
-    await expect(createDevStore({name: 'test-store', json: false})).rejects.toThrow(
+    await expect(createDevStore({name: 'test-store', plan: 'plus', json: false})).rejects.toThrow(
       'Store creation failed with status: FAILED',
     )
   })
@@ -151,7 +229,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'TIMED_OUT'}},
       })
 
-    await expect(createDevStore({name: 'test-store', json: false})).rejects.toThrow(
+    await expect(createDevStore({name: 'test-store', plan: 'plus', json: false})).rejects.toThrow(
       'Store creation failed with status: TIMED_OUT',
     )
   })
@@ -163,7 +241,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'USER_ERROR'}},
       })
 
-    await expect(createDevStore({name: 'test-store', json: false})).rejects.toThrow(
+    await expect(createDevStore({name: 'test-store', plan: 'plus', json: false})).rejects.toThrow(
       'Store creation failed with status: USER_ERROR',
     )
   })
@@ -179,7 +257,7 @@ describe('createDevStore', () => {
 
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(defaultMutationResult)
 
-    await expect(createDevStore({name: 'test-store', json: false})).rejects.toThrow(
+    await expect(createDevStore({name: 'test-store', plan: 'plus', json: false})).rejects.toThrow(
       'Store creation timed out after 5 minutes',
     )
   })
@@ -191,7 +269,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
       })
 
-    await createDevStore({name: 'test-store', organizationId: 456, json: false})
+    await createDevStore({name: 'test-store', plan: 'plus', organizationId: 456, json: false})
 
     expect(selectOrg).toHaveBeenCalledWith('456')
   })
@@ -206,7 +284,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
       })
 
-    await createDevStore({name: 'test-store', json: false})
+    await createDevStore({name: 'test-store', plan: 'plus', json: false})
 
     expect(sleep).toHaveBeenCalledWith(2)
   })
@@ -218,7 +296,7 @@ describe('createDevStore', () => {
         organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
       })
 
-    await createDevStore({name: 'test-store', json: false})
+    await createDevStore({name: 'test-store', plan: 'plus', json: false})
 
     expect(renderSingleTask).toHaveBeenCalledWith(
       expect.objectContaining({
