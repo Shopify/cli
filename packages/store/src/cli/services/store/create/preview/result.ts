@@ -63,12 +63,6 @@ function renderTextResult(result: CreatePreviewStoreResult): void {
     headline: 'Store created',
     customSections: [
       {
-        body: {
-          tabularData: [['Name', result.store.name]],
-          firstColumnSubdued: true,
-        },
-      },
-      {
         body: result.message,
       },
       {

@@ -47,7 +47,7 @@ describe('preview store create service', () => {
     expect(result).toEqual({
       status: 'success',
       message:
-        'Your Shopify store is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
+        'Your Shopify store "Lavender Candles" is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
       store: {
         id: '123',
         name: 'Lavender Candles',

@@ -95,8 +95,7 @@ async function persistPreviewStoreSession(
 
   return {
     status: 'success',
-    message:
-      'Your Shopify store is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
+    message: `Your Shopify store "${response.shop.name}" is ready. This store is temporary. Create a free Shopify account to save it and start selling.`,
     store: {
       id: response.shop.id,
       name: response.shop.name,
