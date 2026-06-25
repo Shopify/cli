@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {createApp, injectFixtureToml} from '../setup/app.js'
+import {createApp, devDashboardAppUrl, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
@@ -20,6 +20,7 @@ test.describe('TOML config regression', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('toml-deploy')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
@@ -28,6 +29,7 @@ test.describe('TOML config regression', () => {
 
       // Overwrite with fully populated TOML fixture (injects the real client_id)
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       const result = await cli.exec(['app', 'deploy', '--path', appDir, '--allow-updates', '--allow-deletes'], {
         timeout: CLI_TIMEOUT.long,
@@ -41,6 +43,7 @@ test.describe('TOML config regression', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           workerIndex: env.workerIndex,
         })
@@ -54,6 +57,7 @@ test.describe('TOML config regression', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('toml-dev')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
@@ -61,6 +65,7 @@ test.describe('TOML config regression', () => {
       const appDir = initResult.appDir
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir], {env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn}})
 
@@ -83,6 +88,7 @@ test.describe('TOML config regression', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,

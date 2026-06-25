@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {createApp, extractClientId, injectFixtureToml} from '../setup/app.js'
+import {createApp, devDashboardAppUrl, extractClientId, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
@@ -20,11 +20,13 @@ test.describe('Multi-config dev', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('multi-cfg')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       // Inject the fully populated TOML as the default config
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
@@ -93,6 +95,7 @@ extensions_summary = "E2E staging app extensions"
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
@@ -107,11 +110,13 @@ extensions_summary = "E2E staging app extensions"
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('mcfg-def')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
       const clientId = extractClientId(appDir)
@@ -168,6 +173,7 @@ extensions_summary = "E2E staging app extensions"
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,

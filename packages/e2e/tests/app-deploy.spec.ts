@@ -1,4 +1,11 @@
-import {appTestFixture as test, createApp, deployApp, versionsList, configLink} from '../setup/app.js'
+import {
+  appTestFixture as test,
+  createApp,
+  deployApp,
+  devDashboardAppUrl,
+  versionsList,
+  configLink,
+} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
@@ -98,6 +105,7 @@ test.describe('App deploy', () => {
       })
       expect(initResult.exitCode, `Step 1 - primary app init failed:\n${initResult.stderr}`).toBe(0)
       const appDir = initResult.appDir
+      primaryAppUrl = devDashboardAppUrl(appDir, env.orgId)
 
       // Step 2: Deploy with a tagged version
       const versionTag = `E2E-v1-${Date.now()}`
@@ -120,7 +128,7 @@ test.describe('App deploy', () => {
       )
       const deployOutput = deployResult.stdout + deployResult.stderr
       expect(deployResult.exitCode, `Step 2 - deploy failed:\n${deployOutput}`).toBe(0)
-      primaryAppUrl = devDashboardAppUrlFromOutput(deployOutput)
+      primaryAppUrl = devDashboardAppUrlFromOutput(deployOutput) ?? primaryAppUrl
       assertDeployAnalytics({output: deployOutput, appName, step: 'Step 2'})
 
       // Step 3: Verify the primary tag is active and no other version is stuck active.
@@ -148,6 +156,7 @@ test.describe('App deploy', () => {
         fs.existsSync(secondaryTomlPath),
         `Step 4 - expected ${secondaryTomlPath} to exist after config link`,
       ).toBe(true)
+      secondaryAppUrl = devDashboardAppUrl(appDir, env.orgId, secondaryConfig)
 
       // Step 5: Deploy from primary dir to secondary app via --config secondary
       const secondaryVersionTag = `E2E-v2-${Date.now()}`
@@ -160,7 +169,7 @@ test.describe('App deploy', () => {
       })
       const secondaryDeployOutput = secondaryDeployResult.stdout + secondaryDeployResult.stderr
       expect(secondaryDeployResult.exitCode, `Step 5 - secondary deploy failed:\n${secondaryDeployOutput}`).toBe(0)
-      secondaryAppUrl = devDashboardAppUrlFromOutput(secondaryDeployOutput)
+      secondaryAppUrl = devDashboardAppUrlFromOutput(secondaryDeployOutput) ?? secondaryAppUrl
 
       // Step 6: Verify the secondary deploy hit the secondary app (not a silent
       // fallback to primary). Checks the secondary tag is active, no other
