@@ -14,7 +14,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
+      "outputs": ["{projectRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*"],
       "options": {
         "command": "pnpm tsc",

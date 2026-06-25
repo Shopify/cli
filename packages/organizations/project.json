@@ -14,7 +14,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
+      "outputs": ["{projectRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
@@ -68,7 +68,10 @@
     },
     "graphql-codegen:generate:organizations-destinations": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql"],
+      "inputs": [
+        "{workspaceRoot}/graphql.config.ts",
+        "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql"
+      ],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
       "options": {
         "commands": ["pnpm exec graphql-codegen --project=organizationsDestinations"],
