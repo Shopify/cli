@@ -45,9 +45,13 @@ export interface DevServerSession extends AdminSession {
 }
 
 /**
- * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']
+ * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off', 'local-hot-reload']
+ *
+ * 'local-hot-reload' selects the local dev server (services/dev/local), which
+ * renders locally and reloads over its own transport, instead of the remote
+ * Storefront-Renderer-backed flow used by the other modes.
  */
-export type LiveReload = 'hot-reload' | 'full-page' | 'off'
+export type LiveReload = 'hot-reload' | 'full-page' | 'off' | 'local-hot-reload'
 
 /**
  * Controls the visibility of the error overlay when an asset upload fails. Options: ['silent', 'default']

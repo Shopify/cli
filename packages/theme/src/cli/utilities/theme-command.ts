@@ -73,6 +73,12 @@ export default abstract class ThemeCommand extends Command {
     }
     const requiredFlags = klass.multiEnvironmentsFlags
     const {args, flags} = await this.parse(klass)
+
+    if (flags['live-reload'] === 'local-hot-reload') {
+      await this.command(flags, undefined, false, args)
+      return
+    }
+
     const commandRequiresAuth = 'password' in klass.flags
 
     const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)

@@ -94,6 +94,10 @@ async function contextDevServerContext(
       only: [],
       host,
       port,
+      /* Theme-extension dev always uses the remote 'hot-reload' mode. The new
+         'local-hot-reload' value never reaches here — it is routed to the
+         local dev server in the theme dev command before this server is set
+         up — so widening the LiveReload union has no effect on extensions. */
       liveReload: 'hot-reload',
       standardEventsDevBundle: false,
       standardEventsInspector: false,

@@ -1,3 +1,4 @@
+import {resolvePort} from './common/flags.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {dev} from '../../services/dev.js'
@@ -5,8 +6,9 @@ import {DevelopmentThemeManager} from '../../utilities/development-theme-manager
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
 import {ensureLiveThemeConfirmed} from '../../utilities/theme-ui.js'
+import {devServe} from '../../services/dev/local/dev-serve.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -49,14 +51,16 @@ You can run this command only in a directory that matches the [default Shopify t
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
+      default: '127.0.0.1',
     }),
     'live-reload': Flags.string({
       description: `The live reload mode switches the server behavior when a file is modified:
-- hot-reload Hot reloads local changes to CSS and sections (default)
-- full-page  Always refreshes the entire page
-- off        Deactivate live reload`,
+- hot-reload       Hot reloads local changes to CSS and sections (default)
+- full-page        Always refreshes the entire page
+- off              Deactivate live reload
+- local-hot-reload Serve the theme from the local dev server with local reloading`,
       default: 'hot-reload',
-      options: ['hot-reload', 'full-page', 'off'],
+      options: ['hot-reload', 'full-page', 'off', 'local-hot-reload'],
       env: 'SHOPIFY_FLAG_LIVE_RELOAD',
     }),
     'error-overlay': Flags.string({
@@ -82,9 +86,12 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR',
       default: false,
     }),
-    port: portFlag({
-      description: 'Local port to serve theme preview from.',
+    port: Flags.integer({
+      min: 1,
+      max: 65535,
+      description: 'Local port to serve theme preview from. Must be between 1 and 65535.',
       env: 'SHOPIFY_FLAG_PORT',
+      default: 9292,
     }),
     theme: Flags.string({
       char: 't',
@@ -145,12 +152,43 @@ You can run this command only in a directory that matches the [default Shopify t
   static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(devFlags: DevFlags, adminSession: AdminSession) {
+    const t0 = performance.now()
+
     const {ignore = [], only = []} = devFlags
 
     recordEvent('theme-command:dev:single-env:authenticated')
 
     let theme: Theme
     let flags
+
+    /* The local dev server (local-hot-reload) renders locally and never sets
+       up a remote Storefront session, so it branches before the remote dev()
+       flow and skips the post-dev metafields pull. The existing dev() path
+       below is left untouched. */
+    if (devFlags['live-reload'] === 'local-hot-reload') {
+      const t1 = performance.now()
+      // eslint-disable-next-line no-console
+      console.log(t1 - t0)
+
+      // TO-DO: Flag handling
+
+      const {path, store, host} = devFlags
+      const port = await resolvePort(devFlags.port)
+      // const store = resolveStore(devFlags.store)
+
+      await devServe(
+        path,
+        store ?? '',
+        host,
+        port,
+        // eslint-disable-next-line no-console
+        () => console.log('http://127.0.0.1:9292'),
+        // eslint-disable-next-line no-console
+        () => console.log('Shoppee says good bye.'),
+      )
+
+      return
+    }
 
     if (devFlags.theme) {
       const filter = {filter: {theme: devFlags.theme}}
