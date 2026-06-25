@@ -1,16 +1,13 @@
-import {renderBulkOperationUserErrors, formatBulkOperationCancellationResult} from './format-bulk-operation-status.js'
-import {
-  BulkOperationCancel,
-  BulkOperationCancelMutation,
-  BulkOperationCancelMutationVariables,
-} from '../../api/graphql/bulk-operations/generated/bulk-operation-cancel.js'
 import {formatOperationInfo, createAdminSessionAsApp} from '../graphql/common.js'
 import {OrganizationApp, Organization} from '../../models/organization.js'
-import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {
+  cancelBulkOperationRequest,
+  renderBulkOperationUserErrors,
+  formatBulkOperationCancellationResult,
+  extractBulkOperationId,
+} from '@shopify/cli-kit/node/api/bulk-operations'
+import {renderInfo, renderError, renderSuccess, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-
-const API_VERSION = '2026-01'
 
 interface CancelBulkOperationOptions {
   organization: Organization
@@ -35,24 +32,27 @@ export async function cancelBulkOperation(options: CancelBulkOperationOptions): 
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
-  const response = await adminRequestDoc<BulkOperationCancelMutation, BulkOperationCancelMutationVariables>({
-    query: BulkOperationCancel,
-    session: adminSession,
-    variables: {id: operationId},
-    version: API_VERSION,
-  })
+  const bulkOperationCancel = await cancelBulkOperationRequest({adminSession, operationId})
 
-  if (response.bulkOperationCancel?.userErrors?.length) {
-    renderBulkOperationUserErrors(response.bulkOperationCancel.userErrors, 'Failed to cancel bulk operation.')
+  if (bulkOperationCancel?.userErrors?.length) {
+    renderBulkOperationUserErrors(bulkOperationCancel.userErrors, 'Failed to cancel bulk operation.')
     return
   }
 
-  const operation = response.bulkOperationCancel?.bulkOperation
+  const operation = bulkOperationCancel?.bulkOperation
   if (operation) {
     const result = formatBulkOperationCancellationResult(operation)
+    // The engine is command-agnostic; this command writes its own "check status" hint.
+    const body: TokenItem | undefined =
+      operation.status === 'CANCELING'
+        ? [
+            'This may take a few moments. Check the status with:\n',
+            {command: `shopify app bulk status --id=${extractBulkOperationId(operation.id)}`},
+          ]
+        : result.body
     const renderOptions = {
       headline: result.headline,
-      ...(result.body && {body: result.body}),
+      ...(body && {body}),
       ...(result.customSections && {customSections: result.customSections}),
     }
 

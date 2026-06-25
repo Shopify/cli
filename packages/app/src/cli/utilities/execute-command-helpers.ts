@@ -1,10 +1,7 @@
 import {linkedAppContext, LoadedAppContextOutput} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
-import {validateSingleOperation} from '../services/graphql/common.js'
 import {OrganizationStore} from '../models/organization.js'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {resolveBulkOperationQuery} from '@shopify/cli-kit/node/api/bulk-operations'
 
 interface AppStoreContextFlags {
   path: string
@@ -61,38 +58,7 @@ export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promi
  * @returns Context object containing query, app context, and store information.
  */
 export async function prepareExecuteContext(flags: ExecuteCommandFlags): Promise<ExecuteContext> {
-  let query: string | undefined
-
-  if (flags.query !== undefined) {
-    if (!flags.query.trim()) {
-      throw new AbortError('The --query flag value is empty. Please provide a valid GraphQL query or mutation.')
-    }
-    query = flags.query
-  } else if (flags['query-file']) {
-    const queryFile = flags['query-file']
-    if (!(await fileExists(queryFile))) {
-      throw new AbortError(
-        outputContent`Query file not found at ${outputToken.path(queryFile)}. Please check the path and try again.`,
-      )
-    }
-    query = await readFile(queryFile, {encoding: 'utf8'})
-    if (!query.trim()) {
-      throw new AbortError(
-        outputContent`Query file at ${outputToken.path(
-          queryFile,
-        )} is empty. Please provide a valid GraphQL query or mutation.`,
-      )
-    }
-  }
-
-  if (!query) {
-    throw new BugError(
-      'Query should have been provided via --query or --query-file flags due to exactlyOne constraint. This indicates the oclif flag validation failed.',
-    )
-  }
-
-  // Validate GraphQL syntax and ensure single operation
-  validateSingleOperation(query)
+  const query = await resolveBulkOperationQuery({query: flags.query, queryFile: flags['query-file']})
 
   const {appContextResult, store} = await prepareAppStoreContext(flags)
 

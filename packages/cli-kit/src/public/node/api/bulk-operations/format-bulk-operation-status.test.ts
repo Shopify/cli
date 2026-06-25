@@ -3,9 +3,9 @@ import {
   renderBulkOperationUserErrors,
   formatBulkOperationCancellationResult,
 } from './format-bulk-operation-status.js'
-import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {GetBulkOperationByIdQuery} from '../../../../cli/api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {mockAndCaptureOutput} from '../../testing/output.js'
 import {describe, test, expect, afterEach} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
 
@@ -142,7 +142,7 @@ describe('renderBulkOperationUserErrors', () => {
 })
 
 describe('formatBulkOperationCancellationResult', () => {
-  test('formats CANCELING status with success render type and status command', () => {
+  test('formats CANCELING status with success render type and no command-specific body', () => {
     const operation = createMockOperation({
       id: 'gid://shopify/BulkOperation/6578182226092',
       status: 'CANCELING',
@@ -150,10 +150,8 @@ describe('formatBulkOperationCancellationResult', () => {
     const result = formatBulkOperationCancellationResult(operation)
 
     expect(result.headline).toBe('Bulk operation is being cancelled.')
-    expect(result.body).toEqual([
-      'This may take a few moments. Check the status with:\n',
-      {command: 'shopify app bulk status --id=6578182226092'},
-    ])
+    // The engine stays command-agnostic; each command appends its own "check status" hint.
+    expect(result.body).toBeUndefined()
     expect(result.customSections).toBeUndefined()
     expect(result.renderType).toBe('success')
   })

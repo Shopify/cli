@@ -2,19 +2,25 @@ import {
   StagedUploadsCreate,
   StagedUploadsCreateMutation,
   StagedUploadsCreateMutationVariables,
-} from '../../api/graphql/bulk-operations/generated/staged-uploads-create.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetch} from '@shopify/cli-kit/node/http'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+} from '../../../../cli/api/graphql/bulk-operations/generated/staged-uploads-create.js'
+import {adminRequestDoc} from '../admin.js'
+import {AdminSession} from '../../session.js'
+import {fetch} from '../../http.js'
+import {AbortError} from '../../error.js'
+import {outputContent} from '../../output.js'
+import {renderSingleTask} from '../../ui.js'
 
 interface StageFileOptions {
   adminSession: AdminSession
   variablesJsonl?: string
 }
 
+/**
+ * Uploads bulk mutation variables to a staged upload target and returns the staged upload key.
+ *
+ * @param options - The admin session and JSONL variables.
+ * @returns The staged upload key used as `stagedUploadPath` for the bulk mutation.
+ */
 export async function stageFile(options: StageFileOptions): Promise<string> {
   const {adminSession, variablesJsonl} = options
 

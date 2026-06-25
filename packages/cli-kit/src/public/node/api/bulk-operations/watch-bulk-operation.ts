@@ -3,13 +3,13 @@ import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {
   GetBulkOperationById,
   GetBulkOperationByIdQuery,
-} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+} from '../../../../cli/api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {adminRequestDoc} from '../admin.js'
+import {sleep} from '../../system.js'
+import {AdminSession} from '../../session.js'
+import {outputContent} from '../../output.js'
+import {renderSingleTask} from '../../ui.js'
+import {AbortSignal} from '../../abort.js'
 
 const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'CANCELED', 'EXPIRED']
 const INITIAL_POLL_INTERVAL_SECONDS = 1
@@ -21,6 +21,14 @@ export const QUICK_WATCH_POLL_INTERVAL_MS = 300
 
 export type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
 
+/**
+ * Polls a bulk operation briefly to surface its initial state, returning quickly so the caller can
+ * keep working while the operation runs in the background.
+ *
+ * @param adminSession - The admin session.
+ * @param operationId - The bulk operation ID to poll.
+ * @returns The latest known operation state.
+ */
 export async function shortBulkOperationPoll(adminSession: AdminSession, operationId: string): Promise<BulkOperation> {
   return renderSingleTask<BulkOperation>({
     title: outputContent`Starting bulk operation`,
@@ -48,6 +56,16 @@ export async function shortBulkOperationPoll(adminSession: AdminSession, operati
   })
 }
 
+/**
+ * Polls a bulk operation until it reaches a terminal state or is aborted, updating the rendered
+ * status as it progresses.
+ *
+ * @param adminSession - The admin session.
+ * @param operationId - The bulk operation ID to watch.
+ * @param abortSignal - Signal used to stop watching early.
+ * @param onAbort - Callback invoked when the user aborts.
+ * @returns The latest known operation state.
+ */
 export async function watchBulkOperation(
   adminSession: AdminSession,
   operationId: string,
@@ -86,11 +104,11 @@ interface PollBulkOperationOptions {
   adminSession: AdminSession
   operationId: string
   pollIntervalSeconds: number
-  /** When true, polls faster initially then slows to pollIntervalSeconds */
+  /** When true, polls faster initially then slows to pollIntervalSeconds. */
   useAdaptivePolling?: boolean
-  /** Poll interval in seconds for initial fast polls (default: 1) */
+  /** Poll interval in seconds for initial fast polls (default: 1). */
   initialPollIntervalSeconds?: number
-  /** Number of fast polls before switching to regular interval (default: 10) */
+  /** Number of fast polls before switching to regular interval (default: 10). */
   initialPollCount?: number
   abortSignal?: AbortSignal
 }
@@ -129,11 +147,17 @@ async function* pollBulkOperation({
     }
 
     if (abortSignal) {
+      // Remove the abort listener after each race so the common case (sleep wins) doesn't leak a
+      // listener per poll, which would otherwise trigger MaxListenersExceededWarning on long watches.
+      let removeAbortListener: (() => void) | undefined
+      const abortPromise = new Promise<void>((resolve) => {
+        const handler = () => resolve()
+        abortSignal.addEventListener('abort', handler, {once: true})
+        removeAbortListener = () => abortSignal.removeEventListener('abort', handler)
+      })
       // eslint-disable-next-line no-await-in-loop
-      await Promise.race([
-        sleep(pollInterval),
-        new Promise((resolve) => abortSignal.addEventListener('abort', resolve)),
-      ])
+      await Promise.race([sleep(pollInterval), abortPromise])
+      removeAbortListener?.()
     } else {
       // eslint-disable-next-line no-await-in-loop
       await sleep(pollInterval)

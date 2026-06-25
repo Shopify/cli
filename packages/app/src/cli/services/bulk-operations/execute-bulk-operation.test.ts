@@ -1,13 +1,15 @@
 import {executeBulkOperation} from './execute-bulk-operation.js'
-import {runBulkOperationQuery} from './run-query.js'
-import {runBulkOperationMutation} from './run-mutation.js'
-import {watchBulkOperation, shortBulkOperationPoll} from './watch-bulk-operation.js'
-import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {resolveApiVersion, createAdminSessionAsApp} from '../graphql/common.js'
-import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
-import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
 import {OrganizationApp, OrganizationSource, OrganizationStore} from '../../models/organization.js'
+import {
+  runBulkOperationQuery,
+  runBulkOperationMutation,
+  watchBulkOperation,
+  shortBulkOperationPoll,
+  downloadBulkOperationResults,
+  BULK_OPERATIONS_MIN_API_VERSION,
+  type BulkOperation,
+} from '@shopify/cli-kit/node/api/bulk-operations'
 import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile, readFile} from '@shopify/cli-kit/node/fs'
@@ -15,10 +17,17 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 
-vi.mock('./run-query.js')
-vi.mock('./run-mutation.js')
-vi.mock('./watch-bulk-operation.js')
-vi.mock('./download-bulk-operation-results.js')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/api/bulk-operations')
+  return {
+    ...actual,
+    runBulkOperationQuery: vi.fn(),
+    runBulkOperationMutation: vi.fn(),
+    watchBulkOperation: vi.fn(),
+    shortBulkOperationPoll: vi.fn(),
+    downloadBulkOperationResults: vi.fn(),
+  }
+})
 vi.mock('../graphql/common.js', async () => {
   const actual = await vi.importActual('../graphql/common.js')
   return {
@@ -72,9 +81,7 @@ describe('executeBulkOperation', () => {
   }
   const mockAdminSession = {token: 'test-token', storeFqdn}
 
-  const createdBulkOperation: NonNullable<
-    NonNullable<BulkOperationRunQueryMutation['bulkOperationRunQuery']>['bulkOperation']
-  > = {
+  const createdBulkOperation: BulkOperation = {
     id: 'gid://shopify/BulkOperation/123',
     type: 'QUERY',
     status: 'CREATED',
@@ -99,7 +106,7 @@ describe('executeBulkOperation', () => {
 
   test('runs query operation when GraphQL document starts with query', async () => {
     const query = 'query { products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -122,7 +129,7 @@ describe('executeBulkOperation', () => {
 
   test('runs query operation when GraphQL document starts with curly brace', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -146,7 +153,7 @@ describe('executeBulkOperation', () => {
   test('runs mutation operation when GraphQL document starts with mutation', async () => {
     const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
     const variables = ['{"input":{"id":"gid://shopify/Product/123"}}']
-    const mockResponse: BulkOperationRunMutationMutation['bulkOperationRunMutation'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationMutation>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -172,7 +179,7 @@ describe('executeBulkOperation', () => {
   test('passes variables parameter to runBulkOperationMutation when variables are provided', async () => {
     const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
     const variables = ['{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}']
-    const mockResponse: BulkOperationRunMutationMutation['bulkOperationRunMutation'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationMutation>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -196,7 +203,7 @@ describe('executeBulkOperation', () => {
 
   test('renders running message when bulk operation returns without user errors', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -218,7 +225,7 @@ describe('executeBulkOperation', () => {
 
   test('renders warning with formatted field errors when bulk operation returns user errors', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: null,
       userErrors: [
         {field: ['query'], message: 'Invalid query syntax', code: null},
@@ -359,7 +366,7 @@ describe('executeBulkOperation', () => {
 
   test('uses watchBulkOperation (not quickWatchBulkOperation) when watch flag is true', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -400,7 +407,7 @@ describe('executeBulkOperation', () => {
 
   test('renders help message in an info banner when watch is provided and user aborts', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -433,7 +440,7 @@ describe('executeBulkOperation', () => {
 
   test('uses quickWatchBulkOperation (not watchBulkOperation) when watch flag is false', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -460,7 +467,7 @@ describe('executeBulkOperation', () => {
       status: 'RUNNING' as const,
       objectCount: '50',
     }
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -492,7 +499,7 @@ describe('executeBulkOperation', () => {
       url: 'https://example.com/download',
       objectCount: '100',
     }
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -526,7 +533,7 @@ describe('executeBulkOperation', () => {
         status,
         objectCount: '0',
       }
-      const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
         bulkOperation: createdBulkOperation,
         userErrors: [],
       }
@@ -558,7 +565,7 @@ describe('executeBulkOperation', () => {
       const resultsContent =
         '{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/123"},"userErrors":[]}},"__lineNumber":0}\n{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/456"},"userErrors":[]}},"__lineNumber":1}'
 
-      const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
         bulkOperation: createdBulkOperation,
         userErrors: [],
       }
@@ -592,7 +599,7 @@ describe('executeBulkOperation', () => {
     const resultsContent =
       '{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/123"},"userErrors":[]}},"__lineNumber":0}\n{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/456"},"userErrors":[]}},"__lineNumber":1}'
 
-    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -624,7 +631,7 @@ describe('executeBulkOperation', () => {
     'waits for operation to finish and renders error when watch is provided and operation finishes with %s status',
     async (status) => {
       const query = '{ products { edges { node { id } } } }'
-      const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
         bulkOperation: createdBulkOperation,
         userErrors: [],
       }
@@ -682,7 +689,7 @@ describe('executeBulkOperation', () => {
     const query = '{ products { edges { node { id } } } }'
     const resultsWithErrors = '{"data":{"productUpdate":{"userErrors":[{"message":"invalid input"}]}},"__lineNumber":0}'
 
-    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -718,7 +725,7 @@ describe('executeBulkOperation', () => {
     const query = '{ products { edges { node { id } } } }'
     const resultsWithoutErrors = '{"data":{"productUpdate":{"product":{"id":"123"},"userErrors":[]}},"__lineNumber":0}'
 
-    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -756,7 +763,7 @@ describe('executeBulkOperation', () => {
       const resultsWithErrors =
         '{"data":{"productUpdate":{"userErrors":[{"message":"invalid input"}]}},"__lineNumber":0}'
 
-      const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      const initialResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
         bulkOperation: createdBulkOperation,
         userErrors: [],
       }
@@ -793,7 +800,7 @@ describe('executeBulkOperation', () => {
 
   test('calls resolveApiVersion with minimum API version constant', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
@@ -816,7 +823,7 @@ describe('executeBulkOperation', () => {
   test('uses resolved API version when running bulk operation', async () => {
     vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
     const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationQuery>> = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }

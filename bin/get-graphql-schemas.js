@@ -81,7 +81,7 @@ const schemas = [
     pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
     localPaths: [
       './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
-      './packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql',
+      './packages/cli-kit/src/cli/api/graphql/bulk-operations/admin_schema.graphql',
       './packages/app/src/cli/api/graphql/admin/admin_schema.graphql',
     ],
     usesLfs: true,

@@ -1,7 +1,6 @@
 import {prepareAppStoreContext, prepareExecuteContext} from './execute-command-helpers.js'
 import {linkedAppContext} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
-import {validateSingleOperation} from '../services/graphql/common.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
@@ -9,9 +8,6 @@ import {describe, test, expect, vi, beforeEach} from 'vitest'
 vi.mock('../services/app-context.js')
 vi.mock('../services/store-context.js')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('../services/graphql/common.js', () => ({
-  validateSingleOperation: vi.fn(),
-}))
 
 describe('prepareAppStoreContext', () => {
   const mockFlags = {
@@ -211,9 +207,11 @@ describe('prepareExecuteContext', () => {
     })
   })
 
-  test('validates GraphQL query using validateSingleOperation', async () => {
-    await prepareExecuteContext(mockFlags)
+  test('rejects a query that contains multiple operations', async () => {
+    const flagsWithMultipleOperations = {...mockFlags, query: 'query A { a } query B { b }'}
 
-    expect(validateSingleOperation).toHaveBeenCalledWith(mockFlags.query)
+    await expect(prepareExecuteContext(flagsWithMultipleOperations)).rejects.toThrow(
+      'must contain exactly one operation',
+    )
   })
 })

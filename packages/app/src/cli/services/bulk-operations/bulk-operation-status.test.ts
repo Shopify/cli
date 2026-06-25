@@ -1,14 +1,7 @@
-import {
-  getBulkOperationStatus,
-  listBulkOperations,
-  normalizeBulkOperationId,
-  extractBulkOperationId,
-} from './bulk-operation-status.js'
-import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
-import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {getBulkOperationStatus, listBulkOperations} from './bulk-operation-status.js'
 import {OrganizationApp, Organization, OrganizationSource} from '../../models/organization.js'
-import {ListBulkOperationsQuery} from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
 import {resolveApiVersion} from '../graphql/common.js'
+import {BULK_OPERATIONS_MIN_API_VERSION, type BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
@@ -51,41 +44,8 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-describe('normalizeBulkOperationId', () => {
-  test('returns GID as-is when already in GID format', () => {
-    const gid = 'gid://shopify/BulkOperation/123'
-    expect(normalizeBulkOperationId(gid)).toBe(gid)
-  })
-
-  test('converts numeric ID to GID format', () => {
-    expect(normalizeBulkOperationId('123')).toBe('gid://shopify/BulkOperation/123')
-    expect(normalizeBulkOperationId('456789')).toBe('gid://shopify/BulkOperation/456789')
-  })
-
-  test('returns non-numeric, non-GID string as-is', () => {
-    const invalidId = 'invalid-id'
-    expect(normalizeBulkOperationId(invalidId)).toBe(invalidId)
-  })
-})
-
-describe('extractBulkOperationId', () => {
-  test('extracts numeric ID from GID', () => {
-    expect(extractBulkOperationId('gid://shopify/BulkOperation/123')).toBe('123')
-    expect(extractBulkOperationId('gid://shopify/BulkOperation/456789')).toBe('456789')
-  })
-
-  test('returns input as-is if not a valid GID format', () => {
-    expect(extractBulkOperationId('gid://shopify/BulkOperation/ABC')).toBe('gid://shopify/BulkOperation/ABC')
-    expect(extractBulkOperationId('BulkOperation/123')).toBe('BulkOperation/123')
-    expect(extractBulkOperationId('invalid-id')).toBe('invalid-id')
-    expect(extractBulkOperationId('123')).toBe('123')
-  })
-})
-
 describe('getBulkOperationStatus', () => {
-  function mockBulkOperation(
-    overrides?: Partial<NonNullable<GetBulkOperationByIdQuery['bulkOperation']>>,
-  ): GetBulkOperationByIdQuery {
+  function mockBulkOperation(overrides?: Partial<BulkOperation>): {bulkOperation: BulkOperation | null} {
     return {
       bulkOperation: {
         id: operationId,
@@ -243,9 +203,7 @@ describe('getBulkOperationStatus', () => {
 })
 
 describe('listBulkOperations', () => {
-  function mockBulkOperationsList(
-    operations: Partial<NonNullable<ListBulkOperationsQuery['bulkOperations']['nodes'][0]>>[],
-  ): ListBulkOperationsQuery {
+  function mockBulkOperationsList(operations: Partial<BulkOperation>[]): {bulkOperations: {nodes: BulkOperation[]}} {
     return {
       bulkOperations: {
         nodes: operations.map((op) => ({

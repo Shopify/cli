@@ -5,17 +5,17 @@ import {
   QUICK_WATCH_TIMEOUT_MS,
 } from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {adminRequestDoc} from '../admin.js'
+import {sleep} from '../../system.js'
+import {renderSingleTask} from '../../ui.js'
+import {outputContent} from '../../output.js'
+import {AbortController} from '../../abort.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('./format-bulk-operation-status.js')
-vi.mock('@shopify/cli-kit/node/api/admin')
-vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('../admin.js')
+vi.mock('../../system.js')
+vi.mock('../../ui.js')
 
 describe('watchBulkOperation', () => {
   const mockAdminSession = {token: 'test-token', storeFqdn: 'test.myshopify.com'}

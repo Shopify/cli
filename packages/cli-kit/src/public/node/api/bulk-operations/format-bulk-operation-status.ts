@@ -1,8 +1,13 @@
-import {extractBulkOperationId} from './bulk-operation-status.js'
-import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
-import {renderError, TokenItem} from '@shopify/cli-kit/node/ui'
+import {GetBulkOperationByIdQuery} from '../../../../cli/api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
+import {outputContent, outputToken, TokenizedString} from '../../output.js'
+import {renderError, TokenItem} from '../../ui.js'
 
+/**
+ * Produces a human-readable status line for a bulk operation.
+ *
+ * @param operation - The bulk operation.
+ * @returns A tokenized status string.
+ */
 export function formatBulkOperationStatus(
   operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,
 ): TokenizedString {
@@ -39,6 +44,12 @@ interface UserError {
   message: string
 }
 
+/**
+ * Renders a list of bulk operation user errors.
+ *
+ * @param userErrors - The user errors to render.
+ * @param headline - The headline for the error block.
+ */
 export function renderBulkOperationUserErrors(userErrors: UserError[], headline: string): void {
   const errorMessages = userErrors
     .map((error) => outputContent`${error.field?.join('.') ?? 'unknown'}: ${error.message}`.value)
@@ -50,13 +61,23 @@ export function renderBulkOperationUserErrors(userErrors: UserError[], headline:
   })
 }
 
-interface BulkOperationCancellationResult {
+export interface BulkOperationCancellationResult {
   headline: string
   body?: TokenItem
   customSections?: {body: {list: {items: string[]}}[]}[]
   renderType: 'success' | 'warning' | 'info'
 }
 
+/**
+ * Classifies the outcome of a cancellation request into a renderable payload.
+ *
+ * The engine intentionally stays command-agnostic: for an in-progress cancellation it returns just
+ * the headline and render type, leaving each command to append its own "check status" hint (which
+ * references that command's own `bulk status` invocation).
+ *
+ * @param operation - The bulk operation after the cancel request.
+ * @returns The headline, body, sections, and render type to use.
+ */
 export function formatBulkOperationCancellationResult(
   operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,
 ): BulkOperationCancellationResult {
@@ -66,10 +87,6 @@ export function formatBulkOperationCancellationResult(
     case 'CANCELING':
       return {
         headline: 'Bulk operation is being cancelled.',
-        body: [
-          'This may take a few moments. Check the status with:\n',
-          {command: `shopify app bulk status --id=${extractBulkOperationId(operation.id)}`},
-        ],
         renderType: 'success',
       }
     case 'CANCELED':
