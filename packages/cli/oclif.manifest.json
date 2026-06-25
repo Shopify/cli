@@ -5965,7 +5965,6 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "name",
-          "required": true,
           "type": "option"
         },
         "no-color": {
@@ -5996,7 +5995,6 @@
             "advanced",
             "plus"
           ],
-          "required": true,
           "type": "option"
         },
         "verbose": {

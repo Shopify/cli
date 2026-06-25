@@ -5,7 +5,7 @@ import {
   PollStoreCreation,
   PollStoreCreationQuery,
 } from '../../../api/graphql/business-platform-organizations/generated/poll_store_creation.js'
-import {selectOrg} from '@shopify/organizations'
+import {Organization} from '@shopify/organizations'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -19,7 +19,7 @@ const POLL_TIMEOUT_MS = 5 * 60 * 1000
 interface CreateDevStoreOptions {
   name: string
   plan: DevStorePlan
-  organizationId?: number
+  organization: Organization
   featurePreview?: string
   withDemoData?: boolean
   json: boolean
@@ -51,7 +51,7 @@ function friendlyStatus(status: StoreCreationStatus): string {
 }
 
 export async function createDevStore(options: CreateDevStoreOptions): Promise<void> {
-  const org = await selectOrg(options.organizationId?.toString())
+  const {organization: org, name, plan} = options
   const token = await ensureAuthenticatedBusinessPlatform()
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
@@ -60,8 +60,8 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
     token,
     organizationId: org.id,
     variables: {
-      shopName: options.name,
-      priceLookupKey: DEV_STORE_PLANS[options.plan],
+      shopName: name,
+      priceLookupKey: DEV_STORE_PLANS[plan],
       prepopulateTestData: options.withDemoData ?? false,
       developerPreviewHandle: options.featurePreview,
     },
@@ -127,10 +127,10 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
       JSON.stringify(
         {
           store: {
-            name: options.name,
+            name,
             domain: shopDomain,
             adminUrl: shopAdminUrl,
-            plan: options.plan,
+            plan,
             ...(options.featurePreview ? {featurePreview: options.featurePreview} : {}),
             demoData: options.withDemoData ?? false,
           },
@@ -145,11 +145,11 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
     )
   } else {
     renderSuccess({
-      headline: `Development store "${options.name}" created successfully.`,
+      headline: `Development store "${name}" created successfully.`,
       body: [
         `Domain: ${shopDomain}`,
         `Admin: ${shopAdminUrl ?? 'N/A'}`,
-        `Plan: ${options.plan}`,
+        `Plan: ${plan}`,
         ...(options.featurePreview ? [`Feature preview: ${options.featurePreview}`] : []),
         `Demo data: ${options.withDemoData ? 'enabled' : 'disabled'}`,
       ],
