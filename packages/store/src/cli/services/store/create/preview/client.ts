@@ -58,20 +58,6 @@ interface RawPreviewStoreCreateResponse {
   access_url?: unknown
 }
 
-interface PreviewStoreClaimRequest {
-  shopId: string
-  adminApiToken: string
-  email?: string
-}
-
-interface PreviewStoreClaimResponse {
-  claimUrl: string
-}
-
-interface RawPreviewStoreClaimResponse {
-  claim_url?: unknown
-}
-
 interface PreviewStoreGetRequest {
   shopId: string
   adminApiToken: string
@@ -80,11 +66,15 @@ interface PreviewStoreGetRequest {
 interface PreviewStoreGetResponse {
   shop: PreviewStoreResponseShop
   accessUrl: string
+  // The backend mints the claim URL inline; it degrades to null when minting fails, so callers
+  // treat an absent value as "retry later" rather than a hard error.
+  claimUrl?: string
 }
 
 interface RawPreviewStoreGetResponse {
   shop?: RawPreviewStoreResponseShop
   access_url?: unknown
+  claim_url?: unknown
 }
 
 interface RawPreviewStoreErrorResponse {
@@ -117,7 +107,7 @@ export function previewStoreCreateHeaders(cliInstanceId: string): Record<string,
   return previewStoreBaseHeaders(cliInstanceId)
 }
 
-export function previewStoreClaimHeaders(cliInstanceId: string, adminApiToken: string): Record<string, string> {
+export function previewStoreAuthenticatedHeaders(cliInstanceId: string, adminApiToken: string): Record<string, string> {
   return {
     ...previewStoreBaseHeaders(cliInstanceId),
     authorization: adminApiToken,
@@ -170,40 +160,6 @@ export async function createPreviewStore(
   return narrowCreateResponse(parsed)
 }
 
-export async function claimPreviewStore(
-  request: PreviewStoreClaimRequest,
-  options: PreviewStoreRequestOptions = {},
-): Promise<PreviewStoreClaimResponse> {
-  const fqdn = await appManagementFqdn()
-  const url = `https://${fqdn}/services/preview-stores/${encodeURIComponent(request.shopId)}/claim`
-  const body = JSON.stringify({...(request.email ? {email: request.email} : {})})
-
-  const response = await shopifyFetch(url, {
-    method: 'POST',
-    headers: previewStoreClaimHeaders(getOrCreateCliInstanceId(options.storage), request.adminApiToken),
-    body,
-  })
-
-  const rawText = await response.text()
-  if (!response.ok) {
-    const error = previewStoreClaimError(response.status, rawText)
-    throw new AbortError(error.message, error.tryMessage)
-  }
-
-  let parsed: RawPreviewStoreClaimResponse
-  try {
-    parsed = JSON.parse(rawText) as RawPreviewStoreClaimResponse
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    throw new AbortError(
-      'Preview store claim URL request returned a non-JSON response.',
-      `Parse error: ${message}. Body (truncated): ${redactPreviewStoreRawText(rawText).slice(0, 500)}`,
-    )
-  }
-
-  return narrowClaimResponse(parsed)
-}
-
 export async function getPreviewStore(
   request: PreviewStoreGetRequest,
   options: PreviewStoreRequestOptions = {},
@@ -213,7 +169,7 @@ export async function getPreviewStore(
 
   const response = await shopifyFetch(url, {
     method: 'GET',
-    headers: previewStoreClaimHeaders(getOrCreateCliInstanceId(options.storage), request.adminApiToken),
+    headers: previewStoreAuthenticatedHeaders(getOrCreateCliInstanceId(options.storage), request.adminApiToken),
   })
 
   const rawText = await response.text()
@@ -294,17 +250,6 @@ function parseErrorBody(rawText: string): RawPreviewStoreErrorResponse {
   }
 }
 
-function previewStoreClaimError(status: number, rawText: string): {message: string; tryMessage?: string} {
-  const parsed = parseErrorBody(rawText)
-  const redactedRawText = redactPreviewStoreRawText(rawText)
-
-  return {
-    message: `Preview store claim URL request failed with HTTP ${status}.`,
-    tryMessage:
-      parsed.message ?? (redactedRawText.length > 0 ? redactedRawText.slice(0, 1000) : 'No response body returned.'),
-  }
-}
-
 function previewStoreGetError(status: number, rawText: string): {message: string; tryMessage?: string} {
   const parsed = parseErrorBody(rawText)
   return {
@@ -344,25 +289,13 @@ function narrowCreateResponse(parsed: RawPreviewStoreCreateResponse): PreviewSto
   }
 }
 
-function narrowClaimResponse(parsed: RawPreviewStoreClaimResponse): PreviewStoreClaimResponse {
-  const claimUrl = typeof parsed.claim_url === 'string' ? parsed.claim_url : undefined
-
-  if (!claimUrl) {
-    throw new AbortError(
-      'Preview store claim URL response is missing required fields.',
-      `Got: ${JSON.stringify(redactPreviewStoreClaimResponse(parsed)).slice(0, 500)}`,
-    )
-  }
-
-  return {claimUrl}
-}
-
 function narrowGetResponse(parsed: RawPreviewStoreGetResponse): PreviewStoreGetResponse {
   const shop = parsed.shop
   const id = typeof shop?.id === 'string' || typeof shop?.id === 'number' ? String(shop.id) : undefined
   const name = typeof shop?.name === 'string' ? shop.name : undefined
   const domain = typeof shop?.domain === 'string' ? normalizeStoreFqdn(shop.domain) : undefined
   const accessUrl = typeof parsed.access_url === 'string' ? parsed.access_url : undefined
+  const claimUrl = typeof parsed.claim_url === 'string' ? parsed.claim_url : undefined
 
   if (!id || !name || !domain || !accessUrl) {
     throw new AbortError(
@@ -374,6 +307,7 @@ function narrowGetResponse(parsed: RawPreviewStoreGetResponse): PreviewStoreGetR
   return {
     shop: {id, name, domain},
     accessUrl,
+    ...(claimUrl ? {claimUrl} : {}),
   }
 }
 
@@ -382,13 +316,6 @@ function redactPreviewStoreResponse(parsed: RawPreviewStoreCreateResponse): RawP
     ...parsed,
     ...(parsed.admin_api_token ? {admin_api_token: '[REDACTED]'} : {}),
     ...(parsed.access_url ? {access_url: '[REDACTED]'} : {}),
-  }
-}
-
-function redactPreviewStoreClaimResponse(parsed: RawPreviewStoreClaimResponse): RawPreviewStoreClaimResponse {
-  return {
-    ...parsed,
-    ...(parsed.claim_url ? {claim_url: '[REDACTED]'} : {}),
   }
 }
 
@@ -403,5 +330,6 @@ function redactPreviewStoreGetResponse(parsed: RawPreviewStoreGetResponse): RawP
   return {
     ...parsed,
     ...(parsed.access_url ? {access_url: '[REDACTED]'} : {}),
+    ...(parsed.claim_url ? {claim_url: '[REDACTED]'} : {}),
   }
 }

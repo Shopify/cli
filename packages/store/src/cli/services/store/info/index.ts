@@ -5,7 +5,7 @@ import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-e
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {getCurrentStoredStoreAppSession} from '../auth/session-store.js'
-import {claimPreviewStore, getPreviewStore} from '../create/preview/client.js'
+import {getPreviewStore} from '../create/preview/client.js'
 import {storeTypeHandle} from '../store-type.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
@@ -143,18 +143,17 @@ function isPreviewStoreSession(session: StoredStoreAppSession | undefined): sess
 
 interface PreviewStoreUrls {
   accessUrl: string
-  saveUrl: string
+  saveUrl?: string
 }
 
 async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promise<PreviewStoreUrls> {
-  const request = {
+  const previewStore = await getPreviewStore({
     shopId: previewSession.preview.shopId,
     adminApiToken: previewSession.accessToken,
-  }
-  const [claim, previewStore] = await Promise.all([claimPreviewStore(request), getPreviewStore(request)])
+  })
   return {
     accessUrl: previewStore.accessUrl,
-    saveUrl: claim.claimUrl,
+    ...(previewStore.claimUrl ? {saveUrl: previewStore.claimUrl} : {}),
   }
 }
 

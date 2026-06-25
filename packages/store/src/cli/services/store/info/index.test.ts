@@ -5,7 +5,7 @@ import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '../auth/session-store.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
-import {claimPreviewStore, getPreviewStore} from '../create/preview/client.js'
+import {getPreviewStore} from '../create/preview/client.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -128,7 +128,6 @@ describe('getStoreInfo', () => {
     expect(fetchOrganizationShop).toHaveBeenCalledWith({store: SHOP, organizationId: '149572536', noPrompt: false})
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
     expect(graphqlRequest).not.toHaveBeenCalled()
-    expect(claimPreviewStore).not.toHaveBeenCalled()
     expect(getPreviewStore).not.toHaveBeenCalled()
     expect(result).toEqual({
       id: 'gid://shopify/Shop/72193245184',
@@ -161,12 +160,10 @@ describe('getStoreInfo', () => {
         accessUrl: 'https://app.shopify.com/auth/preview-store?token=stale-access-token',
       },
     })
-    vi.mocked(claimPreviewStore).mockResolvedValueOnce({
-      claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
-    })
     vi.mocked(getPreviewStore).mockResolvedValueOnce({
       shop: {id: '123', name: 'Lavender Candles', domain: SHOP},
       accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
+      claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
     })
 
     const result = await getStoreInfo({store: SHOP})
@@ -174,10 +171,6 @@ describe('getStoreInfo', () => {
     expect(fetchDestinationsContext).not.toHaveBeenCalled()
     expect(fetchOrganizationShop).not.toHaveBeenCalled()
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(SHOP, true, '123')
-    expect(claimPreviewStore).toHaveBeenCalledWith({
-      shopId: '123',
-      adminApiToken: 'shpat_preview_token',
-    })
     expect(getPreviewStore).toHaveBeenCalledWith({
       shopId: '123',
       adminApiToken: 'shpat_preview_token',
@@ -211,8 +204,33 @@ describe('getStoreInfo', () => {
         accessUrl: 'https://app.shopify.com/auth/preview-store?token=stale-access-token',
       },
     })
-    vi.mocked(claimPreviewStore).mockResolvedValueOnce({
+    vi.mocked(getPreviewStore).mockResolvedValueOnce({
+      shop: {id: '123', name: 'Lavender Candles', domain: SHOP},
+      accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
       claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
+    })
+
+    const result = await getStoreInfo({store: SHOP})
+
+    expect(result.authScopes).toEqual(['read_themes', 'write_themes'])
+  })
+
+  test('omits the save URL when the preview store lookup degrades the claim URL', async () => {
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
+      store: SHOP,
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: 'preview:placeholder-uuid',
+      accessToken: 'shpat_preview_token',
+      scopes: [],
+      acquiredAt: '2026-06-08T12:00:00.000Z',
+      kind: 'preview',
+      preview: {
+        placeholderAccountUuid: 'placeholder-uuid',
+        shopId: '123',
+        name: 'Lavender Candles',
+        createdAt: '2026-06-08T12:00:00.000Z',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=stale-access-token',
+      },
     })
     vi.mocked(getPreviewStore).mockResolvedValueOnce({
       shop: {id: '123', name: 'Lavender Candles', domain: SHOP},
@@ -221,7 +239,14 @@ describe('getStoreInfo', () => {
 
     const result = await getStoreInfo({store: SHOP})
 
-    expect(result.authScopes).toEqual(['read_themes', 'write_themes'])
+    expect(result).toEqual({
+      id: 'gid://shopify/Shop/123',
+      displayName: 'Lavender Candles',
+      subdomain: SHOP,
+      accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
+      authScopes: [],
+    })
+    expect(result.saveUrl).toBeUndefined()
   })
 
   test('prefers BP when store auth exists and BP can resolve the store', async () => {
@@ -245,7 +270,7 @@ describe('getStoreInfo', () => {
       featurePreview: 'extended_variants',
       adminUrl: 'https://admin.shopify.com/store/shop',
     })
-    expect(claimPreviewStore).not.toHaveBeenCalled()
+    expect(getPreviewStore).not.toHaveBeenCalled()
   })
 
   test('falls back to stored store auth when BP cannot resolve a store-auth store', async () => {
