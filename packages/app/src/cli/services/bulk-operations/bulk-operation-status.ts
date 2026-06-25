@@ -5,7 +5,6 @@ import {
   fetchBulkOperationById,
   fetchRecentBulkOperations,
   formatBulkOperationStatus,
-  normalizeBulkOperationId,
   extractBulkOperationId,
   type BulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
@@ -15,8 +14,6 @@ import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
 import {BugError} from '@shopify/cli-kit/node/error'
 import colors from '@shopify/cli-kit/node/colors'
-
-export {normalizeBulkOperationId, extractBulkOperationId}
 
 interface GetBulkOperationStatusOptions {
   organization: Organization

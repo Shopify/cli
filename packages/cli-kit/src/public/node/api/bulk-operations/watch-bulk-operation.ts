@@ -147,11 +147,17 @@ async function* pollBulkOperation({
     }
 
     if (abortSignal) {
+      // Remove the abort listener after each race so the common case (sleep wins) doesn't leak a
+      // listener per poll, which would otherwise trigger MaxListenersExceededWarning on long watches.
+      let removeAbortListener: (() => void) | undefined
+      const abortPromise = new Promise<void>((resolve) => {
+        const handler = () => resolve()
+        abortSignal.addEventListener('abort', handler, {once: true})
+        removeAbortListener = () => abortSignal.removeEventListener('abort', handler)
+      })
       // eslint-disable-next-line no-await-in-loop
-      await Promise.race([
-        sleep(pollInterval),
-        new Promise((resolve) => abortSignal.addEventListener('abort', resolve)),
-      ])
+      await Promise.race([sleep(pollInterval), abortPromise])
+      removeAbortListener?.()
     } else {
       // eslint-disable-next-line no-await-in-loop
       await sleep(pollInterval)

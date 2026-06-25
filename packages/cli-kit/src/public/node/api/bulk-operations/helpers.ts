@@ -119,7 +119,11 @@ export async function resolveApiVersion(options: ResolveApiVersionOptions): Prom
       supportedVersions.push(minimumDefaultVersion)
     }
 
-    return supportedVersions.sort().reverse()[0]!
+    const latest = supportedVersions.sort().reverse()[0]
+    if (!latest) {
+      throw new AbortError('No supported API versions available for this store.')
+    }
+    return latest
   }
 
   // Check if the user provided version is allowed. Unsupported versions (RC) are allowed here.

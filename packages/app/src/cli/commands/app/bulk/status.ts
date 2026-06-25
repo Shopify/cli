@@ -1,13 +1,10 @@
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
-import {
-  getBulkOperationStatus,
-  listBulkOperations,
-  normalizeBulkOperationId,
-} from '../../../services/bulk-operations/bulk-operation-status.js'
+import {getBulkOperationStatus, listBulkOperations} from '../../../services/bulk-operations/bulk-operation-status.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {normalizeBulkOperationId} from '@shopify/cli-kit/node/api/bulk-operations'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export default class BulkStatus extends AppLinkedCommand {

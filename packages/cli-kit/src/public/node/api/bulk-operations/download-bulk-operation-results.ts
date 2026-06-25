@@ -33,7 +33,15 @@ export function resultsContainUserErrors(results: string): boolean {
     .filter((line) => line.trim().length > 0)
 
   return lines.some((line) => {
-    const parsed = JSON.parse(line)
+    let parsed
+    try {
+      parsed = JSON.parse(line)
+    } catch (error) {
+      // A single malformed line (truncated download, partial flush, etc.) shouldn't dictate the
+      // overall result; skip it rather than throwing an uncontextualized SyntaxError.
+      if (error instanceof SyntaxError) return false
+      throw error
+    }
     if (!parsed.data) return false
     const result = Object.values(parsed.data)[0] as {userErrors?: unknown[]} | undefined
     return result?.userErrors !== undefined && result.userErrors.length > 0

@@ -56,4 +56,13 @@ describe('resultsContainUserErrors', () => {
   test('ignores lines without a data field', () => {
     expect(resultsContainUserErrors('{"foo":"bar"}')).toBe(false)
   })
+
+  test('skips malformed JSON lines instead of throwing', () => {
+    const results = [
+      '{"data":{"productUpdate":{"product":{"id":"gid://shopify/Product/1"},"userErrors":[]}}}',
+      '{"data":{"productUpdate": {truncated',
+    ].join('\n')
+    expect(() => resultsContainUserErrors(results)).not.toThrow()
+    expect(resultsContainUserErrors(results)).toBe(false)
+  })
 })

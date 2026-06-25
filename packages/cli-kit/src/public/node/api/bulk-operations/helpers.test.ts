@@ -106,4 +106,9 @@ describe('resolveApiVersion', () => {
     vi.mocked(fetchApiVersions).mockResolvedValue([{handle: '2025-10', supported: true}])
     await expect(resolveApiVersion({adminSession, userSpecifiedVersion: '1999-01'})).rejects.toThrow(AbortError)
   })
+
+  test('throws when no supported version is available and no default is provided', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([{handle: 'unstable', supported: false}])
+    await expect(resolveApiVersion({adminSession})).rejects.toThrow(AbortError)
+  })
 })

@@ -13,6 +13,7 @@ export {
   validateSingleOperation,
   resolveApiVersion,
 } from './bulk-operations/helpers.js'
+export {resolveBulkOperationQuery} from './bulk-operations/query.js'
 export {runBulkOperationQuery} from './bulk-operations/run-query.js'
 export {runBulkOperationMutation} from './bulk-operations/run-mutation.js'
 export {stageFile} from './bulk-operations/stage-file.js'
