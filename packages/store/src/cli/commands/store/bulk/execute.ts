@@ -1,11 +1,8 @@
 import {executeBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
 import StoreCommand from '../../../utilities/store-command.js'
 import {bulkOperationFlags, storeFlags} from '../../../flags.js'
-import {validateSingleOperation} from '@shopify/cli-kit/node/api/bulk-operations'
+import {resolveBulkOperationQuery} from '@shopify/cli-kit/node/api/bulk-operations'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export default class StoreBulkExecute extends StoreCommand {
   static summary = 'Execute bulk operations on a store.'
@@ -37,8 +34,7 @@ export default class StoreBulkExecute extends StoreCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreBulkExecute)
 
-    const query = await resolveQuery(flags.query, flags['query-file'])
-    validateSingleOperation(query)
+    const query = await resolveBulkOperationQuery({query: flags.query, queryFile: flags['query-file']})
 
     await executeBulkOperation({
       store: flags.store,
@@ -51,34 +47,4 @@ export default class StoreBulkExecute extends StoreCommand {
       ...(flags.version && {version: flags.version}),
     })
   }
-}
-
-async function resolveQuery(query?: string, queryFile?: string): Promise<string> {
-  if (query !== undefined) {
-    if (!query.trim()) {
-      throw new AbortError('The --query flag value is empty. Please provide a valid GraphQL query or mutation.')
-    }
-    return query
-  }
-
-  if (queryFile) {
-    if (!(await fileExists(queryFile))) {
-      throw new AbortError(
-        outputContent`Query file not found at ${outputToken.path(queryFile)}. Please check the path and try again.`,
-      )
-    }
-    const fileContents = await readFile(queryFile, {encoding: 'utf8'})
-    if (!fileContents.trim()) {
-      throw new AbortError(
-        outputContent`Query file at ${outputToken.path(
-          queryFile,
-        )} is empty. Please provide a valid GraphQL query or mutation.`,
-      )
-    }
-    return fileContents
-  }
-
-  throw new BugError(
-    'Query should have been provided via --query or --query-file flags due to exactlyOne constraint. This indicates the oclif flag validation failed.',
-  )
 }

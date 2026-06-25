@@ -1,12 +1,7 @@
-import {
-  getBulkOperationStatus,
-  listBulkOperations,
-  normalizeBulkOperationId,
-} from '../../../services/store/bulk/bulk-operation-status.js'
+import {getBulkOperationStatus, listBulkOperations} from '../../../services/store/bulk/bulk-operation-status.js'
 import StoreCommand from '../../../utilities/store-command.js'
-import {storeFlags} from '../../../flags.js'
+import {bulkOperationIdFlag, storeFlags} from '../../../flags.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {Flags} from '@oclif/core'
 
 export default class StoreBulkStatus extends StoreCommand {
   static summary = 'Check the status of bulk operations on a store.'
@@ -27,11 +22,7 @@ export default class StoreBulkStatus extends StoreCommand {
   static flags = {
     ...globalFlags,
     store: storeFlags.store,
-    id: Flags.string({
-      description:
-        'The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations on this store in the last 7 days.',
-      env: 'SHOPIFY_FLAG_ID',
-    }),
+    id: bulkOperationIdFlag,
   }
 
   async run(): Promise<void> {
@@ -40,7 +31,7 @@ export default class StoreBulkStatus extends StoreCommand {
     if (flags.id) {
       await getBulkOperationStatus({
         store: flags.store,
-        operationId: normalizeBulkOperationId(flags.id),
+        operationId: flags.id,
       })
     } else {
       await listBulkOperations({store: flags.store})

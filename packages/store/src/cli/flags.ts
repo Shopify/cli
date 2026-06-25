@@ -1,4 +1,5 @@
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {normalizeBulkOperationId} from '@shopify/cli-kit/node/api/bulk-operations'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
 
@@ -32,6 +33,25 @@ export const storeFlags = {
     env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
   }),
 }
+
+// Shared base for the bulk operation `--id` flag so the GID normalization lives in one place.
+// Commands reference the exported flags directly (status = optional, cancel = required).
+const bulkOperationIdBase = {
+  env: 'SHOPIFY_FLAG_ID',
+  parse: async (input: string) => normalizeBulkOperationId(input),
+}
+
+export const bulkOperationIdFlag = Flags.string({
+  ...bulkOperationIdBase,
+  description:
+    'The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations on this store in the last 7 days.',
+})
+
+export const requiredBulkOperationIdFlag = Flags.string({
+  ...bulkOperationIdBase,
+  description: 'The bulk operation ID to cancel (numeric ID or full GID).',
+  required: true,
+})
 
 export const bulkOperationFlags = {
   query: Flags.string({

@@ -6,7 +6,6 @@ import {
   fetchRecentBulkOperations,
   formatBulkOperationStatus,
   resolveApiVersion,
-  normalizeBulkOperationId,
   extractBulkOperationId,
   type BulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
@@ -14,8 +13,6 @@ import {renderInfo, renderSuccess, renderError, renderTable} from '@shopify/cli-
 import {outputContent, outputToken, outputNewline} from '@shopify/cli-kit/node/output'
 import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
 import colors from '@shopify/cli-kit/node/colors'
-
-export {normalizeBulkOperationId}
 
 interface GetBulkOperationStatusOptions {
   store: string

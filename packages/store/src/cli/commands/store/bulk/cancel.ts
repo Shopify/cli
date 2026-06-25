@@ -1,9 +1,7 @@
 import {cancelBulkOperation} from '../../../services/store/bulk/cancel-bulk-operation.js'
-import {normalizeBulkOperationId} from '../../../services/store/bulk/bulk-operation-status.js'
 import StoreCommand from '../../../utilities/store-command.js'
-import {storeFlags} from '../../../flags.js'
+import {requiredBulkOperationIdFlag, storeFlags} from '../../../flags.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {Flags} from '@oclif/core'
 
 export default class StoreBulkCancel extends StoreCommand {
   static summary = 'Cancel a bulk operation on a store.'
@@ -19,11 +17,7 @@ export default class StoreBulkCancel extends StoreCommand {
   static flags = {
     ...globalFlags,
     store: storeFlags.store,
-    id: Flags.string({
-      description: 'The bulk operation ID to cancel (numeric ID or full GID).',
-      env: 'SHOPIFY_FLAG_ID',
-      required: true,
-    }),
+    id: requiredBulkOperationIdFlag,
   }
 
   async run(): Promise<void> {
@@ -31,7 +25,7 @@ export default class StoreBulkCancel extends StoreCommand {
 
     await cancelBulkOperation({
       store: flags.store,
-      operationId: normalizeBulkOperationId(flags.id),
+      operationId: flags.id,
     })
   }
 }
