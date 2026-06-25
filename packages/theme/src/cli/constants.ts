@@ -32,7 +32,7 @@ export const DEFAULT_IGNORE_PATTERNS = [
   '**/node_modules/',
   '.prettierrc.json',
   // Atomic-write temp files (e.g. blocks/foo.liquid.tmp.bar.baz)
-  '**/{blocks,layouts,snippets}/**/*.liquid.tmp.*',
+  '**/{blocks,layout,snippets}/**/*.liquid.tmp.*',
   '**/{config,locales}/**/*.json.tmp.*',
   '**/{sections,templates}/**/*.{liquid,json}.tmp.*',
 ]
