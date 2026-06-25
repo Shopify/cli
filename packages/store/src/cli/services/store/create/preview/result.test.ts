@@ -15,7 +15,7 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
 const result = {
   status: 'success' as const,
   message:
-    'Your Shopify store is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
+    'Your Shopify store "Lavender Candles" is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
   store: {
     id: '123',
     name: 'Lavender Candles',
@@ -34,7 +34,7 @@ describe('preview store create result presenter', () => {
         {
           status: 'success',
           message:
-            'Your Shopify store is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
+            'Your Shopify store "Lavender Candles" is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
           store: {
             id: '123',
             name: 'Lavender Candles',
@@ -62,13 +62,7 @@ describe('preview store create result presenter', () => {
         headline: 'Store created',
         customSections: [
           {
-            body: {
-              tabularData: [['Name', 'Lavender Candles']],
-              firstColumnSubdued: true,
-            },
-          },
-          {
-            body: 'Your Shopify store is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
+            body: 'Your Shopify store "Lavender Candles" is ready. This store is temporary. Create a free Shopify account to save it and start selling.',
           },
           {
             title: 'Next steps',
