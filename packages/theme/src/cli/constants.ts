@@ -31,6 +31,10 @@ export const DEFAULT_IGNORE_PATTERNS = [
   '**/config.yml',
   '**/node_modules/',
   '.prettierrc.json',
+  // Atomic-write temp files (e.g. blocks/foo.liquid.tmp.bar.baz)
+  '**/{blocks,layout,snippets}/**/*.liquid.tmp.*',
+  '**/{config,locales}/**/*.json.tmp.*',
+  '**/{sections,templates}/**/*.{liquid,json}.tmp.*',
 ]
 
 export const MAX_GRAPHQL_THEME_FILES = 50
