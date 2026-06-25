@@ -5,6 +5,7 @@ import {
   isShopify,
   isTerminalInteractive,
   isUnitTest,
+  _resetHasGit,
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
@@ -123,6 +124,10 @@ describe('isShopify', () => {
 })
 
 describe('hasGit', () => {
+  afterEach(() => {
+    _resetHasGit()
+  })
+
   test('returns false if git --version errors', async () => {
     // Given
     vi.mocked(exec).mockRejectedValue(new Error('git not found'))
@@ -143,6 +148,44 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeTruthy()
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    await hasGit()
+    await hasGit()
+
+    // Then
+    expect(exec).toHaveBeenCalledTimes(1)
+  })
+
+  test('returns the same promise instance', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    const promise1 = hasGit()
+    const promise2 = hasGit()
+
+    // Then
+    expect(promise1).toBe(promise2)
+    await expect(promise1).resolves.toBe(true)
+  })
+
+  test('clears the cache when _resetHasGit is called', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    await hasGit()
+    _resetHasGit()
+    await hasGit()
+
+    // Then
+    expect(exec).toHaveBeenCalledTimes(2)
   })
 })
 
