@@ -2,7 +2,7 @@
 import {appTestFixture as test, createApp, buildApp, generateExtension} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
-import {requireEnv} from '../setup/env.js'
+import {e2eAppName, requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -13,7 +13,7 @@ test.describe('App scaffold', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-scaffold-${Date.now()}`
+    const appName = e2eAppName('scaffold')
 
     try {
       // Step 1: Create a new app from the react-router template
@@ -63,7 +63,7 @@ test.describe('App scaffold', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-ext-only-${Date.now()}`
+    const appName = e2eAppName('ext-only')
 
     try {
       const initResult = await createApp({
@@ -101,7 +101,7 @@ test.describe('App scaffold', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-ext-gen-${Date.now()}`
+    const appName = e2eAppName('ext-gen')
 
     try {
       const initResult = await createApp({

@@ -3,7 +3,7 @@
 import {createApp, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
-import {requireEnv} from '../setup/env.js'
+import {e2eAppName, requireEnv} from '../setup/env.js'
 import {storeTestFixture as test} from '../setup/store.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 import {expect} from '@playwright/test'
@@ -44,7 +44,7 @@ test.describe('Dev hot reload', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-hot-reload-${Date.now()}`
+    const appName = e2eAppName('hot-reload')
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
@@ -102,7 +102,7 @@ test.describe('Dev hot reload', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-hot-create-${Date.now()}`
+    const appName = e2eAppName('hot-create')
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
@@ -154,7 +154,7 @@ test.describe('Dev hot reload', () => {
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = `E2E-hot-delete-${Date.now()}`
+    const appName = e2eAppName('hot-delete')
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
