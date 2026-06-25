@@ -2,13 +2,12 @@ import {buildFunctionExtension} from './extension.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {buildGraphqlTypes, buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
 import {validateSchemaApiVersion} from '../function/schema-version.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, mkdir, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, touchFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -49,9 +48,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -82,9 +81,9 @@ describe('buildFunctionExtension', () => {
       // Then
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -108,9 +107,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -143,9 +142,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -177,9 +176,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -205,9 +204,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -234,9 +233,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -259,9 +258,9 @@ describe('buildFunctionExtension', () => {
       // Then
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -293,9 +292,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -342,9 +341,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -395,9 +394,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -446,9 +445,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -488,9 +487,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -521,9 +520,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
@@ -557,9 +556,9 @@ describe('buildFunctionExtension', () => {
       // When
       await expect(
         buildFunctionExtension(extension, {
-          stdout,
-          stderr,
-          signal,
+          stdout: stdout as any,
+          stderr: stderr as any,
+          signal: signal as any,
           app: app as any,
           environment: 'production',
         }),
