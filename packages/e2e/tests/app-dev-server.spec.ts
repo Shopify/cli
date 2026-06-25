@@ -1,4 +1,4 @@
-import {createApp} from '../setup/app.js'
+import {createApp, devDashboardAppUrl} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
@@ -14,6 +14,7 @@ test.describe('App dev server', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('dev')
+    let appUrl: string | undefined
 
     try {
       // Step 1: Create an extension-only app (no scopes needed)
@@ -29,6 +30,7 @@ test.describe('App dev server', () => {
         0,
       )
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       // Step 2: Start dev server via PTY, targeting the worker's store
       const dev = await cli.spawn(['app', 'dev', '--path', appDir], {
@@ -55,6 +57,7 @@ test.describe('App dev server', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,

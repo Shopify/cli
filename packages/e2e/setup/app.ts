@@ -98,16 +98,23 @@ export async function createApp(ctx: {
 // ---------------------------------------------------------------------------
 
 /**
- * Read the client_id from a shopify.app.toml file.
+ * Read the client_id from a Shopify app TOML file.
  */
-export function extractClientId(appDir: string): string {
-  const tomlPath = path.join(appDir, 'shopify.app.toml')
+export function extractClientId(appDir: string, configName?: string): string {
+  const tomlPath = path.join(appDir, configName ? `shopify.app.${configName}.toml` : 'shopify.app.toml')
   const parsed = toml.parse(fs.readFileSync(tomlPath, 'utf8'))
   const clientId = parsed.client_id as string | undefined
   if (!clientId) {
     throw new Error(`Could not find client_id in ${tomlPath}`)
   }
   return clientId
+}
+
+/**
+ * Build the direct Dev Dashboard URL for an app from its local TOML client_id.
+ */
+export function devDashboardAppUrl(appDir: string, orgId: string, configName?: string): string {
+  return `https://dev.shopify.com/dashboard/${orgId}/apps/${extractClientId(appDir, configName)}`
 }
 
 /**

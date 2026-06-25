@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-imports */
-import {appTestFixture as test, createApp, buildApp, generateExtension} from '../setup/app.js'
+import {appTestFixture as test, createApp, buildApp, devDashboardAppUrl, generateExtension} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
@@ -14,6 +14,7 @@ test.describe('App scaffold', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('scaffold')
+    let appUrl: string | undefined
 
     try {
       // Step 1: Create a new app from the react-router template
@@ -32,6 +33,7 @@ test.describe('App scaffold', () => {
       const initOutput = initResult.stdout + initResult.stderr
       expect(initOutput).toContain('is ready for you to build!')
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       // Step 2: Verify the app directory was created with expected files
       expect(fs.existsSync(appDir)).toBe(true)
@@ -51,6 +53,7 @@ test.describe('App scaffold', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           workerIndex: env.workerIndex,
         })
@@ -64,6 +67,7 @@ test.describe('App scaffold', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('ext-only')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({
@@ -77,6 +81,7 @@ test.describe('App scaffold', () => {
       expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
         0,
       )
+      appUrl = devDashboardAppUrl(initResult.appDir, env.orgId)
       expect(fs.existsSync(initResult.appDir)).toBe(true)
       expect(fs.existsSync(path.join(initResult.appDir, 'shopify.app.toml'))).toBe(true)
     } finally {
@@ -86,6 +91,7 @@ test.describe('App scaffold', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           workerIndex: env.workerIndex,
         })
@@ -102,6 +108,7 @@ test.describe('App scaffold', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('ext-gen')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({
@@ -117,6 +124,7 @@ test.describe('App scaffold', () => {
         0,
       )
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       const extensionConfigs = [
         {name: 'test-product-sub', template: 'product_subscription_ui', flavor: 'react'},
@@ -144,6 +152,7 @@ test.describe('App scaffold', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           workerIndex: env.workerIndex,
         })

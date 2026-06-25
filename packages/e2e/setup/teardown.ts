@@ -127,6 +127,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const appUrl = ctx.appUrl ?? (await findAppOnDevDashboard(page, ctx.appName, ctx.orgId))
+      log.log(wCtx, ctx.appUrl ? 'using direct app URL for delete' : 'using dashboard search for delete')
       if (!appUrl) {
         // null could mean "app not in the list" OR "pagination ended on a stuck error page"
         // — findAppOnDevDashboard's refresh-on-error doesn't cover every iteration.

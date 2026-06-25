@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {createApp, injectFixtureToml} from '../setup/app.js'
+import {createApp, devDashboardAppUrl, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
@@ -45,11 +45,13 @@ test.describe('Dev hot reload', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('hot-reload')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
@@ -89,6 +91,7 @@ test.describe('Dev hot reload', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
@@ -103,11 +106,13 @@ test.describe('Dev hot reload', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('hot-create')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
@@ -141,6 +146,7 @@ test.describe('Dev hot reload', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
@@ -155,11 +161,13 @@ test.describe('Dev hot reload', () => {
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('hot-delete')
+    let appUrl: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       const appDir = initResult.appDir
+      appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
@@ -199,6 +207,7 @@ test.describe('Dev hot reload', () => {
         await teardownAll({
           browserPage,
           appName,
+          appUrl,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
