@@ -5,11 +5,27 @@ import {userInfo as osUserInfo} from 'os'
 // This code has been vendored from https://github.com/sindresorhus/username
 // because adding it as a transtive dependency causes conflicts with other
 // packages that haven't been yet migrated to the latest version.
+let usernamePromise: Promise<string | null> | undefined
+
 /**
  * @param platform - The platform to get the username for. Defaults to the current platform.
  * @returns The username of the current user.
  */
-export async function username(platform: typeof process.platform = process.platform): Promise<string | null> {
+export function username(platform: typeof process.platform = process.platform): Promise<string | null> {
+  if (platform !== process.platform) {
+    return fetchUsername(platform)
+  }
+  return (usernamePromise ??= fetchUsername(platform))
+}
+
+/**
+ * Resets the username cache.
+ */
+export function _resetUsernameCache() {
+  usernamePromise = undefined
+}
+
+async function fetchUsername(platform: typeof process.platform = process.platform): Promise<string | null> {
   outputDebug(outputContent`Obtaining user name...`)
   const environmentVariable = getEnvironmentVariable()
   if (environmentVariable) {
