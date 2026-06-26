@@ -25,7 +25,7 @@ import * as path from 'path'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
-import {navigateToDashboard, refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
+import {getLastPageStatus, navigateToDashboard, refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {deleteAppFromDevDashboard} from '../setup/app.js'
 import {uninstallAppFromStore} from '../setup/store.js'
 import {completeLogin} from '../helpers/browser-login.js'
@@ -74,6 +74,11 @@ interface CleanupStats {
   failed: number
 }
 
+const APP_CARD_SELECTOR = 'a[href*="/apps/"]'
+const EMPTY_APPS_PATTERN =
+  /(no apps matched your search|don't have any apps|do not have any apps|haven't created any apps)/i
+const DASHBOARD_ERROR_PATTERN = /(unprocessable entity|request can't be processed|server error|something went wrong)/i
+
 /**
  * Find and delete all E2E test apps matching a pattern.
  * Handles browser login, dashboard navigation, uninstall, and deletion.
@@ -121,7 +126,7 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
     // Step 2: Navigate to dashboard (retry on 500/502).
     // navigateToDashboard already refreshes once on error; this loop is extra resilience.
     console.log('[cleanup-apps] Navigating to dashboard...')
-    await navigateToDashboard({browserPage: page, email, orgId})
+    await navigateToDashboard({browserPage: page, email, orgId, searchTerm: pattern})
     for (let attempt = 1; attempt <= 3; attempt++) {
       if (!(await refreshIfPageError(page))) break
       if (attempt === 3) throw new Error('Dashboard returned server error after 3 attempts, aborting cleanup')
@@ -170,6 +175,7 @@ async function cleanupAppsPageByPage(opts: {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     await recoverFromAppsPageError(page)
+    await waitForAppsIndex(page)
     const nextUrl = await nextAppsPageUrl(page)
     const {seen, matches} = await findAppsOnCurrentDashboardPage(page, pattern, handledAppUrls)
     const matchOffset = stats.found
@@ -196,7 +202,7 @@ async function cleanupAppsPageByPage(opts: {
       // for an org with matches spread across many pages: re-scanning from the top
       // avoids stale next_cursor links that point past now-deleted apps. Don't
       // "optimize" this into carrying the cursor across mutations.
-      await navigateToDashboard({browserPage: page, email, orgId})
+      await navigateToDashboard({browserPage: page, email, orgId, searchTerm: pattern})
       totalSeen = 0
       pageNumber = 1
       continue
@@ -229,7 +235,7 @@ async function cleanupApp(opts: {
     try {
       if (attempt > 1) {
         console.log(`  (${attempt}/3) retrying...`)
-        await navigateToDashboard({browserPage: page, email, orgId})
+        await navigateToDashboard({browserPage: page, email, orgId, searchTerm: app.name})
       }
 
       if (mode === 'full' || mode === 'uninstall') {
@@ -299,6 +305,48 @@ async function recoverFromAppsPageError(page: Page): Promise<void> {
   }
 }
 
+async function waitForAppsIndex(page: Page): Promise<void> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const status = getLastPageStatus(page)
+    if (status !== undefined && status >= 400) {
+      await retryAppsIndex(page, attempt, `HTTP ${status}`)
+      continue
+    }
+
+    const hasAppCards = await page
+      .locator(APP_CARD_SELECTOR)
+      .first()
+      .waitFor({state: 'attached', timeout: BROWSER_TIMEOUT.max})
+      .then(() => true)
+      .catch(() => false)
+    if (hasAppCards) return
+
+    const bodyText = await page
+      .locator('body')
+      .innerText({timeout: BROWSER_TIMEOUT.short})
+      .catch(() => '')
+    if (EMPTY_APPS_PATTERN.test(bodyText)) return
+
+    const reason = DASHBOARD_ERROR_PATTERN.test(bodyText)
+      ? `dashboard error page: ${compactPageText(bodyText)}`
+      : 'no app cards or empty state'
+    await retryAppsIndex(page, attempt, reason)
+  }
+}
+
+async function retryAppsIndex(page: Page, attempt: number, reason: string): Promise<void> {
+  if (attempt === 3) {
+    throw new Error(`Apps page did not render a usable app list (${reason}; url: ${page.url()})`)
+  }
+  console.log(`[cleanup-apps]   ...apps page not ready (${reason}), retrying`)
+  await page.reload({waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+}
+
+function compactPageText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().slice(0, 120)
+}
+
 async function findAppsOnCurrentDashboardPage(
   page: Page,
   namePattern: string,
@@ -306,7 +354,7 @@ async function findAppsOnCurrentDashboardPage(
 ): Promise<{seen: number; matches: DashboardApp[]}> {
   const matches: DashboardApp[] = []
   let seen = 0
-  const appCards = await page.locator('a[href*="/apps/"]').all()
+  const appCards = await page.locator(APP_CARD_SELECTOR).all()
 
   for (const card of appCards) {
     const href = await card.getAttribute('href')

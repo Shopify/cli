@@ -116,12 +116,14 @@ export async function navigateToDashboard(
   ctx: BrowserContext & {
     email?: string
     orgId?: string
+    searchTerm?: string
   },
 ): Promise<void> {
   const {browserPage} = ctx
   const orgId = ctx.orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
-  const dashboardUrl = orgId ? `https://dev.shopify.com/dashboard/${orgId}/apps` : 'https://dev.shopify.com/dashboard'
-  await browserPage.goto(dashboardUrl, {waitUntil: 'domcontentloaded'})
+  const dashboardUrl = new URL(orgId ? `https://dev.shopify.com/dashboard/${orgId}/apps` : 'https://dev.shopify.com/dashboard')
+  if (ctx.searchTerm) dashboardUrl.searchParams.set('search_term', ctx.searchTerm)
+  await browserPage.goto(dashboardUrl.toString(), {waitUntil: 'domcontentloaded'})
   await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   // Retry on server errors
