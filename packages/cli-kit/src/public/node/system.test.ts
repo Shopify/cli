@@ -393,3 +393,15 @@ describe('readStdinString', () => {
     await expect(got).rejects.toThrow('Stdin input exceeded the maximum allowed size.')
   })
 })
+
+describe('isWsl', () => {
+  test('memoizes the result', async () => {
+    // When
+    const result1 = system.isWsl()
+    const result2 = system.isWsl()
+
+    // Then
+    expect(result1).toBe(result2)
+    await expect(result1).resolves.toBeDefined()
+  })
+})
