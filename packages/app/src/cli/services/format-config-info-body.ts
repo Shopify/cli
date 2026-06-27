@@ -39,26 +39,26 @@ export function formatConfigInfoBody({
   includeConfigOnDeploy,
   messages,
 }: FormatConfigInfoBodyOptions): TokenItem {
-  const items = [`App:             ${appName}`]
-  if (org) items.unshift(`Org:             ${org}`)
-  if (devStores && devStores.length > 0) {
-    devStores.forEach((storeUrl) => items.push(`Dev store:       ${storeUrl}`))
-  }
-  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
-  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
+  const items = [
+    ...(org ? [`Org:             ${org}`] : []),
+    `App:             ${appName}`,
+    ...(devStores ?? []).map((storeUrl) => `Dev store:       ${storeUrl}`),
+    ...(updateURLs ? [`Update URLs:     ${updateURLs}`] : []),
+    ...(includeConfigOnDeploy === undefined ? [] : [`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`]),
+  ]
 
-  let body: Token[] = [{list: {items}}]
+  const body: Token[] = [{list: {items}}]
 
-  if (messages && messages.length) {
-    for (let index = 0; index < messages.length; index++) {
-      const message = messages[index]
+  if (messages && messages.length > 0) {
+    const messageTokens = messages.flatMap((message, index) => {
+      if (message && message.length > 0) {
+        const separator = index === 0 ? '\n' : '\n\n'
+        return [separator, ...message]
+      }
+      return []
+    })
 
-      if (!message || message.length === 0) continue
-
-      const separator = index === 0 ? '\n' : '\n\n'
-
-      body = body.concat(separator, message)
-    }
+    return [...body, ...messageTokens]
   }
 
   return body
