@@ -232,18 +232,39 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
 }
 
 /**
+ * Memoized promise for the hasGit check.
+ */
+let hasGitPromise: Promise<boolean> | undefined
+
+/**
  * Returns whether the environment has Git available.
  *
  * @returns A promise that resolves with the value.
  */
-export async function hasGit(): Promise<boolean> {
-  try {
-    await lazyExec('git', ['--version'])
-    return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
+export function hasGit(): Promise<boolean> {
+  if (hasGitPromise) {
+    return hasGitPromise
   }
+
+  hasGitPromise = (async () => {
+    try {
+      await lazyExec('git', ['--version'])
+      return true
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return false
+    }
+  })()
+
+  return hasGitPromise
+}
+
+/**
+ * Resets the memoized value for the hasGit check.
+ * This is only intended for use in tests.
+ */
+export function _resetHasGit(): void {
+  hasGitPromise = undefined
 }
 
 /**

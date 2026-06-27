@@ -1,6 +1,7 @@
 import {
   ciPlatform,
   hasGit,
+  _resetHasGit,
   isDevelopment,
   isShopify,
   isTerminalInteractive,
@@ -125,6 +126,7 @@ describe('isShopify', () => {
 describe('hasGit', () => {
   test('returns false if git --version errors', async () => {
     // Given
+    _resetHasGit()
     vi.mocked(exec).mockRejectedValue(new Error('git not found'))
 
     // When
@@ -136,6 +138,7 @@ describe('hasGit', () => {
 
   test('returns true if git --version succeeds', async () => {
     // Given
+    _resetHasGit()
     vi.mocked(exec).mockResolvedValue(undefined)
 
     // When
@@ -143,6 +146,21 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeTruthy()
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    _resetHasGit()
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    await hasGit()
+    await hasGit()
+    const got = await hasGit()
+
+    // Then
+    expect(got).toBeTruthy()
+    expect(vi.mocked(exec)).toHaveBeenCalledTimes(1)
   })
 })
 
