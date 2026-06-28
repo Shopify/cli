@@ -238,7 +238,7 @@ class AppInfo {
         if (relevantExtensions[0]) {
           return this.subtableSection(
             relevantExtensions[0].externalType,
-            relevantExtensions.map((ext) => this.extensionSubSection(ext)).flat(),
+            relevantExtensions.flatMap((ext) => this.extensionSubSection(ext)),
           )
         }
       })
