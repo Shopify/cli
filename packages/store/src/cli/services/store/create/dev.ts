@@ -22,6 +22,7 @@ interface CreateDevStoreOptions {
   organization: Organization
   featurePreview?: string
   withDemoData?: boolean
+  country?: string
   json: boolean
 }
 
@@ -64,6 +65,10 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
       priceLookupKey: DEV_STORE_PLANS[plan],
       prepopulateTestData: options.withDemoData ?? false,
       developerPreviewHandle: options.featurePreview,
+      // NOTE: `country` is collected via --country and surfaced in output, but is not
+      // yet sent to BP because the published `createAppDevelopmentStore` schema does
+      // not expose the argument (see shop/world #22968). Wire it here once the backend
+      // lands and `pnpm graphql-codegen` regenerates the mutation variables.
     },
     unauthorizedHandler,
   })
@@ -132,6 +137,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
             adminUrl: shopAdminUrl,
             plan,
             ...(options.featurePreview ? {featurePreview: options.featurePreview} : {}),
+            ...(options.country ? {country: options.country} : {}),
             demoData: options.withDemoData ?? false,
           },
           organization: {
@@ -151,6 +157,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
         `Admin: ${shopAdminUrl ?? 'N/A'}`,
         `Plan: ${plan}`,
         ...(options.featurePreview ? [`Feature preview: ${options.featurePreview}`] : []),
+        ...(options.country ? [`Country: ${options.country}`] : []),
         `Demo data: ${options.withDemoData ? 'enabled' : 'disabled'}`,
       ],
     })
