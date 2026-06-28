@@ -185,7 +185,7 @@ export async function getPreviewStore(
     const message = error instanceof Error ? error.message : 'Unknown error'
     throw new AbortError(
       'Preview store lookup returned a non-JSON response.',
-      `Parse error: ${message}. Body (truncated): ${rawText.slice(0, 500)}`,
+      `Parse error: ${message}. Body (truncated): ${redactPreviewStoreRawText(rawText).slice(0, 500)}`,
     )
   }
 
@@ -252,9 +252,11 @@ function parseErrorBody(rawText: string): RawPreviewStoreErrorResponse {
 
 function previewStoreGetError(status: number, rawText: string): {message: string; tryMessage?: string} {
   const parsed = parseErrorBody(rawText)
+  const redactedRawText = redactPreviewStoreRawText(rawText)
   return {
     message: `Preview store lookup failed with HTTP ${status}.`,
-    tryMessage: parsed.message ?? (rawText.length > 0 ? rawText.slice(0, 1000) : 'No response body returned.'),
+    tryMessage:
+      parsed.message ?? (redactedRawText.length > 0 ? redactedRawText.slice(0, 1000) : 'No response body returned.'),
   }
 }
 
