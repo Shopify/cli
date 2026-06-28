@@ -263,7 +263,7 @@ describe.each(tokenExchangeMethods)(
   ({tokenExchangeMethod, expectedScopes, expectedApi, expectedErrorName}) => {
     const automationToken = 'customToken'
     // Generated from `customToken` using `nonRandomUUID()`
-    const userId = 'eab16ac4-0690-5fed-9d00-71bd202a3c2b37259a8f'
+    const userId = '9d5342f1-beb2-14c1-9f5d-deee6b83513ca1cb10bbedbc9f98fb0a0e2544a48032'
 
     const grantType = 'urn:ietf:params:oauth:grant-type:token-exchange'
     const accessTokenType = 'urn:ietf:params:oauth:token-type:access_token'
