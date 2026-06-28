@@ -251,7 +251,9 @@ function buildPreviewStoreResult(args: {
     saveUrl: previewStoreUrls.saveUrl,
   }
 
-  return {...compact(fields), subdomain: store} as StoreInfoResult
+  // `authScopes` is always present for preview stores (even when empty) so consumers can rely on the
+  // key to learn which Admin API scopes are preapproved. There's no way to grant more scopes later.
+  return {...compact(fields), subdomain: store, authScopes: previewSession.scopes} as StoreInfoResult
 }
 
 // The BP `ShopifyShopID` scalar is the bare numeric id; the admin GID is derived locally.

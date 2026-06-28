@@ -28,6 +28,10 @@ export interface StoreInfoResult {
   adminUrl?: string
   accessUrl?: string
   saveUrl?: string
+  // Preapproved Admin API access scopes for the store (currently only preview stores, which
+  // cache the scopes granted at creation time). Preview stores aren't a logged-in experience, so
+  // there's no way to grant additional scopes later.
+  authScopes?: string[]
 }
 
 /**
