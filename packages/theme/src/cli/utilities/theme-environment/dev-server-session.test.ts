@@ -109,6 +109,33 @@ describe('dev server session', async () => {
         noPrompt: true,
       })
     })
+
+    test('passes selected account session ID to admin and storefront refreshes', async () => {
+      // Given
+      const selectedAdminSession = {...adminSession, sessionId: 'user-id-for-work'}
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+        storefront_digest: 'digest_value',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn,
+        sessionId: 'user-id-for-work',
+      })
+
+      // When
+      await fetchDevServerSession(themeId, selectedAdminSession, 'admin-password')
+
+      // Then
+      const authenticationOptions = {
+        forceRefresh: false,
+        noPrompt: true,
+        sessionId: 'user-id-for-work',
+      }
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith(storeFqdn, 'admin-password', [], authenticationOptions)
+      expect(ensureAuthenticatedStorefront).toHaveBeenCalledWith([], 'admin-password', authenticationOptions)
+    })
   })
 
   describe('initializeDevServerSession', async () => {

@@ -4,6 +4,7 @@ import ThemeCommand, {RequiredFlags} from '../../../utilities/theme-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {InferredFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 type MetafieldsFlags = InferredFlags<typeof MetafieldsPull.flags>
 
@@ -29,7 +30,7 @@ If the metafields file already exists, it will be overwritten.`
 
   static multiEnvironmentsFlags: RequiredFlags = null
 
-  async command(flags: MetafieldsFlags) {
+  async command(flags: MetafieldsFlags, adminSession?: AdminSession) {
     const args: MetafieldsPullFlags = {
       path: flags.path,
       password: flags.password,
@@ -39,6 +40,6 @@ If the metafields file already exists, it will be overwritten.`
       noColor: flags['no-color'],
     }
 
-    await metafieldsPull(args)
+    await metafieldsPull(args, adminSession)
   }
 }

@@ -2440,6 +2440,7 @@ FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2465,8 +2466,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [-d] [-e <value>...] [-f] [--no-color] [--password <value>] [--path <value>] [-a] [-s
-    <value>] [-t <value>...] [--verbose]
+  $ shopify theme delete [--alias <value>] [-d] [-e <value>...] [-f] [--no-color] [--password <value>] [--path
+    <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
 
 FLAGS
   -a, --show-all                [env: SHOPIFY_FLAG_SHOW_ALL] Include others development themes in theme list.
@@ -2476,6 +2477,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>...        [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2501,10 +2503,10 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [-a] [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...]
-    [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...]
-    [--open] [--password <value>] [--path <value>] [--port <value>] [--standard-events-inspector] [-s <value>]
-    [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+  $ shopify theme dev [--alias <value>] [-a] [-e <value>...] [--error-overlay silent|default] [--host <value>]
+    [-x <value>...] [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>]
+    [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>] [--standard-events-inspector] [-s
+    <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -2530,6 +2532,9 @@ FLAGS
 
   -x, --ignore=<value>...
       [env: SHOPIFY_FLAG_IGNORE] Skip hot reloading any files that match the specified pattern.
+
+  --alias=<value>
+      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
 
   --error-overlay=<option>
       [default: default, env: SHOPIFY_FLAG_ERROR_OVERLAY] Controls the visibility of the error overlay when an theme asset
@@ -2638,6 +2643,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2687,8 +2693,8 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [-d] [-e <value>...] [-j] [--no-color] [--password <value>] [--path <value>] [-s <value>]
-    [-t <value>] [--verbose]
+  $ shopify theme info [--alias <value>] [-d] [-e <value>...] [-j] [--no-color] [--password <value>] [--path
+    <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Retrieve info from your development theme.
@@ -2697,6 +2703,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2767,14 +2774,15 @@ Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
-  $ shopify theme list [-e <value>...] [--id <value>] [-j] [--name <value>] [--no-color] [--password <value>]
-    [--path <value>] [--role live|unpublished|development] [-s <value>] [--verbose]
+  $ shopify theme list [--alias <value>] [-e <value>...] [--id <value>] [-j] [--name <value>] [--no-color]
+    [--password <value>] [--path <value>] [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --id=<value>              [env: SHOPIFY_FLAG_ID] Only list theme with the given ID.
       --name=<value>            [env: SHOPIFY_FLAG_NAME] Only list themes that contain the given name.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
@@ -2796,13 +2804,14 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [-e <value>...] [--no-color] [--password <value>] [--path <value>] [-s <value>]
-    [--verbose]
+  $ shopify theme metafields pull [--alias <value>] [-e <value>...] [--no-color] [--password <value>] [--path <value>] [-s
+    <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2824,8 +2833,8 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [-d] [-E] [-e <value>...] [-l] [--no-color] [--password <value>] [--path <value>] [-s
-    <value>] [-t <value>] [--verbose]
+  $ shopify theme open [--alias <value>] [-d] [-E] [-e <value>...] [-l] [--no-color] [--password <value>]
+    [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -E, --editor                  [env: SHOPIFY_FLAG_EDITOR] Open the theme editor for the specified theme in the browser.
@@ -2835,6 +2844,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2892,14 +2902,15 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview --overrides <value> -t <value> [-e <value>...] [--json] [--no-color] [--open] [--password
-    <value>] [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
+  $ shopify theme preview --overrides <value> -t <value> [--alias <value>] [-e <value>...] [--json] [--no-color]
+    [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           (required) [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --json                    [env: SHOPIFY_FLAG_JSON] Output the preview URL and identifier as JSON.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --open                    [env: SHOPIFY_FLAG_OPEN] Automatically launch the theme preview in your default web
@@ -2937,6 +2948,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2962,8 +2974,8 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [-e <value>...] [-f] [--no-color] [--password <value>] [--path <value>] [-s <value>] [-t
-    <value>] [--verbose]
+  $ shopify theme publish [--alias <value>] [-e <value>...] [-f] [--no-color] [--password <value>] [--path <value>]
+    [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
@@ -2971,6 +2983,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2999,8 +3012,8 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [-d] [-e <value>...] [-x <value>...] [-l] [--no-color] [-n] [-o <value>...] [--password
-    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme pull [--alias <value>] [-d] [-e <value>...] [-x <value>...] [-l] [--no-color] [-n] [-o
+    <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Pull theme files from your remote development theme.
@@ -3014,6 +3027,7 @@ FLAGS
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
   -x, --ignore=<value>...       [env: SHOPIFY_FLAG_IGNORE] Skip downloading the specified files (Multiple flags
                                 allowed). Wrap the value in double quotes if you're using wildcards.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -3060,6 +3074,8 @@ FLAGS
   -u, --unpublished                  [env: SHOPIFY_FLAG_UNPUBLISHED] Create a new unpublished theme and push to it.
   -x, --ignore=<value>...            [env: SHOPIFY_FLAG_IGNORE] Skip uploading the specified files (Multiple flags
                                      allowed). Wrap the value in double quotes if you're using wildcards.
+      --alias=<value>                [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for
+                                     authentication.
       --listing=<value>              [env: SHOPIFY_FLAG_LISTING] The listing preset to use for multi-preset themes.
                                      Applies preset files from listings/[preset-name] directory.
       --no-color                     [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
@@ -3114,8 +3130,8 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [-d] [-e <value>...] [-l] [-n <value>] [--no-color] [--password <value>] [--path <value>]
-    [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme rename [--alias <value>] [-d] [-e <value>...] [-l] [-n <value>] [--no-color] [--password
+    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Rename your development theme.
@@ -3125,6 +3141,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -3147,13 +3164,14 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [-e <value>...] [--listing <value>] [--no-color] [--password <value>] [--path <value>]
-    [-s <value>] [--verbose]
+  $ shopify theme share [--alias <value>] [-e <value>...] [--listing <value>] [--no-color] [--password <value>]
+    [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --listing=<value>         [env: SHOPIFY_FLAG_LISTING] The listing preset to use for multi-preset themes. Applies
                                 preset files from listings/[preset-name] directory.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
