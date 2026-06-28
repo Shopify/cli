@@ -1,5 +1,5 @@
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
-import {setStoredStoreAppSession} from './session-store.js'
+import {getCurrentStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
 import {exchangeStoreAuthCodeForToken} from './token-client.js'
 import {waitForStoreAuthCode} from './callback.js'
 import {createPkceBootstrap} from './pkce.js'
@@ -25,6 +25,7 @@ interface StoreAuthDependencies {
   waitForStoreAuthCode: typeof waitForStoreAuthCode
   exchangeStoreAuthCodeForToken: typeof exchangeStoreAuthCodeForToken
   resolveExistingScopes: (store: string) => Promise<ResolvedStoreAuthScopes>
+  getCurrentStoredStoreAppSession: typeof getCurrentStoredStoreAppSession
   presenter: StoreAuthPresenter
 }
 
@@ -33,6 +34,7 @@ const defaultStoreAuthDependencies: StoreAuthDependencies = {
   waitForStoreAuthCode,
   exchangeStoreAuthCodeForToken,
   resolveExistingScopes: resolveExistingStoreAuthScopes,
+  getCurrentStoredStoreAppSession,
   presenter: createStoreAuthPresenter('text'),
 }
 
@@ -42,6 +44,9 @@ export async function authenticateStoreWithApp(
 ): Promise<StoreAuthResult> {
   const resolvedDependencies: StoreAuthDependencies = {...defaultStoreAuthDependencies, ...dependencies}
   const store = normalizeStoreFqdn(input.store)
+
+  throwIfPreviewStore(store, resolvedDependencies)
+
   await recordStoreFqdnMetadata(store, false)
   const requestedScopes = parseStoreAuthScopes(input.scopes)
   const existingScopeResolution = await resolvedDependencies.resolveExistingScopes(store)
@@ -124,4 +129,27 @@ export async function authenticateStoreWithApp(
 
   resolvedDependencies.presenter.success(result)
   return result
+}
+
+/**
+ * Preview stores aren't a logged-in experience, so there's no OAuth flow to run and no way to grant
+ * additional Admin API scopes after creation. Running the standard `store auth` flow against one
+ * would silently fail or confuse callers (including agents that habitually run `store auth` before
+ * `store execute`), so we exit early and point them at the scopes already preapproved at creation.
+ */
+function throwIfPreviewStore(store: string, dependencies: StoreAuthDependencies): void {
+  const session = dependencies.getCurrentStoredStoreAppSession(store)
+  if (session?.kind !== 'preview') return
+
+  const scopes = session.scopes
+  const scopeList = scopes.length > 0 ? scopes.join(', ') : 'none'
+
+  throw new AbortError(
+    `\`store auth\` is unavailable for preview stores.`,
+    `Preview stores aren't a logged-in experience, so additional Admin API scopes can't be granted. The following scopes are already available: ${scopeList}.`,
+    [
+      'Run `shopify store execute` directly against the preview store; no `store auth` step is needed.',
+      'Run `shopify store info --json` to see the preapproved scopes for this store.',
+    ],
+  )
 }
