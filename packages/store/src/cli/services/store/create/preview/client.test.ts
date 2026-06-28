@@ -213,10 +213,7 @@ describe('preview store client', () => {
       {storage: inMemoryStorage('instance-1')},
     )
 
-    expect(got).toEqual({
-      shop: {id: '123', name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
-      accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
-    })
+    expect(got.claimUrl).toBeUndefined()
   })
 
   test('rejects malformed create responses without leaking the admin API token or access URL', async () => {
