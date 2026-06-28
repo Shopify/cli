@@ -161,6 +161,34 @@ describe('createDevStore', () => {
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"demoData": true'))
   })
 
+  test('includes the country in JSON output when provided', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'basic', country: 'CA', json: true})
+
+    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"country": "CA"'))
+  })
+
+  test('includes the country in the success output when provided', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', country: 'CA', json: false})
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.arrayContaining(['Country: CA']),
+      }),
+    )
+  })
+
   test('outputs JSON when --json flag is set', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc)
       .mockResolvedValueOnce(defaultMutationResult)
