@@ -80,6 +80,7 @@ describe('preview store client', () => {
         shop: {id: 123, name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
         placeholder_account_uuid: 'placeholder-uuid',
         admin_api_token: 'shpat_token',
+        admin_api_scopes: ['read_themes', 'write_themes'],
         access_url: 'https://app.shopify.com/auth/preview-store?token=access-token',
       }),
     )
@@ -106,8 +107,38 @@ describe('preview store client', () => {
       shop: {id: '123', name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
       placeholderAccountUuid: 'placeholder-uuid',
       adminApiToken: 'shpat_token',
+      adminApiScopes: ['read_themes', 'write_themes'],
       accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
     })
+  })
+
+  test('rejects the response when the backend omits admin API scopes', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(
+      response(201, {
+        shop: {id: 123, name: 'My Store', domain: 'x.myshopify.com'},
+        admin_api_token: 'shpat_token',
+        access_url: 'https://app.shopify.com/auth/preview-store?token=access-token',
+      }),
+    )
+
+    await expect(createPreviewStore({}, {storage: inMemoryStorage('instance-1')})).rejects.toThrow(
+      'Preview store creation response is missing required fields.',
+    )
+  })
+
+  test('drops non-string admin API scopes', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(
+      response(201, {
+        shop: {id: 123, name: 'My Store', domain: 'x.myshopify.com'},
+        admin_api_token: 'shpat_token',
+        admin_api_scopes: ['read_themes', 42, null, 'write_themes'],
+        access_url: 'https://app.shopify.com/auth/preview-store?token=access-token',
+      }),
+    )
+
+    const got = await createPreviewStore({}, {storage: inMemoryStorage('instance-1')})
+
+    expect(got.adminApiScopes).toEqual(['read_themes', 'write_themes'])
   })
 
   test('omits name and country variables when absent', async () => {
@@ -115,6 +146,7 @@ describe('preview store client', () => {
       response(201, {
         shop: {id: 123, name: 'My Store', domain: 'x.myshopify.com'},
         admin_api_token: 'shpat_token',
+        admin_api_scopes: ['read_themes', 'write_themes'],
         access_url: 'https://app.shopify.com/auth/preview-store?token=access-token',
       }),
     )
