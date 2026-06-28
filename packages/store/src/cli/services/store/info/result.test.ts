@@ -116,10 +116,10 @@ describe('renderStoreInfoResult', () => {
     const actions = storeActions()
     expect(actions).toEqual([
       {link: {label: 'Manage this store in the Shopify admin', url: 'https://admin.shopify.com/store/acme-widgets'}},
-      {link: {label: 'View the storefront', url: 'https://app.shopify.com/auth/preview-store?token=access-token'}},
+      {link: {label: 'View your store', url: 'https://app.shopify.com/auth/preview-store?token=access-token'}},
       {
         link: {
-          label: 'Save your progress on this store',
+          label: 'Save your store',
           url: 'https://admin.shopify.com/store-transfer/accept/claim-token',
         },
       },
