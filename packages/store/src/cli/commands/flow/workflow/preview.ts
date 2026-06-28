@@ -1,5 +1,6 @@
 import {loadConfig} from '../../../services/flow/project-config.js'
 import {readWorkflowFile} from '../../../services/flow/workflow-lifecycle.js'
+import {authenticateFlowStore, throwFlowAuthExpired} from '../../../services/flow/auth.js'
 import StoreCommand from '../../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -7,12 +8,10 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {resolvePath} from '@shopify/cli-kit/node/path'
-import {ensureAuthenticatedIdentity} from '@shopify/cli-kit/node/session'
 import {Args, Flags} from '@oclif/core'
 
 const FLOW_PREVIEW_URL_PRODUCTION = 'https://flow.shopifycloud.com/flow-core/mcp_preview/transform'
 const FLOW_PREVIEW_URL_LOCAL = 'https://flow.shop.dev/flow-core/mcp_preview/transform'
-const FLOW_WORKFLOWS_MANAGE_SCOPE = 'https://api.shopify.com/auth/flow.workflows.manage'
 
 function previewEndpoint(): string {
   return process.env.SHOPIFY_SERVICE_ENV === 'local' ? FLOW_PREVIEW_URL_LOCAL : FLOW_PREVIEW_URL_PRODUCTION
@@ -27,9 +26,7 @@ This is the data path used by the Flow VSCode extension. The extension shells ou
 
   static description = this.descriptionWithoutMarkdown()
 
-  static examples = [
-    '<%= config.bin %> <%= command.id %> ./workflow.flow.json --store shop.myshopify.com',
-  ]
+  static examples = ['<%= config.bin %> <%= command.id %> ./workflow.flow.json --store shop.myshopify.com']
 
   static args = {
     file: Args.string({
@@ -59,22 +56,23 @@ This is the data path used by the Flow VSCode extension. The extension shells ou
     }
 
     const payload = await readWorkflowFile(args.file)
-    const auth = await ensureAuthenticatedIdentity([FLOW_WORKFLOWS_MANAGE_SCOPE])
+    const session = await authenticateFlowStore(store)
 
     const response = await shopifyFetch(
       previewEndpoint(),
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${auth.token}`,
+          Authorization: `Bearer ${session.accessToken}`,
           'Content-Type': 'application/json',
           'X-Shopify-Shop-Domain': store,
-          'X-Shopify-User-Id': auth.userId,
         },
         body: JSON.stringify(payload),
       },
       'slow-request',
     )
+
+    if (response.status === 401) throwFlowAuthExpired(session)
 
     const text = await response.text()
     if (!response.ok) {

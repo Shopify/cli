@@ -5,24 +5,21 @@
  * `flow workflow push`) constructs the structured args it needs and calls
  * `dispatchFlowTool` to send the request. This file owns:
  *   - Routing (Flow vs SK endpoint, prod vs local)
- *   - Auth (Identity scope per source)
- *   - Headers (shop domain, user id, eval flag)
+ *   - Auth (merchant `shopify store auth` token; see ./auth.ts)
+ *   - Headers (shop domain, eval flag)
  *   - Response parsing + error envelope
  *
  * No tool catalog, no name lookup, no zod here. Callers know what they want
  * to call; this just dispatches it.
  */
+import {authenticateFlowStore, throwFlowAuthExpired} from './auth.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {shopifyFetch, type Response} from '@shopify/cli-kit/node/http'
-import {ensureAuthenticatedIdentity} from '@shopify/cli-kit/node/session'
 
 const FLOW_TOOL_CALL_BASE_PRODUCTION = 'https://flow.shopifycloud.com/flow-core/tool_call'
 const FLOW_TOOL_CALL_BASE_LOCAL = 'https://flow.shop.dev/flow-core/tool_call'
 const SK_TOOL_CALL_BASE_PRODUCTION = 'https://sidekick.shopify.ai/tools/call'
 const SK_TOOL_CALL_BASE_LOCAL = 'https://agent-server.shop.dev/tools/call'
-
-const FLOW_WORKFLOWS_MANAGE_SCOPE = 'https://api.shopify.com/auth/flow.workflows.manage'
-const SHOP_ADMIN_GRAPHQL_SCOPE = 'https://api.shopify.com/auth/shop.admin.graphql'
 
 export type ToolSource = 'flow' | 'sk'
 
@@ -44,29 +41,25 @@ export function endpointFor(source: ToolSource): string {
   return local ? SK_TOOL_CALL_BASE_LOCAL : SK_TOOL_CALL_BASE_PRODUCTION
 }
 
-export function scopeFor(source: ToolSource): string {
-  return source === 'flow' ? FLOW_WORKFLOWS_MANAGE_SCOPE : SHOP_ADMIN_GRAPHQL_SCOPE
-}
-
 async function parseResponse(response: Response): Promise<unknown> {
   const text = await response.text()
   if (!text.trim()) return {}
   try {
     return JSON.parse(text)
-  } catch {
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error
     return {raw: text}
   }
 }
 
 export async function dispatchFlowTool(input: DispatchInput): Promise<unknown> {
-  const auth = await ensureAuthenticatedIdentity([scopeFor(input.source)])
+  const session = await authenticateFlowStore(input.store)
   const endpoint = endpointFor(input.source)
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${auth.token}`,
+    Authorization: `Bearer ${session.accessToken}`,
     'Content-Type': 'application/json',
     'X-Shopify-Shop-Domain': input.store,
-    'X-Shopify-User-Id': auth.userId,
   }
   if (input.isEval) headers['X-Shopify-Is-Eval'] = 'true'
 
@@ -82,6 +75,8 @@ export async function dispatchFlowTool(input: DispatchInput): Promise<unknown> {
     },
     'slow-request',
   )
+
+  if (response.status === 401) throwFlowAuthExpired(session)
 
   const body = await parseResponse(response)
 
