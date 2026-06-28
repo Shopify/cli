@@ -8,14 +8,17 @@ import {
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
+  _resetMacAddressCache,
   getThemeKitAccessDomain,
   opentelemetryDomain,
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 
-import {afterEach, expect, describe, vi, test} from 'vitest'
+import macaddress from 'macaddress'
+import {afterEach, expect, describe, vi, test, beforeEach} from 'vitest'
 
+vi.mock('macaddress')
 vi.mock('../fs.js')
 vi.mock('../system.js')
 vi.mock('../environment.js')
@@ -207,12 +210,56 @@ describe('analitycsDisabled', () => {
 })
 
 describe('macAddress', () => {
+  beforeEach(() => {
+    _resetMacAddressCache()
+  })
+
   test('returns any mac address value', async () => {
+    // Given
+    vi.mocked(macaddress.one).mockImplementation(((iface?: any, callback?: any) => {
+      if (typeof iface === 'function') return iface(null, 'macAddress')
+      if (callback) return callback(null, 'macAddress')
+      return Promise.resolve('macAddress')
+    }) as any)
+
     // When
     const got = await macAddress()
 
     // Then
-    expect(got).not.toBeUndefined()
+    expect(got).toBe('macAddress')
+  })
+
+  test('memoizes the mac address', async () => {
+    // Given
+    vi.mocked(macaddress.one).mockImplementation(((iface?: any, callback?: any) => {
+      if (typeof iface === 'function') return iface(null, 'macAddress')
+      if (callback) return callback(null, 'macAddress')
+      return Promise.resolve('macAddress')
+    }) as any)
+
+    // When
+    await macAddress()
+    await macAddress()
+
+    // Then
+    expect(macaddress.one).toHaveBeenCalledTimes(1)
+  })
+
+  test('resets the cache when _resetMacAddressCache is called', async () => {
+    // Given
+    vi.mocked(macaddress.one).mockImplementation(((iface?: any, callback?: any) => {
+      if (typeof iface === 'function') return iface(null, 'macAddress')
+      if (callback) return callback(null, 'macAddress')
+      return Promise.resolve('macAddress')
+    }) as any)
+
+    // When
+    await macAddress()
+    _resetMacAddressCache()
+    await macAddress()
+
+    // Then
+    expect(macaddress.one).toHaveBeenCalledTimes(2)
   })
 })
 

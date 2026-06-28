@@ -45,6 +45,11 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the mac address.
+ */
+let macAddressPromise: Promise<string> | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -291,8 +296,15 @@ export function ciPlatform(
  *
  * @returns Mac address.
  */
-export function macAddress(): Promise<string> {
-  return macaddress.one()
+export async function macAddress(): Promise<string> {
+  return (macAddressPromise ??= macaddress.one())
+}
+
+/**
+ * Resets the memoized mac address.
+ */
+export function _resetMacAddressCache(): void {
+  macAddressPromise = undefined
 }
 
 /**
