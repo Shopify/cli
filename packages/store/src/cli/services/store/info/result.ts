@@ -35,8 +35,8 @@ function storeDetailRows(result: StoreInfoResult): InlineToken[][] {
 function storeActions(result: StoreInfoResult): LinkToken[] {
   const actions: LinkToken[] = []
   pushAction(actions, result.adminUrl, 'Manage this store in the Shopify admin')
-  pushAction(actions, result.accessUrl, 'View the storefront')
-  pushAction(actions, result.saveUrl, 'Save your progress on this store')
+  pushAction(actions, result.accessUrl, 'View your store')
+  pushAction(actions, result.saveUrl, 'Save your store')
   return actions
 }
 
