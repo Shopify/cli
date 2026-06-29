@@ -145,11 +145,8 @@ function throwIfPreviewStore(store: string, dependencies: StoreAuthDependencies)
   const scopeList = scopes.length > 0 ? scopes.join(', ') : 'none'
 
   throw new AbortError(
-    `\`store auth\` is unavailable for preview stores.`,
-    `Preview stores aren't a logged-in experience, so additional Admin API scopes can't be granted. The following scopes are already available: ${scopeList}.`,
-    [
-      'Run `shopify store execute` directly against the preview store; no `store auth` step is needed.',
-      'Run `shopify store info --json` to see the preapproved scopes for this store.',
-    ],
+    `\`store auth\` is unavailable for preview stores. Additional Admin API scopes can't be granted.`,
+    `The following scopes are available: ${scopeList}.\n\nRun \`shopify store info --store ${store} --json\` to view this list again at any time.`,
+    ['Run `shopify store execute` directly against the preview store; no `store auth` step is needed.'],
   )
 }

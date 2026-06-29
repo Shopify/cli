@@ -669,9 +669,14 @@ describe('store auth service', () => {
       () => {
         throw new Error('Expected authenticateStoreWithApp to reject for a preview store.')
       },
-      (err: unknown) => err as Error & {tryMessage?: string},
+      (err: unknown) => err as Error & {tryMessage?: string; nextSteps?: string[]},
     )
 
-    expect(error.tryMessage).toContain('read_themes, write_themes')
+    expect(error.message).toContain("Additional Admin API scopes can't be granted.")
+    expect(error.tryMessage).toContain('The following scopes are available: read_themes, write_themes.')
+    expect(error.tryMessage).toContain('shopify store info --store shop.myshopify.com --json')
+    expect(error.nextSteps).toEqual([
+      'Run `shopify store execute` directly against the preview store; no `store auth` step is needed.',
+    ])
   })
 })
