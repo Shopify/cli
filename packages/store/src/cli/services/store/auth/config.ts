@@ -1,4 +1,5 @@
-export const STORE_AUTH_APP_CLIENT_ID = '7e9cb568cfd431c538f36d1ad3f2b4f6'
+export const STORE_AUTH_APP_CLIENT_ID =
+  process.env.SHOPIFY_STORE_AUTH_APP_CLIENT_ID ?? '7e9cb568cfd431c538f36d1ad3f2b4f6'
 export const DEFAULT_STORE_AUTH_PORT = 13387
 export const STORE_AUTH_CALLBACK_PATH = '/auth/callback'
 

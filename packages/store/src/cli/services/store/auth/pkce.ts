@@ -13,6 +13,7 @@ interface StoreAuthorizationContext {
   redirectUri: string
   authorizationUrl: string
   codeVerifier: string
+  signup?: string
 }
 
 interface StoreAuthBootstrap {
@@ -35,6 +36,7 @@ export function buildStoreAuthUrl(options: {
   state: string
   redirectUri: string
   codeChallenge: string
+  signup?: string
 }): string {
   const params = new URLSearchParams()
   params.set('client_id', STORE_AUTH_APP_CLIENT_ID)
@@ -44,6 +46,7 @@ export function buildStoreAuthUrl(options: {
   params.set('response_type', 'code')
   params.set('code_challenge', options.codeChallenge)
   params.set('code_challenge_method', 'S256')
+  if (options.signup) params.set('signup', options.signup)
 
   return `https://${options.store}/admin/oauth/authorize?${params.toString()}`
 }
@@ -51,6 +54,7 @@ export function buildStoreAuthUrl(options: {
 export function createPkceBootstrap(options: {
   store: string
   scopes: string[]
+  signup?: string
   exchangeCodeForToken: (options: {
     store: string
     code: string
@@ -58,13 +62,13 @@ export function createPkceBootstrap(options: {
     redirectUri: string
   }) => Promise<StoreTokenResponse>
 }): StoreAuthBootstrap {
-  const {store, scopes, exchangeCodeForToken} = options
+  const {store, scopes, signup, exchangeCodeForToken} = options
   const port = DEFAULT_STORE_AUTH_PORT
   const state = randomUUID()
   const redirectUri = storeAuthRedirectUri(port)
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = computeCodeChallenge(codeVerifier)
-  const authorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge})
+  const authorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge, signup})
 
   outputDebug(
     outputContent`Starting PKCE auth for ${outputToken.raw(store)} with scopes ${outputToken.raw(scopes.join(','))} (redirect_uri=${outputToken.raw(redirectUri)})`,
@@ -79,6 +83,7 @@ export function createPkceBootstrap(options: {
       redirectUri,
       authorizationUrl,
       codeVerifier,
+      signup,
     },
     waitForAuthCodeOptions: {
       store,

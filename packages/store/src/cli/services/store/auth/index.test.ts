@@ -77,6 +77,42 @@ describe('store auth service', () => {
     })
   })
 
+  test('authenticateStoreWithApp includes signup JWT in the authorization URL when provided', async () => {
+    const openURL = vi.fn().mockResolvedValue(true)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+        signup: 'signed.signup.jwt',
+      },
+      {
+        openURL,
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_products',
+          expires_in: 86400,
+          refresh_token: 'refresh-token',
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter,
+      },
+    )
+
+    const authorizationUrl = new URL(openURL.mock.calls[0]![0])
+    expect(authorizationUrl.searchParams.get('signup')).toBe('signed.signup.jwt')
+  })
+
   test('authenticateStoreWithApp uses remote scopes by default when available', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const presenter = {

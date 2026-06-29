@@ -6577,6 +6577,84 @@
       "strict": true,
       "summary": "List stores in a Shopify organization."
     },
+    "store:stripe-auth": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup.",
+      "descriptionWithMarkdown": "Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --signup <signup-jwt>",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --signup <signup-jwt> --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "scopes": {
+          "description": "Comma-separated Admin API scopes to request for the app.",
+          "env": "SHOPIFY_FLAG_SCOPES",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "scopes",
+          "required": true,
+          "type": "option"
+        },
+        "signup": {
+          "description": "Provide JWT for the store.",
+          "env": "SHOPIFY_FLAG_SIGNUP",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "signup",
+          "required": true,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "store:stripe-auth",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Authenticate for store commands."
+    },
     "theme:check": {
       "aliases": [
       ],
