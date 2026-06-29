@@ -1,0 +1,52 @@
+{
+  "name": "@shopify/flow-cli",
+  "version": "0.0.1",
+  "description": "Standalone Shopify Flow CLI",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "flow": "./dist/main.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "oclif": {
+    "bin": "flow",
+    "commands": {
+      "strategy": "explicit",
+      "target": "./dist/index.js",
+      "identifier": "COMMANDS"
+    },
+    "topics": {
+      "workflow": {
+        "description": "Manage Flow workflows"
+      }
+    }
+  },
+  "dependencies": {
+    "@oclif/core": "4.8.3",
+    "@shopify/cli-kit": "4.3.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^6.0.0",
+    "@rollup/plugin-commonjs": "^29.0.3",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "esbuild": "0.28.1",
+    "esbuild-plugin-copy": "^2.1.1",
+    "fast-glob": "3.3.3",
+    "rollup": "^3.29.5",
+    "typescript": "5.8.2"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "bundle": "rollup --config rollup.config.mjs",
+    "clean": "rm -rf dist bundle"
+  },
+  "engines": {
+    "node": ">=18.20.0"
+  }
+}
