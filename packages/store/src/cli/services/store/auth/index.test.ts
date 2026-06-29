@@ -605,4 +605,78 @@ describe('store auth service', () => {
       }),
     )
   })
+
+  test('authenticateStoreWithApp exits early for preview stores and lists their preapproved scopes', async () => {
+    const openURL = vi.fn().mockResolvedValue(true)
+    const waitForStoreAuthCode = vi.fn()
+    const exchangeStoreAuthCodeForToken = vi.fn()
+    const presenter = {openingBrowser: vi.fn(), manualAuthUrl: vi.fn(), success: vi.fn()}
+    const getCurrentStoredStoreAppSessionMock = vi.fn().mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: 'preview:placeholder-uuid',
+      accessToken: 'shpat_preview_token',
+      scopes: ['read_themes', 'write_themes'],
+      acquiredAt: '2026-06-08T12:00:00.000Z',
+      kind: 'preview',
+      preview: {shopId: '123', name: 'Lavender Candles', createdAt: '2026-06-08T12:00:00.000Z'},
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {store: 'shop.myshopify.com', scopes: 'read_products'},
+        {
+          openURL,
+          waitForStoreAuthCode,
+          exchangeStoreAuthCodeForToken,
+          getCurrentStoredStoreAppSession: getCurrentStoredStoreAppSessionMock,
+          presenter,
+        },
+      ),
+    ).rejects.toThrow('`store auth` is unavailable for preview stores.')
+
+    // The OAuth flow is never started, and no fqdn metadata is recorded.
+    expect(openURL).not.toHaveBeenCalled()
+    expect(waitForStoreAuthCode).not.toHaveBeenCalled()
+    expect(exchangeStoreAuthCodeForToken).not.toHaveBeenCalled()
+    expect(presenter.openingBrowser).not.toHaveBeenCalled()
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
+  })
+
+  test('authenticateStoreWithApp surfaces the preapproved scope list in the preview-store error', async () => {
+    const getCurrentStoredStoreAppSessionMock = vi.fn().mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: 'preview:placeholder-uuid',
+      accessToken: 'shpat_preview_token',
+      scopes: ['read_themes', 'write_themes'],
+      acquiredAt: '2026-06-08T12:00:00.000Z',
+      kind: 'preview',
+      preview: {shopId: '123', name: 'Lavender Candles', createdAt: '2026-06-08T12:00:00.000Z'},
+    })
+
+    const error = await authenticateStoreWithApp(
+      {store: 'shop.myshopify.com', scopes: 'read_products'},
+      {
+        openURL: vi.fn(),
+        waitForStoreAuthCode: vi.fn(),
+        exchangeStoreAuthCodeForToken: vi.fn(),
+        getCurrentStoredStoreAppSession: getCurrentStoredStoreAppSessionMock,
+        presenter: {openingBrowser: vi.fn(), manualAuthUrl: vi.fn(), success: vi.fn()},
+      },
+    ).then(
+      () => {
+        throw new Error('Expected authenticateStoreWithApp to reject for a preview store.')
+      },
+      (err: unknown) => err as Error & {tryMessage?: string; nextSteps?: string[]},
+    )
+
+    expect(error.message).toContain("Additional Admin API scopes can't be granted.")
+    expect(error.tryMessage).toContain('The following scopes are available: read_themes, write_themes.')
+    expect(error.tryMessage).toContain('shopify store info --store shop.myshopify.com --json')
+    expect(error.nextSteps).toEqual([
+      'Run `shopify store execute` directly against the preview store; no `store auth` step is needed.',
+    ])
+  })
 })
