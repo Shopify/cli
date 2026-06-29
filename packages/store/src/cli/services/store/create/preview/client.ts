@@ -40,6 +40,7 @@ export interface PreviewStoreCreateResponse {
   shop: PreviewStoreResponseShop
   placeholderAccountUuid?: string
   adminApiToken: string
+  adminApiScopes: string[]
   accessUrl: string
 }
 
@@ -53,6 +54,7 @@ interface RawPreviewStoreCreateResponse {
   shop?: RawPreviewStoreResponseShop
   placeholder_account_uuid?: unknown
   admin_api_token?: unknown
+  admin_api_scopes?: unknown
   access_url?: unknown
 }
 
@@ -320,8 +322,13 @@ function narrowCreateResponse(parsed: RawPreviewStoreCreateResponse): PreviewSto
   const accessUrl = typeof parsed.access_url === 'string' ? parsed.access_url : undefined
   const placeholderAccountUuid =
     typeof parsed.placeholder_account_uuid === 'string' ? parsed.placeholder_account_uuid : undefined
+  // The backend always returns `admin_api_scopes` for the granted Admin API token, so it is a
+  // required field. We still filter out any non-string entries defensively.
+  const adminApiScopes = Array.isArray(parsed.admin_api_scopes)
+    ? parsed.admin_api_scopes.filter((scope): scope is string => typeof scope === 'string')
+    : undefined
 
-  if (!id || !name || !domain || !adminApiToken || !accessUrl) {
+  if (!id || !name || !domain || !adminApiToken || !accessUrl || !adminApiScopes) {
     throw new AbortError(
       'Preview store creation response is missing required fields.',
       `Got: ${JSON.stringify(redactPreviewStoreResponse(parsed)).slice(0, 500)}`,
@@ -331,6 +338,7 @@ function narrowCreateResponse(parsed: RawPreviewStoreCreateResponse): PreviewSto
   return {
     shop: {id, name, domain},
     adminApiToken,
+    adminApiScopes,
     accessUrl,
     ...(placeholderAccountUuid ? {placeholderAccountUuid} : {}),
   }

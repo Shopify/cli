@@ -15,6 +15,7 @@ describe('preview store create service', () => {
           shop: {id: '123', name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
           placeholderAccountUuid: 'placeholder-uuid',
           adminApiToken: 'shpat_token',
+          adminApiScopes: ['read_themes', 'write_themes'],
           accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
         })),
         setStoredStoreAppSession,
@@ -29,7 +30,7 @@ describe('preview store create service', () => {
       clientId: STORE_AUTH_APP_CLIENT_ID,
       userId: `${PREVIEW_USER_ID_PREFIX}placeholder-uuid`,
       accessToken: 'shpat_token',
-      scopes: [],
+      scopes: ['read_themes', 'write_themes'],
       acquiredAt: '2026-06-08T12:00:00.000Z',
       kind: 'preview',
       preview: {
@@ -68,6 +69,7 @@ describe('preview store create service', () => {
         createPreviewStore: vi.fn(async () => ({
           shop: {id: '123', name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
           adminApiToken: 'shpat_token',
+          adminApiScopes: [],
           accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
         })),
         setStoredStoreAppSession,
@@ -78,7 +80,7 @@ describe('preview store create service', () => {
     )
 
     expect(setStoredStoreAppSession).toHaveBeenCalledWith(
-      expect.objectContaining({userId: `${PREVIEW_USER_ID_PREFIX}123`}),
+      expect.objectContaining({userId: `${PREVIEW_USER_ID_PREFIX}123`, scopes: []}),
     )
     expect(setLastSeenUserId).toHaveBeenCalledWith(`${PREVIEW_USER_ID_PREFIX}123`)
   })
@@ -88,6 +90,7 @@ describe('preview store create service', () => {
     const createPreviewStore = vi.fn(async () => ({
       shop: {id: '123', name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
       adminApiToken: 'shpat_token',
+      adminApiScopes: [],
       accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
     }))
 
@@ -118,6 +121,7 @@ describe('preview store create service', () => {
         createPreviewStore: vi.fn(async () => ({
           shop: {id: '123', name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
           adminApiToken: 'shpat_token',
+          adminApiScopes: [],
           accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
         })),
         setStoredStoreAppSession,

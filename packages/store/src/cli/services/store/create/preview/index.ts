@@ -73,7 +73,7 @@ async function persistPreviewStoreSession(
     clientId: STORE_AUTH_APP_CLIENT_ID,
     userId,
     accessToken: response.adminApiToken,
-    scopes: [],
+    scopes: response.adminApiScopes,
     acquiredAt,
     kind: 'preview',
     preview: {
