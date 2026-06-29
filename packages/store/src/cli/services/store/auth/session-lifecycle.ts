@@ -1,10 +1,14 @@
 import {maskToken} from './config.js'
 import {throwStoredStoreAuthError, throwReauthenticateStoreAuthError} from './recovery.js'
-import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
 import {refreshStoreAccessToken} from './token-client.js'
+import {
+  clearStoredStoreAppSession,
+  getCurrentStoredStoreAppSession,
+  setStoredStoreAppSession,
+} from '@shopify/cli-kit/node/store-auth-session'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import type {StoredStoreAppSession} from './session-store.js'
+import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 
 const EXPIRY_MARGIN_MS = 4 * 60 * 1000
 

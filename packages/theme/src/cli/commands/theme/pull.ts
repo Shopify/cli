@@ -65,4 +65,8 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     await pull({...flags, noColor: flags['no-color']}, adminSession, multiEnvironment, context)
     recordTiming('theme-command:pull')
   }
+
+  protected storeAuthScopes(): string[] {
+    return ['read_themes']
+  }
 }

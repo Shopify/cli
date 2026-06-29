@@ -1,6 +1,6 @@
-import {getCurrentStoredStoreAppSession} from './session-store.js'
 import {loadStoredStoreSession} from './session-lifecycle.js'
 import {fetchCurrentStoreAuthScopes} from './token-client.js'
+import {getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 

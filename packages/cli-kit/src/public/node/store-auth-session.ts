@@ -1,6 +1,12 @@
-import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './config.js'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {type JsonMapType} from '@shopify/cli-kit/node/toml'
+import {STORE_AUTH_APP_CLIENT_ID} from './constants.js'
+import {normalizeStoreFqdn} from './context/fqdn.js'
+import {LocalStorage} from './local-storage.js'
+import {setLastSeenUserId} from './session.js'
+import type {JsonMapType} from './toml/codec.js'
+import type {AdminSession} from './session.js'
+
+const STORE_AUTH_PROJECT_NAME = 'shopify-cli-store'
+const EXPIRY_MARGIN_MS = 4 * 60 * 1000
 
 /**
  * Discriminator for a stored store auth session.
@@ -11,9 +17,9 @@ import {type JsonMapType} from '@shopify/cli-kit/node/toml'
  * Stored sessions written before this discriminator existed have no `kind` field and are
  * read back as 'standard'.
  */
-type StoredStoreSessionKind = 'standard' | 'preview'
+export type StoredStoreSessionKind = 'standard' | 'preview'
 
-interface StoredPreviewStoreMetadata {
+export interface StoredPreviewStoreMetadata {
   /** Placeholder account UUID returned by the preview-store backend when available. */
   placeholderAccountUuid?: string
   /** Numeric shop id returned by the preview-store backend. */
@@ -59,17 +65,31 @@ interface StoredStoreAppSessionBucket {
   sessionsByUserId: {[userId: string]: StoredStoreAppSession}
 }
 
-interface StoreSessionSchema {
+interface StoreAuthSessionSchema {
   [key: string]: StoredStoreAppSessionBucket
 }
 
-type RawStoreSessionStorage = JsonMapType
+type RawStoreAuthSessionStorage = JsonMapType
 
-let _storeSessionStorage: LocalStorage<StoreSessionSchema> | undefined
+let _storeAuthSessionStorage: LocalStorage<StoreAuthSessionSchema> | undefined
 
-function storeSessionStorage() {
-  _storeSessionStorage ??= new LocalStorage<StoreSessionSchema>({projectName: 'shopify-cli-store'})
-  return _storeSessionStorage
+function storeAuthSessionStorage() {
+  _storeAuthSessionStorage ??= new LocalStorage<StoreAuthSessionSchema>({projectName: STORE_AUTH_PROJECT_NAME})
+  return _storeAuthSessionStorage
+}
+
+/**
+ * Build the local-storage key used for store-auth sessions.
+ *
+ * @param store - The normalized store FQDN.
+ * @returns The store-auth session storage key.
+ */
+export function storeAuthSessionKey(store: string): string {
+  return `${STORE_AUTH_APP_CLIENT_ID}::${escapeStoreAuthSessionKeySegment(store)}`
+}
+
+function escapeStoreAuthSessionKeySegment(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/\./g, '\\.')
 }
 
 function isString(value: unknown): value is string {
@@ -154,7 +174,7 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
 function sanitizeStoredStoreAppSessionBucket(
   store: string,
   storedBucket: unknown,
-  storage: LocalStorage<StoreSessionSchema>,
+  storage: LocalStorage<StoreAuthSessionSchema>,
 ): StoredStoreAppSessionBucket | undefined {
   if (!storedBucket || typeof storedBucket !== 'object') return undefined
 
@@ -200,7 +220,7 @@ function sanitizeStoredStoreAppSessionBucket(
 
 function readStoredStoreAppSessionBucket(
   store: string,
-  storage: LocalStorage<StoreSessionSchema>,
+  storage: LocalStorage<StoreAuthSessionSchema>,
 ): StoredStoreAppSessionBucket | undefined {
   return sanitizeStoredStoreAppSessionBucket(store, storage.get(storeAuthSessionKey(store)), storage)
 }
@@ -208,21 +228,23 @@ function readStoredStoreAppSessionBucket(
 // `conf` persists dotted keys as nested objects. Store-auth callers should not
 // learn that layout directly; this helper keeps the current traversal private to
 // the persistence seam while higher-level code projects summaries instead.
-function readRawStoreSessionStorage(storage: LocalStorage<StoreSessionSchema>): RawStoreSessionStorage {
-  return (storage as unknown as {config?: {store?: RawStoreSessionStorage}}).config?.store ?? {}
+function readRawStoreAuthSessionStorage(storage: LocalStorage<StoreAuthSessionSchema>): RawStoreAuthSessionStorage {
+  return (storage as unknown as {config?: {store?: RawStoreAuthSessionStorage}}).config?.store ?? {}
 }
 
 /**
- * Internal persistence helper for projecting the current session for every
- * store that has locally stored store auth.
+ * Project the current session for every store that has locally stored store auth.
+ *
+ * @param storage - Optional storage override for tests.
+ * @returns Current stored store auth sessions.
  */
 export function listCurrentStoredStoreAppSessions(
-  storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
+  storage: LocalStorage<StoreAuthSessionSchema> = storeAuthSessionStorage(),
 ): StoredStoreAppSession[] {
   const sessions: StoredStoreAppSession[] = []
   const keyPrefix = `${STORE_AUTH_APP_CLIENT_ID}::`
 
-  for (const [key, value] of Object.entries(readRawStoreSessionStorage(storage))) {
+  for (const [key, value] of Object.entries(readRawStoreAuthSessionStorage(storage))) {
     if (!key.startsWith(keyPrefix)) continue
 
     const bucket = sanitizeStoredStoreAppSessionBucket(key.slice(keyPrefix.length), value, storage)
@@ -233,25 +255,39 @@ export function listCurrentStoredStoreAppSessions(
   return sessions
 }
 
+/**
+ * Get the current stored store auth session for a store.
+ *
+ * @param store - The store FQDN or URL to load a store-auth session for.
+ * @param storage - Optional storage override for tests.
+ * @returns The current stored store auth session, or undefined when missing or malformed.
+ */
 export function getCurrentStoredStoreAppSession(
   store: string,
-  storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
+  storage: LocalStorage<StoreAuthSessionSchema> = storeAuthSessionStorage(),
 ): StoredStoreAppSession | undefined {
-  const bucket = readStoredStoreAppSessionBucket(store, storage)
+  const storeFqdn = normalizeStoreFqdn(store)
+  const bucket = readStoredStoreAppSessionBucket(storeFqdn, storage)
   if (!bucket) return undefined
 
   const session = bucket.sessionsByUserId[bucket.currentUserId]
   if (!session) {
-    storage.delete(storeAuthSessionKey(store))
+    storage.delete(storeAuthSessionKey(storeFqdn))
     return undefined
   }
 
   return session
 }
 
+/**
+ * Persist a store auth session and mark it as current for its store.
+ *
+ * @param session - The store auth session to persist.
+ * @param storage - Optional storage override for tests.
+ */
 export function setStoredStoreAppSession(
   session: StoredStoreAppSession,
-  storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
+  storage: LocalStorage<StoreAuthSessionSchema> = storeAuthSessionStorage(),
 ): void {
   const key = storeAuthSessionKey(session.store)
   const existingBucket = readStoredStoreAppSessionBucket(session.store, storage)
@@ -267,22 +303,30 @@ export function setStoredStoreAppSession(
   storage.set(key, nextBucket)
 }
 
+/**
+ * Clear stored store auth sessions for a store.
+ *
+ * @param store - The store FQDN or URL to clear sessions for.
+ * @param userIdOrStorage - Optional user ID to clear, or storage override when clearing all users.
+ * @param maybeStorage - Optional storage override when clearing one user.
+ */
 export function clearStoredStoreAppSession(
   store: string,
-  userIdOrStorage?: string | LocalStorage<StoreSessionSchema>,
-  maybeStorage?: LocalStorage<StoreSessionSchema>,
+  userIdOrStorage?: string | LocalStorage<StoreAuthSessionSchema>,
+  maybeStorage?: LocalStorage<StoreAuthSessionSchema>,
 ): void {
+  const storeFqdn = normalizeStoreFqdn(store)
   const userId = typeof userIdOrStorage === 'string' ? userIdOrStorage : undefined
-  const storage = (typeof userIdOrStorage === 'string' ? maybeStorage : userIdOrStorage) ?? storeSessionStorage()
+  const storage = (typeof userIdOrStorage === 'string' ? maybeStorage : userIdOrStorage) ?? storeAuthSessionStorage()
 
-  const key = storeAuthSessionKey(store)
+  const key = storeAuthSessionKey(storeFqdn)
 
   if (!userId) {
     storage.delete(key)
     return
   }
 
-  const existingBucket = readStoredStoreAppSessionBucket(store, storage)
+  const existingBucket = readStoredStoreAppSessionBucket(storeFqdn, storage)
   if (!existingBucket) return
 
   const {[userId]: _removedSession, ...remainingSessions} = existingBucket.sessionsByUserId
@@ -297,4 +341,42 @@ export function clearStoredStoreAppSession(
     currentUserId: existingBucket.currentUserId === userId ? remainingUserIds[0]! : existingBucket.currentUserId,
     sessionsByUserId: remainingSessions,
   })
+}
+
+/**
+ * Load an Admin API session from the local store-auth cache when one is currently usable.
+ *
+ * @param store - The store FQDN or URL to load a store-auth session for.
+ * @param storage - Optional storage override for tests.
+ * @returns An Admin session, or undefined when no usable session is cached.
+ */
+export function getStoreAuthAdminSession(
+  store: string,
+  storage: LocalStorage<StoreAuthSessionSchema> = storeAuthSessionStorage(),
+): AdminSession | undefined {
+  const storeFqdn = normalizeStoreFqdn(store)
+  const session = getCurrentStoredStoreAppSession(storeFqdn, storage)
+  if (!session || isSessionExpired(session)) return undefined
+
+  setLastSeenUserId(session.userId)
+
+  return {
+    token: session.accessToken,
+    storeFqdn,
+  }
+}
+
+/**
+ * Check whether a stored store auth session is expired, including the refresh margin.
+ *
+ * @param session - The stored store auth session.
+ * @returns True when the session is expired or has an invalid expiry timestamp.
+ */
+export function isSessionExpired(session: StoredStoreAppSession): boolean {
+  if (!session.expiresAt) return false
+
+  const expiresAtMs = new Date(session.expiresAt).getTime()
+  if (Number.isNaN(expiresAtMs)) return true
+
+  return expiresAtMs - EXPIRY_MARGIN_MS < Date.now()
 }

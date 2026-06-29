@@ -4,15 +4,15 @@ import {
   fetchPublicApiVersions,
   runAdminStoreGraphQLOperation,
 } from './admin-transport.js'
-import {clearStoredStoreAppSession} from '../auth/session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
+import {clearStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
-vi.mock('../auth/session-store.js')
+vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {

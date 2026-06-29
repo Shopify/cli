@@ -9,6 +9,8 @@ import StoreExecute from './cli/commands/store/execute.js'
 import StoreInfo from './cli/commands/store/info.js'
 import StoreList from './cli/commands/store/list.js'
 
+export {loadAdminSessionFromStoreAuth} from './cli/services/store/auth/admin-session.js'
+
 const COMMANDS = {
   'store:auth:list': StoreAuthList,
   'store:auth': StoreAuth,

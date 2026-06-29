@@ -1,4 +1,4 @@
-import {listCurrentStoredStoreAppSessions, type StoredStoreAppSession} from './session-store.js'
+import {listCurrentStoredStoreAppSessions, type StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 
 export interface StoredStoreAuthSummary {
   store: string

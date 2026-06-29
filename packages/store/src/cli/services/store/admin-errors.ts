@@ -1,7 +1,7 @@
 import {throwReauthenticateStoreAuthError} from './auth/recovery.js'
-import {clearStoredStoreAppSession} from './auth/session-store.js'
+import {clearStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import type {StoredStoreAppSession} from './auth/session-store.js'
+import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 
 interface GraphQLClientErrorLike {
   response: {status?: number; errors?: unknown}

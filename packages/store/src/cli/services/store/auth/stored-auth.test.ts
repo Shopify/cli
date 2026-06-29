@@ -1,6 +1,6 @@
 import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './config.js'
-import {setStoredStoreAppSession, type StoredStoreAppSession} from './session-store.js'
 import {listStoredStoreAuthSummaries} from './stored-auth.js'
+import {setStoredStoreAppSession, type StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {describe, expect, test} from 'vitest'

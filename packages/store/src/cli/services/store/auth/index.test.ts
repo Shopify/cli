@@ -1,11 +1,11 @@
 import {authenticateStoreWithApp} from './index.js'
-import {setStoredStoreAppSession} from './session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
+import {setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('./session-store.js')
+vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('../attribution.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
