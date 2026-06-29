@@ -90,13 +90,13 @@ export function asHumanFriendlyArray<T>(items: T[]): (T | string)[] {
     return items
   }
 
-  return items.reduce<(T | string)[]>((acc, item, index) => {
-    if (index === items.length - 1) {
-      acc.push('and')
-    } else if (index !== 0) {
-      acc.push(', ')
+  return items.flatMap((item, index) => {
+    if (index === 0) {
+      return [item]
     }
-    acc.push(item)
-    return acc
-  }, [])
+    if (index === items.length - 1) {
+      return ['and', item]
+    }
+    return [', ', item]
+  })
 }

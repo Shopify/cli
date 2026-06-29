@@ -1,4 +1,4 @@
-import {difference, uniq, uniqBy} from './array.js'
+import {asHumanFriendlyArray, difference, uniq, uniqBy} from './array.js'
 import {describe, test, expect} from 'vitest'
 
 describe('uniqBy', () => {
@@ -60,5 +60,40 @@ describe('difference', () => {
 
     // Then
     expect(got).toEqual([1])
+  })
+})
+
+describe('asHumanFriendlyArray', () => {
+  test('returns the same array if it has less than 2 elements', () => {
+    // Given
+    const array = ['apple']
+
+    // When
+    const got = asHumanFriendlyArray(array)
+
+    // Then
+    expect(got).toEqual(['apple'])
+  })
+
+  test('returns a human friendly array if it has 2 elements', () => {
+    // Given
+    const array = ['apple', 'banana']
+
+    // When
+    const got = asHumanFriendlyArray(array)
+
+    // Then
+    expect(got).toEqual(['apple', 'and', 'banana'])
+  })
+
+  test('returns a human friendly array if it has more than 2 elements', () => {
+    // Given
+    const array = ['apple', 'banana', 'orange']
+
+    // When
+    const got = asHumanFriendlyArray(array)
+
+    // Then
+    expect(got).toEqual(['apple', ', ', 'banana', 'and', 'orange'])
   })
 })
