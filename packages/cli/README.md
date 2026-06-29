@@ -84,6 +84,7 @@
 * [`shopify store bulk status`](#shopify-store-bulk-status)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify store info`](#shopify-store-info)
+* [`shopify store open`](#shopify-store-open)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -2386,6 +2387,28 @@ EXAMPLES
   $ shopify store info --store shop.myshopify.com
 
   $ shopify store info --store shop.myshopify.com --json
+```
+
+## `shopify store open`
+
+Open your Shopify store in the default web browser.
+
+```
+USAGE
+  $ shopify store open -s <value> [--no-color] [--verbose]
+
+FLAGS
+  -s, --store=<value>  (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store.
+      --no-color       [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose        [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Open your Shopify store in the default web browser.
+
+  Opens the storefront for a store you have access to in your default web browser.
+
+EXAMPLES
+  $ shopify store open --store shop.myshopify.com
 ```
 
 ## `shopify theme check`

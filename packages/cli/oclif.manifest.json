@@ -6577,6 +6577,55 @@
       "strict": true,
       "summary": "List stores in a Shopify organization."
     },
+    "store:open": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Opens the storefront for a store you have access to in your default web browser.",
+      "descriptionWithMarkdown": "Opens the storefront for a store you have access to in your default web browser.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com"
+      ],
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:open",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Open your Shopify store in the default web browser."
+    },
     "theme:check": {
       "aliases": [
       ],
