@@ -188,6 +188,30 @@ describe('ExtensionServerClient', () => {
       expect(client.connection).toBeUndefined()
       expect(mockSocketServer.clients.length).toBe(0)
     })
+
+    test('generates a random UUID for the client id using crypto.randomUUID when available', () => {
+      const uuid = '12345678-1234-1234-1234-123456789012'
+      const randomUUIDSpy = vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(uuid)
+
+      const client = new ExtensionServerClient()
+
+      expect(client.id).toBe(uuid)
+      expect(randomUUIDSpy).toHaveBeenCalled()
+
+      randomUUIDSpy.mockRestore()
+    })
+
+    test('falls back to Math.random for the client id when crypto.randomUUID is not available', () => {
+      const originalCrypto = globalThis.crypto
+      delete (globalThis as any).crypto
+
+      const client = new ExtensionServerClient()
+
+      expect(client.id).toBeDefined()
+      expect(client.id.length).toBeLessThanOrEqual(10)
+
+      globalThis.crypto = originalCrypto
+    })
   })
 
   describe('on()', () => {
