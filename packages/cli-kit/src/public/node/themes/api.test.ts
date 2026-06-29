@@ -354,6 +354,19 @@ describe('themeCreate', () => {
       preferredBehaviour: expectedApiOptions,
     })
   })
+
+  test('throws a friendly error when access is denied by a missing theme write access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      themeAccessDeniedError(
+        'The user needs write_themes and an exemption from Shopify to modify themes.',
+        'themeCreate',
+      ),
+    )
+
+    await expect(themeCreate(params, session)).rejects.toThrow(
+      'The authenticated account or access token is missing write_themes and an exemption from Shopify to modify themes.',
+    )
+  })
 })
 
 describe('themeUpdate', () => {
@@ -808,11 +821,11 @@ describe('parseThemeFileContent', () => {
   })
 })
 
-function themeAccessDeniedError(requiredAccess?: string): ClientError {
+function themeAccessDeniedError(requiredAccess?: string, field = 'themes'): ClientError {
   const extensions = requiredAccess ? {code: 'ACCESS_DENIED', requiredAccess} : {code: 'ACCESS_DENIED'}
   const message = requiredAccess
-    ? `Access denied for themes field. Required access: ${requiredAccess}`
-    : 'Access denied for themes field.'
+    ? `Access denied for ${field} field. Required access: ${requiredAccess}`
+    : `Access denied for ${field} field.`
 
   return new ClientError(
     {
@@ -821,7 +834,7 @@ function themeAccessDeniedError(requiredAccess?: string): ClientError {
         {
           message,
           extensions,
-          path: ['themes'],
+          path: [field],
         } as any,
       ],
     },

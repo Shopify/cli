@@ -153,7 +153,7 @@ export async function findDevelopmentThemeByName(name: string, session: AdminSes
 export async function themeCreate(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const themeSource = params.src ?? SkeletonThemeCdn
   recordEvent('theme-api:create-theme')
-  const {themeCreate} = await adminRequestDoc({
+  const {themeCreate} = await requestThemeAdminDoc({
     query: ThemeCreate,
     session,
     variables: {
@@ -684,7 +684,16 @@ function getThemeAccessRequirementForAccessDeniedError(error: ClientError): stri
   const requiredAccess = accessDeniedError.extensions?.requiredAccess
   if (typeof requiredAccess !== 'string') return DEFAULT_THEME_ACCESS_REQUIREMENT
 
-  return requiredAccess.trim().replace(/\.$/, '') || DEFAULT_THEME_ACCESS_REQUIREMENT
+  return formatThemeAccessRequirement(requiredAccess)
+}
+
+function formatThemeAccessRequirement(requiredAccess: string): string {
+  const requirement = requiredAccess
+    .trim()
+    .replace(/\.$/, '')
+    .replace(/^The user needs\s+/i, '')
+
+  return requirement || DEFAULT_THEME_ACCESS_REQUIREMENT
 }
 
 function themeGid(id: number): string {
