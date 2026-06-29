@@ -9,6 +9,7 @@ import {
   cloudEnvironment,
   macAddress,
   getThemeKitAccessDomain,
+  _resetHasGit,
   opentelemetryDomain,
 } from './local.js'
 import {fileExists} from '../fs.js'
@@ -123,6 +124,10 @@ describe('isShopify', () => {
 })
 
 describe('hasGit', () => {
+  afterEach(() => {
+    _resetHasGit()
+  })
+
   test('returns false if git --version errors', async () => {
     // Given
     vi.mocked(exec).mockRejectedValue(new Error('git not found'))
@@ -132,6 +137,7 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeFalsy()
+    expect(exec).toHaveBeenCalledWith('git', ['--version'])
   })
 
   test('returns true if git --version succeeds', async () => {
@@ -143,6 +149,19 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeTruthy()
+    expect(exec).toHaveBeenCalledWith('git', ['--version'])
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    await hasGit()
+    await hasGit()
+
+    // Then
+    expect(exec).toHaveBeenCalledTimes(1)
   })
 })
 

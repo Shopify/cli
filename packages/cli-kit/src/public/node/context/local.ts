@@ -45,6 +45,11 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the hasGit check.
+ */
+let memoizedHasGit: Promise<boolean> | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -237,13 +242,23 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
  * @returns A promise that resolves with the value.
  */
 export async function hasGit(): Promise<boolean> {
-  try {
-    await lazyExec('git', ['--version'])
-    return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
-  }
+  return (memoizedHasGit ??= (async () => {
+    try {
+      await lazyExec('git', ['--version'])
+      return true
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return false
+    }
+  })())
+}
+
+/**
+ * Resets the memoized hasGit value.
+ * This is useful for testing.
+ */
+export function _resetHasGit(): void {
+  memoizedHasGit = undefined
 }
 
 /**
