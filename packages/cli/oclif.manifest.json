@@ -6583,12 +6583,21 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Opens the storefront for a store you have access to in your default web browser.",
-      "descriptionWithMarkdown": "Opens the storefront for a store you have access to in your default web browser.",
+      "description": "Opens the storefront for a store you have access to in your default web browser.\n\nUse `--admin` to open the Shopify admin instead. For preview stores that aren't fully set up yet, `--admin` first saves the store and then brings you to the admin in your browser.",
+      "descriptionWithMarkdown": "Opens the storefront for a store you have access to in your default web browser.\n\nUse `--admin` to open the Shopify admin instead. For preview stores that aren't fully set up yet, `--admin` first saves the store and then brings you to the admin in your browser.",
       "examples": [
-        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com"
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --admin"
       ],
       "flags": {
+        "admin": {
+          "allowNo": false,
+          "char": "a",
+          "description": "Open the admin instead of the storefront. For a preview store, this saves the store and then opens the admin.",
+          "env": "SHOPIFY_FLAG_ADMIN",
+          "name": "admin",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
