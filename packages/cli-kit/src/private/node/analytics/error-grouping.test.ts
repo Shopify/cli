@@ -1,4 +1,4 @@
-import {errorGroupingHash, errorGroupingSignals} from './error-grouping.js'
+import {errorGroupingHash, errorGroupingSignals, resolveErrorGrouping} from './error-grouping.js'
 import {GraphQLClientError} from '../api/headers.js'
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError} from 'graphql-request'
@@ -6,6 +6,10 @@ import {describe, expect, test} from 'vitest'
 
 function clientError(status: number, code?: string): ClientError {
   const errors = code ? [{message: 'boom', extensions: {code}}] : undefined
+  return new ClientError({status, errors, headers: {}} as any, {query: 'q'} as any)
+}
+
+function clientErrorWithErrors(status: number, errors: unknown[]): ClientError {
   return new ClientError({status, errors, headers: {}} as any, {query: 'q'} as any)
 }
 
@@ -96,5 +100,63 @@ describe('errorGroupingHash — message fallback', () => {
 
   test('returns undefined for a non-Error value', () => {
     expect(errorGroupingHash(undefined, 'cli')).toBeUndefined()
+  })
+})
+
+describe('errorGroupingHash — multi-error & nested codes (review #3/#5)', () => {
+  test('recognizes the GraphQL string code "429" as rate_limit, even at HTTP 200', () => {
+    // Mirrors errorsIncludeStatus429 in private/node/api.ts.
+    expect(errorGroupingHash(clientError(200, '429'), 'theme')).toEqual('theme:rate_limit:http-200-429')
+  })
+
+  test('scans every error, not just the first, for a routable code', () => {
+    const error = clientErrorWithErrors(200, [{message: 'noise'}, {extensions: {code: 'THROTTLED'}}])
+
+    expect(errorGroupingHash(error, 'theme')).toEqual('theme:rate_limit:http-200-throttled')
+  })
+
+  test('recognizes a nested App Management app_errors access_denied as permission', () => {
+    const error = clientErrorWithErrors(200, [{extensions: {app_errors: {errors: [{category: 'access_denied'}]}}}])
+
+    expect(errorGroupingHash(error, 'app')).toEqual('app:permission:http-200-access-denied')
+  })
+})
+
+describe('errorGroupingHash — precedence & merge (review #2/#4)', () => {
+  test('401 wins over a co-occurring ACCESS_DENIED code (authentication, by decision)', () => {
+    const error = new GraphQLClientError('Unauthenticated', 401, [{extensions: {code: 'ACCESS_DENIED'}}])
+
+    // HTTP 401 is authoritative; the access-denied code is still recorded in the signature.
+    expect(errorGroupingHash(error, 'theme')).toEqual('theme:authentication:http-401-access-denied')
+  })
+
+  test('an absent object code does not erase a code recovered from the message', () => {
+    const error = new GraphQLClientError(
+      'GraphQL Error (Code: 500): {"response":{"errors":[{"extensions":{"code":"INTERNAL"}}]}}',
+      500,
+    )
+
+    const {signals, category} = resolveErrorGrouping(error, 'theme')
+    expect(category).toEqual('server')
+    expect(signals.httpStatus).toEqual(500)
+    expect(signals.code).toEqual('INTERNAL')
+  })
+})
+
+describe('resolveErrorGrouping', () => {
+  test('returns hash, category, and signals together for the metadata path', () => {
+    expect(resolveErrorGrouping(clientError(403, 'ACCESS_DENIED'), 'store')).toEqual({
+      hash: 'store:permission:http-403-access-denied',
+      category: 'permission',
+      signals: {httpStatus: 403, code: 'ACCESS_DENIED', errorClass: 'ClientError'},
+    })
+  })
+
+  test('returns an undefined hash but still-useful signals for an unknown error', () => {
+    const result = resolveErrorGrouping(new Error('nothing categorizes this'), 'cli')
+
+    expect(result.hash).toBeUndefined()
+    expect(result.category).toBeUndefined()
+    expect(result.signals.errorClass).toEqual('Error')
   })
 })

@@ -317,9 +317,30 @@ describe('sends errors to Bugsnag', () => {
     expect(lastBugsnagEvent!.groupingHash).toEqual('theme:permission:http-403-access-denied')
     expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('error_grouping', {
       slice_name: 'theme',
+      category: 'permission',
       http_status: 403,
       error_code: 'ACCESS_DENIED',
       error_class: 'GraphQLClientError',
+    })
+  })
+
+  test('emits message-derived signals and category in metadata for a flattened API error', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'theme dev', startArgs: []},
+    }))
+    // A 5xx the API layer flattened into an AbortError: the structured status field is gone, but it
+    // is recoverable from the message and must still reach both the hash and the metadata.
+    const flattened = new Error('The request responded unsuccessfully with the HTTP status 503')
+
+    await sendErrorToBugsnag(flattened, 'unexpected_error')
+
+    expect(lastBugsnagEvent!.groupingHash).toEqual('theme:server:http-503')
+    expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('error_grouping', {
+      slice_name: 'theme',
+      category: 'server',
+      http_status: 503,
+      error_code: undefined,
+      error_class: 'Error',
     })
   })
 
@@ -334,6 +355,7 @@ describe('sends errors to Bugsnag', () => {
     expect(lastBugsnagEvent!.groupingHash).toBeUndefined()
     expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('error_grouping', {
       slice_name: 'app',
+      category: undefined,
       http_status: undefined,
       error_code: undefined,
       error_class: 'Error',

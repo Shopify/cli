@@ -1,4 +1,5 @@
 import {categorizeError, ErrorCategory, formatErrorMessage} from './error-categorizer.js'
+import {graphQLErrorCodes, isPermissionCode, isRateLimitCode} from './graphql-error-codes.js'
 import {GraphQLClientError} from '../api/headers.js'
 import {ClientError} from 'graphql-request'
 
@@ -16,7 +17,22 @@ interface ErrorGroupingSignals {
 }
 
 /**
+ * The fully resolved grouping decision for an error: the Bugsnag grouping hash (or `undefined` to
+ * fall back to stack-trace grouping), the semantic category, and the structured signals that drove
+ * the decision. The reporter uses a single resolution for both `event.groupingHash` and the
+ * `error_grouping` metadata so they can never disagree.
+ */
+interface ResolvedErrorGrouping {
+  hash?: string
+  category?: string
+  signals: ErrorGroupingSignals
+}
+
+/**
  * Extracts structured grouping signals from an error object.
+ *
+ * Only assigns a field when a value is actually present, so the result can be safely merged over
+ * message-derived signals without an explicit `undefined` erasing a recovered value.
  *
  * @param error - The original error (any type).
  * @returns The HTTP status, GraphQL error code, and error class name when available.
@@ -30,62 +46,94 @@ export function errorGroupingSignals(error: unknown): ErrorGroupingSignals {
 
   // GraphQLClientError (handleErrors: true, status < 500) preserves the status and errors array.
   if (error instanceof GraphQLClientError) {
-    signals.httpStatus = error.statusCode
-    signals.code = firstExtensionCode(error.errors)
+    if (error.statusCode !== undefined) signals.httpStatus = error.statusCode
+    const code = routableCode(error.errors)
+    if (code !== undefined) signals.code = code
     return signals
   }
 
   // Raw graphql-request ClientError (handleErrors: false) exposes the full response.
   if (error instanceof ClientError) {
-    signals.httpStatus = error.response?.status
-    signals.code = firstExtensionCode(error.response?.errors)
+    const status = error.response?.status
+    if (status !== undefined) signals.httpStatus = status
+    const code = routableCode(error.response?.errors)
+    if (code !== undefined) signals.code = code
   }
 
   return signals
 }
 
 /**
- * Builds a Bugsnag grouping hash of the form `${slice}:${category}:${signature}`.
+ * Resolves the full grouping decision for an error: hash, category, and the signals behind it.
  *
  * Categories are resolved structured-first (HTTP status / GraphQL code), falling back to the
  * shared keyword categorizer only for untyped errors. When no meaningful category can be
- * resolved, returns `undefined` so the caller leaves `event.groupingHash` unset and Bugsnag's
+ * resolved, `hash` is `undefined` so the caller leaves `event.groupingHash` unset and Bugsnag's
  * default stack-trace grouping applies — this avoids merging genuinely distinct unknown bugs.
+ *
+ * @param error - The original error (any type).
+ * @param sliceName - The product slice (`app`, `theme`, `store`, `hydrogen`, or `cli`).
+ * @returns The resolved hash (or `undefined`), category, and structured signals.
+ */
+export function resolveErrorGrouping(error: unknown, sliceName: string): ResolvedErrorGrouping {
+  const message = errorMessage(error)
+  // Object signals are authoritative; message-derived signals fill gaps (e.g. 5xx errors that the
+  // API layer flattens into an AbortError, dropping the structured status field). Merge field by
+  // field so an absent object signal never clobbers one recovered from the message.
+  const fromError = errorGroupingSignals(error)
+  const fromMessage = signalsFromMessage(message)
+  const signals: ErrorGroupingSignals = {
+    httpStatus: fromError.httpStatus ?? fromMessage.httpStatus,
+    code: fromError.code ?? fromMessage.code,
+    errorClass: fromError.errorClass ?? fromMessage.errorClass,
+  }
+
+  const structuredCategory = categoryFromSignals(signals)
+  if (structuredCategory) {
+    return {hash: `${sliceName}:${structuredCategory}:${structuredSignature(signals)}`, category: structuredCategory, signals}
+  }
+
+  const groupingError = new Error(stripJsonDump(message))
+  const category = categorizeError(groupingError)
+  if (category === ErrorCategory.Unknown) {
+    return {hash: undefined, category: undefined, signals}
+  }
+
+  const categoryName = category.toLowerCase()
+  return {hash: `${sliceName}:${categoryName}:${formatErrorMessage(groupingError, category)}`, category: categoryName, signals}
+}
+
+/**
+ * Builds a Bugsnag grouping hash of the form `${slice}:${category}:${signature}`.
+ *
+ * Thin wrapper over {@link resolveErrorGrouping} for callers that only need the hash.
  *
  * @param error - The original error (any type).
  * @param sliceName - The product slice (`app`, `theme`, `store`, `hydrogen`, or `cli`).
  * @returns The grouping hash, or `undefined` to fall back to stack-trace grouping.
  */
 export function errorGroupingHash(error: unknown, sliceName: string): string | undefined {
-  const message = errorMessage(error)
-  // Object signals are authoritative; message-derived signals fill gaps (e.g. 5xx errors that the
-  // API layer flattens into an AbortError, dropping the structured status field).
-  const signals: ErrorGroupingSignals = {...signalsFromMessage(message), ...errorGroupingSignals(error)}
-
-  const structuredCategory = categoryFromSignals(signals)
-  if (structuredCategory) {
-    return `${sliceName}:${structuredCategory}:${structuredSignature(signals)}`
-  }
-
-  const groupingError = new Error(stripJsonDump(message))
-  const category = categorizeError(groupingError)
-  if (category === ErrorCategory.Unknown) return undefined
-
-  return `${sliceName}:${category.toLowerCase()}:${formatErrorMessage(groupingError, category)}`
+  return resolveErrorGrouping(error, sliceName).hash
 }
 
 /**
  * Resolves a semantic category from structured signals using an explicit decision table.
  *
- * 403 and ACCESS_DENIED map to `permission` (a forbidden request is a permission problem, not an
- * authentication one). Returns `undefined` when no structured signal is present.
+ * Precedence is deliberate:
+ * - rate limit (`THROTTLED`/`429` code or HTTP 429) wins first — it is the most actionable bucket.
+ * - HTTP 401 is authoritative for `authentication`: a request the server rejected as
+ *   unauthenticated is an authentication problem even if a GraphQL code also reports access-denied.
+ *   `ACCESS_DENIED` in practice pairs with HTTP 403, which is handled by the permission branch.
+ * - 403 / `ACCESS_DENIED` (incl. nested App Management `access_denied`) → `permission`.
+ *
+ * Returns `undefined` when no structured signal is present.
  */
 function categoryFromSignals(signals: ErrorGroupingSignals): string | undefined {
   const {httpStatus, code} = signals
 
-  if (code === 'THROTTLED' || httpStatus === 429) return 'rate_limit'
+  if (isRateLimitCode(code) || httpStatus === 429) return 'rate_limit'
   if (httpStatus === 401) return 'authentication'
-  if (httpStatus === 403 || code === 'ACCESS_DENIED') return 'permission'
+  if (httpStatus === 403 || isPermissionCode(code)) return 'permission'
   if (httpStatus !== undefined && httpStatus >= 500) return 'server'
 
   return undefined
@@ -115,11 +163,11 @@ function signalsFromMessage(message: string): ErrorGroupingSignals {
   if (statusMatch?.[1]) signals.httpStatus = Number(statusMatch[1])
 
   const payload = parseEmbeddedJson(message)
-  if (payload?.response?.status !== undefined) {
-    signals.httpStatus = signals.httpStatus ?? payload.response.status
+  if (signals.httpStatus === undefined && payload?.response?.status !== undefined) {
+    signals.httpStatus = payload.response.status
   }
-  const code = firstExtensionCode(payload?.response?.errors)
-  if (code) signals.code = code
+  const code = routableCode(payload?.response?.errors)
+  if (code !== undefined) signals.code = code
 
   return signals
 }
@@ -147,13 +195,15 @@ function parseEmbeddedJson(message: string): EmbeddedGraphQLPayload | undefined 
 }
 
 /**
- * Returns the GraphQL `extensions.code` of the first error, when the errors value is an array.
- * The API can return `errors` as a string, hence the array guard.
+ * Picks the most routing-relevant code from a GraphQL `errors` value.
+ *
+ * Scans every error (not just the first) and prefers a code we route on — a rate-limit code, then
+ * a permission code — so a benign leading code can't mask a `THROTTLED` or `ACCESS_DENIED` further
+ * down the array. Falls back to the first code present for visibility.
  */
-function firstExtensionCode(errors: unknown): string | undefined {
-  if (!Array.isArray(errors)) return undefined
-  const code = (errors[0] as {extensions?: {code?: unknown}} | undefined)?.extensions?.code
-  return typeof code === 'string' ? code : undefined
+function routableCode(errors: unknown): string | undefined {
+  const codes = graphQLErrorCodes(errors)
+  return codes.find(isRateLimitCode) ?? codes.find(isPermissionCode) ?? codes[0]
 }
 
 /**

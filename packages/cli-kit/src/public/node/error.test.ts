@@ -101,6 +101,19 @@ describe('shouldReportErrorAsUnexpected helper', () => {
     expect(shouldReportErrorAsUnexpected(clientError(400, 'THROTTLED'))).toBe(false)
   })
 
+  test('returns false for a raw ClientError with a GraphQL "429" code at HTTP 200', () => {
+    // Matches errorsIncludeStatus429 in private/node/api.ts.
+    expect(shouldReportErrorAsUnexpected(clientError(200, '429'))).toBe(false)
+  })
+
+  test('returns false for a rate-limit code on a later error entry, not just the first', () => {
+    const error = new ClientError(
+      {status: 200, errors: [{message: 'noise'}, {extensions: {code: 'THROTTLED'}}], headers: {}} as any,
+      {query: 'q'} as any,
+    )
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+  })
+
   test('returns true for a raw ClientError that is a genuine failure (HTTP 500)', () => {
     expect(shouldReportErrorAsUnexpected(clientError(500))).toBe(true)
   })

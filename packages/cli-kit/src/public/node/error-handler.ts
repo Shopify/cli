@@ -12,7 +12,7 @@ import {
 } from './error.js'
 import {outputDebug, outputInfo} from './output.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
-import {errorGroupingHash, errorGroupingSignals} from '../../private/node/analytics/error-grouping.js'
+import {resolveErrorGrouping} from '../../private/node/analytics/error-grouping.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -164,18 +164,20 @@ export async function sendErrorToBugsnag(
           // Group on structured signals from the *original* error (not the flattened
           // `reportableError`), and emit those signals as metadata so backend dashboards and
           // routing work without depending on the grouping hash or on CLI version adoption.
+          // A single resolution drives both the hash and the metadata so they can never disagree:
+          // the metadata carries the resolved category and the same (message-merged) signals.
           // When no meaningful category resolves we leave `groupingHash` unset so Bugsnag's
           // stack-trace grouping applies and distinct unknown bugs are not merged.
-          const groupingHash = errorGroupingHash(error, sliceName)
+          const {hash: groupingHash, category, signals} = resolveErrorGrouping(error, sliceName)
           if (groupingHash) {
             event.groupingHash = groupingHash
           }
-          const {httpStatus, code, errorClass} = errorGroupingSignals(error)
           event.addMetadata('error_grouping', {
             slice_name: sliceName,
-            http_status: httpStatus,
-            error_code: code,
-            error_class: errorClass,
+            category,
+            http_status: signals.httpStatus,
+            error_code: signals.code,
+            error_class: signals.errorClass,
           })
         }
         const errorHandler = (error: unknown) => {
