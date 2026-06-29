@@ -1,4 +1,3 @@
-/* eslint-disable @nx/enforce-module-boundaries */
 import {FileWatcher, OutputContextOptions, WatcherEvent} from './file-watcher.js'
 import {
   DEFAULT_CONFIG,
@@ -230,9 +229,20 @@ describe('file-watcher events', () => {
     async ({fileSystemEvent, path, expectedEvent, expectedEventCount, expectedHandles}) => {
       await inTemporaryDirectory(async (dir) => {
         // Given
-        const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: joinPath(dir, 'extensions/ui_extension_1')})
-        const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: joinPath(dir, 'extensions/ui_extension_1')})
-        const extension2 = await testUIExtension({type: 'ui_extension', directory: joinPath(dir, 'extensions/ui_extension_2')})
+        const extension1 = await testUIExtension({
+          type: 'ui_extension',
+          handle: 'h1',
+          directory: joinPath(dir, 'extensions/ui_extension_1'),
+        })
+        const extension1B = await testUIExtension({
+          type: 'ui_extension',
+          handle: 'h2',
+          directory: joinPath(dir, 'extensions/ui_extension_1'),
+        })
+        const extension2 = await testUIExtension({
+          type: 'ui_extension',
+          directory: joinPath(dir, 'extensions/ui_extension_2'),
+        })
         const functionExtension = await testFunctionExtension({dir: joinPath(dir, 'extensions/my-function')})
         const posExtension = await testAppConfigExtensions(false, dir)
         const appAccessExtension = await testAppAccessConfigExtension(false, dir)
@@ -298,7 +308,10 @@ describe('file-watcher events', () => {
               {
                 type: expectedEvent!.type,
                 path: normalizePath(expectedEventPath),
-                extensionPath: expectedEvent!.extensionPath === 'unknown' ? 'unknown' : normalizePath(joinPath(dir, expectedEvent!.extensionPath)),
+                extensionPath:
+                  expectedEvent!.extensionPath === 'unknown'
+                    ? 'unknown'
+                    : normalizePath(joinPath(dir, expectedEvent!.extensionPath)),
                 startTime: [Date.now(), 0] as [number, number],
               },
             ])
@@ -324,7 +337,8 @@ describe('file-watcher events', () => {
 
               expect(actualEvent.type).toBe(expectedEvent.type)
               expect(actualEvent.path).toBe(normalizePath(expectedEventPath))
-              const expectedExtensionPath = expectedEvent.extensionPath === 'unknown' ? 'unknown' : joinPath(dir, expectedEvent.extensionPath)
+              const expectedExtensionPath =
+                expectedEvent.extensionPath === 'unknown' ? 'unknown' : joinPath(dir, expectedEvent.extensionPath)
               expect(actualEvent.extensionPath).toBe(normalizePath(expectedExtensionPath))
               expect(Array.isArray(actualEvent.startTime)).toBe(true)
 
@@ -372,7 +386,8 @@ describe('file-watcher events', () => {
 
         if (expectedEvent) {
           const fullPath = joinPath(dir, expectedEvent.path)
-          const expectedExtensionPath = expectedEvent.extensionPath === 'unknown' ? 'unknown' : joinPath(dir, expectedEvent.extensionPath)
+          const expectedExtensionPath =
+            expectedEvent.extensionPath === 'unknown' ? 'unknown' : joinPath(dir, expectedEvent.extensionPath)
           onChange([
             {
               type: expectedEvent.type,
@@ -385,7 +400,8 @@ describe('file-watcher events', () => {
 
         if (expectedEvent) {
           const fullPath = joinPath(dir, expectedEvent.path)
-          const expectedExtensionPath = expectedEvent.extensionPath === 'unknown' ? 'unknown' : joinPath(dir, expectedEvent.extensionPath)
+          const expectedExtensionPath =
+            expectedEvent.extensionPath === 'unknown' ? 'unknown' : joinPath(dir, expectedEvent.extensionPath)
           expect(onChange).toHaveBeenCalledWith([
             expect.objectContaining({
               type: expectedEvent.type,
@@ -695,8 +711,16 @@ describe('file-watcher events', () => {
   describe('runtime file discovery', () => {
     test('files added at runtime inside an existing extension trigger file_created', async () => {
       await inTemporaryDirectory(async (dir) => {
-        const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: joinPath(dir, 'extensions/ui_extension_1')})
-        const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: joinPath(dir, 'extensions/ui_extension_1')})
+        const extension1 = await testUIExtension({
+          type: 'ui_extension',
+          handle: 'h1',
+          directory: joinPath(dir, 'extensions/ui_extension_1'),
+        })
+        const extension1B = await testUIExtension({
+          type: 'ui_extension',
+          handle: 'h2',
+          directory: joinPath(dir, 'extensions/ui_extension_1'),
+        })
 
         mockExtensionWatchedFiles(extension1, [joinPath(dir, 'extensions/ui_extension_1/index.js')])
         mockExtensionWatchedFiles(extension1B, [joinPath(dir, 'extensions/ui_extension_1/index.js')])
@@ -785,7 +809,11 @@ describe('file-watcher events', () => {
 
     test('subsequent change/unlink on a runtime-discovered file are not dropped', async () => {
       await inTemporaryDirectory(async (dir) => {
-        const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: joinPath(dir, 'extensions/ui_extension_1')})
+        const extension1 = await testUIExtension({
+          type: 'ui_extension',
+          handle: 'h1',
+          directory: joinPath(dir, 'extensions/ui_extension_1'),
+        })
         mockExtensionWatchedFiles(extension1, [joinPath(dir, 'extensions/ui_extension_1/index.js')])
 
         const testApp = testAppLinked({
