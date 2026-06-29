@@ -73,6 +73,13 @@ describe('renderStoreInfoResult', () => {
     expect(renderInfo).not.toHaveBeenCalled()
   })
 
+  test('includes authScopes in the JSON output when present', () => {
+    renderStoreInfoResult(baseResult({authScopes: ['read_themes', 'write_themes']}), 'json')
+
+    const payload = vi.mocked(outputResult).mock.calls[0]?.[0] as string
+    expect(JSON.parse(payload).authScopes).toEqual(['read_themes', 'write_themes'])
+  })
+
   test('renders a Store details section in text format', () => {
     renderStoreInfoResult(baseResult(), 'text')
 
