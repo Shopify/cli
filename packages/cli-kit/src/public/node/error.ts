@@ -215,13 +215,12 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
 /**
  * Detects raw graphql-request `ClientError`s that are expected environmental conditions rather than
  * CLI bugs. These reach the reporter as plain `Error`s (not `FatalError`s) and would otherwise be
- * reported as unexpected. Two distinct cases:
+ * reported as unexpected. Two distinct cases, both kept out of crash reporting:
  *
- * - **HTTP 401 (unauthenticated).** Not "transient" in the retry sense — it means the user's
- *   session token is expired or invalid, a credential/environment condition we never want as a
- *   crash report (see issue #7891).
- * - **Rate limiting (HTTP 429, or a `THROTTLED`/`429` GraphQL code on any error in the response).**
- *   Matches the rate-limit shape detected by `errorsIncludeStatus429` in `private/node/api.ts`.
+ * HTTP 401 (unauthenticated) is not "transient" in the retry sense — it means the user's session
+ * token is expired or invalid, a credential/environment condition (see issue #7891). Rate limiting
+ * (HTTP 429, or a `THROTTLED`/`429` GraphQL code on any error in the response) matches the shape
+ * detected by `errorsIncludeStatus429` in `private/node/api.ts`.
  *
  * Scoped to the external `ClientError` type only — importing the cli-kit `GraphQLClientError`
  * wrapper here would create an `error.ts → headers.ts → error.ts` import cycle.

@@ -90,7 +90,11 @@ export function resolveErrorGrouping(error: unknown, sliceName: string): Resolve
 
   const structuredCategory = categoryFromSignals(signals)
   if (structuredCategory) {
-    return {hash: `${sliceName}:${structuredCategory}:${structuredSignature(signals)}`, category: structuredCategory, signals}
+    return {
+      hash: `${sliceName}:${structuredCategory}:${structuredSignature(signals)}`,
+      category: structuredCategory,
+      signals,
+    }
   }
 
   const groupingError = new Error(stripJsonDump(message))
@@ -100,7 +104,11 @@ export function resolveErrorGrouping(error: unknown, sliceName: string): Resolve
   }
 
   const categoryName = category.toLowerCase()
-  return {hash: `${sliceName}:${categoryName}:${formatErrorMessage(groupingError, category)}`, category: categoryName, signals}
+  return {
+    hash: `${sliceName}:${categoryName}:${formatErrorMessage(groupingError, category)}`,
+    category: categoryName,
+    signals,
+  }
 }
 
 /**
