@@ -80,14 +80,30 @@ export async function primeBrowserAuthStorage(opts: PrimeBrowserAuthOptions = {}
     console.log('[prime-browser-auth] Logging in...')
     await completeLogin(page, 'https://accounts.shopify.com/lookup', email, password)
 
-    await visitAndHandleAccountPicker(page, 'https://admin.shopify.com/', email)
-    await visitAndHandleAccountPicker(page, `https://dev.shopify.com/dashboard/${orgId}/apps`, email)
+    await attemptVisitAndHandleAccountPicker(page, 'https://admin.shopify.com/', email, 'admin')
+    await attemptVisitAndHandleAccountPicker(
+      page,
+      `https://dev.shopify.com/dashboard/${orgId}/apps`,
+      email,
+      'dev dashboard',
+    )
 
     await context.storageState({path: storageStatePath})
     console.log(`[prime-browser-auth] Browser storage state saved to ${storageStatePath}`)
     return storageStatePath
   } finally {
     await browser.close()
+  }
+}
+
+async function attemptVisitAndHandleAccountPicker(page: Page, url: string, email: string, label: string) {
+  try {
+    await visitAndHandleAccountPicker(page, url, email)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (err) {
+    console.warn(
+      `[prime-browser-auth] Browser session prewarm for ${label} failed: ${err instanceof Error ? err.message : err}`,
+    )
   }
 }
 
