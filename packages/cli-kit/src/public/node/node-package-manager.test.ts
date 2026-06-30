@@ -23,9 +23,10 @@ import {
   PackageManager,
   npmLockfile,
   lockfilesByManager,
+  _resetPackageManagerCache,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
-import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
+import {inTemporaryDirectory, mkdir, removeFile, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {cacheClear} from '../../private/node/conf-store.js'
@@ -852,6 +853,28 @@ describe('writePackageJSON', () => {
 })
 
 describe('getPackageManager', () => {
+  afterEach(() => {
+    _resetPackageManagerCache()
+  })
+
+  test('memoizes the result', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+
+      // When
+      const first = await getPackageManager(tmpDir)
+      // Remove the lockfile to ensure the second call doesn't find it if it's not memoized
+      await removeFile(joinPath(tmpDir, 'yarn.lock'))
+      const second = await getPackageManager(tmpDir)
+
+      // Then
+      expect(first).toEqual('yarn')
+      expect(second).toEqual('yarn')
+    })
+  })
+
   test('finds if npm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given — pin NPM in the temp project

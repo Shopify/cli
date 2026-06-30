@@ -2,7 +2,7 @@ import {AbortError, BugError} from './error.js'
 import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob, fileExistsSync} from './fs.js'
-import {dirname, joinPath} from './path.js'
+import {dirname, joinPath, normalizePath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
@@ -142,6 +142,19 @@ function packageManagerBinaryCommand(
 }
 
 /**
+ * Memoized value for the package manager.
+ */
+let memoizedPackageManager: Map<string, PackageManager> = new Map()
+
+/**
+ * Resets the memoized package manager cache.
+ * This is useful for unit tests.
+ */
+export function _resetPackageManagerCache(): void {
+  memoizedPackageManager = new Map()
+}
+
+/**
  * Returns the dependency manager used in a directory.
  * Walks upward from `fromDirectory` so workspace packages (e.g. `extensions/my-fn/package.json`)
  * still resolve to the repo root lockfile (`pnpm-lock.yaml`).
@@ -151,24 +164,46 @@ function packageManagerBinaryCommand(
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
+  const normalizedPath = normalizePath(fromDirectory)
+  if (memoizedPackageManager.has(normalizedPath)) {
+    return memoizedPackageManager.get(normalizedPath)!
+  }
+
+  let result: PackageManager = 'npm'
   let current = fromDirectory
   outputDebug(outputContent`Looking for a lockfile in ${outputToken.path(current)}...`)
   while (true) {
-    if (fileExistsSync(joinPath(current, yarnLockfile))) return 'yarn'
-    if (fileExistsSync(joinPath(current, pnpmLockfile)) || fileExistsSync(joinPath(current, pnpmWorkspaceFile))) {
-      return 'pnpm'
+    if (fileExistsSync(joinPath(current, yarnLockfile))) {
+      result = 'yarn'
+      break
     }
-    if (hasBunLockfileSync(current)) return 'bun'
-    if (fileExistsSync(joinPath(current, npmLockfile))) return 'npm'
+    if (fileExistsSync(joinPath(current, pnpmLockfile)) || fileExistsSync(joinPath(current, pnpmWorkspaceFile))) {
+      result = 'pnpm'
+      break
+    }
+    if (hasBunLockfileSync(current)) {
+      result = 'bun'
+      break
+    }
+    if (fileExistsSync(joinPath(current, npmLockfile))) {
+      result = 'npm'
+      break
+    }
     const parent = dirname(current)
-    if (parent === current) break
+    if (parent === current) {
+      const pm: PackageManager = packageManagerFromUserAgent()
+      if (pm === 'unknown') {
+        result = 'npm'
+      } else {
+        result = pm
+      }
+      break
+    }
     current = parent
   }
 
-  const pm: PackageManager = packageManagerFromUserAgent()
-  if (pm !== 'unknown') return pm
-
-  return 'npm'
+  memoizedPackageManager.set(normalizedPath, result)
+  return result
 }
 
 /**
