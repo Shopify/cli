@@ -1,5 +1,6 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
 import * as metadata from './metadata.js'
+import {reportAnalyticsEvent} from './analytics.js'
 import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/local.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
@@ -38,16 +39,22 @@ vi.mock('@bugsnag/js', () => {
   }
 })
 vi.mock('./cli.js')
+vi.mock('./analytics.js')
+vi.mock('./ui.js')
 vi.mock('./context/local.js')
 vi.mock('../../public/node/crypto.js')
 vi.mock('../../private/node/context/service.js')
 vi.mock('../../private/node/session.js')
-vi.mock('@oclif/core', () => ({
-  settings: {
-    debug: false,
-  },
-  Interfaces: {},
-}))
+vi.mock('@oclif/core', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    settings: {
+      debug: false,
+    },
+    Interfaces: {},
+  }
+})
 
 beforeEach(() => {
   vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest', metadata: {}})
@@ -64,6 +71,29 @@ beforeEach(() => {
 })
 
 describe('errorHandler', async () => {
+  test('handles generic errors', async () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    const err = new Error('Generic error')
+    const config = {
+      runHook: vi.fn(),
+      plugins: [],
+    } as any
+
+    // When
+    await errorHandler(err, config)
+
+    // Then
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errorMessage: 'Generic error',
+        exitMode: 'unexpected_error',
+      }),
+    )
+    expect(onNotify).toHaveBeenCalled()
+    expect(mockOutput.info()).toMatch('')
+  })
+
   test('finishes the execution without exiting the proccess when cancel execution exception is raised', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
