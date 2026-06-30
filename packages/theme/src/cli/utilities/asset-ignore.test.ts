@@ -1,17 +1,8 @@
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
-import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {test, describe, beforeEach, vi, expect} from 'vitest'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {test, describe, vi, expect} from 'vitest'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
-
-vi.mock('@shopify/cli-kit/node/fs', async () => {
-  const originalFs: any = await vi.importActual('@shopify/cli-kit/node/fs')
-  return {
-    ...originalFs,
-    matchGlob: originalFs.matchGlob,
-    readFile: vi.fn(),
-    fileExists: vi.fn(),
-  }
-})
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui', () => ({
   renderWarning: vi.fn(),
@@ -31,28 +22,21 @@ describe('asset-ignore', () => {
     {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
   ]
 
-  /**
-   * Explicitly defining the type of 'readFile' as it returns either
-   * 'Promise<string>' or 'Promise<Buffer>', which are ambiguous to the
-   * TypeScript language server.
-   */
-  const readFileFn = readFile as (path: string, options?: ReadOptions) => Promise<string>
-
-  beforeEach(() => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readFileFn).mockResolvedValue('')
-  })
-
   describe('getPatternsFromShopifyIgnore', () => {
     test('returns an empty array when the .shopifyignore file does not exist', async () => {
-      // Given
-      vi.mocked(fileExists).mockResolvedValue(false)
-      await expect(getPatternsFromShopifyIgnore('tmp')).resolves.toEqual([])
+      await inTemporaryDirectory(async (tmpDir) => {
+        // When
+        const patterns = await getPatternsFromShopifyIgnore(tmpDir)
+
+        // Then
+        expect(patterns).toEqual([])
+      })
     })
 
-    test('returns an empty array when the .shopifyignore file does not exist', async () => {
-      vi.mocked(fileExists).mockResolvedValue(true)
-      vi.mocked(readFileFn).mockResolvedValue(`
+    test('returns patterns when the .shopifyignore file exists', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const content = `
         # assets/basic.css
         assets/complex.css
         assets/*.png
@@ -60,18 +44,22 @@ describe('asset-ignore', () => {
         templates/*
         config/*_data.json
         .*settings_schema.json
-      `)
+      `
+        await writeFile(joinPath(tmpDir, '.shopifyignore'), content)
 
-      await expect(getPatternsFromShopifyIgnore('tmp')).resolves.toEqual([
-        'assets/complex.css',
-        'assets/*.png',
-        'sections/*',
-        'templates/*',
-        'config/*_data.json',
-        '.*settings_schema.json',
-      ])
+        // When
+        const patterns = await getPatternsFromShopifyIgnore(tmpDir)
 
-      expect(readFileFn).toHaveBeenLastCalledWith('tmp/.shopifyignore', {encoding: 'utf8'})
+        // Then
+        expect(patterns).toEqual([
+          'assets/complex.css',
+          'assets/*.png',
+          'sections/*',
+          'templates/*',
+          'config/*_data.json',
+          '.*settings_schema.json',
+        ])
+      })
     })
   })
 
