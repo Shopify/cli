@@ -109,6 +109,8 @@ export default async function globalSetup() {
           'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
         },
       })
+      context.setDefaultTimeout(BROWSER_TIMEOUT.max)
+      context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
       const page = await context.newPage()
 
       await completeLogin(page, urlMatch[0], email, password)
@@ -119,9 +121,14 @@ export default async function globalSetup() {
       // (completeLogin only authenticates on accounts.shopify.com)
       const orgId = (process.env.E2E_ORG_ID ?? '').trim()
       if (orgId) {
-        await visitAndHandleAccountPicker(page, 'https://admin.shopify.com/', email)
-        await visitAndHandleAccountPicker(page, `https://dev.shopify.com/dashboard/${orgId}/apps`, email)
-        globalLog('auth', 'browser sessions established for admin + dev dashboard')
+        await attemptVisitAndHandleAccountPicker(page, 'https://admin.shopify.com/', email, 'admin')
+        await attemptVisitAndHandleAccountPicker(
+          page,
+          `https://dev.shopify.com/dashboard/${orgId}/apps`,
+          email,
+          'dev dashboard',
+        )
+        globalLog('auth', 'browser session prewarm attempted for admin + dev dashboard')
       }
 
       // Save browser cookies/storage so workers can reuse the session
@@ -148,6 +155,15 @@ export default async function globalSetup() {
   /* eslint-enable require-atomic-updates */
 
   globalLog('auth', `global setup done, config at ${xdgEnv.XDG_CONFIG_HOME}`)
+}
+
+async function attemptVisitAndHandleAccountPicker(page: Page, url: string, email: string, label: string) {
+  try {
+    await visitAndHandleAccountPicker(page, url, email)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (err) {
+    globalLog('auth', `browser session prewarm for ${label} failed: ${err instanceof Error ? err.message : err}`)
+  }
 }
 
 /** Navigate to a URL and dismiss the account picker if it appears. */
