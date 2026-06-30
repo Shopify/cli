@@ -52,12 +52,12 @@
     "type-check": "nx type-check"
   },
   "dependencies": {
-    "@ast-grep/napi": "0.43.0",
+    "@ast-grep/napi": "0.44.0",
     "esbuild": "0.28.1",
     "global-agent": "3.0.0"
   },
   "devDependencies": {
-    "@oclif/core": "4.8.3",
+    "@oclif/core": "4.11.11",
     "@oclif/plugin-commands": "4.1.57",
     "@oclif/plugin-plugins": "5.4.47",
     "@shopify/app": "4.3.0",
