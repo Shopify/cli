@@ -188,6 +188,28 @@ describe('ExtensionServerClient', () => {
       expect(client.connection).toBeUndefined()
       expect(mockSocketServer.clients.length).toBe(0)
     })
+
+    test('uses crypto.randomUUID for id generation when available', () => {
+      const uuid = '12345678-1234-1234-1234-123456789012'
+      vi.stubGlobal('crypto', {
+        randomUUID: () => uuid,
+      })
+
+      const client = new ExtensionServerClient()
+      expect(client.id).toBe(uuid)
+
+      vi.unstubAllGlobals()
+    })
+
+    test('falls back to Math.random for id generation when crypto.randomUUID is not available', () => {
+      vi.stubGlobal('crypto', undefined)
+
+      const client = new ExtensionServerClient()
+      expect(client.id).toBeDefined()
+      expect(client.id.length).toBeGreaterThan(0)
+
+      vi.unstubAllGlobals()
+    })
   })
 
   describe('on()', () => {
