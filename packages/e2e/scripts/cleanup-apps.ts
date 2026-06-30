@@ -22,6 +22,7 @@
 
 import {config} from 'dotenv'
 import * as path from 'path'
+import * as fs from 'fs'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
@@ -59,6 +60,8 @@ export interface CleanupOptions {
   headed?: boolean
   /** Organization ID (default: from E2E_ORG_ID env) */
   orgId?: string
+  /** Playwright browser storage state path (default: E2E_BROWSER_STATE_PATH or global-auth path) */
+  storageStatePath?: string
 }
 
 interface DashboardApp {
@@ -79,6 +82,26 @@ const EMPTY_APPS_PATTERN =
   /(no apps matched your search|don't have any apps|do not have any apps|haven't created any apps)/i
 const DASHBOARD_ERROR_PATTERN = /(unprocessable entity|request can't be processed|server error|something went wrong)/i
 
+function isAccountsShopifyUrl(rawUrl: string): boolean {
+  try {
+    return new URL(rawUrl).hostname === 'accounts.shopify.com'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+function defaultStorageStatePath(): string {
+  const tmpBase = process.env.E2E_TEMP_DIR ?? path.resolve(__dirname, '../../../.e2e-tmp')
+  return path.join(tmpBase, 'global-auth', 'browser-storage-state.json')
+}
+
+function existingStorageStatePath(candidate?: string): string | undefined {
+  return [candidate, process.env.E2E_BROWSER_STATE_PATH, defaultStorageStatePath()].find(
+    (storageStatePath): storageStatePath is string => Boolean(storageStatePath && fs.existsSync(storageStatePath)),
+  )
+}
+
 /**
  * Find and delete all E2E test apps matching a pattern.
  * Handles browser login, dashboard navigation, uninstall, and deletion.
@@ -89,6 +112,7 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
   const orgId = opts.orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
   const email = process.env.E2E_ACCOUNT_EMAIL
   const password = process.env.E2E_ACCOUNT_PASSWORD
+  const storageStatePath = existingStorageStatePath(opts.storageStatePath)
 
   // Banner
   console.log('')
@@ -97,8 +121,8 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
   console.log(`[cleanup-apps] Pattern: "${pattern}"`)
   console.log('')
 
-  if (!email || !password) {
-    throw new Error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required')
+  if (!storageStatePath && (!email || !password)) {
+    throw new Error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required when no browser storage state is available')
   }
 
   if (!orgId) {
@@ -110,6 +134,7 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
     extraHTTPHeaders: {
       'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
     },
+    ...(storageStatePath ? {storageState: storageStatePath} : {}),
   })
   context.setDefaultTimeout(BROWSER_TIMEOUT.max)
   context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
@@ -118,15 +143,24 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
   const totalStart = Date.now()
 
   try {
-    // Step 1: Log into Shopify directly in the browser
-    console.log('[cleanup-apps] Logging in...')
-    await completeLogin(page, 'https://accounts.shopify.com/lookup', email, password)
-    console.log('[cleanup-apps] Logged in successfully.')
+    // Step 1: Reuse Playwright's global auth storage when available; otherwise log in directly.
+    if (storageStatePath) {
+      console.log('[cleanup-apps] Reusing browser storage state.')
+    } else if (email && password) {
+      console.log('[cleanup-apps] Logging in...')
+      await completeLogin(page, 'https://accounts.shopify.com/lookup', email, password)
+      console.log('[cleanup-apps] Logged in successfully.')
+    }
 
     // Step 2: Navigate to dashboard (retry on 500/502).
     // navigateToDashboard already refreshes once on error; this loop is extra resilience.
     console.log('[cleanup-apps] Navigating to dashboard...')
     await navigateToDashboard({browserPage: page, email, orgId, searchTerm: pattern})
+    if (isAccountsShopifyUrl(page.url()) && email && password) {
+      console.log('[cleanup-apps] Browser storage state was not accepted; logging in...')
+      await completeLogin(page, page.url(), email, password)
+      await navigateToDashboard({browserPage: page, email, orgId, searchTerm: pattern})
+    }
     for (let attempt = 1; attempt <= 3; attempt++) {
       if (!(await refreshIfPageError(page))) break
       if (attempt === 3) throw new Error('Dashboard returned server error after 3 attempts, aborting cleanup')
