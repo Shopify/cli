@@ -26,7 +26,7 @@ const result = {
 }
 
 describe('preview store create result presenter', () => {
-  test('writes JSON output with the storefront URL', () => {
+  test('writes JSON output with the next steps', () => {
     writeCreatePreviewStoreResult(result, 'json')
 
     expect(outputResult).toHaveBeenCalledWith(
@@ -43,7 +43,7 @@ describe('preview store create result presenter', () => {
             storefrontUrl: 'https://x12y45z.myshopify.com/?foo=bar',
           },
           next_steps: [
-            'Open your store (https://x12y45z.myshopify.com/?foo=bar) to preview the storefront.',
+            'Use `shopify store open --store x12y45z.myshopify.com` to preview the storefront.',
             'Use `shopify store execute --store x12y45z.myshopify.com` to add products, collections, pages, and more.',
             'Use `shopify theme pull --store x12y45z.myshopify.com` and `shopify theme push --store x12y45z.myshopify.com` to edit your store design.',
           ],
@@ -70,13 +70,8 @@ describe('preview store create result presenter', () => {
               list: {
                 items: [
                   [
-                    'Open ',
-                    {
-                      link: {
-                        label: 'your store',
-                        url: 'https://x12y45z.myshopify.com/?foo=bar',
-                      },
-                    },
+                    'Use ',
+                    {command: 'shopify store open --store x12y45z.myshopify.com'},
                     ' to preview the storefront.',
                   ],
                   [
