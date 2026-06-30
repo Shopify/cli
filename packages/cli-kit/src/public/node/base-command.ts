@@ -105,6 +105,7 @@ abstract class BaseCommand extends Command {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
+    this.failMissingNonTTYFlags(result.flags, this.nonInteractiveRequiredFlags())
     return {...result, ...{argv: result.argv as string[]}}
   }
 
@@ -128,6 +129,17 @@ This flag is required in non-interactive terminal environments, such as a CI env
         )
       }
     })
+  }
+
+  // Collects the names of flags marked with the `requiredIfNonInteractive` factory (see
+  // `requiredIfNonInteractive` in `cli.ts`). The custom property is read from the live command class
+  // rather than the cached manifest, where it would have been stripped.
+  private nonInteractiveRequiredFlags(): string[] {
+    const ctor = this.constructor as unknown as {flags?: FlagInput; baseFlags?: FlagInput}
+    const allFlags = {...ctor.baseFlags, ...ctor.flags}
+    return Object.entries(allFlags)
+      .filter(([, flag]) => Boolean((flag as {requiredIfNonInteractive?: boolean}).requiredIfNonInteractive))
+      .map(([name]) => name)
   }
 
   private async resultWithEnvironment<
