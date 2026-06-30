@@ -99,10 +99,7 @@ test.describe('App scaffold', () => {
     }
   })
 
-  // Extension generation hits businessPlatformOrganizationsRequest which returns 401
-  // even with a valid OAuth session. The Business Platform Organizations API token
-  // exchange needs investigation. OAuth login works, but this specific API rejects it.
-  test.skip('generate extensions and build', async ({cli, env, browserPage}) => {
+  test('generates extensions and builds', async ({cli, env, browserPage}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -127,7 +124,7 @@ test.describe('App scaffold', () => {
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       const extensionConfigs = [
-        {name: 'test-product-sub', template: 'product_subscription_ui', flavor: 'react'},
+        {name: 'test-subscription-link', template: 'subscription_link_extension'},
         {name: 'test-theme-ext', template: 'theme_app_extension'},
       ]
 
