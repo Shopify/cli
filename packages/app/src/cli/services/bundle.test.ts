@@ -2,10 +2,11 @@ import {writeManifestToBundle, compressBundle, uploadToGCS, BUNDLE_EXCLUSION_PAT
 import {AppInterface} from '../models/app/app.js'
 import {describe, test, expect, vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, writeFile, readFile, fileSize} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
 import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {truncate} from 'node:fs/promises'
 
 vi.mock('@shopify/cli-kit/node/archiver', () => {
   return {
@@ -17,11 +18,6 @@ vi.mock('@shopify/cli-kit/node/archiver', () => {
 vi.mock('@shopify/cli-kit/node/http', async (importActual) => {
   const actual: any = await importActual()
   return {...actual, fetch: vi.fn()}
-})
-
-vi.mock('@shopify/cli-kit/node/fs', async (importActual) => {
-  const actual: any = await importActual()
-  return {...actual, fileSize: vi.fn(actual.fileSize)}
 })
 
 describe('writeManifestToBundle', () => {
@@ -227,11 +223,11 @@ describe('uploadToGCS', () => {
 
   test('aborts with a helpful error when the bundle exceeds the 100 MB upload limit', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given — mock the reported size so CI doesn't have to allocate 101 MB on disk.
+      // Given — allocate a 101 MB sparse file so we don't actually use disk space but it reports the right size.
       const bundlePath = joinPath(tmpDir, 'huge.zip')
       await writeFile(bundlePath, 'placeholder')
       const oneHundredOneMb = 101 * 1024 * 1024
-      vi.mocked(fileSize).mockResolvedValueOnce(oneHundredOneMb).mockResolvedValueOnce(oneHundredOneMb)
+      await truncate(bundlePath, oneHundredOneMb)
       vi.mocked(fetch).mockResolvedValue({} as never)
 
       // When / Then
