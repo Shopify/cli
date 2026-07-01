@@ -134,13 +134,16 @@ const E2E_APP_PREFIXES: Record<string, string> = {
 /**
  * Generate a short E2E app name that can be clustered by GitHub Actions run.
  */
-export function e2eAppName(prefix: string): string {
+export function e2eRunSegment(): string {
   const runId = process.env.GITHUB_RUN_ID
   const runAttempt = process.env.GITHUB_RUN_ATTEMPT ?? '1'
-  const runSegment = runId ? `r${BigInt(runId).toString(36)}a${runAttempt}` : 'local'
+  return runId ? `r${BigInt(runId).toString(36)}a${runAttempt}` : 'local'
+}
+
+export function e2eAppName(prefix: string): string {
   const timestampSegment = Date.now().toString(36)
 
-  return `E2E-${E2E_APP_PREFIXES[prefix] ?? prefix}-${runSegment}-${timestampSegment}`
+  return `E2E-${E2E_APP_PREFIXES[prefix] ?? prefix}-${e2eRunSegment()}-${timestampSegment}`
 }
 
 /**
