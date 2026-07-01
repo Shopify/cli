@@ -8,6 +8,7 @@ import StoreCreatePreview from './cli/commands/store/create/preview.js'
 import StoreExecute from './cli/commands/store/execute.js'
 import StoreInfo from './cli/commands/store/info.js'
 import StoreList from './cli/commands/store/list.js'
+import StoreOpen from './cli/commands/store/open.js'
 
 export {loadAdminSessionFromStoreAuth} from './cli/services/store/auth/admin-session.js'
 
@@ -22,6 +23,7 @@ const COMMANDS = {
   'store:execute': StoreExecute,
   'store:info': StoreInfo,
   'store:list': StoreList,
+  'store:open': StoreOpen,
 }
 
 export default COMMANDS
