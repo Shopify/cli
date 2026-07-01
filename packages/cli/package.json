@@ -109,8 +109,14 @@
       "store": {
         "description": "Work directly with Shopify stores."
       },
+      "store:bulk": {
+        "description": "Run, check, and cancel bulk Admin API operations on a store."
+      },
       "store:create": {
         "description": "Create Shopify stores."
+      },
+      "app:bulk": {
+        "description": "Run, check, and cancel bulk Admin API operations for an app on a store."
       },
       "app:config": {
         "description": "Manage app configuration."
