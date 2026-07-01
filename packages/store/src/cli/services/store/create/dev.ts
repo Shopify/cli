@@ -8,7 +8,7 @@ import {
 import {Organization} from '@shopify/organizations'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSingleTask, renderSuccess, type InlineToken} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -65,10 +65,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
       priceLookupKey: DEV_STORE_PLANS[plan],
       prepopulateTestData: options.withDemoData ?? false,
       developerPreviewHandle: options.featurePreview,
-      // NOTE: `country` is collected via --country and surfaced in output, but is not
-      // yet sent to BP because the published `createAppDevelopmentStore` schema does
-      // not expose the argument (see shop/world #22968). Wire it here once the backend
-      // lands and `pnpm graphql-codegen` regenerates the mutation variables.
+      country: options.country,
     },
     unauthorizedHandler,
   })
@@ -150,16 +147,23 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
       ),
     )
   } else {
+    const rows: InlineToken[][] = []
+    pushRow(rows, 'Domain', shopDomain)
+    pushRow(rows, 'Admin', shopAdminUrl ? {link: {label: shopAdminUrl, url: shopAdminUrl}} : undefined)
+    pushRow(rows, 'Plan', plan)
+    pushRow(rows, 'Feature preview', options.featurePreview)
+    pushRow(rows, 'Country', options.country)
+    pushRow(rows, 'Demo data', options.withDemoData ? 'enabled' : 'disabled')
+
     renderSuccess({
       headline: `Development store "${name}" created successfully.`,
-      body: [
-        `Domain: ${shopDomain}`,
-        `Admin: ${shopAdminUrl ?? 'N/A'}`,
-        `Plan: ${plan}`,
-        ...(options.featurePreview ? [`Feature preview: ${options.featurePreview}`] : []),
-        ...(options.country ? [`Country: ${options.country}`] : []),
-        `Demo data: ${options.withDemoData ? 'enabled' : 'disabled'}`,
-      ],
+      customSections: [{body: {tabularData: rows, firstColumnSubdued: true}}],
     })
+  }
+}
+
+function pushRow(rows: InlineToken[][], label: string, value: InlineToken | undefined): void {
+  if (value !== undefined && value !== null && value !== '') {
+    rows.push([label, value])
   }
 }

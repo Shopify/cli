@@ -71,6 +71,7 @@ describe('createDevStore', () => {
           priceLookupKey: 'SHOPIFY_PLUS_APP_DEVELOPMENT',
           prepopulateTestData: false,
           developerPreviewHandle: undefined,
+          country: undefined,
         },
       }),
     )
@@ -161,6 +162,22 @@ describe('createDevStore', () => {
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"demoData": true'))
   })
 
+  test('passes the country to the mutation', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', country: 'CA', json: false})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: expect.objectContaining({country: 'CA'}),
+      }),
+    )
+  })
+
   test('includes the country in JSON output when provided', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc)
       .mockResolvedValueOnce(defaultMutationResult)
@@ -184,7 +201,13 @@ describe('createDevStore', () => {
 
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
-        body: expect.arrayContaining(['Country: CA']),
+        customSections: [
+          expect.objectContaining({
+            body: expect.objectContaining({
+              tabularData: expect.arrayContaining([['Country', 'CA']]),
+            }),
+          }),
+        ],
       }),
     )
   })
