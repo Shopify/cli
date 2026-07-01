@@ -29,6 +29,12 @@ vi.mock('@shopify/cli-kit/node/http', async () => {
   }
 })
 
+async function waitForNextEventLoopTurn() {
+  await new Promise<void>((resolve) => {
+    setImmediate(resolve)
+  })
+}
+
 describe('javy', () => {
   test('properties are set correctly', () => {
     expect(javy.name).toBe('javy')
@@ -211,7 +217,7 @@ describe('javy', () => {
     const secondDownload = downloadBinary(javy).then(() => {
       secondResolved = true
     })
-    await Promise.resolve()
+    await waitForNextEventLoopTurn()
 
     // Then — second download should be blocked waiting for first
     expect(secondResolved).toBe(false)
