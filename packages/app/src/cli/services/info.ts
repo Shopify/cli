@@ -16,7 +16,7 @@ import {
 } from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {uniq} from '@shopify/cli-kit/common/array'
+import {getArrayRejectingUndefined, uniq} from '@shopify/cli-kit/common/array'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
@@ -232,17 +232,16 @@ class AppInfo {
   extensionsSections(): AlertCustomSection[] {
     const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
     const types = uniq(extensions.map((ext) => ext.type))
-    return types
-      .map((extensionType: string): AlertCustomSection | undefined => {
-        const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
-        if (relevantExtensions[0]) {
-          return this.subtableSection(
-            relevantExtensions[0].externalType,
-            relevantExtensions.map((ext) => this.extensionSubSection(ext)).flat(),
-          )
-        }
-      })
-      .filter((section: AlertCustomSection | undefined) => section !== undefined)
+    const sections = types.map((extensionType: string): AlertCustomSection | undefined => {
+      const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
+      if (relevantExtensions[0]) {
+        return this.subtableSection(
+          relevantExtensions[0].externalType,
+          relevantExtensions.flatMap((ext) => this.extensionSubSection(ext)),
+        )
+      }
+    })
+    return getArrayRejectingUndefined(sections)
   }
 
   extensionSubSection(extension: ExtensionInstance): InlineToken[][] {
