@@ -32,8 +32,8 @@ function serializeAsJson(result: CreatePreviewStoreResult) {
 function previewStoreNextSteps(result: CreatePreviewStoreResult): PreviewStoreNextStep[] {
   return [
     {
-      json: `Open your store (${result.store.storefrontUrl}) to preview the storefront.`,
-      text: ['Open ', {link: {label: 'your store', url: result.store.storefrontUrl}}, ' to preview the storefront.'],
+      json: `Use \`shopify store open --store ${result.store.subdomain}\` to preview the storefront.`,
+      text: ['Use ', {command: `shopify store open --store ${result.store.subdomain}`}, ' to preview the storefront.'],
     },
     {
       json: `Use \`shopify store execute --store ${result.store.subdomain}\` to add products, collections, pages, and more.`,
