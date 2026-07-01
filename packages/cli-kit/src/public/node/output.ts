@@ -15,6 +15,7 @@ import {
   JsonContentToken,
   LinesDiffContentToken,
   LinkContentToken,
+  MaskContentToken,
   PathContentToken,
   RawContentToken,
   SubHeadingContentToken,
@@ -91,6 +92,9 @@ export const outputToken = {
   },
   linesDiff(value: Change[]): LinesDiffContentToken {
     return new LinesDiffContentToken(value)
+  },
+  mask(value: string): MaskContentToken {
+    return new MaskContentToken(value)
   },
 }
 

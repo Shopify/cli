@@ -40,7 +40,7 @@ describe('env pull', () => {
       "Created ${filePath}:
 
       SHOPIFY_API_KEY=api-key
-      SHOPIFY_API_SECRET=api-secret
+      SHOPIFY_API_SECRET=***
       SCOPES=my-scope
       "
       `)
@@ -66,15 +66,15 @@ describe('env pull', () => {
       "Updated ${filePath} to be:
 
       SHOPIFY_API_KEY=api-key
-      SHOPIFY_API_SECRET=api-secret
+      SHOPIFY_API_SECRET=***
       SCOPES=my-scope
 
       Here's what changed:
 
       - SHOPIFY_API_KEY=ABC
-      - SHOPIFY_API_SECRET=XYZ
+      - SHOPIFY_API_SECRET=***
       + SHOPIFY_API_KEY=api-key
-      + SHOPIFY_API_SECRET=api-secret
+      + SHOPIFY_API_SECRET=***
       SCOPES=my-scope
         "
       `)
@@ -96,6 +96,23 @@ describe('env pull', () => {
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "No changes to ${filePath}"
       `)
+    })
+  })
+
+  test('masks secrets even in common lines of the diff', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const filePath = resolvePath(tmpDir, '.env')
+      // SHOPIFY_API_SECRET is the same in both versions, but other fields change
+      file.writeFileSync(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=api-secret\nSCOPES=old-scope')
+      vi.spyOn(file, 'writeFile')
+
+      // When
+      const result = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
+
+      // Then
+      expect(unstyled(stringifyMessage(result))).toContain('SHOPIFY_API_SECRET=***')
+      expect(unstyled(stringifyMessage(result))).not.toContain('SHOPIFY_API_SECRET=api-secret')
     })
   })
 })
