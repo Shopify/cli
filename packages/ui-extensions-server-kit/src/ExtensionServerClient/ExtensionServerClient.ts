@@ -32,7 +32,10 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   private uiExtensionsByUuid: Record<string, ExtensionServer.UIExtension> = {}
 
   constructor(options: DeepPartial<ExtensionServer.Options> = {}) {
-    this.id = (Math.random() + 1).toString(36).substring(7)
+    this.id =
+      typeof globalThis.crypto?.randomUUID === 'function'
+        ? globalThis.crypto.randomUUID()
+        : (Math.random() + 1).toString(36).substring(7)
     this.options = getValidatedOptions({
       ...options,
       connection: {

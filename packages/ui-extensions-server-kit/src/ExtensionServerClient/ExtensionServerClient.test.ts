@@ -163,6 +163,28 @@ describe('ExtensionServerClient', () => {
   })
 
   describe('initialization', () => {
+    test('uses crypto.randomUUID() when available', () => {
+      const uuid = '12345678-1234-1234-1234-1234567890ab'
+      vi.stubGlobal('crypto', {randomUUID: () => uuid})
+
+      const client = new ExtensionServerClient(defaultOptions)
+
+      expect(client.id).toBe(uuid)
+
+      vi.unstubAllGlobals()
+    })
+
+    test('falls back to Math.random() when crypto.randomUUID() is not available', () => {
+      vi.stubGlobal('crypto', undefined)
+
+      const client = new ExtensionServerClient(defaultOptions)
+
+      expect(client.id).toBeDefined()
+      expect(client.id.length).toBeLessThan(36)
+
+      vi.unstubAllGlobals()
+    })
+
     test('connects to the target websocket', async () => {
       // Create client
       const client = new ExtensionServerClient(defaultOptions)
