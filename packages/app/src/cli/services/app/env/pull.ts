@@ -3,7 +3,7 @@ import {AppLinkedInterface, getAppScopes} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 
 import {Organization, OrganizationApp} from '../../../models/organization.js'
-import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {patchEnvFile, parse} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -33,10 +33,24 @@ export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOp
     } else {
       await writeFile(envFile, updatedEnvFileContent)
 
-      const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
+      const maskedUpdatedValues = {
+        ...updatedValues,
+        SHOPIFY_API_SECRET: outputToken.mask(updatedValues.SHOPIFY_API_SECRET ?? '').value,
+      }
+
+      const currentEnvValues = parse(envFileContent)
+      const maskedCurrentValues = {
+        ...currentEnvValues,
+        SHOPIFY_API_SECRET: outputToken.mask(currentEnvValues.SHOPIFY_API_SECRET ?? '').value,
+      }
+
+      const maskedEnvFileContent = patchEnvFile(envFileContent, maskedUpdatedValues)
+      const maskedOldEnvFileContent = patchEnvFile(envFileContent, maskedCurrentValues)
+
+      const diff = diffLines(maskedOldEnvFileContent, maskedEnvFileContent)
       return outputContent`Updated ${outputToken.path(envFile)} to be:
 
-${updatedEnvFileContent}
+${maskedEnvFileContent}
 
 Here's what changed:
 
@@ -48,9 +62,15 @@ ${outputToken.linesDiff(diff)}
 
     await writeFile(envFile, newEnvFileContent)
 
+    const maskedUpdatedValues = {
+      ...updatedValues,
+      SHOPIFY_API_SECRET: outputToken.mask(updatedValues.SHOPIFY_API_SECRET ?? '').value,
+    }
+    const maskedNewEnvFileContent = patchEnvFile(null, maskedUpdatedValues)
+
     return outputContent`Created ${outputToken.path(envFile)}:
 
-${newEnvFileContent}
+${maskedNewEnvFileContent}
 `
   }
 }

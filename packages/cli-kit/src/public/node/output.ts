@@ -92,6 +92,11 @@ export const outputToken = {
   linesDiff(value: Change[]): LinesDiffContentToken {
     return new LinesDiffContentToken(value)
   },
+  mask(value: string): RawContentToken {
+    if (value === '') return new RawContentToken('')
+    if (value.length <= 10) return new RawContentToken('***')
+    return new RawContentToken(`${value.slice(0, 10)}***`)
+  },
 }
 
 /**

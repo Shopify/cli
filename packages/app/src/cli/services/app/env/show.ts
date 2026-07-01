@@ -30,7 +30,7 @@ export async function outputEnv(
   } else {
     return outputContent`
     ${outputToken.green('SHOPIFY_API_KEY')}=${remoteApp.apiKey}
-    ${outputToken.green('SHOPIFY_API_SECRET')}=${remoteApp.apiSecretKeys[0]?.secret ?? ''}
+    ${outputToken.green('SHOPIFY_API_SECRET')}=${outputToken.mask(remoteApp.apiSecretKeys[0]?.secret ?? '')}
     ${outputToken.green('SCOPES')}=${getAppScopes(app.configuration)}
   `
   }
