@@ -4,6 +4,7 @@ import {
   isDevelopment,
   isShopify,
   isTerminalInteractive,
+  _resetIsTerminalInteractiveCache,
   isUnitTest,
   analyticsDisabled,
   cloudEnvironment,
@@ -25,6 +26,7 @@ describe('isTerminalInteractive', () => {
   const originalEnv = {...process.env}
 
   afterEach(() => {
+    _resetIsTerminalInteractiveCache()
     process.stdout.isTTY = originalIsTTY
     process.env.TERM = originalEnv.TERM
     if (originalEnv.CI === undefined) {
@@ -67,6 +69,38 @@ describe('isTerminalInteractive', () => {
     process.env.CI = ''
     process.env.TERM = 'xterm-256color'
     expect(isTerminalInteractive()).toBe(false)
+  })
+
+  test('memoizes the result', () => {
+    // Given
+    process.stdout.isTTY = true
+    delete process.env.CI
+    process.env.TERM = 'xterm-256color'
+    const firstResult = isTerminalInteractive()
+
+    // When
+    process.stdout.isTTY = false
+    const secondResult = isTerminalInteractive()
+
+    // Then
+    expect(firstResult).toBe(true)
+    expect(secondResult).toBe(true)
+  })
+
+  test('resets the cache', () => {
+    // Given
+    process.stdout.isTTY = true
+    delete process.env.CI
+    process.env.TERM = 'xterm-256color'
+    isTerminalInteractive()
+
+    // When
+    _resetIsTerminalInteractiveCache()
+    process.stdout.isTTY = false
+    const secondResult = isTerminalInteractive()
+
+    // Then
+    expect(secondResult).toBe(false)
   })
 })
 

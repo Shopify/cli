@@ -17,12 +17,26 @@ async function lazyExec(command: string, args: string[]): Promise<void> {
 }
 
 /**
+ * Memoized value for the terminal interactive check.
+ */
+let memoizedIsTerminalInteractive: boolean | undefined
+
+/**
  * It returns true if the terminal is interactive.
  *
  * @returns True if the terminal is interactive.
  */
 export function isTerminalInteractive(): boolean {
-  return Boolean(process.stdout.isTTY && process.env.TERM !== 'dumb' && !('CI' in process.env))
+  return (memoizedIsTerminalInteractive ??= Boolean(
+    process.stdout.isTTY && process.env.TERM !== 'dumb' && !('CI' in process.env),
+  ))
+}
+
+/**
+ * Resets the memoized value for the terminal interactive check.
+ */
+export function _resetIsTerminalInteractiveCache(): void {
+  memoizedIsTerminalInteractive = undefined
 }
 
 /**
