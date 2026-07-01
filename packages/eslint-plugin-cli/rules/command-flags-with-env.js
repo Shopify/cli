@@ -17,7 +17,11 @@ module.exports = {
             if (!argument) {
               return
             }
-            const properties = argument.properties.map((property) => property.key.name)
+            if (argument.type !== 'ObjectExpression') {
+              return
+            }
+
+            const properties = argument.properties.map((property) => property.key?.name).filter(Boolean)
             if (!properties.includes('env')) {
               context.report(
                 argument,
