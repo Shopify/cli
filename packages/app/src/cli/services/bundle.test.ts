@@ -6,6 +6,7 @@ import {inTemporaryDirectory, mkdir, writeFile, readFile, fileSize} from '@shopi
 import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit/node/archiver', () => {
   return {
@@ -22,6 +23,11 @@ vi.mock('@shopify/cli-kit/node/http', async (importActual) => {
 vi.mock('@shopify/cli-kit/node/fs', async (importActual) => {
   const actual: any = await importActual()
   return {...actual, fileSize: vi.fn(actual.fileSize)}
+})
+
+vi.mock('@shopify/cli-kit/node/system', async (importActual) => {
+  const actual: any = await importActual()
+  return {...actual, sleep: vi.fn()}
 })
 
 describe('writeManifestToBundle', () => {
@@ -211,7 +217,7 @@ describe('uploadToGCS', () => {
       // Given
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
       await writeFile(bundlePath, 'small contents')
-      vi.mocked(fetch).mockResolvedValue({} as never)
+      vi.mocked(fetch).mockResolvedValue({ok: true, status: 200} as never)
 
       // When
       await uploadToGCS('https://signed.example/upload', bundlePath)
@@ -222,6 +228,60 @@ describe('uploadToGCS', () => {
         expect.objectContaining({method: 'put'}),
         'slow-request',
       )
+    })
+  })
+
+  test('throws when the upload returns a non-2xx status so a failed upload is not treated as a success', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      await writeFile(bundlePath, 'small contents')
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve('<Error>SignatureExpired</Error>'),
+      } as never)
+
+      // When / Then
+      await expect(uploadToGCS('https://signed.example/upload', bundlePath)).rejects.toThrow(AbortError)
+      await expect(uploadToGCS('https://signed.example/upload', bundlePath)).rejects.toThrow(/HTTP 403/)
+      // A 403 is not retryable, so it is attempted exactly once per call.
+      expect(fetch).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  test('retries transient upload failures and succeeds', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      await writeFile(bundlePath, 'small contents')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({ok: false, status: 503, text: () => Promise.resolve('unavailable')} as never)
+        .mockResolvedValueOnce({ok: true, status: 200} as never)
+
+      // When
+      await uploadToGCS('https://signed.example/upload', bundlePath)
+
+      // Then
+      expect(fetch).toHaveBeenCalledTimes(2)
+      expect(sleep).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  test('gives up after exhausting retries on persistent transient failures', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      await writeFile(bundlePath, 'small contents')
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        status: 503,
+        text: () => Promise.resolve('unavailable'),
+      } as never)
+
+      // When / Then
+      await expect(uploadToGCS('https://signed.example/upload', bundlePath)).rejects.toThrow(/HTTP 503/)
+      expect(fetch).toHaveBeenCalledTimes(3)
     })
   })
 

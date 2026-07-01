@@ -1,9 +1,9 @@
 import {deploymentErrorsToCustomSections, uploadExtensionsBundle} from './upload.js'
 import {testApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {formData} from '@shopify/cli-kit/node/http'
+import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/http')
@@ -13,6 +13,12 @@ const app = testApp()
 const appManifest = await app.manifest(undefined)
 
 describe('uploadExtensionsBundle', () => {
+  beforeEach(() => {
+    // uploadToGCS validates the upload response status, so the signed PUT must
+    // resolve to a successful response or the upload would (correctly) throw.
+    vi.mocked(fetch).mockResolvedValue({ok: true, status: 200} as any)
+  })
+
   test('calls a mutation on partners', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
