@@ -21,6 +21,7 @@
 
 import {config} from 'dotenv'
 import * as path from 'path'
+import * as fs from 'fs'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
@@ -56,6 +57,28 @@ export interface CleanupStoresOptions {
   headed?: boolean
   /** Organization ID (default: from E2E_ORG_ID env) */
   orgId?: string
+  /** Playwright browser storage state path (default: E2E_BROWSER_STATE_PATH or global-auth path) */
+  storageStatePath?: string
+}
+
+function isAccountsShopifyUrl(rawUrl: string): boolean {
+  try {
+    return new URL(rawUrl).hostname === 'accounts.shopify.com'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+function defaultStorageStatePath(): string {
+  const tmpBase = process.env.E2E_TEMP_DIR ?? path.resolve(__dirname, '../../../.e2e-tmp')
+  return path.join(tmpBase, 'global-auth', 'browser-storage-state.json')
+}
+
+function existingStorageStatePath(candidate?: string): string | undefined {
+  return [candidate, process.env.E2E_BROWSER_STATE_PATH, defaultStorageStatePath()].find(
+    (storageStatePath): storageStatePath is string => Boolean(storageStatePath && fs.existsSync(storageStatePath)),
+  )
 }
 
 export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<void> {
@@ -64,6 +87,7 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
   const orgId = opts.orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
   const email = process.env.E2E_ACCOUNT_EMAIL
   const password = process.env.E2E_ACCOUNT_PASSWORD
+  const storageStatePath = existingStorageStatePath(opts.storageStatePath)
 
   console.log('')
   console.log(`[cleanup-stores] Mode:    ${MODE_LABELS[mode]}`)
@@ -71,8 +95,8 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
   console.log(`[cleanup-stores] Pattern: "${pattern}"`)
   console.log('')
 
-  if (!email || !password) {
-    throw new Error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required')
+  if (!storageStatePath && (!email || !password)) {
+    throw new Error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required when no browser storage state is available')
   }
   if (!orgId) {
     throw new Error('E2E_ORG_ID is required')
@@ -83,6 +107,7 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
     extraHTTPHeaders: {
       'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
     },
+    ...(storageStatePath ? {storageState: storageStatePath} : {}),
   })
   context.setDefaultTimeout(BROWSER_TIMEOUT.max)
   context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
@@ -92,19 +117,28 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
   const totalStart = Date.now()
 
   try {
-    // Step 1: Log in
-    console.log('[cleanup-stores] Logging in...')
-    await completeLogin(page, 'https://accounts.shopify.com/lookup', email, password)
-    console.log('[cleanup-stores] Logged in successfully.')
+    // Step 1: Reuse Playwright's global auth storage when available; otherwise log in directly.
+    if (storageStatePath) {
+      console.log('[cleanup-stores] Reusing browser storage state.')
+    } else if (email && password) {
+      console.log('[cleanup-stores] Logging in...')
+      await completeLogin(page, 'https://accounts.shopify.com/lookup', email, password)
+      console.log('[cleanup-stores] Logged in successfully.')
+    }
 
     // Step 2: Navigate to stores page and find matching stores
     console.log('[cleanup-stores] Navigating to stores page...')
     await page.goto(`https://dev.shopify.com/dashboard/${orgId}/stores`, {waitUntil: 'domcontentloaded'})
+    if (isAccountsShopifyUrl(page.url()) && email && password) {
+      console.log('[cleanup-stores] Browser storage state was not accepted; logging in...')
+      await completeLogin(page, page.url(), email, password)
+      await page.goto(`https://dev.shopify.com/dashboard/${orgId}/stores`, {waitUntil: 'domcontentloaded'})
+    }
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
     // Handle account picker
-    const accountButton = page.locator(`text=${email}`).first()
-    if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
+    const accountButton = email ? page.locator(`text=${email}`).first() : undefined
+    if (accountButton && (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false))) {
       await accountButton.click()
       await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     }
