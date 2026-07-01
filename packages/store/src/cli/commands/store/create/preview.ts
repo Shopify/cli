@@ -8,8 +8,6 @@ import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 
 export default class StoreCreatePreview extends StoreCommand {
-  static hidden = true
-
   static summary = 'Create a preview Shopify store.'
 
   static descriptionWithMarkdown = `Creates a new Shopify store, with no need for an existing account.`
