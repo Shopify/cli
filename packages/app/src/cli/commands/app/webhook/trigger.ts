@@ -81,6 +81,7 @@ export default class WebhookTrigger extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const usedFlags: WebhookTriggerInput = {

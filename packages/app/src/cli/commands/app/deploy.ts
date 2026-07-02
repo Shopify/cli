@@ -102,6 +102,7 @@ export default class Deploy extends AppLinkedCommand {
       clientId,
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const allowUpdates = force || flags['allow-updates']

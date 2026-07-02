@@ -225,6 +225,15 @@ describe('singleton pattern', () => {
     expect(instance1).toBe(instance2)
   })
 
+  test('getInstance returns fresh instances for explicit sessions', () => {
+    // Given/When
+    const instance1 = PartnersClient.getInstance(undefined, {sessionId: 'session-id-for-work'})
+    const instance2 = PartnersClient.getInstance(undefined, {sessionId: 'session-id-for-work'})
+
+    // Then
+    expect(instance1).not.toBe(instance2)
+  })
+
   test('resetInstance allows creating a new instance', () => {
     // Given
     const instance1 = PartnersClient.getInstance()

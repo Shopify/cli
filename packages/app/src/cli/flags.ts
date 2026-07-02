@@ -26,6 +26,10 @@ export const appFlags = {
     env: 'SHOPIFY_FLAG_CLIENT_ID',
     exclusive: ['config'],
   }),
+  'auth-alias': Flags.string({
+    description: 'Alias of the Shopify account to use for authentication.',
+    env: 'SHOPIFY_FLAG_AUTH_ALIAS',
+  }),
   reset: Flags.boolean({
     hidden: false,
     description: 'Reset all your settings.',

@@ -5,6 +5,12 @@
  */
 export interface applogs {
   /**
+   * Alias of the Shopify account to use for authentication.
+   * @environment SHOPIFY_FLAG_AUTH_ALIAS
+   */
+  '--auth-alias <value>'?: string
+
+  /**
    * The Client ID of your app.
    * @environment SHOPIFY_FLAG_CLIENT_ID
    */

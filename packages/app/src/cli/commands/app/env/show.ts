@@ -24,6 +24,7 @@ export default class EnvShow extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
     outputResult(await showEnv(app, remoteApp, organization))
     return {app}

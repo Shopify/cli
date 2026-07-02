@@ -5,12 +5,6 @@
  */
 export interface hydrogendeploy {
   /**
-   * Directory containing the client assets to deploy, relative to the project root. Defaults to the detected Vite client output directory, then falls back to `dist/client`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_ASSETS_DIR
-   */
-  '--assets-dir <value>'?: string
-
-  /**
    * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.
    * @environment AUTH_BYPASS_TOKEN
    */
@@ -23,7 +17,7 @@ export interface hydrogendeploy {
   '--auth-bypass-token-duration <value>'?: string
 
   /**
-   * Specify a build command to run before deploying. If not specified, the Hydrogen build pipeline will be used. When custom output directories are configured, defaults to `node --run build`.
+   * Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.
    *
    */
   '--build-command <value>'?: string
@@ -53,7 +47,7 @@ export interface hydrogendeploy {
   '--env-file <value>'?: string
 
   /**
-   * Forces a deployment to proceed if there are uncommitted changes in its Git repository.
+   * Forces a deployment to proceed if there are uncommited changes in its Git repository.
    * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
   '-f, --force'?: ''
@@ -77,7 +71,7 @@ export interface hydrogendeploy {
   '--lockfile-check'?: ''
 
   /**
-   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommitted changes.
+   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.
    * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION
    */
   '--metadata-description <value>'?: string
@@ -117,10 +111,4 @@ export interface hydrogendeploy {
    * @environment SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN
    */
   '-t, --token <value>'?: string
-
-  /**
-   * Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root. Defaults to the detected Vite server output directory, then falls back to `dist/server`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_WORKER_DIR
-   */
-  '--worker-dir <value>'?: string
 }

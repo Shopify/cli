@@ -5,7 +5,7 @@
  */
 export interface hydrogengenerateroutes {
   /**
-   * React Router adapter used in the route. The default is `react-router`.
+   * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.
    * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER
    */
   '--adapter <value>'?: string

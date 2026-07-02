@@ -76,9 +76,9 @@ export class NoOrgError extends AbortError {
  * If the user doesn't belong to any org, throw an error
  * @returns List of organizations
  */
-export async function fetchOrganizations(): Promise<Organization[]> {
+export async function fetchOrganizations(authSessionId?: string): Promise<Organization[]> {
   const organizations: Organization[] = []
-  for (const client of allDeveloperPlatformClients()) {
+  for (const client of allDeveloperPlatformClients(authSessionId ? {sessionId: authSessionId} : undefined)) {
     // We don't want to run this in parallel because there could be port conflicts
     // eslint-disable-next-line no-await-in-loop
     const clientOrganizations = await client.organizations()
@@ -86,7 +86,7 @@ export async function fetchOrganizations(): Promise<Organization[]> {
   }
 
   if (organizations.length === 0) {
-    const developerPlatformClient = selectDeveloperPlatformClient()
+    const developerPlatformClient = selectDeveloperPlatformClient(authSessionId ? {authSessionId} : undefined)
     const session = await developerPlatformClient.session()
     const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient, session.userId)
     throw new NoOrgError(accountInfo)

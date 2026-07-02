@@ -13,6 +13,7 @@ import {
   CreateAppOptions,
   AppLogsResponse,
   createUnauthorizedHandler,
+  DeveloperPlatformClientAuthOptions,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation} from '../../services/context/partner-account-info.js'
 import {
@@ -202,7 +203,8 @@ interface OrgAndAppsResponse {
 export class PartnersClient implements DeveloperPlatformClient {
   private static instance: PartnersClient | undefined
 
-  static getInstance(session?: Session): PartnersClient {
+  static getInstance(session?: Session, authOptions: DeveloperPlatformClientAuthOptions = {}): PartnersClient {
+    if (authOptions.sessionId) return new PartnersClient(session, authOptions)
     PartnersClient.instance ??= new PartnersClient(session)
     return PartnersClient.instance
   }
@@ -220,9 +222,11 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly bundleFormat = 'zip'
   public readonly supportsDashboardManagedExtensions = true
   private _session: Session | undefined
+  private readonly authOptions: DeveloperPlatformClientAuthOptions
 
-  private constructor(session?: Session) {
+  private constructor(session?: Session, authOptions: DeveloperPlatformClientAuthOptions = {}) {
     this._session = session
+    this.authOptions = authOptions
   }
 
   async session(): Promise<Session> {
@@ -230,7 +234,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
-      const {token, userId} = await ensureAuthenticatedPartners()
+      const {token, userId} = await ensureAuthenticatedPartners([], process.env, this.authOptions)
       this._session = {
         token,
         businessPlatformToken: '',
@@ -271,7 +275,11 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async unsafeRefreshToken(): Promise<string> {
-    const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true, forceRefresh: true})
+    const {token} = await ensureAuthenticatedPartners([], process.env, {
+      ...this.authOptions,
+      noPrompt: true,
+      forceRefresh: true,
+    })
     const session = await this.session()
     if (token) {
       session.token = token

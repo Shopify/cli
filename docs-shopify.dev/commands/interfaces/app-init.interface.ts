@@ -5,6 +5,12 @@
  */
 export interface appinit {
   /**
+   * Alias of the Shopify account to use for authentication.
+   * @environment SHOPIFY_FLAG_AUTH_ALIAS
+   */
+  '--auth-alias <value>'?: string
+
+  /**
    * The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.
    * @environment SHOPIFY_FLAG_CLIENT_ID
    */

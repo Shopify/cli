@@ -48,6 +48,7 @@ export default class FunctionInfo extends AppUnlinkedCommand {
       flags['client-id'],
       flags.reset,
       flags.config,
+      flags['auth-alias'],
     )
 
     const result = functionInfo(ourFunction, {

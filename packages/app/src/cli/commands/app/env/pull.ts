@@ -35,6 +35,7 @@ export default class EnvPull extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
     const envFile = resolvePath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configPath))
     outputResult(await pullEnv({app, remoteApp, organization, envFile}))

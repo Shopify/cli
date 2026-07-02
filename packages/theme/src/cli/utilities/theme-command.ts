@@ -147,6 +147,24 @@ export default abstract class ThemeCommand extends Command {
   }
 
   /**
+   * Create an unauthenticated session object from store and password
+   * @param flags - The environment flags containing store and password
+   * @returns The unauthenticated session object
+   */
+  protected async createSession(flags: FlagValues, storeAuthSession?: AdminSession, lookupStoreAuthSession = true) {
+    const store = ensureThemeStore({store: flags.store as string | undefined})
+    const password = flags.password as string | undefined
+    const authAlias = flags['auth-alias'] as string | undefined
+    const sessionId = !password && authAlias ? await this.sessionIdFromAlias(authAlias) : undefined
+
+    if (password) return ensureAuthenticatedThemes(store, password)
+    if (sessionId) return ensureAuthenticatedThemes(store, password, [], {sessionId})
+
+    const storedSession = lookupStoreAuthSession ? await this.storeAuthSessionForTheme({store}) : undefined
+    return storeAuthSession ?? storedSession ?? ensureAuthenticatedThemes(store, password)
+  }
+
+  /**
    * Create a map of environments from the shopify.theme.toml file
    * @param environments - Names of environments to load
    * @param flags - Flags provided via the CLI or by default
@@ -302,7 +320,7 @@ export default abstract class ThemeCommand extends Command {
             try {
               const store = flags.store as string
               await useThemeStoreContext(store, async () => {
-                const session = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
+                const session = requiresAuth ? await this.createSession(flags, storeAuthSession, false) : undefined
 
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
@@ -345,27 +363,6 @@ export default abstract class ThemeCommand extends Command {
     })
 
     return groups
-  }
-
-  /**
-   * Create an unauthenticated session object from store and password
-   * @param flags - The environment flags containing store and password
-   * @returns The unauthenticated session object
-   */
-  private async createSession(flags: FlagValues, storeAuthSession?: AdminSession) {
-    const store = ensureThemeStore({store: flags.store as string | undefined})
-    const password = flags.password as string | undefined
-    const alias = flags.alias as string | undefined
-    const sessionId = !password && alias ? await this.sessionIdFromAlias(alias) : undefined
-    const session = password
-      ? await ensureAuthenticatedThemes(store, password)
-      : sessionId
-        ? await ensureAuthenticatedThemes(store, password, [], {sessionId})
-        : (storeAuthSession ??
-          (await this.storeAuthSessionForTheme({store})) ??
-          (await ensureAuthenticatedThemes(store, password)))
-
-    return session
   }
 
   private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {

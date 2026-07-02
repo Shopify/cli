@@ -83,6 +83,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
       flags['client-id'],
       flags.reset,
       flags.config,
+      flags['auth-alias'],
     )
 
     await runFunction({

@@ -42,7 +42,7 @@ export const themeFlags = {
     description: 'Password generated from the Theme Access app or an Admin API token.',
     env: 'SHOPIFY_CLI_THEME_TOKEN',
   }),
-  alias: Flags.string({
+  'auth-alias': Flags.string({
     description: 'Alias of the Shopify account to use for authentication.',
     env: 'SHOPIFY_FLAG_AUTH_ALIAS',
   }),
@@ -60,6 +60,13 @@ export const themeFlags = {
     env: 'SHOPIFY_FLAG_ENVIRONMENT',
     multiple: true,
   }),
+}
+
+export const themeAuthenticationFlags = {
+  password: themeFlags.password,
+  store: themeFlags.store,
+  'auth-alias': themeFlags['auth-alias'],
+  environment: themeFlags.environment,
 }
 
 const globQuotesDescription = "Wrap the value in double quotes if you're using wildcards."

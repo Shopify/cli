@@ -77,6 +77,11 @@ export type Paginateable<T> = T & {
 
 interface SelectDeveloperPlatformClientOptions {
   organization?: Organization
+  authSessionId?: string
+}
+
+export interface DeveloperPlatformClientAuthOptions {
+  sessionId?: string
 }
 
 export interface AppVersionIdentifiers {
@@ -84,13 +89,17 @@ export interface AppVersionIdentifiers {
   versionId: string
 }
 
-export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
+export function allDeveloperPlatformClients(
+  authOptions?: DeveloperPlatformClientAuthOptions,
+): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = []
 
-  clients.push(AppManagementClient.getInstance())
+  clients.push(
+    authOptions ? AppManagementClient.getInstance(undefined, authOptions) : AppManagementClient.getInstance(),
+  )
 
   if (!blockPartnersAccess()) {
-    clients.push(PartnersClient.getInstance())
+    clients.push(authOptions ? PartnersClient.getInstance(undefined, authOptions) : PartnersClient.getInstance())
   }
 
   return clients
@@ -98,20 +107,29 @@ export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
 
 export function selectDeveloperPlatformClient({
   organization,
+  authSessionId,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (organization) return selectDeveloperPlatformClientByOrg(organization)
-  return defaultDeveloperPlatformClient()
+  const authOptions = authSessionId ? {sessionId: authSessionId} : undefined
+  if (organization) return selectDeveloperPlatformClientByOrg(organization, authOptions)
+  return defaultDeveloperPlatformClient(authOptions)
 }
 
-function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
-  if (organization.source === OrganizationSource.BusinessPlatform) return AppManagementClient.getInstance()
-  return PartnersClient.getInstance()
+function selectDeveloperPlatformClientByOrg(
+  organization: Organization,
+  authOptions?: DeveloperPlatformClientAuthOptions,
+): DeveloperPlatformClient {
+  if (organization.source === OrganizationSource.BusinessPlatform) {
+    return authOptions ? AppManagementClient.getInstance(undefined, authOptions) : AppManagementClient.getInstance()
+  }
+  return authOptions ? PartnersClient.getInstance(undefined, authOptions) : PartnersClient.getInstance()
 }
 
-function defaultDeveloperPlatformClient(): DeveloperPlatformClient {
-  if (firstPartyDev() && !blockPartnersAccess()) return PartnersClient.getInstance()
+function defaultDeveloperPlatformClient(authOptions?: DeveloperPlatformClientAuthOptions): DeveloperPlatformClient {
+  if (firstPartyDev() && !blockPartnersAccess()) {
+    return authOptions ? PartnersClient.getInstance(undefined, authOptions) : PartnersClient.getInstance()
+  }
 
-  return AppManagementClient.getInstance()
+  return authOptions ? AppManagementClient.getInstance(undefined, authOptions) : AppManagementClient.getInstance()
 }
 
 export interface CreateAppOptions {

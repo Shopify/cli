@@ -91,6 +91,7 @@ export default class Validate extends AppLinkedCommand {
         clientId: flags['client-id'],
         forceRelink: flags.reset,
         userProvidedConfigName: flags.config,
+        authAlias: flags['auth-alias'],
         unsafeTolerateErrors: true,
       })
       app = context.app

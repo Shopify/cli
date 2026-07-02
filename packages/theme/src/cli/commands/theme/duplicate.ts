@@ -1,4 +1,4 @@
-import {themeFlags} from '../../flags.js'
+import {themeAuthenticationFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {duplicate} from '../../services/duplicate.js'
 import {Flags} from '@oclif/core'
@@ -45,7 +45,7 @@ Sample JSON output:
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    password: themeFlags.password,
+    ...themeAuthenticationFlags,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -56,9 +56,6 @@ Sample JSON output:
       description: 'Name of the newly duplicated theme.',
       env: 'SHOPIFY_FLAG_NAME',
     }),
-    store: themeFlags.store,
-    alias: themeFlags.alias,
-    environment: themeFlags.environment,
     force: Flags.boolean({
       char: 'f',
       description: 'Force the duplicate operation to run without prompts or confirmations.',

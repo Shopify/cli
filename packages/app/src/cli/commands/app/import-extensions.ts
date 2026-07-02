@@ -29,6 +29,7 @@ export default class ImportExtensions extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const extensions = await getExtensions({

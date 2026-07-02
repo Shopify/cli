@@ -3,12 +3,14 @@ import initService from '../../services/init/init.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromIdentifiers, selectOrg} from '../../services/context.js'
 import {fetchOrgFromId} from '../../services/dev/fetch.js'
+import {appFlags} from '../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
 import {isValidName} from '../../models/app/validation/common.js'
+import {sessionIdFromAuthAlias} from '../../utilities/auth-alias.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -74,6 +76,7 @@ export default class Init extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
       exclusive: ['client-id'],
     }),
+    'auth-alias': appFlags['auth-alias'],
   }
 
   async run(): Promise<AppLinkedCommandOutput> {
@@ -89,9 +92,10 @@ export default class Init extends AppLinkedCommand {
 
     const inferredPackageManager = inferPackageManager(flags['package-manager'])
     const name = flags.name ?? (await getAppName(flags.path))
+    const authSessionId = await sessionIdFromAuthAlias(flags['auth-alias'])
 
     // Force user authentication before prompting.
-    let developerPlatformClient = selectDeveloperPlatformClient()
+    let developerPlatformClient = selectDeveloperPlatformClient(authSessionId ? {authSessionId} : undefined)
     await developerPlatformClient.session()
 
     const promptAnswers = await initPrompt({
@@ -103,7 +107,10 @@ export default class Init extends AppLinkedCommand {
     let appName: string
     if (flags['client-id']) {
       // If a client-id is provided we don't need to prompt the user and can link directly to that app.
-      const selectedApp = await appFromIdentifiers({apiKey: flags['client-id']})
+      const selectedApp = await appFromIdentifiers({
+        apiKey: flags['client-id'],
+        ...(authSessionId ? {authSessionId} : {}),
+      })
       appName = selectedApp.title
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
@@ -113,9 +120,12 @@ export default class Init extends AppLinkedCommand {
         // If an organization-id is provided, fetch the organization directly
         org = await fetchOrgFromId(flags['organization-id'], developerPlatformClient)
       } else {
-        org = await selectOrg()
+        org = await selectOrg(authSessionId)
       }
-      developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+      developerPlatformClient = selectDeveloperPlatformClient({
+        organization: org,
+        ...(authSessionId ? {authSessionId} : {}),
+      })
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
       selectAppResult = await selectAppOrNewAppName(
         flags.name !== undefined,
@@ -146,6 +156,7 @@ export default class Init extends AppLinkedCommand {
       directory: flags.path,
       useGlobalCLI: promptAnswers.globalCLIResult.alreadyInstalled || promptAnswers.globalCLIResult.install,
       developerPlatformClient,
+      authAlias: flags['auth-alias'],
       postCloneActions: {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },

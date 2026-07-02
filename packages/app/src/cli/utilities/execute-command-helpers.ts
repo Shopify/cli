@@ -6,6 +6,7 @@ import {resolveBulkOperationQuery} from '@shopify/cli-kit/node/api/bulk-operatio
 interface AppStoreContextFlags {
   path: string
   'client-id'?: string
+  'auth-alias'?: string
   reset: boolean
   config?: string
   store?: string
@@ -38,6 +39,7 @@ export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promi
     clientId: flags['client-id'],
     forceRelink: flags.reset,
     userProvidedConfigName: flags.config,
+    ...(flags['auth-alias'] ? {authAlias: flags['auth-alias']} : {}),
   })
 
   const store = await storeContext({

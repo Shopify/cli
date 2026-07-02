@@ -65,7 +65,7 @@ describe('getOrGenerateSchemaPath', () => {
 
       // When
       // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
-      const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
+      const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined, undefined)
 
       // Then
       expect(result).toBe(expectedPath)
@@ -87,7 +87,7 @@ describe('getOrGenerateSchemaPath', () => {
 
       // When
       // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
-      const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
+      const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined, undefined)
 
       // Then
       expect(result).toBe(expectedPath)

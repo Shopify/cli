@@ -28,6 +28,7 @@ This command reuses the existing linked app and organization and skips all inter
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const {configuration, configPath} = await pull({

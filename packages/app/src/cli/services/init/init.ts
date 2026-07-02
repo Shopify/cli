@@ -45,6 +45,7 @@ interface InitOptions {
   local: boolean
   useGlobalCLI: boolean
   developerPlatformClient: DeveloperPlatformClient
+  authAlias?: string
   postCloneActions: {
     removeLockfilesFromGitignore: boolean
   }
@@ -247,6 +248,7 @@ async function init(options: InitOptions) {
     clientId: undefined,
     forceRelink: false,
     userProvidedConfigName: undefined,
+    authAlias: options.authAlias,
   })
 
   renderSuccess({
