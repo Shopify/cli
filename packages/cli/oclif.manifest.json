@@ -7172,6 +7172,19 @@
           "name": "port",
           "type": "option"
         },
+        "reconciliation-strategy": {
+          "description": "How to resolve JSON conflicts when --theme-editor-sync is enabled. Use keep-local to keep local files, keep-remote to keep remote files, or abort to fail instead of prompting.",
+          "env": "SHOPIFY_FLAG_RECONCILIATION_STRATEGY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "reconciliation-strategy",
+          "options": [
+            "keep-local",
+            "keep-remote",
+            "abort"
+          ],
+          "type": "option"
+        },
         "standard-events-inspector": {
           "allowNo": false,
           "description": "Inject the standard events inspector into storefront HTML.",

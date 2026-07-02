@@ -101,6 +101,12 @@ export interface themedev {
   '--port <value>'?: string
 
   /**
+   * How to resolve JSON conflicts when --theme-editor-sync is enabled. Use keep-local to keep local files, keep-remote to keep remote files, or abort to fail instead of prompting.
+   * @environment SHOPIFY_FLAG_RECONCILIATION_STRATEGY
+   */
+  '--reconciliation-strategy <value>'?: string
+
+  /**
    * Inject the standard events inspector into storefront HTML.
    * @environment SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR
    */
