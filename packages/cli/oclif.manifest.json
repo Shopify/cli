@@ -461,6 +461,29 @@
           "name": "config",
           "type": "option"
         },
+        "file-name": {
+          "description": "The name of the app configuration file to create or overwrite.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG_FILE_NAME",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "file-name",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "dependsOn": [
+            "file-name"
+          ],
+          "description": "Overwrite an existing configuration file without prompting.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": false,
+          "name": "force",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
