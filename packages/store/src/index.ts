@@ -6,6 +6,7 @@ import StoreBulkStatus from './cli/commands/store/bulk/status.js'
 import StoreCreateDev from './cli/commands/store/create/dev.js'
 import StoreCreatePreview from './cli/commands/store/create/preview.js'
 import StoreExecute from './cli/commands/store/execute.js'
+import StoreGraphiQL from './cli/commands/store/graphiql.js'
 import StoreInfo from './cli/commands/store/info.js'
 import StoreList from './cli/commands/store/list.js'
 import StoreOpen from './cli/commands/store/open.js'
@@ -21,6 +22,7 @@ const COMMANDS = {
   'store:create:dev': StoreCreateDev,
   'store:create:preview': StoreCreatePreview,
   'store:execute': StoreExecute,
+  'store:graphiql': StoreGraphiQL,
   'store:info': StoreInfo,
   'store:list': StoreList,
   'store:open': StoreOpen,

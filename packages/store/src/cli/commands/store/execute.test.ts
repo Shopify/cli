@@ -54,4 +54,11 @@ describe('store execute command', () => {
     expect(StoreExecute.flags['allow-mutations']).toBeDefined()
     expect(StoreExecute.flags.json).toBeDefined()
   })
+
+  test('requires --query or --query-file', async () => {
+    await expect(StoreExecute.run(['--store', 'shop.myshopify.com'])).rejects.toThrow()
+
+    expect(executeStoreOperation).not.toHaveBeenCalled()
+    expect(writeOrOutputStoreExecuteResult).not.toHaveBeenCalled()
+  })
 })
