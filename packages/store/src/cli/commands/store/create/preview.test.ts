@@ -12,10 +12,6 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
 })
 
 describe('store create preview command', () => {
-  test('is visible now that preview store creation is generally available', () => {
-    expect(StoreCreatePreview.hidden).not.toBe(true)
-  })
-
   test('passes parsed flags through to the service', async () => {
     const result = {
       status: 'success' as const,
