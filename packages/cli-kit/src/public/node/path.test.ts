@@ -1,5 +1,5 @@
-import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory} from './path.js'
-import {describe, test, expect} from 'vitest'
+import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory, _resetCwd} from './path.js'
+import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 describe('relativize', () => {
   test('relativizes the path', () => {
@@ -16,12 +16,41 @@ describe('relativize', () => {
 })
 
 describe('cwd', () => {
+  beforeEach(() => {
+    _resetCwd()
+  })
+
   test.runIf(process.env.INIT_CWD)('returns the initial cwd where the command has been called', () => {
     // Given
     const path = cwd()
 
     // Then
     expect(path).toStrictEqual(normalizePath(process.env.INIT_CWD!))
+  })
+
+  test('memoizes the result', () => {
+    // Given
+    const processCwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/computed/path')
+    const originalInitCwd = process.env.INIT_CWD
+    delete process.env.INIT_CWD
+
+    // When
+    const firstCall = cwd()
+    const secondCall = cwd()
+
+    // Then
+    expect(firstCall).toBe(normalizePath('/computed/path'))
+    expect(secondCall).toBe(normalizePath('/computed/path'))
+    expect(processCwdSpy).toHaveBeenCalledTimes(1)
+
+    // Resetting
+    _resetCwd()
+    cwd()
+    expect(processCwdSpy).toHaveBeenCalledTimes(2)
+
+    // Restore
+    process.env.INIT_CWD = originalInitCwd
+    processCwdSpy.mockRestore()
   })
 })
 
