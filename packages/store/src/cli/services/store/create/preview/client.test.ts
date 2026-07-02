@@ -6,6 +6,7 @@ import {
   getOrCreateCliInstanceId,
   previewStoreAuthenticatedHeaders,
   previewStoreCreateHeaders,
+  PreviewStoreRequestError,
 } from './client.js'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
@@ -197,6 +198,19 @@ describe('preview store client', () => {
       accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
       claimUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
     })
+  })
+
+  test.each([401, 404])('rejects preview store lookups with a %s-carrying error', async (status) => {
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(response(status, {message: 'Not found'}))
+
+    const error = await getPreviewStore(
+      {shopId: '123', adminApiToken: 'shpat_token'},
+      {storage: inMemoryStorage('instance-1')},
+    ).catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(PreviewStoreRequestError)
+    expect((error as PreviewStoreRequestError).status).toBe(status)
+    expect((error as PreviewStoreRequestError).message).toBe(`Preview store lookup failed with HTTP ${status}.`)
   })
 
   test('omits the claim URL when the backend degrades it to null', async () => {

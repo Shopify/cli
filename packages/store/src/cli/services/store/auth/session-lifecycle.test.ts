@@ -142,7 +142,13 @@ describe('loadStoredStoreSession', () => {
 
     await expect(loadStoredStoreSession('shop.myshopify.com')).rejects.toMatchObject({
       message: 'Token refresh failed for shop.myshopify.com (HTTP 401).',
-      tryMessage: 'To re-authenticate, run:',
+      nextSteps: [
+        [
+          'Run',
+          {command: 'shopify store auth --store shop.myshopify.com --scopes read_products'},
+          'to re-authenticate',
+        ],
+      ],
     })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith('shop.myshopify.com', '42')
   })
@@ -167,7 +173,13 @@ describe('loadStoredStoreSession', () => {
 
     await expect(loadStoredStoreSession('shop.myshopify.com')).rejects.toMatchObject({
       message: 'Token refresh returned an invalid response for shop.myshopify.com.',
-      tryMessage: 'To re-authenticate, run:',
+      nextSteps: [
+        [
+          'Run',
+          {command: 'shopify store auth --store shop.myshopify.com --scopes read_products'},
+          'to re-authenticate',
+        ],
+      ],
     })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith('shop.myshopify.com', '42')
   })

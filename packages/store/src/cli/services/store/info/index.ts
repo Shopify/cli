@@ -3,10 +3,11 @@ import {fetchOrganizationShop} from './organization-shop.js'
 import {mapPlanToPublicHandle} from './plan.js'
 import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
+import {throwReauthenticateStoreAuthError} from '../auth/recovery.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
-import {getPreviewStore} from '../create/preview/client.js'
+import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/client.js'
 import {storeTypeHandle} from '../store-type.js'
-import {getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -147,13 +148,31 @@ interface PreviewStoreUrls {
 }
 
 async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promise<PreviewStoreUrls> {
-  const previewStore = await getPreviewStore({
-    shopId: previewSession.preview.shopId,
-    adminApiToken: previewSession.accessToken,
-  })
-  return {
-    accessUrl: previewStore.accessUrl,
-    ...(previewStore.claimUrl ? {saveUrl: previewStore.claimUrl} : {}),
+  try {
+    const previewStore = await getPreviewStore({
+      shopId: previewSession.preview.shopId,
+      adminApiToken: previewSession.accessToken,
+    })
+    return {
+      accessUrl: previewStore.accessUrl,
+      ...(previewStore.claimUrl ? {saveUrl: previewStore.claimUrl} : {}),
+    }
+  } catch (error) {
+    // The CLI has no local signal for when a preview store gets claimed through the browser
+    // claim flow; the stored session keeps reporting `kind: 'preview'` forever. A 401/404 from
+    // the preview-stores service is the first indication that the store has moved on and the
+    // cached preview token is no longer valid, so treat it the same way the Admin API paths
+    // treat a stale stored session: clear it and point the user at `store auth`.
+    if (error instanceof PreviewStoreRequestError && (error.status === 401 || error.status === 404)) {
+      clearStoredStoreAppSession(previewSession.store, previewSession.userId)
+      throwReauthenticateStoreAuthError(
+        `The preview store ${previewSession.store} has likely been claimed, so its stored authentication is no longer valid.`,
+        previewSession.store,
+        previewSession.scopes.join(','),
+      )
+    }
+
+    throw error
   }
 }
 
