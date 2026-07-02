@@ -47,6 +47,8 @@ abstract class BaseCommand extends Command {
 
   protected async init(): Promise<unknown> {
     this.exitWithTimestampWhenEnvVariablePresent()
+    const {suggestAIToolkitInstallIfNeeded} = await import('./ai-agent-toolkit.js')
+    await suggestAIToolkitInstallIfNeeded()
     setCurrentCommandId(this.id ?? '')
     if (!isDevelopment()) {
       // This function runs just prior to `run`
