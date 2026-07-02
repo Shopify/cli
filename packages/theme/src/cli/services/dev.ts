@@ -1,11 +1,12 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerContext, ErrorOverlayMode, LiveReload} from '../utilities/theme-environment/types.js'
+import {type DevServerContext, type ErrorOverlayMode, type LiveReload} from '../utilities/theme-environment/types.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {fetchOrCreateCrawlerSignatureHeaders} from '../utilities/theme-environment/crawler-signature.js'
 import {ensureListingExists} from '../utilities/theme-listing.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -81,9 +82,13 @@ export async function dev(options: DevOptions) {
     await ensureListingExists(options.directory, options.listing)
   }
 
-  const storefrontPasswordPromise = await isStorefrontPasswordProtected(options.adminSession).then((needsPassword) =>
-    needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
-  )
+  const [crawlerSignatureHeaders, isPasswordProtected] = await Promise.all([
+    fetchOrCreateCrawlerSignatureHeaders(options.adminSession),
+    isStorefrontPasswordProtected(options.adminSession),
+  ])
+  const storefrontPassword = isPasswordProtected
+    ? await ensureValidPassword(options.storePassword, options.adminSession.storeFqdn, crawlerSignatureHeaders)
+    : undefined
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
@@ -113,12 +118,12 @@ export async function dev(options: DevOptions) {
     preview: `https://${options.store}/?preview_theme_id=${options.theme.id}`,
   }
 
-  const storefrontPassword = await storefrontPasswordPromise
   const session = await initializeDevServerSession(
     options.theme.id.toString(),
     options.adminSession,
     options.password,
     storefrontPassword,
+    crawlerSignatureHeaders,
   )
   const ctx: DevServerContext = {
     session,

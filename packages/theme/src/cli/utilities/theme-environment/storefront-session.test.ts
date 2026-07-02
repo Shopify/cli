@@ -87,6 +87,60 @@ describe('Storefront API', () => {
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==123:', storefront_digest: 'digest-value'})
     })
 
+    test('passes caller-provided headers when retrieving session cookies', async () => {
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+        {
+          Signature: 'signature-value',
+          'Signature-Input': 'signature-input-value',
+          'Signature-Agent': 'signature-agent-value',
+        },
+      )
+
+      expect(shopifyFetch).toHaveBeenNthCalledWith(
+        1,
+        'https://example-store.myshopify.com?preview_theme_id=123456&_fd=0&pb=0',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Signature: 'signature-value',
+            'Signature-Input': 'signature-input-value',
+            'Signature-Agent': 'signature-agent-value',
+          }),
+        }),
+      )
+      expect(shopifyFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://example-store.myshopify.com/password',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Signature: 'signature-value',
+            'Signature-Input': 'signature-input-value',
+            'Signature-Agent': 'signature-agent-value',
+          }),
+        }),
+      )
+    })
+
     test(`throws an ShopifyEssentialError when _shopify_essential can't be defined`, async () => {
       // Given
       vi.mocked(shopifyFetch)
@@ -430,6 +484,34 @@ describe('Storefront API', () => {
         method: 'POST',
         redirect: 'manual',
       })
+    })
+
+    test('passes crawler signature headers when checking the storefront password', async () => {
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
+        response({
+          status: 302,
+          headers: {
+            location: 'https://store.myshopify.com/',
+          },
+        }),
+      )
+
+      await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com', {
+        Signature: 'signature-value',
+        'Signature-Input': 'signature-input-value',
+        'Signature-Agent': 'signature-agent-value',
+      })
+
+      expect(shopifyFetch).toBeCalledWith(
+        'https://store.myshopify.com/password',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Signature: 'signature-value',
+            'Signature-Input': 'signature-input-value',
+            'Signature-Agent': 'signature-agent-value',
+          }),
+        }),
+      )
     })
 
     test('returns false when the password is incorrect', async () => {

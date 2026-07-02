@@ -9,13 +9,20 @@ import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {initializeDevelopmentExtensionServer, ensureValidPassword, isStorefrontPasswordProtected} from '@shopify/theme'
+import {
+  initializeDevelopmentExtensionServer,
+  ensureValidPassword,
+  isStorefrontPasswordProtected,
+  fetchOrCreateCrawlerSignatureHeaders,
+  type CrawlerSignatureHeaders,
+} from '@shopify/theme'
 import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ThemeAppExtensionServerOptions {
   theme: Theme
   adminSession: AdminSession
   storefrontPassword?: string
+  crawlerSignatureHeaders?: CrawlerSignatureHeaders
   themeExtensionDirectory: string
   themeExtensionPort: number
 }
@@ -52,8 +59,12 @@ export async function setupPreviewThemeAppExtensionsProcess(
   ])
 
   const storeFqdn = adminSession.storeFqdn
-  const storefrontPassword = (await isStorefrontPasswordProtected(adminSession))
-    ? await ensureValidPassword(undefined, storeFqdn)
+  const [crawlerSignatureHeaders, isPasswordProtected] = await Promise.all([
+    fetchOrCreateCrawlerSignatureHeaders(adminSession),
+    isStorefrontPasswordProtected(adminSession),
+  ])
+  const storefrontPassword = isPasswordProtected
+    ? await ensureValidPassword(undefined, storeFqdn, crawlerSignatureHeaders)
     : undefined
 
   const theme = await findOrCreateHostTheme(adminSession, options.theme)
@@ -99,6 +110,7 @@ export async function setupPreviewThemeAppExtensionsProcess(
       theme,
       adminSession,
       storefrontPassword,
+      crawlerSignatureHeaders,
       themeExtensionDirectory,
       themeExtensionPort,
     },
@@ -107,11 +119,12 @@ export async function setupPreviewThemeAppExtensionsProcess(
 
 export const runThemeAppExtensionsServer: DevProcessFunction<ThemeAppExtensionServerOptions> = async (
   _,
-  {theme, adminSession, storefrontPassword, themeExtensionDirectory, themeExtensionPort},
+  {theme, adminSession, storefrontPassword, crawlerSignatureHeaders, themeExtensionDirectory, themeExtensionPort},
 ) => {
   const server = await initializeDevelopmentExtensionServer(theme, {
     adminSession,
     storefrontPassword,
+    crawlerSignatureHeaders,
     themeExtensionDirectory,
     themeExtensionPort,
   })

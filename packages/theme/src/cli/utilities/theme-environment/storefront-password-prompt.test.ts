@@ -72,6 +72,20 @@ describe('ensureValidPassword', () => {
     expect(isStorefrontPasswordCorrect).toHaveBeenCalledWith('testPassword', 'test-store')
   })
 
+  test('passes crawler signature headers when validating the password', async () => {
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
+    vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
+    const crawlerSignatureHeaders = {
+      Signature: 'signature-value',
+      'Signature-Input': 'signature-input-value',
+      'Signature-Agent': 'signature-agent-value',
+    }
+
+    await ensureValidPassword('testPassword', 'test-store', crawlerSignatureHeaders)
+
+    expect(isStorefrontPasswordCorrect).toHaveBeenCalledWith('testPassword', 'test-store', crawlerSignatureHeaders)
+  })
+
   test('should set the password in local storage when a password is validated', async () => {
     // Given
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)

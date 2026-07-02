@@ -1,3 +1,4 @@
+import {fetchOrCreateCrawlerSignatureHeaders} from './crawler-signature.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {
   abortOnMissingRequiredFile,
@@ -13,6 +14,13 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('./crawler-signature.js', async (realImport) => {
+  const realModule = await realImport<typeof import('./crawler-signature.js')>()
+  return {
+    ...realModule,
+    fetchOrCreateCrawlerSignatureHeaders: vi.fn(),
+  }
+})
 vi.mock('./storefront-session.js')
 
 const storeFqdn = 'my-shop.myshopify.com'
@@ -31,6 +39,16 @@ const mockConfigAsset = {
   value: '[]',
   checksum: 'fdsa',
 }
+const crawlerSignatureHeaders = {
+  Signature: 'signature-value',
+  'Signature-Input': 'signature-input-value',
+  'Signature-Agent': 'signature-agent-value',
+}
+
+beforeEach(() => {
+  vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockReset()
+  vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockResolvedValue(crawlerSignatureHeaders)
+})
 
 describe('getStorefrontSessionCookiesWithVerification', () => {
   test('calls verifyRequiredFilesExist when ShopifyEssentialError is thrown', async () => {
@@ -109,6 +127,72 @@ describe('dev server session', async () => {
         noPrompt: true,
       })
     })
+
+    test('fetches crawler signature headers when creating storefront session cookies', async () => {
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn,
+      })
+
+      await fetchDevServerSession(themeId, adminSession, 'admin-password')
+
+      expect(fetchOrCreateCrawlerSignatureHeaders).toHaveBeenCalledWith(adminSession)
+      expect(getStorefrontSessionCookies).toHaveBeenCalledWith(
+        'https://my-shop.myshopify.com',
+        storeFqdn,
+        themeId,
+        undefined,
+        expect.objectContaining(crawlerSignatureHeaders),
+      )
+    })
+
+    test('uses caller-provided crawler signature headers when creating storefront session cookies', async () => {
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn,
+      })
+
+      await fetchDevServerSession(themeId, adminSession, 'admin-password', undefined, crawlerSignatureHeaders)
+
+      expect(fetchOrCreateCrawlerSignatureHeaders).not.toHaveBeenCalled()
+      expect(getStorefrontSessionCookies).toHaveBeenCalledWith(
+        'https://my-shop.myshopify.com',
+        storeFqdn,
+        themeId,
+        undefined,
+        expect.objectContaining(crawlerSignatureHeaders),
+      )
+    })
+
+    test('continues without crawler signature headers when none can be fetched', async () => {
+      vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockResolvedValue(undefined)
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn,
+      })
+
+      await fetchDevServerSession(themeId, adminSession, 'admin-password')
+
+      expect(getStorefrontSessionCookies).toHaveBeenCalledWith(
+        'https://my-shop.myshopify.com',
+        storeFqdn,
+        themeId,
+        undefined,
+        expect.not.objectContaining(crawlerSignatureHeaders),
+      )
+    })
   })
 
   describe('initializeDevServerSession', async () => {
@@ -174,6 +258,7 @@ describe('dev server session', async () => {
           token: 'token_3',
         }),
       )
+      expect(fetchOrCreateCrawlerSignatureHeaders).toHaveBeenCalledOnce()
     })
   })
 })

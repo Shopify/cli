@@ -48,6 +48,10 @@ export * from './cli/utilities/theme-ext-environment/theme-ext-server.js'
 /** Storefront authentication support for running the development server on password-protected stores */
 export {isStorefrontPasswordProtected} from './cli/utilities/theme-environment/storefront-session.js'
 export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-password-prompt.js'
+export {
+  fetchOrCreateCrawlerSignatureHeaders,
+  type CrawlerSignatureHeaders,
+} from './cli/utilities/theme-environment/crawler-signature.js'
 
 // Expose core utilities for developers to build and expand on the CLI
 export {pull} from './cli/services/pull.js'

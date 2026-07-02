@@ -341,6 +341,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     headers = cleanHeader({
       ...headers,
       ...defaultHeaders(),
+      ...(host === ctx.session.storeFqdn ? ctx.session.crawlerSignatureHeaders : {}),
       referer: url.origin,
       Cookie: buildCookies(ctx.session, {headers}),
       // Only include Authorization for theme dev, not theme-extensions
