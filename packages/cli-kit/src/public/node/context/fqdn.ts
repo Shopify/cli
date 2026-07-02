@@ -126,10 +126,10 @@ export async function identityFqdn(): Promise<string> {
  * @returns Normalized store name.
  */
 export function normalizeStoreFqdn(store: string): string {
-  const storeFqdn = store
-    .replace(/^https?:\/\//, '')
-    .replace(/\/$/, '')
-    .replace(/\/admin$/, '')
+  const storeFqdn = parseStoreFqdn(store)
+
+  assertValidStoreFqdn(storeFqdn, store)
+
   const addDomain = (storeFqdn: string) => {
     switch (serviceEnvironment()) {
       case 'local':
@@ -141,6 +141,64 @@ export function normalizeStoreFqdn(store: string): string {
   const containDomain = (storeFqdn: string) =>
     storeFqdn.endsWith('.myshopify.com') || storeFqdn.endsWith('.myshopify.io') || storeFqdn.endsWith('.shop.dev')
   return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
+}
+
+const invalidStoreFqdnTryMessage =
+  'Provide a store handle or Shopify store domain, for example "example" or "example.myshopify.com". ' +
+  'Store URLs may only include the optional /admin path.'
+
+function parseStoreFqdn(store: string): string {
+  const trimmedStore = store.trim()
+
+  if (trimmedStore.startsWith('/')) {
+    throw new AbortError(`Invalid store value: ${store}`, invalidStoreFqdnTryMessage)
+  }
+
+  const storeUrl = parseSupportedStoreUrl(
+    /^https?:\/\//i.test(trimmedStore) ? trimmedStore : `https://${trimmedStore}`,
+    store,
+  )
+  return storeUrl.hostname
+}
+
+function parseSupportedStoreUrl(store: string, originalStore: string): URL {
+  let storeUrl: URL
+  try {
+    storeUrl = new URL(store)
+  } catch {
+    throw new AbortError(`Invalid store value: ${originalStore}`, invalidStoreFqdnTryMessage)
+  }
+
+  const supportedPath = storeUrl.pathname === '/' || storeUrl.pathname === '/admin' || storeUrl.pathname === '/admin/'
+  if (
+    !storeUrl.hostname ||
+    storeUrl.username ||
+    storeUrl.password ||
+    storeUrl.port ||
+    storeUrl.search ||
+    storeUrl.hash ||
+    !supportedPath
+  ) {
+    throw new AbortError(`Invalid store value: ${originalStore}`, invalidStoreFqdnTryMessage)
+  }
+
+  return storeUrl
+}
+
+function assertValidStoreFqdn(storeFqdn: string, store: string) {
+  if (storeFqdn.length === 0 || storeFqdn.length > 253) {
+    throw new AbortError(`Invalid store value: ${store}`, invalidStoreFqdnTryMessage)
+  }
+
+  const domainLabels = storeFqdn.split('.')
+  const validStoreDomainLabel = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i
+  const validDomain = domainLabels.every((label) => {
+    return label.length > 0 && label.length <= 63 && validStoreDomainLabel.test(label)
+  })
+
+  if (!validDomain) {
+    throw new AbortError(`Invalid store value: ${store}`, invalidStoreFqdnTryMessage)
+  }
 }
 
 /**

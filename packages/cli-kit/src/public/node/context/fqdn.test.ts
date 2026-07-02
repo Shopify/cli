@@ -191,6 +191,14 @@ describe('normalizeStore', () => {
     expect(got).toEqual('example.myshopify.com')
   })
 
+  test('parses supported store URLs using the URL hostname', async () => {
+    // When
+    const got = normalizeStoreFqdn('https://Example.myshopify.com/admin/')
+
+    // Then
+    expect(got).toEqual('example.myshopify.com')
+  })
+
   test('parses store name without domain', async () => {
     // When
     const got = normalizeStoreFqdn('example')
@@ -249,5 +257,24 @@ describe('normalizeStore', () => {
 
     // Then
     expect(got).toEqual('example.exampleshopify.io.myshopify.com')
+  })
+
+  test.each([
+    'attacker#.myshopify.com',
+    'attacker?.myshopify.com',
+    'attacker/.myshopify.com',
+    'attacker.com/x.myshopify.com',
+    'http://attacker-domain.com#x.myshopify.com',
+    'https://example.myshopify.com/admin?redirect=attacker',
+    '127.0.0.1:8443#.myshopify.com',
+    'attacker.com@x.myshopify.com',
+    '/x.myshopify.com',
+    '/',
+  ])('rejects store values that URL parsers can reinterpret (%s)', (store) => {
+    expect(() => normalizeStoreFqdn(store)).toThrow('Invalid store value')
+  })
+
+  test('rejects URL paths other than /admin', async () => {
+    expect(() => normalizeStoreFqdn('https://example.myshopify.com/themes')).toThrow('Invalid store value')
   })
 })
