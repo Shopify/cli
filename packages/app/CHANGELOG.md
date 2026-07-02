@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 4.4.0
+
+### Patch Changes
+
+- da3d2e5: Fix dev/deploy bundle uploads feigning success when the GCS upload fails
+- d93a90b: Update Shopify Functions Javy, Javy plugin, and function-runner binaries.
+- Updated dependencies [8ac5e57]
+- Updated dependencies [3ad1710]
+- Updated dependencies [8604491]
+- Updated dependencies [73cebde]
+  - @shopify/cli-kit@4.4.0
+  - @shopify/theme@4.4.0
+  - @shopify/organizations@4.4.0
+  - @shopify/plugin-cloudflare@4.4.0
+
 ## 4.3.0
 
 ### Patch Changes

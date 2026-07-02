@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 4.4.0
+
+### Patch Changes
+
+- 8ac5e57: Recognize Ghostty as a terminal that supports clickable hyperlinks
+- 3ad1710: Render banner/alert footnote URLs on a single contiguous line so long links are no longer broken by hard newlines and remain copy-pasteable when terminal hyperlinks are unsupported
+- 8604491: Parse supported store URLs via `URL.hostname` and reject unsupported domain delimiters before normalizing Shopify store FQDNs.
+- 73cebde: Allow `shopify theme pull` and `shopify theme push` to authenticate with a matching `shopify store auth` session when no theme password is provided.
+
 ## 4.3.0
 
 ### Minor Changes
