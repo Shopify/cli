@@ -79,8 +79,13 @@ describe('runAdminStoreGraphQLOperation', () => {
 
     await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toMatchObject({
       message: `Stored app authentication for ${store} is no longer valid.`,
-      tryMessage: 'To re-authenticate, run:',
-      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products,write_orders`}]],
+      nextSteps: [
+        [
+          'Run',
+          {command: `shopify store auth --store ${store} --scopes read_products,write_orders`},
+          'to re-authenticate',
+        ],
+      ],
     })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
@@ -212,8 +217,13 @@ describe('fetchPublicApiVersions', () => {
 
     await expect(fetchPublicApiVersions({adminSession, session})).rejects.toMatchObject({
       message: `Stored app authentication for ${store} is no longer valid.`,
-      tryMessage: 'To re-authenticate, run:',
-      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products,write_orders`}]],
+      nextSteps: [
+        [
+          'Run',
+          {command: `shopify store auth --store ${store} --scopes read_products,write_orders`},
+          'to re-authenticate',
+        ],
+      ],
     })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })

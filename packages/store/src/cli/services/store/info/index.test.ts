@@ -4,7 +4,7 @@ import {fetchOrganizationShop} from './organization-shop.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
-import {getPreviewStore} from '../create/preview/client.js'
+import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/client.js'
 import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
@@ -25,7 +25,13 @@ vi.mock('./organization-shop.js')
 vi.mock('../auth/session-lifecycle.js')
 vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('../attribution.js')
-vi.mock('../create/preview/client.js')
+vi.mock('../create/preview/client.js', async () => {
+  const actual = await vi.importActual<typeof import('../create/preview/client.js')>('../create/preview/client.js')
+  return {
+    ...actual,
+    getPreviewStore: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
@@ -185,6 +191,64 @@ describe('getStoreInfo', () => {
     })
     // The admin URL doesn't resolve for an unclaimed preview store, so it's deliberately omitted.
     expect(result.adminUrl).toBeUndefined()
+  })
+
+  test.each([401, 404])(
+    'clears the stale preview session and prompts re-auth when the preview store lookup returns %s',
+    async (status) => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
+        store: SHOP,
+        clientId: STORE_AUTH_APP_CLIENT_ID,
+        userId: 'preview:placeholder-uuid',
+        accessToken: 'shpat_preview_token',
+        scopes: ['read_products'],
+        acquiredAt: '2026-06-08T12:00:00.000Z',
+        kind: 'preview',
+        preview: {
+          placeholderAccountUuid: 'placeholder-uuid',
+          shopId: '123',
+          name: 'Lavender Candles',
+          createdAt: '2026-06-08T12:00:00.000Z',
+          accessUrl: 'https://app.shopify.com/auth/preview-store?token=stale-access-token',
+        },
+      })
+      vi.mocked(getPreviewStore).mockRejectedValueOnce(
+        new PreviewStoreRequestError(status, `Preview store lookup failed with HTTP ${status}.`),
+      )
+
+      await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({
+        message: `The preview store ${SHOP} has likely been claimed, so its stored authentication is no longer valid.`,
+        nextSteps: [
+          ['Run', {command: `shopify store auth --store ${SHOP} --scopes read_products`}, 'to re-authenticate'],
+        ],
+      })
+      expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, 'preview:placeholder-uuid')
+    },
+  )
+
+  test('rethrows unrelated preview store lookup failures without clearing the session', async () => {
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
+      store: SHOP,
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: 'preview:placeholder-uuid',
+      accessToken: 'shpat_preview_token',
+      scopes: ['read_products'],
+      acquiredAt: '2026-06-08T12:00:00.000Z',
+      kind: 'preview',
+      preview: {
+        placeholderAccountUuid: 'placeholder-uuid',
+        shopId: '123',
+        name: 'Lavender Candles',
+        createdAt: '2026-06-08T12:00:00.000Z',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=stale-access-token',
+      },
+    })
+    vi.mocked(getPreviewStore).mockRejectedValueOnce(
+      new PreviewStoreRequestError(500, 'Preview store lookup failed with HTTP 500.'),
+    )
+
+    await expect(getStoreInfo({store: SHOP})).rejects.toThrow('Preview store lookup failed with HTTP 500.')
+    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
   test('surfaces cached Admin API scopes for locally stored preview stores', async () => {
@@ -484,8 +548,9 @@ The CLI is currently unable to prompt for reauthentication.`)
 
     await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({
       message: `Stored app authentication for ${SHOP} is no longer valid.`,
-      tryMessage: 'To re-authenticate, run:',
-      nextSteps: [[{command: `shopify store auth --store ${SHOP} --scopes read_products`}]],
+      nextSteps: [
+        ['Run', {command: `shopify store auth --store ${SHOP} --scopes read_products`}, 'to re-authenticate'],
+      ],
     })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, '42')
   })
