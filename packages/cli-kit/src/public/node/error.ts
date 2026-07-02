@@ -1,8 +1,10 @@
 import {normalizePath} from './path.js'
 import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
+import {hasRateLimitCode} from '../../private/node/analytics/graphql-error-codes.js'
 
 import {Errors} from '@oclif/core'
+import {ClientError} from 'graphql-request'
 
 import type {AlertCustomSection} from './ui.js'
 
@@ -193,6 +195,12 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
   if (!isFatal(error)) {
     // this means its not one of the CLI wrapped errors
     if (error instanceof Error) {
+      // Raw API errors that slip through unwrapped (e.g. the handleErrors:false path) are expected
+      // environmental conditions, not CLI bugs. Treat them as expected so they don't pollute crash
+      // reporting.
+      if (isExpectedApiError(error)) {
+        return false
+      }
       const message = error.message
       return !errorMessageImpliesEnvironmentIssue(message)
     }
@@ -202,6 +210,33 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
     return true
   }
   return false
+}
+
+/**
+ * Detects raw graphql-request `ClientError`s that are expected environmental conditions rather than
+ * CLI bugs. These reach the reporter as plain `Error`s (not `FatalError`s) and would otherwise be
+ * reported as unexpected. Two distinct cases, both kept out of crash reporting:
+ *
+ * HTTP 401 (unauthenticated) is not "transient" in the retry sense — it means the user's session
+ * token is expired or invalid, a credential/environment condition (see issue #7891). Rate limiting
+ * (HTTP 429, or a `THROTTLED`/`429` GraphQL code on any error in the response) matches the shape
+ * detected by `errorsIncludeStatus429` in `private/node/api.ts`.
+ *
+ * Scoped to the external `ClientError` type only — importing the cli-kit `GraphQLClientError`
+ * wrapper here would create an `error.ts → headers.ts → error.ts` import cycle.
+ *
+ * @param error - Error to be checked.
+ * @returns A boolean indicating if the error is a known expected API error.
+ */
+function isExpectedApiError(error: Error): boolean {
+  if (!(error instanceof ClientError)) {
+    return false
+  }
+  const status = error.response?.status
+  if (status === 401 || status === 429) {
+    return true
+  }
+  return hasRateLimitCode(error.response?.errors)
 }
 
 /**

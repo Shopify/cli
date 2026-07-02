@@ -6,13 +6,14 @@ import * as error from './error.js'
 import {hashString} from './crypto.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {GraphQLClientError} from '../../private/node/api/headers.js'
 
 import {settings} from '@oclif/core'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 const onNotify = vi.fn()
 const capturedEventHandler = vi.fn()
-let lastBugsnagEvent: {addMetadata: ReturnType<typeof vi.fn>} | undefined
+let lastBugsnagEvent: {addMetadata: ReturnType<typeof vi.fn>; groupingHash?: string} | undefined
 
 vi.mock('process')
 vi.mock('@bugsnag/js', () => {
@@ -302,5 +303,62 @@ describe('sends errors to Bugsnag', () => {
 
     expect(lastBugsnagEvent).toBeDefined()
     expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('custom', {slice_name: 'cli'})
+  })
+
+  test('sets a structured groupingHash and error_grouping metadata for a typed API error', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'theme dev', startArgs: []},
+    }))
+    const apiError = new GraphQLClientError('Forbidden', 403, [{extensions: {code: 'ACCESS_DENIED'}}])
+
+    await sendErrorToBugsnag(apiError, 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.groupingHash).toEqual('theme:permission:http-403-access-denied')
+    expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('error_grouping', {
+      slice_name: 'theme',
+      category: 'permission',
+      http_status: 403,
+      error_code: 'ACCESS_DENIED',
+      error_class: 'GraphQLClientError',
+    })
+  })
+
+  test('emits message-derived signals and category in metadata for a flattened API error', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'theme dev', startArgs: []},
+    }))
+    // A 5xx the API layer flattened into an AbortError: the structured status field is gone, but it
+    // is recoverable from the message and must still reach both the hash and the metadata.
+    const flattened = new Error('The request responded unsuccessfully with the HTTP status 503')
+
+    await sendErrorToBugsnag(flattened, 'unexpected_error')
+
+    expect(lastBugsnagEvent!.groupingHash).toEqual('theme:server:http-503')
+    expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('error_grouping', {
+      slice_name: 'theme',
+      category: 'server',
+      http_status: 503,
+      error_code: undefined,
+      error_class: 'Error',
+    })
+  })
+
+  test('leaves groupingHash unset for an unknown error but still tags error_grouping metadata', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'app dev', startArgs: []},
+    }))
+
+    await sendErrorToBugsnag(new Error('something nobody has categorized'), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.groupingHash).toBeUndefined()
+    expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('error_grouping', {
+      slice_name: 'app',
+      category: undefined,
+      http_status: undefined,
+      error_code: undefined,
+      error_class: 'Error',
+    })
   })
 })

@@ -12,6 +12,7 @@ import {
 } from './error.js'
 import {outputDebug, outputInfo} from './output.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
+import {resolveErrorGrouping} from '../../private/node/analytics/error-grouping.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -27,6 +28,14 @@ import {realpath} from 'fs/promises'
 // Allowed slice names for error analytics grouping.
 // Hardcoded list per product slices to keep analytics consistent.
 const ALLOWED_SLICE_NAMES = new Set<string>(['app', 'theme', 'hydrogen', 'store'])
+
+// Derives the product slice from the command that was running (e.g. `theme dev` -> `theme`),
+// defaulting to `cli` when the command is unknown or not in the allow-list.
+function sliceNameFromStartCommand(startCommand: string | undefined): string {
+  if (!startCommand) return 'cli'
+  const firstWord = startCommand.trim().split(/\s+/)[0] ?? 'cli'
+  return ALLOWED_SLICE_NAMES.has(firstWord) ? firstWord : 'cli'
+}
 
 export async function errorHandler(
   error: Error & {exitCode?: number | undefined},
@@ -147,11 +156,29 @@ export async function sendErrorToBugsnag(
           // Attach command metadata so we know which CLI command triggered the error
           const {commandStartOptions} = metadata.getAllSensitiveMetadata()
           const {startCommand} = commandStartOptions ?? {}
+          const sliceName = sliceNameFromStartCommand(startCommand)
           if (startCommand) {
-            const firstWord = startCommand.trim().split(/\s+/)[0] ?? 'cli'
-            const sliceName = ALLOWED_SLICE_NAMES.has(firstWord) ? firstWord : 'cli'
             event.addMetadata('custom', {slice_name: sliceName})
           }
+
+          // Group on structured signals from the *original* error (not the flattened
+          // `reportableError`), and emit those signals as metadata so backend dashboards and
+          // routing work without depending on the grouping hash or on CLI version adoption.
+          // A single resolution drives both the hash and the metadata so they can never disagree:
+          // the metadata carries the resolved category and the same (message-merged) signals.
+          // When no meaningful category resolves we leave `groupingHash` unset so Bugsnag's
+          // stack-trace grouping applies and distinct unknown bugs are not merged.
+          const {hash: groupingHash, category, signals} = resolveErrorGrouping(error, sliceName)
+          if (groupingHash) {
+            event.groupingHash = groupingHash
+          }
+          event.addMetadata('error_grouping', {
+            slice_name: sliceName,
+            category,
+            http_status: signals.httpStatus,
+            error_code: signals.code,
+            error_class: signals.errorClass,
+          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {
