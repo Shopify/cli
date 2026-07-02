@@ -2,7 +2,7 @@
 import {appTestFixture} from './app.js'
 import {isVisibleWithin} from './browser.js'
 import {BROWSER_TIMEOUT} from './constants.js'
-import {createLogger, e2eSection} from './env.js'
+import {createLogger, e2eRunSegment, e2eSection} from './env.js'
 import * as fs from 'fs'
 import type {BrowserContext} from './browser.js'
 import type {Locator, Page} from '@playwright/test'
@@ -15,7 +15,8 @@ const log = createLogger('browser')
 
 /** Generate a unique store name for a worker. */
 export function generateStoreName(workerIndex: number): string {
-  return `e2e-w${workerIndex}-${Date.now()}`
+  const timestampSegment = Date.now().toString(36)
+  return `e2e-w${workerIndex}-${e2eRunSegment()}-${timestampSegment}`
 }
 
 interface WorkerCtx {
