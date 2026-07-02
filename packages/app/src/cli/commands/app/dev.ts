@@ -62,6 +62,7 @@ export default class Dev extends AppLinkedCommand {
         'Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.',
       env: 'SHOPIFY_FLAG_INSTALL_MKCERT',
       default: false,
+      dependsOn: ['use-localhost'],
     }),
     'localhost-port': portFlag({
       description: 'Port to use for localhost.',

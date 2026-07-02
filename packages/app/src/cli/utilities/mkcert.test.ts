@@ -216,7 +216,7 @@ describe('mkcert', () => {
       expect(downloadGitHubRelease).not.toHaveBeenCalled()
     })
 
-    testWithTempDir('generates a certificate without prompting when install is true', async ({tempDir}) => {
+    testWithTempDir('generates a certificate without prompting when forceInstall is true', async ({tempDir}) => {
       const appDirectory = tempDir
       vi.mocked(generateCertificatePrompt).mockClear()
       vi.mocked(exec).mockClear()
@@ -229,7 +229,7 @@ describe('mkcert', () => {
 
       await generateCertificate({
         appDirectory,
-        install: true,
+        forceInstall: true,
         platform: 'linux',
       })
 
@@ -237,12 +237,12 @@ describe('mkcert', () => {
       expect(exec).toHaveBeenCalled()
     })
 
-    testWithTempDir('fails without prompting when install is false and certificates are missing', async ({tempDir}) => {
+    testWithTempDir('fails without prompting when forceInstall is false and certificates are missing', async ({tempDir}) => {
       vi.mocked(generateCertificatePrompt).mockClear()
       vi.mocked(exec).mockClear()
       const generatePromise = generateCertificate({
         appDirectory: tempDir,
-        install: false,
+        forceInstall: false,
         platform: 'linux',
       })
 

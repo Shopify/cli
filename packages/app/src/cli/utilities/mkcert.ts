@@ -121,7 +121,7 @@ async function downloadMkcertLicense(dotShopifyPath: string): Promise<undefined 
 interface GenerateCertificateOptions {
   appDirectory: string
   resetFirst?: boolean
-  install?: boolean
+  forceInstall?: boolean
   env?: NodeJS.ProcessEnv
   platform?: NodeJS.Platform
   arch?: NodeJS.Architecture
@@ -139,7 +139,7 @@ interface GenerateCertificateOptions {
  */
 export async function generateCertificate({
   appDirectory,
-  install,
+  forceInstall,
   env = process.env,
   platform = process.platform,
   arch = process.arch,
@@ -157,7 +157,7 @@ export async function generateCertificate({
     }
   }
 
-  const shouldGenerate = install ?? (await generateCertificatePrompt())
+  const shouldGenerate = forceInstall ?? (await generateCertificatePrompt())
 
   if (!shouldGenerate) {
     throw new AbortError(`Localhost certificate and key are required at ${relativeCertPath} and ${relativeKeyPath}`)

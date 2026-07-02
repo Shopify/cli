@@ -291,7 +291,7 @@ async function setupNetworkingOptions(
   if (tunnelOptions.mode === 'use-localhost') {
     const {keyContent, certContent, certPath} = await generateCertificate({
       appDirectory,
-      install: installMkcert,
+      forceInstall: installMkcert,
     })
 
     reverseProxyCert = {

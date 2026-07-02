@@ -1059,6 +1059,9 @@
         },
         "install-mkcert": {
           "allowNo": false,
+          "dependsOn": [
+            "use-localhost"
+          ],
           "description": "Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.",
           "env": "SHOPIFY_FLAG_INSTALL_MKCERT",
           "name": "install-mkcert",
