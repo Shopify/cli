@@ -21,6 +21,7 @@ const COMMANDS_TO_SKIP = [
   'theme:init',
   'hydrogen:init',
   'cache:clear',
+  'send-analytics',
 ]
 
 function url(): string {

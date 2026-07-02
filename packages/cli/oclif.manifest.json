@@ -5813,6 +5813,33 @@
       "strict": true,
       "usage": "search [query]"
     },
+    "send-analytics": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "enableJsonFlag": false,
+      "flags": {
+        "payload-file": {
+          "env": "SHOPIFY_FLAG_PAYLOAD_FILE",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "payload-file",
+          "required": true,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "send-analytics",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "store:auth": {
       "aliases": [
       ],
