@@ -1,5 +1,16 @@
 # @shopify/theme
 
+## 4.4.0
+
+### Patch Changes
+
+- 73cebde: Allow `shopify theme pull` and `shopify theme push` to authenticate with a matching `shopify store auth` session when no theme password is provided.
+- Updated dependencies [8ac5e57]
+- Updated dependencies [3ad1710]
+- Updated dependencies [8604491]
+- Updated dependencies [73cebde]
+  - @shopify/cli-kit@4.4.0
+
 ## 4.3.0
 
 ### Patch Changes
