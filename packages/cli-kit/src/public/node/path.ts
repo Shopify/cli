@@ -166,6 +166,11 @@ export function moduleDirectory(moduleURL: string | URL): string {
 }
 
 /**
+ * Memoized value for the current working directory.
+ */
+let memoizedCwd: string | undefined
+
+/**
  * When running a script using `npm run`, something interesting happens. If the current
  * folder does not have a `package.json` or a `node_modules` folder, npm will traverse
  * the directory tree upwards until it finds one. Then it will run the script and set
@@ -175,8 +180,18 @@ export function moduleDirectory(moduleURL: string | URL): string {
  * @returns The path to the current working directory.
  */
 export function cwd(): string {
+  if (memoizedCwd) return memoizedCwd
   // eslint-disable-next-line @shopify/cli/no-process-cwd
-  return normalize(process.env.INIT_CWD || process.cwd()) // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty env var should fall through
+  memoizedCwd = normalize(process.env.INIT_CWD || process.cwd()) // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty env var should fall through
+  return memoizedCwd
+}
+
+/**
+ * Resets the memoized value of the current working directory.
+ * This is useful for testing purposes.
+ */
+export function _resetCwd(): void {
+  memoizedCwd = undefined
 }
 
 /**
