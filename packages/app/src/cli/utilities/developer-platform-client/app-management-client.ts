@@ -44,10 +44,6 @@ import {
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
-import {
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -895,12 +891,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const errorMessages = provisionResult.userErrors?.map((error) => error.message).join(', ') ?? ''
       throw new BugError(`Failed to provision user access to store: ${errorMessages}`)
     }
-  }
-
-  async convertToTransferDisabledStore(
-    _input: ConvertDevToTransferDisabledStoreVariables,
-  ): Promise<ConvertDevToTransferDisabledSchema> {
-    throw new BugError('Not implemented: convertToTransferDisabledStore')
   }
 
   async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {

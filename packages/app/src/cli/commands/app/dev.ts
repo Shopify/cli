@@ -85,11 +85,6 @@ export default class Dev extends AppLinkedCommand {
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
     }),
-    'convert-transfer-disabled-store': Flags.boolean({
-      description: 'Convert the selected development store to a transfer-disabled store without prompting.',
-      env: 'SHOPIFY_FLAG_CONVERT_TRANSFER_DISABLED_STORE',
-      default: false,
-    }),
     'graphiql-port': portFlag({
       hidden: true,
       description: 'Local port of the GraphiQL development server.',
@@ -136,7 +131,6 @@ export default class Dev extends AppLinkedCommand {
       appContextResult,
       storeFqdn: flags.store,
       forceReselectStore: flags.reset,
-      transferDisabledStoreConversion: flags['convert-transfer-disabled-store'],
     })
 
     const devOptions: DevOptions = {
