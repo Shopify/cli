@@ -60,7 +60,7 @@
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
-    "@oclif/core": "4.8.3",
+    "@oclif/core": "4.11.14",
     "@shopify/cli-kit": "4.3.0",
     "@shopify/plugin-cloudflare": "4.3.0",
     "@shopify/organizations": "4.3.0",
@@ -75,7 +75,7 @@
     "http-proxy-node16": "1.0.6",
     "ignore": "6.0.2",
     "json-schema-to-typescript": "15.0.4",
-    "prettier": "3.8.4",
+    "prettier": "3.9.4",
     "proper-lockfile": "4.1.2",
     "react": "19.2.4",
     "which": "4.0.0",
