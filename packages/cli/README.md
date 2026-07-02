@@ -1415,25 +1415,29 @@ Builds and deploys a Hydrogen storefront to Oxygen.
 
 ```
 USAGE
-  $ shopify hydrogen deploy [--auth-bypass-token-duration <value> --auth-bypass-token] [--build-command <value>]
-    [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--force-client-sourcemap]
-    [--json-output] [--lockfile-check] [--metadata-description <value>] [--metadata-user <value>] [--no-verify] [--path
-    <value>] [--preview] [-s <value>] [-t <value>]
+  $ shopify hydrogen deploy [--assets-dir <value>] [--auth-bypass-token-duration <value> --auth-bypass-token]
+    [--build-command <value>] [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f]
+    [--force-client-sourcemap] [--json-output] [--lockfile-check] [--metadata-description <value>] [--metadata-user
+    <value>] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>] [--worker-dir <value>]
 
 FLAGS
   -f, --force                               [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Forces a deployment to proceed if there
-                                            are uncommited changes in its Git repository.
+                                            are uncommitted changes in its Git repository.
   -s, --shop=<value>                        [env: SHOPIFY_SHOP] Shop URL. It can be the shop prefix (janes-apparel) or
                                             the full myshopify.com URL (janes-apparel.myshopify.com,
                                             https://janes-apparel.myshopify.com).
   -t, --token=<value>                       [env: SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN] Oxygen deployment token. Defaults
                                             to the linked storefront's token if available.
+      --assets-dir=<value>                  [env: SHOPIFY_HYDROGEN_FLAG_ASSETS_DIR] Directory containing the client
+                                            assets to deploy, relative to the project root. Defaults to the detected
+                                            Vite client output directory, then falls back to `dist/client`.
       --auth-bypass-token                   [env: AUTH_BYPASS_TOKEN] Generate an authentication bypass token, which can
                                             be used to perform end-to-end tests against the deployment.
       --auth-bypass-token-duration=<value>  [env: AUTH_BYPASS_TOKEN_DURATION] Specify the duration (in hours) up to 12
                                             hours for the authentication bypass token. Defaults to `2`
-      --build-command=<value>               Specify a build command to run before deploying. If not specified, `shopify
-                                            hydrogen build` will be used.
+      --build-command=<value>               Specify a build command to run before deploying. If not specified, the
+                                            Hydrogen build pipeline will be used. When custom output directories are
+                                            configured, defaults to `node --run build`.
       --entry=<value>                       [env: SHOPIFY_HYDROGEN_FLAG_ENTRY] Entry file for the worker. Defaults to
                                             `./server`.
       --env=<value>                         Specifies the environment to perform the operation using its handle. Fetch
@@ -1452,13 +1456,17 @@ FLAGS
                                             `--no-lockfile-check`.
       --metadata-description=<value>        [env: SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION] Description of the changes
                                             in the deployment. Defaults to the commit message of the latest commit if
-                                            there are no uncommited changes.
+                                            there are no uncommitted changes.
       --metadata-user=<value>               [env: SHOPIFY_HYDROGEN_FLAG_METADATA_USER] User that initiated the
                                             deployment. Will be saved and displayed in the Shopify admin
       --no-verify                           Skip the routability verification step after deployment.
       --path=<value>                        [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the Hydrogen
                                             storefront. Defaults to the current directory where the command is run.
       --preview                             Deploys to the Preview environment.
+      --worker-dir=<value>                  [env: SHOPIFY_HYDROGEN_FLAG_WORKER_DIR] Directory containing the Oxygen
+                                            worker entry point (`index.js` or `index.mjs`), relative to the project
+                                            root. Defaults to the detected Vite server output directory, then falls back
+                                            to `dist/server`.
 
 DESCRIPTION
   Builds and deploys a Hydrogen storefront to Oxygen.
@@ -1579,15 +1587,14 @@ USAGE
     [--typescript]
 
 ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|tokenlessApi|all) The
-             route to generate. One of
-             home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
+             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
 
 FLAGS
   -f, --force                 [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
                               already exist.
-      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] Remix adapter used in the route. The default is
-                              `@shopify/remix-oxygen`.
+      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] React Router adapter used in the route. The default
+                              is `react-router`.
       --locale-param=<value>  [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] The param name in Remix routes for the i18n locale,
                               if any. Example: `locale` becomes ($locale).
       --path=<value>          [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the Hydrogen storefront.
@@ -1609,8 +1616,8 @@ USAGE
 FLAGS
   -f, --force                 [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
                               already exist.
-      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] Remix adapter used in the route. The default is
-                              `@shopify/remix-oxygen`.
+      --adapter=<value>       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] React Router adapter used in the route. The default
+                              is `react-router`.
       --locale-param=<value>  [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER] The param name in Remix routes for the i18n locale,
                               if any. Example: `locale` becomes ($locale).
       --path=<value>          [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the Hydrogen storefront.

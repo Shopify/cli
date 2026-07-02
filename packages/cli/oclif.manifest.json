@@ -3987,6 +3987,15 @@
       "descriptionWithMarkdown": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
       "enableJsonFlag": false,
       "flags": {
+        "assets-dir": {
+          "description": "Directory containing the client assets to deploy, relative to the project root. Defaults to the detected Vite client output directory, then falls back to `dist/client`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_ASSETS_DIR",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "assets-dir",
+          "required": false,
+          "type": "option"
+        },
         "auth-bypass-token": {
           "allowNo": false,
           "description": "Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.",
@@ -4008,7 +4017,7 @@
           "type": "option"
         },
         "build-command": {
-          "description": "Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.",
+          "description": "Specify a build command to run before deploying. If not specified, the Hydrogen build pipeline will be used. When custom output directories are configured, defaults to `node --run build`.",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "build-command",
@@ -4056,7 +4065,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Forces a deployment to proceed if there are uncommited changes in its Git repository.",
+          "description": "Forces a deployment to proceed if there are uncommitted changes in its Git repository.",
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
           "required": false,
@@ -4084,7 +4093,7 @@
           "type": "boolean"
         },
         "metadata-description": {
-          "description": "Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.",
+          "description": "Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommitted changes.",
           "env": "SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -4157,6 +4166,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "token",
+          "required": false,
+          "type": "option"
+        },
+        "worker-dir": {
+          "description": "Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root. Defaults to the detected Vite server output directory, then falls back to `dist/server`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_WORKER_DIR",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "worker-dir",
           "required": false,
           "type": "option"
         }
@@ -4489,7 +4507,7 @@
       ],
       "args": {
         "routeName": {
-          "description": "The route to generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.",
+          "description": "The route to generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.",
           "name": "routeName",
           "options": [
             "home",
@@ -4503,7 +4521,6 @@
             "search",
             "robots",
             "sitemap",
-            "tokenlessApi",
             "all"
           ],
           "required": true
@@ -4515,7 +4532,7 @@
       "enableJsonFlag": false,
       "flags": {
         "adapter": {
-          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
+          "description": "React Router adapter used in the route. The default is `react-router`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_ADAPTER",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -4573,7 +4590,7 @@
       "enableJsonFlag": false,
       "flags": {
         "adapter": {
-          "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
+          "description": "React Router adapter used in the route. The default is `react-router`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_ADAPTER",
           "hasDynamicHelp": false,
           "multiple": false,
