@@ -400,11 +400,10 @@ Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>]
-    [--convert-transfer-disabled-store] [--install-mkcert] [--localhost-port <value>] [--no-color] [--no-update]
-    [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password
-    <value>] [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--use-localhost |
-    [--tunnel-url <value> | ]] [--verbose]
+  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--install-mkcert]
+    [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
+    [--skip-dependencies-installation] [-s <value>] [--store-password <value>] [--subscription-product-url <value>] [-t
+    <value>] [--theme-app-extension-port <value>] [--use-localhost | [--tunnel-url <value> | ]] [--verbose]
 
 FLAGS
   -c, --config=<value>                    [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
@@ -415,8 +414,6 @@ FLAGS
       --checkout-cart-url=<value>         [env: SHOPIFY_FLAG_CHECKOUT_CART_URL] Resource URL for checkout UI extension.
                                           Format: "/cart/{productVariantID}:{productQuantity}"
       --client-id=<value>                 [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --convert-transfer-disabled-store   [env: SHOPIFY_FLAG_CONVERT_TRANSFER_DISABLED_STORE] Convert the selected
-                                          development store to a transfer-disabled store without prompting.
       --install-mkcert                    [env: SHOPIFY_FLAG_INSTALL_MKCERT] Install and use mkcert to generate
                                           localhost certificates when --use-localhost is enabled without prompting.
       --localhost-port=<value>            [env: SHOPIFY_FLAG_LOCALHOST_PORT] Port to use for localhost. Must be between

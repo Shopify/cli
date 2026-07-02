@@ -1,21 +1,10 @@
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {
-  confirmConversionToTransferDisabledStorePrompt,
-  reloadStoreListPrompt,
-  selectStorePrompt,
-} from '../../prompts/dev.js'
-import {
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
-import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
-import {outputSuccess} from '@shopify/cli-kit/node/output'
-
-export type TransferDisabledStoreConversionMode = 'prompt-first' | 'always' | 'never'
+import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 
 /**
  * Select store from list or
@@ -31,15 +20,14 @@ export async function selectStore(
   storesSearch: Paginateable<{stores: OrganizationStore[]}>,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
-  conversionMode: TransferDisabledStoreConversionMode = 'prompt-first',
 ): Promise<OrganizationStore> {
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
   let onSearchForStoresByName
   if (developerPlatformClient.supportsStoreSearch) {
     onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
   }
-  // If no stores, guide the developer through creating one
-  // Then, with a store selected, make sure its transfer-disabled, prompting to convert if needed
+  // If no stores, guide the developer through creating one.
+  // Then, with a store selected, make sure it's transfer-disabled.
   let store = await selectStorePrompt({
     onSearchForStoresByName,
     ...storesSearch,
@@ -60,21 +48,7 @@ export async function selectStore(
     store = await selectStore({stores, hasMorePages: false}, org, developerPlatformClient)
   }
 
-  let storeIsValid = await convertToTransferDisabledStoreIfNeeded(
-    store,
-    org.id,
-    developerPlatformClient,
-    conversionMode,
-  )
-  while (!storeIsValid) {
-    // eslint-disable-next-line no-await-in-loop
-    store = await selectStorePrompt({stores: [store], hasMorePages: false, showDomainOnPrompt})
-    if (!store) {
-      throw new CancelExecution()
-    }
-    // eslint-disable-next-line no-await-in-loop
-    storeIsValid = await convertToTransferDisabledStoreIfNeeded(store, org.id, developerPlatformClient, conversionMode)
-  }
+  ensureTransferDisabledStore(store)
 
   return store
 }
@@ -117,23 +91,13 @@ async function waitForCreatedStore(
 
 /**
  * Check if the store exists in the current organization and it is a valid store
- * To be valid, it must be non-transferable. This can't be undone, so we ask the user to confirm.
+ * To be valid, it must be transfer-disabled.
  *
- * @param storeDomain - Store domain to check
- * @param stores - List of available stores
- * @param orgId - Current organization ID
- * @param developerPlatformClient - The client to access the platform API
- * @param conversionMode - Whether to prompt the user to convert the store to a transfer-disabled store, or fail if it's not
- * @returns False, if the store is invalid and the user chose not to convert it. Otherwise true.
- * @throws If the store can't be found in the organization or we fail to make it a transfer-disabled store
+ * @param store - Store to check
+ * @throws If the store is not eligible for `app dev`
  */
-export async function convertToTransferDisabledStoreIfNeeded(
-  store: OrganizationStore,
-  orgId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-  conversionMode: TransferDisabledStoreConversionMode,
-): Promise<boolean> {
-  if (store.transferDisabled || firstPartyDev()) return true
+export function ensureTransferDisabledStore(store: OrganizationStore): void {
+  if (store.transferDisabled || firstPartyDev()) return
 
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
     throw new AbortError(
@@ -142,54 +106,8 @@ export async function convertToTransferDisabledStoreIfNeeded(
     )
   }
 
-  switch (conversionMode) {
-    case 'prompt-first': {
-      const confirmed = await confirmConversionToTransferDisabledStorePrompt()
-      if (!confirmed) {
-        // tell caller the store is invalid and not converted. they may re-prompt etc.
-        return false
-      }
-      await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
-      return true
-    }
-    case 'always': {
-      await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
-      return true
-    }
-    case 'never': {
-      throw new AbortError(
-        'The store you specified is not transfer-disabled',
-        "Try running 'dev --reset' and selecting a different store, or choosing to convert this one.",
-      )
-    }
-  }
-}
-
-/**
- * Convert a store to a transfer-disabled store so development apps can be installed
- * @param store - Store to convert
- * @param orgId - Current organization ID
- * @param developerPlatformClient - The client to access the platform API
- */
-async function convertStoreToTransferDisabled(
-  store: OrganizationStore,
-  orgId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-) {
-  const variables: ConvertDevToTransferDisabledStoreVariables = {
-    input: {
-      organizationID: parseInt(orgId, 10),
-      shopId: store.shopId,
-    },
-  }
-  const result: ConvertDevToTransferDisabledSchema =
-    await developerPlatformClient.convertToTransferDisabledStore(variables)
-  if (!result.convertDevToTestStore.convertedToTestStore) {
-    const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
-    throw new BugError(
-      `Error converting store ${store.shopDomain} to a transfer-disabled store: ${errors}`,
-      'This store might not be compatible with draft apps, please try a different store',
-    )
-  }
-  outputSuccess(`Converted ${store.shopDomain} to a transfer-disabled store`)
+  throw new AbortError(
+    `The store you specified (${store.shopDomain}) is not transfer-disabled`,
+    'Run dev --reset and select a transfer-disabled dev store.',
+  )
 }

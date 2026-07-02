@@ -45,10 +45,6 @@ import {
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -909,12 +905,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
     throw new BugError('Not implemented: createExtension')
-  }
-
-  async convertToTransferDisabledStore(
-    _input: ConvertDevToTransferDisabledStoreVariables,
-  ): Promise<ConvertDevToTransferDisabledSchema> {
-    throw new BugError('Not implemented: convertToTransferDisabledStore')
   }
 
   async updateDeveloperPreview(

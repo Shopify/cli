@@ -23,12 +23,6 @@ export interface appdev {
   '-c, --config <value>'?: string
 
   /**
-   * Convert the selected development store to a transfer-disabled store without prompting.
-   * @environment SHOPIFY_FLAG_CONVERT_TRANSFER_DISABLED_STORE
-   */
-  '--convert-transfer-disabled-store'?: ''
-
-  /**
    * Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.
    * @environment SHOPIFY_FLAG_INSTALL_MKCERT
    */

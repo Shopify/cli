@@ -1,6 +1,6 @@
 import {storeContext} from './store-context.js'
 import {fetchStore} from './dev/fetch.js'
-import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
+import {ensureTransferDisabledStore, selectStore} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {
   testAppLinked,
@@ -66,12 +66,7 @@ describe('storeContext', () => {
         mockDeveloperPlatformClient,
         ['APP_DEVELOPMENT'],
       )
-      expect(convertToTransferDisabledStoreIfNeeded).toHaveBeenCalledWith(
-        mockStore,
-        mockOrganization.id,
-        mockDeveloperPlatformClient,
-        'never',
-      )
+      expect(ensureTransferDisabledStore).toHaveBeenCalledWith(mockStore)
       expect(result).toEqual(mockStore)
     })
   })
@@ -116,7 +111,6 @@ describe('storeContext', () => {
         {stores: allStores, hasMorePages: false},
         mockOrganization,
         mockDeveloperPlatformClient,
-        'prompt-first',
       )
       expect(result).toEqual(mockStore)
     })
@@ -139,54 +133,8 @@ describe('storeContext', () => {
         {stores: allStores, hasMorePages: false},
         mockOrganization,
         mockDeveloperPlatformClient,
-        'prompt-first',
       )
       expect(result).toEqual(mockStore)
-    })
-  })
-
-  test('converts an explicitly provided store when conversion is requested', async () => {
-    await inTemporaryDirectory(async (dir) => {
-      vi.mocked(fetchStore).mockResolvedValue(mockStore)
-      await prepareAppFolder(mockApp, dir)
-
-      await storeContext({
-        appContextResult,
-        storeFqdn: 'explicit-store.myshopify.com',
-        forceReselectStore: false,
-        transferDisabledStoreConversion: true,
-      })
-
-      expect(convertToTransferDisabledStoreIfNeeded).toHaveBeenCalledWith(
-        mockStore,
-        mockOrganization.id,
-        mockDeveloperPlatformClient,
-        'always',
-      )
-    })
-  })
-
-  test('passes conversion preference when selecting a store', async () => {
-    await inTemporaryDirectory(async (dir) => {
-      const appWithoutCachedStore = testAppLinked()
-      await prepareAppFolder(appWithoutCachedStore, dir)
-      const allStores = [mockStore]
-
-      vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
-      vi.mocked(selectStore).mockResolvedValue(mockStore)
-
-      await storeContext({
-        appContextResult: {...appContextResult, app: appWithoutCachedStore},
-        forceReselectStore: false,
-        transferDisabledStoreConversion: true,
-      })
-
-      expect(selectStore).toHaveBeenCalledWith(
-        {stores: allStores, hasMorePages: false},
-        mockOrganization,
-        mockDeveloperPlatformClient,
-        'always',
-      )
     })
   })
 
