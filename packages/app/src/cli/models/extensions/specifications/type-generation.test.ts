@@ -1,10 +1,15 @@
 import {
   createIntentsTypeDefinition,
   createToolsTypeDefinition,
+  findExplicitTsConfigFiles,
+  findAllImportedFiles,
   getGeneratedTypesHelperImportPath,
 } from './type-generation.js'
+import * as fs from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {describe, expect, test} from 'vitest'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {describe, expect, test, vi} from 'vitest'
 
 const adminGeneratedTypesHelperImportPath = '@shopify/ui-extensions/admin'
 
@@ -18,6 +23,218 @@ describe('getGeneratedTypesHelperImportPath', () => {
     expect(getGeneratedTypesHelperImportPath(['customer-account.order-status.block.render'])).toBe(
       '@shopify/ui-extensions/customer-account',
     )
+  })
+})
+
+describe('findAllImportedFiles', () => {
+  test('ignores commented-out imports', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const commentedPath = joinPath(tmpDir, 'commented.ts')
+
+      await writeFile(
+        entryPath,
+        `
+          // import './commented.ts'
+          /*
+            import './commented.ts'
+          */
+        `,
+      )
+      await writeFile(commentedPath, `export const commented = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath)).map((file) => normalizePath(file))
+
+      expect(importedFiles).not.toContain(normalizePath(commentedPath))
+    })
+  })
+
+  test('does not follow type-only imports and exports', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const valuePath = joinPath(tmpDir, 'value.ts')
+      const valueNestedPath = joinPath(tmpDir, 'value-nested.ts')
+      const mixedValuePath = joinPath(tmpDir, 'mixed-value.ts')
+      const mixedExportPath = joinPath(tmpDir, 'mixed-export.ts')
+      const typePath = joinPath(tmpDir, 'types.ts')
+      const typeNestedPath = joinPath(tmpDir, 'type-nested.ts')
+      const exportedTypePath = joinPath(tmpDir, 'exported-types.ts')
+      const exportedTypeNestedPath = joinPath(tmpDir, 'exported-type-nested.ts')
+
+      await writeFile(
+        entryPath,
+        `
+          import './value.ts'
+          import MixedValue, { type MixedType } from './mixed-value.ts'
+          import type { TypeOnly } from './types.ts'
+          export { mixedValue, type MixedExportType } from './mixed-export.ts'
+          export type { ExportedTypeOnly } from './exported-types.ts'
+        `,
+      )
+      await writeFile(valuePath, `import './value-nested.ts'`)
+      await writeFile(valueNestedPath, `export const valueNested = true`)
+      await writeFile(mixedValuePath, `export default true; export type MixedType = string`)
+      await writeFile(mixedExportPath, `export const mixedValue = true; export type MixedExportType = string`)
+      await writeFile(typePath, `import './type-nested.ts'; export type TypeOnly = string`)
+      await writeFile(typeNestedPath, `export const typeNested = true`)
+      await writeFile(exportedTypePath, `import './exported-type-nested.ts'; export type ExportedTypeOnly = string`)
+      await writeFile(exportedTypeNestedPath, `export const exportedTypeNested = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath)).map((file) => normalizePath(file))
+
+      expect(importedFiles).toContain(normalizePath(valuePath))
+      expect(importedFiles).toContain(normalizePath(valueNestedPath))
+      expect(importedFiles).toContain(normalizePath(mixedValuePath))
+      expect(importedFiles).toContain(normalizePath(mixedExportPath))
+      expect(importedFiles).not.toContain(normalizePath(typePath))
+      expect(importedFiles).not.toContain(normalizePath(typeNestedPath))
+      expect(importedFiles).not.toContain(normalizePath(exportedTypePath))
+      expect(importedFiles).not.toContain(normalizePath(exportedTypeNestedPath))
+    })
+  })
+
+  test('stops recursive import scanning at the boundary directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDir = joinPath(tmpDir, 'extensions', 'extension')
+      const srcDir = joinPath(extensionDir, 'src')
+      const sharedDir = joinPath(tmpDir, 'shared')
+
+      await mkdir(extensionDir)
+      await mkdir(srcDir)
+      await mkdir(sharedDir)
+
+      const entryPath = joinPath(srcDir, 'index.ts')
+      const localPath = joinPath(srcDir, 'local.ts')
+      const nestedPath = joinPath(srcDir, 'nested.ts')
+      const externalPath = joinPath(sharedDir, 'utils.ts')
+      const externalNestedPath = joinPath(sharedDir, 'secret.ts')
+
+      await writeFile(
+        entryPath,
+        `
+          import './local.ts'
+          import '../../../shared/utils.ts'
+        `,
+      )
+      await writeFile(localPath, `import './nested.ts'`)
+      await writeFile(nestedPath, `export const nested = true`)
+      await writeFile(externalPath, `import './secret.ts'`)
+      await writeFile(externalNestedPath, `export const secret = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath, {boundaryDirectory: extensionDir})).map((file) =>
+        normalizePath(file),
+      )
+
+      expect(importedFiles).toContain(normalizePath(localPath))
+      expect(importedFiles).toContain(normalizePath(nestedPath))
+      expect(importedFiles).not.toContain(normalizePath(externalPath))
+      expect(importedFiles).not.toContain(normalizePath(externalNestedPath))
+    })
+  })
+
+  test('only follows files from an explicit tsconfig include list when provided', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      const excludedDir = joinPath(tmpDir, 'excluded')
+
+      await mkdir(srcDir)
+      await mkdir(excludedDir)
+
+      const entryPath = joinPath(srcDir, 'index.ts')
+      const includedPath = joinPath(srcDir, 'included.ts')
+      const includedNestedPath = joinPath(srcDir, 'included-nested.ts')
+      const excludedPath = joinPath(excludedDir, 'excluded.ts')
+      const excludedNestedPath = joinPath(excludedDir, 'excluded-nested.ts')
+
+      await writeFile(
+        joinPath(tmpDir, 'tsconfig.json'),
+        JSON.stringify({
+          include: ['src/**/*'],
+        }),
+      )
+      await writeFile(
+        entryPath,
+        `
+          import './included.ts'
+          import '../excluded/excluded.ts'
+        `,
+      )
+      await writeFile(includedPath, `import './included-nested.ts'`)
+      await writeFile(includedNestedPath, `export const includedNested = true`)
+      await writeFile(excludedPath, `import './excluded-nested.ts'`)
+      await writeFile(excludedNestedPath, `export const excludedNested = true`)
+
+      const allowedFiles = await findExplicitTsConfigFiles(entryPath, tmpDir)
+      const importedFiles = (
+        await findAllImportedFiles(entryPath, {
+          boundaryDirectory: tmpDir,
+          allowedFiles,
+          alwaysAllowedFiles: new Set([entryPath]),
+        })
+      ).map((file) => normalizePath(file))
+
+      expect(importedFiles).toContain(normalizePath(includedPath))
+      expect(importedFiles).toContain(normalizePath(includedNestedPath))
+      expect(importedFiles).not.toContain(normalizePath(excludedPath))
+      expect(importedFiles).not.toContain(normalizePath(excludedNestedPath))
+    })
+  })
+
+  test('does not follow declaration files', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const declarationPath = joinPath(tmpDir, 'types.d.ts')
+      const nestedPath = joinPath(tmpDir, 'nested.ts')
+
+      await writeFile(entryPath, `import './types.d.ts'`)
+      await writeFile(declarationPath, `import './nested.ts'`)
+      await writeFile(nestedPath, `export const nested = true`)
+
+      const importedFiles = (await findAllImportedFiles(entryPath, {boundaryDirectory: tmpDir})).map((file) =>
+        normalizePath(file),
+      )
+
+      expect(importedFiles).not.toContain(normalizePath(declarationPath))
+      expect(importedFiles).not.toContain(normalizePath(nestedPath))
+    })
+  })
+
+  test('does not use a tsconfig allowlist when files and include are implicit', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+
+      await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+      await writeFile(entryPath, `export const entry = true`)
+
+      await expect(findExplicitTsConfigFiles(entryPath, tmpDir)).resolves.toBeUndefined()
+    })
+  })
+
+  test('uses cached imports when the same file is scanned more than once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const entryPath = joinPath(tmpDir, 'index.ts')
+      const localPath = joinPath(tmpDir, 'local.ts')
+      const nestedPath = joinPath(tmpDir, 'nested.ts')
+
+      await writeFile(entryPath, `import './local.ts'`)
+      await writeFile(localPath, `import './nested.ts'`)
+      await writeFile(nestedPath, `export const nested = true`)
+
+      const readFileSync = vi.spyOn(fs, 'readFileSync')
+      const importCache = new Map<string, string[]>()
+
+      await findAllImportedFiles(entryPath, {boundaryDirectory: tmpDir, importCache})
+      await findAllImportedFiles(entryPath, {boundaryDirectory: tmpDir, importCache})
+
+      const readCountsByPath = new Map<string, number>()
+      for (const [path] of readFileSync.mock.calls) {
+        readCountsByPath.set(path, (readCountsByPath.get(path) ?? 0) + 1)
+      }
+
+      expect(readCountsByPath.get(entryPath)).toBe(1)
+      expect(readCountsByPath.get(localPath)).toBe(1)
+      expect(readCountsByPath.get(nestedPath)).toBe(1)
+    })
   })
 })
 
