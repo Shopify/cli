@@ -57,6 +57,12 @@ export default class Dev extends AppLinkedCommand {
       default: false,
       exclusive: ['tunnel-url'],
     }),
+    'install-mkcert': Flags.boolean({
+      description:
+        'Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.',
+      env: 'SHOPIFY_FLAG_INSTALL_MKCERT',
+      default: false,
+    }),
     'localhost-port': portFlag({
       description: 'Port to use for localhost.',
       env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
@@ -69,6 +75,10 @@ export default class Dev extends AppLinkedCommand {
     'theme-app-extension-port': portFlag({
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
+    }),
+    'store-password': Flags.string({
+      description: 'The password for storefronts with password protection.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
     notify: Flags.string({
       description:
@@ -134,9 +144,11 @@ export default class Dev extends AppLinkedCommand {
       checkoutCartUrl: flags['checkout-cart-url'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      storePassword: flags['store-password'],
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
+      installMkcert: flags['install-mkcert'],
       tunnel: tunnelMode,
     }
 

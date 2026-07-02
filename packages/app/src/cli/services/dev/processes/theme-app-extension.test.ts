@@ -204,6 +204,24 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
     expect(ensureValidPassword).toHaveBeenCalledWith(undefined, 'test.myshopify.com')
     expect(result!.options.storefrontPassword).toEqual(storefrontPassword)
   })
+
+  test('uses the provided store password when one is required', async () => {
+    const mockTheme = {id: 123} as Theme
+    vi.mocked(fetchTheme).mockResolvedValue(mockTheme)
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
+    vi.mocked(ensureValidPassword).mockResolvedValue('validated-password')
+
+    const result = await setupPreviewThemeAppExtensionsProcess({
+      localApp: testApp({allExtensions: [await testThemeExtensions()]}),
+      remoteApp: testOrganizationApp(),
+      storeFqdn: 'test.myshopify.com',
+      theme: '1',
+      storePassword: 'provided-password',
+    })
+
+    expect(ensureValidPassword).toHaveBeenCalledWith('provided-password', 'test.myshopify.com')
+    expect(result!.options.storefrontPassword).toEqual('validated-password')
+  })
 })
 
 describe('findOrCreateHostTheme', () => {

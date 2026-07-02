@@ -1,10 +1,6 @@
 import {selectStore} from './select-store.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
-import {
-  reloadStoreListPrompt,
-  selectStorePrompt,
-  confirmConversionToTransferDisabledStorePrompt,
-} from '../../prompts/dev.js'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ClientName} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -94,51 +90,25 @@ describe('selectStore', async () => {
     )
   })
 
-  test('prompts user to convert store to non-transferable if selection is invalid', async () => {
+  test('throws if selected store is not transfer-disabled', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await selectStore(
+    const got = selectStore(
       {stores: [STORE1, STORE2], hasMorePages: false},
       ORG1,
       testDeveloperPlatformClient({clientName: ClientName.Partners}),
     )
 
     // Then
-    expect(got).toEqual(STORE2)
+    await expect(got).rejects.toThrow('The store you specified (domain2) is not transfer-disabled')
     expect(selectStorePrompt).toHaveBeenCalledWith(
       expect.objectContaining({
         stores: [STORE1, STORE2],
         showDomainOnPrompt: defaultShowDomainOnPrompt,
       }),
     )
-    expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
-  })
-
-  test('choosing not to convert to transfer-disabled forces another prompt', async () => {
-    // Given
-    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
-    vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(false)
-
-    // When
-    const got = await selectStore(
-      {stores: [STORE1, STORE2], hasMorePages: false},
-      ORG1,
-      testDeveloperPlatformClient({clientName: ClientName.Partners}),
-    )
-
-    // Then
-    expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).toHaveBeenCalledWith(
-      expect.objectContaining({
-        stores: [STORE1, STORE2],
-        showDomainOnPrompt: defaultShowDomainOnPrompt,
-      }),
-    )
-    expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
   })
 
   test('throws if store is non convertible', async () => {

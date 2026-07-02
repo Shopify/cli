@@ -12,10 +12,6 @@ import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_ex
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
 
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
-import {
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -276,9 +272,6 @@ export interface DeveloperPlatformClient {
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
-  convertToTransferDisabledStore: (
-    input: ConvertDevToTransferDisabledStoreVariables,
-  ) => Promise<ConvertDevToTransferDisabledSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>

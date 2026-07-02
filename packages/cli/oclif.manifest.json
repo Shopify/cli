@@ -977,6 +977,13 @@
           "name": "graphiql-port",
           "type": "option"
         },
+        "install-mkcert": {
+          "allowNo": false,
+          "description": "Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.",
+          "env": "SHOPIFY_FLAG_INSTALL_MKCERT",
+          "name": "install-mkcert",
+          "type": "boolean"
+        },
         "localhost-port": {
           "description": "Port to use for localhost. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
@@ -1042,6 +1049,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
           "type": "option"
         },
         "subscription-product-url": {

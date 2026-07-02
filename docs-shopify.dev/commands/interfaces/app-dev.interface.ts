@@ -23,6 +23,12 @@ export interface appdev {
   '-c, --config <value>'?: string
 
   /**
+   * Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.
+   * @environment SHOPIFY_FLAG_INSTALL_MKCERT
+   */
+  '--install-mkcert'?: ''
+
+  /**
    * Port to use for localhost. Must be between 1 and 65535.
    * @environment SHOPIFY_FLAG_LOCALHOST_PORT
    */
@@ -69,6 +75,12 @@ export interface appdev {
    * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>'?: string
+
+  /**
+   * The password for storefronts with password protection.
+   * @environment SHOPIFY_FLAG_STORE_PASSWORD
+   */
+  '--store-password <value>'?: string
 
   /**
    * Resource URL for subscription UI extension. Format: "/products/{productId}"

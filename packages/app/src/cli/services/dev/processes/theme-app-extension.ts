@@ -26,6 +26,7 @@ interface HostThemeSetupOptions {
   storeFqdn: string
   theme?: string
   themeExtensionPort?: number
+  storePassword?: string
 }
 
 export interface PreviewThemeAppExtensionsProcess extends BaseProcess<ThemeAppExtensionServerOptions> {
@@ -53,7 +54,7 @@ export async function setupPreviewThemeAppExtensionsProcess(
 
   const storeFqdn = adminSession.storeFqdn
   const storefrontPassword = (await isStorefrontPasswordProtected(adminSession))
-    ? await ensureValidPassword(undefined, storeFqdn)
+    ? await ensureValidPassword(options.storePassword, storeFqdn)
     : undefined
 
   const theme = await findOrCreateHostTheme(adminSession, options.theme)

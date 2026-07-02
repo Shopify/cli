@@ -1256,6 +1256,25 @@ describe('link', () => {
     })
   })
 
+  test('when remote app exists and supports dev sessions then include automatically_update_urls_on_dev = true', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const developerPlatformClient = buildDeveloperPlatformClient({supportsDevSessions: true})
+      const options: LinkOptions = {
+        directory: tmp,
+        developerPlatformClient,
+      }
+      await mockLoadOpaqueAppWithApp(tmp)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+
+      // When
+      const {configuration} = await link(options)
+
+      // Then
+      expect(configuration.build?.automatically_update_urls_on_dev).toBe(true)
+    })
+  })
+
   test('replace arrays content with the remote one', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
