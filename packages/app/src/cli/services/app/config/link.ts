@@ -38,6 +38,7 @@ export interface LinkOptions {
   configName?: string
   developerPlatformClient?: DeveloperPlatformClient
   isNewApp?: boolean
+  authSessionId?: string
 }
 
 interface LinkOutput {
@@ -108,7 +109,10 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
-    const remoteApp = await appFromIdentifiers({apiKey: options.apiKey})
+    const remoteApp = await appFromIdentifiers({
+      apiKey: options.apiKey,
+      ...(options.authSessionId ? {authSessionId: options.authSessionId} : {}),
+    })
     if (!remoteApp) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -126,6 +130,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     ...creationOptions,
     directory: appDirectory,
     organizationId: options.organizationId,
+    ...(options.authSessionId ? {authSessionId: options.authSessionId} : {}),
   })
 
   const developerPlatformClient = remoteApp.developerPlatformClient

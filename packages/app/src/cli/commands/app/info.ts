@@ -39,6 +39,7 @@ export default class AppInfo extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
       unsafeTolerateErrors: true,
     })
     const results = await info(app, remoteApp, organization, project, {

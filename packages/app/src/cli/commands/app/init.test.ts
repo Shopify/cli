@@ -2,6 +2,7 @@ import Init from './init.js'
 import initPrompt from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {sessionIdFromAuthAlias} from '../../utilities/auth-alias.js'
 import {selectOrg} from '../../services/context.js'
 import {fetchOrgFromId, NoOrgError} from '../../services/dev/fetch.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
@@ -12,7 +13,7 @@ import {
   testOrganization,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -20,6 +21,7 @@ import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 vi.mock('../../prompts/init/init.js')
 vi.mock('../../services/init/init.js')
 vi.mock('../../utilities/developer-platform-client.js')
+vi.mock('../../utilities/auth-alias.js')
 vi.mock('../../services/context.js')
 vi.mock('../../services/dev/fetch.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/dev/fetch.js')>()
@@ -34,6 +36,10 @@ vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('Init command', () => {
+  beforeEach(() => {
+    vi.mocked(sessionIdFromAuthAlias).mockResolvedValue(undefined)
+  })
+
   test('runs init command with default flags', async () => {
     // Given
     const mockOrganization = testOrganization()
@@ -72,6 +78,52 @@ describe('Init command', () => {
       expect.objectContaining({
         name: 'test-app',
         packageManager: 'npm',
+      }),
+    )
+  })
+
+  test('uses auth alias when selecting organization and initializing service', async () => {
+    // Given
+    const mockOrganization = testOrganization()
+    const mockDeveloperPlatformClient = testDeveloperPlatformClient()
+    const mockApp = testAppLinked()
+
+    mockAndCaptureOutput()
+    vi.mocked(sessionIdFromAuthAlias).mockResolvedValue('session-id-for-work')
+    vi.mocked(validateTemplateValue).mockReturnValue(undefined)
+    vi.mocked(validateFlavorValue).mockReturnValue(undefined)
+    vi.mocked(inferPackageManager).mockReturnValue('npm')
+    vi.mocked(generateRandomNameForSubdirectory).mockResolvedValue('test-app')
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
+    vi.mocked(selectOrg).mockResolvedValue(mockOrganization)
+    vi.mocked(mockDeveloperPlatformClient.orgAndApps).mockResolvedValue({
+      organization: mockOrganization,
+      apps: [],
+      hasMorePages: false,
+    })
+    vi.mocked(initPrompt).mockResolvedValue({
+      template: 'https://github.com/Shopify/shopify-app-template-remix',
+      templateType: 'remix',
+      globalCLIResult: {install: false, alreadyInstalled: false},
+    })
+    vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
+    vi.mocked(appNamePrompt).mockResolvedValue('test-app')
+    vi.mocked(initService).mockResolvedValue({app: mockApp})
+
+    // When
+    await Init.run(['--auth-alias', 'work'])
+
+    // Then
+    expect(sessionIdFromAuthAlias).toHaveBeenCalledWith('work')
+    expect(selectDeveloperPlatformClient).toHaveBeenCalledWith({authSessionId: 'session-id-for-work'})
+    expect(selectOrg).toHaveBeenCalledWith('session-id-for-work')
+    expect(selectDeveloperPlatformClient).toHaveBeenCalledWith({
+      organization: mockOrganization,
+      authSessionId: 'session-id-for-work',
+    })
+    expect(initService).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authAlias: 'work',
       }),
     )
   })

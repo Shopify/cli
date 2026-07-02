@@ -127,6 +127,28 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
     })
   })
 
+  test('passes auth session ID to admin authentication when provided', async () => {
+    // Given
+    const mockTheme = {id: 123} as Theme
+    vi.mocked(fetchTheme).mockResolvedValue(mockTheme)
+
+    const storeFqdn = 'test.myshopify.com'
+    const remoteApp = testOrganizationApp()
+    const localApp = testApp({allExtensions: [await testThemeExtensions()]})
+
+    // When
+    await setupPreviewThemeAppExtensionsProcess({
+      localApp,
+      remoteApp,
+      storeFqdn,
+      theme: '123',
+      authSessionId: 'session-id-for-work',
+    })
+
+    // Then
+    expect(ensureAuthenticatedAdmin).toHaveBeenCalledWith(storeFqdn, [], {sessionId: 'session-id-for-work'})
+  })
+
   test('Returns PreviewThemeAppExtensionsOptions if theme extensions are present - Management API app', async () => {
     // Given
     const mockTheme = {id: 123} as Theme

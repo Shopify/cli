@@ -107,11 +107,13 @@ Build the app, including extensions.
 
 ```
 USAGE
-  $ shopify app build [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
-    [--skip-dependencies-installation] [--verbose]
+  $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--skip-dependencies-installation] [--verbose]
 
 FLAGS
   -c, --config=<value>                  [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>              [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for
+                                        authentication.
       --client-id=<value>               [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color                        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>                    [env: SHOPIFY_FLAG_PATH] The path to your app directory.
@@ -138,18 +140,19 @@ Cancel a bulk operation.
 
 ```
 USAGE
-  $ shopify app bulk cancel --id <value> [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset |
-    ] [-s <value>] [--verbose]
+  $ shopify app bulk cancel --id <value> [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color]
+    [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -s, --store=<value>      [env: SHOPIFY_FLAG_STORE] The store domain. Must be an existing dev store.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --id=<value>         (required) [env: SHOPIFY_FLAG_ID] The bulk operation ID to cancel (numeric ID or full GID).
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -s, --store=<value>       [env: SHOPIFY_FLAG_STORE] The store domain. Must be an existing dev store.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --id=<value>          (required) [env: SHOPIFY_FLAG_ID] The bulk operation ID to cancel (numeric ID or full GID).
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Cancel a bulk operation.
@@ -163,9 +166,9 @@ Execute bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk execute [--client-id <value> | -c <value>] [--no-color] [--output-file <value> --watch] [--path
-    <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>] [--variable-file <value> | -v <value>...]
-    [--verbose] [--version <value>]
+  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--output-file
+    <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>] [--variable-file
+    <value> | -v <value>...] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>         [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
@@ -173,6 +176,7 @@ FLAGS
   -s, --store=<value>          [env: SHOPIFY_FLAG_STORE] The store domain. Must be an existing dev store.
   -v, --variables=<value>...   [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your mutation, in
                                JSON format. Can be specified multiple times.
+      --auth-alias=<value>     [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --client-id=<value>      [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color               [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --output-file=<value>    [env: SHOPIFY_FLAG_OUTPUT_FILE] The file path where results should be written if --watch
@@ -209,19 +213,20 @@ Check the status of bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk status [--client-id <value> | -c <value>] [--id <value>] [--no-color] [--path <value>] [--reset
-    | ] [-s <value>] [--verbose]
+  $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [--no-color]
+    [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -s, --store=<value>      [env: SHOPIFY_FLAG_STORE] The store domain. Must be an existing dev store.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --id=<value>         [env: SHOPIFY_FLAG_ID] The bulk operation ID (numeric ID or full GID). If not provided, lists
-                           all bulk operations belonging to this app on this store in the last 7 days.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -s, --store=<value>       [env: SHOPIFY_FLAG_STORE] The store domain. Must be an existing dev store.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --id=<value>          [env: SHOPIFY_FLAG_ID] The bulk operation ID (numeric ID or full GID). If not provided,
+                            lists all bulk operations belonging to this app on this store in the last 7 days.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Check the status of bulk operations.
@@ -242,15 +247,17 @@ Fetch your app configuration from the Developer Dashboard.
 
 ```
 USAGE
-  $ shopify app config link [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config link [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Fetch your app configuration from the Developer Dashboard.
@@ -268,15 +275,17 @@ Refresh an already-linked app configuration without prompts.
 
 ```
 USAGE
-  $ shopify app config pull [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Refresh an already-linked app configuration without prompts.
@@ -299,11 +308,12 @@ ARGUMENTS
   [CONFIG]  The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.
 
 FLAGS
-  --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-  --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-  --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-  --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-  --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+  --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+  --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+  --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+  --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+  --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Activate an app configuration.
@@ -318,17 +328,18 @@ Validate your app configuration and extensions.
 
 ```
 USAGE
-  $ shopify app config validate [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
-    [--verbose]
+  $ shopify app config validate [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json                [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Validate your app configuration and extensions.
@@ -343,9 +354,9 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--client-id <value> | -c <value>] [--message <value>] [--no-build] [--no-color]
-    [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ] [--source-control-url <value>]
-    [--verbose] [--version <value>]
+  $ shopify app deploy [--auth-alias <value>] [--client-id <value> | -c <value>] [--message <value>]
+    [--no-build] [--no-color] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ]
+    [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
@@ -355,6 +366,8 @@ FLAGS
       --allow-updates               [env: SHOPIFY_FLAG_ALLOW_UPDATES] Allows adding and updating extensions and
                                     configuration without requiring user confirmation. Recommended option for CI/CD
                                     environments.
+      --auth-alias=<value>          [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for
+                                    authentication.
       --client-id=<value>           [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --message=<value>             [env: SHOPIFY_FLAG_MESSAGE] Optional message that will be associated with this
                                     version. This is for internal use only and won't be available externally.
@@ -391,8 +404,8 @@ Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--localhost-port
-    <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
+  $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value> | -c <value>]
+    [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
     [--skip-dependencies-installation] [-s <value>] [--subscription-product-url <value>] [-t <value>]
     [--theme-app-extension-port <value>] [--use-localhost | [--tunnel-url <value> | ]] [--verbose]
 
@@ -402,6 +415,8 @@ FLAGS
                                           Shopify Plus sandbox store.
   -t, --theme=<value>                     [env: SHOPIFY_FLAG_THEME] Theme ID or name of the theme app extension host
                                           theme.
+      --auth-alias=<value>                [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for
+                                          authentication.
       --checkout-cart-url=<value>         [env: SHOPIFY_FLAG_CHECKOUT_CART_URL] Resource URL for checkout UI extension.
                                           Format: "/cart/{productVariantID}:{productQuantity}"
       --client-id=<value>                 [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
@@ -441,17 +456,18 @@ Cleans up the dev preview from the selected store.
 
 ```
 USAGE
-  $ shopify app dev clean [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [-s
-    <value>] [--verbose]
+  $ shopify app dev clean [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -s, --store=<value>      [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development store.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -s, --store=<value>       [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development store.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Cleans up the dev preview from the selected store.
@@ -467,17 +483,18 @@ Pull app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env pull [--client-id <value> | -c <value>] [--env-file <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app env pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--env-file <value>]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --env-file=<value>   [env: SHOPIFY_FLAG_ENV_FILE] Specify an environment file to update if the update flag is set
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --env-file=<value>    [env: SHOPIFY_FLAG_ENV_FILE] Specify an environment file to update if the update flag is set
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Pull app and extensions environment variables.
@@ -494,15 +511,17 @@ Display app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env show [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Display app and extensions environment variables.
@@ -516,9 +535,9 @@ Execute GraphQL queries and mutations.
 
 ```
 USAGE
-  $ shopify app execute [--client-id <value> | -c <value>] [--no-color] [--output-file <value>] [--path <value>]
-    [-q <value>] [--query-file <value>] [--reset | ] [-s <value>] [--variable-file <value> | -v <value>] [--verbose]
-    [--version <value>]
+  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--output-file
+    <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>] [--variable-file <value> |
+    -v <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>         [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
@@ -528,6 +547,7 @@ FLAGS
                                store.
   -v, --variables=<value>      [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or
                                mutation, in JSON format.
+      --auth-alias=<value>     [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --client-id=<value>      [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color               [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --output-file=<value>    [env: SHOPIFY_FLAG_OUTPUT_FILE] The file name where results should be written, instead of
@@ -557,15 +577,17 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your function directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Compile a function to wasm.
@@ -579,17 +601,18 @@ Print basic information about your function.
 
 ```
 USAGE
-  $ shopify app function info [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
-    [--verbose]
+  $ shopify app function info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json                [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your function directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Print basic information about your function.
@@ -611,21 +634,22 @@ Replays a function run from an app log.
 
 ```
 USAGE
-  $ shopify app function replay [--client-id <value> | -c <value>] [-j] [-l <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose] [-w]
+  $ shopify app function replay [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [-l <value>] [--no-color]
+    [--path <value>] [--reset | ] [--verbose] [-w]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-  -l, --log=<value>        [env: SHOPIFY_FLAG_LOG] Specifies a log identifier to replay instead of selecting from a
-                           list. The identifier is provided in the output of `shopify app dev` and is the suffix of the
-                           log file name.
-  -w, --[no-]watch         [env: SHOPIFY_FLAG_WATCH] Re-run the function when the source code changes.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json                [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -l, --log=<value>         [env: SHOPIFY_FLAG_LOG] Specifies a log identifier to replay instead of selecting from a
+                            list. The identifier is provided in the output of `shopify app dev` and is the suffix of the
+                            log file name.
+  -w, --[no-]watch          [env: SHOPIFY_FLAG_WATCH] Re-run the function when the source code changes.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your function directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Replays a function run from an app log.
@@ -641,20 +665,21 @@ Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path
-    <value>] [--reset | ] [--verbose]
+  $ shopify app function run [--auth-alias <value>] [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -e, --export=<value>     [env: SHOPIFY_FLAG_EXPORT] Name of the WebAssembly export to invoke.
-  -i, --input=<value>      [env: SHOPIFY_FLAG_INPUT] The input JSON to pass to the function. If omitted, standard input
-                           is used.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -e, --export=<value>      [env: SHOPIFY_FLAG_EXPORT] Name of the WebAssembly export to invoke.
+  -i, --input=<value>       [env: SHOPIFY_FLAG_INPUT] The input JSON to pass to the function. If omitted, standard input
+                            is used.
+  -j, --json                [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your function directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Run a function locally for testing.
@@ -670,17 +695,18 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app function schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--stdout]
-    [--verbose]
+  $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--stdout] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --stdout             [env: SHOPIFY_FLAG_STDOUT] Output the schema to stdout instead of writing to a file.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your function directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --stdout              [env: SHOPIFY_FLAG_STDOUT] Output the schema to stdout instead of writing to a file.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
@@ -698,16 +724,17 @@ Generate GraphQL types for a function.
 
 ```
 USAGE
-  $ shopify app function typegen [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
-  [--verbose]
+  $ shopify app function typegen [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your function directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Generate GraphQL types for a function.
@@ -722,21 +749,22 @@ Generate a new app Extension.
 
 ```
 USAGE
-  $ shopify app generate extension [--client-id <value> | -c <value>] [--flavor
+  $ shopify app generate extension [--auth-alias <value>] [--client-id <value> | -c <value>] [--flavor
     vanilla-js|react|typescript|typescript-react|wasm|rust] [-n <value>] [--no-color] [--path <value>] [--reset | ] [-t
     <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -n, --name=<value>       [env: SHOPIFY_FLAG_NAME] name of your Extension
-  -t, --template=<value>   [env: SHOPIFY_FLAG_EXTENSION_TEMPLATE] Extension template
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --flavor=<option>    [env: SHOPIFY_FLAG_FLAVOR] Choose a starting template for your extension, where applicable
-                           <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -n, --name=<value>        [env: SHOPIFY_FLAG_NAME] name of your Extension
+  -t, --template=<value>    [env: SHOPIFY_FLAG_EXTENSION_TEMPLATE] Extension template
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --flavor=<option>     [env: SHOPIFY_FLAG_FLAVOR] Choose a starting template for your extension, where applicable
+                            <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Generate a new app Extension.
@@ -756,19 +784,20 @@ Import metafield and metaobject definitions.
 
 ```
 USAGE
-  $ shopify app import-custom-data-definitions [--client-id <value> | -c <value>] [--include-existing] [--no-color] [--path <value>]
-    [--reset | ] [-s <value>] [--verbose]
+  $ shopify app import-custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing]
+    [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -s, --store=<value>      [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development or Shopify Plus sandbox
-                           store.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --include-existing   [env: SHOPIFY_FLAG_INCLUDE_EXISTING] Include existing declared definitions in the output.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -s, --store=<value>       [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development or Shopify Plus sandbox
+                            store.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --include-existing    [env: SHOPIFY_FLAG_INCLUDE_EXISTING] Include existing declared definitions in the output.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Import metafield and metaobject definitions.
@@ -783,16 +812,17 @@ Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
-  [--verbose]
+  $ shopify app import-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Import dashboard-managed extensions into your app.
@@ -804,19 +834,20 @@ Print basic information about your app and extensions.
 
 ```
 USAGE
-  $ shopify app info [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
-    [--verbose] [--web-env]
+  $ shopify app info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--verbose] [--web-env]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
-      --web-env            [env: SHOPIFY_FLAG_OUTPUT_WEB_ENV] Outputs environment variables necessary for running and
-                           deploying web/.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json                [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --web-env             [env: SHOPIFY_FLAG_OUTPUT_WEB_ENV] Outputs environment variables necessary for running and
+                            deploying web/.
 
 DESCRIPTION
   Print basic information about your app and extensions.
@@ -837,8 +868,8 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--flavor <value>] [-n <value>] [--no-color] [--organization-id <value> | [--client-id
-    <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
+  $ shopify app init [--auth-alias <value>] [--flavor <value>] [-n <value>] [--no-color] [--organization-id
+    <value> | [--client-id <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  [env: SHOPIFY_FLAG_PACKAGE_MANAGER]
@@ -846,6 +877,7 @@ FLAGS
   -n, --name=<value>              [env: SHOPIFY_FLAG_NAME] The name for the new app. When provided, skips the app
                                   selection prompt and creates a new app with this name.
   -p, --path=<value>              [default: ., env: SHOPIFY_FLAG_PATH]
+      --auth-alias=<value>        [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --client-id=<value>         [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app. Use this to automatically
                                   link your new project to an existing app. Using this flag avoids the app selection
                                   prompt.
@@ -866,22 +898,23 @@ Stream detailed logs for your Shopify app.
 
 ```
 USAGE
-  $ shopify app logs [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
-    [--source <value>...] [--status success|failure] [-s <value>...] [--verbose]
+  $ shopify app logs [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--source <value>...] [--status success|failure] [-s <value>...] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-  -s, --store=<value>...   [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development or Shopify Plus sandbox
-                           store.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --source=<value>...  [env: SHOPIFY_FLAG_SOURCE] Filters output to the specified log source.
-      --status=<option>    [env: SHOPIFY_FLAG_STATUS] Filters output to the specified status (success or failure).
-                           <options: success|failure>
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json                [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -s, --store=<value>...    [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development or Shopify Plus sandbox
+                            store.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --source=<value>...   [env: SHOPIFY_FLAG_SOURCE] Filters output to the specified log source.
+      --status=<option>     [env: SHOPIFY_FLAG_STATUS] Filters output to the specified status (success or failure).
+                            <options: success|failure>
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Stream detailed logs for your Shopify app.
@@ -902,15 +935,17 @@ Print out a list of sources that may be used with the logs command.
 
 ```
 USAGE
-  $ shopify app logs sources [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Print out a list of sources that may be used with the logs command.
@@ -928,17 +963,19 @@ USAGE
   $ shopify app release --version <version>
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --allow-deletes      [env: SHOPIFY_FLAG_ALLOW_DELETES] Allows removing extensions and configuration without
-                           requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.
-      --allow-updates      [env: SHOPIFY_FLAG_ALLOW_UPDATES] Allows adding and updating extensions and configuration
-                           without requiring user confirmation. Recommended option for CI/CD environments.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
-      --version=<value>    (required) [env: SHOPIFY_FLAG_VERSION] The name of the app version to release.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --allow-deletes       [env: SHOPIFY_FLAG_ALLOW_DELETES] Allows removing extensions and configuration without
+                            requiring user confirmation. For CI/CD environments, the recommended flag is
+                            --allow-updates.
+      --allow-updates       [env: SHOPIFY_FLAG_ALLOW_UPDATES] Allows adding and updating extensions and configuration
+                            without requiring user confirmation. Recommended option for CI/CD environments.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --version=<value>     (required) [env: SHOPIFY_FLAG_VERSION] The name of the app version to release.
 
 DESCRIPTION
   Release an app version.
@@ -952,17 +989,18 @@ List deployed versions of your app.
 
 ```
 USAGE
-  $ shopify app versions list [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
-    [--verbose]
+  $ shopify app versions list [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -c, --config=<value>      [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json                [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+      --auth-alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --client-id=<value>   [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color            [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>        [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset               [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose             [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   List deployed versions of your app.
@@ -976,9 +1014,9 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-id <value> | -c <value>]
-    [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>] [--reset |
-    ] [--topic <value>]
+  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--auth-alias <value>] [--client-id <value> |
+    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>]
+    [--reset | ] [--topic <value>]
 
 FLAGS
   -c, --config=<value>
@@ -994,6 +1032,9 @@ FLAGS
 
   --api-version=<value>
       [env: SHOPIFY_FLAG_API_VERSION] The API Version of the webhook topic.
+
+  --auth-alias=<value>
+      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
 
   --client-id=<value>
       [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
@@ -2260,7 +2301,7 @@ FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2286,8 +2327,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--alias <value>] [-d] [-e <value>...] [-f] [--no-color] [--password <value>] [--path
-    <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
+  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [--no-color] [--password <value>]
+    [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
 
 FLAGS
   -a, --show-all                [env: SHOPIFY_FLAG_SHOW_ALL] Include others development themes in theme list.
@@ -2297,7 +2338,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>...        [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2323,10 +2364,10 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [--alias <value>] [-a] [-e <value>...] [--error-overlay silent|default] [--host <value>]
-    [-x <value>...] [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>]
-    [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>] [--standard-events-inspector] [-s
-    <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+  $ shopify theme dev [-a] [--auth-alias <value>] [-e <value>...] [--error-overlay silent|default] [--host
+    <value>] [-x <value>...] [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify
+    <value>] [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>]
+    [--standard-events-inspector] [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -2353,7 +2394,7 @@ FLAGS
   -x, --ignore=<value>...
       [env: SHOPIFY_FLAG_IGNORE] Skip hot reloading any files that match the specified pattern.
 
-  --alias=<value>
+  --auth-alias=<value>
       [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
 
   --error-overlay=<option>
@@ -2463,7 +2504,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2513,8 +2554,8 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [--alias <value>] [-d] [-e <value>...] [-j] [--no-color] [--password <value>] [--path
-    <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme info [--auth-alias <value>] [-d] [-e <value>...] [-j] [--no-color] [--password <value>]
+    [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Retrieve info from your development theme.
@@ -2523,7 +2564,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2594,7 +2635,7 @@ Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
-  $ shopify theme list [--alias <value>] [-e <value>...] [--id <value>] [-j] [--name <value>] [--no-color]
+  $ shopify theme list [--auth-alias <value>] [-e <value>...] [--id <value>] [-j] [--name <value>] [--no-color]
     [--password <value>] [--path <value>] [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
@@ -2602,7 +2643,7 @@ FLAGS
   -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --id=<value>              [env: SHOPIFY_FLAG_ID] Only list theme with the given ID.
       --name=<value>            [env: SHOPIFY_FLAG_NAME] Only list themes that contain the given name.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
@@ -2624,14 +2665,14 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--alias <value>] [-e <value>...] [--no-color] [--password <value>] [--path <value>] [-s
-    <value>] [--verbose]
+  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--no-color] [--password <value>] [--path <value>]
+    [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2653,7 +2694,7 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--alias <value>] [-d] [-E] [-e <value>...] [-l] [--no-color] [--password <value>]
+  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [-l] [--no-color] [--password <value>]
     [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -2664,7 +2705,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2722,15 +2763,15 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview --overrides <value> -t <value> [--alias <value>] [-e <value>...] [--json] [--no-color]
-    [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
+  $ shopify theme preview --overrides <value> -t <value> [--auth-alias <value>] [-e <value>...] [--json]
+    [--no-color] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           (required) [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --json                    [env: SHOPIFY_FLAG_JSON] Output the preview URL and identifier as JSON.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --open                    [env: SHOPIFY_FLAG_OPEN] Automatically launch the theme preview in your default web
@@ -2768,7 +2809,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2794,8 +2835,8 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--alias <value>] [-e <value>...] [-f] [--no-color] [--password <value>] [--path <value>]
-    [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [--no-color] [--password <value>] [--path
+    <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
@@ -2803,7 +2844,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2832,7 +2873,7 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [--alias <value>] [-d] [-e <value>...] [-x <value>...] [-l] [--no-color] [-n] [-o
+  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [-l] [--no-color] [-n] [-o
     <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -2847,7 +2888,7 @@ FLAGS
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
   -x, --ignore=<value>...       [env: SHOPIFY_FLAG_IGNORE] Skip downloading the specified files (Multiple flags
                                 allowed). Wrap the value in double quotes if you're using wildcards.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2894,7 +2935,7 @@ FLAGS
   -u, --unpublished                  [env: SHOPIFY_FLAG_UNPUBLISHED] Create a new unpublished theme and push to it.
   -x, --ignore=<value>...            [env: SHOPIFY_FLAG_IGNORE] Skip uploading the specified files (Multiple flags
                                      allowed). Wrap the value in double quotes if you're using wildcards.
-      --alias=<value>                [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for
+      --auth-alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for
                                      authentication.
       --listing=<value>              [env: SHOPIFY_FLAG_LISTING] The listing preset to use for multi-preset themes.
                                      Applies preset files from listings/[preset-name] directory.
@@ -2950,7 +2991,7 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [--alias <value>] [-d] [-e <value>...] [-l] [-n <value>] [--no-color] [--password
+  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [-l] [-n <value>] [--no-color] [--password
     <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -2961,7 +3002,7 @@ FLAGS
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
                                 API token.
@@ -2984,14 +3025,14 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [--alias <value>] [-e <value>...] [--listing <value>] [--no-color] [--password <value>]
-    [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme share [--auth-alias <value>] [-e <value>...] [--listing <value>] [--no-color] [--password
+    <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
-      --alias=<value>           [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
+      --auth-alias=<value>      [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the Shopify account to use for authentication.
       --listing=<value>         [env: SHOPIFY_FLAG_LISTING] The listing preset to use for multi-preset themes. Applies
                                 preset files from listings/[preset-name] directory.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.

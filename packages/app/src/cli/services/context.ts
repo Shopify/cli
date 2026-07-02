@@ -67,10 +67,11 @@ const appNotFoundHelpMessage = (accountIdentifier: string, isOrg = false) => [
 
 interface AppFromIdOptions {
   apiKey: string
+  authSessionId?: string
 }
 
 export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
-  const allClients = allDeveloperPlatformClients()
+  const allClients = allDeveloperPlatformClients(options.authSessionId ? {sessionId: options.authSessionId} : undefined)
 
   let app: OrganizationApp | undefined
   for (const client of allClients) {
@@ -299,12 +300,18 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
 }
 
 export async function fetchOrCreateOrganizationApp(
-  options: CreateAppOptions & {organizationId?: string},
+  options: CreateAppOptions & {organizationId?: string; authSessionId?: string},
 ): Promise<OrganizationApp> {
   const org = options.organizationId
-    ? await fetchOrgFromId(options.organizationId, selectDeveloperPlatformClient())
-    : await selectOrg()
-  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+    ? await fetchOrgFromId(
+        options.organizationId,
+        selectDeveloperPlatformClient(options.authSessionId ? {authSessionId: options.authSessionId} : undefined),
+      )
+    : await selectOrg(options.authSessionId)
+  const developerPlatformClient = selectDeveloperPlatformClient({
+    organization: org,
+    ...(options.authSessionId ? {authSessionId: options.authSessionId} : {}),
+  })
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
   const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)
 
@@ -318,8 +325,8 @@ export async function fetchOrCreateOrganizationApp(
  * @param developerPlatformClient - The client to access the platform API
  * @returns The selected organization ID
  */
-export async function selectOrg(): Promise<Organization> {
-  const orgs = await fetchOrganizations()
+export async function selectOrg(authSessionId?: string): Promise<Organization> {
+  const orgs = await fetchOrganizations(authSessionId)
   const org = await selectOrganizationPrompt(orgs)
   return org
 }

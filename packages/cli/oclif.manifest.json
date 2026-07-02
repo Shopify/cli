@@ -9,6 +9,14 @@
       "description": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to \"App configuration\" (https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a \"theme app extension\" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
       "descriptionWithMarkdown": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -94,6 +102,14 @@
       "customPluginName": "@shopify/app",
       "description": "Cancels a running bulk operation by ID.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -190,6 +206,14 @@
       "description": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about \"bulk query operations\" (https://shopify.dev/docs/api/usage/bulk-operations/queries) and \"bulk mutation operations\" (https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use \"`bulk status`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk status`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -344,6 +368,14 @@
       "description": "Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about \"bulk query operations\" (https://shopify.dev/docs/api/usage/bulk-operations/queries) and \"bulk mutation operations\" (https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use \"`bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.",
       "descriptionWithMarkdown": "Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk execute`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -439,6 +471,14 @@
       "description": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the \"App configuration\" (https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
       "descriptionWithMarkdown": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -528,6 +568,14 @@
       "description": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
       "descriptionWithMarkdown": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -610,6 +658,14 @@
       "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "descriptionWithMarkdown": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -679,6 +735,14 @@
       "description": "Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.",
       "descriptionWithMarkdown": "Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -781,6 +845,14 @@
           "hidden": false,
           "name": "allow-updates",
           "type": "boolean"
+        },
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
         },
         "client-id": {
           "description": "The Client ID of your app.",
@@ -906,6 +978,14 @@
       "description": "Builds and previews your app on a dev store, and watches for changes. \"Read more about testing apps locally\" (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
       "descriptionWithMarkdown": "Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "checkout-cart-url": {
           "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
           "env": "SHOPIFY_FLAG_CHECKOUT_CART_URL",
@@ -1095,6 +1175,14 @@
       "description": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "descriptionWithMarkdown": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1183,6 +1271,14 @@
       "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "descriptionWithMarkdown": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1270,6 +1366,14 @@
       "description": "Displays environment variables that can be used to deploy apps and app extensions.",
       "descriptionWithMarkdown": "Displays environment variables that can be used to deploy apps and app extensions.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1348,6 +1452,14 @@
       "description": "Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.\n\n  For operations that process large amounts of data, use \"`bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.\n\n  For operations that process large amounts of data, use [`bulk execute`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1492,6 +1604,14 @@
       "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "descriptionWithMarkdown": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1571,6 +1691,14 @@
       "description": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
       "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1659,6 +1787,14 @@
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1765,6 +1901,14 @@
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1872,6 +2016,14 @@
       "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1959,6 +2111,14 @@
       "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
       "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2038,6 +2198,14 @@
       "description": "Generates a new \"app extension\" (https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to \"Supported extensions\" (https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to \"App structure\" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.\n  ",
       "descriptionWithMarkdown": "Generates a new [app extension](https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.\n  ",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2163,6 +2331,14 @@
       "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "descriptionWithMarkdown": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2256,6 +2432,14 @@
       "customPluginName": "@shopify/app",
       "description": "Import dashboard-managed extensions into your app.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2333,6 +2517,14 @@
       "description": "The information returned includes the following:\n\n  - The app and dev store that's used when you run the \"dev\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using \"`dev --reset`\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The \"structure\" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The \"access scopes\" (https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
       "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The app and dev store that's used when you run the [dev](https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [`dev --reset`](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2426,6 +2618,14 @@
       },
       "customPluginName": "@shopify/app",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2545,6 +2745,14 @@
       "description": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
       "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2661,6 +2869,14 @@
       "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "descriptionWithMarkdown": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2755,6 +2971,14 @@
           "name": "allow-updates",
           "type": "boolean"
         },
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2844,6 +3068,14 @@
       "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "descriptionWithMarkdown": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2949,6 +3181,14 @@
           "multiple": false,
           "name": "api-version",
           "required": false,
+          "type": "option"
+        },
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
           "type": "option"
         },
         "client-id": {
@@ -3365,6 +3605,14 @@
       },
       "customPluginName": "@shopify/app",
       "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -6216,12 +6464,12 @@
       "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "descriptionWithMarkdown": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {
@@ -6317,12 +6565,12 @@
       "description": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
       "descriptionWithMarkdown": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "development": {
@@ -6437,14 +6685,6 @@
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
-        "alias": {
-          "description": "Alias of the Shopify account to use for authentication.",
-          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "alias",
-          "type": "option"
-        },
         "allow-live": {
           "allowNo": false,
           "char": "a",
@@ -6452,6 +6692,14 @@
           "env": "SHOPIFY_FLAG_ALLOW_LIVE",
           "name": "allow-live",
           "type": "boolean"
+        },
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
         },
         "environment": {
           "char": "e",
@@ -6665,12 +6913,12 @@
       "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
       "descriptionWithMarkdown": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {
@@ -6773,12 +7021,12 @@
       "customPluginName": "@shopify/theme",
       "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "development": {
@@ -6987,12 +7235,12 @@
       "customPluginName": "@shopify/theme",
       "description": "Lists the themes in your store, along with their IDs and statuses.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {
@@ -7107,12 +7355,12 @@
       "description": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
       "descriptionWithMarkdown": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {
@@ -7196,12 +7444,12 @@
       "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
       "descriptionWithMarkdown": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "development": {
@@ -7355,12 +7603,12 @@
       "description": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
       "descriptionWithMarkdown": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {
@@ -7476,12 +7724,12 @@
       "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {
@@ -7595,12 +7843,12 @@
       "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
       "descriptionWithMarkdown": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {
@@ -7696,12 +7944,12 @@
       "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "development": {
@@ -7845,14 +8093,6 @@
       "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "descriptionWithMarkdown": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "flags": {
-        "alias": {
-          "description": "Alias of the Shopify account to use for authentication.",
-          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "alias",
-          "type": "option"
-        },
         "allow-live": {
           "allowNo": false,
           "char": "a",
@@ -7860,6 +8100,14 @@
           "env": "SHOPIFY_FLAG_ALLOW_LIVE",
           "name": "allow-live",
           "type": "boolean"
+        },
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
         },
         "development": {
           "allowNo": false,
@@ -8061,12 +8309,12 @@
       "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "descriptionWithMarkdown": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "development": {
@@ -8185,12 +8433,12 @@
       "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
       "descriptionWithMarkdown": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
       "flags": {
-        "alias": {
+        "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "alias",
+          "name": "auth-alias",
           "type": "option"
         },
         "environment": {

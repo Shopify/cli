@@ -170,6 +170,7 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: reloadedApp.directory,
       appWatcher,
+      ...(commandOptions.authSessionId ? {authSessionId: commandOptions.authSessionId} : {}),
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({
@@ -199,6 +200,7 @@ export async function setupDevProcesses({
       storeFqdn,
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
+      ...(commandOptions.authSessionId ? {authSessionId: commandOptions.authSessionId} : {}),
     }),
     setupSendUninstallWebhookProcess({
       webs: reloadedApp.webs,

@@ -6,6 +6,7 @@ import {appFromIdentifiers} from './context.js'
 
 import * as localStorage from './local-storage.js'
 import {fetchOrgFromId} from './dev/fetch.js'
+import {sessionIdFromAuthAlias} from '../utilities/auth-alias.js'
 import {testOrganizationApp, testDeveloperPlatformClient, testOrganization} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import * as loader from '../models/app/loader.js'
@@ -22,6 +23,7 @@ vi.mock('./context.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./app/add-uid-to-extension-toml.js')
 vi.mock('../models/extensions/load-specifications.js')
+vi.mock('../utilities/auth-alias.js')
 
 async function writeAppConfig(tmp: string, content: string, configName?: string) {
   const appConfigPath = joinPath(tmp, configName ?? 'shopify.app.toml')
@@ -43,6 +45,7 @@ beforeEach(() => {
   vi.mocked(fetchSpecifications).mockResolvedValue([])
   vi.mocked(appFromIdentifiers).mockResolvedValue(mockRemoteApp)
   vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)
+  vi.mocked(sessionIdFromAuthAlias).mockResolvedValue(undefined)
 })
 
 describe('linkedAppContext', () => {
@@ -145,6 +148,34 @@ client_id="test-api-key"`
     })
   })
 
+  test('passes account alias session to remote app lookup', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(sessionIdFromAuthAlias).mockResolvedValue('session-id-for-work')
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+
+      // When
+      const result = await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+        authAlias: 'work',
+      })
+
+      // Then
+      expect(sessionIdFromAuthAlias).toHaveBeenCalledWith('work')
+      expect(appFromIdentifiers).toHaveBeenCalledWith({
+        apiKey: 'test-api-key',
+        authSessionId: 'session-id-for-work',
+      })
+      expect(result.authSessionId).toBe('session-id-for-work')
+    })
+  })
+
   test('resets app when there is a valid toml but reset option is true', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -173,6 +204,44 @@ client_id="test-api-key"`
 
       // Then
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
+    })
+  })
+
+  test('passes account alias session when relinking', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(sessionIdFromAuthAlias).mockResolvedValue('session-id-for-work')
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+
+      vi.mocked(link).mockResolvedValue({
+        remoteApp: mockRemoteApp,
+        configFileName: 'shopify.app.toml',
+        configuration: {
+          client_id: 'test-api-key',
+          name: 'test-app',
+          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+        } as any,
+      })
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: true,
+        userProvidedConfigName: undefined,
+        clientId: 'test-client-id',
+        authAlias: 'work',
+      })
+
+      // Then
+      expect(link).toHaveBeenCalledWith({
+        directory: tmp,
+        apiKey: 'test-client-id',
+        configName: undefined,
+        authSessionId: 'session-id-for-work',
+      })
     })
   })
 

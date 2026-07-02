@@ -24,6 +24,7 @@ export default class Sources extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     if (app.errors.isEmpty()) {

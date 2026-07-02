@@ -35,6 +35,7 @@ export default class FetchSchema extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const ourFunction = await chooseFunction(app, flags.path)

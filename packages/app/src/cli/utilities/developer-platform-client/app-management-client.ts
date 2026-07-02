@@ -12,6 +12,7 @@ import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
+  DeveloperPlatformClientAuthOptions,
   TemplateSpecificationsOptions,
   Paginateable,
   AppVersion,
@@ -190,7 +191,8 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 export class AppManagementClient implements DeveloperPlatformClient {
   private static instance: AppManagementClient | undefined
 
-  static getInstance(session?: Session): AppManagementClient {
+  static getInstance(session?: Session, authOptions: DeveloperPlatformClientAuthOptions = {}): AppManagementClient {
+    if (authOptions.sessionId) return new AppManagementClient(session, authOptions)
     AppManagementClient.instance ??= new AppManagementClient(session)
     return AppManagementClient.instance
   }
@@ -208,9 +210,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly bundleFormat = 'br'
   public readonly supportsDashboardManagedExtensions = false
   private _session: Session | undefined
+  private readonly authOptions: DeveloperPlatformClientAuthOptions
 
-  private constructor(session?: Session) {
+  private constructor(session?: Session, authOptions: DeveloperPlatformClientAuthOptions = {}) {
     this._session = session
+    this.authOptions = authOptions
   }
 
   async subscribeToAppLogs(
@@ -278,7 +282,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
 
-      const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
+      const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform(this.authOptions)
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
       // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
@@ -343,7 +347,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async unsafeRefreshToken(): Promise<string> {
-    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true, forceRefresh: true})
+    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({
+      ...this.authOptions,
+      noPrompt: true,
+      forceRefresh: true,
+    })
     const session = await this.session()
     session.token = result.appManagementToken
     session.businessPlatformToken = result.businessPlatformToken

@@ -47,6 +47,7 @@ export async function getOrGenerateSchemaPath(
   clientId: string | undefined,
   forceRelink: boolean,
   userProvidedConfigName: string | undefined,
+  authAlias: string | undefined,
 ): Promise<string | undefined> {
   const path = joinPath(extension.directory, 'schema.graphql')
   if (await fileExists(path)) {
@@ -58,6 +59,7 @@ export async function getOrGenerateSchemaPath(
     clientId,
     forceRelink,
     userProvidedConfigName,
+    authAlias,
   })
 
   await generateSchemaService({

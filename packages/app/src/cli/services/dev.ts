@@ -71,6 +71,7 @@ export interface DevOptions {
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
+  authSessionId?: string
 }
 
 export async function dev(commandOptions: DevOptions) {

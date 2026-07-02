@@ -57,7 +57,7 @@ Sample JSON output:
       env: 'SHOPIFY_FLAG_NAME',
     }),
     store: themeFlags.store,
-    alias: themeFlags.alias,
+    'auth-alias': themeFlags['auth-alias'],
     environment: themeFlags.environment,
     force: Flags.boolean({
       char: 'f',

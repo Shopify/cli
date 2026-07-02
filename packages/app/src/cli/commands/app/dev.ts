@@ -116,6 +116,7 @@ export default class Dev extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
     const store = await storeContext({
       appContextResult,

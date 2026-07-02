@@ -5,6 +5,12 @@
  */
 export interface appdev {
   /**
+   * Alias of the Shopify account to use for authentication.
+   * @environment SHOPIFY_FLAG_AUTH_ALIAS
+   */
+  '--auth-alias <value>'?: string
+
+  /**
    * Resource URL for checkout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"
    * @environment SHOPIFY_FLAG_CHECKOUT_CART_URL
    */

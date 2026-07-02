@@ -8,7 +8,7 @@ export interface themerename {
    * Alias of the Shopify account to use for authentication.
    * @environment SHOPIFY_FLAG_AUTH_ALIAS
    */
-  '--alias <value>'?: string
+  '--auth-alias <value>'?: string
 
   /**
    * Rename your development theme.

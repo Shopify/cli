@@ -87,6 +87,18 @@ describe('prepareAppStoreContext', () => {
       userProvidedConfigName: undefined,
     })
   })
+
+  test('passes auth alias to linkedAppContext when provided', async () => {
+    await prepareAppStoreContext({...mockFlags, 'auth-alias': 'work'})
+
+    expect(linkedAppContext).toHaveBeenCalledWith({
+      directory: mockFlags.path,
+      clientId: mockFlags['client-id'],
+      forceRelink: mockFlags.reset,
+      userProvidedConfigName: mockFlags.config,
+      authAlias: 'work',
+    })
+  })
 })
 
 describe('prepareExecuteContext', () => {

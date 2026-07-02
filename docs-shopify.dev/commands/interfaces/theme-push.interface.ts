@@ -5,16 +5,16 @@
  */
 export interface themepush {
   /**
-   * Alias of the Shopify account to use for authentication.
-   * @environment SHOPIFY_FLAG_AUTH_ALIAS
-   */
-  '--alias <value>'?: string
-
-  /**
    * Allow push to a live theme.
    * @environment SHOPIFY_FLAG_ALLOW_LIVE
    */
   '-a, --allow-live'?: ''
+
+  /**
+   * Alias of the Shopify account to use for authentication.
+   * @environment SHOPIFY_FLAG_AUTH_ALIAS
+   */
+  '--auth-alias <value>'?: string
 
   /**
    * Push theme files from your remote development theme.

@@ -24,6 +24,7 @@ interface PreviewableExtensionOptions {
   grantedScopes: string[]
   allExtensions: ExtensionInstance[]
   appWatcher: AppEventWatcher
+  authSessionId?: string
 }
 
 export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExtensionOptions> {
@@ -75,6 +76,7 @@ export async function setupPreviewableExtensionsProcess({
   allExtensions,
   storeFqdn,
   checkoutCartUrl,
+  authSessionId,
   ...options
 }: Omit<PreviewableExtensionOptions, 'pathPrefix' | 'allExtensions' | 'port' | 'cartUrl'> & {
   allExtensions: ExtensionInstance[]
@@ -82,7 +84,7 @@ export async function setupPreviewableExtensionsProcess({
 }): Promise<PreviewableExtensionProcess | undefined> {
   const previewableExtensions = allExtensions.filter((ext) => ext.isPreviewable)
 
-  const cartUrl = await buildCartURLIfNeeded(previewableExtensions, storeFqdn, checkoutCartUrl)
+  const cartUrl = await buildCartURLIfNeeded(previewableExtensions, storeFqdn, checkoutCartUrl, authSessionId)
 
   return {
     prefix: 'extensions',
@@ -94,6 +96,7 @@ export async function setupPreviewableExtensionsProcess({
       storeFqdn,
       allExtensions,
       cartUrl,
+      ...(authSessionId ? {authSessionId} : {}),
       ...options,
     },
   }

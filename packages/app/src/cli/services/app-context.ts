@@ -5,6 +5,7 @@ import link from './app/config/link.js'
 import {fetchOrgFromId} from './dev/fetch.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {sessionIdFromAuthAlias} from '../utilities/auth-alias.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {
@@ -36,6 +37,7 @@ export interface LoadedAppContextOutput {
   specifications: RemoteAwareExtensionSpecification[]
   project: Project
   activeConfig: ActiveConfig
+  authSessionId?: string
 }
 
 /**
@@ -54,6 +56,7 @@ interface LoadedAppContextOptions {
   clientId: string | undefined
   userProvidedConfigName: string | undefined
   unsafeTolerateErrors?: boolean
+  authAlias?: string
 }
 
 /**
@@ -81,15 +84,18 @@ export async function linkedAppContext({
   forceRelink,
   userProvidedConfigName,
   unsafeTolerateErrors = false,
+  authAlias,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   let project: Project
   let activeConfig: ActiveConfig
   let remoteApp: OrganizationApp | undefined
+  const authSessionId = await sessionIdFromAuthAlias(authAlias)
+  const authOptions = authSessionId ? {authSessionId} : {}
 
   if (forceRelink) {
     // Skip getAppConfigurationContext() when force-relinking — it may prompt the
     // user to select a TOML file that will be immediately discarded by link().
-    const result = await link({directory, apiKey: clientId})
+    const result = await link({directory, apiKey: clientId, configName: undefined, ...authOptions})
     remoteApp = result.remoteApp
     const reloaded = await getAppConfigurationContext(directory, result.configFileName)
     project = reloaded.project
@@ -104,7 +110,12 @@ export async function linkedAppContext({
     }
 
     if (!activeConfig.isLinked) {
-      const result = await link({directory, apiKey: clientId, configName: basename(activeConfig.file.path)})
+      const result = await link({
+        directory,
+        apiKey: clientId,
+        configName: basename(activeConfig.file.path),
+        ...authOptions,
+      })
       remoteApp = result.remoteApp
       const reloaded = await getAppConfigurationContext(directory, result.configFileName)
       project = reloaded.project
@@ -120,7 +131,7 @@ export async function linkedAppContext({
   const effectiveClientId = clientId ?? configClientId
 
   // Fetch the remote app, using a different clientID if provided via flag.
-  remoteApp ??= await appFromIdentifiers({apiKey: effectiveClientId})
+  remoteApp ??= await appFromIdentifiers({apiKey: effectiveClientId, ...authOptions})
   const developerPlatformClient = remoteApp.developerPlatformClient
 
   const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
@@ -156,7 +167,16 @@ export async function linkedAppContext({
     await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
   }
 
-  return {project, activeConfig, app: localApp, remoteApp, developerPlatformClient, specifications, organization}
+  const output = {
+    project,
+    activeConfig,
+    app: localApp,
+    remoteApp,
+    developerPlatformClient,
+    specifications,
+    organization,
+  }
+  return authSessionId ? {...output, authSessionId} : output
 }
 
 async function logMetadata(app: {apiKey: string}, organization: Organization, resetUsed: boolean) {

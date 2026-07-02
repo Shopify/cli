@@ -38,7 +38,7 @@ class TestThemeCommand extends ThemeCommand {
     password: Flags.string({
       env: 'SHOPIFY_FLAG_PASSWORD',
     }),
-    alias: Flags.string({
+    'auth-alias': Flags.string({
       env: 'SHOPIFY_FLAG_AUTH_ALIAS',
     }),
     path: Flags.string({
@@ -253,7 +253,10 @@ describe('ThemeCommand', () => {
       vi.mocked(findSessionIdByAlias).mockResolvedValue('user-id-for-work')
 
       await CommandConfig.load()
-      const command = new TestThemeCommand(['--store', 'test-store.myshopify.com', '--alias', 'work'], CommandConfig)
+      const command = new TestThemeCommand(
+        ['--store', 'test-store.myshopify.com', '--auth-alias', 'work'],
+        CommandConfig,
+      )
 
       // When
       await command.run()
@@ -271,7 +274,10 @@ describe('ThemeCommand', () => {
       vi.mocked(findSessionIdByAlias).mockResolvedValue(undefined)
 
       await CommandConfig.load()
-      const command = new TestThemeCommand(['--store', 'test-store.myshopify.com', '--alias', 'missing'], CommandConfig)
+      const command = new TestThemeCommand(
+        ['--store', 'test-store.myshopify.com', '--auth-alias', 'missing'],
+        CommandConfig,
+      )
 
       // When/Then
       await expect(command.run()).rejects.toThrow('No authenticated account found for alias')

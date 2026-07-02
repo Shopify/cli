@@ -42,7 +42,7 @@ export const themeFlags = {
     description: 'Password generated from the Theme Access app or an Admin API token.',
     env: 'SHOPIFY_CLI_THEME_TOKEN',
   }),
-  alias: Flags.string({
+  'auth-alias': Flags.string({
     description: 'Alias of the Shopify account to use for authentication.',
     env: 'SHOPIFY_FLAG_AUTH_ALIAS',
   }),

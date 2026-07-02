@@ -42,6 +42,7 @@ export default class FunctionReplay extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const ourFunction = await chooseFunction(app, flags.path)

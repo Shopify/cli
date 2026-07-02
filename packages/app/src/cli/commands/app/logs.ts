@@ -55,6 +55,7 @@ export default class Logs extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const primaryStore = await storeContext({

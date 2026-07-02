@@ -2,6 +2,7 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {sessionIdFromAuthAlias} from '../../../utilities/auth-alias.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -27,12 +28,14 @@ export default class ConfigLink extends AppLinkedCommand {
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(ConfigLink)
+    const authSessionId = await sessionIdFromAuthAlias(flags['auth-alias'])
 
     const options: LinkOptions = {
       directory: flags.path,
       apiKey: flags['client-id'],
       organizationId: flags['organization-id'],
       configName: flags.config,
+      ...(authSessionId ? {authSessionId} : {}),
     }
 
     const result = await link(options)
@@ -42,6 +45,7 @@ export default class ConfigLink extends AppLinkedCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: result.configFileName,
+      authAlias: flags['auth-alias'],
     })
 
     return {app}

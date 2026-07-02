@@ -10,8 +10,10 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
  * @param store - Store FQDN
  * @returns variantID if exists
  */
-export async function fetchProductVariant(store: string) {
-  const adminSession = await ensureAuthenticatedAdmin(store)
+export async function fetchProductVariant(store: string, authSessionId?: string) {
+  const adminSession = authSessionId
+    ? await ensureAuthenticatedAdmin(store, [], {sessionId: authSessionId})
+    : await ensureAuthenticatedAdmin(store)
   const result: FindProductVariantSchema = await adminRequest(FindProductVariantQuery, adminSession)
   const products = result.products.edges
   if (products.length === 0) {

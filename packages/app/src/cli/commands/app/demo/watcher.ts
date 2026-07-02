@@ -24,6 +24,7 @@ export default class DemoWatcher extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     const watcher = new AppEventWatcher(app)

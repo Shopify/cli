@@ -64,6 +64,7 @@ export default class Release extends AppLinkedCommand {
       clientId,
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      authAlias: flags['auth-alias'],
     })
 
     await release({
