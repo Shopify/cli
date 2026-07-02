@@ -41,6 +41,7 @@ describe('store create dev command', () => {
       plan: 'plus',
       featurePreview: undefined,
       withDemoData: false,
+      country: undefined,
       json: false,
     })
   })
@@ -54,6 +55,7 @@ describe('store create dev command', () => {
       plan: 'plus',
       featurePreview: undefined,
       withDemoData: false,
+      country: undefined,
       json: true,
     })
   })
@@ -77,8 +79,46 @@ describe('store create dev command', () => {
       plan: 'basic',
       featurePreview: 'extended_variants',
       withDemoData: true,
+      country: undefined,
       json: false,
     })
+  })
+
+  test('normalizes and passes the --country flag through to the service', async () => {
+    await StoreCreateDev.run([
+      '--name',
+      'my-test-store',
+      '--plan',
+      'plus',
+      '--organization-id',
+      '12345',
+      '--country',
+      'ca',
+    ])
+
+    expect(createDevStore).toHaveBeenCalledWith(expect.objectContaining({country: 'CA'}))
+  })
+
+  test('rejects an invalid --country value without calling the service', async () => {
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+      throw new Error('process.exit')
+    }) as never)
+
+    await expect(
+      StoreCreateDev.run([
+        '--name',
+        'my-test-store',
+        '--plan',
+        'plus',
+        '--organization-id',
+        '12345',
+        '--country',
+        'USA',
+      ]),
+    ).rejects.toThrow()
+    expect(createDevStore).not.toHaveBeenCalled()
+
+    mockExit.mockRestore()
   })
 
   test('prompts for the name when --name is omitted in an interactive environment', async () => {
@@ -141,6 +181,7 @@ describe('store create dev command', () => {
     expect(StoreCreateDev.flags.plan).toBeDefined()
     expect(StoreCreateDev.flags['feature-preview']).toBeDefined()
     expect(StoreCreateDev.flags['with-demo-data']).toBeDefined()
+    expect(StoreCreateDev.flags.country).toBeDefined()
     expect(StoreCreateDev.flags.json).toBeDefined()
   })
 

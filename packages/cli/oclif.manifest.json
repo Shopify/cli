@@ -6183,6 +6183,15 @@
       "descriptionWithMarkdown": "Creates a new app development store in your organization.",
       "enableJsonFlag": false,
       "flags": {
+        "country": {
+          "description": "Two-letter country code for the store, such as US, CA, or GB.",
+          "env": "SHOPIFY_FLAG_STORE_COUNTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "country",
+          "required": false,
+          "type": "option"
+        },
         "feature-preview": {
           "description": "The handle of a feature preview to enable on the new development store.",
           "env": "SHOPIFY_FLAG_STORE_FEATURE_PREVIEW",
