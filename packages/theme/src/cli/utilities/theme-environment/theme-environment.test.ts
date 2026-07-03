@@ -217,6 +217,7 @@ describe('setupDevServer', () => {
       context.localThemeFileSystem,
       {noDelete: true, ...filters},
       expect.anything(),
+      undefined,
     )
     // This is the best way I could think of verifying the rejectBackgroundJob
     // Verify the rejectBackgroundJob callback is a function accepting one argument

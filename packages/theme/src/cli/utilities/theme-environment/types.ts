@@ -1,5 +1,6 @@
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import type {DevSessionOutput} from '../../ui/DevSessionOutput.js'
 
 /**
  * Defines an authentication session for the theme development server.
@@ -89,6 +90,15 @@ export interface DevServerContext {
    * Tracks the last requested HTML path for keyboard shortcuts.
    */
   lastRequestedPath: string
+
+  /**
+   * Optional per-session output sink for the persistent Ink dev view.
+   *
+   * Present only for the interactive (TTY) dev session; live writers emit into
+   * it instead of writing raw bytes to the terminal. Absent for every non-dev
+   * caller and the non-TTY path, where behavior is unchanged.
+   */
+  sink?: DevSessionOutput
 
   /**
    * Additional options for the development server.

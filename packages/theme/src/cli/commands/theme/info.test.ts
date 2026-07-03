@@ -1,15 +1,19 @@
 import Info from './info.js'
-import {themeEnvironmentInfoJSON, fetchDevInfo, fetchThemeInfo, formatThemeInfo} from '../../services/info.js'
+import {
+  themeEnvironmentInfoJSON,
+  fetchDevInfo,
+  fetchThemeInfo,
+  formatThemeInfo,
+  renderThemeInfo,
+} from '../../services/info.js'
 import {describe, vi, expect, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../../services/info.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/ui')
 
 const CommandConfig = new Config({root: __dirname})
 
@@ -45,7 +49,7 @@ describe('Info', () => {
 
       expect(fetchThemeInfo).toHaveBeenCalled()
       expect(outputResult).toHaveBeenCalledWith(JSON.stringify(mockThemeInfo, null, 2))
-      expect(renderInfo).not.toHaveBeenCalled()
+      expect(renderThemeInfo).not.toHaveBeenCalled()
     })
 
     test('renders formatted info when no --json flag is passed', async () => {
@@ -59,7 +63,7 @@ describe('Info', () => {
 
       expect(fetchThemeInfo).toHaveBeenCalled()
       expect(formatThemeInfo).toHaveBeenCalled()
-      expect(renderInfo).toHaveBeenCalled()
+      expect(renderThemeInfo).toHaveBeenCalledWith(mockFormatted)
       expect(outputResult).not.toHaveBeenCalled()
     })
 
@@ -86,7 +90,7 @@ describe('Info', () => {
 
       expect(themeEnvironmentInfoJSON).toHaveBeenCalled()
       expect(outputResult).toHaveBeenCalledWith(JSON.stringify(mockDevInfo, null, 2))
-      expect(renderInfo).not.toHaveBeenCalled()
+      expect(renderThemeInfo).not.toHaveBeenCalled()
     })
 
     test('renders info when no --json flag is passed', async () => {
@@ -96,7 +100,7 @@ describe('Info', () => {
       await run([])
 
       expect(fetchDevInfo).toHaveBeenCalled()
-      expect(renderInfo).toHaveBeenCalled()
+      expect(renderThemeInfo).toHaveBeenCalledWith({customSections: mockSections})
       expect(outputResult).not.toHaveBeenCalled()
     })
   })

@@ -23,6 +23,7 @@ export async function reconcileAndPollThemeEditorChanges(
     only: string[]
   },
   rejectBackgroundJob: (reason?: unknown) => void,
+  logSyncLine?: (line: string) => void,
 ): Promise<{
   updatedRemoteChecksumsPromise: Promise<Checksum[]>
   workPromise: Promise<void>
@@ -41,6 +42,7 @@ export async function reconcileAndPollThemeEditorChanges(
       localThemeFileSystem,
       options,
       rejectBackgroundJob,
+      logSyncLine,
     )
     return updatedRemoteChecksums
   })

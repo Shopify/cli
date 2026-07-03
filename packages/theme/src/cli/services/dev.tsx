@@ -7,18 +7,27 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {ensureListingExists} from '../utilities/theme-listing.js'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Panel} from '../ui/components/Panel.js'
+import {Cell, StyledTable} from '../ui/components/StyledTable.js'
+import {ThemeDevUI, DevUrls} from '../ui/components/ThemeDevUI.js'
+import {DevSessionOutput} from '../ui/DevSessionOutput.js'
+import {renderThemeView} from '../ui/render.js'
+import {palette} from '../ui/palette.js'
+import {Box, Text} from '@shopify/cli-kit/node/ink'
+import {render, renderSuccess, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {debounce} from '@shopify/cli-kit/common/function'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import chalk from '@shopify/cli-kit/node/colors'
 import {Config} from '@oclif/core'
+import React from 'react'
 
 import readline from 'readline'
 
@@ -85,12 +94,20 @@ export async function dev(options: DevOptions) {
     needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
   )
 
+  // The persistent Ink view is only used on the TTY path. Its per-session output
+  // sink is created here (before the file system + context) so live writers can
+  // be routed into the view instead of raw stderr. On the non-TTY path it stays
+  // undefined and every writer keeps its current raw output, byte-for-byte.
+  const isInteractive = terminalSupportsPrompting()
+  const devSessionOutput = isInteractive ? new DevSessionOutput() : undefined
+
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
     filters: options,
     listing: options.listing,
     noDelete: options.noDelete,
     notify: options.notify,
+    logSyncLine: devSessionOutput ? (line) => devSessionOutput.log(line) : undefined,
   })
 
   const host = options.host ?? DEFAULT_HOST
@@ -127,6 +144,7 @@ export async function dev(options: DevOptions) {
     directory: options.directory,
     type: 'theme',
     lastRequestedPath: '',
+    sink: devSessionOutput,
     options: {
       themeEditorSync: options['theme-editor-sync'],
       host,
@@ -147,6 +165,127 @@ export async function dev(options: DevOptions) {
     ctx,
   )
 
+  if (devSessionOutput) {
+    await runInteractiveDevServer({
+      themeName: options.theme.name,
+      urls,
+      ctx,
+      open: options.open,
+      renderDevSetupProgress,
+      serverStart,
+      backgroundJobPromise,
+      resolveBackgroundJob,
+      devSessionOutput,
+    })
+  } else {
+    await runNonInteractiveDevServer({
+      themeName: options.theme.name,
+      urls,
+      ctx,
+      open: options.open,
+      renderDevSetupProgress,
+      serverStart,
+      backgroundJobPromise,
+      resolveBackgroundJob,
+    })
+  }
+
+  await reportDevAnalytics(options.commandConfig, options.adminSession)
+
+  process.exit(0)
+}
+
+interface DevServerLifecycle {
+  themeName: string
+  urls: DevUrls
+  ctx: {lastRequestedPath: string}
+  open: boolean
+  renderDevSetupProgress: () => Promise<void>
+  serverStart: () => Promise<unknown>
+  backgroundJobPromise: Promise<void>
+  resolveBackgroundJob: () => void
+}
+
+interface InteractiveDevServerLifecycle extends DevServerLifecycle {
+  devSessionOutput: DevSessionOutput
+}
+
+/**
+ * TTY path: a single persistent Ink root that stays mounted for the life of the
+ * dev server. Ctrl-C is owned by the view (`useInput` → `abortController.abort()`),
+ * which resolves `render()` and, in turn, the background job — preserving the
+ * existing Ctrl-C → analytics → `process.exit(0)` teardown.
+ */
+async function runInteractiveDevServer({
+  themeName,
+  urls,
+  ctx,
+  open,
+  renderDevSetupProgress,
+  serverStart,
+  backgroundJobPromise,
+  resolveBackgroundJob,
+  devSessionOutput,
+}: InteractiveDevServerLifecycle) {
+  const abortController = new AbortController()
+  const debouncedOpenURL = debounce(openURLSafely, 100, {leading: true, trailing: false})
+
+  const onOpenURL = (key: 't' | 'p' | 'e' | 'g') => {
+    switch (key) {
+      case 't':
+        debouncedOpenURL(urls.local, 'localhost')
+        break
+      case 'p':
+        debouncedOpenURL(urls.preview, 'theme preview')
+        break
+      case 'e':
+        debouncedOpenURL(
+          ctx.lastRequestedPath === '/'
+            ? urls.themeEditor
+            : `${urls.themeEditor}&previewPath=${encodeURIComponent(ctx.lastRequestedPath)}`,
+          'theme editor',
+        )
+        break
+      case 'g':
+        debouncedOpenURL(urls.giftCard, 'gift card preview')
+        break
+    }
+  }
+
+  // Once the view unmounts (Ctrl-C / abort), resolve the background job so the
+  // Promise.all below completes and teardown proceeds.
+  const renderPromise = renderThemeDevUI({themeName, urls, abortController, devSessionOutput, onOpenURL}).finally(
+    resolveBackgroundJob,
+  )
+
+  await Promise.all([
+    backgroundJobPromise,
+    renderDevSetupProgress()
+      .then(serverStart)
+      .then(() => {
+        if (open) {
+          openURLSafely(urls.local, 'development server')
+        }
+      }),
+    renderPromise,
+  ])
+}
+
+/**
+ * Non-TTY / CI path: byte-for-byte identical to the previous behavior — readline
+ * keypress handler, `renderDevReady` (which falls back to `renderLinks`), and the
+ * background job resolved via the keypress handler's Ctrl-C.
+ */
+async function runNonInteractiveDevServer({
+  themeName,
+  urls,
+  ctx,
+  open,
+  renderDevSetupProgress,
+  serverStart,
+  backgroundJobPromise,
+  resolveBackgroundJob,
+}: DevServerLifecycle) {
   readline.emitKeypressEvents(process.stdin)
 
   const keypressHandler = createKeypressHandler(urls, ctx, resolveBackgroundJob)
@@ -156,20 +295,31 @@ export async function dev(options: DevOptions) {
     backgroundJobPromise,
     renderDevSetupProgress()
       .then(serverStart)
-      .then(() => {
+      .then(async () => {
         if (process.stdin.isTTY) {
           process.stdin.setRawMode(true)
         }
-        renderLinks(urls)
-        if (options.open) {
+        await renderDevReady(themeName, urls)
+        if (open) {
           openURLSafely(urls.local, 'development server')
         }
       }),
   ])
+}
 
-  await reportDevAnalytics(options.commandConfig, options.adminSession)
-
-  process.exit(0)
+/**
+ * Mounts the persistent `ThemeDevUI` root with `exitOnCtrlC: false` so Ctrl-C is
+ * handled by the view's abort lifecycle rather than by Ink tearing the tree down
+ * mid-frame. Resolves once the tree unmounts.
+ */
+export async function renderThemeDevUI(props: {
+  themeName: string
+  urls: DevUrls
+  abortController: AbortController
+  devSessionOutput: DevSessionOutput
+  onOpenURL: (key: 't' | 'p' | 'e' | 'g') => void
+}): Promise<void> {
+  await render(<ThemeDevUI {...props} />, {exitOnCtrlC: false})
 }
 
 export async function reportDevAnalytics(config: Config, session: AdminSession): Promise<void> {
@@ -236,6 +386,36 @@ function handleOpenURLError(message: string) {
       body: error.stack ?? error.message,
     })
   }
+}
+
+function linkCell(label: string, url: string): TokenItem {
+  return {link: {label, url}}
+}
+
+function styledDevReadyView(themeName: string, urls: DevUrls) {
+  const rows: Cell[][] = [
+    ['Local', linkCell(urls.local, urls.local)],
+    ['Editor', linkCell('Open in Theme Editor', urls.themeEditor)],
+    ['Preview', linkCell('Share theme preview', urls.preview)],
+    ['Gift cards', linkCell('Preview gift cards', urls.giftCard)],
+  ]
+
+  return (
+    <Panel
+      title={`${themeName} · dev server`}
+      footer="(t) localhost  (p) preview  (e) editor  (g) gift cards  ·  Ctrl-C to stop"
+    >
+      <Box>
+        <Text color={palette.role}>● </Text>
+        <Text color={palette.text}>running</Text>
+      </Box>
+      <StyledTable rows={rows} firstColumnSubdued />
+    </Panel>
+  )
+}
+
+export async function renderDevReady(themeName: string, urls: DevUrls): Promise<void> {
+  await renderThemeView(styledDevReadyView(themeName, urls), () => renderLinks(urls))
 }
 
 export function renderLinks(urls: {local: string; giftCard: string; themeEditor: string; preview: string}) {

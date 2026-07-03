@@ -2,8 +2,10 @@ import {getHtmlHandler} from './html.js'
 import {render} from './storefront-renderer.js'
 import {DevServerContext} from './types.js'
 import {emptyThemeExtFileSystem, emptyThemeFileSystem} from '../theme-fs-empty.js'
+import {DevSessionOutput} from '../../ui/DevSessionOutput.js'
 import {createEvent} from 'h3'
 import {describe, expect, test, vi} from 'vitest'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
 import {IncomingMessage, ServerResponse} from 'node:http'
@@ -13,6 +15,7 @@ vi.mock('./storefront-renderer.js')
 vi.mock('./hot-reload/error-page.js')
 vi.mock('./hot-reload/server.js')
 vi.mock('../theme-ext-environment/theme-ext-server.js')
+vi.mock('@shopify/cli-kit/node/ui')
 
 function createH3Event(method = 'GET', path = '/', headers = {}) {
   const req = new IncomingMessage(new Socket())
@@ -137,5 +140,40 @@ describe('getHtmlHandler', async () => {
     expect(mockExit).toHaveBeenCalledWith(1)
     expect(ctx.session.refresh).toHaveBeenCalledTimes(6)
     mockExit.mockRestore()
+  })
+
+  test('renders a per-request render failure via renderError when no sink is provided', async () => {
+    // Given
+    vi.mocked(renderError).mockClear()
+    const handler = getHtmlHandler(theme, ctx)
+    const event = createH3Event('GET', '/')
+    vi.mocked(render).mockRejectedValueOnce(new Error('render blew up'))
+
+    // When
+    await handler(event)
+
+    // Then
+    expect(renderError).toHaveBeenCalledTimes(1)
+  })
+
+  test('routes a per-request render failure into the sink and not to renderError when a sink is provided', async () => {
+    // Given
+    vi.mocked(renderError).mockClear()
+    const sink = new DevSessionOutput()
+    const alertSpy = vi.spyOn(sink, 'alert')
+    const sinkCtx = {...ctx, sink} as unknown as DevServerContext
+    const handler = getHtmlHandler(theme, sinkCtx)
+    const event = createH3Event('GET', '/')
+    vi.mocked(render).mockRejectedValueOnce(new Error('render blew up'))
+
+    // When
+    await handler(event)
+
+    // Then
+    expect(alertSpy).toHaveBeenCalledTimes(1)
+    expect(alertSpy).toHaveBeenCalledWith(
+      expect.objectContaining({headline: expect.stringContaining('Failed to render storefront')}),
+    )
+    expect(renderError).not.toHaveBeenCalled()
   })
 })

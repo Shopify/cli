@@ -3,7 +3,14 @@ import {batchedRequests} from '../batching.js'
 import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {
+  outputDebug,
+  outputInfo,
+  outputContent,
+  outputToken,
+  stringifyMessage,
+  OutputMessage,
+} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -22,6 +29,7 @@ export function pollThemeEditorChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
   rejectBackgroundJob: (reason?: unknown) => void,
+  logSyncLine?: (line: string) => void,
 ) {
   outputDebug('Listening for changes in the theme editor')
 
@@ -36,7 +44,14 @@ export function pollThemeEditorChanges(
     await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
 
     // eslint-disable-next-line require-atomic-updates
-    latestChecksums = await pollRemoteJsonChanges(targetTheme, session, latestChecksums, localFileSystem, options)
+    latestChecksums = await pollRemoteJsonChanges(
+      targetTheme,
+      session,
+      latestChecksums,
+      localFileSystem,
+      options,
+      logSyncLine,
+    )
       .then((checksums) => {
         failedPollingAttempts = 0
         lastError = ''
@@ -79,6 +94,7 @@ export async function pollRemoteJsonChanges(
   remoteChecksums: Checksum[],
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
+  logSyncLine?: (line: string) => void,
 ): Promise<Checksum[]> {
   /*
    * Capture the current set of unsynced file keys to ensure
@@ -102,8 +118,8 @@ export async function pollRemoteJsonChanges(
 
   await abortIfMultipleSourcesChange(localFileSystem, changedAssets)
 
-  await syncChangedAssets(targetTheme, currentSession, localFileSystem, changedAssets)
-  await deleteRemovedAssets(localFileSystem, deletedAssets, options)
+  await syncChangedAssets(targetTheme, currentSession, localFileSystem, changedAssets, logSyncLine)
+  await deleteRemovedAssets(localFileSystem, deletedAssets, options, logSyncLine)
 
   return latestChecksums
 }
@@ -127,11 +143,20 @@ function getAssetsChangedOnRemote(previousChecksums: Checksum[], latestChecksums
   return assetsChangedOnRemote
 }
 
+function emitSyncLine(message: OutputMessage, logSyncLine?: (line: string) => void) {
+  if (logSyncLine) {
+    logSyncLine(stringifyMessage(message))
+  } else {
+    outputInfo(message)
+  }
+}
+
 async function syncChangedAssets(
   targetTheme: Theme,
   currentSession: AdminSession,
   localFileSystem: ThemeFileSystem,
   assetsChangedOnRemote: Checksum[],
+  logSyncLine?: (line: string) => void,
 ) {
   const filesToGet = assetsChangedOnRemote.filter(
     (file) => localFileSystem.files.get(file.key)?.checksum !== file.checksum,
@@ -147,10 +172,11 @@ async function syncChangedAssets(
         assets.map(async (asset) => {
           if (asset) {
             await localFileSystem.write(asset)
-            outputInfo(
+            emitSyncLine(
               outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
                 '»',
               )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
+              logSyncLine,
             )
           }
         }),
@@ -165,16 +191,18 @@ export async function deleteRemovedAssets(
   localFileSystem: ThemeFileSystem,
   assetsDeletedFromRemote: Checksum[],
   options: {noDelete: boolean},
+  logSyncLine?: (line: string) => void,
 ) {
   if (!options.noDelete) {
     return Promise.all(
       assetsDeletedFromRemote.map((file) => {
         if (localFileSystem.files.get(file.key)) {
           return localFileSystem.delete(file.key).then(() => {
-            outputInfo(
+            emitSyncLine(
               outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
                 '»',
               )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+              logSyncLine,
             )
           })
         }

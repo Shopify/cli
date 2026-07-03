@@ -116,6 +116,7 @@ function handleThemeEditorSync(
         only: ctx.options.only,
       },
       rejectBackgroundJob,
+      ctx.sink ? (line) => ctx.sink?.log(line) : undefined,
     )
   } else {
     return Promise.resolve({

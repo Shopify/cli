@@ -74,7 +74,11 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
           )
 
           if (status >= 500 && !pathname.endsWith('.js.map')) {
-            renderWarning(errorInfo)
+            if (ctx.sink) {
+              ctx.sink.alert({headline: errorInfo.headline, body: errorInfo.body})
+            } else {
+              renderWarning(errorInfo)
+            }
           }
 
           return new Response(error.message, {status, statusText})

@@ -30,6 +30,14 @@ export interface ThemeFileSystemOptions {
   listing?: string
   noDelete?: boolean
   notify?: string
+  /**
+   * Optional sink for already-formatted sync-result lines. When provided (the
+   * interactive `theme dev` session), the file system routes its "synced »
+   * update/delete" lines here instead of writing them to stderr, so the
+   * persistent Ink view can render them. Absent for every other caller
+   * (e.g. `theme push`), whose output is unchanged.
+   */
+  logSyncLine?: (line: string) => void
 }
 
 /**

@@ -120,7 +120,11 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
         const {status, statusText, cause, ...errorInfo} = extractFetchErrorInfo(error, 'Failed to render storefront')
         const [title, ...rest] = errorInfo.headline.split('\n') as [string, ...string[]]
 
-        renderError(errorInfo)
+        if (ctx.sink) {
+          ctx.sink.alert({headline: errorInfo.headline, body: errorInfo.body})
+        } else {
+          renderError(errorInfo)
+        }
 
         return createErrorPageResponse(
           ctx,

@@ -12,10 +12,12 @@ import {
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
+import {DevSessionOutput} from '../../../ui/DevSessionOutput.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 import {createEvent} from 'h3'
 import * as output from '@shopify/cli-kit/node/output'
+import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
@@ -25,6 +27,7 @@ import type {DevServerContext} from '../types.js'
 import type {Theme, ThemeFSEventName, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('../storefront-renderer.js')
+vi.mock('@shopify/cli-kit/node/ui')
 vi.spyOn(output, 'outputDebug')
 
 const THEME_ID = 'my-theme-id'
@@ -466,6 +469,53 @@ describe('getUpdatedFileParts', () => {
   })
 })
 
+describe('hr-log relays', () => {
+  const hrLogUrl = (message: {type: string; headline: string; body?: string}) =>
+    `/?hr-log=${encodeURIComponent(JSON.stringify(message))}`
+
+  beforeEach(() => {
+    vi.mocked(renderError).mockClear()
+    vi.mocked(renderWarning).mockClear()
+    vi.mocked(renderInfo).mockClear()
+  })
+
+  test('renders hr-log messages via render* when no sink is provided', async () => {
+    // Given
+    const {hotReloadHandler} = createTestContext()
+
+    // When
+    await hotReloadHandler(createH3Event(hrLogUrl({type: 'error', headline: 'boom'})).event)
+    await hotReloadHandler(createH3Event(hrLogUrl({type: 'warn', headline: 'careful'})).event)
+    await hotReloadHandler(createH3Event(hrLogUrl({type: 'info', headline: 'fyi'})).event)
+
+    // Then
+    expect(renderError).toHaveBeenCalledWith(expect.objectContaining({headline: '[HotReload] boom'}))
+    expect(renderWarning).toHaveBeenCalledWith(expect.objectContaining({headline: '[HotReload] careful'}))
+    expect(renderInfo).toHaveBeenCalledWith(expect.objectContaining({headline: '[HotReload] fyi'}))
+  })
+
+  test('routes hr-log messages into the sink and not to render* when a sink is provided', async () => {
+    // Given
+    const sink = new DevSessionOutput()
+    const errorSpy = vi.spyOn(sink, 'error')
+    const alertSpy = vi.spyOn(sink, 'alert')
+    const {hotReloadHandler} = createTestContext({sink})
+
+    // When
+    await hotReloadHandler(createH3Event(hrLogUrl({type: 'error', headline: 'boom'})).event)
+    await hotReloadHandler(createH3Event(hrLogUrl({type: 'warn', headline: 'careful'})).event)
+    await hotReloadHandler(createH3Event(hrLogUrl({type: 'info', headline: 'fyi'})).event)
+
+    // Then
+    expect(errorSpy).toHaveBeenCalledWith('[HotReload] boom')
+    expect(alertSpy).toHaveBeenCalledWith({headline: '[HotReload] careful', body: undefined})
+    expect(alertSpy).toHaveBeenCalledWith({headline: '[HotReload] fyi', body: undefined})
+    expect(renderError).not.toHaveBeenCalled()
+    expect(renderWarning).not.toHaveBeenCalled()
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
+})
+
 // -- Test utilities --
 
 function createH3Event(url: string, headers?: Record<string, string>) {
@@ -490,7 +540,7 @@ function createH3Event(url: string, headers?: Record<string, string>) {
   return {event, data}
 }
 
-function createTestContext(options?: {files?: [string, string][]}) {
+function createTestContext(options?: {files?: [string, string][]; sink?: DevSessionOutput}) {
   /** Waits for an event stream to be flushed, or for the last `onSync` callback to be triggered */
   const nextTick = () => new Promise((resolve) => setTimeout(resolve))
 
@@ -550,6 +600,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
     localThemeExtensionFileSystem,
     directory: 'tmp',
     type: 'theme',
+    sink: options?.sink,
     options: {
       ignore: [],
       only: [],

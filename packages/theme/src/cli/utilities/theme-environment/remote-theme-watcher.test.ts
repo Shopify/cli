@@ -60,6 +60,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
         only: [],
       },
       mockRejectBackgroundJob,
+      undefined,
     )
   })
 

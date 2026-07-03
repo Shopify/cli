@@ -32,6 +32,40 @@ import type {Theme, ThemeAsset, ThemeFSEventPayload} from '@shopify/cli-kit/node
 
 import type {DevServerContext} from '../types.js'
 
+interface RenderableMessage {
+  headline: string
+  body?: string
+}
+
+/**
+ * Routes a hot-reload log message to the per-session sink when one is present
+ * (interactive dev), or to the original raw `render*` writer otherwise. Keeps
+ * non-dev/non-TTY behavior byte-for-byte identical.
+ */
+function relayError(ctx: DevServerContext, message: RenderableMessage) {
+  if (ctx.sink) {
+    ctx.sink.error(message.body ? `${message.headline}\n${message.body}` : message.headline)
+  } else {
+    renderError(message)
+  }
+}
+
+function relayWarning(ctx: DevServerContext, message: RenderableMessage) {
+  if (ctx.sink) {
+    ctx.sink.alert({headline: message.headline, body: message.body})
+  } else {
+    renderWarning(message)
+  }
+}
+
+function relayInfo(ctx: DevServerContext, message: RenderableMessage) {
+  if (ctx.sink) {
+    ctx.sink.alert({headline: message.headline, body: message.body})
+  } else {
+    renderInfo(message)
+  }
+}
+
 // --- Section tag content cache ---
 
 interface FileDetailsEntry {
@@ -188,7 +222,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
 
       eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
         eventStream.push(JSON.stringify(event)).catch((error: Error) => {
-          renderWarning({headline: 'Failed to send HotReload event.', body: error.stack})
+          relayWarning(ctx, {headline: 'Failed to send HotReload event.', body: error.stack})
         })
       })
 
@@ -208,13 +242,13 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
         message.headline = `[HotReload] ${message.headline}`
 
         if (message.type === 'error') {
-          renderError(message)
+          relayError(ctx, message)
         } else if (message.type === 'warn') {
-          renderWarning(message)
+          relayWarning(ctx, message)
         } else if (message.type === 'info') {
-          renderInfo(message)
+          relayInfo(ctx, message)
         } else {
-          renderWarning({headline: `Unknown HotReload log type: ${message.type}`})
+          relayWarning(ctx, {headline: `Unknown HotReload log type: ${message.type}`})
         }
       }
 
@@ -305,7 +339,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
 
           recordEvent('theme-service:hot-reload:section:render-error')
 
-          if (!appBlockId) renderWarning(errorInfo)
+          if (!appBlockId) relayWarning(ctx, errorInfo)
 
           return new Response(null, {status, statusText})
         })

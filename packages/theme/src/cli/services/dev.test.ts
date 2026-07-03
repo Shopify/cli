@@ -1,4 +1,4 @@
-import {dev, openURLSafely, renderLinks, createKeypressHandler, reportDevAnalytics} from './dev.js'
+import {dev, openURLSafely, renderLinks, renderDevReady, createKeypressHandler, reportDevAnalytics} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
@@ -6,14 +6,25 @@ import {initializeDevServerSession} from '../utilities/theme-environment/dev-ser
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {describe, expect, test, vi, beforeEach, afterEach, type MockInstance} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {render, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {openURL, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {render as renderInk} from '@shopify/cli-kit/node/testing/ui'
+import {unstyled} from '@shopify/cli-kit/node/output'
+import {type JSX} from 'react'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {getAvailableTCPPort, checkPortAvailability} from '@shopify/cli-kit/node/tcp'
 import {Config} from '@oclif/core'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()
+  return {
+    ...actual,
+    render: vi.fn(),
+    renderSuccess: vi.fn(),
+    renderWarning: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/colors', () => ({
   default: {
     bold: (str: string) => str,
@@ -23,6 +34,7 @@ vi.mock('@shopify/cli-kit/node/colors', () => ({
 }))
 vi.mock('@shopify/cli-kit/node/system', () => ({
   openURL: vi.fn(),
+  terminalSupportsPrompting: vi.fn(),
 }))
 vi.mock('@shopify/cli-kit/node/analytics', () => ({
   reportAnalyticsEvent: vi.fn(),
@@ -119,6 +131,82 @@ describe('renderLinks', () => {
     })
   })
 })
+
+describe('renderDevReady', () => {
+  const urls = {
+    local: 'http://127.0.0.1:9292',
+    giftCard: 'http://127.0.0.1:9292/gift_cards/[store_id]/preview',
+    themeEditor: 'https://my-store.myshopify.com/admin/themes/123/editor?hr=9292',
+    preview: 'https://my-store.myshopify.com/?preview_theme_id=123',
+  }
+
+  test('falls back to renderLinks/renderSuccess and does not render Ink when the terminal does not support prompting', async () => {
+    // Given
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+
+    // When
+    await renderDevReady('My Theme', urls)
+
+    // Then
+    expect(render).not.toHaveBeenCalled()
+    expect(renderSuccess).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            title: 'Preview your theme (t)',
+            items: [{link: {url: urls.local}}],
+          },
+        },
+      ],
+      nextSteps: [
+        [{link: {label: 'Share your theme preview (p)', url: urls.preview}}, {subdued: urls.preview}],
+        [{link: {label: 'Customize your theme at the theme editor (e)', url: urls.themeEditor}}],
+        [{link: {label: 'Preview your gift cards (g)', url: urls.giftCard}}],
+      ],
+    })
+  })
+
+  test('renders the styled dev-ready Panel when the terminal supports prompting', async () => {
+    // Given
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+
+    // When
+    await renderDevReady('My Theme', urls)
+
+    // Then
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(render).toHaveBeenCalledTimes(1)
+    const view = vi.mocked(render).mock.calls[0]![0] as JSX.Element
+    const {lastFrame} = renderInk(view)
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+      │                                                                                                  │
+      │  My Theme · dev server                                                                           │
+      │  ● running                                                                                       │
+      │  Local       http://127.0.0.1:9292                                                               │
+      │  Editor      Open in Theme Editor                                                                │
+      │              (                                                                                   │
+      │              https://my-store.mysh                                                               │
+      │              opify.com/admin/theme                                                               │
+      │              s/123/editor?hr=9292                                                                │
+      │              )                                                                                   │
+      │  Preview     Share theme preview (                                                               │
+      │               https://my-store.mys                                                               │
+      │              hopify.com/?preview_t                                                               │
+      │              heme_id=123 )                                                                       │
+      │  Gift cards  Preview gift cards (                                                                │
+      │              http://127.0.0.1:9292                                                               │
+      │              /gift_cards/[store_id                                                               │
+      │              ]/preview )                                                                         │
+      │                                                                                                  │
+      │  (t) localhost  (p) preview  (e) editor  (g) gift cards  ·  Ctrl-C to stop                       │
+      │                                                                                                  │
+      ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+})
+
 describe('openURLSafely', () => {
   test('calls renderWarning when openURL fails', async () => {
     // Given

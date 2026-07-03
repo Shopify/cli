@@ -1,16 +1,28 @@
-import {themeInfoJSON, fetchThemeInfo, themeEnvironmentInfoJSON} from './info.js'
+import {themeInfoJSON, fetchThemeInfo, themeEnvironmentInfoJSON, renderThemeInfo} from './info.js'
 import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themePreviewUrl, themeEditorUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {describe, vi, test, expect} from 'vitest'
+import {beforeEach, describe, vi, test, expect} from 'vitest'
+import {render, renderInfo} from '@shopify/cli-kit/node/ui'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {render as renderInk} from '@shopify/cli-kit/node/testing/ui'
+import {unstyled} from '@shopify/cli-kit/node/output'
+import {JSX} from 'react'
 
 vi.mock('./local-storage.js')
 vi.mock('../utilities/development-theme-manager.js')
 vi.mock('../utilities/theme-selector.js', () => {
   return {findOrSelectTheme: vi.fn()}
 })
+// Mock only the render entry points; keep the real TokenizedText (and other UI
+// components) so the styled view renders link/subdued tokens as it does in prod.
+vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()
+  return {...actual, render: vi.fn(), renderInfo: vi.fn()}
+})
+vi.mock('@shopify/cli-kit/node/system')
 
 const storeFqdn = 'my-shop.myshopify.com'
 
@@ -103,5 +115,75 @@ describe('info', () => {
         editor_url: themeEditorUrl(developmentTheme, session),
       },
     })
+  })
+})
+
+describe('renderThemeInfo', () => {
+  const formatted = {
+    customSections: [
+      {
+        title: 'Theme information',
+        body: [{subdued: 'Environment name: staging'}],
+      },
+      {
+        title: 'Theme Details',
+        body: {
+          tabularData: [
+            ['Id', '#123'],
+            ['Name', 'my theme'],
+            ['Editor Url', {link: {url: 'https://my-shop.myshopify.com/editor', label: 'Open in Theme Editor'}}],
+          ],
+          firstColumnSubdued: true,
+        },
+      },
+    ],
+  }
+
+  beforeEach(() => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+  })
+
+  test('falls back to renderInfo with the original sections when the terminal does not support prompting', async () => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+
+    await renderThemeInfo(formatted)
+
+    expect(renderInfo).toHaveBeenCalledWith(formatted)
+    expect(render).not.toHaveBeenCalled()
+  })
+
+  test('renders styled panels with key/value rows and a link value when the terminal supports prompting', async () => {
+    await renderThemeInfo(formatted)
+
+    expect(render).toHaveBeenCalledOnce()
+    expect(renderInfo).not.toHaveBeenCalled()
+
+    const view = vi.mocked(render).mock.calls[0]![0] as JSX.Element
+    const {lastFrame} = renderInk(view)
+    const frame = unstyled(lastFrame()!)
+    expect(frame).toMatchInlineSnapshot(`
+      "╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+      │                                                                                                  │
+      │  Theme information                                                                               │
+      │  Environment name: staging                                                                       │
+      │                                                                                                  │
+      ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+      ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+      │                                                                                                  │
+      │  Theme Details                                                                                   │
+      │  Id          #123                                                                                │
+      │  Name        my theme                                                                            │
+      │  Editor Url  Open in Theme Editor                                                                │
+      │               ( https://my-shop.m                                                                │
+      │              yshopify.com/editor                                                                 │
+      │              )                                                                                   │
+      │                                                                                                  │
+      ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+    expect(frame).toContain('Environment name: staging')
+    expect(frame).toContain('Theme Details')
+    expect(frame).toContain('Open in Theme Editor')
   })
 })

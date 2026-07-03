@@ -1,5 +1,6 @@
 import {
   canProxyRequest,
+  getProxyHandler,
   getProxyStorefrontHeaders,
   injectCdnProxy,
   patchRenderingResponse,
@@ -11,13 +12,18 @@ import {
   standardEventsRuntimeDevUrl,
   standardEventsRuntimeUrl,
 } from './standard-events.js'
+import {DevSessionOutput} from '../../ui/DevSessionOutput.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {createEvent} from 'h3'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {IncomingMessage, ServerResponse} from 'node:http'
 
 import {Socket} from 'node:net'
 
 import type {DevServerContext} from './types.js'
+import type {Theme} from '@shopify/cli-kit/node/themes/types'
+
+vi.mock('@shopify/cli-kit/node/ui')
 
 function createH3Event(method = 'GET', path = '/', headers = {}) {
   const req = new IncomingMessage(new Socket())
@@ -589,6 +595,47 @@ describe('dev proxy', () => {
       expect(requestUrl.searchParams.get('pb')).toBe('0')
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBe('Bearer sfr-devtools-token')
+    })
+  })
+
+  describe('getProxyHandler — per-request error relay', () => {
+    const theme = {id: '123'} as unknown as Theme
+
+    beforeEach(() => {
+      vi.mocked(renderWarning).mockClear()
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('upstream unavailable')))
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    test('renders a >=500 proxy failure via renderWarning when no sink is provided', async () => {
+      // Given
+      const handler = getProxyHandler(theme, ctx)
+      const event = createH3Event('GET', '/some-asset.js')
+
+      // When
+      await handler(event)
+
+      // Then
+      expect(renderWarning).toHaveBeenCalledTimes(1)
+    })
+
+    test('routes a >=500 proxy failure into the sink and not to renderWarning when a sink is provided', async () => {
+      // Given
+      const sink = new DevSessionOutput()
+      const alertSpy = vi.spyOn(sink, 'alert')
+      const sinkCtx = {...ctx, sink} as unknown as DevServerContext
+      const handler = getProxyHandler(theme, sinkCtx)
+      const event = createH3Event('GET', '/some-asset.js')
+
+      // When
+      await handler(event)
+
+      // Then
+      expect(alertSpy).toHaveBeenCalledTimes(1)
+      expect(renderWarning).not.toHaveBeenCalled()
     })
   })
 })

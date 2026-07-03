@@ -1,12 +1,17 @@
 import ThemeCommand from '../../utilities/theme-command.js'
-import {fetchThemeInfo, fetchDevInfo, formatThemeInfo, themeEnvironmentInfoJSON} from '../../services/info.js'
+import {
+  fetchThemeInfo,
+  fetchDevInfo,
+  formatThemeInfo,
+  renderThemeInfo,
+  themeEnvironmentInfoJSON,
+} from '../../services/info.js'
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {OutputFlags} from '@oclif/core/interfaces'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
@@ -47,14 +52,14 @@ export default class Info extends ThemeCommand {
       }
 
       const formattedInfo = await formatThemeInfo(output, flags)
-      renderInfo(formattedInfo)
+      await renderThemeInfo(formattedInfo)
     } else {
       if (flags.json) {
         return outputResult(JSON.stringify(themeEnvironmentInfoJSON({cliVersion: this.config.version}), null, 2))
       }
       const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
 
-      renderInfo({customSections: infoMessage})
+      await renderThemeInfo({customSections: infoMessage})
     }
     recordTiming('theme-command:info')
   }

@@ -33,14 +33,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.ts\"",
+        "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
         "cwd": "packages/theme"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",
         "cwd": "packages/theme"
       }
     },

@@ -5,6 +5,7 @@ import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {describe, expect, test, vi, afterEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import * as output from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../theme-fs.js')
@@ -40,6 +41,50 @@ describe('pollRemoteJsonChanges', async () => {
       key: 'templates/asset.json',
       value: 'content',
     })
+  })
+
+  test('routes the "Synced » download" line into logSyncLine and not to stderr when a sink is provided', async () => {
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
+    const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const updatedRemoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
+    vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+    vi.mocked(fetchThemeAssets).mockResolvedValue([{checksum: '2', key: 'templates/asset.json', value: 'content'}])
+    const outputInfoSpy = vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
+    const logSyncLine = vi.fn()
+
+    // When
+    await pollRemoteJsonChanges(
+      developmentTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      defaultOptions,
+      logSyncLine,
+    )
+
+    // Then
+    expect(logSyncLine).toHaveBeenCalledTimes(1)
+    expect(logSyncLine).toHaveBeenCalledWith(expect.stringContaining('download templates/asset.json from remote theme'))
+    expect(outputInfoSpy).not.toHaveBeenCalled()
+    outputInfoSpy.mockRestore()
+  })
+
+  test('writes the "Synced » download" line to stderr via outputInfo when no sink is provided', async () => {
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
+    const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const updatedRemoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
+    vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+    vi.mocked(fetchThemeAssets).mockResolvedValue([{checksum: '2', key: 'templates/asset.json', value: 'content'}])
+    const outputInfoSpy = vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
+
+    // When
+    await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
+
+    // Then
+    expect(outputInfoSpy).toHaveBeenCalledTimes(1)
+    outputInfoSpy.mockRestore()
   })
 
   test('downloads newly added files from remote theme', async () => {

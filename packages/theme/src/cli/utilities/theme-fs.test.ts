@@ -23,6 +23,7 @@ import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
 import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {recordError} from '@shopify/cli-kit/node/analytics'
@@ -1012,6 +1013,7 @@ describe('theme-fs', () => {
       unsyncedFileKeys = new Set([fileKey])
       uploadErrors = new Map()
       vi.mocked(triggerBrowserFullReload).mockClear()
+      vi.mocked(outputInfo).mockClear()
     })
 
     test('returns false if file is not in unsyncedFileKeys', async () => {
@@ -1056,6 +1058,44 @@ describe('theme-fs', () => {
         expect(unsyncedFileKeys.has(fileKey)).toBe(false)
         expect(triggerBrowserFullReload).not.toHaveBeenCalled()
       })
+    })
+
+    test('writes the sync-result line to stderr via outputInfo when no logSyncLine sink is provided', async () => {
+      // Given
+      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([{key: fileKey, success: true, operation: Operation.Upload}])
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
+
+      // When
+      await handler({value: 'content'})
+
+      // Then
+      expect(outputInfo).toHaveBeenCalledTimes(1)
+      const infoLine = vi.mocked(outputInfo).mock.calls[0]?.[0] as string
+      expect(infoLine).toContain('✎')
+      expect(infoLine).toContain('updated')
+      expect(infoLine).not.toContain('●')
+      expect(infoLine).not.toContain('synced »')
+      expect(infoLine).toContain(fileKey)
+    })
+
+    test('routes the sync-result line into logSyncLine and does not write to stderr when a sink is provided', async () => {
+      // Given
+      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([{key: fileKey, success: true, operation: Operation.Upload}])
+      const logSyncLine = vi.fn()
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession, logSyncLine)
+
+      // When
+      await handler({value: 'content'})
+
+      // Then
+      expect(logSyncLine).toHaveBeenCalledTimes(1)
+      const syncLine = logSyncLine.mock.calls[0]?.[0] as string
+      expect(syncLine).toContain('✎')
+      expect(syncLine).toContain('updated')
+      expect(syncLine).not.toContain('●')
+      expect(syncLine).not.toContain('synced »')
+      expect(syncLine).toContain(fileKey)
+      expect(outputInfo).not.toHaveBeenCalled()
     })
 
     test('throws error and sets uploadErrors on failed sync', async () => {

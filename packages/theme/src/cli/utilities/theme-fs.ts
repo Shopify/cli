@@ -5,10 +5,12 @@ import {createSyncingCatchError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {getListingFilePath, updateSettingsDataForListing} from './theme-listing.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
+import {palette} from '../ui/palette.js'
+import colors from '@shopify/cli-kit/node/colors'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -181,7 +183,14 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       .then((content) => {
         if (!content) return
 
-        return handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)(content)
+        return handleSyncUpdate(
+          unsyncedFileKeys,
+          uploadErrors,
+          fileKey,
+          themeId,
+          adminSession,
+          options?.logSyncLine,
+        )(content)
       })
       .catch(createSyncingCatchError(fileKey, 'upload'))
 
@@ -225,7 +234,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
           .then(async (results) => {
             if (!results[0]?.success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
             unsyncedFileKeys.delete(fileKey)
-            outputSyncResult('delete', fileKey)
+            outputSyncResult('delete', fileKey, options?.logSyncLine)
             return true
           })
           .catch((error) => {
@@ -363,6 +372,7 @@ export function handleSyncUpdate(
   fileKey: string,
   themeId: string,
   adminSession: AdminSession,
+  logSyncLine?: (line: string) => void,
 ): (content: {value?: string; attachment?: string}) => PromiseLike<boolean> {
   return async (content) => {
     if (!unsyncedFileKeys.has(fileKey)) {
@@ -385,7 +395,7 @@ export function handleSyncUpdate(
     }
 
     unsyncedFileKeys.delete(fileKey)
-    outputSyncResult('update', fileKey)
+    outputSyncResult('update', fileKey, logSyncLine)
 
     return true
   }
@@ -568,10 +578,19 @@ function dirPath(filePath: string) {
   return filePath.substring(0, fileNameIndex)
 }
 
-function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
-  outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
-  )
+function outputSyncResult(action: 'update' | 'delete', fileKey: string, logSyncLine?: (line: string) => void): void {
+  // Clean-columns layout: subdued time · soft-accent ✎ tag (col-2 width 5) ·
+  // subdued past-tense op (padded 7) · file key. Padding is applied to the RAW
+  // text before coloring so the zero-width ANSI escapes do not break alignment.
+  const time = colors.hex(palette.subdued)(timestampDateFormat.format(new Date()))
+  const tag = colors.hex(palette.accent)('✎'.padEnd(5))
+  const op = colors.hex(palette.subdued)((action === 'delete' ? 'deleted' : 'updated').padEnd(7))
+  const line = `${time}  ${tag}  ${op}  ${fileKey}`
+  if (logSyncLine) {
+    logSyncLine(line)
+  } else {
+    outputInfo(line)
+  }
 }
 
 export function inferLocalHotReloadScriptPath() {

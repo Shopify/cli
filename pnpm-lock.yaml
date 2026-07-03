@@ -704,6 +704,9 @@ importers:
       h3:
         specifier: 1.15.11
         version: 1.15.11
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
       yaml:
         specifier: 2.9.0
         version: 2.9.0
@@ -711,6 +714,9 @@ importers:
       '@shopify/theme-hot-reload':
         specifier: ^0.0.22
         version: 0.0.22
+      '@types/react':
+        specifier: 18.3.12
+        version: 18.3.12
       '@vitest/coverage-istanbul':
         specifier: ^3.2.6
         version: 3.2.6(vitest@4.1.8)

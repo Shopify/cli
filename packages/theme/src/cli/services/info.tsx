@@ -1,12 +1,16 @@
 import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
+import {Panel} from '../ui/components/Panel.js'
+import {Cell, StyledTable} from '../ui/components/StyledTable.js'
+import {renderThemeView} from '../ui/render.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
+import {AlertCustomSection, InlineToken, renderInfo, TokenizedText} from '@shopify/cli-kit/node/ui'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import React from 'react'
 
 interface ThemeInfo {
   theme: {
@@ -152,4 +156,29 @@ function formatKey(key: string): string {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function isTabularBody(
+  body: AlertCustomSection['body'],
+): body is {tabularData: InlineToken[][]; firstColumnSubdued?: boolean} {
+  return typeof body === 'object' && body !== null && !Array.isArray(body) && 'tabularData' in body
+}
+
+function styledSection(section: AlertCustomSection, index: number): JSX.Element {
+  const body = isTabularBody(section.body) ? (
+    <StyledTable rows={section.body.tabularData as Cell[][]} firstColumnSubdued />
+  ) : (
+    <TokenizedText item={section.body} />
+  )
+  return (
+    <Panel key={index} title={section.title}>
+      {body}
+    </Panel>
+  )
+}
+
+export async function renderThemeInfo(formatted: {customSections: AlertCustomSection[]}): Promise<void> {
+  await renderThemeView(<>{formatted.customSections.map((section, index) => styledSection(section, index))}</>, () =>
+    renderInfo(formatted),
+  )
 }

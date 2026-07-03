@@ -1,1 +1,1 @@
-export {Box, Text, Static, useInput, useStdin, useStdout, measureElement} from 'ink'
+export {Box, Text, Static, useApp, useInput, useStdin, useStdout, measureElement} from 'ink'

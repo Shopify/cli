@@ -26,7 +26,7 @@ const config = [
   // The theme package has tests that partially mock cli-kit with dynamic imports.
   // Those mocks should not make every static cli-kit import in the package fail.
   {
-    files: ['packages/theme/src/**/*.ts'],
+    files: ['packages/theme/src/**/*.ts', 'packages/theme/src/**/*.tsx'],
     rules: {
       '@nx/enforce-module-boundaries': [
         'error',
