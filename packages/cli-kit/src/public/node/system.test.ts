@@ -1,6 +1,6 @@
 import * as system from './system.js'
 import {execa} from 'execa'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
 
@@ -350,6 +350,81 @@ describe('isStdinPiped', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('terminalSupportsPrompting', () => {
+  beforeEach(() => {
+    system._resetTerminalSupportsPromptingCache()
+  })
+
+  test('returns true when not in CI and both stdin/stdout are TTY', () => {
+    // Given
+    vi.stubEnv('CI', '')
+    Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true})
+    Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true})
+
+    // When
+    const got = system.terminalSupportsPrompting()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false when in CI', () => {
+    // Given
+    vi.stubEnv('CI', 'true')
+    Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true})
+    Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true})
+
+    // When
+    const got = system.terminalSupportsPrompting()
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  test('memoizes the result', () => {
+    // Given
+    vi.stubEnv('CI', '')
+    let calls = 0
+    Object.defineProperty(process.stdin, 'isTTY', {
+      get: () => {
+        calls++
+        return true
+      },
+      configurable: true,
+    })
+    Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true})
+
+    // When
+    system.terminalSupportsPrompting()
+    system.terminalSupportsPrompting()
+
+    // Then
+    expect(calls).toBe(1)
+  })
+
+  test('reset function clears the cache', () => {
+    // Given
+    vi.stubEnv('CI', '')
+    let calls = 0
+    Object.defineProperty(process.stdin, 'isTTY', {
+      get: () => {
+        calls++
+        return true
+      },
+      configurable: true,
+    })
+    Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true})
+
+    // When
+    system.terminalSupportsPrompting()
+    system._resetTerminalSupportsPromptingCache()
+    system.terminalSupportsPrompting()
+
+    // Then
+    expect(calls).toBe(2)
   })
 })
 

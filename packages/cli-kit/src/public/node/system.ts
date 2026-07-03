@@ -334,15 +334,26 @@ export function terminalSupportsHyperlinks(): boolean {
 }
 
 /**
+ * Memoized value for the terminal prompting support check.
+ */
+let memoizedTerminalSupportsPrompting: boolean | undefined
+
+/**
  * Check if the standard input and output streams support prompting.
  *
  * @returns True if the standard input and output streams support prompting.
  */
 export function terminalSupportsPrompting(): boolean {
-  if (isTruthy(process.env.CI)) {
-    return false
-  }
-  return Boolean(process.stdin.isTTY && process.stdout.isTTY)
+  return (memoizedTerminalSupportsPrompting ??=
+    !isTruthy(process.env.CI) && Boolean(process.stdin.isTTY && process.stdout.isTTY))
+}
+
+/**
+ * Resets the memoized value for the terminal prompting support check.
+ * This is used for testing purposes.
+ */
+export function _resetTerminalSupportsPromptingCache(): void {
+  memoizedTerminalSupportsPrompting = undefined
 }
 
 /**
