@@ -6,6 +6,7 @@ import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {unstyled} from './output.js'
+import {_resetTerminalSupportsPromptingCache} from './system.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 
@@ -20,6 +21,7 @@ beforeEach(() => {
   Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
   Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true, writable: true})
   vi.stubEnv('CI', '')
+  _resetTerminalSupportsPromptingCache()
 })
 
 afterEach(() => {
@@ -441,6 +443,7 @@ describe('applying environments', async () => {
   runTestInTmpDir('throws in non-TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
     // Given — simulate non-interactive (CI) environment
     vi.stubEnv('CI', 'true')
+    _resetTerminalSupportsPromptingCache()
 
     // When
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])

@@ -344,8 +344,13 @@ let memoizedTerminalSupportsPrompting: boolean | undefined
  * @returns True if the standard input and output streams support prompting.
  */
 export function terminalSupportsPrompting(): boolean {
-  return (memoizedTerminalSupportsPrompting ??=
-    !isTruthy(process.env.CI) && Boolean(process.stdin.isTTY && process.stdout.isTTY))
+  if (memoizedTerminalSupportsPrompting === undefined) {
+    const isCi = isTruthy(process.env.CI)
+    const isStdinTTY = Boolean(process.stdin.isTTY)
+    const isStdoutTTY = Boolean(process.stdout.isTTY)
+    memoizedTerminalSupportsPrompting = !isCi && isStdinTTY && isStdoutTTY
+  }
+  return memoizedTerminalSupportsPrompting
 }
 
 /**
