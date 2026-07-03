@@ -1,4 +1,4 @@
-import {difference, uniq, uniqBy} from './array.js'
+import {difference, takeRandomFromArray, uniq, uniqBy} from './array.js'
 import {describe, test, expect} from 'vitest'
 
 describe('uniqBy', () => {
@@ -60,5 +60,40 @@ describe('difference', () => {
 
     // Then
     expect(got).toEqual([1])
+  })
+})
+
+describe('takeRandomFromArray', () => {
+  test('returns an element from the array', () => {
+    // Given
+    const array = ['apple', 'banana', 'cherry']
+
+    // When
+    const got = takeRandomFromArray(array)
+
+    // Then
+    expect(array).toContain(got)
+  })
+
+  test('returns the only element from a single-element array', () => {
+    // Given
+    const array = ['apple']
+
+    // When
+    const got = takeRandomFromArray(array)
+
+    // Then
+    expect(got).toBe('apple')
+  })
+
+  test('returns undefined for an empty array', () => {
+    // Given
+    const array: string[] = []
+
+    // When
+    const got = takeRandomFromArray(array)
+
+    // Then
+    expect(got).toBeUndefined()
   })
 })

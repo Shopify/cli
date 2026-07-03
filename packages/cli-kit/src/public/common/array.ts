@@ -9,7 +9,22 @@ import type {List, ValueIteratee} from 'lodash'
  * @returns A random element from the array.
  */
 export function takeRandomFromArray<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)]!
+  const length = array.length
+  if (length === 0) {
+    return array[0]!
+  }
+
+  const arrayBuffer = new Uint32Array(1)
+  const maxUint32 = 4294967296
+  const maxMultiple = maxUint32 - (maxUint32 % length)
+
+  let randomValue: number
+  do {
+    globalThis.crypto.getRandomValues(arrayBuffer)
+    randomValue = arrayBuffer[0]!
+  } while (randomValue >= maxMultiple)
+
+  return array[randomValue % length]!
 }
 
 /**
