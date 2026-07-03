@@ -1,5 +1,62 @@
-import {difference, uniq, uniqBy} from './array.js'
+import {asHumanFriendlyArray, difference, uniq, uniqBy} from './array.js'
 import {describe, test, expect} from 'vitest'
+
+describe('asHumanFriendlyArray', () => {
+  test('returns an empty array when given an empty array', () => {
+    // Given
+    const items: string[] = []
+
+    // When
+    const got = asHumanFriendlyArray(items)
+
+    // Then
+    expect(got).toEqual([])
+  })
+
+  test('returns the same array when it has one item', () => {
+    // Given
+    const items = ['apple']
+
+    // When
+    const got = asHumanFriendlyArray(items)
+
+    // Then
+    expect(got).toEqual(['apple'])
+  })
+
+  test('returns the items separated by and when it has two items', () => {
+    // Given
+    const items = ['apple', 'banana']
+
+    // When
+    const got = asHumanFriendlyArray(items)
+
+    // Then
+    expect(got).toEqual(['apple', 'and', 'banana'])
+  })
+
+  test('returns the items separated by commas and and when it has more than two items', () => {
+    // Given
+    const items = ['apple', 'banana', 'orange']
+
+    // When
+    const got = asHumanFriendlyArray(items)
+
+    // Then
+    expect(got).toEqual(['apple', ', ', 'banana', 'and', 'orange'])
+  })
+
+  test('works with objects', () => {
+    // Given
+    const items = ['apple', 'banana', {command: '--flag'}]
+
+    // When
+    const got = asHumanFriendlyArray(items)
+
+    // Then
+    expect(got).toEqual(['apple', ', ', 'banana', 'and', {command: '--flag'}])
+  })
+})
 
 describe('uniqBy', () => {
   test('removes duplicates', () => {
