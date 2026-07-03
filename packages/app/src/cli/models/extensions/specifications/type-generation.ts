@@ -46,27 +46,44 @@ export function parseApiVersion(apiVersion: string): {year: number; month: numbe
   return {year: parseInt(year, 10), month: parseInt(month, 10)}
 }
 
-async function loadTsConfig(startPath: string): Promise<{
+interface LoadedTsConfig {
   compilerOptions: ts.CompilerOptions
   configPath: string | undefined
   fileNames?: string[]
   hasExplicitFiles: boolean
-}> {
+}
+
+export type TsConfigCache = Map<string, LoadedTsConfig>
+
+async function loadTsConfig(startPath: string, cache?: TsConfigCache): Promise<LoadedTsConfig> {
   const ts = await loadTypeScript()
   const configPath = ts.findConfigFile(startPath, ts.sys.fileExists.bind(ts.sys), 'tsconfig.json')
   if (!configPath) {
     return {compilerOptions: {}, configPath: undefined, hasExplicitFiles: false}
   }
 
+  const resolvedConfigPath = resolvePath(configPath)
+  const cachedConfig = cache?.get(resolvedConfigPath)
+  if (cachedConfig) {
+    return cachedConfig
+  }
+
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile.bind(ts.sys))
   if (configFile.error) {
-    return {compilerOptions: {}, configPath, hasExplicitFiles: false}
+    return {compilerOptions: {}, configPath: resolvedConfigPath, hasExplicitFiles: false}
   }
 
   const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configPath))
-  const hasExplicitFiles = Boolean(configFile.config.files ?? configFile.config.include)
+  const hasExplicitFiles = Boolean(parsedConfig.raw?.files ?? parsedConfig.raw?.include)
+  const loadedConfig = {
+    compilerOptions: parsedConfig.options,
+    configPath: resolvedConfigPath,
+    fileNames: parsedConfig.fileNames,
+    hasExplicitFiles,
+  }
 
-  return {compilerOptions: parsedConfig.options, configPath, fileNames: parsedConfig.fileNames, hasExplicitFiles}
+  cache?.set(resolvedConfigPath, loadedConfig)
+  return loadedConfig
 }
 
 async function fallbackResolve(importPath: string, baseDir: string): Promise<string | null> {
@@ -104,10 +121,12 @@ interface FindAllImportedFilesOptions {
   allowedFiles?: Set<string>
   alwaysAllowedFiles?: Set<string>
   importCache?: Map<string, string[]>
+  tsConfigCache?: TsConfigCache
 }
 
 interface ParseAndResolveImportsOptions {
   importCache?: Map<string, string[]>
+  tsConfigCache?: TsConfigCache
 }
 
 function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean {
@@ -147,7 +166,7 @@ async function parseAndResolveImports(
     const resolvedPaths: string[] = []
 
     // Load TypeScript configuration once
-    const {compilerOptions} = await loadTsConfig(filePath)
+    const {compilerOptions} = await loadTsConfig(filePath, options.tsConfigCache)
 
     // Determine script kind based on file extension
     let scriptKind = ts.ScriptKind.JSX
@@ -172,6 +191,7 @@ async function parseAndResolveImports(
           !node.importClause?.name &&
           node.importClause?.namedBindings &&
           ts.isNamedImports(node.importClause.namedBindings) &&
+          node.importClause.namedBindings.elements.length > 0 &&
           node.importClause.namedBindings.elements.every((element) => element.isTypeOnly)
         ) {
           return
@@ -191,6 +211,7 @@ async function parseAndResolveImports(
         if (
           node.exportClause &&
           ts.isNamedExports(node.exportClause) &&
+          node.exportClause.elements.length > 0 &&
           node.exportClause.elements.every((element) => element.isTypeOnly)
         ) {
           return
@@ -268,8 +289,9 @@ export async function findAllImportedFiles(
 export async function findExplicitTsConfigFiles(
   fromFile: string,
   extensionDirectory: string,
+  options: {tsConfigCache?: TsConfigCache} = {},
 ): Promise<Set<string> | undefined> {
-  const {configPath, fileNames, hasExplicitFiles} = await loadTsConfig(fromFile)
+  const {configPath, fileNames, hasExplicitFiles} = await loadTsConfig(fromFile, options.tsConfigCache)
   if (!configPath || !hasExplicitFiles) return
 
   if (!isWithinBoundary(configPath, extensionDirectory)) return

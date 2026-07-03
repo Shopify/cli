@@ -60,14 +60,20 @@ describe('findAllImportedFiles', () => {
       const typeNestedPath = joinPath(tmpDir, 'type-nested.ts')
       const exportedTypePath = joinPath(tmpDir, 'exported-types.ts')
       const exportedTypeNestedPath = joinPath(tmpDir, 'exported-type-nested.ts')
+      const emptyImportPath = joinPath(tmpDir, 'empty-import.ts')
+      const emptyImportNestedPath = joinPath(tmpDir, 'empty-import-nested.ts')
+      const emptyExportPath = joinPath(tmpDir, 'empty-export.ts')
+      const emptyExportNestedPath = joinPath(tmpDir, 'empty-export-nested.ts')
 
       await writeFile(
         entryPath,
         `
           import './value.ts'
           import MixedValue, { type MixedType } from './mixed-value.ts'
+          import {} from './empty-import.ts'
           import type { TypeOnly } from './types.ts'
           export { mixedValue, type MixedExportType } from './mixed-export.ts'
+          export {} from './empty-export.ts'
           export type { ExportedTypeOnly } from './exported-types.ts'
         `,
       )
@@ -79,6 +85,10 @@ describe('findAllImportedFiles', () => {
       await writeFile(typeNestedPath, `export const typeNested = true`)
       await writeFile(exportedTypePath, `import './exported-type-nested.ts'; export type ExportedTypeOnly = string`)
       await writeFile(exportedTypeNestedPath, `export const exportedTypeNested = true`)
+      await writeFile(emptyImportPath, `import './empty-import-nested.ts'`)
+      await writeFile(emptyImportNestedPath, `export const emptyImportNested = true`)
+      await writeFile(emptyExportPath, `import './empty-export-nested.ts'`)
+      await writeFile(emptyExportNestedPath, `export const emptyExportNested = true`)
 
       const importedFiles = (await findAllImportedFiles(entryPath)).map((file) => normalizePath(file))
 
@@ -86,6 +96,10 @@ describe('findAllImportedFiles', () => {
       expect(importedFiles).toContain(normalizePath(valueNestedPath))
       expect(importedFiles).toContain(normalizePath(mixedValuePath))
       expect(importedFiles).toContain(normalizePath(mixedExportPath))
+      expect(importedFiles).toContain(normalizePath(emptyImportPath))
+      expect(importedFiles).toContain(normalizePath(emptyImportNestedPath))
+      expect(importedFiles).toContain(normalizePath(emptyExportPath))
+      expect(importedFiles).toContain(normalizePath(emptyExportNestedPath))
       expect(importedFiles).not.toContain(normalizePath(typePath))
       expect(importedFiles).not.toContain(normalizePath(typeNestedPath))
       expect(importedFiles).not.toContain(normalizePath(exportedTypePath))
@@ -177,6 +191,57 @@ describe('findAllImportedFiles', () => {
       expect(importedFiles).toContain(normalizePath(includedNestedPath))
       expect(importedFiles).not.toContain(normalizePath(excludedPath))
       expect(importedFiles).not.toContain(normalizePath(excludedNestedPath))
+    })
+  })
+
+  test('uses explicit tsconfig include inherited from an extended config', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDir = joinPath(tmpDir, 'extensions', 'extension')
+      const srcDir = joinPath(extensionDir, 'src')
+      const excludedDir = joinPath(extensionDir, 'excluded')
+
+      await mkdir(extensionDir)
+      await mkdir(srcDir)
+      await mkdir(excludedDir)
+
+      const entryPath = joinPath(srcDir, 'index.ts')
+      const includedPath = joinPath(srcDir, 'included.ts')
+      const excludedPath = joinPath(excludedDir, 'excluded.ts')
+
+      await writeFile(
+        joinPath(tmpDir, 'tsconfig.base.json'),
+        JSON.stringify({
+          include: ['extensions/extension/src/**/*'],
+        }),
+      )
+      await writeFile(
+        joinPath(extensionDir, 'tsconfig.json'),
+        JSON.stringify({
+          extends: '../../tsconfig.base.json',
+        }),
+      )
+      await writeFile(
+        entryPath,
+        `
+          import './included.ts'
+          import '../excluded/excluded.ts'
+        `,
+      )
+      await writeFile(includedPath, `export const included = true`)
+      await writeFile(excludedPath, `export const excluded = true`)
+
+      const allowedFiles = await findExplicitTsConfigFiles(entryPath, extensionDir)
+      const importedFiles = (
+        await findAllImportedFiles(entryPath, {
+          boundaryDirectory: extensionDir,
+          allowedFiles,
+          alwaysAllowedFiles: new Set([entryPath]),
+        })
+      ).map((file) => normalizePath(file))
+
+      expect(allowedFiles).toContain(normalizePath(entryPath))
+      expect(importedFiles).toContain(normalizePath(includedPath))
+      expect(importedFiles).not.toContain(normalizePath(excludedPath))
     })
   })
 
