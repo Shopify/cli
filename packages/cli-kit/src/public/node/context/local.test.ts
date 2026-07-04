@@ -10,6 +10,7 @@ import {
   macAddress,
   getThemeKitAccessDomain,
   opentelemetryDomain,
+  _resetCIPlatformCache,
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
@@ -252,6 +253,10 @@ describe('cloudEnvironment', () => {
 })
 
 describe('ciPlatform', () => {
+  afterEach(() => {
+    _resetCIPlatformCache()
+  })
+
   test('should return isCI false for non-CI environment', () => {
     // Given
     const nonCIResult = ciPlatform({})
@@ -338,6 +343,39 @@ describe('ciPlatform', () => {
       name: 'azure',
       metadata: {},
     })
+  })
+
+  test('should return memoized data when env is process.env', () => {
+    // Given
+    const originalEnv = process.env
+    try {
+      process.env = {CI: 'true', GITHUB_ACTION: '1'} as any
+      const firstResult = ciPlatform()
+
+      // When
+      process.env = {CI: 'false'} as any
+      const secondResult = ciPlatform()
+
+      // Then
+      expect(secondResult).toBe(firstResult)
+      expect(secondResult.isCI).toBe(true)
+    } finally {
+      process.env = originalEnv
+    }
+  })
+
+  test('should NOT return memoized data when env is NOT process.env', () => {
+    // Given
+    const env1 = {CI: 'true', GITHUB_ACTION: '1'}
+    const env2 = {CI: 'false'}
+    const firstResult = ciPlatform(env1)
+
+    // When
+    const secondResult = ciPlatform(env2)
+
+    // Then
+    expect(secondResult).not.toBe(firstResult)
+    expect(secondResult.isCI).toBe(false)
   })
 })
 

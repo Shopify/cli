@@ -45,6 +45,14 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the CI platform check.
+ */
+let memoizedCIPlatform:
+  | {isCI: true; name: string; metadata: Metadata}
+  | {isCI: false; name?: undefined; metadata?: undefined}
+  | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -247,6 +255,14 @@ export async function hasGit(): Promise<boolean> {
 }
 
 /**
+ * Resets the memoized CI platform value.
+ * This is useful for testing purposes.
+ */
+export function _resetCIPlatformCache(): void {
+  memoizedCIPlatform = undefined
+}
+
+/**
  * Gets info on the CI platform the CLI is running on, if applicable.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -255,6 +271,10 @@ export async function hasGit(): Promise<boolean> {
 export function ciPlatform(
   env = process.env,
 ): {isCI: true; name: string; metadata: Metadata} | {isCI: false; name?: undefined; metadata?: undefined} {
+  if (env === process.env && memoizedCIPlatform !== undefined) {
+    return memoizedCIPlatform
+  }
+  let result: {isCI: true; name: string; metadata: Metadata} | {isCI: false; name?: undefined; metadata?: undefined}
   if (isTruthy(env.CI)) {
     let name = 'unknown'
     if (isSet(env.BITBUCKET_BUILD_NUMBER)) {
@@ -269,21 +289,26 @@ export function ciPlatform(
       name = 'buildkite'
     }
 
-    return {
+    result = {
       isCI: true,
       name,
       metadata: getCIMetadata(name, env),
     }
   } else if (isTruthy(env.TF_BUILD)) {
-    return {
+    result = {
       isCI: true,
       name: 'azure',
       metadata: getCIMetadata('azure', env),
     }
+  } else {
+    result = {
+      isCI: false,
+    }
   }
-  return {
-    isCI: false,
+  if (env === process.env) {
+    memoizedCIPlatform = result
   }
+  return result
 }
 
 /**
