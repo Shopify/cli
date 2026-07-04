@@ -31,6 +31,7 @@ interface ZipOptions {
  * Windows.
  *
  * @param options - ZipOptions.
+ * @returns A promise that resolves when the directory has been zipped.
  */
 export async function zip(options: ZipOptions): Promise<void> {
   const {inputDirectory, outputZipPath, matchFilePattern = '**/*'} = options
@@ -42,47 +43,39 @@ export async function zip(options: ZipOptions): Promise<void> {
     followSymbolicLinks: false,
   })
 
-  return new Promise((resolve, reject) => {
-    const archive = archiver('zip')
+  const archive = archiver('zip')
+  const output = createWriteStream(outputZipPath)
 
-    const output = createWriteStream(outputZipPath)
-    output.on('close', () => {
-      resolve()
-    })
-    archive.on('error', (error) => {
-      reject(error)
-    })
-    archive.pipe(output)
-
-    const directoriesToAdd = new Set<string>()
-    for (const filePath of pathsToZip) {
-      const fileRelativePath = relativePath(inputDirectory, filePath)
-      collectParentDirectories(fileRelativePath, directoriesToAdd)
-    }
-
-    const sortedDirs = Array.from(directoriesToAdd).sort((left, right) => left.localeCompare(right))
-    for (const dir of sortedDirs) {
-      const dirName = dir.endsWith('/') ? dir : `${dir}/`
-      archive.append(Buffer.alloc(0), {name: dirName})
-    }
-
-    // Read all files immediately before adding to archive to prevent ENOENT errors
-    // Using archive.file() causes lazy loading which fails if files are deleted before finalize()
-    const addFilesPromises = pathsToZip.map(async (filePath) => {
-      await archiveFile(inputDirectory, filePath, archive)
-    })
-
-    // Wait for all files to be read and added before finalizing
-    Promise.all(addFilesPromises)
-      .then(() => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        archive.finalize()
-      })
-      .catch((error) => {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-        reject(error)
-      })
+  const archivePromise = new Promise<void>((resolve, reject) => {
+    output.on('close', () => resolve())
+    archive.on('error', (error) => reject(error))
   })
+
+  archive.pipe(output)
+
+  const directoriesToAdd = new Set<string>()
+  for (const filePath of pathsToZip) {
+    const fileRelativePath = relativePath(inputDirectory, filePath)
+    collectParentDirectories(fileRelativePath, directoriesToAdd)
+  }
+
+  const sortedDirs = Array.from(directoriesToAdd).sort((left, right) => left.localeCompare(right))
+  for (const dir of sortedDirs) {
+    const dirName = dir.endsWith('/') ? dir : `${dir}/`
+    archive.append(Buffer.alloc(0), {name: dirName})
+  }
+
+  // Read all files immediately before adding to archive to prevent ENOENT errors
+  // Using archive.file() causes lazy loading which fails if files are deleted before finalize()
+  const addFilesPromises = pathsToZip.map(async (filePath) => {
+    await archiveFile(inputDirectory, filePath, archive)
+  })
+
+  // Wait for all files to be read and added before finalizing
+  await Promise.all(addFilesPromises)
+  await archive.finalize()
+
+  return archivePromise
 }
 
 function collectParentDirectories(fileRelativePath: string, accumulator: Set<string>): void {
@@ -154,34 +147,32 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
 
   try {
     // Create tar archive using archiver
-    await new Promise<void>((resolve, reject) => {
-      const archive = archiver('tar')
-      const output = createWriteStream(tempTarPath)
+    const archive = archiver('tar')
+    const output = createWriteStream(tempTarPath)
 
+    const archivePromise = new Promise<void>((resolve, reject) => {
       output.on('close', () => resolve())
       archive.on('error', (error) => reject(error))
-      archive.pipe(output)
-
-      glob(options.matchFilePattern ?? '**/*', {
-        cwd: options.inputDirectory,
-        absolute: true,
-        dot: true,
-        followSymbolicLinks: false,
-      })
-        .then(async (pathsToZip) => {
-          // Read all files immediately to prevent ENOENT errors during race conditions
-          const addFilesPromises = pathsToZip.map(async (filePath) => {
-            await archiveFile(options.inputDirectory, filePath, archive)
-          })
-
-          await Promise.all(addFilesPromises)
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          archive.finalize()
-        })
-        .catch((error) => {
-          reject(error instanceof Error ? error : new Error(String(error)))
-        })
     })
+
+    archive.pipe(output)
+
+    const pathsToZip = await glob(options.matchFilePattern ?? '**/*', {
+      cwd: options.inputDirectory,
+      absolute: true,
+      dot: true,
+      followSymbolicLinks: false,
+    })
+
+    // Read all files immediately to prevent ENOENT errors during race conditions
+    const addFilesPromises = pathsToZip.map(async (filePath) => {
+      await archiveFile(options.inputDirectory, filePath, archive)
+    })
+
+    await Promise.all(addFilesPromises)
+    await archive.finalize()
+
+    await archivePromise
 
     const tarContent = readFileSync(tempTarPath)
     const compressed = brotliCompressSync(tarContent, {
