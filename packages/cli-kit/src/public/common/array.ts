@@ -8,8 +8,24 @@ import type {List, ValueIteratee} from 'lodash'
  * @param array - Array from which we'll select a random item.
  * @returns A random element from the array.
  */
-export function takeRandomFromArray<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)]!
+export function takeRandomFromArray<T>(array: T[]): T | undefined {
+  if (array.length === 0) {
+    return undefined
+  }
+
+  // Rejection sampling to avoid modulo bias
+  const maxUint32 = 0xffffffff
+  const range = array.length
+  const limit = maxUint32 - (maxUint32 % range)
+
+  const randomBuffer = new Uint32Array(1)
+  let randomValue: number
+  do {
+    globalThis.crypto.getRandomValues(randomBuffer)
+    randomValue = randomBuffer[0]!
+  } while (randomValue >= limit)
+
+  return array[randomValue % range]
 }
 
 /**
