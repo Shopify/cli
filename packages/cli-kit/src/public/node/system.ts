@@ -365,6 +365,19 @@ export async function isWsl(): Promise<boolean> {
 }
 
 /**
+ * Memoized value for the stdin piped check.
+ */
+let memoizedIsStdinPiped: boolean | undefined
+
+/**
+ * Reset the memoized value for the stdin piped check.
+ * This is only used for testing.
+ */
+export function _resetIsStdinPipedCache(): void {
+  memoizedIsStdinPiped = undefined
+}
+
+/**
  * Check if stdin has piped data available.
  * This distinguishes between actual piped input (e.g., `echo "query" | cmd`)
  * and non-TTY environments without input (e.g., CI).
@@ -372,13 +385,18 @@ export async function isWsl(): Promise<boolean> {
  * @returns True if stdin is receiving piped data or file redirect, false otherwise.
  */
 export function isStdinPiped(): boolean {
+  if (memoizedIsStdinPiped !== undefined) {
+    return memoizedIsStdinPiped
+  }
+
   try {
     const stats = fstatSync(0)
-    return stats.isFIFO() || stats.isFile()
+    memoizedIsStdinPiped = stats.isFIFO() || stats.isFile()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    return false
+    memoizedIsStdinPiped = false
   }
+  return memoizedIsStdinPiped
 }
 
 /**

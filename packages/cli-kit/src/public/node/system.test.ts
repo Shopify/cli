@@ -1,6 +1,7 @@
 import * as system from './system.js'
+import {_resetIsStdinPipedCache} from './system.js'
 import {execa} from 'execa'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
 
@@ -14,6 +15,10 @@ vi.mock('fs', async (importOriginal) => {
     ...actual,
     fstatSync: vi.fn(),
   }
+})
+
+beforeEach(() => {
+  _resetIsStdinPipedCache()
 })
 
 describe('captureOutput', () => {
@@ -350,6 +355,18 @@ describe('isStdinPiped', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+
+  test('memoizes the result', () => {
+    // Given
+    vi.mocked(fs.fstatSync).mockReturnValue({isFIFO: () => true, isFile: () => false} as fs.Stats)
+
+    // When
+    system.isStdinPiped()
+    system.isStdinPiped()
+
+    // Then
+    expect(fs.fstatSync).toHaveBeenCalledTimes(1)
   })
 })
 
