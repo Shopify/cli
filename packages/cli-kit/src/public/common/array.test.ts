@@ -1,5 +1,29 @@
-import {difference, uniq, uniqBy} from './array.js'
+import {difference, takeRandomFromArray, uniq, uniqBy} from './array.js'
 import {describe, test, expect} from 'vitest'
+
+describe('takeRandomFromArray', () => {
+  test('returns a random element from the array', () => {
+    // Given
+    const array = [1, 2, 3, 4, 5]
+
+    // When
+    const got = takeRandomFromArray(array)
+
+    // Then
+    expect(array).toContain(got)
+  })
+
+  test('returns undefined for an empty array', () => {
+    // Given
+    const array: number[] = []
+
+    // When
+    const got = takeRandomFromArray(array)
+
+    // Then
+    expect(got).toBeUndefined()
+  })
+})
 
 describe('uniqBy', () => {
   test('removes duplicates', () => {
