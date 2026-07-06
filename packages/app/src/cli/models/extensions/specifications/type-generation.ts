@@ -129,7 +129,7 @@ interface ParseAndResolveImportsOptions {
   tsConfigCache?: TsConfigCache
 }
 
-function hasOnlyTypeOnlyElements(elements: readonly {isTypeOnly: boolean}[]): boolean {
+function hasOnlyTypeOnlyElements(elements: ReadonlyArray<{isTypeOnly: boolean}>): boolean {
   return elements.length > 0 && elements.every((element) => element.isTypeOnly)
 }
 
