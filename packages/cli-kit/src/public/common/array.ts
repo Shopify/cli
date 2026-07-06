@@ -10,8 +10,16 @@ import type {List, ValueIteratee} from 'lodash'
  */
 export function takeRandomFromArray<T>(array: T[]): T {
   if (array.length === 0) return array[0]!
-  const randomIndex = globalThis.crypto.getRandomValues(new Uint32Array(1))[0]! % array.length
-  return array[randomIndex]!
+  if (array.length === 1) return array[0]!
+
+  const maxUint32 = 0xffffffff
+  const range = maxUint32 - (maxUint32 % array.length)
+  let randomValue: number
+  do {
+    randomValue = globalThis.crypto.getRandomValues(new Uint32Array(1))[0]!
+  } while (randomValue >= range)
+
+  return array[randomValue % array.length]!
 }
 
 /**
