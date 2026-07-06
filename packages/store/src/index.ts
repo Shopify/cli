@@ -1,5 +1,4 @@
 import StoreAuthList from './cli/commands/store/auth/list.js'
-import FlowToolCall from './cli/commands/flow/tool/call.js'
 import FlowEnvSearch from './cli/commands/flow/env/search.js'
 import FlowInit from './cli/commands/flow/init.js'
 import FlowResourceSearch from './cli/commands/flow/resource/search.js'
@@ -28,7 +27,6 @@ import StoreList from './cli/commands/store/list.js'
 
 const COMMANDS = {
   'store:auth:list': StoreAuthList,
-  'flow:tool:call': FlowToolCall,
   'flow:env:search': FlowEnvSearch,
   'flow:init': FlowInit,
   'flow:resource:search': FlowResourceSearch,
