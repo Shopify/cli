@@ -393,3 +393,19 @@ describe('readStdinString', () => {
     await expect(got).rejects.toThrow('Stdin input exceeded the maximum allowed size.')
   })
 })
+
+describe('sleep', () => {
+  test('waits for the given number of seconds', async () => {
+    // Given
+    vi.useFakeTimers()
+    const seconds = 0.1
+
+    // When
+    const sleepPromise = system.sleep(seconds)
+    await vi.advanceTimersByTimeAsync(seconds * 1000)
+    await sleepPromise
+
+    // Then
+    vi.useRealTimers()
+  })
+})
