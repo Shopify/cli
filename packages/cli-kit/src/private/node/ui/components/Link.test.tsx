@@ -1,13 +1,23 @@
 import {Link} from './Link.js'
 import {LinksContext} from '../contexts/LinksContext.js'
 import {render} from '../../testing/ui.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import React from 'react'
-import supportsHyperlinks from 'supports-hyperlinks'
+import {terminalSupportsHyperlinks, _resetTerminalSupportsHyperlinksCache} from '../../../../public/node/system.js'
 
-vi.mock('supports-hyperlinks')
+vi.mock('../../../../public/node/system.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../public/node/system.js')>()
+  return {
+    ...actual,
+    terminalSupportsHyperlinks: vi.fn(),
+  }
+})
 
 describe('Link', async () => {
+  beforeEach(() => {
+    _resetTerminalSupportsHyperlinksCache()
+  })
+
   test("renders correctly with a fallback for terminals that don't support hyperlinks", async () => {
     // Given
     supportHyperLinks(false)
@@ -164,7 +174,7 @@ describe('Link', async () => {
   })
 
   function supportHyperLinks(isSupported: boolean) {
-    vi.mocked(supportsHyperlinks).stdout = isSupported
+    vi.mocked(terminalSupportsHyperlinks).mockReturnValue(isSupported)
   }
 
   function asLink(url: string, label?: string) {

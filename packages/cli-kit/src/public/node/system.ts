@@ -325,12 +325,25 @@ export async function sleep(seconds: number): Promise<void> {
 }
 
 /**
+ * Memoized value for the terminal hyperlinks support check.
+ */
+let terminalSupportsHyperlinksCache: boolean | undefined
+
+/**
  * Check if the terminal supports OSC 8 hyperlinks.
  *
  * @returns True if the terminal supports hyperlinks.
  */
 export function terminalSupportsHyperlinks(): boolean {
-  return supportsHyperlinks.stdout
+  return (terminalSupportsHyperlinksCache ??= supportsHyperlinks.stdout)
+}
+
+/**
+ * Resets the terminal hyperlinks support cache.
+ * This is only intended for use in tests.
+ */
+export function _resetTerminalSupportsHyperlinksCache(): void {
+  terminalSupportsHyperlinksCache = undefined
 }
 
 /**

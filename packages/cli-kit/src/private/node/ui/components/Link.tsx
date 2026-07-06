@@ -1,8 +1,8 @@
 import {LinksContext, ContextValue as LinksContextValue} from '../contexts/LinksContext.js'
 import {Text} from 'ink'
 import React, {FunctionComponent, useContext} from 'react'
+import {terminalSupportsHyperlinks} from '../../../../public/node/system.js'
 import ansiEscapes from 'ansi-escapes'
-import supportsHyperlinks from 'supports-hyperlinks'
 import chalk from 'chalk'
 
 interface LinkProps {
@@ -11,7 +11,7 @@ interface LinkProps {
 }
 
 function link(label: string | undefined, url: string, linksContext: LinksContextValue | null) {
-  if (!supportsHyperlinks.stdout) {
+  if (!terminalSupportsHyperlinks()) {
     if (linksContext === null) {
       if (url === (label ?? url)) {
         return url

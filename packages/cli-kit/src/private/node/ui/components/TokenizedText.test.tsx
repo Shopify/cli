@@ -2,12 +2,18 @@ import {tokenItemToString, TokenizedText} from './TokenizedText.js'
 import {LinksContext, Link} from '../contexts/LinksContext.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {render} from '../../testing/ui.js'
-import {describe, expect, test, vi} from 'vitest'
-import supportsHyperlinks from 'supports-hyperlinks'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {terminalSupportsHyperlinks, _resetTerminalSupportsHyperlinksCache} from '../../../../public/node/system.js'
 
 import React, {FunctionComponent, useRef} from 'react'
 
-vi.mock('supports-hyperlinks')
+vi.mock('../../../../public/node/system.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../public/node/system.js')>()
+  return {
+    ...actual,
+    terminalSupportsHyperlinks: vi.fn(),
+  }
+})
 
 // Matches the on-the-wire OSC 8 sequence emitted by `ansiEscapes.link`,
 // which is what `<Link>` ultimately renders when the terminal supports
@@ -37,6 +43,10 @@ const WithLinksContext: FunctionComponent<{children: React.ReactNode}> = ({child
 }
 
 describe('TokenizedText', async () => {
+  beforeEach(() => {
+    _resetTerminalSupportsHyperlinksCache()
+  })
+
   test('renders arrays of items separated by spaces', async () => {
     const item = [
       'Run',
@@ -90,7 +100,7 @@ describe('TokenizedText', async () => {
 
   describe('markdown-link parsing in plain strings', async () => {
     test('renders strings without a markdown link unchanged', async () => {
-      vi.mocked(supportsHyperlinks).stdout = false
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(false)
 
       const {lastFrame} = render(
         <WithLinksContext>
@@ -102,7 +112,7 @@ describe('TokenizedText', async () => {
     })
 
     test('does not linkify a bare URL — callers must opt in via `[label](url)` or `<url>`', async () => {
-      vi.mocked(supportsHyperlinks).stdout = true
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(true)
       const url = 'https://example.com/docs'
 
       const {lastFrame} = render(
@@ -116,7 +126,7 @@ describe('TokenizedText', async () => {
     })
 
     test('replaces an opt-in `[label](url)` with the label and a `[N]` footnote anchor when the terminal does not support hyperlinks', async () => {
-      vi.mocked(supportsHyperlinks).stdout = false
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(false)
       const url = 'https://shopify.dev/docs/apps/build/sales-channels/channel-config-extension#specification-properties'
 
       const {lastFrame} = render(
@@ -130,7 +140,7 @@ describe('TokenizedText', async () => {
     })
 
     test('wraps the label of a `[label](url)` in OSC 8 escapes when the terminal supports hyperlinks', async () => {
-      vi.mocked(supportsHyperlinks).stdout = true
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(true)
       const url = 'https://example.com/docs'
 
       const {lastFrame} = render(
@@ -143,7 +153,7 @@ describe('TokenizedText', async () => {
     })
 
     test('renders a label-less `<url>` autolink as a `[N]` anchor and registers the URL in the footnote table', async () => {
-      vi.mocked(supportsHyperlinks).stdout = false
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(false)
       const url = 'https://shopify.dev/docs'
 
       const {lastFrame} = render(
@@ -157,7 +167,7 @@ describe('TokenizedText', async () => {
     })
 
     test('parses multiple opt-in links in the same string', async () => {
-      vi.mocked(supportsHyperlinks).stdout = false
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(false)
       const first = 'https://example.com/a'
       const second = 'https://example.com/b'
 
@@ -171,7 +181,7 @@ describe('TokenizedText', async () => {
     })
 
     test('parses back-to-back opt-in links separated only by whitespace', async () => {
-      vi.mocked(supportsHyperlinks).stdout = false
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(false)
       const first = 'https://example.com/a'
       const second = 'https://example.com/b'
 
@@ -185,7 +195,7 @@ describe('TokenizedText', async () => {
     })
 
     test('does not parse markdown links that omit the http(s) scheme', async () => {
-      vi.mocked(supportsHyperlinks).stdout = true
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(true)
 
       const {lastFrame} = render(
         <WithLinksContext>
@@ -198,7 +208,7 @@ describe('TokenizedText', async () => {
     })
 
     test('does not parse opt-in markdown when no LinksContext is present (e.g. outside a Banner)', async () => {
-      vi.mocked(supportsHyperlinks).stdout = true
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(true)
       const url = 'https://example.com/docs'
 
       const {lastFrame} = render(<TokenizedText item={`see [docs](${url}) now`} />)
@@ -213,7 +223,7 @@ describe('TokenizedText', async () => {
       // which is misleading. With opt-in markdown the bare URL stays
       // as-is and only the doc reference — which the server marks up —
       // becomes clickable.
-      vi.mocked(supportsHyperlinks).stdout = true
+      vi.mocked(terminalSupportsHyperlinks).mockReturnValue(true)
       const tunnelUrl = 'https://wrong'
       const docUrl = 'https://shopify.dev/docs/tunnels'
 

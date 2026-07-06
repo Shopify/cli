@@ -13,14 +13,21 @@ import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {TokenizedString} from './output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import supportsHyperlinks from 'supports-hyperlinks'
+import {terminalSupportsHyperlinks, _resetTerminalSupportsHyperlinksCache} from './system.js'
 
 import {Writable} from 'stream'
 
-vi.mock('supports-hyperlinks')
+vi.mock('./system.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./system.js')>()
+  return {
+    ...actual,
+    terminalSupportsHyperlinks: vi.fn(),
+  }
+})
 
 beforeEach(() => {
-  vi.mocked(supportsHyperlinks).stdout = false
+  _resetTerminalSupportsHyperlinksCache()
+  vi.mocked(terminalSupportsHyperlinks).mockReturnValue(false)
 })
 
 afterEach(() => {

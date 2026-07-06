@@ -353,6 +353,38 @@ describe('isStdinPiped', () => {
   })
 })
 
+import supportsHyperlinks from 'supports-hyperlinks'
+
+describe('terminalSupportsHyperlinks', () => {
+  test('memoizes the result and is reset by _resetTerminalSupportsHyperlinksCache', () => {
+    // Given
+    const stdoutSpy = vi.spyOn(supportsHyperlinks, 'stdout', 'get')
+
+    // When
+    system._resetTerminalSupportsHyperlinksCache()
+    stdoutSpy.mockReturnValue(true)
+    const firstCall = system.terminalSupportsHyperlinks()
+    const secondCall = system.terminalSupportsHyperlinks()
+
+    // Then
+    expect(firstCall).toBe(true)
+    expect(secondCall).toBe(true)
+    expect(stdoutSpy).toHaveBeenCalledTimes(1)
+
+    // When
+    system._resetTerminalSupportsHyperlinksCache()
+    stdoutSpy.mockReturnValue(false)
+    const thirdCall = system.terminalSupportsHyperlinks()
+
+    // Then
+    expect(thirdCall).toBe(false)
+    expect(stdoutSpy).toHaveBeenCalledTimes(2)
+
+    stdoutSpy.mockRestore()
+    vi.resetModules()
+  })
+})
+
 describe('readStdinString', () => {
   test('returns undefined when stdin is not piped', async () => {
     // Given
