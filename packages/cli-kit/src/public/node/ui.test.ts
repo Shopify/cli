@@ -12,8 +12,8 @@ import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {TokenizedString} from './output.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {terminalSupportsHyperlinks, _resetTerminalSupportsHyperlinksCache} from './system.js'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {Writable} from 'stream'
 

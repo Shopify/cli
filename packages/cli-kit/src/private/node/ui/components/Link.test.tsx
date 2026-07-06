@@ -1,9 +1,9 @@
 import {Link} from './Link.js'
 import {LinksContext} from '../contexts/LinksContext.js'
 import {render} from '../../testing/ui.js'
+import {terminalSupportsHyperlinks, _resetTerminalSupportsHyperlinksCache} from '../../../../public/node/system.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import React from 'react'
-import {terminalSupportsHyperlinks, _resetTerminalSupportsHyperlinksCache} from '../../../../public/node/system.js'
 
 vi.mock('../../../../public/node/system.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../public/node/system.js')>()

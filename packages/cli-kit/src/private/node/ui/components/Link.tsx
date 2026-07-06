@@ -1,7 +1,7 @@
+import {terminalSupportsHyperlinks} from '../../../../public/node/system.js'
 import {LinksContext, ContextValue as LinksContextValue} from '../contexts/LinksContext.js'
 import {Text} from 'ink'
 import React, {FunctionComponent, useContext} from 'react'
-import {terminalSupportsHyperlinks} from '../../../../public/node/system.js'
 import ansiEscapes from 'ansi-escapes'
 import chalk from 'chalk'
 

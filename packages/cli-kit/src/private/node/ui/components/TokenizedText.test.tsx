@@ -2,8 +2,8 @@ import {tokenItemToString, TokenizedText} from './TokenizedText.js'
 import {LinksContext, Link} from '../contexts/LinksContext.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {render} from '../../testing/ui.js'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {terminalSupportsHyperlinks, _resetTerminalSupportsHyperlinksCache} from '../../../../public/node/system.js'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 import React, {FunctionComponent, useRef} from 'react'
 

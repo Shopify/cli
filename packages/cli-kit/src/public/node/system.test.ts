@@ -1,9 +1,9 @@
 import * as system from './system.js'
 import {execa} from 'execa'
+import supportsHyperlinks from 'supports-hyperlinks'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
-
 import * as fs from 'fs'
 
 vi.mock('which')
@@ -352,8 +352,6 @@ describe('isStdinPiped', () => {
     expect(got).toBe(false)
   })
 })
-
-import supportsHyperlinks from 'supports-hyperlinks'
 
 describe('terminalSupportsHyperlinks', () => {
   test('memoizes the result and is reset by _resetTerminalSupportsHyperlinksCache', () => {
