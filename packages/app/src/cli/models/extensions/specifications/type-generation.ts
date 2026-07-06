@@ -129,6 +129,28 @@ interface ParseAndResolveImportsOptions {
   tsConfigCache?: TsConfigCache
 }
 
+function hasOnlyTypeOnlyElements(elements: readonly {isTypeOnly: boolean}[]): boolean {
+  return elements.length > 0 && elements.every((element) => element.isTypeOnly)
+}
+
+function isTypeOnlyImport(node: ts.ImportDeclaration, typescript: typeof ts): boolean {
+  if (node.importClause?.isTypeOnly) return true
+
+  const namedBindings = node.importClause?.namedBindings
+  if (node.importClause?.name || !namedBindings) return false
+
+  return typescript.isNamedImports(namedBindings) && hasOnlyTypeOnlyElements(namedBindings.elements)
+}
+
+function isTypeOnlyExport(node: ts.ExportDeclaration, typescript: typeof ts): boolean {
+  if (node.isTypeOnly) return true
+
+  const exportClause = node.exportClause
+  if (!exportClause) return false
+
+  return typescript.isNamedExports(exportClause) && hasOnlyTypeOnlyElements(exportClause.elements)
+}
+
 function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean {
   if (!boundaryDirectory) return true
   return isSubpath(resolvePath(boundaryDirectory), resolvePath(filePath))
@@ -183,17 +205,7 @@ async function parseAndResolveImports(
 
     const visit = (node: ts.Node): void => {
       if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        if (node.importClause?.isTypeOnly) {
-          return
-        }
-
-        if (
-          !node.importClause?.name &&
-          node.importClause?.namedBindings &&
-          ts.isNamedImports(node.importClause.namedBindings) &&
-          node.importClause.namedBindings.elements.length > 0 &&
-          node.importClause.namedBindings.elements.every((element) => element.isTypeOnly)
-        ) {
+        if (isTypeOnlyImport(node, ts)) {
           return
         }
 
@@ -204,16 +216,7 @@ async function parseAndResolveImports(
           importPaths.push(firstArg.text)
         }
       } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        if (node.isTypeOnly) {
-          return
-        }
-
-        if (
-          node.exportClause &&
-          ts.isNamedExports(node.exportClause) &&
-          node.exportClause.elements.length > 0 &&
-          node.exportClause.elements.every((element) => element.isTypeOnly)
-        ) {
+        if (isTypeOnlyExport(node, ts)) {
           return
         }
 
@@ -238,7 +241,9 @@ async function parseAndResolveImports(
       if (resolvedModule.resolvedModule?.resolvedFileName) {
         const resolvedPath = resolvedModule.resolvedModule.resolvedFileName
 
-        resolvedPaths.push(resolvedPath)
+        if (!resolvedPath.includes('node_modules')) {
+          resolvedPaths.push(resolvedPath)
+        }
       } else {
         // Fallback to manual resolution for edge cases
         // eslint-disable-next-line no-await-in-loop
@@ -293,8 +298,6 @@ export async function findExplicitTsConfigFiles(
 ): Promise<Set<string> | undefined> {
   const {configPath, fileNames, hasExplicitFiles} = await loadTsConfig(fromFile, options.tsConfigCache)
   if (!configPath || !hasExplicitFiles) return
-
-  if (!isWithinBoundary(configPath, extensionDirectory)) return
 
   return new Set(
     (fileNames ?? [])
