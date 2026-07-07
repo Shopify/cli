@@ -1,12 +1,12 @@
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
-import {testApp, testAppWithConfig, testDeveloperPlatformClient, testUIExtension} from './app.test-data.js'
+import {testApp, testAppWithConfig, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('updateAppIdentifiers', () => {
-  test('persists the ids that are not env variables when deploying, creating a new file', async () => {
+  test('updates ids in memory when deploying without creating a new env file', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension()
@@ -25,19 +25,15 @@ describe('updateAppIdentifiers', () => {
           },
         },
         command: 'deploy',
-        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       // Then
-      const dotEnvFile = await readAndParseDotEnv(joinPath(tmpDir, '.env'))
-      expect(dotEnvFile.variables.SHOPIFY_API_KEY).toEqual('FOO')
-      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
-      expect(gotApp.dotenv?.variables.SHOPIFY_API_KEY).toEqual('FOO')
-      expect(gotApp.dotenv?.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+      await expect(fileExists(joinPath(tmpDir, '.env'))).resolves.toBe(false)
+      expect(gotApp.dotenv).toBeUndefined()
     })
   })
 
-  test('persists the ids in the config-specific env file when deploying, updating the existing file', async () => {
+  test('does not write ids to the config-specific env file when deploying', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const dotEnvFilePath = joinPath(tmpDir, '.env.staging')
@@ -62,20 +58,17 @@ describe('updateAppIdentifiers', () => {
           },
         },
         command: 'deploy',
-        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       // Then
       const dotEnvFileContent = await readFile(dotEnvFilePath)
       const dotEnvFile = await readAndParseDotEnv(dotEnvFilePath)
-      expect(dotEnvFileContent).toEqual(
-        '#comment\nEXISTING_VAR=value\nSHOPIFY_MY_EXTENSION_ID=BAR\n#anothercomment\nSHOPIFY_API_KEY=FOO',
-      )
+      expect(dotEnvFileContent).toEqual('#comment\nEXISTING_VAR=value\nSHOPIFY_MY_EXTENSION_ID=OLDID\n#anothercomment')
       expect(dotEnvFile.variables.EXISTING_VAR).toEqual('value')
-      expect(dotEnvFile.variables.SHOPIFY_API_KEY).toEqual('FOO')
-      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
-      expect(gotApp.dotenv?.variables.SHOPIFY_API_KEY).toEqual('FOO')
-      expect(gotApp.dotenv?.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+      expect(dotEnvFile.variables.SHOPIFY_API_KEY).toBeUndefined()
+      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('OLDID')
+      expect(gotApp.dotenv?.variables.SHOPIFY_API_KEY).toBeUndefined()
+      expect(gotApp.dotenv?.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
     })
   })
 
@@ -99,7 +92,6 @@ describe('updateAppIdentifiers', () => {
             },
           },
           command: 'deploy',
-          developerPlatformClient: testDeveloperPlatformClient(),
         },
         {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
       )
@@ -115,7 +107,7 @@ describe('updateAppIdentifiers', () => {
   })
 })
 
-test('does not change a unified config TOML with multiple when the uid is already present for atomic deployments', async () => {
+test('does not change a unified config TOML with multiple when the uid is already present', async () => {
   await inTemporaryDirectory(async (tmpDir: string) => {
     // Given
     const uiExtension1 = await testUIExtension({
@@ -167,7 +159,6 @@ type = "ui_extension"`,
           },
         },
         command: 'deploy',
-        developerPlatformClient: testDeveloperPlatformClient({supportsAtomicDeployments: true}),
       },
       {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
     )

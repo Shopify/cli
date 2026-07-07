@@ -1,43 +1,11 @@
 import {addUidToTomlsIfNecessary} from './add-uid-to-extension-toml.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {testDeveloperPlatformClient, testUIExtension} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, test, expect} from 'vitest'
 import {writeFile, readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('addUidToTomlsIfNecessary', () => {
-  test('skips if platform does not support atomic deployments', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const tomlPath = joinPath(tmpDir, 'extension.toml')
-      const tomlContent = `
-        type = "checkout_ui_extension"
-        handle = "my-extension"
-      `
-      await writeFile(tomlPath, tomlContent)
-
-      const extension = await testUIExtension({
-        directory: tmpDir,
-        configuration: {
-          handle: 'my-extension',
-          type: 'checkout_ui_extension',
-          name: 'test',
-        },
-        configurationPath: tomlPath,
-        uid: '123',
-      })
-
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: false})
-
-      // When
-      await addUidToTomlsIfNecessary([extension], client)
-
-      // Then
-      const updatedContent = await readFile(tomlPath)
-      expect(updatedContent).toBe(tomlContent)
-    })
-  })
-
   test('adds uid to single extension TOML', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -56,7 +24,7 @@ describe('addUidToTomlsIfNecessary', () => {
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
+      const client = testDeveloperPlatformClient({})
 
       // When
       await addUidToTomlsIfNecessary([extension], client)
@@ -97,7 +65,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
+      const client = testDeveloperPlatformClient({})
 
       // When
       await addUidToTomlsIfNecessary([extension], client)
@@ -155,7 +123,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
+      const client = testDeveloperPlatformClient({})
 
       // When
       await addUidToTomlsIfNecessary([extension, extension1], client)
@@ -197,7 +165,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         },
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
+      const client = testDeveloperPlatformClient({})
 
       // When
       await addUidToTomlsIfNecessary([extension], client)
@@ -226,7 +194,7 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
+      const client = testDeveloperPlatformClient({})
 
       // When
       await addUidToTomlsIfNecessary([extension], client)

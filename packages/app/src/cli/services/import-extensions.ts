@@ -79,7 +79,7 @@ async function handleExtensionDirectory({
 }
 
 export async function importExtensions(options: ImportOptions) {
-  const {app, remoteApp, developerPlatformClient, extensionTypes, extensions, buildExtensionConfig, all} = options
+  const {app, remoteApp, extensionTypes, extensions, buildExtensionConfig, all} = options
 
   let extensionsToMigrate = extensions.filter((ext) => extensionTypes.includes(ext.type.toLowerCase()))
   extensionsToMigrate = filterOutImportedExtensions(app, extensionsToMigrate)
@@ -131,7 +131,6 @@ export async function importExtensions(options: ImportOptions) {
       app: remoteApp.apiKey,
     },
     command: 'import-extensions',
-    developerPlatformClient,
   })
 }
 
