@@ -67,10 +67,6 @@ import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graph
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
 import {AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
-import {
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateDraftMutationVariables,
-} from '../../api/graphql/partners/generated/update-draft.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
@@ -1239,12 +1235,6 @@ export const extensionCreateResponse: ExtensionCreateSchema = {
   },
 }
 
-const extensionUpdateResponse: ExtensionUpdateDraftMutation = {
-  extensionUpdateDraft: {
-    userErrors: [],
-  },
-}
-
 const deployResponse: AppDeploySchema = {
   appDeploy: {
     appVersion: {
@@ -1391,7 +1381,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appVersionByTag: (_app: MinimalOrganizationApp, _tag: string) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
-    updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),

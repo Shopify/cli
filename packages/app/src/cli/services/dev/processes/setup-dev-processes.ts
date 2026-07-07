@@ -1,7 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
-import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
@@ -41,7 +40,6 @@ type DevProcessDefinition =
   | WebProcess
   | ProxyServerProcess
   | PreviewableExtensionProcess
-  | DraftableExtensionProcess
   | GraphiQLServerProcess
   | DevSessionProcess
   | AppLogsSubscribeProcess
@@ -166,14 +164,7 @@ export async function setupDevProcesses({
           appPreviewURL: appPreviewUrl,
           devSessionStatusManager,
         })
-      : await setupDraftableExtensionsProcess({
-          localApp: reloadedApp,
-          remoteApp,
-          apiKey,
-          developerPlatformClient,
-          proxyUrl: network.proxyUrl,
-          appWatcher,
-        }),
+      : undefined,
     await setupPreviewThemeAppExtensionsProcess({
       remoteApp,
       localApp: reloadedApp,
