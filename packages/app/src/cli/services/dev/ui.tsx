@@ -1,11 +1,9 @@
-import {Dev, DevProps} from './ui/components/Dev.js'
+import {type DevProps} from './ui/components/Dev.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 
 export async function renderDev({
   processes,
@@ -13,7 +11,6 @@ export async function renderDev({
   app,
   abortController,
   graphiqlUrl,
-  graphiqlPort,
   developerPreview,
   shopFqdn,
   devSessionStatusManager,
@@ -30,17 +27,7 @@ export async function renderDev({
   configPath?: string
   localURL?: string
 }) {
-  if (!terminalSupportsPrompting()) {
-    await renderDevNonInteractive({
-      processes,
-      previewUrl,
-      graphiqlUrl,
-      app,
-      abortController,
-      developerPreview,
-      shopFqdn,
-    })
-  } else if (app.developerPlatformClient.supportsDevSessions) {
+  if (terminalSupportsPrompting()) {
     return render(
       <DevSessionUI
         processes={processes}
@@ -60,24 +47,17 @@ export async function renderDev({
         exitOnCtrlC: false,
       },
     )
-  } else {
-    return render(
-      <Dev
-        processes={processes}
-        abortController={abortController}
-        previewUrl={previewUrl}
-        app={app}
-        graphiqlUrl={graphiqlUrl}
-        graphiqlPort={graphiqlPort}
-        developerPreview={developerPreview}
-        isEditionWeek={isEditionWeek()}
-        shopFqdn={shopFqdn}
-      />,
-      {
-        exitOnCtrlC: false,
-      },
-    )
   }
+
+  await renderDevNonInteractive({
+    processes,
+    previewUrl,
+    graphiqlUrl,
+    app,
+    abortController,
+    developerPreview,
+    shopFqdn,
+  })
 }
 
 async function renderDevNonInteractive({
@@ -104,14 +84,4 @@ async function renderDevNonInteractive({
       await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
     }),
   )
-}
-
-// We should make this better later, but for now, we'll hardcode and see how it's received.
-function isEditionWeek() {
-  if (isTruthy(process.env.IS_EDITION_WEEK)) return true
-  if (isUnitTest()) return false
-  const editionStart = new Date('2024-01-31T17:00:00.000Z')
-  const editionWeekEnd = new Date('2024-02-07T17:00:00.000Z')
-  const now = new Date()
-  return now >= editionStart && now <= editionWeekEnd
 }

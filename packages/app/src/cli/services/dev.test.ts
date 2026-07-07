@@ -1,4 +1,4 @@
-import {dev, warnIfScopesDifferBeforeDev, blockIfMigrationIncomplete} from './dev.js'
+import {dev, blockIfMigrationIncomplete} from './dev.js'
 import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
@@ -12,7 +12,6 @@ import {
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -56,7 +55,7 @@ describe('dev', () => {
       remoteApp: testOrganizationApp({apiKey: 'api-key'}),
       organization: testOrganization(),
       specifications: [],
-      developerPlatformClient: testDeveloperPlatformClient({supportsDevSessions: false}),
+      developerPlatformClient: testDeveloperPlatformClient(),
       store,
       directory: app.directory,
       update: false,
@@ -87,97 +86,15 @@ describe('dev', () => {
   })
 })
 
-describe('warnIfScopesDifferBeforeDev', () => {
-  const appsWithScopes = (local: string, remote: string) => {
-    const localApp = testAppLinked({})
-    const remoteApp = testOrganizationApp()
-    localApp.configuration = {
-      ...localApp.configuration,
-      access_scopes: {scopes: local, use_legacy_install_flow: false},
-    }
-    remoteApp.configuration = {
-      ...remoteApp.configuration,
-      access_scopes: {scopes: remote, use_legacy_install_flow: false},
-    } as any
-    return {
-      localApp,
-      remoteApp,
-    }
-  }
-
-  test('does not warn if the scopes are the same', async () => {
-    // Given
-    const developerPlatformClient = testDeveloperPlatformClient({supportsDevSessions: false})
-    const apps = appsWithScopes('scopes1,scopes2', 'scopes1,scopes2')
-
-    // When
-    const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
-    await warnIfScopesDifferBeforeDev({
-      ...apps,
-      developerPlatformClient,
-      commandOptions: {project: testProject()} as any,
-    })
-
-    // Then
-    expect(mockOutput.warn()).toBe('')
-  })
-
-  test('warns if the scopes differ', async () => {
-    // Given
-    const apps = appsWithScopes('scopes1,scopes2', 'scopes3,scopes4')
-    const developerPlatformClient = testDeveloperPlatformClient({supportsDevSessions: false})
-
-    // When
-    const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
-    await warnIfScopesDifferBeforeDev({
-      ...apps,
-      developerPlatformClient,
-      commandOptions: {project: testProject()} as any,
-    })
-
-    // Then
-    expect(mockOutput.warn()).toContain("The scopes in your TOML don't match")
-  })
-
-  test('silent if scopes differ cosmetically', async () => {
-    // Given
-    const apps = appsWithScopes('scopes1,      scopes2 ', '  scopes2,     scopes1')
-    const developerPlatformClient = testDeveloperPlatformClient({supportsDevSessions: false})
-
-    // When
-    const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
-    await warnIfScopesDifferBeforeDev({
-      ...apps,
-      developerPlatformClient,
-      commandOptions: {project: testProject()} as any,
-    })
-
-    // Then
-    expect(mockOutput.warn()).toBe('')
-  })
-})
-
 describe('blockIfMigrationIncomplete', () => {
   const baseConfig = () => ({
     localApp: testAppLinked({}),
     remoteApp: testOrganizationApp(),
-    developerPlatformClient: testDeveloperPlatformClient({supportsDevSessions: true}),
-  })
-
-  test('does nothing when dev sessions not supported', async () => {
-    const devConfig = {
-      ...baseConfig(),
-      developerPlatformClient: testDeveloperPlatformClient({supportsDevSessions: false}),
-    } as any
-    await expect(blockIfMigrationIncomplete(devConfig)).resolves.toBeUndefined()
+    developerPlatformClient: testDeveloperPlatformClient(),
   })
 
   test('does nothing when all remote extensions have ids (migrated)', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({
-      supportsDevSessions: true,
       async appExtensionRegistrations() {
         return {
           app: {
@@ -202,7 +119,6 @@ describe('blockIfMigrationIncomplete', () => {
 
   test('does nothing remote extensions dont have uids but are webhook subscriptions', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({
-      supportsDevSessions: true,
       async appExtensionRegistrations() {
         return {
           app: {
@@ -227,7 +143,6 @@ describe('blockIfMigrationIncomplete', () => {
 
   test('throws AbortError when some remote extensions are missing ids (not migrated)', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({
-      supportsDevSessions: true,
       async appExtensionRegistrations() {
         return {
           app: {
@@ -248,30 +163,5 @@ describe('blockIfMigrationIncomplete', () => {
     } as any
 
     await expect(blockIfMigrationIncomplete(devConfig)).rejects.toThrow(/need to be assigned uid identifiers/)
-  })
-
-  test('does nothing for Partners with missing ids (not migrated)', async () => {
-    const developerPlatformClient = testDeveloperPlatformClient({
-      supportsDevSessions: false,
-      async appExtensionRegistrations() {
-        return {
-          app: {
-            extensionRegistrations: [
-              {id: '', uuid: 'u1', title: 'Legacy Ext 1', type: 'theme'},
-              {uuid: 'u2', title: 'Legacy Ext 2', type: 'web_pixel_extension'},
-            ],
-            configurationRegistrations: [],
-            dashboardManagedExtensionRegistrations: [],
-          },
-        } as any
-      },
-    })
-
-    const devConfig = {
-      ...baseConfig(),
-      developerPlatformClient,
-    } as any
-
-    await expect(blockIfMigrationIncomplete(devConfig)).resolves.toBeUndefined()
   })
 })

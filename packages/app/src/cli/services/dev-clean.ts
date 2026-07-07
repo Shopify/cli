@@ -12,12 +12,6 @@ export async function devClean(options: DevCleanOptions) {
   const client = options.appContextResult.developerPlatformClient
   const remoteApp = options.appContextResult.remoteApp
 
-  if (!client.supportsDevSessions) {
-    throw new AbortError(
-      `Dev preview is not supported for this app. It's valid only for apps created on the Next-Gen Dev Platform.`,
-    )
-  }
-
   const result = await client.devSessionDelete({shopFqdn: options.store.shopDomain, appId: remoteApp.id})
 
   if (result.devSessionDelete?.userErrors.length) {

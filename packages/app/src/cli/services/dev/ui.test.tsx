@@ -1,5 +1,4 @@
 import {renderDev} from './ui.js'
-import {Dev} from './ui/components/Dev.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
@@ -9,7 +8,6 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('./ui/components/Dev.js')
 vi.mock('../context.js')
 vi.mock('./ui/components/DevSessionUI.js')
 
@@ -64,7 +62,6 @@ describe('ui', () => {
         devSessionStatusManager,
       })
 
-      expect(vi.mocked(Dev)).not.toHaveBeenCalled()
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
         1,
         process.stdout,
@@ -189,7 +186,7 @@ describe('ui', () => {
       expect(developerPreview.disable).not.toHaveBeenCalled()
     })
 
-    test('uses ink when terminal supports TTY', async () => {
+    test('renders dev session UI when terminal supports TTY', async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
       const concurrentProcess = {
         prefix: 'prefix',
@@ -227,11 +224,11 @@ describe('ui', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      expect(vi.mocked(Dev)).toHaveBeenCalled()
+      expect(vi.mocked(DevSessionUI)).toHaveBeenCalled()
       expect(concurrentProcess.action).not.toHaveBeenCalled()
     })
 
-    test('renders DevSessionUI when terminal supports TTY and app supports dev sessions', async () => {
+    test('renders DevSessionUI when terminal supports TTY', async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
       const concurrentProcess = {
         prefix: 'prefix',
@@ -250,7 +247,6 @@ describe('ui', () => {
         id: '123',
         developerPlatformClient: {
           ...developerPlatformClient,
-          supportsDevSessions: true,
           devSessionDelete: vi.fn(),
         },
         extensions: [],
@@ -283,7 +279,6 @@ describe('ui', () => {
         // React 19 no longer passes legacy context as second argument
         undefined,
       )
-      expect(vi.mocked(Dev)).not.toHaveBeenCalled()
     })
 
     test('calls devSessionDelete when DevSessionUI aborts', async () => {
@@ -301,7 +296,6 @@ describe('ui', () => {
         id: '123',
         developerPlatformClient: {
           ...developerPlatformClient,
-          supportsDevSessions: true,
           devSessionDelete: vi.fn(),
         },
         extensions: [],

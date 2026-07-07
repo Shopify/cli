@@ -360,7 +360,7 @@ export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options
       existingBuildOptions: localAppOptions.existingBuildOptions,
       linkedAppAndClientIdFromFileAreInSync: localAppOptions.localAppIdMatchedRemote,
       linkedAppWasNewlyCreated: Boolean(remoteApp.newApp),
-      defaultToUpdateUrlsOnDev: developerPlatformClient.supportsDevSessions,
+      defaultToUpdateUrlsOnDev: true,
     }),
   }
 

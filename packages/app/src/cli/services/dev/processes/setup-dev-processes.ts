@@ -151,20 +151,18 @@ export async function setupDevProcesses({
       appDirectory: reloadedApp.directory,
       appWatcher,
     }),
-    developerPlatformClient.supportsDevSessions
-      ? await setupDevSessionProcess({
-          app: reloadedApp,
-          apiKey,
-          developerPlatformClient,
-          url: network.proxyUrl,
-          appId: remoteApp.id,
-          organizationId: remoteApp.organizationId,
-          storeFqdn,
-          appWatcher,
-          appPreviewURL: appPreviewUrl,
-          devSessionStatusManager,
-        })
-      : undefined,
+    await setupDevSessionProcess({
+      app: reloadedApp,
+      apiKey,
+      developerPlatformClient,
+      url: network.proxyUrl,
+      appId: remoteApp.id,
+      organizationId: remoteApp.organizationId,
+      storeFqdn,
+      appWatcher,
+      appPreviewURL: appPreviewUrl,
+      devSessionStatusManager,
+    }),
     await setupPreviewThemeAppExtensionsProcess({
       remoteApp,
       localApp: reloadedApp,
