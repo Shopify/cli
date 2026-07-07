@@ -1,5 +1,5 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
-import {firstPartyDev, isUnitTest, isVerbose} from '../../../public/node/context/local.js'
+import {isUnitTest, isVerbose} from '../../../public/node/context/local.js'
 import {AbortError} from '../../../public/node/error.js'
 import https from 'https'
 
@@ -60,7 +60,6 @@ export function buildHeaders(token?: string): Record<string, string> {
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'Content-Type': 'application/json',
-    ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
   }
   if (token) {
     const authString = token.match(/^shp(at|ua|ca|tka)/) ? token : `Bearer ${token}`

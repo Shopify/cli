@@ -62,7 +62,6 @@ import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
 export type {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
 
@@ -109,8 +108,6 @@ function selectDeveloperPlatformClientByOrg(organization: Organization): Develop
 }
 
 function defaultDeveloperPlatformClient(): DeveloperPlatformClient {
-  if (firstPartyDev() && !blockPartnersAccess()) return PartnersClient.getInstance()
-
   return AppManagementClient.getInstance()
 }
 
