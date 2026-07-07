@@ -213,7 +213,8 @@ describe('setup-dev-processes', () => {
         appId: '1234',
       },
     })
-    expect(res.processes[3]).toMatchObject({
+    const themeProcess = res.processes.find((process) => process.type === 'theme-app-extensions')
+    expect(themeProcess).toMatchObject({
       type: 'theme-app-extensions',
       prefix: 'theme-extensions',
       function: runThemeAppExtensionsServer,
@@ -233,7 +234,8 @@ describe('setup-dev-processes', () => {
         themeExtensionPort: 9293,
       },
     })
-    expect(res.processes[4]).toMatchObject({
+    const sendWebhookProcess = res.processes.find((process) => process.type === 'send-webhook')
+    expect(sendWebhookProcess).toMatchObject({
       type: 'send-webhook',
       prefix: 'webhooks',
       function: sendWebhook,
@@ -347,8 +349,8 @@ describe('setup-dev-processes', () => {
     expect(res.graphiqlUrl).toBe(`http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(expectedKey)}`)
   })
 
-  test('process list includes dev-session when useDevSession is true', async () => {
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({supportsDevSessions: true})
+  test('process list includes dev-session', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true

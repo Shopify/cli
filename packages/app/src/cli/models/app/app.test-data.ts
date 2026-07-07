@@ -1353,7 +1353,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
     supportsAtomicDeployments: false,
-    supportsDevSessions: stubs.supportsDevSessions ?? false,
     supportsStoreSearch: false,
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
@@ -1441,7 +1440,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
           | 'supportsAtomicDeployments'
           | 'clientName'
           | 'webUiName'
-          | 'supportsDevSessions'
           | 'supportsStoreSearch'
           | 'organizationSource'
           | 'bundleFormat'

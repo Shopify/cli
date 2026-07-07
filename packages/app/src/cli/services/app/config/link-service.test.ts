@@ -29,7 +29,6 @@ beforeEach(async () => {
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    supportsDevSessions: true,
     async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':

@@ -6,15 +6,8 @@ import {
   getURLs,
   shouldOrPromptUpdateURLs,
   startTunnelPlugin,
-  updateURLs,
 } from './dev/urls.js'
-import {
-  enableDeveloperPreview,
-  disableDeveloperPreview,
-  developerPreviewUpdate,
-  showReusedDevValues,
-} from './context.js'
-import {fetchAppPreviewMode} from './dev/fetch.js'
+import {showReusedDevValues} from './context.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
@@ -22,13 +15,12 @@ import {renderDev} from './dev/ui.js'
 import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
-import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {Web, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
+import {Web, AppLinkedInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
@@ -44,10 +36,8 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
-import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -167,7 +157,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     cachedUpdateURLs,
     remoteApp,
     apiKey,
-    developerPlatformClient,
   )
 
   return {
@@ -186,63 +175,11 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 }
 
 async function actionsBeforeSettingUpDevProcesses(devConfig: DevConfig) {
-  await warnIfScopesDifferBeforeDev(devConfig)
   await blockIfMigrationIncomplete(devConfig)
-}
-
-/**
- * Show a warning if the scopes in the local app configuration do not match the scopes in the remote app configuration.
- *
- * This is to flag that the developer may wish to run `shopify app deploy` to push the latest scopes.
- *
- */
-export async function warnIfScopesDifferBeforeDev({
-  localApp,
-  remoteApp,
-  developerPlatformClient,
-  commandOptions,
-}: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient' | 'commandOptions'>) {
-  if (developerPlatformClient.supportsDevSessions) return
-  const localAccess = localApp.configuration.access_scopes
-  const remoteAccess = remoteApp.configuration?.access_scopes
-
-  const rationaliseScopes = (scopeString: string | undefined) => {
-    if (!scopeString) return scopeString
-    return scopeString
-      .split(',')
-      .map((scope) => scope.trim())
-      .sort()
-      .join(',')
-  }
-  const localScopes = rationaliseScopes(localAccess?.scopes)
-  const remoteScopes = rationaliseScopes(remoteAccess?.scopes)
-
-  if (!localAccess?.use_legacy_install_flow && localScopes !== remoteScopes) {
-    const nextSteps = [
-      [
-        'Run',
-        {command: formatPackageManagerCommand(commandOptions.project.packageManager, 'shopify app deploy')},
-        'to push your scopes to the Partner Dashboard',
-      ],
-    ]
-
-    renderWarning({
-      headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
-      body: [
-        `Scopes in ${basename(localApp.configPath)}:`,
-        scopesMessage(getAppScopesArray(localApp.configuration)),
-        '\n',
-        'Scopes in Partner Dashboard:',
-        scopesMessage(remoteAccess?.scopes?.split(',') ?? []),
-      ],
-      nextSteps,
-    })
-  }
 }
 
 export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
   const {developerPlatformClient, remoteApp} = devConfig
-  if (!developerPlatformClient.supportsDevSessions) return
 
   const extensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app.extensionRegistrations
   if (
@@ -279,7 +216,6 @@ async function handleUpdatingOfPartnerUrls(
   cachedUpdateURLs: boolean | undefined,
   remoteApp: OrganizationApp,
   apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
   let shouldUpdateURLs = false
@@ -298,19 +234,10 @@ async function handleUpdatingOfPartnerUrls(
         localApp,
         apiKey,
         newURLs,
-        developerPlatformClient,
       })
 
       if (shouldUpdateURLs) {
-        if (developerPlatformClient.supportsDevSessions) {
-          // For dev sessions, store the new URLs in the local app so that the manifest can be patched with them
-          // The local toml is not updated.
-          localApp.setDevApplicationURLs(newURLs)
-        } else {
-          // When running dev app urls are pushed directly to API Client config instead of creating a new app version
-          // so current app version and API Client config will have diferent url values.
-          await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
-        }
+        localApp.setDevApplicationURLs(newURLs)
       }
     }
   }
@@ -410,14 +337,7 @@ async function launchDevProcesses({
   const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
-    canEnablePreviewMode: developerPlatformClient.supportsDevSessions
-      ? false
-      : await canEnablePreviewMode({
-          localApp: config.localApp,
-          developerPlatformClient,
-          apiKey,
-          organizationId: config.remoteApp.organizationId,
-        }),
+    canEnablePreviewMode: false,
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
     id: config.remoteApp.id,
@@ -432,7 +352,7 @@ async function launchDevProcesses({
     graphiqlPort: config.graphiqlPort,
     app,
     abortController,
-    developerPreview: developerPreviewController(apiKey, developerPlatformClient),
+    developerPreview: developerPreviewController(),
     shopFqdn: config.storeFqdn,
     devSessionStatusManager,
     appURL: config.localApp.devApplicationURLs?.applicationUrl,
@@ -443,24 +363,12 @@ async function launchDevProcesses({
   })
 }
 
-function developerPreviewController(
-  apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): DeveloperPreviewController {
-  if (developerPlatformClient.supportsDevSessions) {
-    return {
-      fetchMode: () => Promise.resolve(false),
-      enable: () => Promise.resolve(false),
-      disable: () => Promise.resolve(),
-      update: () => Promise.resolve(false),
-    }
-  }
-
+function developerPreviewController(): DeveloperPreviewController {
   return {
-    fetchMode: async () => Boolean(await fetchAppPreviewMode(apiKey, developerPlatformClient)),
-    enable: async () => enableDeveloperPreview({apiKey, developerPlatformClient}),
-    disable: async () => disableDeveloperPreview({apiKey, developerPlatformClient}),
-    update: async (state: boolean) => developerPreviewUpdate({apiKey, developerPlatformClient, enabled: state}),
+    fetchMode: () => Promise.resolve(false),
+    enable: () => Promise.resolve(false),
+    disable: () => Promise.resolve(),
+    update: () => Promise.resolve(false),
   }
 }
 
@@ -484,14 +392,6 @@ async function logMetadataForDev(options: {
     store_fqdn: options.storeFqdn,
     cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
   }))
-}
-
-function scopesMessage(scopes: string[]) {
-  return {
-    list: {
-      items: scopes.length === 0 ? ['No scopes'] : scopes,
-    },
-  }
 }
 
 async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {

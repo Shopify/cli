@@ -241,6 +241,7 @@ describe('link', () => {
         },
         build: {
           include_config_on_deploy: true,
+          automatically_update_urls_on_dev: true,
         },
       })
       expect(content).toMatchSnapshot()
@@ -342,6 +343,7 @@ describe('link', () => {
         },
         build: {
           include_config_on_deploy: true,
+          automatically_update_urls_on_dev: true,
         },
       })
       expect(content).toMatchSnapshot()
@@ -1195,14 +1197,14 @@ describe('link', () => {
     })
   })
 
-  test('when remote app is new and supports dev sessions then include automatically_update_urls_on_dev = true', async () => {
+  test('when remote app is new then include automatically_update_urls_on_dev = true', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const filePath = joinPath(tmp, 'shopify.app.toml')
       const initialContent = `scopes = ""
     `
       writeFileSync(filePath, initialContent)
-      const developerPlatformClient = buildDeveloperPlatformClient({supportsDevSessions: true})
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
         developerPlatformClient,
