@@ -5,10 +5,8 @@ import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export async function addUidToTomlsIfNecessary(
   extensions: ExtensionInstance[],
-  developerPlatformClient: DeveloperPlatformClient,
+  _developerPlatformClient: DeveloperPlatformClient,
 ) {
-  if (!developerPlatformClient.supportsAtomicDeployments) return
-
   // We can't update the TOML files in parallel because some extensions might share the same file
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop

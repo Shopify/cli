@@ -212,7 +212,7 @@ export async function automaticMatchmaking(
   identifiers: IdentifiersExtensions,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<MatchResult> {
-  const useUuidMatching = developerPlatformClient.supportsAtomicDeployments
+  const useUuidMatching = true
   const ids = getExtensionIds(localSources, identifiers)
   const localIds = Object.values(ids)
 

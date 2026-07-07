@@ -1,11 +1,9 @@
 import {getDotEnvFileName} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {deepCompare} from '@shopify/cli-kit/common/object'
 import type {AppInterface} from './app.js'
 
 export interface IdentifiersExtensions {
@@ -38,7 +36,6 @@ interface UpdateAppIdentifiersOptions {
   app: AppInterface
   identifiers: UuidOnlyIdentifiers
   command: UpdateAppIdentifiersCommand
-  developerPlatformClient: DeveloperPlatformClient
 }
 
 /**
@@ -47,7 +44,7 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command, developerPlatformClient}: UpdateAppIdentifiersOptions,
+  {app, identifiers, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
@@ -67,12 +64,7 @@ export async function updateAppIdentifiers(
     }
   })
 
-  const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
-  const writeToFile =
-    (!contentIsEqual &&
-      (command === 'deploy' || command === 'release') &&
-      !developerPlatformClient.supportsAtomicDeployments) ||
-    command === 'import-extensions'
+  const writeToFile = command === 'import-extensions'
 
   dotenvFile.variables = updatedVariables
 

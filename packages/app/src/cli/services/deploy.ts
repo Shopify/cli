@@ -228,7 +228,7 @@ export async function deploy(options: DeployOptions) {
       bundlePath: candidateBundlePath,
       identifiers,
       skipBuild: options.skipBuild,
-      isDevDashboardApp: developerPlatformClient.supportsAtomicDeployments,
+      isDevDashboardApp: true,
     })
 
     let uploadTaskTitle
@@ -271,7 +271,7 @@ export async function deploy(options: DeployOptions) {
             commitReference: options.commitReference,
           })
 
-          await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+          await updateAppIdentifiers({app, identifiers, command: 'deploy'})
         },
       },
     ]
@@ -292,7 +292,7 @@ export async function deploy(options: DeployOptions) {
      * If deployment fails when uploading we want the identifiers to be persisted
      * for the next run.
      */
-    await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+    await updateAppIdentifiers({app, identifiers, command: 'deploy'})
     throw error
   }
 

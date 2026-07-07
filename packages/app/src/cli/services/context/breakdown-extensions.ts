@@ -345,7 +345,7 @@ function loadExtensionsIdentifiersBreakdown(
   validMatches: IdentifiersExtensions,
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
-  developerPlatformClient: DeveloperPlatformClient,
+  _developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter((ext) => {
     const spec = specs.find(
@@ -362,11 +362,7 @@ function loadExtensionsIdentifiersBreakdown(
     const UidMatch = module.registrationId === identifier
     const pendingMigration = module.registrationId.length === 0
 
-    if (developerPlatformClient.supportsAtomicDeployments) {
-      return UidMatch || (pendingMigration && UuidMatch)
-    } else {
-      return UuidMatch
-    }
+    return UidMatch || (pendingMigration && UuidMatch)
   }
 
   const allExistingExtensions = Object.entries(validMatches)

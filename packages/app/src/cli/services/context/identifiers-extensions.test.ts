@@ -422,9 +422,9 @@ describe('matchmaking returns ok with pending manual matches', () => {
       extensions: {
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
-        'extension-b': 'UUID_B',
+        'extension-b': EXTENSION_B.uid,
       },
-      extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2', 'extension-b': 'B'},
+      extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2', 'extension-b': EXTENSION_B.uid},
       extensionsNonUuidManaged: {},
     })
   })
@@ -495,9 +495,9 @@ describe('matchmaking returns ok with pending manual matches and manual match fa
     expect(got).toEqual({
       extensions: {
         EXTENSION_A: 'UUID_A',
-        'extension-a-2': 'UUID_A_3',
+        'extension-a-2': EXTENSION_A_2.uid,
       },
-      extensionIds: {EXTENSION_A: 'A', 'extension-a-2': 'A_3'},
+      extensionIds: {EXTENSION_A: 'A', 'extension-a-2': EXTENSION_A_2.uid},
       extensionsNonUuidManaged: {},
     })
   })
@@ -561,10 +561,10 @@ describe('matchmaking returns ok with pending some pending to create', () => {
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).toBeCalledTimes(2)
+    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
-      extensions: {'extension-a': 'UUID_A', 'extension-a-2': 'UUID_A_2'},
-      extensionIds: {'extension-a': 'A', 'extension-a-2': 'A_2'},
+      extensions: {'extension-a': EXTENSION_A.uid, 'extension-a-2': EXTENSION_A_2.uid},
+      extensionIds: {'extension-a': EXTENSION_A.uid, 'extension-a-2': EXTENSION_A_2.uid},
       extensionsNonUuidManaged: {},
     })
   })
@@ -667,10 +667,10 @@ describe('matchmaking returns ok with some pending confirmation', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).toBeCalledTimes(1)
+    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
-      extensions: {'extension-b': 'UUID_B'},
-      extensionIds: {'extension-b': 'B'},
+      extensions: {'extension-b': EXTENSION_B.uid},
+      extensionIds: {'extension-b': EXTENSION_B.uid},
       extensionsNonUuidManaged: {},
     })
   })
@@ -980,11 +980,11 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).toBeCalledTimes(1)
+    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {app_access: 'C_A'},
-      extensionsNonUuidManaged: {app_access: 'UUID_C_A'},
+      extensionIds: {app_access: CONFIG_A.uid},
+      extensionsNonUuidManaged: {app_access: CONFIG_A.uid},
     })
   })
   test('when the include config on deploy flag is disabled but draft extensions should be used configuration extensions are created with context', async () => {
@@ -1004,17 +1004,10 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).toHaveBeenCalledWith({
-      apiKey: 'appId',
-      type: PAYMENTS_A.graphQLType,
-      config: '{}',
-      handle: PAYMENTS_A.handle,
-      title: PAYMENTS_A.handle,
-      context: 'payments.offsite.render',
-    })
+    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
-      extensions: {'payments-extension': 'PAYMENTS_A_UUID'},
-      extensionIds: {'payments-extension': 'PAYMENTS_A'},
+      extensions: {'payments-extension': PAYMENTS_A.uid},
+      extensionIds: {'payments-extension': PAYMENTS_A.uid},
       extensionsNonUuidManaged: {},
     })
   })
@@ -1173,14 +1166,9 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).toBeCalledTimes(4)
-    expect(Object.values(extensionsNonUuidManaged)).toEqual([
-      'webhook-subscription-1',
-      'webhook-subscription-2',
-      'webhook-subscription-3',
-      'webhook-subscription-4',
-    ])
-    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(['1', '2', '3', '4'])
+    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
+    expect(Object.values(extensionsNonUuidManaged)).toEqual(localSources.map((source) => source.uid))
+    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(localSources.map((source) => source.uid))
   })
 
   test('if there are possible matches, creates the extension for those that dont match', async () => {
@@ -1250,14 +1238,14 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).toBeCalledTimes(4)
+    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(Object.values(extensionsNonUuidManaged)).toEqual([
       'webhook-subscription-uuid',
-      'webhook-subscription-1',
-      'webhook-subscription-2',
-      'webhook-subscription-3',
-      'webhook-subscription-4',
+      ...localSources.slice(1).map((source) => source.uid),
     ])
-    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(['webhook-subscription-id', '1', '2', '3', '4'])
+    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual([
+      'webhook-subscription-id',
+      ...localSources.slice(1).map((source) => source.uid),
+    ])
   })
 })

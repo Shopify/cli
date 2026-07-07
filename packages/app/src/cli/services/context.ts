@@ -23,7 +23,7 @@ import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Token, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
@@ -145,10 +145,10 @@ interface EnsureDeployContextResult {
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployOptions): Promise<EnsureDeployContextResult> {
-  const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
+  const {force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  const includeConfigOnDeploy = await checkIncludeConfigOnDeploy({app, reset, force, developerPlatformClient})
+  const includeConfigOnDeploy = await checkIncludeConfigOnDeploy({app})
 
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
@@ -173,67 +173,20 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     allowDeletes: options.allowDeletes,
   })
 
-  await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+  await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
   // if the current active app version is missing user_identifiers in some app module, then we are migrating to dev dash
   let didMigrateExtensionsToDevDash = false
-  if (developerPlatformClient.supportsAtomicDeployments && activeAppVersion) {
+  if (activeAppVersion) {
     didMigrateExtensionsToDevDash = activeAppVersion.appModuleVersions.some((version) => !version.registrationId)
   }
 
   return {identifiers, didMigrateExtensionsToDevDash}
 }
 
-interface ShouldOrPromptIncludeConfigDeployOptions {
-  appDirectory: string
-  localApp: AppInterface
-}
-
-async function checkIncludeConfigOnDeploy({
-  app,
-  reset,
-  force,
-  developerPlatformClient,
-}: {
-  app: AppInterface
-  reset: boolean
-  force: boolean
-  developerPlatformClient: DeveloperPlatformClient
-}): Promise<boolean | undefined> {
-  if (developerPlatformClient.supportsAtomicDeployments) {
-    await removeIncludeConfigOnDeployField(app)
-    return undefined
-  }
-
-  let includeConfigOnDeploy = app.includeConfigOnDeploy
-  if (reset) includeConfigOnDeploy = undefined
-
-  if (force && includeConfigOnDeploy === undefined) {
-    // If a partner is deploying on CI/CD with include_config_on_deploy not set,
-    // we need to abort the deploy, because the default value changed to true.
-    const message = [
-      'You must specify a value for',
-      {command: 'include_config_on_deploy'},
-      'in your TOML file. Including configuration will be required very soon.',
-    ]
-    const nextSteps = [
-      'Run',
-      {command: 'shopify app deploy'},
-      'interactively, without',
-      {command: '--allow-updates'},
-      'or',
-      {command: '--allow-deletes'},
-      '.',
-    ]
-    throw new AbortError(message, nextSteps)
-  }
-
-  if (force || includeConfigOnDeploy === true) return includeConfigOnDeploy
-
-  return promptAndSaveIncludeConfigOnDeploy({
-    appDirectory: app.directory,
-    localApp: app,
-  })
+async function checkIncludeConfigOnDeploy({app}: {app: AppInterface}): Promise<boolean | undefined> {
+  await removeIncludeConfigOnDeployField(app)
+  return undefined
 }
 
 async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
@@ -269,28 +222,6 @@ function renderWarningAboutIncludeConfigOnDeploy() {
       label: 'See Shopify CLI documentation.',
       url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
     },
-  })
-}
-
-async function promptAndSaveIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions): Promise<boolean> {
-  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configPath)
-  options.localApp.configuration.build = {
-    ...options.localApp.configuration.build,
-    include_config_on_deploy: shouldIncludeConfigDeploy,
-  }
-  const configFile = await TomlFile.read(options.localApp.configPath)
-  await configFile.patch({build: {include_config_on_deploy: shouldIncludeConfigDeploy}})
-  await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
-  return shouldIncludeConfigDeploy
-}
-
-function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
-  return renderConfirmationPrompt({
-    message: `Include \`${basename(
-      configPath,
-    )}\` configuration on \`deploy\`? Soon, this will no longer be optional and configuration will be included on every deploy.`,
-    confirmationMessage: 'Yes, always (Recommended)',
-    cancellationMessage: 'No, not now',
   })
 }
 
