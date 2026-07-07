@@ -385,11 +385,11 @@ export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Pro
   // Button can be below the fold, and takes ~1-2s to enable after uninstall (one reload covers propagation lag).
   // If it stays disabled after reload, installs remain — fail fast for caller.
   const deleteBtn = page.locator('button:has-text("Delete app")').first()
-  await deleteBtn.scrollIntoViewIfNeeded()
+  await deleteBtn.scrollIntoViewIfNeeded({timeout: BROWSER_TIMEOUT.long})
   if (!(await deleteBtn.isEnabled())) {
     await page.reload({waitUntil: 'domcontentloaded'})
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-    await deleteBtn.scrollIntoViewIfNeeded()
+    await deleteBtn.scrollIntoViewIfNeeded({timeout: BROWSER_TIMEOUT.long})
     if (!(await deleteBtn.isEnabled())) throw new Error('STILL_HAS_INSTALLS')
   }
   await deleteBtn.click({timeout: 2 * BROWSER_TIMEOUT.long})
