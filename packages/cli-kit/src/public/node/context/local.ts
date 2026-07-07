@@ -45,6 +45,16 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the cloud environment check.
+ */
+let memoizedCloudEnvironment:
+  | {
+      platform: 'codespaces' | 'gitpod' | 'cloudShell' | 'localhost'
+      editor: boolean
+    }
+  | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -219,16 +229,30 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   platform: 'codespaces' | 'gitpod' | 'cloudShell' | 'localhost'
   editor: boolean
 } {
+  if (env === process.env && memoizedCloudEnvironment) {
+    return memoizedCloudEnvironment
+  }
+
+  let result: {
+    platform: 'codespaces' | 'gitpod' | 'cloudShell' | 'localhost'
+    editor: boolean
+  }
+
   if (isSet(env[environmentVariables.codespaces])) {
-    return {platform: 'codespaces', editor: true}
+    result = {platform: 'codespaces', editor: true}
+  } else if (isSet(env[environmentVariables.gitpod])) {
+    result = {platform: 'gitpod', editor: true}
+  } else if (isSet(env[environmentVariables.cloudShell])) {
+    result = {platform: 'cloudShell', editor: true}
+  } else {
+    result = {platform: 'localhost', editor: false}
   }
-  if (isSet(env[environmentVariables.gitpod])) {
-    return {platform: 'gitpod', editor: true}
+
+  if (env === process.env) {
+    memoizedCloudEnvironment = result
   }
-  if (isSet(env[environmentVariables.cloudShell])) {
-    return {platform: 'cloudShell', editor: true}
-  }
-  return {platform: 'localhost', editor: false}
+
+  return result
 }
 
 /**
@@ -326,3 +350,10 @@ export function opentelemetryDomain(env = process.env): string {
 }
 
 export type CIMetadata = Metadata
+
+/**
+ * Resets the cloud environment cache.
+ */
+export function _resetCloudEnvironmentCache(): void {
+  memoizedCloudEnvironment = undefined
+}

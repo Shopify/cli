@@ -7,6 +7,7 @@ import {
   isUnitTest,
   analyticsDisabled,
   cloudEnvironment,
+  _resetCloudEnvironmentCache,
   macAddress,
   getThemeKitAccessDomain,
   opentelemetryDomain,
@@ -217,6 +218,10 @@ describe('macAddress', () => {
 })
 
 describe('cloudEnvironment', () => {
+  afterEach(() => {
+    _resetCloudEnvironmentCache()
+  })
+
   test('when codespace environmentreturns correct cloud platform', () => {
     // Given
     const env = {CODESPACES: '1'}
@@ -248,6 +253,51 @@ describe('cloudEnvironment', () => {
 
     // Then
     expect(got.platform).toBe('localhost')
+  })
+
+  test('memoizes the result when using process.env', () => {
+    // Given
+    const originalEnv = process.env
+    const mockEnv = {...process.env, CODESPACES: '1'}
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(process as any).env = mockEnv
+
+      // When
+      const got1 = cloudEnvironment()
+      const got2 = cloudEnvironment()
+
+      // Then
+      expect(got1.platform).toBe('codespaces')
+      expect(got1).toBe(got2)
+
+      // And resetting the cache
+      _resetCloudEnvironmentCache()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(process as any).env = {...process.env, GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
+      delete (process.env as any).CODESPACES
+
+      const got3 = cloudEnvironment()
+      expect(got3.platform).toBe('gitpod')
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(process as any).env = originalEnv
+    }
+  })
+
+  test('does not memoize when a custom environment is provided', () => {
+    // Given
+    const env1 = {CODESPACES: '1'}
+    const env2 = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
+
+    // When
+    const got1 = cloudEnvironment(env1)
+    const got2 = cloudEnvironment(env2)
+
+    // Then
+    expect(got1.platform).toBe('codespaces')
+    expect(got2.platform).toBe('gitpod')
+    expect(got1).not.toBe(got2)
   })
 })
 
