@@ -7,7 +7,6 @@ import {describe, expect, vi, test, beforeAll} from 'vitest'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 vi.mock('../dev/fetch')
-vi.mock('../dev/create-extension')
 vi.mock('@shopify/cli-kit/node/output')
 
 const REGISTRATION_A: RemoteSource = {

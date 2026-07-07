@@ -41,7 +41,6 @@ import {
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
@@ -1212,24 +1211,6 @@ const appVersionsDiffResponse: AppVersionsDiffSchema = {
   },
 }
 
-export const extensionCreateResponse: ExtensionCreateSchema = {
-  extensionCreate: {
-    extensionRegistration: {
-      id: 'extension-id',
-      uuid: 'extension-uuid',
-      title: 'my extension',
-      type: 'other',
-      draftVersion: {
-        config: 'config',
-        registrationId: 'registration-id',
-        lastUserInteractionAt: '2024-01-01',
-        validationErrors: [],
-      },
-    },
-    userErrors: [],
-  },
-}
-
 const deployResponse: AppDeploySchema = {
   appDeploy: {
     appVersion: {
@@ -1356,7 +1337,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_app: MinimalOrganizationApp, _tag: string) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
-    createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),

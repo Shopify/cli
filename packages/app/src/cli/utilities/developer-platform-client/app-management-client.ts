@@ -44,7 +44,6 @@ import {
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
@@ -889,10 +888,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const errorMessages = provisionResult.userErrors?.map((error) => error.message).join(', ') ?? ''
       throw new BugError(`Failed to provision user access to store: ${errorMessages}`)
     }
-  }
-
-  async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
-    throw new BugError('Not implemented: createExtension')
   }
 
   async convertToTransferDisabledStore(

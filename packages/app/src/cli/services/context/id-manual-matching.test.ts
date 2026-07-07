@@ -1,6 +1,6 @@
 /* eslint-disable @shopify/prefer-module-scope-constants */
 import {manualMatchIds, ManualMatchResult} from './id-manual-matching.js'
-import {ExtensionRegistration} from '../dev/create-extension.js'
+import {RemoteSource} from './identifiers.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, vi, test, beforeAll} from 'vitest'
@@ -8,7 +8,7 @@ import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-const REGISTRATION_A: ExtensionRegistration = {
+const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
   id: 'A',
   title: 'A',

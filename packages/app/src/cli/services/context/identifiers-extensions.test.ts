@@ -25,7 +25,6 @@ import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient, Flag} from '../../utilities/developer-platform-client.js'
-import {ExtensionCreateSchema} from '../../api/graphql/extension_create.js'
 import appPOSSpec from '../../models/extensions/specifications/app_config_point_of_sale.js'
 import appWebhookSubscriptionSpec from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {getModulesToMigrate} from '../dev/migrate-app-module.js'
@@ -34,14 +33,6 @@ import {PartnersClient} from '../../utilities/developer-platform-client/partners
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
-
-interface Registration {
-  uuid: string
-  id: string
-  title: string
-  type: string
-  contextValue?: string
-}
 
 const REGISTRATION_A = {
   uuid: 'UUID_A',
@@ -155,23 +146,6 @@ const options = (
   }
   setPathValue(localApp.app, 'remoteFlags', flags)
   return localApp
-}
-
-async function createExtensionResult(registration: Registration): Promise<ExtensionCreateSchema> {
-  return {
-    extensionCreate: {
-      extensionRegistration: {
-        ...registration,
-        draftVersion: {
-          config: 'config',
-          registrationId: 'registrationId',
-          lastUserInteractionAt: '2024-01-01',
-          validationErrors: [],
-        },
-      },
-      userErrors: [],
-    },
-  }
 }
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -402,9 +376,7 @@ describe('matchmaking returns ok with pending manual matches', () => {
       EXTENSION_A_2: 'UUID_A_2',
     }
     const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => createExtensionResult(REGISTRATION_B),
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const got = await deployConfirmed(
@@ -476,9 +448,7 @@ describe('matchmaking returns ok with pending manual matches and manual match fa
       EXTENSION_A: 'UUID_A',
     }
     const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => createExtensionResult(REGISTRATION_A_3),
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const got = await deployConfirmed(
@@ -535,19 +505,7 @@ describe('matchmaking returns ok with pending some pending to create', () => {
     const extensionsToCreate: LocalSource[] = [EXTENSION_A, EXTENSION_A_2]
     const validMatches = {}
     const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
-    let createExtensionCounter = 0
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: async () => {
-        createExtensionCounter++
-        if (createExtensionCounter === 1) {
-          return createExtensionResult(REGISTRATION_A)
-        } else if (createExtensionCounter === 2) {
-          return createExtensionResult(REGISTRATION_A_2)
-        } else {
-          throw new Error('createExtension should not be called 3 times')
-        }
-      },
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const got = await deployConfirmed(
@@ -561,7 +519,6 @@ describe('matchmaking returns ok with pending some pending to create', () => {
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {'extension-a': EXTENSION_A.uid, 'extension-a-2': EXTENSION_A_2.uid},
       extensionIds: {'extension-a': EXTENSION_A.uid, 'extension-a-2': EXTENSION_A_2.uid},
@@ -614,7 +571,6 @@ describe('matchmaking returns ok with some pending confirmation', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toBeCalled()
     expect(got).toEqual({
       extensions: {'extension-b': 'UUID_B'},
       extensionIds: {'extension-b': 'B'},
@@ -656,9 +612,7 @@ describe('matchmaking returns ok with some pending confirmation', () => {
     const extensionsToCreate: LocalSource[] = [EXTENSION_B]
     const validMatches = {}
     const remoteExtensions = [REGISTRATION_B]
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => createExtensionResult(REGISTRATION_B),
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const got = await deployConfirmed(options([EXTENSION_B], [], {developerPlatformClient}), remoteExtensions, [], {
@@ -667,7 +621,6 @@ describe('matchmaking returns ok with some pending confirmation', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {'extension-b': EXTENSION_B.uid},
       extensionIds: {'extension-b': EXTENSION_B.uid},
@@ -722,7 +675,6 @@ describe('matchmaking returns ok with nothing pending', () => {
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toBeCalled()
     expect(got).toEqual({
       extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
       extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
@@ -784,7 +736,6 @@ describe('includes functions', () => {
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toBeCalled()
     expect(got).toEqual({
       extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'},
       extensionIds: {EXTENSION_A: 'A', FUNCTION_A: 'FUNCTION_A'},
@@ -925,7 +876,6 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toBeCalled()
     expect(got).toEqual({
       extensions: {},
       extensionIds: {point_of_sale: 'C_A'},
@@ -948,7 +898,6 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
       extensionIds: {},
@@ -965,9 +914,7 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
       title: 'C_A',
       type: 'app-access',
     }
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => createExtensionResult(REGISTRATION_CONFIG_A),
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
 
@@ -980,7 +927,6 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
       extensionIds: {app_access: CONFIG_A.uid},
@@ -991,9 +937,7 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     // Given
     const extensionsToCreate: LocalSource[] = [PAYMENTS_A]
     const validMatches = {}
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => createExtensionResult(PAYMENTS_REGISTRATION_A),
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const ensureExtensionsIdsOptions = options([], [], {configExtensions: [PAYMENTS_A], developerPlatformClient})
@@ -1004,7 +948,6 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {'payments-extension': PAYMENTS_A.uid},
       extensionIds: {'payments-extension': PAYMENTS_A.uid},
@@ -1039,7 +982,6 @@ describe('deployConfirmed: handle existent uuid managed extensions', () => {
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
       extensionIds: {point_of_sale: 'C_A'},
@@ -1075,7 +1017,6 @@ describe('deployConfirmed: extensions that should be managed in the TOML', () =>
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
       extensionIds: {point_of_sale: 'C_A'},
@@ -1140,20 +1081,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     }).app
     const appId = 'appId'
 
-    let createExtensionCounter = 0
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => {
-        createExtensionCounter++
-        const registration = {
-          uuid: `webhook-subscription-${createExtensionCounter}`,
-          id: createExtensionCounter.toString(),
-          title: `Webhook Subscription ${createExtensionCounter}`,
-          type: 'WEBHOOK_SUBSCRIPTION',
-          contextValue: '',
-        }
-        return createExtensionResult(registration)
-      },
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
 
@@ -1166,7 +1094,6 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(Object.values(extensionsNonUuidManaged)).toEqual(localSources.map((source) => source.uid))
     expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(localSources.map((source) => source.uid))
   })
@@ -1213,20 +1140,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     }).app
     const appId = 'appId'
 
-    let createExtensionCounter = 0
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: async () => {
-        createExtensionCounter++
-        const registration = {
-          uuid: `webhook-subscription-${createExtensionCounter}`,
-          id: createExtensionCounter.toString(),
-          title: `Webhook Subscription ${createExtensionCounter}`,
-          type: 'WEBHOOK_SUBSCRIPTION',
-          contextValue: '',
-        }
-        return createExtensionResult(registration)
-      },
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
@@ -1238,7 +1152,6 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(Object.values(extensionsNonUuidManaged)).toEqual([
       'webhook-subscription-uuid',
       ...localSources.slice(1).map((source) => source.uid),
