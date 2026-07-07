@@ -61,16 +61,6 @@ import {
   AppVersionsQuerySchema,
 } from '../../api/graphql/get_versions_list.js'
 import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateQuery,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../../api/graphql/development_preview.js'
-import {
-  FindAppPreviewModeQuery,
-  FindAppPreviewModeSchema,
-  FindAppPreviewModeVariables,
-} from '../../api/graphql/find_app_preview_mode.js'
-import {
   AppVersionsDiffQuery,
   AppVersionsDiffSchema,
   AppVersionsDiffVariables,
@@ -515,16 +505,6 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async ensureUserAccessToStore(_orgId: string, _store: OrganizationStore): Promise<void> {
     // This is a no-op for partners
-  }
-
-  async updateDeveloperPreview(
-    input: DevelopmentStorePreviewUpdateInput,
-  ): Promise<DevelopmentStorePreviewUpdateSchema> {
-    return this.request(DevelopmentStorePreviewUpdateQuery, input)
-  }
-
-  async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
-    return this.request(FindAppPreviewModeQuery, input)
   }
 
   async sendSampleWebhook(
