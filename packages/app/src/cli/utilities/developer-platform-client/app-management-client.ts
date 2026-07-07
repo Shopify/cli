@@ -49,11 +49,6 @@ import {
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
 } from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -906,16 +901,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     _input: ConvertDevToTransferDisabledStoreVariables,
   ): Promise<ConvertDevToTransferDisabledSchema> {
     throw new BugError('Not implemented: convertToTransferDisabledStore')
-  }
-
-  async updateDeveloperPreview(
-    _input: DevelopmentStorePreviewUpdateInput,
-  ): Promise<DevelopmentStorePreviewUpdateSchema> {
-    throw new BugError('Not implemented: updateDeveloperPreview')
-  }
-
-  async appPreviewMode(_input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
-    throw new BugError('Not implemented: appPreviewMode')
   }
 
   async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {

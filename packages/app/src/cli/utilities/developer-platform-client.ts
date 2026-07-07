@@ -17,11 +17,6 @@ import {
   ConvertDevToTransferDisabledStoreVariables,
 } from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../api/graphql/development_preview.js'
-import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
@@ -270,8 +265,6 @@ export interface DeveloperPlatformClient {
   convertToTransferDisabledStore: (
     input: ConvertDevToTransferDisabledStoreVariables,
   ) => Promise<ConvertDevToTransferDisabledSchema>
-  updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
-  appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
   apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>

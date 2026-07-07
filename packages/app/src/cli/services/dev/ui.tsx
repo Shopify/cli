@@ -1,9 +1,23 @@
-import {type DevProps} from './ui/components/Dev.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+
+interface DevProps {
+  processes: OutputProcess[]
+  previewUrl: string
+  graphiqlUrl?: string
+  abortController: AbortController
+  shopFqdn: string
+  app: {
+    id: string
+    developerPlatformClient: DeveloperPlatformClient
+  }
+}
 
 export async function renderDev({
   processes,
@@ -11,7 +25,6 @@ export async function renderDev({
   app,
   abortController,
   graphiqlUrl,
-  developerPreview,
   shopFqdn,
   devSessionStatusManager,
   appURL,
@@ -53,10 +66,7 @@ export async function renderDev({
     processes,
     previewUrl,
     graphiqlUrl,
-    app,
     abortController,
-    developerPreview,
-    shopFqdn,
   })
 }
 
@@ -64,16 +74,8 @@ async function renderDevNonInteractive({
   processes,
   previewUrl,
   graphiqlUrl,
-  app: {canEnablePreviewMode},
   abortController,
-  developerPreview,
-}: Omit<DevProps, 'graphiqlPort'>) {
-  if (canEnablePreviewMode) {
-    await developerPreview.enable()
-    abortController?.signal.addEventListener('abort', async () => {
-      await developerPreview.disable()
-    })
-  }
+}: Pick<DevProps, 'processes' | 'previewUrl' | 'graphiqlUrl' | 'abortController'>) {
   process.stdout.write(`\nPreview URL: ${previewUrl}\n`)
   if (graphiqlUrl) {
     process.stdout.write(`GraphiQL URL (Admin API): ${graphiqlUrl}\n`)
