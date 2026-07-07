@@ -284,6 +284,12 @@ export async function configLink(
   // Without this, an Enter press arrives mid-mount and a subsequent render can
   // flip the prompt state unexpectedly (e.g. turning a select into search mode).
   const settle = (ms = 50) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+  const typeText = async (text: string) => {
+    for (const char of text) {
+      proc.ptyProcess.write(char)
+      await settle(10)
+    }
+  }
 
   try {
     // With --organization-id, the first prompt is either "Create this project"
@@ -309,7 +315,8 @@ export async function configLink(
     // text, wait for it to be consumed, then write \r separately.
     await proc.waitForOutput('App name', CLI_TIMEOUT.medium)
     await settle()
-    proc.ptyProcess.write(ctx.appName)
+    await typeText(ctx.appName)
+    await proc.waitForOutput(ctx.appName, CLI_TIMEOUT.medium)
     await settle()
     proc.sendKey('\r')
 
