@@ -2,25 +2,17 @@ import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {appFromIdentifiers, ensureDeployContext, ensureThemeExtensionDevContext} from './context.js'
-import {createExtension} from './dev/create-extension.js'
+import {appFromIdentifiers, ensureDeployContext} from './context.js'
 import {CachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {DeployOptions} from './deploy.js'
-import {
-  MinimalAppIdentifiers,
-  Organization,
-  OrganizationApp,
-  OrganizationSource,
-  OrganizationStore,
-} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {
   testDeveloperPlatformClient,
   testAppWithConfig,
   testOrganizationApp,
-  testThemeExtensions,
   testProject,
 } from '../models/app/app.test-data.js'
 import {getAppConfigurationFileName, isWebType} from '../models/app/loader.js'
@@ -112,7 +104,6 @@ function buildDeveloperPlatformClient(extras?: Partial<DeveloperPlatformClient>)
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
-vi.mock('./dev/create-extension')
 vi.mock('./dev/select-app')
 vi.mock('./dev/select-store')
 vi.mock('../prompts/dev')
@@ -377,70 +368,6 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(result.didMigrateExtensionsToDevDash).toBe(false)
-  })
-})
-
-describe('ensureThemeExtensionDevContext', () => {
-  test('fetches theme extension when it exists', async () => {
-    // Given
-    const apiKey = 'apiKey'
-    const extension = await testThemeExtensions()
-
-    const mockedExtensionRegistrations = {
-      app: {
-        extensionRegistrations: [
-          {
-            id: 'other ID',
-            uuid: 'other UUID',
-            title: 'other extension',
-            type: 'other',
-          },
-          {
-            id: 'existing ID',
-            uuid: 'UUID',
-            title: 'theme app extension',
-            type: 'THEME_APP_EXTENSION',
-          },
-        ],
-        configurationRegistrations: [],
-        dashboardManagedExtensionRegistrations: [],
-      },
-    }
-
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(mockedExtensionRegistrations),
-    })
-
-    // When
-    const got = await ensureThemeExtensionDevContext(extension, apiKey, developerPlatformClient)
-
-    // Then
-    expect('existing ID').toEqual(got.id)
-    expect('UUID').toEqual(got.uuid)
-    expect('theme app extension').toEqual(got.title)
-    expect('THEME_APP_EXTENSION').toEqual(got.type)
-  })
-
-  test('creates theme extension when it does not exist', async () => {
-    // Given
-    const apiKey = 'apiKey'
-    const extension = await testThemeExtensions()
-
-    vi.mocked(createExtension).mockResolvedValue({
-      id: 'new ID',
-      uuid: 'UUID',
-      title: 'theme app extension',
-      type: 'THEME_APP_EXTENSION',
-    })
-
-    // When
-    const got = await ensureThemeExtensionDevContext(extension, apiKey, buildDeveloperPlatformClient())
-
-    // Then
-    expect('new ID').toEqual(got.id)
-    expect('UUID').toEqual(got.uuid)
-    expect('theme app extension').toEqual(got.title)
-    expect('THEME_APP_EXTENSION').toEqual(got.type)
   })
 })
 
