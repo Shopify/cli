@@ -223,7 +223,6 @@ export interface DeveloperPlatformClient {
   readonly clientName: ClientName
   readonly webUiName: string
   readonly supportsAtomicDeployments: boolean
-  readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
   readonly supportsDashboardManagedExtensions: boolean

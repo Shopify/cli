@@ -199,7 +199,6 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly clientName = ClientName.Partners
   public readonly webUiName = 'Partner Dashboard'
   public readonly supportsAtomicDeployments = false
-  public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
   public readonly bundleFormat = 'zip'
   public readonly supportsDashboardManagedExtensions = true
