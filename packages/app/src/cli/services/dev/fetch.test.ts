@@ -45,9 +45,8 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners and App Management for 1P development', async () => {
+  test('returns fetched organizations from available developer platform clients', async () => {
     // Given
-    vi.stubEnv('SHOPIFY_CLI_1P_DEV', 'true')
     vi.mocked(blockPartnersAccess).mockReturnValue(false)
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG1]),

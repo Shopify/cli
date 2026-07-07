@@ -140,6 +140,20 @@ describe('validateSession', () => {
     expect(got).toBe('needs_full_auth')
   })
 
+  test('returns needs_full_auth if cached identity has employee scope', async () => {
+    // Given
+    const session = {
+      identity: {...validIdentity, scopes: [...validIdentity.scopes, 'employee']},
+      applications: validApplications,
+    }
+
+    // When
+    const got = await validateSession(requestedScopes, defaultApps, session)
+
+    // Then
+    expect(got).toBe('needs_full_auth')
+  })
+
   test('returns needs_refresh if identity is expired', async () => {
     // Given
     const session = {
