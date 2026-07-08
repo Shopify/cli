@@ -359,12 +359,6 @@
           ]
         }
       },
-      "packages/ui-extensions-dev-console": {
-        "entry": [
-          "**/src/main.tsx!"
-        ],
-        "project": "**/*.{ts,tsx}!"
-      },
       "packages/ui-extensions-server-kit": {
         "entry": [
           "**/src/index.ts!",

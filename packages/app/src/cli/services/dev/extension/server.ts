@@ -1,14 +1,12 @@
 import {
   corsMiddleware,
-  devConsoleAssetsMiddleware,
-  devConsoleIndexMiddleware,
   getExtensionAssetMiddleware,
   getExtensionPayloadMiddleware,
   getExtensionPointMiddleware,
   getExtensionsPayloadMiddleware,
   getLogMiddleware,
   noCacheMiddleware,
-  redirectToDevConsoleMiddleware,
+  redirectToExtensionsMiddleware,
 } from './server/middlewares.js'
 import {ExtensionsPayloadStore, ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -28,15 +26,14 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpApp.use(getLogMiddleware(options))
   httpApp.use(corsMiddleware)
   httpApp.use(noCacheMiddleware)
-  httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
-  httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)
+  httpRouter.use('/extensions/dev-console', redirectToExtensionsMiddleware)
   httpRouter.use('/extensions/:extensionId', getExtensionPayloadMiddleware(options))
   httpRouter.use('/extensions/:extensionId/', getExtensionPayloadMiddleware(options))
   httpRouter.use('/extensions/:extensionId/:extensionPointTarget', getExtensionPointMiddleware(options))
   httpRouter.use('/extensions/:extensionId/assets/**:assetPath', getExtensionAssetMiddleware(options))
   httpRouter.use('/extensions', getExtensionsPayloadMiddleware(options))
   httpRouter.use('/extensions/', getExtensionsPayloadMiddleware(options))
-  httpRouter.use('/', redirectToDevConsoleMiddleware)
+  httpRouter.use('/', redirectToExtensionsMiddleware)
 
   httpApp.use(httpRouter)
 
