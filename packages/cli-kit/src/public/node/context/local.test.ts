@@ -10,6 +10,8 @@ import {
   macAddress,
   getThemeKitAccessDomain,
   opentelemetryDomain,
+  firstPartyDev,
+  _resetFirstPartyDevCache,
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
@@ -80,6 +82,62 @@ describe('isUnitTest', () => {
 
     // Then
     expect(got).toBe(true)
+  })
+})
+
+describe('firstPartyDev', () => {
+  afterEach(() => {
+    _resetFirstPartyDevCache()
+  })
+
+  test('returns true when SHOPIFY_CLI_1P_DEV is truthy', () => {
+    // Given
+    const env = {SHOPIFY_CLI_1P_DEV: '1'}
+
+    // When
+    const got = firstPartyDev(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('memoizes the result', () => {
+    // Given
+    const env = process.env
+    const originalValue = env.SHOPIFY_CLI_1P_DEV
+    env.SHOPIFY_CLI_1P_DEV = '1'
+
+    // When
+    const got1 = firstPartyDev()
+    env.SHOPIFY_CLI_1P_DEV = '0'
+    const got2 = firstPartyDev()
+
+    // Then
+    expect(got1).toBe(true)
+    expect(got2).toBe(true)
+
+    // Cleanup
+    env.SHOPIFY_CLI_1P_DEV = originalValue
+  })
+
+  test('resets the cache', () => {
+    // Given
+    const env = process.env
+    const originalValue = env.SHOPIFY_CLI_1P_DEV
+    env.SHOPIFY_CLI_1P_DEV = '1'
+
+    // When
+    const got1 = firstPartyDev()
+    _resetFirstPartyDevCache()
+    env.SHOPIFY_CLI_1P_DEV = '0'
+    const got2 = firstPartyDev()
+
+    // Then
+    expect(got1).toBe(true)
+    expect(got2).toBe(false)
+
+    // Cleanup
+    env.SHOPIFY_CLI_1P_DEV = originalValue
   })
 })
 

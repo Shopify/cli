@@ -45,6 +45,11 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the first party dev check.
+ */
+let memoizedFirstPartyDev: boolean | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -142,7 +147,17 @@ export function alwaysLogMetrics(env = process.env): boolean {
  * @returns True if SHOPIFY_CLI_1P is truthy.
  */
 export function firstPartyDev(env = process.env): boolean {
+  if (env === process.env) {
+    return (memoizedFirstPartyDev ??= isTruthy(env[environmentVariables.firstPartyDev]))
+  }
   return isTruthy(env[environmentVariables.firstPartyDev])
+}
+
+/**
+ * Resets the memoized value for the first party dev check.
+ */
+export function _resetFirstPartyDevCache(): void {
+  memoizedFirstPartyDev = undefined
 }
 
 /**
