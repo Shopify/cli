@@ -24,7 +24,25 @@ const COMMANDS_TO_SKIP = [
 ]
 
 function url(): string {
-  return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
+  const envUrl = process.env.SHOPIFY_CLI_NOTIFICATIONS_URL
+  if (envUrl) {
+    try {
+      const parsedUrl = new globalThis.URL(envUrl)
+      // We only allow https for notifications to prevent loading malicious content from insecure sources.
+      if (parsedUrl.protocol === 'https:') {
+        return envUrl
+      }
+      outputDebug(
+        `The notifications URL provided via SHOPIFY_CLI_NOTIFICATIONS_URL (${envUrl}) is not secure (https). Falling back to default.`,
+      )
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      outputDebug(
+        `The notifications URL provided via SHOPIFY_CLI_NOTIFICATIONS_URL (${envUrl}) is not a valid URL. Falling back to default.`,
+      )
+    }
+  }
+  return URL
 }
 
 const NotificationSchema = zod.object({
