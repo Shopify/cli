@@ -1,6 +1,5 @@
 import {RemoteSource, LocalSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {uniqBy, difference} from '@shopify/cli-kit/common/array'
@@ -210,24 +209,9 @@ export async function automaticMatchmaking(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
   identifiers: IdentifiersExtensions,
-  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<MatchResult> {
-  const useUuidMatching = true
   const ids = getExtensionIds(localSources, identifiers)
-  const localIds = Object.values(ids)
-
-  const existsRemotely = (local: LocalSource) =>
-    remoteSources.some((remote) => {
-      if (remote.type !== developerPlatformClient.toExtensionGraphQLType(local.graphQLType)) return false
-      return ids[local.localIdentifier] === remote.uuid
-    })
-
-  const local = localSources.filter((local) => !existsRemotely(local))
-  const remote = remoteSources.filter((remote) => !localIds.includes(remote.uuid))
-
-  const {matched, toCreate, toConfirm, toManualMatch} = useUuidMatching
-    ? matchByUIDandUUID(localSources, remoteSources, ids)
-    : matchByNameAndType(local, remote)
+  const {matched, toCreate, toConfirm, toManualMatch} = matchByUIDandUUID(localSources, remoteSources, ids)
 
   return {
     identifiers: {...ids, ...matched},

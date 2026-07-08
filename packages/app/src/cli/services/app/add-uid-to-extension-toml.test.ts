@@ -1,6 +1,5 @@
 import {addUidToTomlsIfNecessary} from './add-uid-to-extension-toml.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, test, expect} from 'vitest'
 import {writeFile, readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -24,10 +23,8 @@ describe('addUidToTomlsIfNecessary', () => {
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then
       const updatedContent = await readFile(tomlPath)
@@ -65,10 +62,8 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then — uid must be inside the [[extensions]] block (right after handle), not at
       // the top level of the file.
@@ -123,10 +118,8 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({})
-
       // When
-      await addUidToTomlsIfNecessary([extension, extension1], client)
+      await addUidToTomlsIfNecessary([extension, extension1])
 
       // Then
       const updatedContent = await readFile(tomlPath)
@@ -165,10 +158,8 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         },
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then
       const updatedContent = await readFile(tomlPath)
@@ -194,10 +185,8 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then
       const updatedContent = await readFile(tomlPath)

@@ -2,7 +2,7 @@
 import {automaticMatchmaking} from './id-matching.js'
 import {RemoteSource} from './identifiers.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {testDeveloperPlatformClient, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
+import {testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test, beforeAll} from 'vitest'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -254,7 +254,7 @@ beforeAll(async () => {
 describe('automaticMatchmaking', () => {
   test('creates all local extensions when there are no remote ones', async () => {
     // When
-    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [], {}, testDeveloperPlatformClient({}))
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [], {})
 
     // Then
     const expected = {
@@ -269,12 +269,7 @@ describe('automaticMatchmaking', () => {
   test('creates the missing extension when there is a remote one', async () => {
     // When
     const registrationA = {...REGISTRATION_A, id: ''}
-    const got = await automaticMatchmaking(
-      [EXTENSION_A, EXTENSION_A_2],
-      [registrationA],
-      {'extension-a': 'UUID_A'},
-      testDeveloperPlatformClient({}),
-    )
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [registrationA], {'extension-a': 'UUID_A'})
 
     // Then
     const expected = {
@@ -310,7 +305,6 @@ describe('outputAddedIDs', () => {
         'extension-c': 'UUID_C',
         'extension-d': 'UUID_D',
       },
-      testDeveloperPlatformClient({}),
     )
 
     // Then: outputInfo should be called with the expected messages

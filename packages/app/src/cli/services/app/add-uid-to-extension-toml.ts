@@ -1,12 +1,8 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
-export async function addUidToTomlsIfNecessary(
-  extensions: ExtensionInstance[],
-  _developerPlatformClient: DeveloperPlatformClient,
-) {
+export async function addUidToTomlsIfNecessary(extensions: ExtensionInstance[]) {
   // We can't update the TOML files in parallel because some extensions might share the same file
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop

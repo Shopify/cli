@@ -145,12 +145,7 @@ export async function ensureExtensionsIds(
     didMigrateDashboardExtensions = true
   }
 
-  const matchExtensions = await automaticMatchmaking(
-    localExtensions,
-    remoteExtensions,
-    identifiers,
-    options.developerPlatformClient,
-  )
+  const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, identifiers)
 
   let validMatches = matchExtensions.identifiers
   const extensionsToCreate = matchExtensions.toCreate ?? []
@@ -200,7 +195,6 @@ export async function deployConfirmed(
   const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
     singleAndDynamicStrategyExtensions,
     options.app,
-    options.appId,
     options.developerPlatformClient,
   )
 

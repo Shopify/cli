@@ -755,7 +755,6 @@ describe('includes functions', () => {
       [EXTENSION_A, FUNCTION_A],
       [REGISTRATION_A, FUNCTION_REGISTRATION_A],
       {},
-      ensureExtensionsIdsOptions.developerPlatformClient,
     )
     expect(got).toEqual({
       dashboardOnlyExtensions: [],
@@ -814,12 +813,7 @@ describe('excludes non uuid managed extensions', () => {
     })
 
     // Then
-    expect(automaticMatchmaking).toHaveBeenCalledWith(
-      [EXTENSION_A],
-      [REGISTRATION_A],
-      {},
-      ensureExtensionsIdsOptions.developerPlatformClient,
-    )
+    expect(automaticMatchmaking).toHaveBeenCalledWith([EXTENSION_A], [REGISTRATION_A], {})
   })
 })
 
