@@ -180,6 +180,7 @@ eslint-report.json
 
 # Generated docs
 docs/api
+docs-shopify.dev/commands/interfaces/
 
 vite.config.ts.timestamp*
 
