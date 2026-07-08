@@ -1,4 +1,4 @@
-import {invalidCountryCodeMessage, isCountryCode, previewStoreFlags} from '../../../flags.js'
+import {previewStoreFlags} from '../../../flags.js'
 import {type CreatePreviewStoreResult, createPreviewStoreCommand} from '../../../services/store/create/preview/index.js'
 import {writeCreatePreviewStoreResult} from '../../../services/store/create/preview/result.js'
 import StoreCommand from '../../../utilities/store-command.js'
@@ -33,10 +33,6 @@ export default class StoreCreatePreview extends StoreCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreCreatePreview)
-
-    if (flags.country !== undefined && !isCountryCode(flags.country)) {
-      this.error(invalidCountryCodeMessage)
-    }
 
     const result = await renderSingleTask<CreatePreviewStoreResult>({
       title: outputContent`Creating store`,

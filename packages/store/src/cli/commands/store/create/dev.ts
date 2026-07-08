@@ -1,7 +1,7 @@
 import {createDevStore} from '../../../services/store/create/dev.js'
 import {devStorePlanHandles, DevStorePlan} from '../../../services/store/constants.js'
 import {storeNamePrompt, storePlanPrompt} from '../../../prompts/store.js'
-import {devStoreFlags, invalidCountryCodeMessage, isCountryCode, storeFlags} from '../../../flags.js'
+import {devStoreFlags, storeFlags} from '../../../flags.js'
 import {selectOrg} from '@shopify/organizations'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -46,10 +46,6 @@ export default class StoreCreateDev extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreCreateDev)
     this.failMissingNonTTYFlags(flags, ['name', 'organization-id', 'plan'])
-
-    if (flags.country !== undefined && !isCountryCode(flags.country)) {
-      this.error(invalidCountryCodeMessage)
-    }
 
     const organization = await selectOrg(flags['organization-id']?.toString())
     const name = flags.name ?? (await storeNamePrompt())
