@@ -315,33 +315,6 @@ describe('when existing session is valid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
-  test('uses an explicitly selected session without reading the current session ID', async () => {
-    // Given
-    const selectedUserId = 'selected-user-id'
-    const sessions: Sessions = {
-      [fqdn]: {
-        [userId]: {
-          identity: validIdentityToken,
-          applications: {},
-        },
-        [selectedUserId]: {
-          identity: {...validIdentityToken, userId: selectedUserId},
-          applications: appTokens,
-        },
-      },
-    }
-    vi.mocked(validateSession).mockResolvedValueOnce('ok')
-    vi.mocked(fetchSessions).mockResolvedValue(sessions)
-
-    // When
-    const got = await ensureAuthenticated(defaultApplications, process.env, {sessionId: selectedUserId})
-
-    // Then
-    expect(getCurrentSessionId).not.toHaveBeenCalled()
-    expect(validateSession).toHaveBeenCalledWith(expect.any(Array), expect.any(Object), sessions[fqdn]![selectedUserId])
-    expect(got).toEqual({...validTokens, userId: selectedUserId})
-  })
-
   test('uses the command selected session without changing the current session ID', async () => {
     // Given
     const selectedUserId = 'selected-user-id'
@@ -408,7 +381,7 @@ describe('when existing session is valid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
-  test('refreshes an explicitly selected session without changing the current session ID', async () => {
+  test('refreshes the command selected session without changing the current session ID', async () => {
     // Given
     const selectedUserId = 'selected-user-id'
     const sessions: Sessions = {
@@ -422,9 +395,10 @@ describe('when existing session is valid', () => {
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(fetchSessions).mockResolvedValue(sessions)
     vi.mocked(refreshAccessToken).mockResolvedValueOnce({...validIdentityToken, userId: selectedUserId})
+    setCommandSessionId(selectedUserId)
 
     // When
-    const got = await ensureAuthenticated(defaultApplications, process.env, {sessionId: selectedUserId})
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(refreshAccessToken).toHaveBeenCalled()

@@ -234,12 +234,12 @@ describe('ensureAuthenticatedTheme', () => {
     })
 
     // When
-    const got = await ensureAuthenticatedThemes('mystore', undefined, [], {sessionId: 'user-id'})
+    const got = await ensureAuthenticatedThemes('mystore', undefined, [], {noPrompt: true})
 
     // Then
     expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
     expect(ensureAuthenticated).toHaveBeenCalledWith({adminApi: {scopes: [], storeFqdn: 'mystore'}}, process.env, {
-      sessionId: 'user-id',
+      noPrompt: true,
     })
   })
 

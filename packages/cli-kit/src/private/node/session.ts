@@ -188,7 +188,6 @@ export interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
   forceRefresh?: boolean
   forceNewSession?: boolean
-  sessionId?: string
 }
 
 /**
@@ -202,12 +201,7 @@ export interface EnsureAuthenticatedAdditionalOptions {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
-  {
-    forceRefresh = false,
-    noPrompt = false,
-    forceNewSession = false,
-    sessionId,
-  }: EnsureAuthenticatedAdditionalOptions = {},
+  {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
@@ -220,10 +214,9 @@ export async function ensureAuthenticated(
   }
 
   const sessions = (await sessionStore.fetch()) ?? {}
-  const selectedSessionId = sessionId ?? commandSessionId
 
-  let currentSessionId = forceNewSession ? undefined : (selectedSessionId ?? getCurrentSessionId())
-  if (!currentSessionId && !selectedSessionId) {
+  let currentSessionId = forceNewSession ? undefined : (commandSessionId ?? getCurrentSessionId())
+  if (!currentSessionId && !commandSessionId) {
     const userIds = Object.keys(sessions[fqdn] ?? {})
     if (userIds.length > 0) currentSessionId = userIds[0]
   }
@@ -272,7 +265,7 @@ ${outputToken.json(applications)}
   // Save the new session info if it has changed
   if (!isEmpty(newSession)) {
     await sessionStore.store(updatedSessions)
-    if (!selectedSessionId) setCurrentSessionId(newSessionId)
+    if (!commandSessionId) setCurrentSessionId(newSessionId)
   }
 
   const tokens = await tokensFor(applications, completeSession)
