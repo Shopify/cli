@@ -1314,7 +1314,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     webUiName: 'Test Dashboard',
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
-    supportsDashboardManagedExtensions: true,
     session: () => Promise.resolve(testPartnersUserSession),
     unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
@@ -1389,10 +1388,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[
-        key as keyof Omit<
-          DeveloperPlatformClient,
-          'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat' | 'supportsDashboardManagedExtensions'
-        >
+        key as keyof Omit<DeveloperPlatformClient, 'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat'>
       ] = vi.fn().mockImplementation(value)
     }
   }

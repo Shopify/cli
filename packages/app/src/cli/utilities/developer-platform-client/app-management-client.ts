@@ -193,7 +193,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly webUiName = 'Developer Dashboard'
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   public readonly bundleFormat = 'br'
-  public readonly supportsDashboardManagedExtensions = false
   private _session: Session | undefined
 
   private constructor(session?: Session) {

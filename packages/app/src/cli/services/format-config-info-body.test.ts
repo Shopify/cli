@@ -137,62 +137,6 @@ describe('formatConfigInfoBody', () => {
     })
   })
 
-  test('if includeConfigOnDeploy is true, it shows an item for includeConfigOnDeploy', () => {
-    // GIVEN
-    const options = {
-      appName: 'test-app',
-      includeConfigOnDeploy: true,
-    }
-
-    // WHEN
-    const result = formatConfigInfoBody(options)
-
-    // THEN
-    const body = result as Token[]
-    expect(body[0]).toMatchObject({
-      list: {
-        items: expect.arrayContaining(['Include config:  Yes']),
-      },
-    })
-  })
-
-  test('if includeConfigOnDeploy is false, it shows an item for includeConfigOnDeploy with No', () => {
-    // GIVEN
-    const options = {
-      appName: 'test-app',
-      includeConfigOnDeploy: false,
-    }
-
-    // WHEN
-    const result = formatConfigInfoBody(options)
-
-    // THEN
-    const body = result as Token[]
-    expect(body[0]).toMatchObject({
-      list: {
-        items: expect.arrayContaining(['Include config:  No']),
-      },
-    })
-  })
-
-  test('if includeConfigOnDeploy is undefined, it does not show an item for includeConfigOnDeploy', () => {
-    // GIVEN
-    const options = {
-      appName: 'test-app',
-    }
-
-    // WHEN
-    const result = formatConfigInfoBody(options)
-
-    // THEN
-    const body = result as Token[]
-    expect(body[0]).toMatchObject({
-      list: {
-        items: expect.not.arrayContaining([expect.stringMatching(/^Include config:/)]),
-      },
-    })
-  })
-
   test('if there are messages, it shows each message as a distinct paragraph', () => {
     // GIVEN
     const message1: Token[] = ['First message']

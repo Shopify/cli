@@ -223,7 +223,6 @@ export interface DeveloperPlatformClient {
   readonly webUiName: string
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
-  readonly supportsDashboardManagedExtensions: boolean
   session: () => Promise<Session>
   /**
    * This is an unsafe method that should only be used when the session is expired.

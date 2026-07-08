@@ -195,7 +195,6 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly webUiName = 'Partner Dashboard'
   public readonly organizationSource = OrganizationSource.Partners
   public readonly bundleFormat = 'zip'
-  public readonly supportsDashboardManagedExtensions = true
   private _session: Session | undefined
 
   private constructor(session?: Session) {

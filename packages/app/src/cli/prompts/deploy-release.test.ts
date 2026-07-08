@@ -18,7 +18,7 @@ beforeEach(() => {
 
 describe('deployOrReleaseConfirmationPrompt', () => {
   describe('when release', () => {
-    test('and force no prompt should be displayed and true returned', async () => {
+    test('and no release no prompt should be displayed and true returned', async () => {
       // Given
       const {extensionIdentifiersBreakdown, configExtensionIdentifiersBreakdown} = buildCompleteBreakdownInfo()
       const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt')
@@ -30,8 +30,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown,
         configExtensionIdentifiersBreakdown,
         appTitle,
-        release: true,
-        force: true,
+        release: false,
       })
 
       // Then
@@ -59,7 +58,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         configExtensionIdentifiersBreakdown,
         appTitle,
         release: true,
-        force: false,
       })
 
       // Then
@@ -104,7 +102,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle,
         release: true,
-        force: false,
       })
 
       // Then
@@ -159,7 +156,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle,
         release: true,
-        force: false,
       })
 
       // Then
@@ -220,7 +216,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle,
         release: true,
-        force: false,
         installCount: 1243,
       })
 
@@ -247,7 +242,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle,
         release: true,
-        force: false,
         installCount: 0,
       })
 
@@ -272,7 +266,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const result = await deployOrReleaseConfirmationPrompt({
         ...breakdownInfo,
         release: true,
-        force: false,
       })
 
       // Then
@@ -325,7 +318,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const result = await deployOrReleaseConfirmationPrompt({
         ...breakdownInfo,
         release: true,
-        force: false,
         showConfig: false,
       })
 
@@ -373,7 +365,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle,
         release: true,
-        force: false,
       })
 
       // Then
@@ -412,10 +403,9 @@ describe('deployOrReleaseConfirmationPrompt', () => {
   })
 
   describe('when no release', () => {
-    test('and no force without extensions deleted should display the complete confirmation prompt', async () => {
+    test('skips the confirmation prompt', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
-      breakdownInfo.extensionIdentifiersBreakdown.onlyRemote = []
 
       const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
@@ -426,44 +416,15 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle,
         release: false,
-        force: false,
       })
 
       // Then
       verifyMetada({
         metadataSpyOn,
-        extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
-      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
-        renderConfirmationPromptContent({
-          appTitle,
-          infoTable: [
-            {
-              header: 'Configuration:',
-              items: [
-                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
-                'existing field name1',
-                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
-              ],
-            },
-            {
-              header: 'Extensions:',
-              items: [
-                {bullet: '+', item: ['to create extension (uid: uid-create)', {subdued: '(new)'}], color: 'green'},
-                {item: ['to update extension', {subdued: '(updated)'}], color: '#FF8800'},
-                'unchanged extension',
-                ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
-              ],
-            },
-          ],
-          dangerPrompt: false,
-          confirmationMessage: 'Yes, create this new version',
-          message: 'Create a new version of app title?',
-        }),
-      )
+      expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
   })
@@ -480,7 +441,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle: 'app title',
         release: true,
-        force: false,
         allowUpdates: true,
         allowDeletes: true,
       })
@@ -505,7 +465,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle: 'app title',
         release: true,
-        force: false,
         allowUpdates: true,
         allowDeletes: false,
       })
@@ -530,7 +489,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle: 'app title',
         release: true,
-        force: false,
         allowUpdates: true,
         allowDeletes: false,
       })
@@ -555,7 +513,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle: 'app title',
         release: true,
-        force: false,
         allowUpdates: false,
         allowDeletes: true,
       })
@@ -577,7 +534,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
           ...breakdownInfo,
           appTitle: 'app title',
           release: true,
-          force: false,
           allowUpdates: true,
           allowDeletes: false,
         }),
@@ -596,7 +552,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
           ...breakdownInfo,
           appTitle: 'app title',
           release: true,
-          force: false,
           allowUpdates: false,
           allowDeletes: true,
         }),
@@ -619,7 +574,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
           ...breakdownInfo,
           appTitle: 'app title',
           release: true,
-          force: false,
         }),
       ).rejects.toMatchObject({
         message: 'This deployment includes changes that require confirmation.',
@@ -645,7 +599,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
           ...breakdownInfo,
           appTitle: 'app title',
           release: true,
-          force: false,
         }),
       ).rejects.toMatchObject({
         message: 'This deployment includes changes that require confirmation.',
@@ -666,7 +619,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
           ...breakdownInfo,
           appTitle: 'app title',
           release: true,
-          force: false,
         }),
       ).rejects.toMatchObject({
         message: 'This deployment includes changes that require confirmation.',
@@ -687,7 +639,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         ...breakdownInfo,
         appTitle: 'app title',
         release: true,
-        force: false,
       })
 
       // Then - should show the prompt normally since there are no changes requiring confirmation
