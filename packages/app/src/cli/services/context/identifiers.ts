@@ -22,7 +22,6 @@ export interface EnsureDeploymentIdsPresenceOptions {
   allowDeletes?: boolean
   release: boolean
   remoteApp: PartnersAppForIdentifierMatching
-  includeDraftExtensions?: boolean
   activeAppVersion?: AppVersion
 }
 
