@@ -19,7 +19,6 @@ describe('app bulk cancel command', () => {
   const store = testOrganizationStore({shopDomain: 'shop.myshopify.com'})
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(prepareAppStoreContext).mockResolvedValue({
       appContextResult: {
         app,
