@@ -212,6 +212,34 @@ describe('createDevStore', () => {
     )
   })
 
+  test('renders Admin as N/A in the success output when the admin URL is missing', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce({
+        createAppDevelopmentStore: {
+          shopAdminUrl: null,
+          shopDomain: 'test-store.myshopify.com',
+          userErrors: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', json: false})
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customSections: [
+          expect.objectContaining({
+            body: expect.objectContaining({
+              tabularData: expect.arrayContaining([['Admin', 'N/A']]),
+            }),
+          }),
+        ],
+      }),
+    )
+  })
+
   test('outputs JSON when --json flag is set', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc)
       .mockResolvedValueOnce(defaultMutationResult)

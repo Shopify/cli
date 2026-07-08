@@ -149,7 +149,9 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
   } else {
     const rows: InlineToken[][] = []
     pushRow(rows, 'Domain', shopDomain)
-    pushRow(rows, 'Admin', shopAdminUrl ? {link: {label: shopAdminUrl, url: shopAdminUrl}} : undefined)
+    // Admin always renders, falling back to 'N/A' when the URL is missing, so the
+    // summary never silently drops this commonly expected field.
+    rows.push(['Admin', shopAdminUrl ? {link: {label: shopAdminUrl, url: shopAdminUrl}} : 'N/A'])
     pushRow(rows, 'Plan', plan)
     pushRow(rows, 'Feature preview', options.featurePreview)
     pushRow(rows, 'Country', options.country)
