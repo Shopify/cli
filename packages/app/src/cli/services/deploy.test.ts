@@ -17,7 +17,6 @@ import {
   testOrganization,
   testProject,
 } from '../models/app/app.test-data.js'
-import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -52,7 +51,6 @@ vi.mock('./context.js')
 vi.mock('./deploy/upload.js')
 vi.mock('./deploy/bundle.js')
 vi.mock('./dev/fetch.js')
-vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/crypto')
@@ -116,7 +114,7 @@ describe('deploy', () => {
       organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
     })
   })
@@ -186,11 +184,10 @@ describe('deploy', () => {
       organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 UI extension', async () => {
@@ -234,11 +231,10 @@ describe('deploy', () => {
         },
       ],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 theme extension', async () => {
@@ -282,11 +278,10 @@ describe('deploy', () => {
         },
       ],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 function extension', async () => {
@@ -347,12 +342,11 @@ describe('deploy', () => {
         },
       ],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       bundlePath: expect.stringMatching(/bundle.zip$/),
       release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 UI and 1 theme extension', async () => {
@@ -415,12 +409,11 @@ describe('deploy', () => {
         },
       ],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
       commitReference,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
   test('pushes the configuration extension if include config on deploy ', async () => {
@@ -468,12 +461,11 @@ describe('deploy', () => {
         },
       ],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
       commitReference,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
   test('doesnt push the configuration extension if include config on deploy is disabled', async () => {
@@ -512,12 +504,11 @@ describe('deploy', () => {
       organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
       commitReference,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
   test('shows a success message', async () => {
@@ -712,22 +703,13 @@ async function testDeployBundle({
   didMigrateExtensionsToDevDash = false,
 }: TestDeployBundleInput) {
   // Given
-  const extensionsPayload: {[key: string]: string} = {}
-  for (const extension of app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)) {
-    extensionsPayload[extension.localIdentifier] = extension.localIdentifier
+  const appModuleUuids: {[key: string]: string} = {}
+  for (const extension of app.allExtensions) {
+    appModuleUuids[extension.localIdentifier] = extension.localIdentifier
   }
-  const extensionsNonUuidPayload: {[key: string]: string} = {}
-  for (const extension of app.allExtensions.filter((ext) => !ext.isUUIDStrategyExtension)) {
-    extensionsNonUuidPayload[extension.localIdentifier] = extension.localIdentifier
-  }
-  const identifiers = {
-    app: 'app-id',
-    extensions: extensionsPayload,
-    extensionIds: {},
-    extensionsNonUuidManaged: extensionsNonUuidPayload,
-  }
+  const deployIdentifiers = {appModuleUuids, appModuleRegistrationIds: {}}
 
-  vi.mocked(ensureDeployContext).mockResolvedValue({identifiers, didMigrateExtensionsToDevDash})
+  vi.mocked(ensureDeployContext).mockResolvedValue({deployIdentifiers, didMigrateExtensionsToDevDash})
 
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],
@@ -736,7 +718,6 @@ async function testDeployBundle({
     ...(!released && {deployError: 'no release error'}),
     location: 'https://partners.shopify.com/0/apps/0/versions/1',
   })
-  vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
 
   await deploy({
     app,

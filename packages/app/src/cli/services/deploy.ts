@@ -6,7 +6,6 @@ import {allExtensionTypes, filterOutImportedExtensions, importAllExtensions} fro
 import {getExtensions} from './fetch-extensions.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
-import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
 import {reloadApp} from '../models/app/loader.js'
@@ -148,7 +147,7 @@ export async function deploy(options: DeployOptions) {
     allowDeletes,
   })
 
-  const {identifiers, didMigrateExtensionsToDevDash} = await ensureDeployContext({
+  const {deployIdentifiers, didMigrateExtensionsToDevDash} = await ensureDeployContext({
     ...options,
     app,
     developerPlatformClient,
@@ -170,89 +169,79 @@ export async function deploy(options: DeployOptions) {
 
   let uploadExtensionsBundleResult!: UploadExtensionsBundleOutput
 
-  try {
-    const candidateBundlePath = joinPath(
-      options.app.directory,
-      '.shopify',
-      `deploy-bundle.${developerPlatformClient.bundleFormat}`,
-    )
-    await mkdir(dirname(candidateBundlePath))
+  const candidateBundlePath = joinPath(
+    options.app.directory,
+    '.shopify',
+    `deploy-bundle.${developerPlatformClient.bundleFormat}`,
+  )
+  await mkdir(dirname(candidateBundlePath))
 
-    const appManifest = await app.manifest(identifiers)
+  const appManifest = await app.manifest(appManifestUuids(app, deployIdentifiers.appModuleUuids))
 
-    const bundlePath = await bundleAndBuildExtensions({
-      app,
-      appManifest,
-      bundlePath: candidateBundlePath,
-      identifiers,
-      skipBuild: options.skipBuild,
-      isDevDashboardApp: true,
-    })
+  const bundlePath = await bundleAndBuildExtensions({
+    app,
+    appManifest,
+    bundlePath: candidateBundlePath,
+    skipBuild: options.skipBuild,
+  })
 
-    let uploadTaskTitle
+  let uploadTaskTitle
 
-    if (release) {
-      uploadTaskTitle = 'Releasing an app version'
-    } else {
-      uploadTaskTitle = 'Creating an app version'
-    }
-
-    const tasks: Task<TasksContext>[] = [
-      {
-        title: 'Running validation',
-        task: async () => {
-          await app.preDeployValidation()
-        },
-      },
-      {
-        title: uploadTaskTitle,
-        task: async () => {
-          const appModules = await Promise.all(
-            app.allExtensions.flatMap((ext) =>
-              ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
-            ),
-          )
-
-          uploadExtensionsBundleResult = await uploadExtensionsBundle({
-            appManifest,
-            appId: remoteApp.id,
-            apiKey,
-            name: app.name,
-            organizationId: remoteApp.organizationId,
-            bundlePath,
-            appModules: getArrayRejectingUndefined(appModules),
-            release,
-            developerPlatformClient,
-            extensionIds: identifiers.extensionIds,
-            message: options.message,
-            version: options.version,
-            commitReference: options.commitReference,
-          })
-
-          await updateAppIdentifiers({app, identifiers, command: 'deploy'})
-        },
-      },
-    ]
-
-    await renderTasks(tasks)
-
-    await outputCompletionMessage({
-      app,
-      project: options.project,
-      release,
-      uploadExtensionsBundleResult,
-      didMigrateExtensionsToDevDash,
-    })
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    /**
-     * If deployment fails when uploading we want the identifiers to be persisted
-     * for the next run.
-     */
-    await updateAppIdentifiers({app, identifiers, command: 'deploy'})
-    throw error
+  if (release) {
+    uploadTaskTitle = 'Releasing an app version'
+  } else {
+    uploadTaskTitle = 'Creating an app version'
   }
+
+  const tasks: Task<TasksContext>[] = [
+    {
+      title: 'Running validation',
+      task: async () => {
+        await app.preDeployValidation()
+      },
+    },
+    {
+      title: uploadTaskTitle,
+      task: async () => {
+        const appModules = await Promise.all(
+          app.allExtensions.flatMap((ext) =>
+            ext.bundleConfig({
+              appModuleUuids: deployIdentifiers.appModuleUuids,
+              developerPlatformClient,
+              apiKey,
+              appConfiguration: app.configuration,
+            }),
+          ),
+        )
+
+        uploadExtensionsBundleResult = await uploadExtensionsBundle({
+          appManifest,
+          appId: remoteApp.id,
+          apiKey,
+          name: app.name,
+          organizationId: remoteApp.organizationId,
+          bundlePath,
+          appModules: getArrayRejectingUndefined(appModules),
+          release,
+          developerPlatformClient,
+          appModuleRegistrationIds: deployIdentifiers.appModuleRegistrationIds,
+          message: options.message,
+          version: options.version,
+          commitReference: options.commitReference,
+        })
+      },
+    },
+  ]
+
+  await renderTasks(tasks)
+
+  await outputCompletionMessage({
+    app,
+    project: options.project,
+    release,
+    uploadExtensionsBundleResult,
+    didMigrateExtensionsToDevDash,
+  })
 
   return {app}
 }
@@ -345,4 +334,12 @@ async function outputCompletionMessage({
       ],
     ],
   })
+}
+
+function appManifestUuids(app: AppLinkedInterface, appModuleUuids: {[localIdentifier: string]: string}) {
+  return Object.fromEntries(
+    app.allExtensions
+      .filter((extension) => extension.isUUIDStrategyExtension)
+      .map((extension) => [extension.localIdentifier, appModuleUuids[extension.localIdentifier]!]),
+  )
 }

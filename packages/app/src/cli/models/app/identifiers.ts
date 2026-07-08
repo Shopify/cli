@@ -6,35 +6,20 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import type {AppInterface} from './app.js'
 
-export interface IdentifiersExtensions {
+export interface ExtensionUuidsByLocalIdentifier {
   [localIdentifier: string]: string
 }
 
-export interface Identifiers {
-  /** Application's API Key */
-  app: string
-
-  /**
-   * The extensions' unique identifiers.
-   */
-  extensions: IdentifiersExtensions
-
-  /**
-   * The extensions' numeric identifiers (expressed as a string).
-   */
-  extensionIds: IdentifiersExtensions
-
-  /**
-   * The extensions' unique identifiers which uuid is not managed.
-   */
-  extensionsNonUuidManaged: IdentifiersExtensions
+export interface DeployIdentifiers {
+  appModuleUuids: ExtensionUuidsByLocalIdentifier
+  appModuleRegistrationIds: ExtensionUuidsByLocalIdentifier
 }
 
-type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
 type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release' | 'import-extensions'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface
-  identifiers: UuidOnlyIdentifiers
+  appApiKey: string
+  extensionUuids: ExtensionUuidsByLocalIdentifier
   command: UpdateAppIdentifiersCommand
 }
 
@@ -44,7 +29,7 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command}: UpdateAppIdentifiersOptions,
+  {app, appApiKey, extensionUuids, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
@@ -55,12 +40,12 @@ export async function updateAppIdentifiers(
   }
   const updatedVariables: {[key: string]: string} = {...(app.dotenv?.variables ?? {})}
   if (!systemEnvironment[app.idEnvironmentVariableName]) {
-    updatedVariables[app.idEnvironmentVariableName] = identifiers.app
+    updatedVariables[app.idEnvironmentVariableName] = appApiKey
   }
-  Object.keys(identifiers.extensions).forEach((identifier) => {
+  Object.keys(extensionUuids).forEach((identifier) => {
     const envVariable = `SHOPIFY_${constantize(identifier)}_ID`
     if (!systemEnvironment[envVariable]) {
-      updatedVariables[envVariable] = identifiers.extensions[identifier]!
+      updatedVariables[envVariable] = extensionUuids[identifier]!
     }
   })
 
@@ -91,7 +76,7 @@ interface GetAppIdentifiersOptions {
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
   systemEnvironment = process.env,
-): Partial<UuidOnlyIdentifiers> {
+): ExtensionUuidsByLocalIdentifier {
   const envVariables = {
     ...app.dotenv?.variables,
     ...(systemEnvironment as {[variable: string]: string}),
@@ -104,8 +89,5 @@ export function getAppIdentifiers(
   }
   app.allExtensions.forEach(processExtension)
 
-  return {
-    app: envVariables[app.idEnvironmentVariableName],
-    extensions: extensionsIdentifiers,
-  }
+  return extensionsIdentifiers
 }

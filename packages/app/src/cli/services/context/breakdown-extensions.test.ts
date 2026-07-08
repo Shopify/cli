@@ -1,184 +1,23 @@
-/* eslint-disable @shopify/prefer-module-scope-constants */
-import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {
+  buildConfigExtensionIdentifiersBreakdown,
   buildDashboardBreakdownInfo,
   buildExtensionBreakdownInfo,
-  configExtensionsIdentifiersBreakdown,
-  extensionsIdentifiersDeployBreakdown,
+  configExtensionsIdentifiersReleaseBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './breakdown-extensions.js'
-import {RemoteSource} from './identifiers.js'
-import {AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
+import {AppModuleVersion} from '../../utilities/developer-platform-client.js'
+import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {
-  buildVersionedAppSchema,
   testApp,
   testAppConfigExtensions,
   testDeveloperPlatformClient,
-  testUIExtension,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
-import {OrganizationApp, MinimalAppIdentifiers} from '../../models/organization.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
-import {versionDiffByVersion} from '../release/version-diff.js'
-import {AppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {describe, vi, test, beforeAll, expect} from 'vitest'
-import {setPathValue} from '@shopify/cli-kit/common/object'
+import {versionDiffByVersion} from '../release/version-diff.js'
+import {describe, expect, test, vi} from 'vitest'
 
-const REGISTRATION_A: RemoteSource = {
-  uuid: 'UUID_A',
-  id: 'A',
-  title: 'A',
-  type: 'CHECKOUT_POST_PURCHASE',
-}
-
-const REGISTRATION_DASH_MIGRATED_A: RemoteSource = {
-  uuid: 'UUID_DM_A',
-  id: 'DM_A',
-  title: 'DM A',
-  type: 'CUSTOMER_ACCOUNTS_UI_EXTENSION',
-}
-
-const REGISTRATION_DASHBOARD_A = {
-  id: 'D_A',
-  title: 'Dashboard A',
-  uuid: 'UUID_D_A',
-  type: 'flow_action_definition',
-  activeVersion: {
-    config: '{}',
-  },
-}
-
-const REGISTRATION_DASHBOARD_NEW = {
-  id: 'D_NEW',
-  title: 'Dashboard New',
-  uuid: 'UUID_D_NEW',
-  type: 'flow_action_definition',
-  activeVersion: {
-    config: '{}',
-  },
-}
-
-const MODULE_CLI_A: AppModuleVersion = {
-  registrationId: 'A',
-  registrationUuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase',
-  type: 'checkout_post_purchase',
-  specification: {
-    identifier: 'checkout_post_purchase',
-    name: 'Post purchase UI extension',
-    experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
-
-const MODULE_CLI_A_NO_UID: AppModuleVersion = {
-  registrationId: '',
-  registrationUuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase',
-  type: 'checkout_post_purchase',
-  specification: {
-    identifier: 'checkout_post_purchase',
-    name: 'Post purchase UI extension',
-    experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
-
-const MODULE_CLI_A_EXTERNAL_IDENTIFIER: AppModuleVersion = {
-  registrationId: 'A',
-  registrationUuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase',
-  type: 'checkout_post_purchase_external',
-  specification: {
-    identifier: 'checkout_post_purchase_external',
-    name: 'Post purchase UI extension',
-    experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
-
-const MODULE_DASHBOARD_MIGRATED_CLI_A: AppModuleVersion = {
-  registrationId: 'A',
-  registrationUuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase',
-  type: 'checkout_post_purchase',
-  specification: {
-    identifier: 'checkout_post_purchase',
-    name: 'Post purchase UI extension',
-    experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
-
-const MODULE_CONFIG_A: AppModuleVersion = {
-  registrationId: 'C_A',
-  registrationUuid: 'UUID_C_A',
-  registrationTitle: 'Registration title',
-  type: 'app_access',
-  specification: {
-    identifier: 'app_access',
-    name: 'App access',
-    experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
-
-const MODULE_DASHBOARD_A: AppModuleVersion = {
-  registrationId: 'D_A',
-  registrationUuid: 'UUID_D_A',
-  registrationTitle: 'Dashboard A',
-  type: 'flow_action_definition',
-  specification: {
-    identifier: 'flow_action_definition',
-    name: 'Flow action definition',
-    experience: 'deprecated',
-    options: {
-      managementExperience: 'dashboard',
-    },
-  },
-}
-
-const MODULE_DELETED_DASHBOARD_B: AppModuleVersion = {
-  registrationId: 'D_B',
-  registrationUuid: 'UUID_D_B',
-  registrationTitle: 'Dashboard Deleted B',
-  type: 'flow_action_definition',
-  specification: {
-    identifier: 'flow_action_definition',
-    name: 'Flow action definition',
-    experience: 'deprecated',
-    options: {
-      managementExperience: 'dashboard',
-    },
-  },
-}
-
-const MODULE_DELETED_CLI_B: AppModuleVersion = {
-  registrationId: 'B',
-  registrationUuid: 'UUID_B',
-  registrationTitle: 'Checkout post purchase Deleted B',
-  type: 'checkout_post_purchase',
-  specification: {
-    identifier: 'checkout_post_purchase',
-    name: 'Post purchase UI extension',
-    experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
+vi.mock('../release/version-diff')
 
 const VERSION_DIFF_CONFIG_A: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_C_A',
@@ -240,372 +79,21 @@ const VERSION_DIFF_DELETED_CLI_WEBHOOK: AppVersionsDiffExtensionSchema = {
   },
 }
 
-const APP_URL_SPEC: AppModuleVersion = {
-  registrationId: 'C_A',
-  registrationUuid: 'UUID_C_A',
-  registrationTitle: 'Registration title',
-  type: 'app_home',
-  config: {app_url: 'https://myapp.com'},
-  specification: {
-    identifier: 'app_home',
-    name: 'App Ui',
-    experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
-
-const API_VERSION_SPEC: AppModuleVersion = {
-  registrationId: 'C_Z',
-  registrationUuid: 'UUID_C_Z',
-  registrationTitle: 'Registration title',
-  type: 'webhooks',
-  config: {api_version: '2023-04'},
-  specification: {
-    identifier: 'webhooks',
-    name: 'Webhooks',
-    experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-    },
-  },
-}
-
-const APP_CONFIGURATION: CurrentAppConfiguration = {
-  name: 'my app',
-  client_id: '12345',
-  webhooks: {
-    api_version: '2023-04',
-  },
-  application_url: 'https://myapp.com',
-  embedded: false,
-  build: {
-    include_config_on_deploy: true,
-  },
-}
-
-const LOCAL_APP = async (
-  uiExtensions: ExtensionInstance[],
-  configuration: CurrentAppConfiguration = APP_CONFIGURATION,
-  flags = [],
-): Promise<AppInterface> => {
-  const versionSchema = await buildVersionedAppSchema()
-
-  const localApp = testApp({
-    name: 'my-app',
-    directory: '/app',
-    configuration,
-    allExtensions: [...uiExtensions, await testAppConfigExtensions()],
-    specifications: await loadLocalExtensionsSpecifications(),
-    configSchema: versionSchema.schema,
-  })
-
-  setPathValue(localApp, 'remoteFlags', flags)
-  return localApp
-}
-
-const options = async (params: {
-  uiExtensions: ExtensionInstance[]
-  identifiers?: any
-  remoteApp?: OrganizationApp
-  release?: boolean
-  developerPlatformClient?: DeveloperPlatformClient
-  activeAppVersion?: AppVersion
-}) => {
-  return {
-    app: await LOCAL_APP(params.uiExtensions),
-    developerPlatformClient: params.developerPlatformClient ?? testDeveloperPlatformClient(),
-    appId: 'appId',
-    appName: 'appName',
-    envIdentifiers: {extensions: params.identifiers ?? {}},
-    force: false,
-    remoteApp: params.remoteApp ?? testOrganizationApp(),
-    release: params.release ?? true,
-    activeAppVersion: params.activeAppVersion,
-  }
-}
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
-
-let EXTENSION_A: ExtensionInstance
-let EXTENSION_A_2: ExtensionInstance
-let DASH_MIGRATED_EXTENSION_A: ExtensionInstance
-let uiExtensions: ExtensionInstance[]
-
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('../dev/fetch')
-vi.mock('./identifiers-extensions')
-vi.mock('../release/version-diff')
-vi.mock('../../prompts/deploy-release')
-
-beforeAll(async () => {
-  EXTENSION_A = await testUIExtension({
-    directory: '/EXTENSION_A',
-    configuration: {
-      name: 'EXTENSION A',
-      type: 'checkout_post_purchase',
-      metafields: [],
-      capabilities: {
-        network_access: false,
-        block_progress: false,
-        api_access: false,
-        collect_buyer_consent: {
-          sms_marketing: false,
-        },
-        iframe: {
-          sources: [],
-        },
-      },
-    },
-    entrySourceFilePath: '',
-    devUUID: 'devUUID',
-  })
-
-  EXTENSION_A_2 = await testUIExtension({
-    directory: '/EXTENSION_A_2',
-    configuration: {
-      name: 'EXTENSION A 2',
-      type: 'checkout_post_purchase',
-      metafields: [],
-      capabilities: {
-        network_access: false,
-        block_progress: false,
-        api_access: false,
-        collect_buyer_consent: {
-          sms_marketing: false,
-        },
-        iframe: {
-          sources: [],
-        },
-      },
-    },
-    entrySourceFilePath: '',
-    devUUID: 'devUUID',
-  })
-
-  DASH_MIGRATED_EXTENSION_A = await testUIExtension({
-    directory: '/DASH_MIGRATED_EXTENSION_A',
-    configuration: {
-      name: 'DASH MIGRATED EXTENSION A',
-      type: 'pos_ui_extension',
-      metafields: [],
-      capabilities: {
-        network_access: false,
-        block_progress: false,
-        api_access: false,
-        collect_buyer_consent: {
-          sms_marketing: false,
-        },
-        iframe: {
-          sources: [],
-        },
-      },
-    },
-    entrySourceFilePath: '',
-    devUUID: 'devUUID',
-  })
-
-  uiExtensions = [EXTENSION_A, EXTENSION_A_2]
-})
-
-describe('extensionsIdentifiersDeployBreakdown', () => {
-  describe('deploy with no release', () => {
-    test('returns the current valid local extensions content', async () => {
-      // Given
-      const extensionsToConfirm = {
-        validMatches: {EXTENSION_A: 'UUID_A'},
-        dashboardOnlyExtensions: [],
-        extensionsToCreate: [EXTENSION_A_2],
-        didMigrateDashboardExtensions: false,
-      }
-      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
-      const remoteExtensionRegistrations = {
-        app: {
-          extensionRegistrations: [REGISTRATION_A],
-          configurationRegistrations: [],
-          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
-        },
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-      })
-
-      // When
-      const result = await extensionsIdentifiersDeployBreakdown(
-        await options({uiExtensions, release: false, developerPlatformClient}),
-      )
-
-      // Then
-      expect(result).toEqual({
-        extensionIdentifiersBreakdown: {
-          onlyRemote: [],
-          toCreate: [],
-          unchanged: [
-            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
-            buildExtensionBreakdownInfo('extension-a-2', undefined),
-          ],
-          toUpdate: [],
-        },
-        extensionsToConfirm,
-        remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
-      })
-    })
-  })
-  describe('deploy with release', () => {
-    test('and there is no active version then every extension should be created', async () => {
-      // Given
-      const extensionsToConfirm = {
-        validMatches: {EXTENSION_A: 'UUID_A'},
-        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
-        extensionsToCreate: [EXTENSION_A_2],
-        didMigrateDashboardExtensions: false,
-      }
-      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
-      const remoteExtensionRegistrations = {
-        app: {
-          extensionRegistrations: [REGISTRATION_A],
-          configurationRegistrations: [],
-          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
-        },
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-      })
-
-      // When
-      const result = await extensionsIdentifiersDeployBreakdown(await options({uiExtensions, developerPlatformClient}))
-
-      // Then
-      expect(result).toEqual({
-        extensionIdentifiersBreakdown: {
-          onlyRemote: [],
-          toCreate: [
-            buildExtensionBreakdownInfo('EXTENSION_A', 'UUID_A'),
-            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
-            buildDashboardBreakdownInfo('Dashboard A'),
-          ],
-          toUpdate: [],
-          unchanged: [],
-        },
-        extensionsToConfirm,
-        remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
-      })
-    })
-    test('and there is an active version with only app config app modules then every extension should be created', async () => {
-      // Given
-      const extensionsToConfirm = {
-        validMatches: {EXTENSION_A: 'UUID_A'},
-        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
-        extensionsToCreate: [EXTENSION_A_2],
-        didMigrateDashboardExtensions: false,
-      }
-      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
-      const remoteExtensionRegistrations = {
-        app: {
-          extensionRegistrations: [REGISTRATION_A],
-          configurationRegistrations: [],
-          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
-        },
-      }
-
-      const activeVersion = {appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await extensionsIdentifiersDeployBreakdown(await options({uiExtensions, developerPlatformClient}))
-
-      // Then
-      expect(result).toEqual({
-        extensionIdentifiersBreakdown: {
-          onlyRemote: [],
-          toCreate: [
-            buildExtensionBreakdownInfo('EXTENSION_A', 'UUID_A'),
-            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
-          ],
-          toUpdate: [],
-          unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
-        },
-        extensionsToConfirm,
-        remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
-      })
-    })
-    test('and there is an active version with modules without UID, those should be returned as toUpdate, the rest, unchanged', async () => {
-      // Given
-      const extensionsToConfirm = {
-        validMatches: {EXTENSION_A: 'UUID_A'},
-        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
-        extensionsToCreate: [EXTENSION_A_2],
-        didMigrateDashboardExtensions: false,
-      }
-      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
-      const remoteExtensionRegistrations = {
-        app: {
-          extensionRegistrations: [REGISTRATION_A],
-          configurationRegistrations: [],
-          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
-        },
-      }
-      const activeAppVersion = {
-        appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A_NO_UID],
-      }
-      let fetchActiveAppVersionCalled = false
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_app: MinimalAppIdentifiers) => {
-          fetchActiveAppVersionCalled = true
-          return Promise.resolve(activeAppVersion)
-        },
-      })
-
-      // When
-      const result = await extensionsIdentifiersDeployBreakdown(
-        await options({uiExtensions, developerPlatformClient, activeAppVersion}),
-      )
-
-      // Then
-      expect(fetchActiveAppVersionCalled).toBe(false)
-      expect(result).toEqual({
-        extensionIdentifiersBreakdown: {
-          onlyRemote: [],
-          toCreate: [buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid')],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A', undefined)],
-          unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
-        },
-        extensionsToConfirm,
-        remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
-      })
-    })
-  })
-})
-
 describe('extensionsIdentifiersReleaseBreakdown', () => {
   test('when active version only includes app config modules then the response will be empty', async () => {
-    // Given
-    const versionDiff = {
-      versionsDiff: {
-        added: [],
-        updated: [VERSION_DIFF_CONFIG_A],
-        removed: [],
-      },
-      versionDetails: {
-        id: 1,
-        uuid: 'uuid',
-        location: 'location',
-        versionTag: '1.0.0',
-        message: 'message',
-        appModuleVersions: [],
-      },
-    }
+    const versionDiff = buildVersionDiff({
+      added: [],
+      updated: [VERSION_DIFF_CONFIG_A],
+      removed: [],
+    })
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
-    // When
-    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, testOrganizationApp(), ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(
+      testDeveloperPlatformClient(),
+      testOrganizationApp(),
+      '1.0.0',
+    )
 
-    // Then
     expect(result).toEqual({
       extensionIdentifiersBreakdown: {
         onlyRemote: [],
@@ -617,63 +105,54 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     })
   })
 
-  test('when active version only includes not only app config modules then the response will return them', async () => {
-    // Given
-    const versionDiff = {
-      versionsDiff: {
-        added: [VERSION_DIFF_CLI_A],
-        updated: [VERSION_DIFF_CONFIG_A, VERSION_DIFF_DASH_A],
-        removed: [VERSION_DIFF_DELETED_CLI_B],
-      },
-      versionDetails: {
-        id: 1,
-        uuid: 'uuid',
-        location: 'location',
-        versionTag: '1.0.0',
-        message: 'message',
-        appModuleVersions: [],
-      },
-    }
+  test('maps release version extension and dashboard changes into the prompt breakdown', async () => {
+    const versionDiff = buildVersionDiff({
+      added: [VERSION_DIFF_CLI_A, VERSION_DIFF_DASH_A],
+      updated: [VERSION_DIFF_CLI_A, VERSION_DIFF_DASH_A],
+      removed: [VERSION_DIFF_DELETED_CLI_B, VERSION_DIFF_DASH_A],
+    })
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
-    // When
-    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, testOrganizationApp(), ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(
+      testDeveloperPlatformClient(),
+      testOrganizationApp(),
+      '1.0.0',
+    )
 
-    // Then
     expect(result).toEqual({
       extensionIdentifiersBreakdown: {
-        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B', undefined)],
-        toCreate: [buildExtensionBreakdownInfo('Checkout post purchase', undefined)],
+        onlyRemote: [
+          buildExtensionBreakdownInfo('Checkout post purchase Deleted B', undefined),
+          buildDashboardBreakdownInfo('Dashboard A'),
+        ],
+        toCreate: [
+          buildExtensionBreakdownInfo('Checkout post purchase', undefined),
+          buildDashboardBreakdownInfo('Dashboard A'),
+        ],
         toUpdate: [],
-        unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
+        unchanged: [
+          buildExtensionBreakdownInfo('Checkout post purchase', undefined),
+          buildDashboardBreakdownInfo('Dashboard A'),
+        ],
       },
       versionDetails: versionDiff.versionDetails,
     })
   })
 
-  test('exclude webhook subscription modules from the version diff', async () => {
-    // Given
-    const versionDiff = {
-      versionsDiff: {
-        added: [],
-        updated: [],
-        removed: [VERSION_DIFF_DELETED_CLI_B, VERSION_DIFF_DELETED_CLI_WEBHOOK],
-      },
-      versionDetails: {
-        id: 1,
-        uuid: 'uuid',
-        location: 'location',
-        versionTag: '1.0.0',
-        message: 'message',
-        appModuleVersions: [],
-      },
-    }
+  test('does not include webhook subscriptions in release extension changes', async () => {
+    const versionDiff = buildVersionDiff({
+      added: [],
+      updated: [],
+      removed: [VERSION_DIFF_DELETED_CLI_B, VERSION_DIFF_DELETED_CLI_WEBHOOK],
+    })
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
-    // When
-    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, testOrganizationApp(), ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(
+      testDeveloperPlatformClient(),
+      testOrganizationApp(),
+      '1.0.0',
+    )
 
-    // Then
     expect(result).toEqual({
       extensionIdentifiersBreakdown: {
         toCreate: [],
@@ -686,1084 +165,119 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
   })
 })
 
-describe('configExtensionsIdentifiersBreakdown', () => {
-  describe('deploy with no release', () => {
-    test('returns the list of the local config versioned top level fields', async () => {
-      // Given
-      const configuration = {
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://myapp.com',
+describe('buildConfigExtensionIdentifiersBreakdown', () => {
+  test('compares aggregate config content with order-insensitive arrays', () => {
+    const result = buildConfigExtensionIdentifiersBreakdown(
+      {
         embedded: true,
-        pos: {
-          embedded: false,
-        },
-        app_proxy: {
-          url: 'https://my-proxy-new.dev',
-          subpath: 'subpath-whatever',
-          prefix: 'apps',
-        },
-        build: {
-          automatically_update_urls_on_dev: false,
-          dev_store_url: 'https://my-dev-store.com',
-          include_config_on_deploy: true,
-        },
-        webhooks: {
-          api_version: '2023-04',
-        },
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        remoteApp: testOrganizationApp(),
-        apiKey: 'apiKey',
-        localApp: await LOCAL_APP([], configuration),
-        release: false,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'pos', 'app_proxy', 'webhooks'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-  })
-  describe('deploy with release using local configuration', () => {
-    test('when the same local config and remote app module type exists and have same values it will be returned in the existing list', async () => {
-      // Given
-      const configuration = {
         name: 'my app',
-        client_id: '12345',
-        application_url: 'https://myapp.com',
-        embedded: true,
         webhooks: {
-          api_version: '2023-04',
-        },
-        build: {
-          include_config_on_deploy: true,
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const brandingActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_B',
-        registrationUuid: 'UUID_C_B',
-        registrationTitle: 'Registration title',
-        type: 'branding',
-        config: {name: 'my app'},
-        specification: {
-          identifier: 'branding',
-          name: 'branding',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const webhooksActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_C',
-        registrationUuid: 'UUID_C_C',
-        registrationTitle: 'Registration title',
-        type: 'webhooks',
-        config: {api_version: '2023-04'},
-        specification: {
-          identifier: 'webhooks',
-          name: 'webhooks',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {
-        appModuleVersions: [
-          configActiveAppModule,
-          brandingActiveAppModule,
-          webhooksActiveAppModule,
-          MODULE_DASHBOARD_A,
-        ],
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], configuration),
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-
-    test('when the same local config and remote app module type exists and have different values it will be returned in the update list', async () => {
-      // Given
-      const configuration = {
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://myapp.com',
-        embedded: true,
-        webhooks: {
-          api_version: '2023-04',
-        },
-        build: {
-          include_config_on_deploy: true,
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp-edited.com', embedded: false},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const brandingActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_B',
-        registrationUuid: 'UUID_C_B',
-        registrationTitle: 'Registration title',
-        type: 'branding',
-        config: {name: 'my app'},
-        specification: {
-          identifier: 'branding',
-          name: 'branding',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const webhooksActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_C',
-        registrationUuid: 'UUID_C_C',
-        registrationTitle: 'Registration title',
-        type: 'webhooks',
-        config: {api_version: '2023-04'},
-        specification: {
-          identifier: 'webhooks',
-          name: 'webhooks',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {
-        appModuleVersions: [
-          configActiveAppModule,
-          brandingActiveAppModule,
-          webhooksActiveAppModule,
-          MODULE_DASHBOARD_A,
-        ],
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], configuration),
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['name', 'webhooks'],
-        existingUpdatedFieldNames: ['application_url', 'embedded'],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-    test('when a new local config app module type exists it will be returned in the new list', async () => {
-      // Given
-      const configuration = {
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://myapp.com',
-        embedded: true,
-        pos: {
-          embedded: false,
-        },
-        webhooks: {
-          api_version: '2023-04',
-        },
-        build: {
-          include_config_on_deploy: true,
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {
-        appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A],
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], configuration),
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: ['name', 'webhooks', 'pos'],
-        deletedFieldNames: [],
-      })
-    })
-    test('when a remote config app module type not exists locally it will be returned in the delete list', async () => {
-      // Given
-      const configuration = {
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://myapp.com',
-        embedded: true,
-        webhooks: {
-          api_version: '2023-04',
-        },
-        build: {
-          include_config_on_deploy: true,
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const brandingActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_B',
-        registrationUuid: 'UUID_C_B',
-        registrationTitle: 'Registration title',
-        type: 'branding',
-        config: {name: 'my app', app_handle: 'handle'},
-        specification: {
-          identifier: 'branding',
-          name: 'Branding',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const webhooksActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_C',
-        registrationUuid: 'UUID_C_C',
-        registrationTitle: 'Registration title',
-        type: 'webhooks',
-        config: {api_version: '2023-04'},
-        specification: {
-          identifier: 'webhooks',
-          name: 'webhooks',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActivePosConfigurationAppModule: AppModuleVersion = {
-        registrationId: 'C_B',
-        registrationUuid: 'UUID_C_B',
-        registrationTitle: 'Registration title',
-        type: 'point_of_sale',
-        config: {embedded: false},
-        specification: {
-          identifier: 'point_of_sale',
-          name: 'Pos configuration',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {
-        appModuleVersions: [
-          configActiveAppModule,
-          configActivePosConfigurationAppModule,
-          brandingActiveAppModule,
-          webhooksActiveAppModule,
-          MODULE_DASHBOARD_A,
-        ],
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], configuration),
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: [],
-        deletedFieldNames: ['pos'],
-      })
-    })
-  })
-  describe('deploy with release using a remote version configuration', () => {
-    test('when the version to release config and remote remote current app exists and have same values it will be returned in the existing list', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], APP_CONFIGURATION),
-        versionAppModules: [configToReleaseAppModule],
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-    test('when the version to release config and remote remote current app exists and have different values it will be returned in the update list', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp-edited.com', embedded: false},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], APP_CONFIGURATION),
-        versionAppModules: [configToReleaseAppModule],
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: [],
-        existingUpdatedFieldNames: ['application_url', 'embedded'],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-    test('when the version to release includes a new config it will be returned in the new list', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configToReleasePosAppModule: AppModuleVersion = {
-        registrationId: 'C_B',
-        registrationUuid: 'UUID_C_B',
-        registrationTitle: 'Registration title',
-        type: 'point_of_sale',
-        config: {embedded: false},
-        specification: {
-          identifier: 'point_of_sale',
-          name: 'Pos configuration',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], APP_CONFIGURATION),
-        versionAppModules: [configToReleaseAppModule, configToReleasePosAppModule],
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: ['pos'],
-        deletedFieldNames: [],
-      })
-    })
-    test('when the version to release config doesnt include a config module that exists in the remote remote current app it will be returned in the delete list', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActivePosConfigurationAppModule: AppModuleVersion = {
-        registrationId: 'C_B',
-        registrationUuid: 'UUID_C_B',
-        registrationTitle: 'Registration title',
-        type: 'point_of_sale',
-        config: {embedded: false},
-        specification: {
-          identifier: 'point_of_sale',
-          name: 'Pos configuration',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {
-        appModuleVersions: [configActiveAppModule, configActivePosConfigurationAppModule, MODULE_DASHBOARD_A],
-      }
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], APP_CONFIGURATION),
-        versionAppModules: [configToReleaseAppModule],
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: [],
-        deletedFieldNames: ['pos'],
-      })
-    })
-
-    test('relative path declarative webhook subscriptions do not show up in the diff when not changed', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'webhook_subscription',
-        config: {topics: ['products/create'], uri: '/webhooks'},
-        specification: {
-          identifier: 'webhook_subscription',
-          name: 'Webhook Subscription',
-          experience: 'extension',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'webhook_subscription',
-        config: {
-          topics: ['products/create'],
-          uri: 'https://myapp.com/webhooks',
-        },
-        specification: {
-          identifier: 'webhook_subscription',
-          name: 'Webhook Subscription',
-          experience: 'extension',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {appModuleVersions: [configActiveAppModule, APP_URL_SPEC, API_VERSION_SPEC]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], APP_CONFIGURATION),
-        versionAppModules: [configToReleaseAppModule, APP_URL_SPEC, API_VERSION_SPEC],
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['webhooks', 'application_url'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-    test('relative path declarative webhook subscriptions show up in the diff when changed', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'webhook_subscription',
-        config: {topics: ['products/create'], uri: '/webhooks-new'},
-        specification: {
-          identifier: 'webhook_subscription',
-          name: 'Webhook Subscription',
-          experience: 'extension',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'webhook_subscription',
-        config: {
-          topics: ['products/create'],
-          uri: 'https://myapp.com/webhooks',
-        },
-        specification: {
-          identifier: 'webhook_subscription',
-          name: 'Webhook Subscription',
-          experience: 'extension',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {appModuleVersions: [configActiveAppModule, APP_URL_SPEC, API_VERSION_SPEC]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], APP_CONFIGURATION),
-        versionAppModules: [configToReleaseAppModule, APP_URL_SPEC, API_VERSION_SPEC],
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: ['application_url'],
-        existingUpdatedFieldNames: ['webhooks'],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-    test('relative path declarative webhook subscriptions show up in the diff when application_url is changed', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_Y',
-        registrationUuid: 'UUID_C_Y',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com/new'},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_Y',
-        registrationUuid: 'UUID_C_Y',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com'},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const webhookConfigToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'webhook_subscription',
-        config: {topics: ['products/create'], uri: '/webhooks'},
-        specification: {
-          identifier: 'webhook_subscription',
-          name: 'Webhook Subscription',
-          experience: 'extension',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const webhookConfigActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'webhook_subscription',
-        config: {topics: ['products/create'], uri: 'https://myapp.com/webhooks'},
-        specification: {
-          identifier: 'webhook_subscription',
-          name: 'Webhook Subscription',
-          experience: 'extension',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {appModuleVersions: [configActiveAppModule, API_VERSION_SPEC, webhookConfigActiveAppModule]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], APP_CONFIGURATION),
-        versionAppModules: [configToReleaseAppModule, API_VERSION_SPEC, webhookConfigToReleaseAppModule],
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: [],
-        existingUpdatedFieldNames: ['application_url', 'webhooks'],
-        newFieldNames: [],
-        deletedFieldNames: [],
-      })
-    })
-
-    test('webhook subscriptions are properly sorted by URI and topics', async () => {
-      // Given
-      const unsortedWebhookModules: AppModuleVersion[] = [
-        {
-          registrationId: 'W_1',
-          registrationUuid: 'UUID_W_1',
-          registrationTitle: 'Webhook 1',
-          type: 'webhook_subscription',
-          config: {
-            // Unsorted topics
-            topics: ['products/update', 'products/create'],
-            uri: 'https://myapp.com/webhooks/products',
-          },
-          specification: {
-            identifier: 'webhook_subscription',
-            name: 'Webhook Subscription',
-            experience: 'extension',
-            options: {
-              managementExperience: 'cli',
-            },
-          },
-        },
-        {
-          registrationId: 'W_2',
-          registrationUuid: 'UUID_W_2',
-          registrationTitle: 'Webhook 2',
-          type: 'webhook_subscription',
-          config: {
-            topics: ['orders/create'],
-            uri: 'https://myapp.com/webhooks/orders',
-          },
-          specification: {
-            identifier: 'webhook_subscription',
-            name: 'Webhook Subscription',
-            experience: 'extension',
-            options: {
-              managementExperience: 'cli',
-            },
-          },
-        },
-        {
-          registrationId: 'W_4',
-          registrationUuid: 'UUID_W_4',
-          registrationTitle: 'Webhook 4',
-          type: 'webhook_subscription',
-          config: {
-            topics: ['products/delete'],
-            // Same URI as W_1
-            uri: 'https://myapp.com/webhooks/products',
-          },
-          specification: {
-            identifier: 'webhook_subscription',
-            name: 'Webhook Subscription',
-            experience: 'extension',
-            options: {
-              managementExperience: 'cli',
-            },
-          },
-        },
-        {
-          registrationId: 'W_3',
-          registrationUuid: 'UUID_W_3',
-          registrationTitle: 'Webhook 3',
-          type: 'webhook_subscription',
-          config: {
-            // Unsorted topics
-            topics: ['customers/create', 'customers/update'],
-            uri: 'https://myapp.com/webhooks/customers',
-          },
-          specification: {
-            identifier: 'webhook_subscription',
-            name: 'Webhook Subscription',
-            experience: 'extension',
-            options: {
-              managementExperience: 'cli',
-            },
-          },
-        },
-      ]
-
-      const activeVersion = {appModuleVersions: [...unsortedWebhookModules, APP_URL_SPEC, API_VERSION_SPEC]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      const appConfiguration = {
-        ...APP_CONFIGURATION,
-        webhooks: {
-          api_version: '2023-04',
-          // Subscriptions in a different order than remote
           subscriptions: [
-            {
-              topics: ['products/delete'],
-              uri: 'https://myapp.com/webhooks/products',
-            },
-            {
-              topics: ['orders/create'],
-              uri: 'https://myapp.com/webhooks/orders',
-            },
-            {
-              // Different order from remote
-              topics: ['customers/update', 'customers/create'],
-              uri: 'https://myapp.com/webhooks/customers',
-            },
-            {
-              // Different order from remote
-              topics: ['products/create', 'products/update'],
-              uri: 'https://myapp.com/webhooks/products',
-            },
+            {topics: ['products/update', 'products/create'], uri: 'https://example.com/products'},
+            {topics: ['orders/create'], uri: 'https://example.com/orders'},
           ],
         },
-      }
+      },
+      {
+        app_proxy: {prefix: 'apps'},
+        name: 'my app',
+        webhooks: {
+          subscriptions: [
+            {topics: ['orders/create'], uri: 'https://example.com/orders'},
+            {topics: ['products/create', 'products/update'], uri: 'https://example.com/products'},
+          ],
+        },
+      },
+    )
 
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], appConfiguration),
-        release: true,
-      })
-
-      // Then
-      // Even though the webhook subscriptions are in different orders and have unsorted topics,
-      // they should be considered the same after normalization
-      expect(result).toEqual({
-        existingFieldNames: ['webhooks', 'application_url'],
-        existingUpdatedFieldNames: [],
-        newFieldNames: ['name', 'embedded'],
-        deletedFieldNames: [],
-      })
+    expect(result).toEqual({
+      existingFieldNames: ['name', 'webhooks'],
+      existingUpdatedFieldNames: [],
+      newFieldNames: ['embedded'],
+      deletedFieldNames: ['app_proxy'],
     })
   })
-  describe('deploy with release using local configuration when there is no remote app version', () => {
-    test('all local configuration will be returned in the new list', async () => {
-      // Given
-      const configuration = {
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://myapp.com',
-        embedded: true,
-        webhooks: {
-          api_version: '2023-04',
-        },
-        build: {
-          include_config_on_deploy: true,
-        },
-      }
 
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(undefined),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], configuration),
-        release: true,
-      })
-
-      // Then
-      expect(result).toEqual({
-        existingFieldNames: [],
-        existingUpdatedFieldNames: [],
-        newFieldNames: expect.arrayContaining(['name', 'application_url', 'embedded', 'webhooks']),
-        deletedFieldNames: [],
-      })
-      expect(result!.newFieldNames).toHaveLength(4)
-    })
-  })
-  describe('deploy not including the configuration app modules', () => {
-    test('when the include_config_on_deploy is not true the configuration breakdown info is not returned', async () => {
-      // Given
-      const configuration = {
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://myapp.com',
-        embedded: true,
-        pos: {
-          embedded: false,
-        },
-        build: {
-          include_config_on_deploy: false,
-        },
-        webhooks: {
-          api_version: '2023-04',
-        },
-      }
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: {app_url: 'https://myapp.com', embedded: true},
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
-      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
-      })
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        developerPlatformClient,
-        apiKey: 'apiKey',
-        remoteApp: testOrganizationApp(),
-        localApp: await LOCAL_APP([], configuration),
-        versionAppModules: [configToReleaseAppModule],
-        release: true,
-      })
-
-      // Then
-      expect(result).toBeUndefined()
-    })
+  test('returns undefined when both configs are empty', () => {
+    expect(buildConfigExtensionIdentifiersBreakdown({}, {})).toBeUndefined()
   })
 })
+
+describe('configExtensionsIdentifiersReleaseBreakdown', () => {
+  test('compares the selected version config against the active version config', async () => {
+    const app = testApp({
+      allExtensions: [await testAppConfigExtensions()],
+      specifications: await loadLocalExtensionsSpecifications(),
+    })
+    const result = configExtensionsIdentifiersReleaseBreakdown({
+      localApp: app,
+      versionAppModules: [
+        configModule('branding', {name: 'my app'}),
+        configModule('app_home', {app_url: 'https://new.example.com', embedded: false}),
+        configModule('point_of_sale', {embedded: false}),
+        configModule('webhooks', {api_version: '2025-01'}),
+      ],
+      activeAppVersion: {
+        appModuleVersions: [
+          configModule('branding', {name: 'my app'}),
+          configModule('app_home', {app_url: 'https://old.example.com', embedded: false}),
+          configModule('webhooks', {api_version: '2025-01'}),
+        ],
+      },
+    })
+
+    expect(result).toEqual({
+      existingFieldNames: ['name', 'embedded', 'webhooks'],
+      existingUpdatedFieldNames: ['application_url'],
+      newFieldNames: ['pos'],
+      deletedFieldNames: [],
+    })
+  })
+
+  test('returns undefined when the local app has no config extensions', () => {
+    const app = testApp({allExtensions: []})
+
+    const result = configExtensionsIdentifiersReleaseBreakdown({
+      localApp: app,
+      versionAppModules: [configModule('branding', {name: 'my app'})],
+    })
+
+    expect(result).toBeUndefined()
+  })
+})
+
+function buildVersionDiff(versionsDiff: {
+  added: AppVersionsDiffExtensionSchema[]
+  updated: AppVersionsDiffExtensionSchema[]
+  removed: AppVersionsDiffExtensionSchema[]
+}) {
+  return {
+    versionsDiff,
+    versionDetails: {
+      id: 1,
+      uuid: 'uuid',
+      location: 'location',
+      versionTag: '1.0.0',
+      message: 'message',
+      appModuleVersions: [],
+    },
+  }
+}
+
+function configModule(identifier: string, config: {[key: string]: unknown}): AppModuleVersion {
+  return {
+    registrationId: `${identifier}-id`,
+    registrationUuid: `${identifier}-uuid`,
+    registrationTitle: identifier,
+    type: identifier,
+    config,
+    specification: {
+      identifier,
+      name: identifier,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+      },
+    },
+  }
+}

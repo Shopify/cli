@@ -1,9 +1,9 @@
+import {LocalRemoteSource} from './migrate-app-module.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSource} from '../context/identifiers.js'
-import {LocalRemoteSource} from '../context/id-matching.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 

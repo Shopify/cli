@@ -233,16 +233,11 @@ describe('deployConfig', async () => {
 })
 
 describe('bundleConfig', async () => {
-  test('returns the uuid from extensions when the extension is uuid managed', async () => {
+  test('returns the uuid from appModuleUuids', async () => {
     const extensionInstance = await testThemeExtensions()
 
     const got = await extensionInstance.bundleConfig({
-      identifiers: {
-        extensions: {'theme-extension-name': 'theme-uuid'},
-        extensionIds: {},
-        app: 'My app',
-        extensionsNonUuidManaged: {},
-      },
+      appModuleUuids: {'theme-extension-name': 'theme-uuid'},
       developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
@@ -260,12 +255,7 @@ describe('bundleConfig', async () => {
     const extensionInstance = await testPaymentExtensions()
 
     const got = await extensionInstance.bundleConfig({
-      identifiers: {
-        extensions: {'payment-extension-name': 'payment-uuid'},
-        extensionIds: {},
-        app: 'My app',
-        extensionsNonUuidManaged: {},
-      },
+      appModuleUuids: {'payment-extension-name': 'payment-uuid'},
       developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
@@ -279,16 +269,11 @@ describe('bundleConfig', async () => {
     )
   })
 
-  test('returns the uuid from extensionsNonUuidManaged when the extension is not uuid managed', async () => {
+  test('returns the uuid for a non-uuid-managed extension', async () => {
     const extensionInstance = await testAppConfigExtensions()
 
     const got = await extensionInstance.bundleConfig({
-      identifiers: {
-        extensions: {},
-        extensionIds: {},
-        app: 'My app',
-        extensionsNonUuidManaged: {point_of_sale: 'uuid'},
-      },
+      appModuleUuids: {point_of_sale: 'uuid'},
       developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
@@ -416,7 +401,7 @@ describe('buildUIDFromStrategy', async () => {
     // Given
     const extensionInstance = await testSingleWebhookSubscriptionExtension()
     // Then
-    expect(extensionInstance.uid).toBe('orders/delete::undefined::https://my-app.com/webhooks')
+    expect(extensionInstance.uid).toBe('orders/delete::::https://my-app.com/webhooks')
   })
 
   test('returns a custom string when strategy is dynamic and it is a webhook subscription extension with filters', async () => {

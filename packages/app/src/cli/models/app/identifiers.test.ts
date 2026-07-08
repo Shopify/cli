@@ -18,11 +18,9 @@ describe('updateAppIdentifiers', () => {
       // When
       const gotApp = await updateAppIdentifiers({
         app,
-        identifiers: {
-          app: 'FOO',
-          extensions: {
-            my_extension: 'BAR',
-          },
+        appApiKey: 'FOO',
+        extensionUuids: {
+          my_extension: 'BAR',
         },
         command: 'deploy',
       })
@@ -51,11 +49,9 @@ describe('updateAppIdentifiers', () => {
       // When
       const gotApp = await updateAppIdentifiers({
         app,
-        identifiers: {
-          app: 'FOO',
-          extensions: {
-            my_extension: 'BAR',
-          },
+        appApiKey: 'FOO',
+        extensionUuids: {
+          my_extension: 'BAR',
         },
         command: 'deploy',
       })
@@ -85,11 +81,9 @@ describe('updateAppIdentifiers', () => {
       await updateAppIdentifiers(
         {
           app,
-          identifiers: {
-            app: 'FOO',
-            extensions: {
-              my_extension: 'BAR',
-            },
+          appApiKey: 'FOO',
+          extensionUuids: {
+            my_extension: 'BAR',
           },
           command: 'deploy',
         },
@@ -152,11 +146,9 @@ type = "ui_extension"`,
     await updateAppIdentifiers(
       {
         app,
-        identifiers: {
-          app: 'FOO',
-          extensions: {
-            my_extension: 'BAR',
-          },
+        appApiKey: 'FOO',
+        extensionUuids: {
+          my_extension: 'BAR',
         },
         command: 'deploy',
       },
@@ -203,8 +195,7 @@ describe('getAppIdentifiers', () => {
       })
 
       // Then
-      expect(got.app).toEqual('FOO')
-      expect((got.extensions ?? {})['test-ui-extension']).toEqual('BAR')
+      expect(got['test-ui-extension']).toEqual('BAR')
     })
   })
 
@@ -229,8 +220,7 @@ describe('getAppIdentifiers', () => {
       )
 
       // Then
-      expect(got.app).toEqual('FOO')
-      expect((got.extensions ?? {})['test-ui-extension']).toEqual('BAR')
+      expect(got['test-ui-extension']).toEqual('BAR')
     })
   })
 })

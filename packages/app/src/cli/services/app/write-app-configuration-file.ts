@@ -3,7 +3,6 @@ import {reduceWebhooks} from '../../models/extensions/specifications/transform/a
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {zod} from '@shopify/cli-kit/node/schema'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, configPath: string) {
@@ -44,53 +43,6 @@ export function stripEmptyObjects(obj: unknown): unknown {
     return result
   }
   return obj
-}
-
-/**
- * Rewrite a configuration object to match the structure of a Zod schema.
- *
- * Used by breakdown-extensions.ts to normalize configs before diffing.
- * Not used by writeAppConfigurationFile — that function uses stripEmptyObjects instead.
- */
-export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
-  if (schema === null || schema === undefined) return null
-  if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
-    return rewriteConfiguration(schema.unwrap(), config)
-  if (schema instanceof zod.ZodArray) {
-    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
-  }
-  if (schema instanceof zod.ZodEffects) {
-    return rewriteConfiguration(schema._def.schema, config)
-  }
-  if (schema instanceof zod.ZodObject) {
-    const entries = Object.entries(schema.shape)
-    const confObj = config as {[key: string]: unknown}
-    let result: {[key: string]: unknown} = {}
-    entries.forEach(([key, subSchema]) => {
-      if (confObj !== undefined && confObj[key] !== undefined) {
-        let value = rewriteConfiguration(subSchema as T, confObj[key])
-        if (!(value instanceof Array) && value instanceof Object && Object.keys(value as object).length === 0) {
-          value = undefined
-        }
-        result = {...result, [key]: value}
-      }
-    })
-
-    // if dynamic config was enabled, its possible to have more keys in the file than the schema
-    const blockedKeys = ['scopes']
-
-    Object.entries(confObj)
-      .filter(([key]) => !blockedKeys.includes(key))
-      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-      .forEach(([key, value]) => {
-        if (!entries.map(([key]) => key).includes(key)) {
-          result = {...result, [key]: value}
-        }
-      })
-
-    return result
-  }
-  return config
 }
 
 function addDefaultCommentsToToml(fileString: string) {

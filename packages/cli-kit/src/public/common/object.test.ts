@@ -1,6 +1,7 @@
 import {
   compact,
   deepCompare,
+  deepCompareWithOrderInsensitiveArrays,
   deepDifference,
   deepMergeObjects,
   getPathValue,
@@ -112,6 +113,40 @@ describe('deepCompare', () => {
     const result = deepCompare(obj1, obj2)
 
     // Then
+    expect(result).toBeFalsy()
+  })
+})
+
+describe('deepCompareWithOrderInsensitiveArrays', () => {
+  test('returns true when arrays contain the same values in a different order', () => {
+    const first = {
+      webhooks: {
+        subscriptions: [
+          {topic: 'orders/delete', uri: 'https://example.com/orders/delete'},
+          {topic: 'products/update', uri: 'https://example.com/products/update'},
+        ],
+      },
+    }
+    const second = {
+      webhooks: {
+        subscriptions: [
+          {uri: 'https://example.com/products/update', topic: 'products/update'},
+          {uri: 'https://example.com/orders/delete', topic: 'orders/delete'},
+        ],
+      },
+    }
+
+    const result = deepCompareWithOrderInsensitiveArrays(first, second)
+
+    expect(result).toBeTruthy()
+  })
+
+  test('returns false when arrays contain different values', () => {
+    const first = {items: [{id: 1}, {id: 2}]}
+    const second = {items: [{id: 1}, {id: 3}]}
+
+    const result = deepCompareWithOrderInsensitiveArrays(first, second)
+
     expect(result).toBeFalsy()
   })
 })

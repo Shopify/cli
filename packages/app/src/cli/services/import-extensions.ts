@@ -1,5 +1,5 @@
 import {AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
-import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
+import {updateAppIdentifiers, ExtensionUuidsByLocalIdentifier} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../models/extensions/schemas.js'
@@ -103,7 +103,7 @@ export async function importExtensions(options: ImportOptions) {
     }
   }
 
-  const extensionUuids: IdentifiersExtensions = {}
+  const extensionUuids: ExtensionUuidsByLocalIdentifier = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const {directory, action} = await handleExtensionDirectory({app, name: ext.title})
 
@@ -126,10 +126,8 @@ export async function importExtensions(options: ImportOptions) {
   renderSuccessMessages(generatedExtensions)
   await updateAppIdentifiers({
     app,
-    identifiers: {
-      extensions: extensionUuids,
-      app: remoteApp.apiKey,
-    },
+    appApiKey: remoteApp.apiKey,
+    extensionUuids,
     command: 'import-extensions',
   })
 }

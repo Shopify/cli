@@ -1,5 +1,5 @@
+import {LocalRemoteSource} from './migrate-app-module.js'
 import {RemoteSource} from '../context/identifiers.js'
-import {LocalRemoteSource} from '../context/id-matching.js'
 import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
