@@ -13,34 +13,23 @@ function isCountryCode(value: string): boolean {
 }
 
 /**
- * Builds a reusable `--country` flag. The value is normalized to an uppercase,
- * trimmed string and validated during parsing, so every command that uses this
- * flag rejects invalid codes with the same error before its `run` body executes.
- *
- * @param env - The environment variable that can supply the flag's value.
+ * Reusable `--country` flag shared by every store-creation command. The value
+ * is normalized to an uppercase, trimmed string and validated during parsing,
+ * so invalid codes are rejected with the same error before a command's `run`
+ * body executes.
  */
-export function countryFlag(env: string) {
-  return Flags.string({
-    description: 'Two-letter country code for the store, such as US, CA, or GB.',
-    env,
-    required: false,
-    parse: async (value) => {
-      const normalized = value.trim().toUpperCase()
-      if (!isCountryCode(normalized)) {
-        throw new AbortError(invalidCountryCodeMessage)
-      }
-      return normalized
-    },
-  })
-}
-
-export const previewStoreFlags = {
-  country: countryFlag('SHOPIFY_FLAG_STORE_COUNTRY'),
-}
-
-export const devStoreFlags = {
-  country: countryFlag('SHOPIFY_FLAG_STORE_COUNTRY'),
-}
+export const countryFlag = Flags.string({
+  description: 'Two-letter country code for the store, such as US, CA, or GB.',
+  env: 'SHOPIFY_FLAG_STORE_COUNTRY',
+  required: false,
+  parse: async (value) => {
+    const normalized = value.trim().toUpperCase()
+    if (!isCountryCode(normalized)) {
+      throw new AbortError(invalidCountryCodeMessage)
+    }
+    return normalized
+  },
+})
 
 export const storeFlags = {
   store: Flags.string({

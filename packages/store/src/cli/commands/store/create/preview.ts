@@ -1,4 +1,4 @@
-import {previewStoreFlags} from '../../../flags.js'
+import {countryFlag} from '../../../flags.js'
 import {type CreatePreviewStoreResult, createPreviewStoreCommand} from '../../../services/store/create/preview/index.js'
 import {writeCreatePreviewStoreResult} from '../../../services/store/create/preview/result.js'
 import StoreCommand from '../../../utilities/store-command.js'
@@ -28,7 +28,7 @@ export default class StoreCreatePreview extends StoreCommand {
       env: 'SHOPIFY_FLAG_PREVIEW_STORE_NAME',
       required: false,
     }),
-    country: previewStoreFlags.country,
+    country: countryFlag,
   }
 
   public async run(): Promise<void> {

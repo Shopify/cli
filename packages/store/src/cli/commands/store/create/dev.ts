@@ -1,7 +1,7 @@
 import {createDevStore} from '../../../services/store/create/dev.js'
 import {devStorePlanHandles, DevStorePlan} from '../../../services/store/constants.js'
 import {storeNamePrompt, storePlanPrompt} from '../../../prompts/store.js'
-import {devStoreFlags, storeFlags} from '../../../flags.js'
+import {countryFlag, storeFlags} from '../../../flags.js'
 import {selectOrg} from '@shopify/organizations'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -40,7 +40,7 @@ export default class StoreCreateDev extends Command {
       default: false,
       env: 'SHOPIFY_FLAG_STORE_WITH_DEMO_DATA',
     }),
-    country: devStoreFlags.country,
+    country: countryFlag,
   }
 
   async run(): Promise<void> {
