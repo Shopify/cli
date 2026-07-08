@@ -107,7 +107,7 @@ describe('findAllImportedFiles', () => {
     })
   })
 
-  test('stops recursive import scanning at the boundary directory', async () => {
+  test('includes imports outside the boundary directory without recursively scanning them', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const extensionDir = joinPath(tmpDir, 'extensions', 'extension')
       const srcDir = joinPath(extensionDir, 'src')
@@ -141,8 +141,56 @@ describe('findAllImportedFiles', () => {
 
       expect(importedFiles).toContain(normalizePath(localPath))
       expect(importedFiles).toContain(normalizePath(nestedPath))
-      expect(importedFiles).not.toContain(normalizePath(externalPath))
+      expect(importedFiles).toContain(normalizePath(externalPath))
       expect(importedFiles).not.toContain(normalizePath(externalNestedPath))
+    })
+  })
+
+  test('recursively scans imports outside the boundary directory when explicitly included by tsconfig', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionDir = joinPath(tmpDir, 'extensions', 'extension')
+      const srcDir = joinPath(extensionDir, 'src')
+      const sharedDir = joinPath(tmpDir, 'shared')
+
+      await mkdir(extensionDir)
+      await mkdir(srcDir)
+      await mkdir(sharedDir)
+
+      const entryPath = joinPath(srcDir, 'index.ts')
+      const localPath = joinPath(srcDir, 'local.ts')
+      const externalPath = joinPath(sharedDir, 'utils.ts')
+      const externalNestedPath = joinPath(sharedDir, 'secret.ts')
+
+      await writeFile(
+        joinPath(tmpDir, 'tsconfig.json'),
+        JSON.stringify({
+          include: ['extensions/extension/src/**/*', 'shared/**/*'],
+        }),
+      )
+      await writeFile(
+        entryPath,
+        `
+          import './local.ts'
+          import '../../../shared/utils.ts'
+        `,
+      )
+      await writeFile(localPath, `export const local = true`)
+      await writeFile(externalPath, `import './secret.ts'`)
+      await writeFile(externalNestedPath, `export const secret = true`)
+
+      const allowedFiles = await findExplicitTsConfigFiles(entryPath, extensionDir)
+      const importedFiles = (
+        await findAllImportedFiles(entryPath, {
+          boundaryDirectory: extensionDir,
+          allowedFiles,
+          alwaysAllowedFiles: new Set([entryPath]),
+        })
+      ).map((file) => normalizePath(file))
+
+      expect(allowedFiles).toContain(normalizePath(externalPath))
+      expect(importedFiles).toContain(normalizePath(localPath))
+      expect(importedFiles).toContain(normalizePath(externalPath))
+      expect(importedFiles).toContain(normalizePath(externalNestedPath))
     })
   })
 

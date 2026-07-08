@@ -163,12 +163,18 @@ function isAllowedFile(filePath: string, options: FindAllImportedFilesOptions): 
   return options.allowedFiles.has(resolvedPath) || Boolean(options.alwaysAllowedFiles?.has(resolvedPath))
 }
 
-function isScannableFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
+function canIncludeImportedFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
+  return !filePath.includes('node_modules') && !filePath.endsWith('.d.ts') && isAllowedFile(filePath, options)
+}
+
+function canScanImportedFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
+  const resolvedPath = resolvePath(filePath)
+  const isExplicitlyAllowed =
+    (options.allowedFiles?.has(resolvedPath) ?? false) || (options.alwaysAllowedFiles?.has(resolvedPath) ?? false)
+
   return (
-    !filePath.includes('node_modules') &&
-    !filePath.endsWith('.d.ts') &&
-    isWithinBoundary(filePath, options.boundaryDirectory) &&
-    isAllowedFile(filePath, options)
+    canIncludeImportedFile(filePath, options) &&
+    (isWithinBoundary(filePath, options.boundaryDirectory) || isExplicitlyAllowed)
   )
 }
 
@@ -276,13 +282,15 @@ export async function findAllImportedFiles(
 
   visited.add(filePath)
   const resolvedPaths = (await parseAndResolveImports(filePath, options)).filter((resolvedPath) =>
-    isScannableFile(resolvedPath, options),
+    canIncludeImportedFile(resolvedPath, options),
   )
 
   const allFiles = [...resolvedPaths]
 
   // Recursively find imports from the resolved files
   for (const resolvedPath of resolvedPaths) {
+    if (!canScanImportedFile(resolvedPath, options)) continue
+
     // eslint-disable-next-line no-await-in-loop
     const nestedImports = await findAllImportedFiles(resolvedPath, options, visited)
     allFiles.push(...nestedImports)
@@ -293,17 +301,13 @@ export async function findAllImportedFiles(
 
 export async function findExplicitTsConfigFiles(
   fromFile: string,
-  extensionDirectory: string,
+  _extensionDirectory: string,
   options: {tsConfigCache?: TsConfigCache} = {},
 ): Promise<Set<string> | undefined> {
   const {configPath, fileNames, hasExplicitFiles} = await loadTsConfig(fromFile, options.tsConfigCache)
   if (!configPath || !hasExplicitFiles) return
 
-  return new Set(
-    (fileNames ?? [])
-      .filter((fileName) => isWithinBoundary(fileName, extensionDirectory))
-      .map((fileName) => resolvePath(fileName)),
-  )
+  return new Set((fileNames ?? []).map((fileName) => resolvePath(fileName)))
 }
 
 interface CreateTypeDefinitionOptions {
