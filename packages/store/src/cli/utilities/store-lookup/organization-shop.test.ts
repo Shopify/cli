@@ -1,7 +1,7 @@
 import {fetchOrganizationShop} from './organization-shop.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/business-platform')
@@ -48,7 +48,7 @@ describe('fetchOrganizationShop', () => {
     expect(shop.ownerEmail).toBe('jane@acme.com')
   })
 
-  test('throws BugError when no shop matches the domain', async () => {
+  test('throws AbortError when no shop matches the domain', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
       organization: {
         id: 'gid',
@@ -57,7 +57,7 @@ describe('fetchOrganizationShop', () => {
       },
     } as never)
 
-    await expect(fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})).rejects.toBeInstanceOf(BugError)
+    await expect(fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})).rejects.toBeInstanceOf(AbortError)
   })
 
   test('passes organizationId and search variable to the request', async () => {
@@ -86,6 +86,6 @@ describe('fetchOrganizationShop', () => {
 
   test('throws when organization is missing', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({organization: null} as never)
-    await expect(fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})).rejects.toBeInstanceOf(BugError)
+    await expect(fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})).rejects.toBeInstanceOf(AbortError)
   })
 })

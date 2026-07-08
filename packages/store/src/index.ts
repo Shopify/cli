@@ -6,6 +6,7 @@ import StoreBulkStatus from './cli/commands/store/bulk/status.js'
 import StoreStripeAuth from './cli/commands/store/stripe-auth.js'
 import StoreCreateDev from './cli/commands/store/create/dev.js'
 import StoreCreatePreview from './cli/commands/store/create/preview.js'
+import StoreDelete from './cli/commands/store/delete.js'
 import StoreExecute from './cli/commands/store/execute.js'
 import StoreGraphiQL from './cli/commands/store/graphiql.js'
 import StoreInfo from './cli/commands/store/info.js'
@@ -23,6 +24,7 @@ const COMMANDS = {
   'store:stripe-auth': StoreStripeAuth,
   'store:create:dev': StoreCreateDev,
   'store:create:preview': StoreCreatePreview,
+  'store:delete': StoreDelete,
   'store:execute': StoreExecute,
   'store:graphiql': StoreGraphiQL,
   'store:info': StoreInfo,

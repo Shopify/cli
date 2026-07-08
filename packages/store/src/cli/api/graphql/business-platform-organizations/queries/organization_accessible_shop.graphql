@@ -1,0 +1,9 @@
+query OrganizationAccessibleShop($id: ShopifyShopID!) {
+  organization {
+    accessibleShop(id: $id) {
+      shopifyShopId
+      planName
+      storeType
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import {getStoreInfo} from './index.js'
-import {StoreInfoBusinessPlatformStoreNotFoundError, fetchDestinationsContext} from './destinations.js'
-import {fetchOrganizationShop} from './organization-shop.js'
+import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
+import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
@@ -11,17 +11,19 @@ import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, test, expect, vi} from 'vitest'
-import type {OrganizationShopFields} from './types.js'
+import type {OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
 import type {Store} from '../../../api/graphql/business-platform-organizations/generated/types.js'
 
-vi.mock('./destinations.js', async () => {
-  const actual = await vi.importActual<typeof import('./destinations.js')>('./destinations.js')
+vi.mock('../../../utilities/store-lookup/destinations.js', async () => {
+  const actual = await vi.importActual<typeof import('../../../utilities/store-lookup/destinations.js')>(
+    '../../../utilities/store-lookup/destinations.js',
+  )
   return {
     ...actual,
     fetchDestinationsContext: vi.fn(),
   }
 })
-vi.mock('./organization-shop.js')
+vi.mock('../../../utilities/store-lookup/organization-shop.js')
 vi.mock('../auth/session-lifecycle.js')
 vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('../attribution.js')
@@ -96,7 +98,7 @@ function mockStoredStoreAuth(): void {
 }
 
 function mockBusinessPlatformUnavailable(
-  error: Error = new StoreInfoBusinessPlatformStoreNotFoundError(
+  error: Error = new StoreLookupStoreNotFoundError(
     `Couldn't find a store with domain ${SHOP} for the current account.`,
   ),
 ): void {

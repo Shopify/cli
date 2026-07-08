@@ -32,11 +32,11 @@ type StoreCreationStatus = NonNullable<
 function friendlyStatus(status: StoreCreationStatus): string {
   switch (status) {
     case 'CALLING_CORE':
-      return 'Initiating store creation...'
+      return 'Initiating store creation'
     case 'AWAITING_CORE_STORE_READY':
-      return 'Waiting for store to be ready...'
+      return 'Waiting for store to be ready'
     case 'FINALIZING':
-      return 'Finalizing store setup...'
+      return 'Finalizing store setup'
     case 'COMPLETE':
       return 'Store creation complete!'
     case 'FAILED':
@@ -84,7 +84,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
   }
 
   await renderSingleTask({
-    title: outputContent`Waiting for store to be ready...`,
+    title: outputContent`Waiting for store to be ready`,
     task: async (updateStatus) => {
       const startTime = Date.now()
       while (true) {
