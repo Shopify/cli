@@ -118,6 +118,7 @@ type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'cus
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
+let commandSessionId: string | undefined
 
 /**
  * Retrieves a stable user identifier for analytics, or `'unknown'` if none applies.
@@ -179,10 +180,15 @@ export function setLastSeenAuthMethod(method: AuthMethod) {
   authMethod = method
 }
 
+export function setCommandSessionId(sessionId: string | undefined) {
+  commandSessionId = sessionId
+}
+
 export interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
   forceRefresh?: boolean
   forceNewSession?: boolean
+  sessionId?: string
 }
 
 /**
@@ -196,7 +202,12 @@ export interface EnsureAuthenticatedAdditionalOptions {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
-  {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
+  {
+    forceRefresh = false,
+    noPrompt = false,
+    forceNewSession = false,
+    sessionId,
+  }: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
@@ -209,9 +220,10 @@ export async function ensureAuthenticated(
   }
 
   const sessions = (await sessionStore.fetch()) ?? {}
+  const selectedSessionId = sessionId ?? commandSessionId
 
-  let currentSessionId = getCurrentSessionId()
-  if (!currentSessionId) {
+  let currentSessionId = forceNewSession ? undefined : (selectedSessionId ?? getCurrentSessionId())
+  if (!currentSessionId && !selectedSessionId) {
     const userIds = Object.keys(sessions[fqdn] ?? {})
     if (userIds.length > 0) currentSessionId = userIds[0]
   }
@@ -260,7 +272,7 @@ ${outputToken.json(applications)}
   // Save the new session info if it has changed
   if (!isEmpty(newSession)) {
     await sessionStore.store(updatedSessions)
-    setCurrentSessionId(newSessionId)
+    if (!selectedSessionId) setCurrentSessionId(newSessionId)
   }
 
   const tokens = await tokensFor(applications, completeSession)

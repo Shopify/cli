@@ -153,6 +153,13 @@ export const jsonFlag = {
   }),
 }
 
+export const authAliasFlag = {
+  'auth-alias': Flags.string({
+    description: 'Alias of the Shopify account to use for authentication.',
+    env: 'SHOPIFY_FLAG_AUTH_ALIAS',
+  }),
+}
+
 /**
  * Builds a `--port` flag that only accepts a valid port number. The flag parses its
  * value as an integer and rejects anything that isn't a whole number between 1 and
