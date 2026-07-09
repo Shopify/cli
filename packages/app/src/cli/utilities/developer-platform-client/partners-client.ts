@@ -40,11 +40,6 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {
-  ExtensionCreateQuery,
-  ExtensionCreateSchema,
-  ExtensionCreateVariables,
-} from '../../api/graphql/extension_create.js'
-import {
   ConvertDevToTransferDisabledStoreQuery,
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
@@ -442,10 +437,6 @@ export class PartnersClient implements DeveloperPlatformClient {
         }
       }),
     }
-  }
-
-  async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
-    return this.request(ExtensionCreateQuery, input)
   }
 
   async deploy(deployInput: AppDeployOptions): Promise<AppDeploySchema> {

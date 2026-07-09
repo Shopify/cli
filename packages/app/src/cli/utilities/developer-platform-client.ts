@@ -11,7 +11,6 @@ import {
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
 
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
 import {
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
@@ -257,7 +256,6 @@ export interface DeveloperPlatformClient {
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
-  createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
   convertToTransferDisabledStore: (

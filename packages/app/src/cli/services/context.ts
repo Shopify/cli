@@ -1,7 +1,6 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import {DeployOptions} from './deploy.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
@@ -10,13 +9,10 @@ import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/ap
 import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
-import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {
   allDeveloperPlatformClients,
   CreateAppOptions,
-  DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {selectOrganizationPrompt} from '@shopify/organizations'
@@ -102,29 +98,6 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
     )
   }
   return app
-}
-
-export async function ensureThemeExtensionDevContext(
-  extension: ExtensionInstance,
-  apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<ExtensionRegistration> {
-  const remoteSpecifications = await developerPlatformClient.appExtensionRegistrations({
-    id: apiKey,
-    apiKey,
-    organizationId: '1',
-  })
-  const remoteRegistration = remoteSpecifications.app.extensionRegistrations.find((extension) => {
-    return extension.type === 'THEME_APP_EXTENSION'
-  })
-
-  if (remoteRegistration) {
-    return remoteRegistration
-  }
-
-  const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, developerPlatformClient)
-
-  return registration
 }
 
 interface EnsureDeployContextResult {
