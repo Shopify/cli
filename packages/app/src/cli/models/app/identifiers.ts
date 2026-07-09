@@ -30,6 +30,15 @@ export interface Identifiers {
   extensionsNonUuidManaged: IdentifiersExtensions
 }
 
+export interface ExtensionUuidsByLocalIdentifier {
+  [localIdentifier: string]: string
+}
+
+export interface DeployIdentifiers {
+  appModuleUuids: ExtensionUuidsByLocalIdentifier
+  appModuleRegistrationIds: ExtensionUuidsByLocalIdentifier
+}
+
 type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
 type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release' | 'import-extensions'
 interface UpdateAppIdentifiersOptions {
