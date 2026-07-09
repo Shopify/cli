@@ -14,10 +14,6 @@ import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../api/graphql/development_preview.js'
-import {
   allDeveloperPlatformClients,
   CreateAppOptions,
   DeveloperPlatformClient,
@@ -409,44 +405,4 @@ export async function logMetadataForLoadedContext(
     ...organizationInfo,
     api_key: app.apiKey,
   }))
-}
-
-export async function enableDeveloperPreview({
-  apiKey,
-  developerPlatformClient,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-}) {
-  return developerPreviewUpdate({apiKey, developerPlatformClient, enabled: true})
-}
-
-export async function disableDeveloperPreview({
-  apiKey,
-  developerPlatformClient,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-}) {
-  await developerPreviewUpdate({apiKey, developerPlatformClient, enabled: false})
-}
-
-export async function developerPreviewUpdate({
-  apiKey,
-  developerPlatformClient,
-  enabled,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-  enabled: boolean
-}) {
-  const input: DevelopmentStorePreviewUpdateInput = {
-    input: {
-      apiKey,
-      enabled,
-    },
-  }
-  const result: DevelopmentStorePreviewUpdateSchema = await developerPlatformClient.updateDeveloperPreview(input)
-  const userErrors = result.developmentStorePreviewUpdate.userErrors
-  return !userErrors || userErrors.length === 0
 }

@@ -44,19 +44,10 @@ describe('devClean', () => {
     // When/Then
     await expect(devClean(mockOptions)).rejects.toThrow(`Failed to stop the dev preview: ${errorMessage}`)
   })
-
-  test('throws AbortError when devSessions are not supported', async () => {
-    // Given
-    mockOptions.appContextResult.developerPlatformClient = customDevPlatformClient(undefined, false)
-
-    // When/Then
-    await expect(devClean(mockOptions)).rejects.toThrow('Dev preview is not supported for this app.')
-  })
 })
 
-function customDevPlatformClient(devSessionDeleteError?: string, supportsDevSessions = true) {
+function customDevPlatformClient(devSessionDeleteError?: string) {
   return testDeveloperPlatformClient({
-    supportsDevSessions,
     devSessionDelete: vi.fn().mockResolvedValue({
       devSessionDelete: {
         userErrors: devSessionDeleteError ? [{message: devSessionDeleteError}] : [],

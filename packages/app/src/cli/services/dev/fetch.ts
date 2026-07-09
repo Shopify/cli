@@ -1,5 +1,4 @@
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
 import {fetchCurrentAccountInformation} from '../context/partner-account-info.js'
 import {
   DeveloperPlatformClient,
@@ -92,14 +91,6 @@ export async function fetchOrganizations(): Promise<Organization[]> {
     throw new NoOrgError(accountInfo)
   }
   return organizations
-}
-
-export async function fetchAppPreviewMode(
-  apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<boolean | undefined> {
-  const res: FindAppPreviewModeSchema = await developerPlatformClient.appPreviewMode({apiKey})
-  return res.app?.developmentStorePreviewEnabled
 }
 
 export async function fetchOrgFromId(
