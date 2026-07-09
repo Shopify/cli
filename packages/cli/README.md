@@ -367,8 +367,8 @@ Fetch your app configuration from the Developer Dashboard.
 
 ```
 USAGE
-  $ shopify app config link [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app config link [--auth-alias <value>] [--client-id <value> | -c <value>] [--force [--file-name <value> |
+    ]] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -382,6 +382,14 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --file-name=<value>
+      The name of the app configuration file to create or overwrite.
+      [env: SHOPIFY_FLAG_APP_CONFIG_FILE_NAME]
+
+  --force
+      Overwrite an existing configuration file without prompting.
+      [env: SHOPIFY_FLAG_FORCE]
 
   --no-color
       Disable color output.
