@@ -543,7 +543,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         // Related issues: PR #559094 in old Core repo
         if ('topic' in this.configuration && 'uri' in this.configuration) {
           const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-          return `${subscription.topic}::${subscription.filter}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
+          return `${subscription.topic}::${subscription.filter ?? ''}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
         } else {
           return nonRandomUUID(JSON.stringify(this.configuration))
         }
