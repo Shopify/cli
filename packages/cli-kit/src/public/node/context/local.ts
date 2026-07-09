@@ -45,12 +45,21 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Memoized value for the development check.
+ */
+let memoizedIsDevelopment: boolean | undefined
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
  * @returns True if SHOPIFY_ENV is development.
  */
 export function isDevelopment(env = process.env): boolean {
+  if (env === process.env) {
+    // Memoize the result to avoid repeated env lookups in high-frequency paths.
+    return (memoizedIsDevelopment ??= env[environmentVariables.env] === 'development')
+  }
   return env[environmentVariables.env] === 'development'
 }
 
@@ -326,3 +335,10 @@ export function opentelemetryDomain(env = process.env): string {
 }
 
 export type CIMetadata = Metadata
+
+/**
+ * Resets the memoized value of isDevelopment.
+ */
+export function _resetIsDevelopmentCache(): void {
+  memoizedIsDevelopment = undefined
+}

@@ -5,6 +5,7 @@ import {
   isShopify,
   isTerminalInteractive,
   isUnitTest,
+  _resetIsDevelopmentCache,
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
@@ -84,6 +85,10 @@ describe('isUnitTest', () => {
 })
 
 describe('isDevelopment', () => {
+  afterEach(() => {
+    _resetIsDevelopmentCache()
+  })
+
   test('returns true when SHOPIFY_CLI_ENV is debug', () => {
     // Given
     const env = {SHOPIFY_CLI_ENV: 'development'}
@@ -93,6 +98,28 @@ describe('isDevelopment', () => {
 
     // Then
     expect(got).toBe(true)
+  })
+
+  test('memoizes the result when using process.env', () => {
+    // Given
+    const originalEnv = process.env.SHOPIFY_CLI_ENV
+    process.env.SHOPIFY_CLI_ENV = 'development'
+
+    // When
+    const firstCall = isDevelopment()
+    process.env.SHOPIFY_CLI_ENV = 'production'
+    const secondCall = isDevelopment()
+
+    // Then
+    expect(firstCall).toBe(true)
+    expect(secondCall).toBe(true)
+
+    // Resetting the cache should allow the new value to be picked up
+    _resetIsDevelopmentCache()
+    expect(isDevelopment()).toBe(false)
+
+    // Cleanup
+    process.env.SHOPIFY_CLI_ENV = originalEnv
   })
 })
 
