@@ -863,7 +863,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const provisionable = isStoreProvisionable(org.currentUser?.organizationPermissions ?? [])
       return mapBusinessPlatformStoresToOrganizationStores(nodes, provisionable)
     })
-    return stores[0]
+
+    // `accessibleShops` treats `domain` as a fuzzy, free-text `search` argument, so a domain that is
+    // a substring of another store's domain (e.g. `example.myshopify.com` vs
+    // `turbo-example.myshopify.com`) can return multiple hits. Return only the store whose domain
+    // matches exactly, otherwise we risk connecting to the wrong store.
+    const normalizedDomain = normalizeStoreFqdn(shopDomain)
+    return stores.find((store) => store.shopDomain === normalizedDomain)
   }
 
   async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
