@@ -1,4 +1,5 @@
-import {LinkContentToken} from './content-tokens.js'
+import {LinkContentToken, LinesDiffContentToken} from './content-tokens.js'
+import colors from '../../public/node/colors.js'
 import {describe, expect, test} from 'vitest'
 
 describe('LinkContentToken', () => {
@@ -18,5 +19,35 @@ describe('LinkContentToken', () => {
 
     // Then
     expect(got.output()).toEqual(fallback)
+  })
+})
+
+describe('LinesDiffContentToken', () => {
+  test('formats added and removed lines correctly', () => {
+    // Given
+    const changes = [
+      {value: 'same\n', count: 1},
+      {value: 'removed\n', count: 1, removed: true},
+      {value: 'added\n', count: 1, added: true},
+    ]
+    const token = new LinesDiffContentToken(changes)
+
+    // When
+    const output = token.output()
+
+    // Then
+    expect(output).toEqual(['same\n', colors.magenta('- removed\n'), colors.green('+ added\n')])
+  })
+
+  test('handles multiple lines in a single change part', () => {
+    // Given
+    const changes = [{value: 'added1\nadded2\n', count: 2, added: true}]
+    const token = new LinesDiffContentToken(changes)
+
+    // When
+    const output = token.output()
+
+    // Then
+    expect(output).toEqual([colors.green('+ added1\n'), colors.green('+ added2\n')])
   })
 })
