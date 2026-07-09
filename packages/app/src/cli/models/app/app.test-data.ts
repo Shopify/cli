@@ -1331,7 +1331,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const clientStub: DeveloperPlatformClient = {
     clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
-    supportsAtomicDeployments: false,
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
     supportsDashboardManagedExtensions: true,
@@ -1412,12 +1411,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       retVal[
         key as keyof Omit<
           DeveloperPlatformClient,
-          | 'supportsAtomicDeployments'
-          | 'clientName'
-          | 'webUiName'
-          | 'organizationSource'
-          | 'bundleFormat'
-          | 'supportsDashboardManagedExtensions'
+          'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat' | 'supportsDashboardManagedExtensions'
         >
       ] = vi.fn().mockImplementation(value)
     }

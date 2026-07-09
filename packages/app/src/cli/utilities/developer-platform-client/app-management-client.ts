@@ -192,7 +192,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   public readonly clientName = ClientName.AppManagement
   public readonly webUiName = 'Developer Dashboard'
-  public readonly supportsAtomicDeployments = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   public readonly bundleFormat = 'br'
   public readonly supportsDashboardManagedExtensions = false

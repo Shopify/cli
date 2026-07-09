@@ -317,13 +317,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   const version = activeAppVersion ?? (await developerPlatformClient.activeAppVersion(remoteApp))
   if (!version) return
 
-  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
-    version,
-    validMatches,
-    toCreate,
-    specs,
-    developerPlatformClient,
-  )
+  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(version, validMatches, toCreate, specs)
 
   const dashboardOnlyFinal = dashboardOnly.filter(
     (dashboardOnly) =>
@@ -345,7 +339,6 @@ function loadExtensionsIdentifiersBreakdown(
   validMatches: IdentifiersExtensions,
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
-  developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter((ext) => {
     const spec = specs.find(
@@ -362,11 +355,7 @@ function loadExtensionsIdentifiersBreakdown(
     const UidMatch = module.registrationId === identifier
     const pendingMigration = module.registrationId.length === 0
 
-    if (developerPlatformClient.supportsAtomicDeployments) {
-      return UidMatch || (pendingMigration && UuidMatch)
-    } else {
-      return UuidMatch
-    }
+    return UidMatch || (pendingMigration && UuidMatch)
   }
 
   const allExistingExtensions = Object.entries(validMatches)
