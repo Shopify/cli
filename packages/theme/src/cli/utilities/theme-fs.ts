@@ -5,8 +5,7 @@ import {createSyncingCatchError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {getListingFilePath, updateSettingsDataForListing} from './theme-listing.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
-import {palette} from '../ui/palette.js'
-import colors from '@shopify/cli-kit/node/colors'
+import {palette, paint} from '../ui/palette.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -582,9 +581,9 @@ function outputSyncResult(action: 'update' | 'delete', fileKey: string, logSyncL
   // Clean-columns layout: subdued time · soft-accent ✎ tag (col-2 width 5) ·
   // subdued past-tense op (padded 7) · file key. Padding is applied to the RAW
   // text before coloring so the zero-width ANSI escapes do not break alignment.
-  const time = colors.hex(palette.subdued)(timestampDateFormat.format(new Date()))
-  const tag = colors.hex(palette.accent)('✎'.padEnd(5))
-  const op = colors.hex(palette.subdued)((action === 'delete' ? 'deleted' : 'updated').padEnd(7))
+  const time = paint(palette.subdued)(timestampDateFormat.format(new Date()))
+  const tag = paint(palette.accent)('✎'.padEnd(5))
+  const op = paint(palette.subdued)((action === 'delete' ? 'deleted' : 'updated').padEnd(7))
   const line = `${time}  ${tag}  ${op}  ${fileKey}`
   if (logSyncLine) {
     logSyncLine(line)

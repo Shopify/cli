@@ -1,7 +1,6 @@
 import {Cell, StyledTable} from './StyledTable.js'
-import {palette} from '../palette.js'
+import {palette, paint} from '../palette.js'
 import {DevSessionAlert, DevSessionOutput, DevSessionStatus} from '../DevSessionOutput.js'
-import colors from '@shopify/cli-kit/node/colors'
 import {Box, Text, useInput, useStdin, useStdout} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC, TokenItem} from '@shopify/cli-kit/node/ui'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -145,16 +144,16 @@ const ThemeDevUI: FunctionComponent<ThemeDevUIProps> = ({
     // padded/aligned). Single space before the message; headline in error-pink,
     // optional subdued em-dash body. The composed line is a single row (no `\n`)
     // so the panel truncates cleanly.
-    const glyph = colors.hex(palette.status.error).bold('⚠')
+    const glyph = paint(palette.status.error).bold('⚠')
     const onAlert = (alert: DevSessionAlert) => {
-      const headline = colors.hex(palette.status.error)(alert.headline)
-      const body = alert.body ? colors.hex(palette.subdued)(` — ${alert.body}`) : ''
+      const headline = paint(palette.status.error)(alert.headline)
+      const body = alert.body ? paint(palette.subdued)(` — ${alert.body}`) : ''
       append(`${glyph} ${headline}${body}`)
     }
     const onError = (error: Error | string) => {
       const message = error instanceof Error ? (error.stack ?? error.message) : error
       const firstLine = String(message).split('\n')[0] ?? String(message)
-      append(`${glyph} ${colors.hex(palette.status.error)(firstLine)}`)
+      append(`${glyph} ${paint(palette.status.error)(firstLine)}`)
     }
 
     devSessionOutput.on('log', onLog)

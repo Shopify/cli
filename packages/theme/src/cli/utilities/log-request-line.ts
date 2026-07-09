@@ -1,8 +1,7 @@
 import {EXTENSION_CDN_PREFIX, VANITY_CDN_PREFIX} from './theme-environment/proxy.js'
 import {timestampDateFormat} from '../constants.js'
-import {palette} from '../ui/palette.js'
+import {palette, paint} from '../ui/palette.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import colors from '@shopify/cli-kit/node/colors'
 import {H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 
@@ -31,11 +30,11 @@ export function logRequestLine(event: H3Event, response: MinimalResponse, ctx: D
   // <Text> stays color-prop-free and the embedded ANSI passes through. Padding
   // is applied to the RAW text BEFORE coloring — ANSI escapes have string length
   // but zero display width, so padding a colored string would misalign columns.
-  const time = colors.hex(palette.subdued)(timestampDateFormat.format(new Date()))
-  const method = colors.hex(methodColor(event.method))(event.method.toUpperCase().padEnd(5))
+  const time = paint(palette.subdued)(timestampDateFormat.format(new Date()))
+  const method = paint(methodColor(event.method))(event.method.toUpperCase().padEnd(5))
   const status = getColorizeStatus(response.status)(String(response.status).padEnd(3))
   const path = truncatedPath
-  const duration = durationString ? colors.hex(palette.subdued)(durationString) : ''
+  const duration = durationString ? paint(palette.subdued)(durationString) : ''
 
   const message = `${time}  ${method}  ${status} ${path}${duration ? `  ${duration}` : ''}`
 
@@ -82,10 +81,10 @@ function methodColor(method: string): string {
 
 function getColorizeStatus(status: number): (text: string) => string {
   if (status < 300) {
-    return colors.hex(palette.status.success)
+    return paint(palette.status.success)
   } else if (status < 400) {
-    return colors.hex(palette.status.redirect)
+    return paint(palette.status.redirect)
   } else {
-    return colors.hex(palette.status.error)
+    return paint(palette.status.error)
   }
 }

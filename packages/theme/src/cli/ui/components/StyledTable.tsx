@@ -38,7 +38,11 @@ function cellWidth(cell: Cell): number {
   return unstyled(cellText(cell)).length
 }
 
-function columnDefaultColor(isHeader: boolean, isFirstColumn: boolean, firstColumnSubdued: boolean): string {
+function columnDefaultColor(
+  isHeader: boolean,
+  isFirstColumn: boolean,
+  firstColumnSubdued: boolean,
+): string | undefined {
   if (isHeader) return palette.header
   if (isFirstColumn && firstColumnSubdued) return palette.subdued
   return palette.text
@@ -69,7 +73,7 @@ function fittedColumnWidths(natural: number[], available: number): number[] {
   return natural.map((width, index) => (index === widestIndex ? shrunk : width))
 }
 
-function renderCellContent(cell: Cell, isHeader: boolean, defaultColor: string) {
+function renderCellContent(cell: Cell, isHeader: boolean, defaultColor: string | undefined) {
   if (!isStyledCell(cell) && typeof cell !== 'string') {
     return <TokenizedText item={cell} />
   }

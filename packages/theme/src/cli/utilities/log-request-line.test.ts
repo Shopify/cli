@@ -1,11 +1,10 @@
 import {logRequestLine, shouldLog} from './log-request-line.js'
 import {DevSessionOutput} from '../ui/DevSessionOutput.js'
-import {palette} from '../ui/palette.js'
+import {palette, paint} from '../ui/palette.js'
 import {createEvent} from 'h3'
 import {describe, test, expect, vi} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import colors from '@shopify/cli-kit/node/colors'
 import {IncomingMessage, ServerResponse} from 'node:http'
 
 import {Socket} from 'node:net'
@@ -131,9 +130,9 @@ describe('logRequestLine', () => {
     const postLine = logSpy.mock.calls[1]?.[0] ?? ''
     const deleteLine = logSpy.mock.calls[2]?.[0] ?? ''
 
-    expect(getLine).toContain(colors.hex(palette.methods.get)('GET  '))
-    expect(postLine).toContain(colors.hex(palette.methods.post)('POST '))
-    expect(deleteLine).toContain(colors.hex(palette.methods.delete)('DELETE'))
+    expect(getLine).toContain(paint(palette.methods.get)('GET  '))
+    expect(postLine).toContain(paint(palette.methods.post)('POST '))
+    expect(deleteLine).toContain(paint(palette.methods.delete)('DELETE'))
   })
 
   test('colors the status per class using the status palette', () => {
@@ -144,9 +143,9 @@ describe('logRequestLine', () => {
     logRequestLine(createH3Event('GET', '/redirect'), fakeResponse(302), fakeCtx({sink}))
     logRequestLine(createH3Event('GET', '/error'), fakeResponse(500), fakeCtx({sink}))
 
-    expect(logSpy.mock.calls[0]?.[0]).toContain(colors.hex(palette.status.success)('200'))
-    expect(logSpy.mock.calls[1]?.[0]).toContain(colors.hex(palette.status.redirect)('302'))
-    expect(logSpy.mock.calls[2]?.[0]).toContain(colors.hex(palette.status.error)('500'))
+    expect(logSpy.mock.calls[0]?.[0]).toContain(paint(palette.status.success)('200'))
+    expect(logSpy.mock.calls[1]?.[0]).toContain(paint(palette.status.redirect)('302'))
+    expect(logSpy.mock.calls[2]?.[0]).toContain(paint(palette.status.error)('500'))
   })
 
   test('respects the theme-extension early return regardless of sink', () => {

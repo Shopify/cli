@@ -29,7 +29,7 @@ function tabularSection(
   }
 }
 
-function roleColor(role: string): string {
+function roleColor(role: string): string | undefined {
   switch (role) {
     case 'live':
       return palette.role

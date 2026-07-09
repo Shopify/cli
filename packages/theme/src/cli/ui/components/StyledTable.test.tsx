@@ -39,10 +39,10 @@ describe('StyledTable', () => {
         rows={[
           [
             {text: 'Theme 1', bold: true},
-            {text: '● live', color: '#A7E8BD', bold: true},
-            {text: '#1', color: '#8B8296'},
+            {text: '● live', color: 'green', bold: true},
+            {text: '#1', color: 'gray'},
           ],
-          ['Theme 2', {text: 'development (current)', color: '#C9A0FF'}, {text: '#2', color: '#8B8296'}],
+          ['Theme 2', {text: 'development (current)', color: 'gray'}, {text: '#2', color: 'gray'}],
         ]}
       />,
     )
