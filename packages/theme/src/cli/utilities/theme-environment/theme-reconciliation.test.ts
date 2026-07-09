@@ -297,6 +297,7 @@ describe('reconcileJsonFiles', () => {
       // Then
       expect(renderSelectPrompt).not.toHaveBeenCalled()
       expect(fetchThemeAssets).not.toHaveBeenCalled()
+      expect(deleteThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [remoteChecksums[0]!.key], adminSession)
     })
 
     test('should abort without prompting when abort strategy is selected', async () => {
@@ -321,19 +322,12 @@ describe('reconcileJsonFiles', () => {
       )
 
       // Then
-      let error: (Error & {tryMessage?: string}) | undefined
-      try {
-        await result
-        throw new Error('Expected reconciliation to abort')
-      } catch (caughtError) {
-        error = caughtError as Error & {tryMessage?: string}
-      }
-
-      expect(error).toBeDefined()
-      expect(error!.message).toEqual('Theme JSON files need reconciliation.')
-      expect(error!.tryMessage).toContain('templates/local_only.json')
-      expect(error!.tryMessage).toContain('templates/remote_only.json')
-      expect(error!.tryMessage).toContain('templates/conflict.json')
+      await expect(result).rejects.toMatchObject({
+        message: 'Theme JSON files need reconciliation.',
+        tryMessage: expect.stringMatching(
+          /templates\/local_only\.json[\s\S]*templates\/remote_only\.json[\s\S]*templates\/conflict\.json/,
+        ),
+      })
       expect(renderSelectPrompt).not.toHaveBeenCalled()
     })
 
@@ -359,7 +353,7 @@ describe('reconcileJsonFiles', () => {
       expect(fetchThemeAssets).toHaveBeenCalled()
     })
 
-    test('should not download files from remote when `local` source is selected', async () => {
+    test('should delete files from remote when `local` source is selected', async () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(LOCAL_STRATEGY)
       const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
@@ -377,6 +371,7 @@ describe('reconcileJsonFiles', () => {
 
       // Then
       expect(fetchThemeAssets).not.toHaveBeenCalled()
+      expect(deleteThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [remoteChecksums[0]!.key], adminSession)
     })
   })
 

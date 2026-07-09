@@ -186,6 +186,8 @@ function applyReconciliationStrategy(
     case 'keep-local':
       options.local.callback(files)
       break
+    case 'abort':
+      break
   }
 }
 
@@ -331,7 +333,9 @@ async function partitionFilesByReconciliationStrategy(
       },
       local: {
         label: 'Keep the local version',
-        callback: () => {},
+        callback: (files) => {
+          remoteFilesToDelete.push(...files)
+        },
       },
     },
     reconciliationStrategy,
