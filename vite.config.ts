@@ -17,7 +17,6 @@ export default defineConfig({
       'packages/plugin-did-you-mean/vite.config.ts',
       'packages/store/vite.config.ts',
       'packages/theme/vite.config.ts',
-      'packages/ui-extensions-dev-console/vite.config.mts',
       'packages/ui-extensions-server-kit/vite.config.mts',
     ],
   },

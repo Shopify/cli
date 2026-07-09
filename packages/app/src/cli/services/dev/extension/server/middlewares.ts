@@ -4,9 +4,9 @@ import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {resolveOutputDir} from '../../../build/steps/include-assets/generate-manifest.js'
-import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
+import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
-import {joinPath, resolvePath, isSubpath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath, isSubpath, extname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -25,8 +25,8 @@ export const noCacheMiddleware = defineEventHandler((event) => {
   setResponseHeader(event, 'Cache-Control', 'no-cache')
 })
 
-export const redirectToDevConsoleMiddleware = defineEventHandler(async (event) => {
-  return sendRedirect(event, '/extensions/dev-console', 307)
+export const redirectToExtensionsMiddleware = defineEventHandler(async (event) => {
+  return sendRedirect(event, '/extensions', 307)
 })
 
 export async function fileServerMiddleware(event: H3Event, options: {filePath: string}) {
@@ -112,44 +112,6 @@ export function getExtensionsPayloadMiddleware({payloadStore}: GetExtensionsMidd
     return payloadStore.getRawPayload()
   })
 }
-
-export const devConsoleIndexMiddleware = defineEventHandler(async (event) => {
-  const rootDirectory = await findPathUp(joinPath('assets', 'dev-console'), {
-    type: 'directory',
-    cwd: moduleDirectory(import.meta.url),
-  })
-
-  if (!rootDirectory) {
-    return sendError(event, {
-      statusCode: 404,
-      statusMessage: `Could not find root directory for dev console`,
-    })
-  }
-
-  return fileServerMiddleware(event, {
-    filePath: rootDirectory,
-  })
-})
-
-export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
-  const {assetPath = ''} = getRouterParams(event)
-
-  const rootDirectory = await findPathUp(joinPath('assets', 'dev-console', 'extensions', 'dev-console', 'assets'), {
-    type: 'directory',
-    cwd: moduleDirectory(import.meta.url),
-  })
-
-  if (!rootDirectory) {
-    return sendError(event, {
-      statusCode: 404,
-      statusMessage: `Could not find root directory for dev console asset`,
-    })
-  }
-
-  return fileServerMiddleware(event, {
-    filePath: joinPath(rootDirectory, assetPath),
-  })
-})
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler((event) => {

@@ -30,11 +30,10 @@ let exitCode = 0
 console.info(colors.green.bold(`Linting that packages have strict version requirements`))
 const packageJsonPaths = await fg(path.join(rootDirectory, 'packages/*/package.json'), {type: 'file'})
 const dependenciesWithLooseVersionRequirement = []
-const internalPackages = ['@shopify/ui-extensions-dev-console-app']
 const ignoredDependencies = ['react']
 for (const packageJsonPath of packageJsonPaths) {
   const {dependencies, name: pkg} = JSON.parse((await fs.readFile(packageJsonPath)).toString())
-  if (internalPackages.includes(pkg) || !dependencies) {
+  if (!dependencies) {
     continue
   }
   for (const [dependency, version] of Object.entries(dependencies)) {
