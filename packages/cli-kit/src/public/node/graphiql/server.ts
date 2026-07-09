@@ -155,9 +155,9 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
     )
   }
 
-  const faviconPath = require.resolve('@shopify/cli-kit/assets/graphiql/favicon.ico')
+  const faviconPath = require.resolve('../../../../assets/graphiql/favicon.ico')
   const faviconContent = readFileSync(faviconPath)
-  const stylePath = require.resolve('@shopify/cli-kit/assets/graphiql/style.css')
+  const stylePath = require.resolve('../../../../assets/graphiql/style.css')
   const styleContent = readFileSync(stylePath, 'utf8')
 
   app.use(
