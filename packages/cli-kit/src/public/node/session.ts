@@ -17,6 +17,7 @@ import {
   PartnersAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
+  setCommandSessionId,
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
@@ -49,6 +50,37 @@ export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountI
  */
 export function setLastSeenUserId(userId: string): void {
   setLastSeenUserIdAfterAuth(userId)
+}
+
+/**
+ * Finds a stored Shopify account session by alias without changing the current session.
+ *
+ * @param alias - The account alias to find.
+ * @returns The matching session ID, or undefined if no session matches.
+ */
+export async function findSessionIdByAlias(alias: string): Promise<string | undefined> {
+  return sessionStore.findSessionByAlias(alias)
+}
+
+/**
+ * Selects a stored Shopify account session by alias for the current command process.
+ *
+ * @param alias - The account alias to select. Passing undefined clears the command selection.
+ */
+export async function setCurrentSessionAlias(alias?: string): Promise<void> {
+  if (!alias) {
+    setCommandSessionId(undefined)
+    return
+  }
+
+  const sessionId = await findSessionIdByAlias(alias)
+  if (!sessionId) {
+    throw new AbortError(
+      outputContent`No authenticated account found for alias ${outputToken.yellow(alias)}.`,
+      outputContent`Run ${outputToken.genericShellCommand(`shopify auth login`)} first.`,
+    )
+  }
+  setCommandSessionId(sessionId)
 }
 
 interface UserAccountInfo {
