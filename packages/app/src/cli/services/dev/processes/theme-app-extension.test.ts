@@ -227,7 +227,7 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
       storePassword: 'provided-password',
     })
 
-    expect(ensureValidPassword).toHaveBeenCalledWith('provided-password', 'test.myshopify.com')
+    expect(ensureValidPassword).toHaveBeenCalledWith('provided-password', 'test.myshopify.com', crawlerSignatureHeaders)
     expect(result!.options.storefrontPassword).toEqual('validated-password')
   })
 })

@@ -237,19 +237,22 @@ describe('mkcert', () => {
       expect(exec).toHaveBeenCalled()
     })
 
-    testWithTempDir('fails without prompting when forceInstall is false and certificates are missing', async ({tempDir}) => {
-      vi.mocked(generateCertificatePrompt).mockClear()
-      vi.mocked(exec).mockClear()
-      const generatePromise = generateCertificate({
-        appDirectory: tempDir,
-        forceInstall: false,
-        platform: 'linux',
-      })
+    testWithTempDir(
+      'fails without prompting when forceInstall is false and certificates are missing',
+      async ({tempDir}) => {
+        vi.mocked(generateCertificatePrompt).mockClear()
+        vi.mocked(exec).mockClear()
+        const generatePromise = generateCertificate({
+          appDirectory: tempDir,
+          forceInstall: false,
+          platform: 'linux',
+        })
 
-      await expect(generatePromise).rejects.toThrow(AbortError)
-      expect(generateCertificatePrompt).not.toHaveBeenCalled()
-      expect(exec).not.toHaveBeenCalled()
-    })
+        await expect(generatePromise).rejects.toThrow(AbortError)
+        expect(generateCertificatePrompt).not.toHaveBeenCalled()
+        expect(exec).not.toHaveBeenCalled()
+      },
+    )
 
     testWithTempDir('skips certificate generation if the certificate already exists', async ({tempDir}) => {
       const appDirectory = tempDir

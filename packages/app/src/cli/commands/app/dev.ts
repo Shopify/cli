@@ -54,14 +54,12 @@ export default class Dev extends AppLinkedCommand {
       description:
         "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",
       env: 'SHOPIFY_FLAG_USE_LOCALHOST',
-      default: false,
       exclusive: ['tunnel-url'],
     }),
     'install-mkcert': Flags.boolean({
       description:
         'Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.',
       env: 'SHOPIFY_FLAG_INSTALL_MKCERT',
-      default: false,
       dependsOn: ['use-localhost'],
     }),
     'localhost-port': portFlag({
@@ -107,7 +105,7 @@ export default class Dev extends AppLinkedCommand {
     const {flags} = await this.parse(Dev)
 
     const tunnelMode = await getTunnelMode({
-      useLocalhost: flags['use-localhost'],
+      useLocalhost: flags['use-localhost'] ?? false,
       tunnelUrl: flags['tunnel-url'],
       localhostPort: flags['localhost-port'],
     })
@@ -149,7 +147,7 @@ export default class Dev extends AppLinkedCommand {
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
-      installMkcert: flags['install-mkcert'],
+      installMkcert: flags['install-mkcert'] ?? false,
       tunnel: tunnelMode,
     }
 
