@@ -136,16 +136,6 @@ export function alwaysLogMetrics(env = process.env): boolean {
 }
 
 /**
- * Returns true if the CLI User is 1P.
- *
- * @param env - The environment variables from the environment of the current process.
- * @returns True if SHOPIFY_CLI_1P is truthy.
- */
-export function firstPartyDev(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.firstPartyDev])
-}
-
-/**
  * Returns true if the CLI can run the "doctor-release" command.
  *
  * @param env - The environment variables from the environment of the current process.

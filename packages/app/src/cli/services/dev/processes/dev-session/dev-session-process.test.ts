@@ -3,7 +3,6 @@ import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../../models/app/app.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
-import {buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {
   testAppAccessConfigExtension,
   testAppLinked,
@@ -20,7 +19,6 @@ import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
 import {readdir} from '@shopify/cli-kit/node/fs'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
 
 vi.mock('@shopify/cli-kit/node/fs')
@@ -29,14 +27,6 @@ vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../../../../utilities/app/app-url.js')
 vi.mock('node-fetch')
 vi.mock('../../../bundle.js')
-vi.mock('@shopify/cli-kit/node/context/local', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@shopify/cli-kit/node/context/local')>()
-  return {
-    ...original,
-    firstPartyDev: vi.fn().mockReturnValue(false),
-  }
-})
-
 describe('setupDevSessionProcess', () => {
   test('returns a dev session process with correct configuration', async () => {
     // Given
@@ -50,7 +40,6 @@ describe('setupDevSessionProcess', () => {
       appId: 'app123',
       appWatcher: {} as AppEventWatcher,
       appPreviewURL: 'https://test.preview.url',
-      appLocalProxyURL: 'https://test.local.url',
       devSessionStatusManager: new DevSessionStatusManager(),
     }
 
@@ -72,7 +61,6 @@ describe('setupDevSessionProcess', () => {
         appId: options.appId,
         appWatcher: options.appWatcher,
         appPreviewURL: options.appPreviewURL,
-        appLocalProxyURL: options.appLocalProxyURL,
         devSessionStatusManager: options.devSessionStatusManager,
       },
     })
@@ -108,7 +96,6 @@ describe('pushUpdatesForDevSession', () => {
       appId: 'app123',
       organizationId: 'org123',
       appPreviewURL: 'https://test.preview.url',
-      appLocalProxyURL: 'https://test.local.url',
       devSessionStatusManager,
     }
   })
@@ -197,7 +184,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('handles scope changes and displays updated message', async () => {
     // Given
-    vi.mocked(buildAppURLForWeb).mockResolvedValue('https://test.myshopify.com/admin/apps/test')
     const appAccess = await testAppAccessConfigExtension(false, undefined, false)
     const event = {extensionEvents: [{type: 'updated', extension: appAccess}], app}
     const contextSpy = vi.spyOn(outputContext, 'useConcurrentOutputContext')
@@ -219,9 +205,8 @@ describe('pushUpdatesForDevSession', () => {
     contextSpy.mockRestore()
   })
 
-  test('updates preview URL to appPreviewURL by default (local dev console only for 1P devs)', async () => {
-    // Given - dev console is NOT shown by default (only for 1P devs)
-    vi.mocked(firstPartyDev).mockReturnValue(false)
+  test('updates preview URL to appPreviewURL when previewable extensions change', async () => {
+    // Given
     const extension = await testUIExtension({type: 'ui_extension'})
     const newApp = testAppLinked({allExtensions: [extension]})
 
@@ -234,24 +219,6 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then
     expect(devSessionStatusManager.status.previewURL).toBe(options.appPreviewURL)
-  })
-
-  test('updates preview URL to appLocalProxyURL when 1P dev has previewable extensions', async () => {
-    // Given - dev console is shown for 1P devs with previewable extensions
-    vi.mocked(firstPartyDev).mockReturnValue(true)
-    const extension = await testUIExtension({type: 'ui_extension'})
-    const newApp = testAppLinked({allExtensions: [extension]})
-
-    // When
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
-    await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
-    appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
-    await flushPromises()
-
-    // Then
-    expect(devSessionStatusManager.status.previewURL).toBe(options.appLocalProxyURL)
-    vi.mocked(firstPartyDev).mockReturnValue(false)
   })
 
   test('updates preview URL to appPreviewURL when no previewable extensions', async () => {

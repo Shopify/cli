@@ -2,7 +2,6 @@ import {ApplicationToken, IdentityToken, Session, validateCachedIdentityTokenStr
 
 import {applicationId} from './identity.js'
 import {sessionConstants} from '../constants.js'
-import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'
 import {outputDebug} from '../../../public/node/output.js'
 
@@ -13,7 +12,7 @@ type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
  */
 function validateScopes(requestedScopes: string[], identity: IdentityToken) {
   const currentScopes = identity.scopes
-  if (firstPartyDev() !== currentScopes.includes('employee')) return false
+  if (currentScopes.includes('employee')) return false
   return requestedScopes.every((scope) => currentScopes.includes(scope))
 }
 

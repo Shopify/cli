@@ -16,7 +16,7 @@ import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {firstPartyDev, isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {readdir} from '@shopify/cli-kit/node/fs'
 import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
@@ -260,18 +260,13 @@ export class DevSession {
   }
 
   /**
-   * Update the preview URL, it only changes if we move between a non-previewable state and a previewable state.
-   * (i.e. if we go from a state with no extensions to a state with ui-extensions or vice versa)
-   * Use local dev console only for 1P developers (SHOPIFY_CLI_1P_DEV is enabled).
+   * Update the preview URL when extension availability changes.
    * @param event - The app event
    */
   private updatePreviewURL(event: AppEvent) {
-    const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
-    const useDevConsole = firstPartyDev() && hasPreview
-    const newPreviewURL = useDevConsole ? this.options.appLocalProxyURL : this.options.appPreviewURL
     const hasExtensions = event.app.nonConfigExtensions.length > 0
     this.statusManager.updateStatus({
-      previewURL: newPreviewURL,
+      previewURL: this.options.appPreviewURL,
       appEmbedded: event.app.configuration.embedded,
       hasExtensions,
     })

@@ -13,7 +13,6 @@ import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../prompts/dev')
 vi.mock('./fetch')
-vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
 

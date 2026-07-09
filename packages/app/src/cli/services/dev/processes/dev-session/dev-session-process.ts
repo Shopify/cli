@@ -15,7 +15,6 @@ export interface DevSessionProcessOptions {
   appId: string
   appWatcher: AppEventWatcher
   appPreviewURL: string
-  appLocalProxyURL: string
   devSessionStatusManager: DevSessionStatusManager
 }
 

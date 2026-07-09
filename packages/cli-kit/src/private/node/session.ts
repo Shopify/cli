@@ -16,7 +16,7 @@ import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
-import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
+import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
@@ -301,10 +301,6 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
-  if (firstPartyDev()) {
-    outputDebug(outputContent`Authenticating as Shopify Employee...`)
-    scopes.push('employee')
-  }
 
   let identityToken: IdentityToken
   const identityTokenInformation = getIdentityTokenInformation()

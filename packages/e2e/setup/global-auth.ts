@@ -55,7 +55,6 @@ export default async function globalSetup() {
     SHOPIFY_CLI_NO_ANALYTICS: '1',
     NODE_OPTIONS: '',
     CI: '1',
-    SHOPIFY_CLI_1P_DEV: undefined,
     SHOPIFY_FLAG_CLIENT_ID: undefined,
   }
 

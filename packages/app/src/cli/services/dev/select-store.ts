@@ -11,7 +11,6 @@ import {
 import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputSuccess} from '@shopify/cli-kit/node/output'
 
@@ -130,7 +129,7 @@ export async function convertToTransferDisabledStoreIfNeeded(
   developerPlatformClient: DeveloperPlatformClient,
   conversionMode: 'prompt-first' | 'never',
 ): Promise<boolean> {
-  if (store.transferDisabled || firstPartyDev()) return true
+  if (store.transferDisabled) return true
 
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
     throw new AbortError(
