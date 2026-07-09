@@ -4,6 +4,7 @@ import {executeBundleThemeStep} from './bundle-theme-step.js'
 import {executeBundleUIStep} from './bundle-ui-step.js'
 import {executeBuildFunctionStep} from './build-function-step.js'
 import {executeCreateTaxStubStep} from './create-tax-stub-step.js'
+import {executeGenerateGraphqlTypesStep} from './generate-graphql-types-step.js'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
 /**
@@ -34,6 +35,9 @@ export async function executeStepByType(step: LifecycleStep, context: BuildConte
 
     case 'create_tax_stub':
       return executeCreateTaxStubStep(step, context)
+
+    case 'generate_graphql_types':
+      return executeGenerateGraphqlTypesStep(step, context)
     default:
       throw new Error(`Unknown build step type: ${(step as {type: string}).type}`)
   }

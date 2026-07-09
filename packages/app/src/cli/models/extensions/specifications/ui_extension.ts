@@ -82,6 +82,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         instructions: targeting.instructions,
         intents: targeting.intents,
         assets: targeting.assets,
+        input_query: targeting.input_query,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -96,6 +97,11 @@ const uiExtensionSpec = createExtensionSpecification({
     {
       lifecycle: 'deploy',
       steps: [
+        {
+          id: 'generate-graphql-types',
+          name: 'Generate GraphQL types',
+          type: 'generate_graphql_types',
+        },
         {
           id: 'bundle-ui',
           name: 'Bundle UI Extension',
@@ -151,7 +157,23 @@ const uiExtensionSpec = createExtensionSpecification({
     return validateUIExtensionPointConfig(directory, config.extension_points, path)
   },
   deployConfig: async (config, directory) => {
-    const transformedExtensionPoints = config.extension_points?.map(addDistPathToAssets) ?? []
+    const transformedExtensionPoints = await Promise.all(
+      (config.extension_points ?? []).map(async (extPoint) => {
+        const transformed = addDistPathToAssets(extPoint)
+
+        // Read input_query file if configured
+        if (extPoint.input_query) {
+          const inputQueryPath = joinPath(directory, extPoint.input_query)
+          const inputQueryContent = await readInputQuery(inputQueryPath)
+          return {
+            ...transformed,
+            input_query: inputQueryContent,
+          }
+        }
+
+        return transformed
+      }),
+    )
 
     return {
       api_version: config.api_version,
@@ -540,6 +562,17 @@ function buildShouldRenderAsset(
           extensionPoint.target,
         )}', (...args) => shouldRender(...args));`
       : `import '${shouldRenderAsset.module}'`,
+  }
+}
+
+async function readInputQuery(path: string): Promise<string> {
+  if (await fileExists(path)) {
+    return readFile(path)
+  } else {
+    throw new AbortError(
+      `No input query file at ${path}.`,
+      `Create the file or remove the line referencing it in the extension's TOML.`,
+    )
   }
 }
 

@@ -32,7 +32,7 @@ export interface BundleUIStep extends BaseStep {
 
 /** Steps that don't require any config yet. */
 interface NoConfigStep extends BaseStep {
-  readonly type: 'build_theme' | 'bundle_theme' | 'build_function' | 'create_tax_stub'
+  readonly type: 'build_theme' | 'bundle_theme' | 'build_function' | 'create_tax_stub' | 'generate_graphql_types'
   readonly config?: Record<string, never>
 }
 

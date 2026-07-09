@@ -40,6 +40,7 @@ describe('ui_extension', async () => {
           }
         }
       }
+      input_query?: string
     }[]
   }
 
@@ -48,7 +49,21 @@ describe('ui_extension', async () => {
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
     const configuration = {
-      extension_points: extensionPoints,
+      extension_points: extensionPoints?.map((ep) => ({
+        target: ep.target,
+        module: ep.module,
+        metafields: [],
+        default_placement_reference: ep.default_placement_reference,
+        urls: ep.urls ?? {},
+        capabilities: undefined,
+        preloads: {},
+        build_manifest: ep.build_manifest!,
+        tools: undefined,
+        instructions: undefined,
+        intents: undefined,
+        assets: undefined,
+        input_query: ep.input_query,
+      })),
       api_version: apiVersion ?? ('2023-01' as const),
       name: 'UI Extension',
       description: 'This is an ordinary test extension.',
@@ -154,6 +169,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
@@ -223,6 +239,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
@@ -288,6 +305,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           urls: {},
@@ -353,6 +371,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -421,6 +440,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -491,6 +511,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -561,6 +582,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -626,6 +648,73 @@ describe('ui_extension', async () => {
           instructions: './instructions.md',
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+            },
+          },
+          urls: {},
+        },
+      ])
+    })
+
+    test('targeting object accepts input_query as an optional string', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            input_query: './input.graphql',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          tools: undefined,
+          instructions: undefined,
+          intents: undefined,
+          assets: undefined,
+          input_query: './input.graphql',
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -691,6 +780,7 @@ describe('ui_extension', async () => {
           instructions: undefined,
           intents: undefined,
           assets: './assets',
+          input_query: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -855,6 +945,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           instructions: './instructions.md',
           intents: undefined,
           assets: undefined,
+          input_query: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -874,6 +965,76 @@ Please check the configuration in ${uiExtension.configurationPath}`),
   })
 
   describe('deployConfig()', () => {
+    test('reads and includes input_query file contents in extension point when configured', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const inputQueryContent = 'query { shop { name } }'
+        await writeFile(joinPath(tmpDir, 'input.graphql'), inputQueryContent)
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          extensionPoints: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              input_query: './input.graphql',
+              build_manifest: {
+                assets: {
+                  main: {
+                    filepath: 'test-ui-extension.js',
+                    module: './src/ExtensionPointA.js',
+                  },
+                },
+              },
+            },
+          ],
+        })
+
+        // When
+        const deployConfig = await uiExtension.deployConfig({
+          apiKey: 'apiKey',
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        const extensionPoints = deployConfig?.extension_points as any[] | undefined
+        expect(extensionPoints?.[0]?.input_query).toBe(inputQueryContent)
+      })
+    })
+
+    test('throws AbortError when input_query file does not exist', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          extensionPoints: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              input_query: './missing-input.graphql',
+              build_manifest: {
+                assets: {
+                  main: {
+                    filepath: 'test-ui-extension.js',
+                    module: './src/ExtensionPointA.js',
+                  },
+                },
+              },
+            },
+          ],
+        })
+
+        // When & Then
+        await expect(() =>
+          uiExtension.deployConfig({
+            apiKey: 'apiKey',
+            appConfiguration: placeholderAppConfiguration,
+          }),
+        ).rejects.toThrowError(AbortError)
+      })
+    })
+
     test('returns the deploy config', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given

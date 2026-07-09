@@ -76,6 +76,7 @@ const NewExtensionPointSchema = zod.object({
     })
     .optional(),
   assets: zod.string().optional(),
+  input_query: zod.string().optional(),
 })
 
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
