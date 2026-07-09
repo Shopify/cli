@@ -1,4 +1,4 @@
-import {IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
 import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 
 import {AppDeployOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -32,8 +32,7 @@ interface UploadExtensionsBundleOptions {
   /** App Modules extra data */
   appModules: AppModuleSettings[]
 
-  /** The extensions' numeric identifiers (expressed as a string). */
-  extensionIds: IdentifiersExtensions
+  appModuleRegistrationIds: ExtensionUuidsByLocalIdentifier
 
   /** Wether or not to release the version */
   release: boolean
@@ -114,7 +113,7 @@ export async function uploadExtensionsBundle(
   if (!result.appDeploy.appVersion) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
       result.appDeploy.userErrors ?? [],
-      options.extensionIds,
+      options.appModuleRegistrationIds,
       options.appModules,
       {
         version: options.version,
@@ -147,7 +146,7 @@ const GENERIC_ERRORS_TITLE = '\n'
 
 export function deploymentErrorsToCustomSections(
   errors: AppDeploySchema['appDeploy']['userErrors'],
-  extensionIds: IdentifiersExtensions,
+  appModuleRegistrationIds: ExtensionUuidsByLocalIdentifier,
   appModules: AppModuleSettings[],
   flags: {
     version?: string
@@ -157,11 +156,11 @@ export function deploymentErrorsToCustomSections(
     return error.details?.some((detail) => detail.extension_id) ?? false
   }
 
-  const isCliError = (error: (typeof errors)[0], extensionIds: IdentifiersExtensions) => {
+  const isCliError = (error: (typeof errors)[0], appModuleRegistrationIds: ExtensionUuidsByLocalIdentifier) => {
     const errorExtensionId =
       error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id ?? ''
 
-    return Object.values(extensionIds).includes(errorExtensionId.toString())
+    return Object.values(appModuleRegistrationIds).includes(errorExtensionId.toString())
   }
 
   const isAppManagementValidationError = (error: (typeof errors)[0]) => {
@@ -173,11 +172,11 @@ export function deploymentErrorsToCustomSections(
 
   const [extensionErrors, nonExtensionErrors] = partition(nonAppManagementErrors, (error) => isExtensionError(error))
 
-  const [cliErrors, partnersErrors] = partition(extensionErrors, (error) => isCliError(error, extensionIds))
+  const [cliErrors, partnersErrors] = partition(extensionErrors, (error) => isCliError(error, appModuleRegistrationIds))
 
   const customSections = [
     ...generalErrorsSection(nonExtensionErrors, {version: flags.version}),
-    ...cliErrorsSections(cliErrors, extensionIds),
+    ...cliErrorsSections(cliErrors, appModuleRegistrationIds),
     ...partnersErrorsSections(partnersErrors),
     ...appManagementErrorsSection(appManagementErrors, appModules),
   ]
@@ -228,7 +227,10 @@ function generalErrorsSection(
   }
 }
 
-function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], identifiers: IdentifiersExtensions) {
+function cliErrorsSections(
+  errors: AppDeploySchema['appDeploy']['userErrors'],
+  identifiers: ExtensionUuidsByLocalIdentifier,
+) {
   return errors.reduce<ErrorCustomSection[]>((sections, error) => {
     const field = (error.field ?? ['unknown']).join('.').replace('extension_points', 'extensions.targeting')
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`

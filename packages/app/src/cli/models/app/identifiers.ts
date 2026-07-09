@@ -100,7 +100,7 @@ interface GetAppIdentifiersOptions {
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
   systemEnvironment = process.env,
-): Partial<UuidOnlyIdentifiers> {
+): ExtensionUuidsByLocalIdentifier {
   const envVariables = {
     ...app.dotenv?.variables,
     ...(systemEnvironment as {[variable: string]: string}),
@@ -113,8 +113,5 @@ export function getAppIdentifiers(
   }
   app.allExtensions.forEach(processExtension)
 
-  return {
-    app: envVariables[app.idEnvironmentVariableName],
-    extensions: extensionsIdentifiers,
-  }
+  return extensionsIdentifiers
 }

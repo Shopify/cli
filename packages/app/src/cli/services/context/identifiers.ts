@@ -1,7 +1,7 @@
 import {deployConfirmed} from './identifiers-extensions.js'
 import {configExtensionsIdentifiersBreakdown, extensionsIdentifiersDeployBreakdown} from './breakdown-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
-import {Identifiers} from '../../models/app/identifiers.js'
+import {ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {AppVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -14,7 +14,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   developerPlatformClient: DeveloperPlatformClient
   appId: string
   appName: string
-  envIdentifiers: Partial<Identifiers>
+  envIdentifiers: ExtensionUuidsByLocalIdentifier
   /** If true, allow adding and updating extensions and configuration without user confirmation */
   allowUpdates?: boolean
   /** If true, allow removing extensions and configuration without user confirmation */
