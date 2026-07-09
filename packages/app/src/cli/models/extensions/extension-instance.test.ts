@@ -416,7 +416,7 @@ describe('buildUIDFromStrategy', async () => {
     // Given
     const extensionInstance = await testSingleWebhookSubscriptionExtension()
     // Then
-    expect(extensionInstance.uid).toBe('orders/delete::undefined::https://my-app.com/webhooks')
+    expect(extensionInstance.uid).toBe('orders/delete::::https://my-app.com/webhooks')
   })
 
   test('returns a custom string when strategy is dynamic and it is a webhook subscription extension with filters', async () => {
