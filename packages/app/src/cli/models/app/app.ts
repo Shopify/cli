@@ -8,7 +8,6 @@ import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
-import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
@@ -228,7 +227,6 @@ export interface AppInterface<
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
   nonConfigExtensions: ExtensionInstance[]
-  draftableExtensions: ExtensionInstance[]
   errors: AppErrors
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
@@ -326,12 +324,6 @@ export class App<
 
   get nonConfigExtensions() {
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
-  }
-
-  get draftableExtensions() {
-    return this.realExtensions.filter(
-      (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
-    )
   }
 
   setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {

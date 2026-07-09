@@ -19,7 +19,6 @@ import {
   testPaymentsAppExtension,
   testDeveloperPlatformClient,
   testSingleWebhookSubscriptionExtension,
-  testAppAccessConfigExtension,
 } from '../../models/app/app.test-data.js'
 import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
@@ -955,69 +954,6 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
       extensionsNonUuidManaged: {},
     })
   })
-  test('when the include config on deploy flag is disabled but draft extensions should be used configuration extensions are created', async () => {
-    // Given
-    const extensionsToCreate: LocalSource[] = []
-    const validMatches = {}
-    const REGISTRATION_CONFIG_A = {
-      uuid: 'UUID_C_A',
-      id: 'C_A',
-      title: 'C_A',
-      type: 'app-access',
-    }
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => createExtensionResult(REGISTRATION_CONFIG_A),
-    })
-
-    // When
-
-    const CONFIG_A = await testAppAccessConfigExtension()
-    const ensureExtensionsIdsOptions = options([], [], {configExtensions: [CONFIG_A], developerPlatformClient})
-    ensureExtensionsIdsOptions.includeDraftExtensions = true
-    const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
-      extensionsToCreate,
-      validMatches,
-    })
-
-    // Then
-    expect(developerPlatformClient.createExtension).toBeCalledTimes(1)
-    expect(got).toEqual({
-      extensions: {},
-      extensionIds: {app_access: 'C_A'},
-      extensionsNonUuidManaged: {app_access: 'UUID_C_A'},
-    })
-  })
-  test('when the include config on deploy flag is disabled but draft extensions should be used configuration extensions are created with context', async () => {
-    // Given
-    const extensionsToCreate: LocalSource[] = [PAYMENTS_A]
-    const validMatches = {}
-    const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: () => createExtensionResult(PAYMENTS_REGISTRATION_A),
-    })
-
-    // When
-    const ensureExtensionsIdsOptions = options([], [], {configExtensions: [PAYMENTS_A], developerPlatformClient})
-    ensureExtensionsIdsOptions.includeDraftExtensions = true
-    const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
-      extensionsToCreate,
-      validMatches,
-    })
-
-    // Then
-    expect(developerPlatformClient.createExtension).toHaveBeenCalledWith({
-      apiKey: 'appId',
-      type: PAYMENTS_A.graphQLType,
-      config: '{}',
-      handle: PAYMENTS_A.handle,
-      title: PAYMENTS_A.handle,
-      context: 'payments.offsite.render',
-    })
-    expect(got).toEqual({
-      extensions: {'payments-extension': 'PAYMENTS_A_UUID'},
-      extensionIds: {'payments-extension': 'PAYMENTS_A'},
-      extensionsNonUuidManaged: {},
-    })
-  })
 })
 describe('deployConfirmed: handle existent uuid managed extensions', () => {
   test('when the include config on deploy flag is enabled configuration extensions are not created but the uuids are returned', async () => {
@@ -1146,7 +1082,6 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
       flags: [],
     }).app
     const appId = 'appId'
-
     let createExtensionCounter = 0
     const developerPlatformClient = testDeveloperPlatformClient({
       createExtension: () => {
@@ -1168,7 +1103,6 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
       remoteSources,
       app,
       appId,
-      false,
       developerPlatformClient,
     )
 
@@ -1224,7 +1158,6 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
       flags: [],
     }).app
     const appId = 'appId'
-
     let createExtensionCounter = 0
     const developerPlatformClient = testDeveloperPlatformClient({
       createExtension: async () => {
@@ -1245,7 +1178,6 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
       remoteSources,
       app,
       appId,
-      false,
       developerPlatformClient,
     )
 

@@ -163,13 +163,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.devUUID = `dev-${this.uid}`
   }
 
-  get draftMessages() {
-    if (this.isAppConfigExtension) return {successMessage: undefined, errorMessage: undefined}
-    const successMessage = `Draft updated successfully for extension: ${this.localIdentifier}`
-    const errorMessage = `Error updating extension draft for ${this.localIdentifier}`
-    return {successMessage, errorMessage}
-  }
-
   get isUUIDStrategyExtension() {
     return this.specification.uidStrategy === 'uuid'
   }

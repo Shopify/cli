@@ -346,191 +346,145 @@ describe('isFlow', async () => {
   })
 })
 
-describe('draftMessages', async () => {
-  test('returns correct success message when the extension is draftable and not configuration', async () => {
+describe('buildHandle', async () => {
+  test('extensions handle is either its handle or name when specification uidStrategy is uuid', async () => {
     // Given
     const extensionInstance = await testUIExtension()
 
-    // When
-    const result = extensionInstance.draftMessages.successMessage
-
+    const result = extensionInstance.configuration.handle ?? slugify(extensionInstance.configuration.name ?? '')
     // Then
-    expect(result).toEqual('Draft updated successfully for extension: test-ui-extension')
+    expect(extensionInstance.handle).toBe(result)
   })
 
-  test('returns no success message when the extension is draftable but configuration', async () => {
+  test('extensions handle is its identifier when specification uidStrategy is single', async () => {
     // Given
     const extensionInstance = await testAppConfigExtensions()
 
-    // When
-    const result = extensionInstance.draftMessages.successMessage
-
     // Then
-    expect(result).toBeUndefined()
+    expect(extensionInstance.handle).toBe(extensionInstance.specification.identifier)
   })
 
-  test('returns correct error message when the extension is draftable and not configuration', async () => {
+  test('extensions handle is a hashString when specification uidStrategy is dynamic and it is a webhook subscription extension', async () => {
     // Given
-    const extensionInstance = await testUIExtension()
+    const extensionInstance = await testSingleWebhookSubscriptionExtension()
 
     // When
-    const result = extensionInstance.draftMessages.errorMessage
+    const subscription = extensionInstance.configuration as unknown as SingleWebhookSubscriptionType
+    let result = ''
+    if (subscription) {
+      result = hashString(subscription.topic + subscription.uri + subscription.filter).substring(
+        0,
+        MAX_EXTENSION_HANDLE_LENGTH,
+      )
+    }
 
     // Then
-    expect(result).toEqual('Error updating extension draft for test-ui-extension')
+    expect(extensionInstance.handle).toBe(result)
   })
+})
 
-  test('returns no error message when the extension is draftable but configuration', async () => {
+describe('buildUIDFromStrategy', async () => {
+  test('returns specification identifier when strategy is single', async () => {
     // Given
     const extensionInstance = await testAppConfigExtensions()
 
-    // When
-    const result = extensionInstance.draftMessages.successMessage
+    // Then
+    expect(extensionInstance.uid).toBe(extensionInstance.specification.identifier)
+  })
+
+  test('returns configuration uid when strategy is uuid and uid exists', async () => {
+    // Given
+    const extensionInstance = await testUIExtension({
+      name: 'test-extension',
+      type: 'ui_extension',
+      uid: 'test-uid',
+    })
 
     // Then
-    expect(result).toBeUndefined()
+    expect(extensionInstance.uid).toBe('test-uid')
   })
 
-  describe('buildHandle', async () => {
-    test('extensions handle is either its handle or name when specification uidStrategy is uuid', async () => {
-      // Given
-      const extensionInstance = await testUIExtension()
+  test('returns non-random UUID based on handle when strategy is uuid and no uid exists', async () => {
+    // Given
+    const extensionInstance = await testThemeExtensions()
 
-      const result = extensionInstance.configuration.handle ?? slugify(extensionInstance.configuration.name ?? '')
-      // Then
-      expect(extensionInstance.handle).toBe(result)
-    })
-
-    test('extensions handle is its identifier when specification uidStrategy is single', async () => {
-      // Given
-      const extensionInstance = await testAppConfigExtensions()
-
-      // Then
-      expect(extensionInstance.handle).toBe(extensionInstance.specification.identifier)
-    })
-
-    test('extensions handle is a hashString when specification uidStrategy is dynamic and it is a webhook subscription extension', async () => {
-      // Given
-      const extensionInstance = await testSingleWebhookSubscriptionExtension()
-
-      // When
-      const subscription = extensionInstance.configuration as unknown as SingleWebhookSubscriptionType
-      let result = ''
-      if (subscription) {
-        result = hashString(subscription.topic + subscription.uri + subscription.filter).substring(
-          0,
-          MAX_EXTENSION_HANDLE_LENGTH,
-        )
-      }
-
-      // Then
-      expect(extensionInstance.handle).toBe(result)
-    })
+    // Then
+    expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
   })
 
-  describe('buildUIDFromStrategy', async () => {
-    test('returns specification identifier when strategy is single', async () => {
-      // Given
-      const extensionInstance = await testAppConfigExtensions()
-
-      // Then
-      expect(extensionInstance.uid).toBe(extensionInstance.specification.identifier)
-    })
-
-    test('returns configuration uid when strategy is uuid and uid exists', async () => {
-      // Given
-      const extensionInstance = await testUIExtension({
-        name: 'test-extension',
-        type: 'ui_extension',
-        uid: 'test-uid',
-      })
-
-      // Then
-      expect(extensionInstance.uid).toBe('test-uid')
-    })
-
-    test('returns non-random UUID based on handle when strategy is uuid and no uid exists', async () => {
-      // Given
-      const extensionInstance = await testThemeExtensions()
-
-      // Then
-      expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
-    })
-
-    test('returns a custom string when strategy is dynamic and it is a webhook subscription extension without filters', async () => {
-      // Given
-      const extensionInstance = await testSingleWebhookSubscriptionExtension()
-      // Then
-      expect(extensionInstance.uid).toBe('orders/delete::undefined::https://my-app.com/webhooks')
-    })
-
-    test('returns a custom string when strategy is dynamic and it is a webhook subscription extension with filters', async () => {
-      // Given
-      const extensionInstance = await testSingleWebhookSubscriptionExtension({
-        config: {
-          topic: 'orders/delete',
-          uri: 'https://my-app.com/webhooks',
-          filter: '123',
-        },
-      })
-      // Then
-      expect(extensionInstance.uid).toBe('orders/delete::123::https://my-app.com/webhooks')
-    })
+  test('returns a custom string when strategy is dynamic and it is a webhook subscription extension without filters', async () => {
+    // Given
+    const extensionInstance = await testSingleWebhookSubscriptionExtension()
+    // Then
+    expect(extensionInstance.uid).toBe('orders/delete::undefined::https://my-app.com/webhooks')
   })
 
-  describe('outputPath for function extensions', async () => {
-    test('uses default path when build is undefined', async () => {
-      // Given
-      const config = {
-        name: 'foo',
-        type: 'function',
-        api_version: '2023-07',
-        configuration_ui: true,
-        // build is intentionally omitted to test undefined case
-      } as FunctionConfigType
+  test('returns a custom string when strategy is dynamic and it is a webhook subscription extension with filters', async () => {
+    // Given
+    const extensionInstance = await testSingleWebhookSubscriptionExtension({
+      config: {
+        topic: 'orders/delete',
+        uri: 'https://my-app.com/webhooks',
+        filter: '123',
+      },
+    })
+    // Then
+    expect(extensionInstance.uid).toBe('orders/delete::123::https://my-app.com/webhooks')
+  })
+})
 
-      const extensionInstance = await testFunctionExtension({
-        config,
-        dir: 'test-function',
-      })
+describe('outputPath for function extensions', async () => {
+  test('uses default path when build is undefined', async () => {
+    // Given
+    const config = {
+      name: 'foo',
+      type: 'function',
+      api_version: '2023-07',
+      configuration_ui: true,
+      // build is intentionally omitted to test undefined case
+    } as FunctionConfigType
 
-      // Then
-      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
+    const extensionInstance = await testFunctionExtension({
+      config,
+      dir: 'test-function',
     })
 
-    test('uses default path when build.path is undefined', async () => {
-      // Given
-      const config = functionConfiguration()
-      config.build = {
-        wasm_opt: true,
-        // path is not defined
-      }
+    // Then
+    expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
+  })
 
-      const extensionInstance = await testFunctionExtension({
-        config,
-        dir: 'test-function',
-      })
+  test('uses default path when build.path is undefined', async () => {
+    // Given
+    const config = functionConfiguration()
+    config.build = {
+      wasm_opt: true,
+      // path is not defined
+    }
 
-      // Then
-      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
+    const extensionInstance = await testFunctionExtension({
+      config,
+      dir: 'test-function',
     })
 
-    test('uses default path when build.path is defined (custom path is only applied during build)', async () => {
-      // Given
-      const config = functionConfiguration()
-      config.build = {
-        wasm_opt: true,
-        path: 'custom/output.wasm',
-      }
+    // Then
+    expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
+  })
 
-      const extensionInstance = await testFunctionExtension({
-        config,
-        dir: 'test-function',
-      })
+  test('uses default path when build.path is defined (custom path is only applied during build)', async () => {
+    // Given
+    const config = functionConfiguration()
+    config.build = {
+      wasm_opt: true,
+      path: 'custom/output.wasm',
+    }
 
-      // Then - outputPath always defaults to dist/index.wasm; build.path is applied by buildFunctionExtension
-      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
+    const extensionInstance = await testFunctionExtension({
+      config,
+      dir: 'test-function',
     })
+
+    // Then - outputPath always defaults to dist/index.wasm; build.path is applied by buildFunctionExtension
+    expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
   })
 })
 

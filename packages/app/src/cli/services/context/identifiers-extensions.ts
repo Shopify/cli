@@ -203,7 +203,6 @@ export async function deployConfirmed(
     singleAndDynamicStrategyExtensions,
     options.app,
     options.appId,
-    options.includeDraftExtensions,
     options.developerPlatformClient,
   )
 
@@ -274,12 +273,9 @@ export async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
   app: AppInterface,
   appId: string,
-  includeDraftExtensions = false,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
-  let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.allExtensions
-
-  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUUIDStrategyExtension)
+  const localExtensionRegistrations = app.allExtensions.filter((ext) => !ext.isUUIDStrategyExtension)
 
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}

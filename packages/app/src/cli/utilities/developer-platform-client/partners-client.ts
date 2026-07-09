@@ -133,11 +133,6 @@ import {
 import {AppLogsSubscribeMutation, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 
 import {AllOrgs} from '../../api/graphql/partners/generated/all-orgs.js'
-import {
-  ExtensionUpdateDraft,
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateDraftMutationVariables,
-} from '../../api/graphql/partners/generated/update-draft.js'
 import {FindAppQuery, FindAppQuerySchema, FindAppQueryVariables} from '../../api/graphql/find_app.js'
 import {
   FindOrganizationQuery,
@@ -464,10 +459,6 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
     return this.request(ExtensionCreateQuery, input)
-  }
-
-  async updateExtension(extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {
-    return this.requestDoc(ExtensionUpdateDraft, extensionInput)
   }
 
   async deploy(deployInput: AppDeployOptions): Promise<AppDeploySchema> {
