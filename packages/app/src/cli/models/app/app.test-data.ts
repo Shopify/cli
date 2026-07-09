@@ -43,11 +43,6 @@ import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../../api/graphql/development_preview.js'
-import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
@@ -1272,22 +1267,6 @@ const convertedToTransferDisabledStoreResponse = {
   },
 }
 
-const updateDeveloperPreviewResponse: DevelopmentStorePreviewUpdateSchema = {
-  developmentStorePreviewUpdate: {
-    app: {
-      id: 'app-id',
-      developmentStorePreviewEnabled: true,
-    },
-    userErrors: [],
-  },
-}
-
-const appPreviewModeResponse: FindAppPreviewModeSchema = {
-  app: {
-    developmentStorePreviewEnabled: true,
-  },
-}
-
 const organizationsResponse: Organization[] = [testOrganization()]
 
 const sendSampleWebhookResponse: SendSampleWebhookSchema = {
@@ -1385,9 +1364,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
     convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
       Promise.resolve(convertedToTransferDisabledStoreResponse),
-    updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
-      Promise.resolve(updateDeveloperPreviewResponse),
-    appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),

@@ -273,44 +273,17 @@ describe('createAsNewAppPrompt', () => {
 })
 
 describe('updateURLsPrompt', () => {
-  test('shows legacy prompt when dev sessions is disabled', async () => {
+  test('shows prompt without app proxy', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     const currentAppUrl = 'http://current-url'
-    const currentRedirectUrls = ['http://current-redirect-url1', 'http://current-redirect-url2']
     const newUrls = {
       applicationUrl: 'http://new-url',
       redirectUrlWhitelist: ['http://new-redirect-url'],
     }
 
     // When
-    const got = await updateURLsPrompt(false, currentAppUrl, currentRedirectUrls, newUrls)
-
-    // Then
-    expect(got).toEqual(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
-      message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
-      infoTable: {
-        'Current app URL': ['http://current-url'],
-        'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
-      },
-      confirmationMessage: 'Yes, automatically update',
-      cancellationMessage: 'No, never',
-    })
-  })
-
-  test('shows dev sessions prompt when enabled without app proxy', async () => {
-    // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-    const currentAppUrl = 'http://current-url'
-    const currentRedirectUrls: string[] = []
-    const newUrls = {
-      applicationUrl: 'http://new-url',
-      redirectUrlWhitelist: ['http://new-redirect-url'],
-    }
-
-    // When
-    const got = await updateURLsPrompt(true, currentAppUrl, currentRedirectUrls, newUrls)
+    const got = await updateURLsPrompt(currentAppUrl, newUrls)
 
     // Then
     expect(got).toEqual(true)
@@ -327,11 +300,10 @@ describe('updateURLsPrompt', () => {
     })
   })
 
-  test('shows dev sessions prompt when enabled with app proxy', async () => {
+  test('shows prompt with app proxy', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     const currentAppUrl = 'http://current-url'
-    const currentRedirectUrls: string[] = []
     const newUrls: ApplicationURLs = {
       applicationUrl: 'http://new-url',
       redirectUrlWhitelist: ['http://new-redirect-url'],
@@ -343,7 +315,7 @@ describe('updateURLsPrompt', () => {
     }
 
     // When
-    const got = await updateURLsPrompt(true, currentAppUrl, currentRedirectUrls, newUrls)
+    const got = await updateURLsPrompt(currentAppUrl, newUrls)
 
     // Then
     expect(got).toEqual(true)

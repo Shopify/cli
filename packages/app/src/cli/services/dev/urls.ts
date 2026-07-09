@@ -235,12 +235,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
   let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
 
   if (options.cachedUpdateURLs === undefined) {
-    shouldUpdateURLs = await updateURLsPrompt(
-      true,
-      options.currentURLs.applicationUrl,
-      options.currentURLs.redirectUrlWhitelist,
-      options.newURLs,
-    )
+    shouldUpdateURLs = await updateURLsPrompt(options.currentURLs.applicationUrl, options.newURLs)
 
     if (options.localApp) {
       const localConfiguration = options.localApp.configuration

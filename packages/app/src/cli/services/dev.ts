@@ -12,7 +12,6 @@ import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {renderDev} from './dev/ui.js'
-import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
@@ -334,25 +333,18 @@ async function launchDevProcesses({
     return outputProcess
   })
 
-  const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
-    canEnablePreviewMode: false,
-    developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
-    apiKey,
     id: config.remoteApp.id,
     developerPlatformClient,
-    extensions: config.localApp.allExtensions,
   }
 
   return renderDev({
     processes: processesForTaskRunner,
     previewUrl,
     graphiqlUrl,
-    graphiqlPort: config.graphiqlPort,
     app,
     abortController,
-    developerPreview: developerPreviewController(),
     shopFqdn: config.storeFqdn,
     devSessionStatusManager,
     appURL: config.localApp.devApplicationURLs?.applicationUrl,
@@ -361,15 +353,6 @@ async function launchDevProcesses({
     configPath: config.localApp.configPath,
     localURL: config.network.proxyUrl,
   })
-}
-
-function developerPreviewController(): DeveloperPreviewController {
-  return {
-    fetchMode: () => Promise.resolve(false),
-    enable: () => Promise.resolve(false),
-    disable: () => Promise.resolve(),
-    update: () => Promise.resolve(false),
-  }
 }
 
 async function logMetadataForDev(options: {
