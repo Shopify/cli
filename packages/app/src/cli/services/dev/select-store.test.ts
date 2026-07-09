@@ -238,7 +238,7 @@ describe('selectStore', async () => {
     expect(res).toContain('https://dev.shopify.com/dashboard/1234/stores')
   })
 
-  test('enables backend search if the DeveloperPlatformClient supports it', async () => {
+  test('enables backend search', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
@@ -246,7 +246,7 @@ describe('selectStore', async () => {
     const got = await selectStore(
       {stores: [STORE1, STORE2], hasMorePages: false},
       ORG1,
-      testDeveloperPlatformClient({clientName: ClientName.Partners, supportsStoreSearch: true}),
+      testDeveloperPlatformClient({clientName: ClientName.Partners}),
     )
 
     // Then
