@@ -118,17 +118,16 @@ interface EnsureDeployContextResult {
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployOptions): Promise<EnsureDeployContextResult> {
-  const {force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
+  const {noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  const includeConfigOnDeploy = await checkIncludeConfigOnDeploy({app})
+  await removeIncludeConfigOnDeployField(app)
 
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
     configFile: basename(app.configPath),
-    includeConfigOnDeploy,
     messages: [resetHelpMessage],
   })
 
@@ -136,7 +135,6 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     app,
     appId: remoteApp.apiKey,
     appName: remoteApp.title,
-    force,
     release: !noRelease,
     developerPlatformClient,
     envIdentifiers: getAppIdentifiers({app}),
@@ -155,11 +153,6 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
   }
 
   return {identifiers, didMigrateExtensionsToDevDash}
-}
-
-async function checkIncludeConfigOnDeploy({app}: {app: AppInterface}): Promise<boolean | undefined> {
-  await removeIncludeConfigOnDeployField(app)
-  return undefined
 }
 
 async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
@@ -273,7 +266,6 @@ interface CurrentlyUsedConfigInfoOptions {
   updateURLs?: string
   configFile?: string
   appDotEnv?: string
-  includeConfigOnDeploy?: boolean
   messages?: Token[][]
 }
 
@@ -284,7 +276,6 @@ export function renderCurrentlyUsedConfigInfo({
   updateURLs,
   configFile,
   appDotEnv,
-  includeConfigOnDeploy,
   messages,
 }: CurrentlyUsedConfigInfoOptions): void {
   const devStores = []
@@ -294,7 +285,7 @@ export function renderCurrentlyUsedConfigInfo({
 
   renderInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
-    body: formatConfigInfoBody({appName, org, devStores, updateURLs, includeConfigOnDeploy, messages}),
+    body: formatConfigInfoBody({appName, org, devStores, updateURLs, messages}),
   })
 }
 

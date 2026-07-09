@@ -87,11 +87,9 @@ export default class Deploy extends AppLinkedCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const force = flags['no-release']
-
     // When releasing, we require --no-release or --allow-updates or --allow-deletes for non-TTY.
     const requiredNonTTYFlags: string[] = []
-    const hasAnyForceFlags = force || flags['allow-updates'] || flags['allow-deletes']
+    const hasAnyForceFlags = flags['no-release'] || flags['allow-updates'] || flags['allow-deletes']
     if (!hasAnyForceFlags) {
       requiredNonTTYFlags.push('allow-updates')
     }
@@ -104,8 +102,8 @@ export default class Deploy extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    const allowUpdates = force || flags['allow-updates']
-    const allowDeletes = force || flags['allow-deletes']
+    const allowUpdates = flags['no-release'] || flags['allow-updates']
+    const allowDeletes = flags['no-release'] || flags['allow-deletes']
 
     const result = await deploy({
       app,
@@ -114,7 +112,6 @@ export default class Deploy extends AppLinkedCommand {
       organization,
       developerPlatformClient,
       reset: flags.reset,
-      force,
       allowUpdates,
       allowDeletes,
       noRelease: flags['no-release'],

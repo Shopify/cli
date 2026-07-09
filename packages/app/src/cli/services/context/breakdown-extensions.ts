@@ -15,7 +15,6 @@ import {ExtensionSpecification, isAppConfigSpecification} from '../../models/ext
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
-import {throwUidMappingError} from '../../prompts/uid-mapping-error.js'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -57,14 +56,6 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   remoteExtensionsRegistrations: RemoteExtensionRegistrations
 }> {
   let remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations(options)
-
-  if (options.force && !options.developerPlatformClient.supportsDashboardManagedExtensions) {
-    const unMigratedextensions = remoteExtensionsRegistrations.app.extensionRegistrations.filter((ext) => !ext.id)
-
-    if (unMigratedextensions.length > 0) {
-      throwUidMappingError()
-    }
-  }
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
 

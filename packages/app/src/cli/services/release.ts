@@ -56,9 +56,8 @@ export async function release(options: ReleaseOptions) {
     extensionIdentifiersBreakdown,
     appTitle: remoteApp.title,
     release: true,
-    force: options.force,
-    allowUpdates: options.allowUpdates,
-    allowDeletes: options.allowDeletes,
+    allowUpdates: options.force || options.allowUpdates,
+    allowDeletes: options.force || options.allowDeletes,
   })
   if (!confirmed) throw new AbortSilentError()
   interface Context {
