@@ -651,12 +651,7 @@ describe('manifest', () => {
     })
 
     // When
-    const manifest = await app.manifest({
-      app: 'API_KEY',
-      extensions: {app_access: 'UUID_A'},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    })
+    const manifest = await app.manifest({app_access: 'UUID_A'})
 
     // Then
     expect(manifest).toEqual({
