@@ -10,7 +10,7 @@ export interface IdentifiersExtensions {
   [localIdentifier: string]: string
 }
 
-export interface Identifiers {
+interface Identifiers {
   /** Application's API Key */
   app: string
 
