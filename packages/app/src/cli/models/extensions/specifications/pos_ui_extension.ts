@@ -10,7 +10,7 @@ const dependency = '@shopify/retail-ui-extensions'
 // The host-mediated intercept events a POS UI extension may block. Surface-augmented
 // and expected to grow — add new events here as POS exposes more interceptable
 // workflows. See `shopify.intercept()` in ui-api-design.
-export const POS_INTERCEPT_EVENTS = ['beforecheckout', 'beforepayment'] as const
+const POS_INTERCEPT_EVENTS = ['beforecheckout', 'beforepayment'] as const
 
 // POS-specific capabilities. Extends the shared capabilities (block_progress, etc.)
 // with an `intercepts` array listing the events this extension may block. Membership
