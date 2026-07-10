@@ -1,5 +1,4 @@
 import {AppInterface, AppManifest} from '../../models/app/app.js'
-import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
 import {compressBundle, writeManifestToBundle} from '../bundle.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -12,9 +11,7 @@ interface BundleOptions {
   app: AppInterface
   appManifest: AppManifest
   bundlePath: string
-  identifiers?: Identifiers
   skipBuild: boolean
-  isDevDashboardApp: boolean
 }
 
 /**
@@ -39,16 +36,9 @@ export async function bundleAndBuildExtensions(options: BundleOptions): Promise<
   const extensionBuildProcesses = options.app.allExtensions.map((extension) => ({
     prefix: extension.localIdentifier,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      // This outputId is the UID for AppManagement, and UUID for Partners
-      // Comes from the matching logic in `ensureDeployContext`
-      const outputId = options.isDevDashboardApp
-        ? undefined
-        : options.identifiers?.extensions[extension.localIdentifier]
-
       await extension.buildForBundle(
         {stderr, stdout, signal, app: options.app, environment: 'production', skipBuild: options.skipBuild},
         bundleDirectory,
-        outputId,
       )
     },
   }))
