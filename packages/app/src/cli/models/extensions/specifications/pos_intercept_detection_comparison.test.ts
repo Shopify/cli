@@ -84,6 +84,13 @@ const cases: Case[] = [
     simpleWarnKinds: ['function-reference'],
   },
   {
+    name: 'alias chain const a=shopify; const b=a — C:resolve  S:WARN(object-alias-access, chain closed)',
+    file: 'case-alias-chain.ts',
+    complexEvents: ['aliaschain'],
+    simpleEvents: [],
+    simpleWarnKinds: ['object-alias-access'],
+  },
+  {
     name: 'if/else both branches — C:resolve  S:resolve  (no warn)',
     file: 'case-branches.ts',
     complexEvents: ['branchelse', 'branchif'],

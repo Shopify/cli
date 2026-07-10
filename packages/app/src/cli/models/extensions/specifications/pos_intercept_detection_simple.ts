@@ -96,36 +96,50 @@ export interface SimpleDetectionResult {
 const DECLARE_HINT = 'Declare this intercept explicitly under capabilities.intercepts in the extension TOML.'
 
 /**
- * Collect identifiers directly aliased to the `shopify` global in this file:
- * `const s = shopify` and `s = shopify`. Intentionally single-level (no alias
- * chains) — keeping the simple detector simple. Used ONLY to scope the
- * object-alias-access warning so a bare `const s = shopify` used for unrelated
- * reasons never warns; we only flag when `.intercept` is actually accessed on it.
+ * Collect identifiers aliased to the `shopify` global WITHIN this file:
+ * `const s = shopify` / `s = shopify`, plus same-file alias CHAINS
+ * (`const a = shopify; const b = a`). This is a cheap same-file fixpoint over
+ * identifier-to-identifier assignments — NOT the complex detector's whole-graph,
+ * cross-file data-flow. It exists so the "never silently miss" guarantee holds:
+ * without chain handling, `b.intercept(...)` would be neither resolved nor
+ * warned. Aliases are used ONLY to scope the object-alias-access warning — a
+ * bare `const s = shopify` used for unrelated reasons still never warns; we flag
+ * only when `.intercept` is actually accessed on the alias.
  */
 function collectShopifyAliases(ts: typeof import('typescript'), sourceFile: ts.SourceFile): Set<string> {
   const aliases = new Set<string>()
-  const visit = (node: ts.Node): void => {
-    if (
-      ts.isVariableDeclaration(node) &&
-      ts.isIdentifier(node.name) &&
-      node.initializer &&
-      ts.isIdentifier(node.initializer) &&
-      node.initializer.text === 'shopify'
-    ) {
-      aliases.add(node.name.text)
+
+  // One syntactic pass, applied to a fixpoint so chains resolve regardless of
+  // declaration order.
+  const pass = (): boolean => {
+    const before = aliases.size
+    const visit = (node: ts.Node): void => {
+      if (
+        ts.isVariableDeclaration(node) &&
+        ts.isIdentifier(node.name) &&
+        node.initializer &&
+        ts.isIdentifier(node.initializer) &&
+        (node.initializer.text === 'shopify' || aliases.has(node.initializer.text))
+      ) {
+        aliases.add(node.name.text)
+      }
+      if (
+        ts.isBinaryExpression(node) &&
+        node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+        ts.isIdentifier(node.left) &&
+        ts.isIdentifier(node.right) &&
+        (node.right.text === 'shopify' || aliases.has(node.right.text))
+      ) {
+        aliases.add(node.left.text)
+      }
+      ts.forEachChild(node, visit)
     }
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-      ts.isIdentifier(node.left) &&
-      ts.isIdentifier(node.right) &&
-      node.right.text === 'shopify'
-    ) {
-      aliases.add(node.left.text)
-    }
-    ts.forEachChild(node, visit)
+    visit(sourceFile)
+    return aliases.size > before
   }
-  visit(sourceFile)
+  while (pass()) {
+    // repeat until no new aliases are discovered
+  }
   return aliases
 }
 
