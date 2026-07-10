@@ -26,7 +26,13 @@ import type ts from 'typescript'
 //   * function-reference:     const f = shopify.intercept ; x = shopify.intercept ;
 //                             wrap(shopify.intercept)   (any non-call use of the fn)
 //   * object-alias-access:    const s = shopify; ... s.intercept(...)  (call or ref)
-//   * dynamic-arg:            shopify.intercept(<non-string-literal>)
+//   * dynamic-arg:            shopify.intercept(<non-string-literal>, cb)
+//   * missing-callback:       shopify.intercept('literal')  with no callback
+//
+// The real API is `shopify.intercept('<event>', callback)`. A direct literal
+// call is DERIVED only when a callback second arg is present; a literal call
+// with no callback is flagged (missing-callback) as a suspected malformed
+// registration rather than counted. Extra trailing args are tolerated.
 //
 // Control flow is ignored (every direct literal call counts, any branch).
 // ---------------------------------------------------------------------------
@@ -43,7 +49,28 @@ function scriptKindFor(ts: typeof import('typescript'), filePath: string): ts.Sc
   return ts.ScriptKind.JSX
 }
 
-export type InterceptWarningKind = 'destructure' | 'function-reference' | 'object-alias-access' | 'dynamic-arg'
+export type InterceptWarningKind =
+  | 'destructure'
+  | 'function-reference'
+  | 'object-alias-access'
+  | 'dynamic-arg'
+  | 'missing-callback'
+
+/**
+ * A genuine intercept registration has a callback as its SECOND argument.
+ * Accepts arrow fn, function expression, or a function reference (identifier /
+ * property access). See the full detector for the shared rationale.
+ */
+function hasCallbackArg(ts: typeof import('typescript'), call: ts.CallExpression): boolean {
+  const second = call.arguments[1]
+  if (!second) return false
+  return (
+    ts.isArrowFunction(second) ||
+    ts.isFunctionExpression(second) ||
+    ts.isIdentifier(second) ||
+    ts.isPropertyAccessExpression(second)
+  )
+}
 
 /** An intercept-shaped pattern the simple scan can't statically resolve. */
 export interface InterceptWarning {
@@ -165,11 +192,21 @@ function analyzeFileSimple(
         const isDirectCallee = parent && ts.isCallExpression(parent) && parent.expression === node
 
         if (isShopify && isDirectCallee) {
-          // Direct `shopify.intercept(...)` — resolve literal, else dynamic-arg warn.
+          // Direct `shopify.intercept('<event>', callback)`.
           const call = parent as ts.CallExpression
           const firstArg = call.arguments[0]
+          const callbackPresent = hasCallbackArg(ts, call)
           if (firstArg && ts.isStringLiteralLike(firstArg)) {
-            callsites.push({...posOf(call), event: firstArg.text, argText: firstArg.getText(sourceFile)})
+            if (callbackPresent) {
+              callsites.push({...posOf(call), event: firstArg.text, argText: firstArg.getText(sourceFile)})
+            } else {
+              warnings.push({
+                kind: 'missing-callback',
+                ...posOf(call),
+                raw: truncate(call.getText(sourceFile)),
+                message: `shopify.intercept('${firstArg.text}') is missing its callback argument (suspected malformed registration). ${DECLARE_HINT}`,
+              })
+            }
           } else {
             warnings.push({
               kind: 'dynamic-arg',

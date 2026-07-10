@@ -84,21 +84,41 @@ LOUDLY (a warning with file:line + raw source telling the developer to declare
 that intercept in the TOML). It resolves nothing indirect and follows nothing
 cross-file — it recognizes intercept-shaped patterns *syntactically* and warns.
 
+All calls use the real API shape `shopify.intercept('<event>', callback)`.
+
 Three-way matrix (`pos_intercept_detection_comparison.test.ts`):
 
 | pattern | complex resolves | simple resolves | simple warns |
 |---------|:-------:|:-------:|:-----|
-| `shopify.intercept('beforecheckout')` | yes | yes | — |
-| `const {intercept} = shopify; intercept('x')` | yes | no | `destructure` |
-| `const s = shopify; s.intercept('x')` | yes | no | `object-alias-access` |
-| `let fn; fn = shopify.intercept; fn('x')` | yes | no | `function-reference` |
+| `shopify.intercept('beforecheckout', cb)` | yes | yes | — |
+| `const {intercept} = shopify; intercept('x', cb)` | yes | no | `destructure` |
+| `const s = shopify; s.intercept('x', cb)` | yes | no | `object-alias-access` |
+| `let fn; fn = shopify.intercept; fn('x', cb)` | yes | no | `function-reference` |
 | cross-file `export const block = shopify.intercept` | yes | no | `function-reference` (at creation site) |
 | `if/else` both branches | yes | yes | — |
-| dynamic variable arg | unresolved | no | `dynamic-arg` |
+| dynamic variable first arg | unresolved | no | `dynamic-arg` |
+| literal event, NO callback (malformed) | unresolved | no | `missing-callback` |
+| `('event', cb, extraArg)` trailing args | yes | yes | — |
 | `const s = shopify; s.toast.show()` (noise) | n/a | no | **— (no false positive)** |
 
 **Key property:** the simple detector has ZERO silent misses on the alias
 patterns — where it can't resolve, it warns.
+
+### Callback-presence handling (2-arg API `intercept('<event>', callback)`)
+
+The event is the FIRST arg; a genuine registration has a callback SECOND arg.
+Both detectors accept as a callback: an arrow function, a function expression,
+or a function reference (identifier or property access). Handling:
+
+- **Literal event + callback** → resolved event (counted). This is the only path
+  that counts an event.
+- **Literal event, NO/invalid callback** → surfaced but NOT counted: a suspected
+  MALFORMED registration. Complex reports it in `unresolved`; simple emits a
+  `missing-callback` warning. (Henry's lean: surface, don't silently count.)
+- **Non-literal first arg** → `dynamic-arg` unresolved/warn as before (callback
+  presence is moot — the event name is unknowable).
+- **Extra trailing args** beyond `(event, callback)` → tolerated; only `args[0]`
+  and `args[1]` are inspected.
 
 ### Is warn-on-alias simpler or more complex than full resolution?
 

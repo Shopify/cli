@@ -33,9 +33,14 @@ import type ts from 'typescript'
 //         const s = shopify; s.intercept('...')
 //         let fn; fn = shopify.intercept   (reassignment)
 //         export const intercept = shopify.intercept  (re-export, cross-file)
-//   * Only STRING-LITERAL first args are statically resolvable. Anything else
-//     (variables, member expressions, template strings with substitutions) is
-//     surfaced as UNRESOLVED and never silently dropped.
+//   * The API is `shopify.intercept('<event>', callback)`: the event is the
+//     FIRST arg and a callback is the SECOND. Only STRING-LITERAL first args are
+//     statically resolvable; anything else (variables, member expressions,
+//     template strings with substitutions) is surfaced as UNRESOLVED, never
+//     dropped. A resolved event is counted ONLY when a callback second arg is
+//     present; a literal-event call missing its callback is surfaced as a
+//     suspected MALFORMED registration (not counted). Extra trailing args are
+//     tolerated.
 // ---------------------------------------------------------------------------
 
 async function loadTypeScript(): Promise<typeof ts> {
@@ -274,6 +279,28 @@ function collectImportsAndExports(ts: typeof import('typescript'), analysis: Fil
   visit(analysis.sourceFile)
 }
 
+/**
+ * The real API is `shopify.intercept('<event>', callback)`. A genuine intercept
+ * registration has a SECOND argument that is a function/callback. We accept:
+ *   - arrow function          shopify.intercept('x', () => {})
+ *   - function expression      shopify.intercept('x', function () {})
+ *   - a reference to a function (identifier or property access)
+ *                              shopify.intercept('x', handler) / handlers.onX
+ * Anything else (missing, or a non-function literal like a string/number/object)
+ * is treated as a missing/invalid callback — a suspected malformed registration.
+ * Extra trailing args are tolerated (we only inspect args[0] and args[1]).
+ */
+function hasCallbackArg(ts: typeof import('typescript'), call: ts.CallExpression): boolean {
+  const second = call.arguments[1]
+  if (!second) return false
+  return (
+    ts.isArrowFunction(second) ||
+    ts.isFunctionExpression(second) ||
+    ts.isIdentifier(second) ||
+    ts.isPropertyAccessExpression(second)
+  )
+}
+
 /** Final pass: collect every intercept callsite using the resolved alias sets. */
 function collectCallsites(ts: typeof import('typescript'), analysis: FileAnalysis): InterceptCallsite[] {
   const callsites: InterceptCallsite[] = []
@@ -288,6 +315,7 @@ function collectCallsites(ts: typeof import('typescript'), analysis: FileAnalysi
 
       if (isInterceptCall) {
         const firstArg = node.arguments[0]
+        const callbackPresent = hasCallbackArg(ts, node)
         const {line, character} = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
         const base = {file: analysis.path, line: line + 1, column: character + 1}
 
@@ -300,7 +328,18 @@ function collectCallsites(ts: typeof import('typescript'), analysis: FileAnalysi
           })
         } else if (ts.isStringLiteralLike(firstArg)) {
           // string literal or no-substitution template literal
-          callsites.push({...base, event: firstArg.text, argText: firstArg.getText(sourceFile)})
+          if (callbackPresent) {
+            callsites.push({...base, event: firstArg.text, argText: firstArg.getText(sourceFile)})
+          } else {
+            // Literal event but no callback — surface it, but do NOT count it as a
+            // resolved event: it's a suspected malformed intercept registration.
+            callsites.push({
+              ...base,
+              event: null,
+              argText: firstArg.getText(sourceFile),
+              unresolvedReason: `intercept('${firstArg.text}', ...) is missing its callback argument (suspected malformed registration)`,
+            })
+          }
         } else {
           callsites.push({
             ...base,

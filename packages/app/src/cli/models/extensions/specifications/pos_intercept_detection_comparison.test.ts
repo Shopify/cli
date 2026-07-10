@@ -17,15 +17,19 @@ const fixture = (name: string) => joinPath(fixtures, name)
 //   [S] simple RESOLVES the event   (direct string-literal calls only)
 //   [W] simple WARNS instead        (kind of warning emitted)
 //
+// All calls use the real API shape: shopify.intercept('<event>', callback).
+//
 //   pattern                                          | C resolves | S resolves | S warns
 //   -------------------------------------------------|------------|------------|--------------------
-//   shopify.intercept('beforecheckout')              |    yes     |    yes     |    —
-//   const {intercept}=shopify; intercept('x')        |    yes     |    no      | destructure
-//   const s=shopify; s.intercept('x')                |    yes     |    no      | object-alias-access
-//   let fn; fn=shopify.intercept; fn('x')            |    yes     |    no      | function-reference
+//   shopify.intercept('beforecheckout', cb)          |    yes     |    yes     |    —
+//   const {intercept}=shopify; intercept('x', cb)    |    yes     |    no      | destructure
+//   const s=shopify; s.intercept('x', cb)            |    yes     |    no      | object-alias-access
+//   let fn; fn=shopify.intercept; fn('x', cb)        |    yes     |    no      | function-reference
 //   cross-file export const block=shopify.intercept  |    yes     |    no      | function-reference
 //   if/else both branches                            |    yes     |    yes     |    —
-//   dynamic variable arg                             | unresolved |    no      | dynamic-arg
+//   dynamic variable first arg                       | unresolved |    no      | dynamic-arg
+//   literal event, NO callback (malformed)           | unresolved |    no      | missing-callback
+//   ('event', cb, extraArg)  trailing args tolerated |    yes     |    yes     |    —
 //   const s=shopify; s.toast.show()  (noise)         |    n/a     |    no      |    — (no false positive)
 //
 // KEY PROPERTY under test: the simple detector has ZERO SILENT MISSES on the
@@ -94,6 +98,20 @@ const cases: Case[] = [
     simpleWarnKinds: ['dynamic-arg'],
   },
   {
+    name: 'literal event but NO callback (malformed) — C:unresolved  S:WARN(missing-callback)',
+    file: 'case-missing-callback.ts',
+    complexEvents: [],
+    simpleEvents: [],
+    simpleWarnKinds: ['missing-callback'],
+  },
+  {
+    name: 'trailing args tolerated — C:resolve  S:resolve  (no warn)',
+    file: 'case-trailing-args.ts',
+    complexEvents: ['trailing'],
+    simpleEvents: ['trailing'],
+    simpleWarnKinds: [],
+  },
+  {
     name: 'noise: const s=shopify used for non-intercept — S: no resolve, NO false-positive warn',
     file: 'case-alias-noise.ts',
     complexEvents: [],
@@ -121,6 +139,19 @@ describe('complex vs safe-simplest POS intercept detector — three-way matrix',
         expect(warning.message).toContain('capabilities.intercepts')
       })
     })
+  })
+
+  test('malformed (literal event, no callback): BOTH surface it, NEITHER counts it as an event', async () => {
+    const [complex, simple] = await Promise.all([
+      detectPosIntercepts(fixture('case-missing-callback.ts')),
+      detectPosInterceptsSimple(fixture('case-missing-callback.ts')),
+    ])
+    // Not counted as a real event by either detector.
+    expect(complex.events).toEqual([])
+    expect(simple.events).toEqual([])
+    // But surfaced by both — complex as an unresolved callsite, simple as a warning.
+    expect(complex.unresolved.some((cs) => /missing its callback/.test(cs.unresolvedReason ?? ''))).toBe(true)
+    expect(simple.warnings.map((warning) => warning.kind)).toEqual(['missing-callback'])
   })
 
   test('KEY PROPERTY: zero silent misses — simple either resolves or warns for every alias pattern', async () => {
