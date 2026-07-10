@@ -129,6 +129,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {fetchOrganizations} from '@shopify/organizations'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
@@ -445,7 +446,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         managementExperience: 'cli',
         registrationLimit: spec.uidStrategy.appModuleLimit,
         uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
-        experience: normalizeExperience(spec.experience),
+        experience: normalizeExperience(spec.experience, spec.identifier),
         validationSchema: spec.validationSchema,
       }),
     )
@@ -687,7 +688,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience: normalizeExperience(mod.specification.experience),
+          experience: normalizeExperience(mod.specification.experience, mod.specification.identifier),
           options: {
             managementExperience: 'cli',
           },
@@ -1370,7 +1371,8 @@ type SpecificationExperience = 'extension' | 'configuration' | 'deprecated'
  * Normalizes the raw experience string from the API into a known union value.
  * Falls back to 'extension' for any unexpected/unknown values and logs a debug message.
  */
-function normalizeExperience(raw: string): SpecificationExperience {
+function normalizeExperience(raw: string, type: string): SpecificationExperience {
+  if (type === WebhookSubscriptionSpecIdentifier) return 'configuration'
   switch (raw) {
     case 'extension':
     case 'configuration':
@@ -1428,7 +1430,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
       ...mod.specification,
       identifier: mod.specification.identifier,
       options: {managementExperience: mod.specification.managementExperience as 'cli' | 'custom' | 'dashboard'},
-      experience: normalizeExperience(mod.specification.experience),
+      experience: normalizeExperience(mod.specification.experience, mod.specification.externalIdentifier),
     },
   }
 }
