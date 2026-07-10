@@ -10,21 +10,44 @@ control-flow-agnostic AST walk of the import graph.
 
 Files:
 
-- `pos_intercept_detection.ts` — the detector (`detectPosIntercepts`,
-  `deriveInterceptsFromDirectory`, `findPosExtensionEntry`).
+- `pos_intercept_detection.ts` — the full detector (`detectPosIntercepts`,
+  `deriveInterceptsFromConfig`, `findInterceptEntryModules`, `POS_INTERCEPT_TARGET`).
+- `pos_intercept_detection_simple.ts` — a deliberately simple baseline detector
+  (`detectPosInterceptsSimple`) for evaluating whether the complexity is worth it.
 - `pos_intercept_detection.test.ts` — unit tests against the demo fixture.
+- `pos_intercept_detection_comparison.test.ts` — complex-vs-simple matrix.
 - `fixtures/pos-intercept-demo/` — a POS extension exercising every alias form,
-  control-flow branches, a cross-file re-exported alias, and dynamic args.
+  control-flow branches, a cross-file re-exported alias, and dynamic args, plus a
+  render-target module (`home-tile.ts`) that must be IGNORED.
+- `fixtures/pos-intercept-compare/` — one isolated file per pattern for the matrix.
 - `pos_ui_extension.ts` — `deployConfig` now calls `deriveAndMergeIntercepts`.
 - `pos_ui_extension.test.ts` — proves the derived events land in the deployed
   `capabilities.intercepts`.
 
+## Entry points come from declared TARGETS, scoped to `pos.app.ready.data`
+
+Entry points are NOT guessed filenames (`index.*`). They are the `module` paths
+of the extension's declared targets (`targeting` / legacy `extension_points`,
+per `NewExtensionPointSchema`). Detection is scoped to a single target:
+
+> **`pos.app.ready.data`** — the session-lifetime BACKGROUND target.
+
+Confirmed against the published `@shopify/ui-extensions` point-of-sale surface:
+`.../surfaces/point-of-sale/targets/pos.app.ready.data.d.ts` re-exports
+`BackgroundShopifyGlobal as ShopifyGlobal`, and `globals.d.ts` documents that the
+background-only global (valid only from `pos.app.ready.data`) is what carries
+the host-mediated event/intercept APIs. Render targets
+(`pos.home.tile.render`, `pos.home.modal.render`, …) see the narrower
+`ShopifyGlobal` and do not support intercepts, so we don't scan them.
+`findInterceptEntryModules(config, directory)` filters targets to
+`pos.app.ready.data` and returns their resolved `module` paths as the entry set.
+
 ### Detection behaviour (matches the brief)
 
 1. **Reuses the CLI's existing AST tooling.** It calls `findAllImportedFiles()`
-   from `type-generation.ts` to walk the full import graph from the extension's
-   `index.*` entry, and uses the same `typescript` compiler API
-   (`ts.createSourceFile` / `forEachChild` / `isCallExpression`).
+   from `type-generation.ts` to walk the full import graph from the
+   `pos.app.ready.data` target's `module`(s), and uses the same `typescript`
+   compiler API (`ts.createSourceFile` / `forEachChild` / `isCallExpression`).
 2. **Ignores control flow.** Every `shopify.intercept(...)` callsite is counted
    regardless of `if`/`else`/ternary/loop/dead-code. Capabilities are a static
    **superset** of what the extension might do; reachability is a runtime
@@ -48,8 +71,33 @@ Run the tests:
 cd packages/app
 ../../node_modules/.bin/vitest run \
   src/cli/models/extensions/specifications/pos_intercept_detection.test.ts \
-  src/cli/models/extensions/specifications/pos_ui_extension.test.ts
+  src/cli/models/extensions/specifications/pos_ui_extension.test.ts \
+  src/cli/models/extensions/specifications/pos_intercept_detection_comparison.test.ts
 ```
+
+## Complex vs simple detector — is the complexity worth it?
+
+A second, deliberately simple detector (`pos_intercept_detection_simple.ts`)
+matches ONLY direct `shopify.intercept('x')` calls plus same-file
+`const {intercept} = shopify` destructuring. The comparison matrix
+(`pos_intercept_detection_comparison.test.ts`) runs both over per-pattern
+fixtures:
+
+| pattern | complex | simple |
+|---------|:-------:|:------:|
+| `shopify.intercept('beforecheckout')` | catch | catch |
+| `const {intercept} = shopify; intercept('x')` | catch | catch |
+| `const s = shopify; s.intercept('x')` | catch | **MISS** |
+| `let fn; fn = shopify.intercept; fn('x')` | catch | **MISS** |
+| cross-file `export const block = shopify.intercept` imported+called | catch | **MISS** |
+| `if/else` both branches | catch | catch |
+| dynamic variable arg | unresolved | unresolved |
+
+The extra complexity buys coverage for exactly three real-world patterns:
+object-aliasing, reassignment, and cross-file re-exported references. For direct
+calls, same-file destructuring, control-flow branches, and dynamic args the two
+detectors are identical. This is the data point for deciding how much alias
+tracking to ship.
 
 ---
 

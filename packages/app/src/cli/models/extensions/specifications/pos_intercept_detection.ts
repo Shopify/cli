@@ -8,8 +8,16 @@ import type ts from 'typescript'
 // SPIKE / PROTOTYPE: derive POS intercept events from extension SOURCE CODE.
 //
 // Instead of trusting the hand-authored `capabilities.intercepts` TOML array,
-// this walks the extension's import graph (starting from its `index.*` entry)
-// and statically detects every `shopify.intercept('<event>', ...)` callsite.
+// this walks the extension's import graph and statically detects every
+// `shopify.intercept('<event>', ...)` callsite.
+//
+// ENTRY POINTS COME FROM THE DECLARED TARGETS, not from guessed filenames. Each
+// target/extension-point in the parsed config carries a `module` path (see
+// NewExtensionPointSchema). We SCOPE detection to a single target:
+// `pos.app.ready.data` — the session-lifetime BACKGROUND target (it exposes the
+// `BackgroundShopifyGlobal`, under which `intercept` lives). The render targets
+// (pos.home.tile.render, pos.home.modal.render, etc.) do not support intercepts,
+// so we don't scan them. We walk the import graph from that target's module(s).
 //
 // Design notes / deliberate choices (per the spike brief):
 //   * We IGNORE control flow. Every callsite counts, regardless of whether it
@@ -78,20 +86,39 @@ interface FileAnalysis {
 }
 
 /**
- * Resolve the entry `index.{js,jsx,ts,tsx}` file for a POS UI extension given
- * its directory. Mirrors AppLoader.findEntryPath for `single_js_entry_path`
- * extensions so the detector can be driven straight from a deploy directory.
+ * The ONLY POS target that supports intercepts: the session-lifetime background
+ * target. Its module is the entry point for intercept derivation. Confirmed
+ * against the @shopify/ui-extensions point-of-sale surface, where
+ * `pos.app.ready.data` re-exports `BackgroundShopifyGlobal` (the only global
+ * that carries the host-mediated event/intercept APIs).
  */
-export async function findPosExtensionEntry(directory: string): Promise<string | undefined> {
-  const candidates = ['index']
-    .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-    .flatMap((fileName) => [`src/${fileName}`, fileName])
-    .map((relativePath) => joinPath(directory, relativePath))
+export const POS_INTERCEPT_TARGET = 'pos.app.ready.data'
 
-  const found = await Promise.all(
-    candidates.map(async (candidate) => ((await fileExists(candidate)) ? candidate : undefined)),
-  )
-  return found.find((candidate) => candidate !== undefined)
+/** Minimal shape of a declared target/extension-point (see NewExtensionPointSchema). */
+export interface ExtensionTargetLike {
+  target?: string
+  module?: string
+}
+
+/**
+ * Given an extension's parsed configuration and directory, return the absolute
+ * module path(s) for the intercept-supporting target (`pos.app.ready.data`).
+ *
+ * Targets are read from `targeting` (preferred) or the legacy `extension_points`
+ * array — exactly the fields ui_extension uses. Entry points are the declared
+ * `module` paths, NOT a guessed `index.*` filename.
+ */
+export function findInterceptEntryModules(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config: {targeting?: any; extension_points?: any} | undefined,
+  directory: string,
+): string[] {
+  const rawTargets = config?.targeting ?? config?.extension_points ?? []
+  if (!Array.isArray(rawTargets)) return []
+
+  return (rawTargets as ExtensionTargetLike[])
+    .filter((entry) => entry?.target === POS_INTERCEPT_TARGET && typeof entry?.module === 'string')
+    .map((entry) => resolvePath(directory, entry.module as string))
 }
 
 function scriptKindFor(ts: typeof import('typescript'), filePath: string): ts.ScriptKind {
@@ -317,13 +344,22 @@ async function resolveFileModuleSpecifiers(
 
 /**
  * Detect all POS intercept events reachable (statically, control-flow-agnostic)
- * from the given entry file, following the full local import graph.
+ * from the given entry point(s), following the full local import graph. Accepts
+ * one or more entry modules (a target may declare more than one, and an
+ * extension may declare the intercept target more than once).
  */
-export async function detectPosIntercepts(entryFilePath: string): Promise<InterceptDetectionResult> {
+export async function detectPosIntercepts(
+  entryFilePaths: string | string[],
+): Promise<InterceptDetectionResult> {
   const ts = await loadTypeScript()
 
-  const imported = await findAllImportedFiles(entryFilePath)
-  const allFiles = uniq([entryFilePath, ...imported])
+  const entries = uniq((Array.isArray(entryFilePaths) ? entryFilePaths : [entryFilePaths]).filter(Boolean))
+
+  // Walk every entry's import graph, sharing a `visited` set so shared modules
+  // are analyzed once.
+  const visited = new Set<string>()
+  const importedByEntry = await Promise.all(entries.map((entry) => findAllImportedFiles(entry, visited)))
+  const allFiles = uniq([...entries, ...importedByEntry.flat()])
 
   // Parse + seed every file.
   const analyses = new Map<string, FileAnalysis>()
@@ -392,13 +428,16 @@ export async function detectPosIntercepts(entryFilePath: string): Promise<Interc
 }
 
 /**
- * Convenience wrapper for the deploy path: given an extension directory, find
- * its entry and return the derived events (empty array if no entry found).
+ * Deploy-path entry: given the parsed extension configuration and directory,
+ * derive intercept events from the `pos.app.ready.data` target's module(s).
+ * Returns undefined when the extension declares no intercept-supporting target.
  */
-export async function deriveInterceptsFromDirectory(
+export async function deriveInterceptsFromConfig(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config: {targeting?: any; extension_points?: any} | undefined,
   directory: string,
 ): Promise<InterceptDetectionResult | undefined> {
-  const entry = await findPosExtensionEntry(directory)
-  if (!entry) return undefined
-  return detectPosIntercepts(entry)
+  const entryModules = findInterceptEntryModules(config, directory)
+  if (entryModules.length === 0) return undefined
+  return detectPosIntercepts(entryModules)
 }

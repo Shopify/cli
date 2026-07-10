@@ -1,8 +1,8 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema, CapabilitiesSchema} from '../schemas.js'
+import {BaseSchema, CapabilitiesSchema, NewExtensionPointsSchema} from '../schemas.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import {deriveInterceptsFromDirectory} from './pos_intercept_detection.js'
+import {deriveInterceptsFromConfig} from './pos_intercept_detection.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
@@ -47,6 +47,9 @@ type PosUIConfigType = zod.infer<typeof PosUISchema>
 const PosUISchema = BaseSchema.extend({
   name: zod.string(),
   capabilities: PosCapabilitiesSchema.optional(),
+  // Declared mount points. Each target carries a `module` path; intercept
+  // derivation reads the `pos.app.ready.data` target's module as its entry.
+  targeting: NewExtensionPointsSchema.optional(),
 })
 
 type PosCapabilities = zod.infer<typeof PosCapabilitiesSchema>
@@ -64,12 +67,13 @@ type PosCapabilities = zod.infer<typeof PosCapabilitiesSchema>
  * so a source-parsing edge case can never block a deploy.
  */
 export async function deriveAndMergeIntercepts(
-  capabilities: PosCapabilities | undefined,
+  config: PosUIConfigType | undefined,
   directory: string,
 ): Promise<PosCapabilities | undefined> {
+  const capabilities = config?.capabilities
   let derivedEvents: string[] = []
   try {
-    const detection = await deriveInterceptsFromDirectory(directory)
+    const detection = await deriveInterceptsFromConfig(config, directory)
     if (detection) {
       derivedEvents = detection.events
       if (detection.unresolved.length > 0) {
@@ -112,15 +116,16 @@ const posUISpec = createExtensionSpecification({
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)
 
     // Derive intercept events from the extension's SOURCE CODE (control-flow
-    // agnostic AST walk of the import graph) and fold them into
-    // `capabilities.intercepts`. This is the transmission mechanism for derived
-    // events: there is no dedicated wire field. deployConfig emits the SAME
-    // `capabilities.intercepts` array the backend already reads — whether an
-    // event came from the TOML or from source, it lands in the deployed version
-    // config identically, so the backend persists it as a capability with no
-    // backend change required. Derived + TOML-declared events are unioned so a
-    // hand-authored declaration keeps working alongside derivation.
-    const capabilities = await deriveAndMergeIntercepts(config.capabilities, directory)
+    // agnostic AST walk of the pos.app.ready.data target's import graph) and
+    // fold them into `capabilities.intercepts`. This is the transmission
+    // mechanism for derived events: there is no dedicated wire field.
+    // deployConfig emits the SAME `capabilities.intercepts` array the backend
+    // already reads — whether an event came from the TOML or from source, it
+    // lands in the deployed version config identically, so the backend persists
+    // it as a capability with no backend change required. Derived + TOML-declared
+    // events are unioned so a hand-authored declaration keeps working alongside
+    // derivation.
+    const capabilities = await deriveAndMergeIntercepts(config, directory)
 
     return {
       name: config.name,
