@@ -1,6 +1,6 @@
 import {release} from './release.js'
 import {
-  configExtensionsIdentifiersBreakdown,
+  configExtensionsIdentifiersReleaseBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
 import {testAppLinked, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
@@ -148,7 +148,7 @@ async function testRelease(
 ) {
   // Given
   vi.mocked(extensionsIdentifiersReleaseBreakdown).mockResolvedValue(buildExtensionsBreakdown())
-  vi.mocked(configExtensionsIdentifiersBreakdown).mockResolvedValue(buildConfigExtensionsBreakdown())
+  vi.mocked(configExtensionsIdentifiersReleaseBreakdown).mockReturnValue(buildConfigExtensionsBreakdown())
 
   await release({
     app,

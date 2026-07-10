@@ -15,7 +15,7 @@ import {ExtensionSpecification, isAppConfigSpecification} from '../../models/ext
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
-import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
+import {deepCompare, deepCompareWithOrderInsensitiveArrays, deepDifference} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export interface ConfigExtensionIdentifiersBreakdown {
@@ -418,4 +418,59 @@ function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[],
     toUpdate: [],
     unchanged: toUpdate,
   }
+}
+
+export function configExtensionsIdentifiersReleaseBreakdown({
+  localApp,
+  versionAppModules,
+  activeAppVersion,
+}: {
+  localApp: AppInterface
+  versionAppModules: AppModuleVersion[]
+  activeAppVersion?: AppVersion
+}) {
+  if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
+  const versionConfig = remoteAppConfigurationExtensionContent(
+    versionAppModules,
+    localApp.specifications ?? [],
+    localApp.remoteFlags,
+  )
+  const activeConfig = remoteAppConfigurationExtensionContent(
+    activeAppVersion?.appModuleVersions ?? [],
+    localApp.specifications ?? [],
+    localApp.remoteFlags,
+  )
+  return buildConfigExtensionIdentifiersBreakdown(versionConfig, activeConfig)
+}
+
+function buildConfigExtensionIdentifiersBreakdown(
+  localConfig: {[key: string]: unknown},
+  remoteConfig: {[key: string]: unknown},
+): ConfigExtensionIdentifiersBreakdown | undefined {
+  const fieldNames = new Set([...Object.keys(localConfig), ...Object.keys(remoteConfig)])
+  if (fieldNames.size === 0) return undefined
+
+  const breakdown: ConfigExtensionIdentifiersBreakdown = {
+    existingFieldNames: [],
+    existingUpdatedFieldNames: [],
+    newFieldNames: [],
+    deletedFieldNames: [],
+  }
+
+  for (const fieldName of fieldNames) {
+    const localValue = localConfig[fieldName]
+    const remoteValue = remoteConfig[fieldName]
+
+    if (localValue === undefined) {
+      breakdown.deletedFieldNames.push(fieldName)
+    } else if (remoteValue === undefined) {
+      breakdown.newFieldNames.push(fieldName)
+    } else if (deepCompareWithOrderInsensitiveArrays(localValue, remoteValue)) {
+      breakdown.existingFieldNames.push(fieldName)
+    } else {
+      breakdown.existingUpdatedFieldNames.push(fieldName)
+    }
+  }
+
+  return breakdown
 }
