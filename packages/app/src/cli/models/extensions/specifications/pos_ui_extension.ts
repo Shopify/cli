@@ -17,13 +17,13 @@ const dependency = '@shopify/retail-ui-extensions'
 // functionally equivalent to extension targets, and the server is the source of
 // truth for the valid set. This keeps the event set forward-compatible — new
 // intercept events can ship without a CLI release and won't be rejected by older
-// CLI installs. Only light structural validation happens here (non-empty lowercase
-// identifier + uniqueness); the backend validates the actual event names at deploy.
+// CLI installs. Only light structural validation happens here (lowercase letters
+// a-z + uniqueness); the backend validates the actual event names at deploy.
 const PosCapabilitiesSchema = CapabilitiesSchema.extend({
   intercepts: zod
     .array(
-      zod.string().regex(/^[a-z][a-z0-9]*$/, {
-        message: 'Intercept event must be a lowercase alphanumeric identifier',
+      zod.string().regex(/^[a-z]+$/, {
+        message: 'Intercept event must contain only lowercase letters (a-z)',
       }),
     )
     .optional()
