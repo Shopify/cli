@@ -1,11 +1,7 @@
 import {startHRTime, endHRTimeInMs} from './hrtime.js'
-import {describe, test, expect, vi, afterEach} from 'vitest'
+import {describe, test, expect, vi} from 'vitest'
 
 describe('hrtime', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
   test('startHRTime returns the current high-resolution real time', () => {
     // Given
     const mockTime: [number, number] = [123, 456]
