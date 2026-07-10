@@ -7,23 +7,23 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/retail-ui-extensions'
 
-// The host-mediated intercept events a POS UI extension may block. Surface-augmented
-// and expected to grow — add new events here as POS exposes more interceptable
-// workflows. See `shopify.intercept()` in ui-api-design.
-const POS_INTERCEPT_EVENTS = ['beforecheckout', 'beforepayment'] as const
-
 // POS-specific capabilities. Extends the shared capabilities (block_progress, etc.)
-// with an `intercepts` array listing the events this extension may block. Membership
-// in the array is the event-scoped POS analogue of checkout's single `block_progress`
-// capability boolean. Do not fold `intercepts` into the shared CapabilitiesSchema —
-// it is POS-only.
+// with an `intercepts` array listing the host-mediated events this extension may
+// block. Membership in the array is the event-scoped POS analogue of checkout's
+// single `block_progress` capability boolean. Do not fold `intercepts` into the
+// shared CapabilitiesSchema — it is POS-only.
+//
+// Event names are intentionally free-form strings (not a hardcoded enum): they are
+// functionally equivalent to extension targets, and the server is the source of
+// truth for the valid set. This keeps the event set forward-compatible — new
+// intercept events can ship without a CLI release and won't be rejected by older
+// CLI installs. Only light structural validation happens here (non-empty lowercase
+// identifier + uniqueness); the backend validates the actual event names at deploy.
 const PosCapabilitiesSchema = CapabilitiesSchema.extend({
   intercepts: zod
     .array(
-      zod.enum(POS_INTERCEPT_EVENTS, {
-        errorMap: () => ({
-          message: `Intercept event must be one of: ${POS_INTERCEPT_EVENTS.join(', ')}`,
-        }),
+      zod.string().regex(/^[a-z][a-z0-9]*$/, {
+        message: 'Intercept event must be a lowercase alphanumeric identifier',
       }),
     )
     .optional()
