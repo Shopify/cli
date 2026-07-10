@@ -1,5 +1,5 @@
 import {
-  configExtensionsIdentifiersBreakdown,
+  configExtensionsIdentifiersReleaseBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
 import {AppLinkedInterface} from '../models/app/app.js'
@@ -41,15 +41,11 @@ export async function release(options: ReleaseOptions) {
     remoteApp,
     options.version,
   )
-  const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
-    developerPlatformClient,
-    apiKey: remoteApp.apiKey,
+
+  const configExtensionIdentifiersBreakdown = configExtensionsIdentifiersReleaseBreakdown({
     localApp: app,
-    remoteApp,
-    versionAppModules: versionDetails.appModuleVersions.map((appModuleVersion) => ({
-      ...appModuleVersion,
-    })),
-    release: true,
+    versionAppModules: versionDetails.appModuleVersions,
+    activeAppVersion: await developerPlatformClient.activeAppVersion(remoteApp),
   })
   const confirmed = await deployOrReleaseConfirmationPrompt({
     configExtensionIdentifiersBreakdown,
@@ -59,6 +55,7 @@ export async function release(options: ReleaseOptions) {
     allowUpdates: options.force || options.allowUpdates,
     allowDeletes: options.force || options.allowDeletes,
   })
+
   if (!confirmed) throw new AbortSilentError()
   interface Context {
     appRelease: AppReleaseSchema
