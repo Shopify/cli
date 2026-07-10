@@ -63,27 +63,25 @@ export class JsonContentToken extends ContentToken<any> {
 
 export class LinesDiffContentToken extends ContentToken<Change[]> {
   output(): string[] {
-    return this.value
-      .map((part) => {
-        if (part.added) {
-          return part.value
-            .split(/\n/)
-            .filter((line) => line !== '')
-            .map((line) => {
-              return colors.green(`+ ${line}\n`)
-            })
-        } else if (part.removed) {
-          return part.value
-            .split(/\n/)
-            .filter((line) => line !== '')
-            .map((line) => {
-              return colors.magenta(`- ${line}\n`)
-            })
-        } else {
-          return part.value
-        }
-      })
-      .flat()
+    return this.value.flatMap((part) => {
+      if (part.added) {
+        return part.value
+          .split(/\n/)
+          .filter((line) => line !== '')
+          .map((line) => {
+            return colors.green(`+ ${line}\n`)
+          })
+      } else if (part.removed) {
+        return part.value
+          .split(/\n/)
+          .filter((line) => line !== '')
+          .map((line) => {
+            return colors.magenta(`- ${line}\n`)
+          })
+      } else {
+        return part.value
+      }
+    })
   }
 }
 
