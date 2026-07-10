@@ -203,8 +203,7 @@ describe('getAppIdentifiers', () => {
       })
 
       // Then
-      expect(got.app).toEqual('FOO')
-      expect((got.extensions ?? {})['test-ui-extension']).toEqual('BAR')
+      expect(got['test-ui-extension']).toEqual('BAR')
     })
   })
 
@@ -229,8 +228,7 @@ describe('getAppIdentifiers', () => {
       )
 
       // Then
-      expect(got.app).toEqual('FOO')
-      expect((got.extensions ?? {})['test-ui-extension']).toEqual('BAR')
+      expect(got['test-ui-extension']).toEqual('BAR')
     })
   })
 })
