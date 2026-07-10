@@ -75,29 +75,67 @@ cd packages/app
   src/cli/models/extensions/specifications/pos_intercept_detection_comparison.test.ts
 ```
 
-## Complex vs simple detector — is the complexity worth it?
+## Complex (resolve) vs "safe simplest" (resolve-or-warn)
 
-A second, deliberately simple detector (`pos_intercept_detection_simple.ts`)
-matches ONLY direct `shopify.intercept('x')` calls plus same-file
-`const {intercept} = shopify` destructuring. The comparison matrix
-(`pos_intercept_detection_comparison.test.ts`) runs both over per-pattern
-fixtures:
+The second detector (`pos_intercept_detection_simple.ts`) is now the **safe
+simplest** design. Its rule: **never silently under-report.** A call is either
+DERIVED SILENTLY (direct `shopify.intercept('<string-literal>')`) or FLAGGED
+LOUDLY (a warning with file:line + raw source telling the developer to declare
+that intercept in the TOML). It resolves nothing indirect and follows nothing
+cross-file — it recognizes intercept-shaped patterns *syntactically* and warns.
 
-| pattern | complex | simple |
-|---------|:-------:|:------:|
-| `shopify.intercept('beforecheckout')` | catch | catch |
-| `const {intercept} = shopify; intercept('x')` | catch | catch |
-| `const s = shopify; s.intercept('x')` | catch | **MISS** |
-| `let fn; fn = shopify.intercept; fn('x')` | catch | **MISS** |
-| cross-file `export const block = shopify.intercept` imported+called | catch | **MISS** |
-| `if/else` both branches | catch | catch |
-| dynamic variable arg | unresolved | unresolved |
+Three-way matrix (`pos_intercept_detection_comparison.test.ts`):
 
-The extra complexity buys coverage for exactly three real-world patterns:
-object-aliasing, reassignment, and cross-file re-exported references. For direct
-calls, same-file destructuring, control-flow branches, and dynamic args the two
-detectors are identical. This is the data point for deciding how much alias
-tracking to ship.
+| pattern | complex resolves | simple resolves | simple warns |
+|---------|:-------:|:-------:|:-----|
+| `shopify.intercept('beforecheckout')` | yes | yes | — |
+| `const {intercept} = shopify; intercept('x')` | yes | no | `destructure` |
+| `const s = shopify; s.intercept('x')` | yes | no | `object-alias-access` |
+| `let fn; fn = shopify.intercept; fn('x')` | yes | no | `function-reference` |
+| cross-file `export const block = shopify.intercept` | yes | no | `function-reference` (at creation site) |
+| `if/else` both branches | yes | yes | — |
+| dynamic variable arg | unresolved | no | `dynamic-arg` |
+| `const s = shopify; s.toast.show()` (noise) | n/a | no | **— (no false positive)** |
+
+**Key property:** the simple detector has ZERO silent misses on the alias
+patterns — where it can't resolve, it warns.
+
+### Is warn-on-alias simpler or more complex than full resolution?
+
+**Honest assessment: simpler, and meaningfully so.** Code-ish (non-comment)
+lines: complex ≈ 295, simple ≈ 172 (~42% smaller). More importantly, the simple
+detector DROPS the expensive machinery:
+
+- No cross-file alias propagation and no whole-graph fixpoint loop.
+- No per-file import/export symbol maps.
+- No multi-pass alias-set growth (`shopifyAliases`/`interceptAliases`).
+- No `let`-reassignment data-flow.
+
+What it ADDS is cheap and local: a single-pass syntactic check per file that (a)
+resolves direct literal calls and (b) pattern-matches four warn shapes. The only
+state it keeps is a one-level set of `const s = shopify` alias names, used *only*
+to scope the object-alias warning.
+
+### False-positive / noise risk and how it's scoped
+
+- **`const s = shopify` used for non-intercept reasons.** We do NOT warn on the
+  alias declaration. We warn only at an actual `.intercept` access on that alias
+  (`s.intercept`). A `const s = shopify; s.toast.show()` produces no warning
+  (covered by the `case-alias-noise` fixture).
+- **`function-reference` breadth.** Any non-call use of `shopify.intercept`
+  warns. This is intentional and low-noise — there is essentially no legitimate
+  reason to reference `shopify.intercept` without eventually calling it.
+- **Residual noise vector:** a developer who aliases the shopify object *and*
+  legitimately calls `.intercept` with a literal (`const s = shopify;
+  s.intercept('beforecheckout')`) gets a warning even though the event is
+  knowable. That's the deliberate trade: the simple detector refuses to resolve
+  through the alias, so it asks for an explicit declaration instead. The complex
+  detector resolves it silently. This is exactly the cost/benefit Henry is
+  weighing.
+- **Single-level aliasing.** `const a = shopify; const b = a; b.intercept()` is
+  not recognized as an alias chain, so `b.intercept` would warn as a
+  `function-reference`/miss depending on shape — still a warning, never a silent
+  miss, so the safety property holds.
 
 ---
 
