@@ -4,16 +4,8 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
-import {glob, inTemporaryDirectory, mkdir, touchFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {glob, inTemporaryDirectory, mkdir, touchFileSync, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
-
-vi.mock('@shopify/cli-kit/node/fs', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/fs')
-  return {
-    ...actual,
-    writeFile: vi.fn(),
-  }
-})
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
@@ -127,91 +119,103 @@ describe('bundleExtension()', () => {
   })
 
   test('writes metafile to disk for production builds', async () => {
-    // Given
-    const extension = await testUIExtension()
-    const stdout: any = {
-      write: vi.fn(),
-    }
-    const stderr: any = {
-      write: vi.fn(),
-    }
-    const esbuildRebuild = vi.fn(esbuildResultFixture)
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extension = await testUIExtension({directory: tmpDir})
+      const stdout: any = {
+        write: vi.fn(),
+      }
+      const stderr: any = {
+        write: vi.fn(),
+      }
+      const esbuildRebuild = vi.fn(esbuildResultFixture)
 
-    vi.mocked(esContext).mockResolvedValue({
-      rebuild: esbuildRebuild,
-      watch: vi.fn(),
-      dispose: vi.fn(),
-      cancel: vi.fn(),
-      serve: vi.fn(),
+      vi.mocked(esContext).mockResolvedValue({
+        rebuild: esbuildRebuild,
+        watch: vi.fn(),
+        dispose: vi.fn(),
+        cancel: vi.fn(),
+        serve: vi.fn(),
+      })
+
+      const distPath = joinPath(extension.directory, 'dist')
+      await mkdir(distPath)
+      extension.outputPath = joinPath(distPath, 'test-ui-extension.js')
+
+      // When
+      await bundleExtension({
+        env: {},
+        outputPath: extension.outputPath,
+        minify: true,
+        environment: 'production',
+        stdin: {
+          contents: 'console.log("mock stdin content")',
+          resolveDir: 'mock/resolve/dir',
+          loader: 'tsx',
+        },
+        stdout,
+        stderr,
+      })
+
+      // Then
+      const esbuildOptions = vi.mocked(esContext).mock.calls[0]![0]
+      expect(esbuildOptions.metafile).toBe(true)
+
+      const metafilePath = joinPath(extension.directory, 'dist', 'test-ui-extension.metafile.json')
+      const content = await readFile(metafilePath)
+      expect(JSON.parse(content)).toEqual({inputs: {}, outputs: {}})
     })
-
-    // When
-    await bundleExtension({
-      env: {},
-      outputPath: extension.outputPath,
-      minify: true,
-      environment: 'production',
-      stdin: {
-        contents: 'console.log("mock stdin content")',
-        resolveDir: 'mock/resolve/dir',
-        loader: 'tsx',
-      },
-      stdout,
-      stderr,
-    })
-
-    // Then
-    const esbuildOptions = vi.mocked(esContext).mock.calls[0]![0]
-    expect(esbuildOptions.metafile).toBe(true)
-
-    expect(writeFile).toHaveBeenCalledWith(
-      joinPath(extension.directory, 'dist', 'test-ui-extension.metafile.json'),
-      JSON.stringify({inputs: {}, outputs: {}}),
-    )
   })
 
   test('does not write metafile to disk for development builds', async () => {
-    // Given
-    const extension = await testUIExtension()
-    const stdout: any = {
-      write: vi.fn(),
-    }
-    const stderr: any = {
-      write: vi.fn(),
-    }
-    const esbuildRebuild = vi.fn(async () => {
-      const result = await esbuildResultFixture()
-      return {...result, metafile: undefined}
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extension = await testUIExtension({directory: tmpDir})
+      const stdout: any = {
+        write: vi.fn(),
+      }
+      const stderr: any = {
+        write: vi.fn(),
+      }
+      const esbuildRebuild = vi.fn(async () => {
+        const result = await esbuildResultFixture()
+        return {...result, metafile: undefined}
+      })
+
+      vi.mocked(esContext).mockResolvedValue({
+        rebuild: esbuildRebuild,
+        watch: vi.fn(),
+        dispose: vi.fn(),
+        cancel: vi.fn(),
+        serve: vi.fn(),
+      })
+
+      const distPath = joinPath(extension.directory, 'dist')
+      await mkdir(distPath)
+      extension.outputPath = joinPath(distPath, 'test-ui-extension.js')
+
+      // When
+      await bundleExtension({
+        env: {},
+        outputPath: extension.outputPath,
+        minify: false,
+        environment: 'development',
+        stdin: {
+          contents: 'console.log("mock stdin content")',
+          resolveDir: 'mock/resolve/dir',
+          loader: 'tsx',
+        },
+        stdout,
+        stderr,
+      })
+
+      // Then
+      const esbuildOptions = vi.mocked(esContext).mock.calls[0]![0]
+      expect(esbuildOptions.metafile).toBeUndefined()
+
+      const metafilePath = joinPath(extension.directory, 'dist', 'test-ui-extension.metafile.json')
+      expect(fileExistsSync(metafilePath)).toBe(false)
     })
-
-    vi.mocked(esContext).mockResolvedValue({
-      rebuild: esbuildRebuild,
-      watch: vi.fn(),
-      dispose: vi.fn(),
-      cancel: vi.fn(),
-      serve: vi.fn(),
-    })
-
-    // When
-    await bundleExtension({
-      env: {},
-      outputPath: extension.outputPath,
-      minify: false,
-      environment: 'development',
-      stdin: {
-        contents: 'console.log("mock stdin content")',
-        resolveDir: 'mock/resolve/dir',
-        loader: 'tsx',
-      },
-      stdout,
-      stderr,
-    })
-
-    // Then
-    const esbuildOptions = vi.mocked(esContext).mock.calls[0]![0]
-    expect(esbuildOptions.metafile).toBeUndefined()
-
-    expect(writeFile).not.toHaveBeenCalled()
   })
 
   test('can switch off React deduplication', async () => {
