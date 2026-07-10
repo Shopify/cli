@@ -13,7 +13,7 @@ describe('pos_ui_extension', async () => {
 
   interface ParsedPosUIConfig {
     state: 'ok' | 'error'
-    data?: {intercepts?: {event: string; block_progress: boolean}[]}
+    data?: {capabilities?: {intercepts?: string[]}}
     errors?: {message: string}[]
   }
 
@@ -52,40 +52,46 @@ describe('pos_ui_extension', async () => {
     })
   })
 
-  describe('intercepts schema', () => {
-    test('parses when no intercepts are declared', () => {
+  describe('intercepts capability', () => {
+    test('parses when no capabilities are declared', () => {
       const parsed = parse({})
       expect(parsed.state).toBe('ok')
-      expect(parsed.data?.intercepts).toBeUndefined()
+      expect(parsed.data?.capabilities?.intercepts).toBeUndefined()
     })
 
-    test('parses valid intercept declarations', () => {
+    test('parses a valid intercepts array', () => {
       const parsed = parse({
-        intercepts: [
-          {event: 'beforecheckout', block_progress: true},
-          {event: 'beforepayment', block_progress: false},
-        ],
+        capabilities: {intercepts: ['beforecheckout', 'beforepayment']},
       })
 
       expect(parsed.state).toBe('ok')
-      expect(parsed.data?.intercepts).toEqual([
-        {event: 'beforecheckout', block_progress: true},
-        {event: 'beforepayment', block_progress: false},
-      ])
+      expect(parsed.data?.capabilities?.intercepts).toEqual(['beforecheckout', 'beforepayment'])
     })
 
-    test('defaults block_progress to false when omitted', () => {
+    test('parses an empty intercepts array', () => {
       const parsed = parse({
-        intercepts: [{event: 'beforecheckout'}],
+        capabilities: {intercepts: []},
       })
 
       expect(parsed.state).toBe('ok')
-      expect(parsed.data?.intercepts).toEqual([{event: 'beforecheckout', block_progress: false}])
+      expect(parsed.data?.capabilities?.intercepts).toEqual([])
+    })
+
+    test('coexists with shared capabilities without overriding them', () => {
+      const parsed = parse({
+        capabilities: {network_access: true, intercepts: ['beforecheckout']},
+      })
+
+      expect(parsed.state).toBe('ok')
+      expect(parsed.data?.capabilities).toMatchObject({
+        network_access: true,
+        intercepts: ['beforecheckout'],
+      })
     })
 
     test('rejects an unknown intercept event', () => {
       const parsed = parse({
-        intercepts: [{event: 'notarealevent'}],
+        capabilities: {intercepts: ['notarealevent']},
       })
 
       expect(parsed.state).toBe('error')
@@ -94,20 +100,9 @@ describe('pos_ui_extension', async () => {
       )
     })
 
-    test('rejects a non-boolean block_progress', () => {
-      const parsed = parse({
-        intercepts: [{event: 'beforecheckout', block_progress: 'yes'}],
-      })
-
-      expect(parsed.state).toBe('error')
-    })
-
     test('rejects duplicate intercept events', () => {
       const parsed = parse({
-        intercepts: [
-          {event: 'beforecheckout', block_progress: true},
-          {event: 'beforecheckout', block_progress: false},
-        ],
+        capabilities: {intercepts: ['beforecheckout', 'beforecheckout']},
       })
 
       expect(parsed.state).toBe('error')
@@ -116,12 +111,12 @@ describe('pos_ui_extension', async () => {
   })
 
   describe('deployConfig()', () => {
-    test('includes intercepts in the deploy config', async () => {
+    test('includes capabilities.intercepts in the deploy config', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         vi.spyOn(appModule, 'getDependencyVersion').mockResolvedValue({name: 'name', version: '1.2.3'})
 
         const extension = await getTestPosUIExtension(tmpDir, {
-          intercepts: [{event: 'beforecheckout', block_progress: true}],
+          capabilities: {intercepts: ['beforecheckout']},
         })
 
         const deployConfig = await extension.deployConfig({
@@ -132,12 +127,12 @@ describe('pos_ui_extension', async () => {
         expect(deployConfig).toMatchObject({
           name: 'My POS Extension',
           renderer_version: '1.2.3',
-          intercepts: [{event: 'beforecheckout', block_progress: true}],
+          capabilities: {intercepts: ['beforecheckout']},
         })
       })
     })
 
-    test('omits intercepts when none are declared', async () => {
+    test('omits intercepts when no capabilities are declared', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         vi.spyOn(appModule, 'getDependencyVersion').mockResolvedValue({name: 'name', version: '1.2.3'})
 
@@ -148,7 +143,7 @@ describe('pos_ui_extension', async () => {
           appConfiguration: placeholderAppConfiguration,
         })
 
-        expect(deployConfig?.intercepts).toBeUndefined()
+        expect((deployConfig as {capabilities?: {intercepts?: string[]}})?.capabilities?.intercepts).toBeUndefined()
       })
     })
   })

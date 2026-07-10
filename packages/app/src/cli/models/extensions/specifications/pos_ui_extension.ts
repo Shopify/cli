@@ -1,45 +1,50 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchema, CapabilitiesSchema} from '../schemas.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/retail-ui-extensions'
 
-// The host-mediated intercept events a POS UI extension can participate in.
-// Surface-augmented and expected to grow — add new events here as POS exposes
-// more interceptable workflows. See `shopify.intercept()` in ui-api-design.
+// The host-mediated intercept events a POS UI extension may block. Surface-augmented
+// and expected to grow — add new events here as POS exposes more interceptable
+// workflows. See `shopify.intercept()` in ui-api-design.
 export const POS_INTERCEPT_EVENTS = ['beforecheckout', 'beforepayment'] as const
 
-// A single intercept declaration: which event the extension participates in and
-// whether it intends to block progress on that event. This is the event-scoped
-// POS analogue of checkout's single `capabilities.block_progress` boolean.
-const InterceptSchema = zod.object({
-  event: zod.enum(POS_INTERCEPT_EVENTS, {
-    errorMap: () => ({
-      message: `Intercept event must be one of: ${POS_INTERCEPT_EVENTS.join(', ')}`,
+// POS-specific capabilities. Extends the shared capabilities (block_progress, etc.)
+// with an `intercepts` array listing the events this extension may block. Membership
+// in the array is the event-scoped POS analogue of checkout's single `block_progress`
+// capability boolean. Do not fold `intercepts` into the shared CapabilitiesSchema —
+// it is POS-only.
+const PosCapabilitiesSchema = CapabilitiesSchema.extend({
+  intercepts: zod
+    .array(
+      zod.enum(POS_INTERCEPT_EVENTS, {
+        errorMap: () => ({
+          message: `Intercept event must be one of: ${POS_INTERCEPT_EVENTS.join(', ')}`,
+        }),
+      }),
+    )
+    .optional()
+    .superRefine((events, ctx) => {
+      if (!events) return
+      const duplicates = [...new Set(events.filter((event, index) => events.indexOf(event) !== index))]
+      if (duplicates.length > 0) {
+        ctx.addIssue({
+          code: zod.ZodIssueCode.custom,
+          message: `Duplicate intercept events found: ${duplicates.join(
+            ', ',
+          )}. Each intercept event may only be declared once.`,
+        })
+      }
     }),
-  }),
-  block_progress: zod.boolean().optional().default(false),
 })
 
 type PosUIConfigType = zod.infer<typeof PosUISchema>
 const PosUISchema = BaseSchema.extend({
   name: zod.string(),
-  intercepts: zod.array(InterceptSchema).optional(),
-}).superRefine((config, ctx) => {
-  const events = config.intercepts?.map((intercept) => intercept.event) ?? []
-  const duplicates = [...new Set(events.filter((event, index) => events.indexOf(event) !== index))]
-  if (duplicates.length > 0) {
-    ctx.addIssue({
-      code: zod.ZodIssueCode.custom,
-      message: `Duplicate intercept events found: ${duplicates.join(
-        ', ',
-      )}. Each intercept event may only be declared once.`,
-      path: ['intercepts'],
-    })
-  }
+  capabilities: PosCapabilitiesSchema.optional(),
 })
 
 const posUISpec = createExtensionSpecification({
@@ -61,7 +66,7 @@ const posUISpec = createExtensionSpecification({
       name: config.name,
       description: config.description,
       renderer_version: result?.version,
-      intercepts: config.intercepts,
+      capabilities: config.capabilities,
     }
   },
 })
