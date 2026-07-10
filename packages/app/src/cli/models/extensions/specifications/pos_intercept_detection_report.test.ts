@@ -24,9 +24,11 @@ import {test} from 'vitest'
 interface Sample {
   name: string
   label: string
+  /** Minimal code shown in the report (just enough to understand the sample). */
+  show: string
   /** entry filename within the sample dir. */
   entry: string
-  /** filename -> source content (verbatim, printed in the report). */
+  /** filename -> source content (verbatim) actually written + analyzed. */
   files: {[filename: string]: string}
 }
 
@@ -36,6 +38,7 @@ const SAMPLES: Sample[] = [
   {
     name: 'plain direct call',
     label: 'BOTH RESOLVE',
+    show: `shopify.intercept('beforecheckout', cb)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nshopify.intercept('beforecheckout', ${CB})\n`,
@@ -44,6 +47,7 @@ const SAMPLES: Sample[] = [
   {
     name: 'same-file destructure',
     label: 'simple WARNS, complex RESOLVES',
+    show: `const {intercept} = shopify\nintercept('beforediscount', cb)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nconst {intercept} = shopify\nintercept('beforediscount', ${CB})\n`,
@@ -52,6 +56,7 @@ const SAMPLES: Sample[] = [
   {
     name: 'object alias then member call',
     label: 'simple WARNS, complex RESOLVES',
+    show: `const s = shopify\ns.intercept('beforeexchange', cb)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nconst s = shopify\ns.intercept('beforeexchange', ${CB})\n`,
@@ -60,6 +65,7 @@ const SAMPLES: Sample[] = [
   {
     name: 'cross-file re-exported reference',
     label: 'simple WARNS, complex RESOLVES',
+    show: `// dep.ts\nexport const block = shopify.intercept\n// index.ts\nblock('beforecancel', cb)`,
     entry: 'index.ts',
     files: {
       'dep.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nexport const block = shopify.intercept\n`,
@@ -67,8 +73,9 @@ const SAMPLES: Sample[] = [
     },
   },
   {
-    name: 'alias chain const a = shopify; const b = a',
+    name: 'alias chain',
     label: 'simple WARNS (chain closed), complex RESOLVES',
+    show: `const a = shopify\nconst b = a\nb.intercept('beforecapture', cb)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nconst a = shopify\nconst b = a\nb.intercept('beforecapture', ${CB})\n`,
@@ -77,30 +84,34 @@ const SAMPLES: Sample[] = [
   {
     name: 'dynamic event argument (variable)',
     label: 'BOTH UNRESOLVED (dynamic) — simple WARNS',
+    show: `const evt = 'beforetax'\nshopify.intercept(evt, cb)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nconst evt = 'beforetax'\nshopify.intercept(evt, ${CB})\n`,
     },
   },
   {
-    name: 'const-folded event name const E = "..."; intercept(E, cb)',
+    name: 'const-folded event name',
     label: 'COMPLEX ALSO FAILS (no constant folding) — simple WARNS',
+    show: `const E = 'beforeshipping'\nshopify.intercept(E, cb)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nconst E = 'beforeshipping'\nshopify.intercept(E, ${CB})\n`,
     },
   },
   {
-    name: 'higher-order passing register(shopify.intercept)',
+    name: 'higher-order passing',
     label: 'COMPLEX ALSO FAILS (silent miss on HOF) — simple WARNS',
+    show: `function register(fn) { fn('beforepayment', cb) }\nregister(shopify.intercept)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nfunction register(fn: typeof shopify.intercept) {\n  fn('beforepayment', ${CB})\n}\nregister(shopify.intercept)\n`,
     },
   },
   {
-    name: 'stored in object then called const m = { i: shopify.intercept }',
+    name: 'stored in object then called',
     label: 'COMPLEX ALSO FAILS (silent miss via object storage) — simple WARNS',
+    show: `const m = {i: shopify.intercept}\nm.i('beforerefund', cb)`,
     entry: 'index.ts',
     files: {
       'index.ts': `declare const shopify: {intercept: (e: string, cb: () => void) => void}\nconst m = {i: shopify.intercept}\nm.i('beforerefund', ${CB})\n`,
@@ -118,7 +129,14 @@ function writeSample(sample: Sample): string {
   return join(dir, sample.entry)
 }
 
-const list = (items: string[]) => (items.length ? `[${items.join(', ')}]` : '[]')
+type Mark = '✅' | '🟠' | '❌'
+
+/** ✅ resolved · 🟠 surfaced/warned but not resolved · ❌ silent miss. */
+function symbolFor(resolved: boolean, surfaced: boolean): Mark {
+  if (resolved) return '✅'
+  if (surfaced) return '🟠'
+  return '❌'
+}
 
 function indent(text: string): string {
   return text
@@ -128,64 +146,61 @@ function indent(text: string): string {
     .join('\n')
 }
 
-async function reportOne(sourceLabel: string, entryPath: string, printedSource?: string): Promise<void> {
+interface Tally {
+  '✅': number
+  '🟠': number
+  '❌': number
+}
+
+async function reportOne(
+  heading: string,
+  entryPath: string,
+  code: string | undefined,
+  tally: {simple: Tally; complex: Tally},
+): Promise<void> {
   const [simple, complex] = await Promise.all([detectPosInterceptsSimple(entryPath), detectPosIntercepts(entryPath)])
 
-  const simpleWarns = simple.warnings.map((warning) => `${warning.kind}: ${warning.message.split('.')[0]}`)
-  const complexUnresolved = complex.unresolved.map((entry) => entry.unresolvedReason ?? entry.argText)
-
-  // Verdict.
-  const simpleStr = simple.events.length
-    ? `resolved ${list(simple.events)}`
-    : simpleWarns.length
-      ? `WARN(${simple.warnings.map((warning) => warning.kind).join(', ')})`
-      : 'nothing'
-  const complexStr = complex.events.length
-    ? `resolved ${list(complex.events)}`
-    : complexUnresolved.length
-      ? `unresolved(${complexUnresolved.length})`
-      : 'NOTHING — silent miss'
-  const complexFailed = complex.events.length === 0
-  const verdict = `${complexFailed && complexUnresolved.length === 0 ? '⚠ COMPLEX ALSO FAILS — ' : ''}simple ${simpleStr}  |  complex ${complexStr}`
+  const simpleSymbol = symbolFor(simple.events.length > 0, simple.warnings.length > 0)
+  const complexSymbol = symbolFor(complex.events.length > 0, complex.unresolved.length > 0)
+  tally.simple[simpleSymbol]++
+  tally.complex[complexSymbol]++
 
   const lines: string[] = []
-  lines.push('═'.repeat(72))
-  lines.push(sourceLabel)
-  lines.push('─'.repeat(72))
-  if (printedSource !== undefined) {
-    lines.push('SOURCE:')
-    lines.push(indent(printedSource))
-    lines.push('')
-  }
-  lines.push(`SIMPLE   events=${list(simple.events)}`)
-  if (simpleWarns.length) simpleWarns.forEach((warning) => lines.push(`         warn  ${warning}`))
-  lines.push(`COMPLEX  events=${list(complex.events)}`)
-  if (complexUnresolved.length) complexUnresolved.forEach((reason) => lines.push(`         unresolved  ${reason}`))
-  lines.push(`VERDICT  ${verdict}`)
+  lines.push(heading)
+  if (code !== undefined) lines.push(indent(code))
+  lines.push(`    SIMPLE ${simpleSymbol}    COMPLEX ${complexSymbol}`)
+  lines.push('')
   // eslint-disable-next-line no-console
   console.log(lines.join('\n'))
 }
 
 test('POS intercept detector report (simple vs complex)', async () => {
   const overridePath = process.env.REPORT_PATH
+  const tally = {
+    simple: {'✅': 0, '🟠': 0, '❌': 0},
+    complex: {'✅': 0, '🟠': 0, '❌': 0},
+  }
   // eslint-disable-next-line no-console
-  console.log(`\n\nPOS INTERCEPT DETECTOR REPORT — simple (safe-simplest) vs complex (alias-resolving)\n`)
+  console.log(
+    `\n\nPOS INTERCEPT DETECTOR REPORT — simple (safe-simplest) vs complex (alias-resolving)\n` +
+      `✅ resolved · 🟠 not resolved but surfaced/warned · ❌ silent miss (returned nothing)\n`,
+  )
 
   if (overridePath) {
-    // eslint-disable-next-line no-console
-    console.log(`Running against REPORT_PATH=${overridePath}\n`)
-    await reportOne(`FILE: ${overridePath}`, overridePath)
+    await reportOne(`FILE: ${overridePath}`, overridePath, undefined, tally)
   } else {
     for (let index = 0; index < SAMPLES.length; index++) {
       const sample = SAMPLES[index]!
       const entryPath = writeSample(sample)
-      const combinedSource = Object.entries(sample.files)
-        .map(([filename, content]) => `// ── ${filename} ──\n${content}`)
-        .join('\n')
       // eslint-disable-next-line no-await-in-loop
-      await reportOne(`SAMPLE ${index + 1}: ${sample.name}   [${sample.label}]`, entryPath, combinedSource)
+      await reportOne(`${index + 1}. ${sample.name}`, entryPath, sample.show, tally)
     }
   }
+
+  const row = (t: Tally) => `✅ ${t['✅']}   🟠 ${t['🟠']}   ❌ ${t['❌']}`
   // eslint-disable-next-line no-console
-  console.log(`\n${'═'.repeat(72)}\nLEGEND: "silent miss" = a real intercept('event', cb) call the detector\nreturned NOTHING for (not even unresolved). The safe-simplest detector never\nsilently misses — it warns and tells the developer to declare it in TOML.\n`)
+  console.log(
+    `${'─'.repeat(56)}\nTALLY\n  SIMPLE :  ${row(tally.simple)}\n  COMPLEX:  ${row(tally.complex)}\n` +
+      `${'─'.repeat(56)}\nSimple has ZERO ❌ (never a silent miss); complex trades some 🟠/❌\nfor silent derivation of the alias cases.\n`,
+  )
 })
