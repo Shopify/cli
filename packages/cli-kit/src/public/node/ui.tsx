@@ -30,6 +30,7 @@ import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import {SingleTask} from '../../private/node/ui/components/SingleTask.js'
+import {MarkdownStream} from '../../private/node/ui/components/MarkdownStream.js'
 
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
@@ -544,6 +545,35 @@ export async function renderSingleTask<T>({
       ...renderOptions,
       exitOnCtrlC: false,
     },
+  )
+  return taskResult!
+}
+
+export interface RenderMarkdownStreamOptions<T> {
+  task: (updateContent: (content: string) => void) => Promise<T>
+  renderOptions?: RenderOptions
+}
+
+/**
+ * Streams Markdown to the terminal, re-rendering it as ANSI-styled text each time the
+ * task calls `updateContent`. The final content stays on screen once the task
+ * completes — it's the actual result, not a transient status. The task's result is
+ * returned.
+ * @param options - Configuration object
+ * @param options.task - The async task to execute. Receives an updateContent callback that replaces the currently displayed Markdown.
+ * @param options.renderOptions - Optional render configuration
+ * @returns The result of the task
+ */
+export async function renderMarkdownStream<T>({task, renderOptions}: RenderMarkdownStreamOptions<T>): Promise<T> {
+  let taskResult: T
+  await render(
+    <MarkdownStream
+      task={task}
+      onComplete={(result) => {
+        taskResult = result
+      }}
+    />,
+    renderOptions,
   )
   return taskResult!
 }

@@ -2,8 +2,12 @@ import {howtoService} from './howto.js'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {renderMarkdownStream} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/ui')
 
 // Builds a fake streaming Response whose body yields the given raw SSE text as a
 // single chunk (or a few pre-split chunks, to exercise cross-chunk buffering).
@@ -29,6 +33,9 @@ let writeSpy: ReturnType<typeof vi.spyOn>
 
 beforeEach(() => {
   writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+  // Most tests exercise the plain, non-interactive output path. TTY-specific behaviour
+  // is covered separately below.
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
 })
 
 afterEach(() => {
@@ -142,5 +149,39 @@ describe('howtoService', () => {
 
     await expect(howtoService('Create an app')).rejects.toThrowError(AbortError)
     await expect(howtoService('Create an app')).rejects.toThrowError(/Lost connection to shopify\.dev/)
+  })
+})
+
+describe('howtoService in an interactive terminal', () => {
+  beforeEach(() => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+    // Drive the task exactly like the real `renderMarkdownStream` would: run it and
+    // record every call to `updateContent`, without actually mounting an Ink app.
+    vi.mocked(renderMarkdownStream).mockImplementation(async ({task}) => task(() => {}))
+  })
+
+  test('streams accumulated content through renderMarkdownStream instead of writing to stdout directly', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      streamingResponse([
+        sseMessage('response', 'Run '),
+        sseMessage('response', '`shopify app init`'),
+        sseMessage('complete', null),
+      ]),
+    )
+
+    const updates: string[] = []
+    vi.mocked(renderMarkdownStream).mockImplementation(async ({task}) => task((content) => updates.push(content)))
+
+    await howtoService('Create an app')
+
+    expect(renderMarkdownStream).toHaveBeenCalled()
+    expect(updates).toEqual(['Run ', 'Run `shopify app init`'])
+    expect(writeSpy).not.toHaveBeenCalled()
+  })
+
+  test('propagates a stream error out of renderMarkdownStream', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(streamingResponse([sseMessage('error', null)]))
+
+    await expect(howtoService('Create an app')).rejects.toThrowError(AbortError)
   })
 })

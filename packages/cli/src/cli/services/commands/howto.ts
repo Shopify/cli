@@ -1,5 +1,7 @@
 import {shopifyFetch, type Response} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {renderMarkdownStream} from '@shopify/cli-kit/node/ui'
 
 // The dev-assistant conversations endpoint is the same one that powers the "Ask AI"
 // widget on shopify.dev. It streams a Server-Sent Events response.
@@ -51,7 +53,10 @@ function parseServerSentEvent(block: string): ServerSentEvent {
   return {event, data: dataLines.join('\n')}
 }
 
-export async function howtoService(task: string): Promise<void> {
+// Requests the assistant's answer for `task` and calls `onToken` with each token of the
+// answer as it streams in. Throws an `AbortError` for network failures, non-ok
+// responses, or an `error` event from the assistant.
+async function streamAssistantAnswer(task: string, onToken: (token: string) => void): Promise<void> {
   let response: Response
   try {
     response = await shopifyFetch(
@@ -87,7 +92,6 @@ export async function howtoService(task: string): Promise<void> {
   const body = response.body as unknown as AsyncIterable<Buffer>
 
   let buffer = ''
-  let wroteAnyOutput = false
 
   try {
     for await (const chunk of body) {
@@ -102,13 +106,10 @@ export async function howtoService(task: string): Promise<void> {
 
         if (message.event === 'response' && message.data) {
           // Each `response` event's data is a JSON-encoded string containing one token.
-          const token = JSON.parse(message.data) as string
-          process.stdout.write(token)
-          wroteAnyOutput = true
+          onToken(JSON.parse(message.data) as string)
         } else if (message.event === 'error') {
           throw new AbortError('The Shopify assistant could not complete this request.', 'Wait a moment and try again.')
         } else if (message.event === 'complete') {
-          if (wroteAnyOutput) process.stdout.write('\n')
           return
         }
 
@@ -122,6 +123,30 @@ export async function howtoService(task: string): Promise<void> {
       'Check your network connection and try again.',
     )
   }
+}
 
+export async function howtoService(task: string): Promise<void> {
+  // In an interactive terminal, render the answer as Markdown, redrawing it as more of
+  // it streams in. Otherwise (piped output, CI, agents reading stdout, etc.) just write
+  // the raw Markdown tokens as they arrive — safest for machine consumption, and avoids
+  // spraying ANSI escape codes into a non-terminal output stream.
+  if (terminalSupportsPrompting()) {
+    await renderMarkdownStream({
+      task: async (updateContent) => {
+        let accumulated = ''
+        await streamAssistantAnswer(task, (token) => {
+          accumulated += token
+          updateContent(accumulated)
+        })
+      },
+    })
+    return
+  }
+
+  let wroteAnyOutput = false
+  await streamAssistantAnswer(task, (token) => {
+    process.stdout.write(token)
+    wroteAnyOutput = true
+  })
   if (wroteAnyOutput) process.stdout.write('\n')
 }
