@@ -80,6 +80,17 @@ describe('howtoService', () => {
     expect(prompt).toContain('already installed')
   })
 
+  test('tells the assistant this is a single-turn command with no follow-up reply', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(streamingResponse([sseMessage('complete', null)]))
+
+    await howtoService('Create an app')
+
+    const {body} = vi.mocked(shopifyFetch).mock.calls[0]![1]!
+    const {prompt} = JSON.parse(body as string)
+    expect(prompt).toContain('single-turn command')
+    expect(prompt).toContain("don't end your answer by inviting a")
+  })
+
   test('streams each response token to stdout in order and finishes with a newline', async () => {
     vi.mocked(shopifyFetch).mockResolvedValue(
       streamingResponse([
