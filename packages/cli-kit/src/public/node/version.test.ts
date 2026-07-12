@@ -1,7 +1,7 @@
 import {captureOutput} from './system.js'
-import {localCLIVersion, globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {localCLIVersion, globalCLIVersion, isPreReleaseVersion, _resetGlobalCLIVersionCache} from './version.js'
 import {inTemporaryDirectory} from './fs.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 import which from 'which'
 
@@ -39,6 +39,10 @@ describe('localCLIVersion', () => {
 })
 
 describe('globalCLIVersion', () => {
+  beforeEach(() => {
+    _resetGlobalCLIVersionCache()
+  })
+
   test('returns the version when a recent CLI is installed globally', async () => {
     // Given
     // TS is not detecting the return type correctly, so we need to cast it
@@ -77,6 +81,35 @@ describe('globalCLIVersion', () => {
     // Then
     expect(got).toBeUndefined()
     expect(captureOutput).not.toHaveBeenCalled()
+  })
+
+  test('memoizes the result', async () => {
+    // Given
+    vi.mocked(which.sync).mockReturnValue(['path/to/shopify'] as unknown as string)
+    vi.mocked(captureOutput).mockResolvedValue('@shopify/cli/3.65.0')
+
+    // When
+    const got1 = await globalCLIVersion()
+    const got2 = await globalCLIVersion()
+
+    // Then
+    expect(got1).toBe('3.65.0')
+    expect(got2).toBe('3.65.0')
+    expect(captureOutput).toHaveBeenCalledTimes(1)
+  })
+
+  test('resets the cache when _resetGlobalCLIVersionCache is called', async () => {
+    // Given
+    vi.mocked(which.sync).mockReturnValue(['path/to/shopify'] as unknown as string)
+    vi.mocked(captureOutput).mockResolvedValue('@shopify/cli/3.65.0')
+
+    // When
+    await globalCLIVersion()
+    _resetGlobalCLIVersionCache()
+    await globalCLIVersion()
+
+    // Then
+    expect(captureOutput).toHaveBeenCalledTimes(2)
   })
 })
 

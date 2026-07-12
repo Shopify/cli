@@ -1,6 +1,12 @@
 import {captureOutput} from './system.js'
 import which from 'which'
 import {satisfies, SemVer} from 'semver'
+
+/**
+ * Memoized value for the global CLI version.
+ */
+let memoizedGlobalCLIVersion: Promise<string | undefined> | undefined
+
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
@@ -22,25 +28,40 @@ export async function localCLIVersion(directory: string): Promise<string | undef
  *
  * @returns The version of the CLI if it is globally installed or undefined.
  */
-export async function globalCLIVersion(): Promise<string | undefined> {
-  try {
-    const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
-    // Both execa and which find the project dependency. We need to exclude it.
-    const shopifyBinaries = which.sync('shopify', {all: true}).filter((path) => !path.includes('node_modules'))
-    if (!shopifyBinaries[0]) return undefined
-    const output = await captureOutput(shopifyBinaries[0], [], {env})
-    const versionMatch = output.match(/@shopify\/cli\/([^\s]+)/)
-    if (versionMatch && versionMatch[1]) {
-      const version = versionMatch[1]
-      if (satisfies(version, `>=3.59.0`) || isPreReleaseVersion(version)) {
-        return version
-      }
-    }
-    return undefined
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return undefined
+export function globalCLIVersion(): Promise<string | undefined> {
+  if (memoizedGlobalCLIVersion) {
+    return memoizedGlobalCLIVersion
   }
+  memoizedGlobalCLIVersion = (async () => {
+    try {
+      const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
+      // Both execa and which find the project dependency. We need to exclude it.
+      const shopifyBinaries = which.sync('shopify', {all: true}).filter((path) => !path.includes('node_modules'))
+      const binary = shopifyBinaries[0]
+      if (binary) {
+        const output = await captureOutput(binary, [], {env})
+        const versionMatch = output.match(/@shopify\/cli\/([^\s]+)/)
+        if (versionMatch && versionMatch[1]) {
+          const version = versionMatch[1]
+          if (satisfies(version, `>=3.59.0`) || isPreReleaseVersion(version)) {
+            return version
+          }
+        }
+      }
+      return undefined
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return undefined
+    }
+  })()
+  return memoizedGlobalCLIVersion
+}
+
+/**
+ * Resets the memoized value for the global CLI version.
+ */
+export function _resetGlobalCLIVersionCache(): void {
+  memoizedGlobalCLIVersion = undefined
 }
 
 /**
