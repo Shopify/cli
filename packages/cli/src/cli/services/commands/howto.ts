@@ -2,6 +2,7 @@ import {shopifyFetch, type Response} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderMarkdownStream} from '@shopify/cli-kit/node/ui'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 // The dev-assistant conversations endpoint is the same one that powers the "Ask AI"
 // widget on shopify.dev. It streams a Server-Sent Events response.
@@ -19,6 +20,14 @@ function buildPrompt(task: string): string {
   return `You are the assistant behind the \`shopify howto\` CLI command. Your only job is to explain \
 how to accomplish a task using Shopify CLI (and the app/theme/extension workflows it supports), grounded \
 in the Shopify developer documentation.
+
+The user is asking this question by running \`shopify howto\` from their terminal right now — meaning \
+Shopify CLI ${CLI_KIT_VERSION} is already installed, already working, and already running on their \
+machine at this exact moment. There is no scenario where they need to install it: they are actively \
+using it. Don't include an "install Shopify CLI", "check for prerequisites", "make sure you have the \
+CLI" or "check your version" section or step, and don't mention \`npm install -g @shopify/cli\`, \
+Homebrew, or \`shopify version\` at all, even conditionally ("if you haven't..."). Start your answer \
+directly with the first real action for the task itself.
 
 Rules:
 - Only answer questions about accomplishing tasks with Shopify CLI or Shopify development. If the task \

@@ -4,6 +4,7 @@ import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderMarkdownStream} from '@shopify/cli-kit/node/ui'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/system')
@@ -66,6 +67,17 @@ describe('howtoService', () => {
     expect(prompt).toContain('Create an app with a checkout extension')
     expect(prompt).toContain('shopify howto')
     expect(promptHistory).toEqual([])
+  })
+
+  test('tells the assistant Shopify CLI is already installed, with its version', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(streamingResponse([sseMessage('complete', null)]))
+
+    await howtoService('Create an app')
+
+    const {body} = vi.mocked(shopifyFetch).mock.calls[0]![1]!
+    const {prompt} = JSON.parse(body as string)
+    expect(prompt).toContain(`Shopify CLI ${CLI_KIT_VERSION}`)
+    expect(prompt).toContain('already installed')
   })
 
   test('streams each response token to stdout in order and finishes with a newline', async () => {
