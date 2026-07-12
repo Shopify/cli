@@ -4089,6 +4089,52 @@
       "strict": false,
       "usage": "help [command] [flags]"
     },
+    "howto": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Ask how to accomplish a task using Shopify CLI. The answer comes from Shopify's AI assistant, grounded in shopify.dev, and only covers Shopify development topics.",
+      "enableJsonFlag": false,
+      "examples": [
+        "# ask how to accomplish a task with Shopify CLI\n    shopify howto --task \"Create an app with a checkout extension\"\n    "
+      ],
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "task": {
+          "description": "The task you want to accomplish using Shopify CLI.",
+          "env": "SHOPIFY_FLAG_TASK",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "task",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "howto",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "hydrogen:build": {
       "aliases": [
       ],

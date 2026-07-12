@@ -43,6 +43,7 @@
 * [`shopify doc fetch`](#shopify-doc-fetch)
 * [`shopify doc search`](#shopify-doc-search)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
+* [`shopify howto`](#shopify-howto)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
 * [`shopify hydrogen codegen`](#shopify-hydrogen-codegen)
@@ -2201,6 +2202,36 @@ FLAGS
 
 DESCRIPTION
   Display help for Shopify CLI
+```
+
+## `shopify howto`
+
+Ask how to accomplish a task using Shopify CLI. The answer comes from Shopify's AI assistant, grounded in shopify.dev, and only covers Shopify development topics.
+
+```
+USAGE
+  $ shopify howto --task <value> [--no-color] [--verbose]
+
+FLAGS
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --task=<value>
+      (required) The task you want to accomplish using Shopify CLI.
+      [env: SHOPIFY_FLAG_TASK]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Ask how to accomplish a task using Shopify CLI. The answer comes from Shopify's AI assistant, grounded in shopify.dev,
+  and only covers Shopify development topics.
+
+EXAMPLES
+  # ask how to accomplish a task with Shopify CLI
+      shopify howto --task "Create an app with a checkout extension"
 ```
 
 ## `shopify hydrogen build`

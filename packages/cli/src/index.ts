@@ -13,6 +13,7 @@ import DoctorTheme from './cli/commands/doctor-release/theme/index.js'
 import DocFetch from './cli/commands/doc/fetch.js'
 import DocSearch from './cli/commands/doc/search.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
+import Howto from './cli/commands/howto.js'
 import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
@@ -147,6 +148,7 @@ export const COMMANDS: any = {
   ...HydrogenCommands,
   ...StoreCommands,
   search: Search,
+  howto: Howto,
   upgrade: Upgrade,
   version: VersionCommand,
   help: HelpCommand,
