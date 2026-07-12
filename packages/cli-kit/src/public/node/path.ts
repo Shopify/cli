@@ -133,14 +133,15 @@ export function commonParentDirectory(first: string, second: string): string {
  * @returns Relativized path.
  */
 export function relativizePath(path: string, dir: string = cwd()): string {
-  const result = commonParentDirectory(path, dir)
+  const commonParent = commonParentDirectory(path, dir)
   const relativePath = relative(dir, path)
-  const relativeComponents = relativePath.split('/').filter((component) => component === '..').length
-  if (result === '/' || relativePath === '' || relativeComponents > 2) {
+  const upLevels = relativePath.split('/').filter((component) => component === '..').length
+
+  if (commonParent === '/' || relativePath === '' || upLevels > 2) {
     return path
-  } else {
-    return relativePath
   }
+
+  return relativePath
 }
 
 /**
