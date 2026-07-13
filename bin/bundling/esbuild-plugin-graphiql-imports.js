@@ -23,11 +23,10 @@ const resolveGraphiQLAssetHelper = `function resolveGraphiQLAsset(asset) {
 const GraphiQLImportsPlugin = {
   name: 'GraphiQLImportsPlugin',
   setup(build) {
-    // GraphiQL uses require.resolve with paths that won't work with esbuild
-    // We need to replace them with valid paths
-    // graphiql/server.ts uses require.resolve('@shopify/cli-kit/assets/...'). The bundled CLI does not ship
-    // @shopify/cli-kit as a dependency; assets are copied to dist/assets. Rewrite to a resolver that works whether
-    // esbuild emits the GraphiQL server into a top-level shared chunk or a nested command file.
+    // GraphiQL uses require.resolve with paths that won't work after esbuild moves this module.
+    // We need to replace them with valid paths. The bundled CLI copies cli-kit assets to dist/assets,
+    // so rewrite to a resolver that works whether esbuild emits the GraphiQL server into a top-level
+    // shared chunk or a nested command file.
     build.onLoad({filter: /[/\\]graphiql[/\\]server\.[cm]?[jt]s$/}, async (args) => {
       const contents = await readFile(args.path, 'utf8')
       if (!createRequireStatement.test(contents)) {
@@ -41,7 +40,9 @@ const GraphiQLImportsPlugin = {
         contents: contents
           .replace(createRequireStatement, (match) => `${match}\n${resolveGraphiQLAssetHelper}`)
           .replace("require.resolve('@shopify/cli-kit/assets/graphiql/favicon.ico')", "resolveGraphiQLAsset('favicon.ico')")
-          .replace("require.resolve('@shopify/cli-kit/assets/graphiql/style.css')", "resolveGraphiQLAsset('style.css')"),
+          .replace("require.resolve('@shopify/cli-kit/assets/graphiql/style.css')", "resolveGraphiQLAsset('style.css')")
+          .replace("require.resolve('../../../../assets/graphiql/favicon.ico')", "resolveGraphiQLAsset('favicon.ico')")
+          .replace("require.resolve('../../../../assets/graphiql/style.css')", "resolveGraphiQLAsset('style.css')"),
       }
     })
   },
