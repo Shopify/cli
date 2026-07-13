@@ -53,7 +53,7 @@ export interface hydrogendeploy {
   '--env-file <value>'?: string
 
   /**
-   * Forces a deployment to proceed if there are uncommitted changes in its Git repository.
+   * Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation prompts for non-preview environments.
    * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
   '-f, --force'?: ''

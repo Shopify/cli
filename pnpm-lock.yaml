@@ -275,8 +275,8 @@ importers:
         specifier: 4.5.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 13.0.0
-        version: 13.0.0(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@18.19.130)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@22.19.17)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@22.19.17)(jiti@2.6.1)(sass@1.100.0)(tsx@4.22.4)(yaml@2.9.0))
+        specifier: 13.0.1
+        version: 13.0.1(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@18.19.130)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@22.19.17)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@22.19.17)(jiti@2.6.1)(sass@1.100.0)(tsx@4.22.4)(yaml@2.9.0))
       '@shopify/cli-kit':
         specifier: 4.5.0
         version: link:../cli-kit
@@ -3818,8 +3818,8 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==, tarball: https://registry.npmjs.org/@shikijs/vscode-textmate/-/vscode-textmate-10.0.2.tgz}
 
-  '@shopify/cli-hydrogen@13.0.0':
-    resolution: {integrity: sha512-s3nY0vU0V40VFAaOH2OA6sKgzxJqxWbCS20NJyQGoQ5kaXx0l7TPnziGhFirIbodzR8of7lA5noHNPIw3KKSoA==, tarball: https://registry.npmjs.org/@shopify/cli-hydrogen/-/cli-hydrogen-13.0.0.tgz}
+  '@shopify/cli-hydrogen@13.0.1':
+    resolution: {integrity: sha512-P9y8MbtRa8fSKOjoeh3rSko40DdRNqjknZzJAXx/U4de5vIhNrUM2SXs/LWJ58I1o6cYyH862ZYMySkjLlZZxQ==, tarball: https://registry.npmjs.org/@shopify/cli-hydrogen/-/cli-hydrogen-13.0.1.tgz}
     engines: {node: ^22 || ^24}
     hasBin: true
     peerDependencies:
@@ -13032,7 +13032,7 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@shopify/cli-hydrogen@13.0.0(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@18.19.130)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@22.19.17)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@22.19.17)(jiti@2.6.1)(sass@1.100.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@shopify/cli-hydrogen@13.0.1(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@18.19.130)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@22.19.17)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@22.19.17)(jiti@2.6.1)(sass@1.100.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       '@ast-grep/napi': 0.34.1
       '@oclif/core': 3.26.5
