@@ -2371,7 +2371,8 @@ USAGE
 
 FLAGS
   -f, --force
-      Forces a deployment to proceed if there are uncommitted changes in its Git repository.
+      Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation
+      prompts for non-preview environments.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
 
   -s, --shop=<value>
@@ -2587,9 +2588,17 @@ Push environment variables from the local .env file to your linked Hydrogen stor
 
 ```
 USAGE
-  $ shopify hydrogen env push [--env <value> | ] [--env-file <value>] [--path <value>]
+  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--path <value>]
 
 FLAGS
+  -f, --force
+      Push environment variable changes without confirmation.
+      [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  --dry-run
+      Preview environment variable changes without pushing them.
+      [env: SHOPIFY_HYDROGEN_FLAG_DRY_RUN]
+
   --env=<value>
       Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
 
