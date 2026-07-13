@@ -13,19 +13,20 @@ function sanitizeCmd(cmd: string): string {
 }
 
 function relativeScore(commandBigrams: string[], userCommandBigrams: string[]): number {
-  const map: Record<string, number> = {}
-  commandBigrams.forEach((elem) => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    map[elem] = map[elem] ? map[elem]! + 1 : 1
-  })
-  const result: string[] = []
+  const counts = new Map<string, number>()
+  for (const elem of commandBigrams) {
+    counts.set(elem, (counts.get(elem) ?? 0) + 1)
+  }
+
+  let result = 0
   for (const key of userCommandBigrams) {
-    if (key in map && map[key]! > 0) {
-      result.push(key)
-      map[key] = map[key]! - 1
+    const count = counts.get(key) ?? 0
+    if (count > 0) {
+      result += 1
+      counts.set(key, count - 1)
     }
   }
-  return result.length
+  return result
 }
 
 export function findAlternativeCommand(

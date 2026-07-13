@@ -5,7 +5,6 @@ interface FormatConfigInfoBodyOptions {
   org?: string
   devStores?: string[]
   updateURLs?: string
-  includeConfigOnDeploy?: boolean
   messages?: Token[][]
 }
 
@@ -36,7 +35,6 @@ export function formatConfigInfoBody({
   org,
   devStores,
   updateURLs,
-  includeConfigOnDeploy,
   messages,
 }: FormatConfigInfoBodyOptions): TokenItem {
   const items = [`App:             ${appName}`]
@@ -45,7 +43,6 @@ export function formatConfigInfoBody({
     devStores.forEach((storeUrl) => items.push(`Dev store:       ${storeUrl}`))
   }
   if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
-  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
 
   let body: Token[] = [{list: {items}}]
 

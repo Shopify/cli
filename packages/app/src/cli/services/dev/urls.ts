@@ -227,7 +227,6 @@ interface ShouldOrPromptUpdateURLsOptions {
   localApp?: AppLinkedInterface
   apiKey: string
   newURLs: ApplicationURLs
-  developerPlatformClient: DeveloperPlatformClient
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
@@ -236,12 +235,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
   let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
 
   if (options.cachedUpdateURLs === undefined) {
-    shouldUpdateURLs = await updateURLsPrompt(
-      options.developerPlatformClient.supportsDevSessions,
-      options.currentURLs.applicationUrl,
-      options.currentURLs.redirectUrlWhitelist,
-      options.newURLs,
-    )
+    shouldUpdateURLs = await updateURLsPrompt(options.currentURLs.applicationUrl, options.newURLs)
 
     if (options.localApp) {
       const localConfiguration = options.localApp.configuration

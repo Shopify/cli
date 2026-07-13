@@ -15,14 +15,12 @@ export interface EnsureDeploymentIdsPresenceOptions {
   appId: string
   appName: string
   envIdentifiers: Partial<Identifiers>
-  force: boolean
   /** If true, allow adding and updating extensions and configuration without user confirmation */
   allowUpdates?: boolean
   /** If true, allow removing extensions and configuration without user confirmation */
   allowDeletes?: boolean
   release: boolean
   remoteApp: PartnersAppForIdentifierMatching
-  includeDraftExtensions?: boolean
   activeAppVersion?: AppVersion
 }
 
@@ -58,10 +56,8 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     activeAppVersion: options.activeAppVersion,
   })
 
-  const shouldFetchInstallCount =
-    extensionIdentifiersBreakdown.onlyRemote.length > 0 &&
-    !options.force &&
-    !(options.allowUpdates && options.allowDeletes)
+  const shouldWarn = options.release && !options.allowDeletes
+  const shouldFetchInstallCount = extensionIdentifiersBreakdown.onlyRemote.length > 0 && shouldWarn
 
   let installCount: number | undefined
   if (shouldFetchInstallCount) {
@@ -82,7 +78,6 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     configExtensionIdentifiersBreakdown,
     appTitle: options.remoteApp?.title,
     release: options.release,
-    force: options.force,
     allowUpdates: options.allowUpdates,
     allowDeletes: options.allowDeletes,
     installCount,

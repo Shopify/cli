@@ -4,6 +4,7 @@ import {useThemeStoreContext} from '../services/local-storage.js'
 
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
+import {authAliasFlag} from '@shopify/cli-kit/node/cli'
 import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes, setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {
@@ -54,6 +55,8 @@ type EnvironmentName = string
 export type RequiredFlags = (string | string[])[] | null
 
 export default abstract class ThemeCommand extends Command {
+  static baseFlags = authAliasFlag
+
   environmentsFilename(): string {
     return configurationFileName
   }

@@ -44,16 +44,10 @@ import {
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
 } from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -75,10 +69,6 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
-import {
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateDraftMutationVariables,
-} from '../../api/graphql/partners/generated/update-draft.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
@@ -139,6 +129,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {fetchOrganizations} from '@shopify/organizations'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
@@ -161,6 +152,7 @@ import {
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {encodeGid, numericIdFromEncodedGid, numericIdFromGid} from '@shopify/cli-kit/common/gid'
+import {uniq} from '@shopify/cli-kit/common/array'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {getCurrentCommandId} from '@shopify/cli-kit/node/global-context'
@@ -201,12 +193,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   public readonly clientName = ClientName.AppManagement
   public readonly webUiName = 'Developer Dashboard'
-  public readonly supportsAtomicDeployments = true
-  public readonly supportsDevSessions = true
-  public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   public readonly bundleFormat = 'br'
-  public readonly supportsDashboardManagedExtensions = false
   private _session: Session | undefined
 
   private constructor(session?: Session) {
@@ -459,7 +447,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         managementExperience: 'cli',
         registrationLimit: spec.uidStrategy.appModuleLimit,
         uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
-        experience: normalizeExperience(spec.experience),
+        experience: normalizeExperience(spec.experience, spec.identifier),
         validationSchema: spec.validationSchema,
       }),
     )
@@ -701,7 +689,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience: normalizeExperience(mod.specification.experience),
+          experience: normalizeExperience(mod.specification.experience, mod.specification.identifier),
           options: {
             managementExperience: 'cli',
           },
@@ -746,10 +734,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
     }
-  }
-
-  async updateExtension(_extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {
-    throw new BugError('Not implemented: updateExtension')
   }
 
   async deploy({
@@ -881,7 +865,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const provisionable = isStoreProvisionable(org.currentUser?.organizationPermissions ?? [])
       return mapBusinessPlatformStoresToOrganizationStores(nodes, provisionable)
     })
-    return stores[0]
+
+    // `accessibleShops` treats `domain` as a fuzzy, free-text `search` argument, so a domain that is
+    // a substring of another store's domain (e.g. `example.myshopify.com` vs
+    // `turbo-example.myshopify.com`) can return multiple hits. Return only the store whose domain
+    // matches exactly, otherwise we risk connecting to the wrong store.
+    const normalizedDomain = normalizeStoreFqdn(shopDomain)
+    return stores.find((store) => store.shopDomain === normalizedDomain)
   }
 
   async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
@@ -907,24 +897,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
-    throw new BugError('Not implemented: createExtension')
-  }
-
   async convertToTransferDisabledStore(
     _input: ConvertDevToTransferDisabledStoreVariables,
   ): Promise<ConvertDevToTransferDisabledSchema> {
     throw new BugError('Not implemented: convertToTransferDisabledStore')
-  }
-
-  async updateDeveloperPreview(
-    _input: DevelopmentStorePreviewUpdateInput,
-  ): Promise<DevelopmentStorePreviewUpdateSchema> {
-    throw new BugError('Not implemented: updateDeveloperPreview')
-  }
-
-  async appPreviewMode(_input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
-    throw new BugError('Not implemented: appPreviewMode')
   }
 
   async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
@@ -1356,8 +1332,8 @@ export async function allowedTemplates(
   version: string = CLI_KIT_VERSION,
 ): Promise<GatedExtensionTemplate[]> {
   // Extract both types of flags from templates
-  const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
-  const allExpFlags = Array.from(new Set(templates.map((ext) => ext.organizationExpFlags ?? []).flat()))
+  const allBetaFlags = uniq(templates.flatMap((ext) => ext.organizationBetaFlags ?? []))
+  const allExpFlags = uniq(templates.flatMap((ext) => ext.organizationExpFlags ?? []))
 
   // Fetch both flag types in parallel
   const [enabledBetaFlags, enabledExpFlags] = await Promise.all([
@@ -1396,7 +1372,8 @@ type SpecificationExperience = 'extension' | 'configuration' | 'deprecated'
  * Normalizes the raw experience string from the API into a known union value.
  * Falls back to 'extension' for any unexpected/unknown values and logs a debug message.
  */
-function normalizeExperience(raw: string): SpecificationExperience {
+function normalizeExperience(raw: string, type: string): SpecificationExperience {
+  if (type === WebhookSubscriptionSpecIdentifier) return 'configuration'
   switch (raw) {
     case 'extension':
     case 'configuration':
@@ -1454,7 +1431,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
       ...mod.specification,
       identifier: mod.specification.identifier,
       options: {managementExperience: mod.specification.managementExperience as 'cli' | 'custom' | 'dashboard'},
-      experience: normalizeExperience(mod.specification.experience),
+      experience: normalizeExperience(mod.specification.experience, mod.specification.externalIdentifier),
     },
   }
 }

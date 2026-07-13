@@ -1,11 +1,23 @@
-import {Dev, DevProps} from './ui/components/Dev.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+
+interface DevProps {
+  processes: OutputProcess[]
+  previewUrl: string
+  graphiqlUrl?: string
+  abortController: AbortController
+  shopFqdn: string
+  app: {
+    id: string
+    developerPlatformClient: DeveloperPlatformClient
+  }
+}
 
 export async function renderDev({
   processes,
@@ -13,8 +25,6 @@ export async function renderDev({
   app,
   abortController,
   graphiqlUrl,
-  graphiqlPort,
-  developerPreview,
   shopFqdn,
   devSessionStatusManager,
   appURL,
@@ -30,17 +40,7 @@ export async function renderDev({
   configPath?: string
   localURL?: string
 }) {
-  if (!terminalSupportsPrompting()) {
-    await renderDevNonInteractive({
-      processes,
-      previewUrl,
-      graphiqlUrl,
-      app,
-      abortController,
-      developerPreview,
-      shopFqdn,
-    })
-  } else if (app.developerPlatformClient.supportsDevSessions) {
+  if (terminalSupportsPrompting()) {
     return render(
       <DevSessionUI
         processes={processes}
@@ -60,40 +60,22 @@ export async function renderDev({
         exitOnCtrlC: false,
       },
     )
-  } else {
-    return render(
-      <Dev
-        processes={processes}
-        abortController={abortController}
-        previewUrl={previewUrl}
-        app={app}
-        graphiqlUrl={graphiqlUrl}
-        graphiqlPort={graphiqlPort}
-        developerPreview={developerPreview}
-        isEditionWeek={isEditionWeek()}
-        shopFqdn={shopFqdn}
-      />,
-      {
-        exitOnCtrlC: false,
-      },
-    )
   }
+
+  await renderDevNonInteractive({
+    processes,
+    previewUrl,
+    graphiqlUrl,
+    abortController,
+  })
 }
 
 async function renderDevNonInteractive({
   processes,
   previewUrl,
   graphiqlUrl,
-  app: {canEnablePreviewMode},
   abortController,
-  developerPreview,
-}: Omit<DevProps, 'graphiqlPort'>) {
-  if (canEnablePreviewMode) {
-    await developerPreview.enable()
-    abortController?.signal.addEventListener('abort', async () => {
-      await developerPreview.disable()
-    })
-  }
+}: Pick<DevProps, 'processes' | 'previewUrl' | 'graphiqlUrl' | 'abortController'>) {
   process.stdout.write(`\nPreview URL: ${previewUrl}\n`)
   if (graphiqlUrl) {
     process.stdout.write(`GraphiQL URL (Admin API): ${graphiqlUrl}\n`)
@@ -104,14 +86,4 @@ async function renderDevNonInteractive({
       await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
     }),
   )
-}
-
-// We should make this better later, but for now, we'll hardcode and see how it's received.
-function isEditionWeek() {
-  if (isTruthy(process.env.IS_EDITION_WEEK)) return true
-  if (isUnitTest()) return false
-  const editionStart = new Date('2024-01-31T17:00:00.000Z')
-  const editionWeekEnd = new Date('2024-02-07T17:00:00.000Z')
-  const now = new Date()
-  return now >= editionStart && now <= editionWeekEnd
 }

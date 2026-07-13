@@ -33,7 +33,6 @@ describe('ensureDeploymentIdsPresence', () => {
       appName: 'appName',
       remoteApp: testOrganizationApp(),
       envIdentifiers: {},
-      force: false,
       release: true,
     }
     await expect(ensureDeploymentIdsPresence(params)).rejects.toThrow(AbortSilentError)
@@ -59,7 +58,6 @@ describe('ensureDeploymentIdsPresence', () => {
       appName: 'appName',
       remoteApp,
       envIdentifiers: {},
-      force: false,
       release: true,
     }
 
@@ -74,7 +72,7 @@ describe('ensureDeploymentIdsPresence', () => {
     })
   })
 
-  test('when force is true, appInstallCount is not called even with remote-only extensions', async () => {
+  test('when release is false, appInstallCount is not called even with remote-only extensions', async () => {
     // Given
     const breakdown = buildExtensionsBreakdown()
     breakdown.extensionIdentifiersBreakdown.onlyRemote = [buildExtensionBreakdownInfo('removed', 'uuid-1')]
@@ -98,8 +96,7 @@ describe('ensureDeploymentIdsPresence', () => {
       appName: 'appName',
       remoteApp: testOrganizationApp(),
       envIdentifiers: {},
-      force: true,
-      release: true,
+      release: false,
     }
 
     // When
@@ -133,7 +130,6 @@ describe('ensureDeploymentIdsPresence', () => {
       appName: 'appName',
       remoteApp: testOrganizationApp(),
       envIdentifiers: {},
-      force: false,
       allowUpdates: true,
       allowDeletes: true,
       release: true,
@@ -170,7 +166,6 @@ describe('ensureDeploymentIdsPresence', () => {
       appName: 'appName',
       remoteApp: testOrganizationApp(),
       envIdentifiers: {},
-      force: false,
       release: true,
     }
 
@@ -206,7 +201,6 @@ describe('ensureDeploymentIdsPresence', () => {
       appName: 'appName',
       remoteApp: testOrganizationApp(),
       envIdentifiers: {},
-      force: false,
       release: true,
     }
     const result = await ensureDeploymentIdsPresence(params)

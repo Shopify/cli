@@ -154,39 +154,15 @@ export async function createAsNewAppPrompt(): Promise<boolean> {
   })
 }
 
-export function updateURLsPrompt(
-  usingDevSessions: boolean,
-  currentAppUrl: string,
-  currentRedirectUrls: string[],
-  newURLs: ApplicationURLs,
-): Promise<boolean> {
-  if (usingDevSessions) {
-    return updateURLsPromptWithDevSessions(currentAppUrl, newURLs)
-  }
-  return legacyUpdateURLsPrompt(currentAppUrl, currentRedirectUrls)
-}
-
-function legacyUpdateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<boolean> {
-  return renderConfirmationPrompt({
-    message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
-    confirmationMessage: 'Yes, automatically update',
-    cancellationMessage: 'No, never',
-    infoTable: {
-      'Current app URL': [currentAppUrl],
-      'Current redirect URLs': currentRedirectUrls,
-    },
-  })
-}
-
-function updateURLsPromptWithDevSessions(currentAppUrl: string, urls: ApplicationURLs): Promise<boolean> {
+export function updateURLsPrompt(currentAppUrl: string, newURLs: ApplicationURLs): Promise<boolean> {
   const affectedConfigs = ['application_url', 'redirect_urls']
-  if (urls.appProxy?.proxyUrl) {
+  if (newURLs.appProxy?.proxyUrl) {
     affectedConfigs.push('app_proxy')
   }
 
   const infoTable: {[key: string]: string[]} = {
     'Currently released app URL': [currentAppUrl],
-    '=> Dev URL': [urls.applicationUrl],
+    '=> Dev URL': [newURLs.applicationUrl],
     'Affected configurations': affectedConfigs,
   }
 

@@ -16,7 +16,7 @@ import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
-import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
+import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
@@ -118,6 +118,7 @@ type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'cus
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
+let commandSessionId: string | undefined
 
 /**
  * Retrieves a stable user identifier for analytics, or `'unknown'` if none applies.
@@ -179,6 +180,10 @@ export function setLastSeenAuthMethod(method: AuthMethod) {
   authMethod = method
 }
 
+export function setCommandSessionId(sessionId: string | undefined) {
+  commandSessionId = sessionId
+}
+
 export interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
   forceRefresh?: boolean
@@ -210,8 +215,8 @@ export async function ensureAuthenticated(
 
   const sessions = (await sessionStore.fetch()) ?? {}
 
-  let currentSessionId = getCurrentSessionId()
-  if (!currentSessionId) {
+  let currentSessionId = forceNewSession ? undefined : (commandSessionId ?? getCurrentSessionId())
+  if (!currentSessionId && !commandSessionId) {
     const userIds = Object.keys(sessions[fqdn] ?? {})
     if (userIds.length > 0) currentSessionId = userIds[0]
   }
@@ -260,7 +265,7 @@ ${outputToken.json(applications)}
   // Save the new session info if it has changed
   if (!isEmpty(newSession)) {
     await sessionStore.store(updatedSessions)
-    setCurrentSessionId(newSessionId)
+    if (!commandSessionId) setCurrentSessionId(newSessionId)
   }
 
   const tokens = await tokensFor(applications, completeSession)
@@ -296,10 +301,6 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
-  if (firstPartyDev()) {
-    outputDebug(outputContent`Authenticating as Shopify Employee...`)
-    scopes.push('employee')
-  }
 
   let identityToken: IdentityToken
   const identityTokenInformation = getIdentityTokenInformation()

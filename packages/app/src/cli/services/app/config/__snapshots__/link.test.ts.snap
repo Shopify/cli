@@ -79,6 +79,7 @@ use_legacy_install_flow = true
 
 [build]
 include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 "
 `;
 
@@ -515,6 +516,7 @@ url = "https://api-client-config.com/preferences"
 
 [build]
 include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 "
 `;
 
@@ -542,10 +544,11 @@ embedded = false
 
 [build]
 include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 "
 `;
 
-exports[`link > when remote app is new and supports dev sessions then include automatically_update_urls_on_dev = true 1`] = `
+exports[`link > when remote app is new then include automatically_update_urls_on_dev = true 1`] = `
 "# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 application_url = "https://example.com"

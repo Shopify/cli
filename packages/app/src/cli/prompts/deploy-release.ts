@@ -18,7 +18,6 @@ interface DeployOrReleaseConfirmationPromptOptions {
   configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown
   appTitle?: string
   release: boolean
-  force: boolean
   /** If true, allow adding and updating extensions and configuration without user confirmation */
   allowUpdates?: boolean
   /** If true, allow removing extensions and configuration without user confirmation */
@@ -46,20 +45,20 @@ interface DeployConfirmationPromptOptions {
  * Throws an error if in non-TTY mode and there are changes that require confirmation.
  */
 function shouldSkipConfirmationPrompt({
-  force,
+  release,
   allowUpdates,
   allowDeletes,
   extensionIdentifiersBreakdown,
   configExtensionIdentifiersBreakdown,
 }: {
-  force: boolean
+  release: boolean
   allowUpdates?: boolean
   allowDeletes?: boolean
   extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
   configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown
 }): boolean {
-  // --no-release (which sets force=true internally) is equivalent to --allow-updates --allow-deletes
-  if (force || (allowUpdates && allowDeletes)) return true
+  // not releasing is equivalent to --allow-updates --allow-deletes
+  if (!release || (allowUpdates && allowDeletes)) return true
 
   const hasDeletedExtensions = extensionIdentifiersBreakdown.onlyRemote.length > 0
   const hasDeletedConfig = (configExtensionIdentifiersBreakdown?.deletedFieldNames.length ?? 0) > 0
@@ -92,7 +91,6 @@ function shouldSkipConfirmationPrompt({
 }
 
 export async function deployOrReleaseConfirmationPrompt({
-  force,
   allowUpdates,
   allowDeletes,
   extensionIdentifiersBreakdown,
@@ -104,7 +102,7 @@ export async function deployOrReleaseConfirmationPrompt({
   await metadata.addPublicMetadata(() => buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown))
 
   const shouldSkip = shouldSkipConfirmationPrompt({
-    force,
+    release,
     allowUpdates,
     allowDeletes,
     extensionIdentifiersBreakdown,

@@ -40,11 +40,6 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {
-  ExtensionCreateQuery,
-  ExtensionCreateSchema,
-  ExtensionCreateVariables,
-} from '../../api/graphql/extension_create.js'
-import {
   ConvertDevToTransferDisabledStoreQuery,
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
@@ -60,16 +55,6 @@ import {
   AppVersionsQueryVariables,
   AppVersionsQuerySchema,
 } from '../../api/graphql/get_versions_list.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateQuery,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../../api/graphql/development_preview.js'
-import {
-  FindAppPreviewModeQuery,
-  FindAppPreviewModeSchema,
-  FindAppPreviewModeVariables,
-} from '../../api/graphql/find_app_preview_mode.js'
 import {
   AppVersionsDiffQuery,
   AppVersionsDiffSchema,
@@ -133,11 +118,6 @@ import {
 import {AppLogsSubscribeMutation, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 
 import {AllOrgs} from '../../api/graphql/partners/generated/all-orgs.js'
-import {
-  ExtensionUpdateDraft,
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateDraftMutationVariables,
-} from '../../api/graphql/partners/generated/update-draft.js'
 import {FindAppQuery, FindAppQuerySchema, FindAppQueryVariables} from '../../api/graphql/find_app.js'
 import {
   FindOrganizationQuery,
@@ -213,12 +193,8 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   public readonly clientName = ClientName.Partners
   public readonly webUiName = 'Partner Dashboard'
-  public readonly supportsAtomicDeployments = false
-  public readonly supportsDevSessions = false
-  public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
   public readonly bundleFormat = 'zip'
-  public readonly supportsDashboardManagedExtensions = true
   private _session: Session | undefined
 
   private constructor(session?: Session) {
@@ -462,14 +438,6 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
-    return this.request(ExtensionCreateQuery, input)
-  }
-
-  async updateExtension(extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {
-    return this.requestDoc(ExtensionUpdateDraft, extensionInput)
-  }
-
   async deploy(deployInput: AppDeployOptions): Promise<AppDeploySchema> {
     const {organizationId, ...deployOptions} = deployInput
     // Enforce the type
@@ -525,16 +493,6 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async ensureUserAccessToStore(_orgId: string, _store: OrganizationStore): Promise<void> {
     // This is a no-op for partners
-  }
-
-  async updateDeveloperPreview(
-    input: DevelopmentStorePreviewUpdateInput,
-  ): Promise<DevelopmentStorePreviewUpdateSchema> {
-    return this.request(DevelopmentStorePreviewUpdateQuery, input)
-  }
-
-  async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
-    return this.request(FindAppPreviewModeQuery, input)
   }
 
   async sendSampleWebhook(

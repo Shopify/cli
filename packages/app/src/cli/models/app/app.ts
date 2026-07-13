@@ -1,6 +1,6 @@
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
-import {Identifiers} from './identifiers.js'
+import {ExtensionUuidsByLocalIdentifier} from './identifiers.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
@@ -8,7 +8,6 @@ import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
-import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
@@ -228,7 +227,6 @@ export interface AppInterface<
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
   nonConfigExtensions: ExtensionInstance[]
-  draftableExtensions: ExtensionInstance[]
   errors: AppErrors
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
@@ -247,7 +245,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): CreateAppOptions
-  manifest: (identifiers: Identifiers | undefined) => Promise<AppManifest>
+  manifest: (appModuleUuids: ExtensionUuidsByLocalIdentifier | undefined) => Promise<AppManifest>
   removeExtension: (extensionUid: string) => void
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
@@ -328,18 +326,12 @@ export class App<
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
 
-  get draftableExtensions() {
-    return this.realExtensions.filter(
-      (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
-    )
-  }
-
   setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {
     this.patchAppConfiguration(devApplicationURLs)
     this.realExtensions.forEach((ext) => ext.patchWithAppDevURLs(devApplicationURLs))
   }
 
-  async manifest(identifiers: Identifiers | undefined): Promise<AppManifest> {
+  async manifest(appModuleUuids: ExtensionUuidsByLocalIdentifier | undefined): Promise<AppManifest> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
         const config = await module.deployConfig({
@@ -350,7 +342,7 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
-          uuid: identifiers?.extensions[module.localIdentifier],
+          uuid: appModuleUuids?.[module.localIdentifier],
           assets: module.uid,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,

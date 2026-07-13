@@ -1,7 +1,7 @@
 import {buildHeaders, sanitizedHeadersOutput, GraphQLClientError} from './headers.js'
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {randomUUID} from '../../../public/node/crypto.js'
-import {firstPartyDev, isUnitTest} from '../../../public/node/context/local.js'
+import {isUnitTest} from '../../../public/node/context/local.js'
 
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
@@ -14,30 +14,9 @@ beforeEach(() => {
 })
 
 describe('common API methods', () => {
-  test('headers are built correctly when firstPartyDev yields true', () => {
+  test('headers are built correctly', () => {
     // Given
     vi.mocked(randomUUID).mockReturnValue('random-uuid')
-    vi.mocked(firstPartyDev).mockReturnValue(true)
-    // When
-    const headers = buildHeaders('my-token')
-
-    // Then
-    const version = CLI_KIT_VERSION
-    expect(headers).toEqual({
-      'Content-Type': 'application/json',
-      'Keep-Alive': 'timeout=30',
-      'X-Shopify-Access-Token': 'Bearer my-token',
-      'User-Agent': `Shopify CLI; v=${version}`,
-      authorization: 'Bearer my-token',
-      'Sec-CH-UA-PLATFORM': process.platform,
-      'X-Shopify-Cli-Employee': '1',
-    })
-  })
-
-  test('when user is not employee, do not include header', () => {
-    // Given
-    vi.mocked(randomUUID).mockReturnValue('random-uuid')
-    vi.mocked(firstPartyDev).mockReturnValue(false)
     // When
     const headers = buildHeaders('my-token')
 
@@ -58,7 +37,6 @@ describe('common API methods', () => {
     (prefix) => {
       // Given
       vi.mocked(randomUUID).mockReturnValue('random-uuid')
-      vi.mocked(firstPartyDev).mockReturnValue(false)
       const token = `${prefix}_my_token`
       // When
       const headers = buildHeaders(token)

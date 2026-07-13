@@ -11,17 +11,11 @@ import {
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
 
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
 import {
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
 } from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../api/graphql/development_preview.js'
-import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
@@ -43,10 +37,6 @@ import {
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppManifest} from '../models/app/app.js'
-import {
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateDraftMutationVariables,
-} from '../api/graphql/partners/generated/update-draft.js'
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
@@ -62,7 +52,6 @@ import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
 export type {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
 
@@ -109,8 +98,6 @@ function selectDeveloperPlatformClientByOrg(organization: Organization): Develop
 }
 
 function defaultDeveloperPlatformClient(): DeveloperPlatformClient {
-  if (firstPartyDev() && !blockPartnersAccess()) return PartnersClient.getInstance()
-
   return AppManagementClient.getInstance()
 }
 
@@ -234,12 +221,8 @@ export interface TemplateSpecificationsOptions {
 export interface DeveloperPlatformClient {
   readonly clientName: ClientName
   readonly webUiName: string
-  readonly supportsAtomicDeployments: boolean
-  readonly supportsDevSessions: boolean
-  readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
-  readonly supportsDashboardManagedExtensions: boolean
   session: () => Promise<Session>
   /**
    * This is an unsafe method that should only be used when the session is expired.
@@ -272,15 +255,11 @@ export interface DeveloperPlatformClient {
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
-  createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
-  updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
   convertToTransferDisabledStore: (
     input: ConvertDevToTransferDisabledStoreVariables,
   ) => Promise<ConvertDevToTransferDisabledSchema>
-  updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
-  appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
   apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>

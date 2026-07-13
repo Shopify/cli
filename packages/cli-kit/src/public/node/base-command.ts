@@ -2,6 +2,7 @@ import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {outputContent, outputResult, outputToken} from './output.js'
+import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
@@ -17,6 +18,7 @@ export type ArgOutput = OutputArgs<any>
 export type FlagOutput = OutputFlags<any>
 
 interface EnvironmentFlags {
+  'auth-alias'?: string
   environment?: string[]
   path?: string
 }
@@ -95,7 +97,7 @@ abstract class BaseCommand extends Command {
   }
 
   protected async parse<
-    TFlags extends FlagOutput & {path?: string; verbose?: boolean},
+    TFlags extends FlagOutput & {path?: string; verbose?: boolean; 'auth-alias'?: string},
     TGlobalFlags extends FlagOutput,
     TArgs extends ArgOutput,
   >(
@@ -104,6 +106,7 @@ abstract class BaseCommand extends Command {
   ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs> & {argv: string[]}> {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
+    await setCurrentSessionAlias(result.flags['auth-alias'])
     await addFromParsedFlags(result.flags)
     return {...result, ...{argv: result.argv as string[]}}
   }

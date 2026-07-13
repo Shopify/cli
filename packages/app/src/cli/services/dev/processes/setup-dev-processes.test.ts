@@ -4,21 +4,16 @@ import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {launchGraphiQLServer} from './graphiql.js'
-import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session/dev-session-process.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {launchAppWatcher} from './app-watcher-process.js'
 import {
-  testAppAccessConfigExtension,
-  testAppConfigExtensions,
   testAppWithConfig,
   testDeveloperPlatformClient,
-  testSingleWebhookSubscriptionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
   testFunctionExtension,
-  testWebhookExtensions,
   testOrganizationApp,
   testAppLinked,
   testOrganization,
@@ -26,7 +21,6 @@ import {
   testProject,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
-import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import * as loader from '../../../models/app/loader.js'
@@ -37,16 +31,13 @@ import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
-vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
 vi.mock('../fetch.js')
 vi.mock('@shopify/cli-kit/node/environment')
 vi.mock('@shopify/theme')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/context/fqdn', async (importOriginal) => {
   const original = await importOriginal<typeof import('@shopify/cli-kit/node/context/fqdn')>()
   return {
@@ -56,14 +47,6 @@ vi.mock('@shopify/cli-kit/node/context/fqdn', async (importOriginal) => {
 })
 
 beforeEach(() => {
-  // mocked for draft extensions
-  vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({
-    extensionIds: {},
-    app: 'app-id',
-    extensions: {},
-    extensionsNonUuidManaged: {},
-  })
-
   // mocked for theme app extensions
   vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue({
     storeFqdn: 'store.myshopify.io',
@@ -79,8 +62,6 @@ beforeEach(() => {
     role: 'theme',
     processing: false,
   })
-  // By default, firstPartyDev is false (local dev console only shown for 1P devs)
-  vi.mocked(firstPartyDev).mockReturnValue(false)
   vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
 })
 
@@ -178,7 +159,6 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
-    // Dev console is NOT shown by default (only shown for 1P devs)
     expect(res.previewUrl).toBe('https://admin.shopify.com/store/store/apps/api-key?dev-console=show')
     expect(res.processes[0]).toMatchObject({
       type: 'web',
@@ -233,20 +213,8 @@ describe('setup-dev-processes', () => {
         appId: '1234',
       },
     })
-    expect(res.processes[3]).toMatchObject({
-      type: 'draftable-extension',
-      prefix: 'extensions',
-      function: pushUpdatesForDraftableExtensions,
-      options: {
-        localApp,
-        apiKey: 'api-key',
-        developerPlatformClient,
-        extensions: expect.arrayContaining([draftable]),
-        remoteExtensionIds: {},
-        proxyUrl: 'https://example.com/proxy',
-      },
-    })
-    expect(res.processes[4]).toMatchObject({
+    const themeProcess = res.processes.find((process) => process.type === 'theme-app-extensions')
+    expect(themeProcess).toMatchObject({
       type: 'theme-app-extensions',
       prefix: 'theme-extensions',
       function: runThemeAppExtensionsServer,
@@ -266,7 +234,8 @@ describe('setup-dev-processes', () => {
         themeExtensionPort: 9293,
       },
     })
-    expect(res.processes[5]).toMatchObject({
+    const sendWebhookProcess = res.processes.find((process) => process.type === 'send-webhook')
+    expect(sendWebhookProcess).toMatchObject({
       type: 'send-webhook',
       prefix: 'webhooks',
       function: sendWebhook,
@@ -380,8 +349,8 @@ describe('setup-dev-processes', () => {
     expect(res.graphiqlUrl).toBe(`http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(expectedKey)}`)
   })
 
-  test('process list includes dev-session when useDevSession is true', async () => {
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({supportsDevSessions: true})
+  test('process list includes dev-session', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true
@@ -529,7 +498,8 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
-    expect(res.processes[6]).toMatchObject({
+    const appLogsProcess = res.processes.find((process) => process.type === 'app-logs-subscribe')
+    expect(appLogsProcess).toMatchObject({
       type: 'app-logs-subscribe',
       prefix: 'app-logs',
       function: subscribeAndStartPolling,
@@ -630,110 +600,5 @@ describe('setup-dev-processes', () => {
     expect(logsProcess).not.toBeUndefined()
     expect(logsProcess?.options).toHaveProperty('localApp')
     expect(logsProcess?.options).toHaveProperty('appWatcher')
-  })
-
-  test('pushUpdatesForDraftableExtensions does not include config extensions except app_access', async () => {
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
-    const storeFqdn = 'store.myshopify.io'
-    const storeId = '123456789'
-    const remoteAppUpdated = true
-    const graphiqlPort = 1234
-    const commandOptions: DevConfig['commandOptions'] = {
-      ...appContextResult,
-      subscriptionProductUrl: '/products/999999',
-      checkoutCartUrl: '/cart/999999:1',
-      theme: '1',
-      directory: '',
-      update: false,
-      commandConfig: new Config({root: ''}),
-      skipDependenciesInstallation: false,
-      tunnel: {mode: 'auto'},
-    }
-    const network: DevConfig['network'] = {
-      proxyUrl: 'https://example.com/proxy',
-      proxyPort: 444,
-      backendPort: 111,
-      frontendPort: 222,
-      currentUrls: {
-        applicationUrl: 'https://example.com/application',
-        redirectUrlWhitelist: ['https://example.com/redirect'],
-      },
-    }
-    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
-    const draftable = await testTaxCalculationExtension()
-    const nonDraftableSingleUidStrategyExtension = await testAppConfigExtensions()
-    const draftableSingleUidStrategyExtension = await testAppAccessConfigExtension()
-    const webhookSubscriptionModuleExtension = await testSingleWebhookSubscriptionExtension()
-    const webhooksModuleExtension = await testWebhookExtensions()
-    const theme = await testThemeExtensions()
-    const localApp = testAppWithConfig({
-      config: {},
-      app: {
-        webs: [
-          {
-            directory: 'web',
-            configuration: {
-              roles: [WebType.Backend, WebType.Frontend],
-              commands: {dev: 'npm exec remix dev'},
-              webhooks_path: '/webhooks',
-              hmr_server: {
-                http_paths: ['/ping'],
-              },
-            },
-          },
-        ],
-        allExtensions: [
-          previewable,
-          draftable,
-          theme,
-          nonDraftableSingleUidStrategyExtension,
-          draftableSingleUidStrategyExtension,
-          webhookSubscriptionModuleExtension,
-          webhooksModuleExtension,
-        ],
-      },
-    })
-    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
-
-    const remoteApp: DevConfig['remoteApp'] = {
-      apiKey: 'api-key',
-      apiSecretKeys: [{secret: 'api-secret'}],
-      id: '1234',
-      title: 'App',
-      organizationId: '5678',
-      grantedScopes: [],
-      flags: [],
-      developerPlatformClient,
-    }
-
-    const graphiqlKey = 'somekey'
-
-    const res = await setupDevProcesses({
-      localApp,
-      commandOptions,
-      network,
-      remoteApp,
-      remoteAppUpdated,
-      storeFqdn,
-      storeId,
-      developerPlatformClient,
-      partnerUrlsUpdated: true,
-      graphiqlPort,
-      graphiqlKey,
-    })
-
-    expect(res.processes[3]).toMatchObject({
-      type: 'draftable-extension',
-      prefix: 'extensions',
-      function: pushUpdatesForDraftableExtensions,
-      options: {
-        localApp,
-        apiKey: 'api-key',
-        developerPlatformClient,
-        extensions: expect.arrayContaining([draftable, theme, previewable, draftableSingleUidStrategyExtension]),
-        remoteExtensionIds: {},
-        proxyUrl: 'https://example.com/proxy',
-      },
-    })
   })
 })

@@ -11,7 +11,6 @@ import {
 import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputSuccess} from '@shopify/cli-kit/node/output'
 
@@ -31,10 +30,7 @@ export async function selectStore(
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> {
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
-  let onSearchForStoresByName
-  if (developerPlatformClient.supportsStoreSearch) {
-    onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
-  }
+  const onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
   // If no stores, guide the developer through creating one
   // Then, with a store selected, make sure its transfer-disabled, prompting to convert if needed
   let store = await selectStorePrompt({
@@ -130,7 +126,7 @@ export async function convertToTransferDisabledStoreIfNeeded(
   developerPlatformClient: DeveloperPlatformClient,
   conversionMode: 'prompt-first' | 'never',
 ): Promise<boolean> {
-  if (store.transferDisabled || firstPartyDev()) return true
+  if (store.transferDisabled) return true
 
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
     throw new AbortError(

@@ -1,7 +1,6 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import {DeployOptions} from './deploy.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
@@ -10,24 +9,17 @@ import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/ap
 import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
-import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../api/graphql/development_preview.js'
 import {
   allDeveloperPlatformClients,
   CreateAppOptions,
-  DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Token, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
@@ -108,29 +100,6 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
   return app
 }
 
-export async function ensureThemeExtensionDevContext(
-  extension: ExtensionInstance,
-  apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<ExtensionRegistration> {
-  const remoteSpecifications = await developerPlatformClient.appExtensionRegistrations({
-    id: apiKey,
-    apiKey,
-    organizationId: '1',
-  })
-  const remoteRegistration = remoteSpecifications.app.extensionRegistrations.find((extension) => {
-    return extension.type === 'THEME_APP_EXTENSION'
-  })
-
-  if (remoteRegistration) {
-    return remoteRegistration
-  }
-
-  const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, developerPlatformClient)
-
-  return registration
-}
-
 interface EnsureDeployContextResult {
   identifiers: Identifiers
   didMigrateExtensionsToDevDash: boolean
@@ -149,17 +118,16 @@ interface EnsureDeployContextResult {
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployOptions): Promise<EnsureDeployContextResult> {
-  const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
+  const {noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  const includeConfigOnDeploy = await checkIncludeConfigOnDeploy({app, reset, force, developerPlatformClient})
+  await removeIncludeConfigOnDeployField(app)
 
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
     configFile: basename(app.configPath),
-    includeConfigOnDeploy,
     messages: [resetHelpMessage],
   })
 
@@ -167,7 +135,6 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     app,
     appId: remoteApp.apiKey,
     appName: remoteApp.title,
-    force,
     release: !noRelease,
     developerPlatformClient,
     envIdentifiers: getAppIdentifiers({app}),
@@ -177,67 +144,15 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     allowDeletes: options.allowDeletes,
   })
 
-  await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+  await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
   // if the current active app version is missing user_identifiers in some app module, then we are migrating to dev dash
   let didMigrateExtensionsToDevDash = false
-  if (developerPlatformClient.supportsAtomicDeployments && activeAppVersion) {
+  if (activeAppVersion) {
     didMigrateExtensionsToDevDash = activeAppVersion.appModuleVersions.some((version) => !version.registrationId)
   }
 
   return {identifiers, didMigrateExtensionsToDevDash}
-}
-
-interface ShouldOrPromptIncludeConfigDeployOptions {
-  appDirectory: string
-  localApp: AppInterface
-}
-
-async function checkIncludeConfigOnDeploy({
-  app,
-  reset,
-  force,
-  developerPlatformClient,
-}: {
-  app: AppInterface
-  reset: boolean
-  force: boolean
-  developerPlatformClient: DeveloperPlatformClient
-}): Promise<boolean | undefined> {
-  if (developerPlatformClient.supportsAtomicDeployments) {
-    await removeIncludeConfigOnDeployField(app)
-    return undefined
-  }
-
-  let includeConfigOnDeploy = app.includeConfigOnDeploy
-  if (reset) includeConfigOnDeploy = undefined
-
-  if (force && includeConfigOnDeploy === undefined) {
-    // If a partner is deploying on CI/CD with include_config_on_deploy not set,
-    // we need to abort the deploy, because the default value changed to true.
-    const message = [
-      'You must specify a value for',
-      {command: 'include_config_on_deploy'},
-      'in your TOML file. Including configuration will be required very soon.',
-    ]
-    const nextSteps = [
-      'Run',
-      {command: 'shopify app deploy'},
-      'interactively, without',
-      {command: '--allow-updates'},
-      'or',
-      {command: '--allow-deletes'},
-      '.',
-    ]
-    throw new AbortError(message, nextSteps)
-  }
-
-  if (force || includeConfigOnDeploy === true) return includeConfigOnDeploy
-
-  return promptAndSaveIncludeConfigOnDeploy({
-    appDirectory: app.directory,
-    localApp: app,
-  })
 }
 
 async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
@@ -273,28 +188,6 @@ function renderWarningAboutIncludeConfigOnDeploy() {
       label: 'See Shopify CLI documentation.',
       url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
     },
-  })
-}
-
-async function promptAndSaveIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions): Promise<boolean> {
-  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configPath)
-  options.localApp.configuration.build = {
-    ...options.localApp.configuration.build,
-    include_config_on_deploy: shouldIncludeConfigDeploy,
-  }
-  const configFile = await TomlFile.read(options.localApp.configPath)
-  await configFile.patch({build: {include_config_on_deploy: shouldIncludeConfigDeploy}})
-  await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
-  return shouldIncludeConfigDeploy
-}
-
-function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
-  return renderConfirmationPrompt({
-    message: `Include \`${basename(
-      configPath,
-    )}\` configuration on \`deploy\`? Soon, this will no longer be optional and configuration will be included on every deploy.`,
-    confirmationMessage: 'Yes, always (Recommended)',
-    cancellationMessage: 'No, not now',
   })
 }
 
@@ -373,7 +266,6 @@ interface CurrentlyUsedConfigInfoOptions {
   updateURLs?: string
   configFile?: string
   appDotEnv?: string
-  includeConfigOnDeploy?: boolean
   messages?: Token[][]
 }
 
@@ -384,7 +276,6 @@ export function renderCurrentlyUsedConfigInfo({
   updateURLs,
   configFile,
   appDotEnv,
-  includeConfigOnDeploy,
   messages,
 }: CurrentlyUsedConfigInfoOptions): void {
   const devStores = []
@@ -394,7 +285,7 @@ export function renderCurrentlyUsedConfigInfo({
 
   renderInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
-    body: formatConfigInfoBody({appName, org, devStores, updateURLs, includeConfigOnDeploy, messages}),
+    body: formatConfigInfoBody({appName, org, devStores, updateURLs, messages}),
   })
 }
 
@@ -409,44 +300,4 @@ export async function logMetadataForLoadedContext(
     ...organizationInfo,
     api_key: app.apiKey,
   }))
-}
-
-export async function enableDeveloperPreview({
-  apiKey,
-  developerPlatformClient,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-}) {
-  return developerPreviewUpdate({apiKey, developerPlatformClient, enabled: true})
-}
-
-export async function disableDeveloperPreview({
-  apiKey,
-  developerPlatformClient,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-}) {
-  await developerPreviewUpdate({apiKey, developerPlatformClient, enabled: false})
-}
-
-export async function developerPreviewUpdate({
-  apiKey,
-  developerPlatformClient,
-  enabled,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-  enabled: boolean
-}) {
-  const input: DevelopmentStorePreviewUpdateInput = {
-    input: {
-      apiKey,
-      enabled,
-    },
-  }
-  const result: DevelopmentStorePreviewUpdateSchema = await developerPlatformClient.updateDeveloperPreview(input)
-  const userErrors = result.developmentStorePreviewUpdate.userErrors
-  return !userErrors || userErrors.length === 0
 }

@@ -39,9 +39,6 @@ export interface DeployOptions {
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
 
-  /** If true, proceed with deploy without asking for confirmation (equivalent to allowUpdates && allowDeletes) */
-  force: boolean
-
   /** If true, allow adding and updating extensions and configuration without user confirmation */
   allowUpdates?: boolean
 
@@ -73,58 +70,24 @@ interface ImportExtensionsIfNeededOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
-  force: boolean
+  noRelease?: boolean
+  allowUpdates?: boolean
+  allowDeletes?: boolean
 }
 
-async function handleSupportedDashboardExtensions(
+async function handleDashboardExtensions(
   options: ImportExtensionsIfNeededOptions & {
     extensions: ExtensionRegistration[]
   },
 ): Promise<AppLinkedInterface> {
-  const {app, remoteApp, developerPlatformClient, force, extensions} = options
-
-  if (force || !isTTY()) {
-    return app
-  }
-
-  const message = [
-    `App includes legacy extensions that will be deprecated soon:\n`,
-    extensions.map((ext) => `  - ${ext.title}`).join('\n'),
-    '\n\nRun ',
-    {command: 'shopify app import-extensions'},
-    'to add legacy extensions now?',
-  ]
-  const shouldImportExtensions = await renderConfirmationPrompt({
-    message,
-    confirmationMessage: 'Yes, add legacy extensions and deploy',
-    cancellationMessage: 'No, skip for now',
-  })
-
-  if (shouldImportExtensions) {
-    await importAllExtensions({
-      app,
-      remoteApp,
-      developerPlatformClient,
-      extensions,
-    })
-    return reloadApp(app)
-  }
-
-  return app
-}
-
-async function handleUnsupportedDashboardExtensions(
-  options: ImportExtensionsIfNeededOptions & {
-    extensions: ExtensionRegistration[]
-  },
-): Promise<AppLinkedInterface> {
-  const {app, remoteApp, developerPlatformClient, force, extensions} = options
+  const {app, remoteApp, developerPlatformClient, noRelease, allowUpdates, allowDeletes, extensions} = options
+  const force = [noRelease, allowUpdates, allowDeletes].some(Boolean)
 
   const message = [
     `App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:\n`,
     extensions.map((ext) => `  - ${ext.title}`).join('\n'),
   ]
-  const nextSteps = ['\n\nRun ', {command: 'shopify app import-extensions'}, 'to add legacy extensions.']
+  const nextSteps = ['\n\nRun ', {command: 'shopify app import-extensions'}, ' to add legacy extensions.']
 
   if (force || !isTTY()) {
     throw new AbortError(message, nextSteps)
@@ -145,9 +108,9 @@ async function handleUnsupportedDashboardExtensions(
       extensions,
     })
     return reloadApp(app)
-  } else {
-    throw new AbortSilentError()
   }
+
+  throw new AbortSilentError()
 }
 
 export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeededOptions): Promise<AppLinkedInterface> {
@@ -167,27 +130,22 @@ export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeeded
     return app
   }
 
-  if (developerPlatformClient.supportsDashboardManagedExtensions) {
-    return handleSupportedDashboardExtensions({
-      ...options,
-      extensions: extensionsNotImportedYet,
-    })
-  } else {
-    return handleUnsupportedDashboardExtensions({
-      ...options,
-      extensions: extensionsNotImportedYet,
-    })
-  }
+  return handleDashboardExtensions({
+    ...options,
+    extensions: extensionsNotImportedYet,
+  })
 }
 
 export async function deploy(options: DeployOptions) {
-  const {remoteApp, developerPlatformClient, noRelease, force, allowUpdates, allowDeletes} = options
+  const {remoteApp, developerPlatformClient, noRelease, allowUpdates, allowDeletes} = options
 
   const app = await importExtensionsIfNeeded({
     app: options.app,
     remoteApp,
     developerPlatformClient,
-    force,
+    noRelease,
+    allowUpdates,
+    allowDeletes,
   })
 
   const {identifiers, didMigrateExtensionsToDevDash} = await ensureDeployContext({
@@ -197,6 +155,8 @@ export async function deploy(options: DeployOptions) {
     allowUpdates,
     allowDeletes,
   })
+
+  const appModuleUuids = {...identifiers.extensions, ...identifiers.extensionsNonUuidManaged}
 
   const release = !noRelease
   const apiKey = remoteApp.apiKey
@@ -220,15 +180,13 @@ export async function deploy(options: DeployOptions) {
     )
     await mkdir(dirname(candidateBundlePath))
 
-    const appManifest = await app.manifest(identifiers)
+    const appManifest = await app.manifest(appManifestUuids(app, appModuleUuids))
 
     const bundlePath = await bundleAndBuildExtensions({
       app,
       appManifest,
       bundlePath: candidateBundlePath,
-      identifiers,
       skipBuild: options.skipBuild,
-      isDevDashboardApp: developerPlatformClient.supportsAtomicDeployments,
     })
 
     let uploadTaskTitle
@@ -251,7 +209,7 @@ export async function deploy(options: DeployOptions) {
         task: async () => {
           const appModules = await Promise.all(
             app.allExtensions.flatMap((ext) =>
-              ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
+              ext.bundleConfig({appModuleUuids, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
             ),
           )
 
@@ -271,7 +229,7 @@ export async function deploy(options: DeployOptions) {
             commitReference: options.commitReference,
           })
 
-          await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+          await updateAppIdentifiers({app, identifiers, command: 'deploy'})
         },
       },
     ]
@@ -292,7 +250,7 @@ export async function deploy(options: DeployOptions) {
      * If deployment fails when uploading we want the identifiers to be persisted
      * for the next run.
      */
-    await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+    await updateAppIdentifiers({app, identifiers, command: 'deploy'})
     throw error
   }
 
@@ -387,4 +345,12 @@ async function outputCompletionMessage({
       ],
     ],
   })
+}
+
+function appManifestUuids(app: AppLinkedInterface, appModuleUuids: {[localIdentifier: string]: string}) {
+  return Object.fromEntries(
+    app.allExtensions
+      .filter((extension) => extension.isUUIDStrategyExtension)
+      .map((extension) => [extension.localIdentifier, appModuleUuids[extension.localIdentifier]!]),
+  )
 }

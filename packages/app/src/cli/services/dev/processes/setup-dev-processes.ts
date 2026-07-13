@@ -1,7 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
-import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
@@ -15,7 +14,7 @@ import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
 import {LocalhostCert, getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
-import {buildAppURLForAdmin, buildAppURLForWeb} from '../../../utilities/app/app-url.js'
+import {buildAppURLForAdmin} from '../../../utilities/app/app-url.js'
 import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -23,7 +22,6 @@ import {reloadApp} from '../../../models/app/loader.js'
 import {resolveGraphiQLKey} from '@shopify/cli-kit/node/graphiql/server'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -42,7 +40,6 @@ type DevProcessDefinition =
   | WebProcess
   | ProxyServerProcess
   | PreviewableExtensionProcess
-  | DraftableExtensionProcess
   | GraphiQLServerProcess
   | DevSessionProcess
   | AppLogsSubscribeProcess
@@ -99,26 +96,9 @@ export async function setupDevProcesses({
   const reloadedApp = await reloadApp(localApp)
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
-  // Decide on the appropriate preview URL for a session with these processes
-  // - 1P developers with previewable extensions: use local dev console
-  // - 1P developers without previewable extensions: use legacy OAuth redirect URL
-  // - 3P developers: use unified admin URL
-  const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
-  const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
-  const is1PDev = firstPartyDev()
-
-  // appPreviewUrl is the direct app URL (used by GraphiQL and dev session fallback)
-  // previewURL is what's shown to the user (may be dev console for 1P devs)
-  let appPreviewUrl: string
-  if (is1PDev) {
-    appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-  } else {
-    const adminDomain = await adminFqdn()
-    appPreviewUrl = buildAppURLForAdmin(storeFqdn, apiKey, adminDomain)
-  }
-
-  const useDevConsole = is1PDev && anyPreviewableExtensions
-  const previewURL = useDevConsole ? devConsoleURL : appPreviewUrl
+  const adminDomain = await adminFqdn()
+  const appPreviewUrl = buildAppURLForAdmin(storeFqdn, apiKey, adminDomain)
+  const previewURL = appPreviewUrl
 
   const resolvedGraphiqlKey = resolveGraphiQLKey(graphiqlKey, apiSecret, storeFqdn)
   const graphiqlURL = shouldRenderGraphiQL
@@ -171,28 +151,18 @@ export async function setupDevProcesses({
       appDirectory: reloadedApp.directory,
       appWatcher,
     }),
-    developerPlatformClient.supportsDevSessions
-      ? await setupDevSessionProcess({
-          app: reloadedApp,
-          apiKey,
-          developerPlatformClient,
-          url: network.proxyUrl,
-          appId: remoteApp.id,
-          organizationId: remoteApp.organizationId,
-          storeFqdn,
-          appWatcher,
-          appPreviewURL: appPreviewUrl,
-          appLocalProxyURL: devConsoleURL,
-          devSessionStatusManager,
-        })
-      : await setupDraftableExtensionsProcess({
-          localApp: reloadedApp,
-          remoteApp,
-          apiKey,
-          developerPlatformClient,
-          proxyUrl: network.proxyUrl,
-          appWatcher,
-        }),
+    await setupDevSessionProcess({
+      app: reloadedApp,
+      apiKey,
+      developerPlatformClient,
+      url: network.proxyUrl,
+      appId: remoteApp.id,
+      organizationId: remoteApp.organizationId,
+      storeFqdn,
+      appWatcher,
+      appPreviewURL: appPreviewUrl,
+      devSessionStatusManager,
+    }),
     await setupPreviewThemeAppExtensionsProcess({
       remoteApp,
       localApp: reloadedApp,

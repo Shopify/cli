@@ -41,13 +41,7 @@ import {
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../../api/graphql/development_preview.js'
-import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
@@ -67,10 +61,6 @@ import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graph
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
 import {AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
-import {
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateDraftMutationVariables,
-} from '../../api/graphql/partners/generated/update-draft.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
@@ -1221,30 +1211,6 @@ const appVersionsDiffResponse: AppVersionsDiffSchema = {
   },
 }
 
-export const extensionCreateResponse: ExtensionCreateSchema = {
-  extensionCreate: {
-    extensionRegistration: {
-      id: 'extension-id',
-      uuid: 'extension-uuid',
-      title: 'my extension',
-      type: 'other',
-      draftVersion: {
-        config: 'config',
-        registrationId: 'registration-id',
-        lastUserInteractionAt: '2024-01-01',
-        validationErrors: [],
-      },
-    },
-    userErrors: [],
-  },
-}
-
-const extensionUpdateResponse: ExtensionUpdateDraftMutation = {
-  extensionUpdateDraft: {
-    userErrors: [],
-  },
-}
-
 const deployResponse: AppDeploySchema = {
   appDeploy: {
     appVersion: {
@@ -1279,22 +1245,6 @@ const convertedToTransferDisabledStoreResponse = {
   convertDevToTestStore: {
     convertedToTestStore: true,
     userErrors: [],
-  },
-}
-
-const updateDeveloperPreviewResponse: DevelopmentStorePreviewUpdateSchema = {
-  developmentStorePreviewUpdate: {
-    app: {
-      id: 'app-id',
-      developmentStorePreviewEnabled: true,
-    },
-    userErrors: [],
-  },
-}
-
-const appPreviewModeResponse: FindAppPreviewModeSchema = {
-  app: {
-    developmentStorePreviewEnabled: true,
   },
 }
 
@@ -1362,12 +1312,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const clientStub: DeveloperPlatformClient = {
     clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
-    supportsAtomicDeployments: false,
-    supportsDevSessions: stubs.supportsDevSessions ?? false,
-    supportsStoreSearch: false,
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
-    supportsDashboardManagedExtensions: true,
     session: () => Promise.resolve(testPartnersUserSession),
     unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
@@ -1390,16 +1336,11 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_app: MinimalOrganizationApp, _tag: string) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
-    createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
-    updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
     convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
       Promise.resolve(convertedToTransferDisabledStoreResponse),
-    updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
-      Promise.resolve(updateDeveloperPreviewResponse),
-    appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
@@ -1447,17 +1388,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[
-        key as keyof Omit<
-          DeveloperPlatformClient,
-          | 'supportsAtomicDeployments'
-          | 'clientName'
-          | 'webUiName'
-          | 'supportsDevSessions'
-          | 'supportsStoreSearch'
-          | 'organizationSource'
-          | 'bundleFormat'
-          | 'supportsDashboardManagedExtensions'
-        >
+        key as keyof Omit<DeveloperPlatformClient, 'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat'>
       ] = vi.fn().mockImplementation(value)
     }
   }

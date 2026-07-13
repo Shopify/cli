@@ -4,7 +4,7 @@ import {
   getExtensionPayloadMiddleware,
   fileServerMiddleware,
   noCacheMiddleware,
-  redirectToDevConsoleMiddleware,
+  redirectToExtensionsMiddleware,
   getExtensionPointMiddleware,
 } from './middlewares.js'
 import * as utilities from './utilities.js'
@@ -100,13 +100,13 @@ describe('noCacheMiddleware()', () => {
   })
 })
 
-describe('redirectToDevConsoleMiddleware()', () => {
-  test('redirects to /extensions/dev-console', async () => {
+describe('redirectToExtensionsMiddleware()', () => {
+  test('redirects to /extensions', async () => {
     const event = getMockEvent()
 
-    await redirectToDevConsoleMiddleware(event)
+    await redirectToExtensionsMiddleware(event)
 
-    expect(h3.sendRedirect).toHaveBeenCalledWith(event, '/extensions/dev-console', 307)
+    expect(h3.sendRedirect).toHaveBeenCalledWith(event, '/extensions', 307)
   })
 })
 
