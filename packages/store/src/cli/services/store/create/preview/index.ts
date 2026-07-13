@@ -4,8 +4,6 @@ import {recordStoreFqdnMetadata} from '../../attribution.js'
 import {setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 
-export const PREVIEW_USER_ID_PREFIX = 'preview:'
-
 interface CreatePreviewStoreInput {
   name?: string
   country?: string
@@ -57,7 +55,7 @@ export async function createPreviewStoreCommand(
 }
 
 function previewUserId(response: PreviewStoreCreateResponse): string {
-  return `${PREVIEW_USER_ID_PREFIX}${response.placeholderAccountUuid ?? response.shop.id}`
+  return response.placeholderAccountUuid ?? response.shop.id
 }
 
 async function persistPreviewStoreSession(
