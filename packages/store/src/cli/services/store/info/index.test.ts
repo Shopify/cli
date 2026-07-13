@@ -153,7 +153,7 @@ describe('getStoreInfo', () => {
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
       store: SHOP,
       clientId: STORE_AUTH_APP_CLIENT_ID,
-      userId: 'preview:placeholder-uuid',
+      userId: 'placeholder-uuid',
       accessToken: 'shpat_preview_token',
       scopes: [],
       acquiredAt: '2026-06-08T12:00:00.000Z',
@@ -177,6 +177,7 @@ describe('getStoreInfo', () => {
     expect(fetchDestinationsContext).not.toHaveBeenCalled()
     expect(fetchOrganizationShop).not.toHaveBeenCalled()
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(SHOP, true, '123')
+    expect(setLastSeenUserId).toHaveBeenCalledWith('placeholder-uuid')
     expect(getPreviewStore).toHaveBeenCalledWith({
       shopId: '123',
       adminApiToken: 'shpat_preview_token',
@@ -199,7 +200,7 @@ describe('getStoreInfo', () => {
       vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
         store: SHOP,
         clientId: STORE_AUTH_APP_CLIENT_ID,
-        userId: 'preview:placeholder-uuid',
+        userId: 'placeholder-uuid',
         accessToken: 'shpat_preview_token',
         // Preview stores are preapproved for a large, fixed scope catalog; the re-auth message
         // should not dump the whole list back at the user (see the placeholder assertion below).
@@ -236,7 +237,7 @@ describe('getStoreInfo', () => {
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
       store: SHOP,
       clientId: STORE_AUTH_APP_CLIENT_ID,
-      userId: 'preview:placeholder-uuid',
+      userId: 'placeholder-uuid',
       accessToken: 'shpat_preview_token',
       scopes: ['read_products'],
       acquiredAt: '2026-06-08T12:00:00.000Z',
@@ -261,7 +262,7 @@ describe('getStoreInfo', () => {
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
       store: SHOP,
       clientId: STORE_AUTH_APP_CLIENT_ID,
-      userId: 'preview:placeholder-uuid',
+      userId: 'placeholder-uuid',
       accessToken: 'shpat_preview_token',
       scopes: ['read_themes', 'write_themes'],
       acquiredAt: '2026-06-08T12:00:00.000Z',
@@ -289,7 +290,7 @@ describe('getStoreInfo', () => {
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
       store: SHOP,
       clientId: STORE_AUTH_APP_CLIENT_ID,
-      userId: 'preview:placeholder-uuid',
+      userId: 'placeholder-uuid',
       accessToken: 'shpat_preview_token',
       scopes: [],
       acquiredAt: '2026-06-08T12:00:00.000Z',
@@ -565,7 +566,7 @@ The CLI is currently unable to prompt for reauthentication.`)
     mockStoreAuthFallback()
     vi.mocked(loadStoredStoreSession).mockResolvedValue({
       ...STORED_SESSION,
-      userId: 'preview:placeholder-uuid',
+      userId: 'placeholder-uuid',
       kind: 'preview',
       scopes: ['read_products', 'write_products', 'read_themes'],
     })

@@ -1,4 +1,4 @@
-import {PREVIEW_USER_ID_PREFIX, createPreviewStoreCommand} from './index.js'
+import {createPreviewStoreCommand} from './index.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../../auth/config.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -28,7 +28,7 @@ describe('preview store create service', () => {
     expect(setStoredStoreAppSession).toHaveBeenCalledWith({
       store: 'x12y45z.myshopify.com',
       clientId: STORE_AUTH_APP_CLIENT_ID,
-      userId: `${PREVIEW_USER_ID_PREFIX}placeholder-uuid`,
+      userId: 'placeholder-uuid',
       accessToken: 'shpat_token',
       scopes: ['read_themes', 'write_themes'],
       acquiredAt: '2026-06-08T12:00:00.000Z',
@@ -44,7 +44,7 @@ describe('preview store create service', () => {
     })
     expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('x12y45z.myshopify.com', true, '123')
-    expect(setLastSeenUserId).toHaveBeenCalledWith(`${PREVIEW_USER_ID_PREFIX}placeholder-uuid`)
+    expect(setLastSeenUserId).toHaveBeenCalledWith('placeholder-uuid')
     expect(result).toEqual({
       status: 'success',
       message:
@@ -79,10 +79,8 @@ describe('preview store create service', () => {
       },
     )
 
-    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
-      expect.objectContaining({userId: `${PREVIEW_USER_ID_PREFIX}123`, scopes: []}),
-    )
-    expect(setLastSeenUserId).toHaveBeenCalledWith(`${PREVIEW_USER_ID_PREFIX}123`)
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(expect.objectContaining({userId: '123', scopes: []}))
+    expect(setLastSeenUserId).toHaveBeenCalledWith('123')
   })
 
   test('passes client options to the create request', async () => {
@@ -132,7 +130,7 @@ describe('preview store create service', () => {
     )
 
     expect(setStoredStoreAppSession).toHaveBeenCalledOnce()
-    expect(setLastSeenUserId).toHaveBeenCalledWith(`${PREVIEW_USER_ID_PREFIX}123`)
+    expect(setLastSeenUserId).toHaveBeenCalledWith('123')
     expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('x12y45z.myshopify.com', true, '123')
     expect(result.status).toBe('success')
