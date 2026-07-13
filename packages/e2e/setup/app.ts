@@ -285,10 +285,8 @@ export async function configLink(
   // flip the prompt state unexpectedly (e.g. turning a select into search mode).
   const settle = (ms = 50) => new Promise<void>((resolve) => setTimeout(resolve, ms))
   const typeText = async (text: string) => {
-    for (const char of text) {
-      proc.ptyProcess.write(char)
-      await settle(10)
-    }
+    proc.ptyProcess.write(text)
+    await settle(250)
   }
 
   try {
@@ -309,15 +307,17 @@ export async function configLink(
     }
 
     // Wait for "App name" text prompt and submit the desired name.
-    // Important: Ink parses each PTY data event as ONE keypress. If we write
-    // "name\r" in one call, parseKeypress sees the whole string and treats
-    // it as text (not Enter), so the prompt never submits. We must write the
-    // text, wait for it to be consumed, then write \r separately.
+    // Important: Ink parses each PTY data event as ONE keypress. Write the
+    // app name as one text event so characters are not dropped during busy CI
+    // renders, then write Enter separately so it is handled as submission.
+    //
+    // Do not wait for the full app name to appear in PTY output before pressing
+    // Enter: under CI load, Ink's line-clearing renders can make the captured
+    // output miss or reorder prompt echo even when the input was received.
     await proc.waitForOutput('App name', CLI_TIMEOUT.medium)
     await settle()
     await typeText(ctx.appName)
-    await proc.waitForOutput(ctx.appName, CLI_TIMEOUT.medium)
-    await settle()
+    await settle(250)
     proc.sendKey('\r')
 
     const exitCode = await proc.waitForExit(CLI_TIMEOUT.long)
