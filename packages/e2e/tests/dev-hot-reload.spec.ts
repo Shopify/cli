@@ -62,10 +62,11 @@ test.describe('Dev hot reload', () => {
       try {
         await proc.waitForOutput(READY_MESSAGE, CLI_TIMEOUT.medium)
 
-        // Edit scopes in the TOML to trigger a reload
+        // Edit a harmless URL field in the TOML to trigger a reload without
+        // invalidating the fixture's webhook scope requirements.
         const tomlPath = path.join(appDir, 'shopify.app.toml')
         const original = fs.readFileSync(tomlPath, 'utf8')
-        const patched = updateTomlValues(original, [[['access_scopes', 'scopes'], 'read_products,write_products']])
+        const patched = updateTomlValues(original, [[['application_url'], 'https://example.com/updated']])
         fs.writeFileSync(tomlPath, patched)
 
         await proc.waitForOutput('App config updated', CLI_TIMEOUT.medium)
