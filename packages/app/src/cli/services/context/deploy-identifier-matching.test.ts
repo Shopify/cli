@@ -1,6 +1,5 @@
 /* eslint-disable @shopify/prefer-module-scope-constants */
 import {classifyDeployExtensionChanges, ensureDeployIdentifiersFromAppVersion} from './deploy-identifier-matching.js'
-import {extensionMigrationPrompt} from './prompts.js'
 import {EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {AppInterface} from '../../models/app/app.js'
 import {
@@ -15,16 +14,12 @@ import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {BaseConfigType} from '../../models/extensions/schemas.js'
 import {createConfigExtensionSpecification} from '../../models/extensions/specification.js'
-import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppModuleVersion} from '../../utilities/developer-platform-client.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
-import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 vi.mock('../../prompts/deploy-release.js')
-vi.mock('./prompts.js')
-vi.mock('../dev/migrate-to-ui-extension.js')
 
 const REMOTE_APP: OrganizationApp = testOrganizationApp({
   id: 'app-id',
@@ -36,7 +31,6 @@ const EMPTY_EXTENSION_BREAKDOWN = {onlyRemote: [], toCreate: [], toUpdate: [], u
 
 let EXTENSION_A: ExtensionInstance
 let EXTENSION_B: ExtensionInstance
-let EXTENSION_TO_MIGRATE: ExtensionInstance
 let CONFIG_EXTENSION: ExtensionInstance
 let WEBHOOK_SUBSCRIPTION_EXTENSION: ExtensionInstance
 let APP: AppInterface
@@ -121,13 +115,6 @@ beforeAll(async () => {
     type: 'checkout_post_purchase',
     uid: 'uid-b',
   })
-  EXTENSION_TO_MIGRATE = await buildUiExtension({
-    directory: '/extension-to-migrate',
-    name: 'Legacy UI',
-    type: 'ui_extension',
-    uid: 'uid-migration',
-  })
-
   CONFIG_EXTENSION = await testAppConfigExtensions()
   WEBHOOK_SUBSCRIPTION_EXTENSION = await testSingleWebhookSubscriptionExtension()
 
@@ -191,8 +178,6 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
-  vi.mocked(extensionMigrationPrompt).mockResolvedValue(true)
-  vi.mocked(migrateExtensionsToUIExtension).mockResolvedValue([])
 })
 
 describe('classifyDeployExtensionChanges', () => {
@@ -627,96 +612,5 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
         [CONFIG_EXTENSION.localIdentifier]: CONFIG_EXTENSION.uid,
       },
     })
-  })
-
-  test('runs extension migrations before classifying the app version', async () => {
-    const legacyRemoteExtension = {
-      uuid: 'legacy-uuid-a',
-      id: '',
-      title: EXTENSION_TO_MIGRATE.localIdentifier,
-      type: 'CHECKOUT_UI_EXTENSION',
-    }
-    const migratedModule = {
-      registrationId: EXTENSION_TO_MIGRATE.uid,
-      registrationUuid: legacyRemoteExtension.uuid,
-      registrationTitle: 'Legacy UI',
-      type: 'ui_extension',
-      config: await EXTENSION_TO_MIGRATE.deployConfig({apiKey: REMOTE_APP.apiKey, appConfiguration: APP.configuration}),
-      specification: {
-        identifier: 'ui_extension',
-        name: 'UI Extension',
-        experience: 'extension',
-        options: {managementExperience: 'cli'},
-      },
-    } as AppModuleVersion
-    const activeAppVersion = {appModuleVersions: [migratedModule]}
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: () =>
-        Promise.resolve({
-          app: {
-            extensionRegistrations: [legacyRemoteExtension],
-            dashboardManagedExtensionRegistrations: [],
-            configurationRegistrations: [],
-          },
-        }),
-      activeAppVersion: () => Promise.resolve(activeAppVersion),
-    })
-
-    await ensureDeployIdentifiersFromAppVersion(
-      deployOptions({
-        app: testApp({...APP, allExtensions: [EXTENSION_TO_MIGRATE]}),
-        developerPlatformClient,
-        activeAppVersion: {appModuleVersions: []},
-        allowUpdates: true,
-      }),
-    )
-
-    expect(extensionMigrationPrompt).toHaveBeenCalledWith([
-      {local: EXTENSION_TO_MIGRATE, remote: legacyRemoteExtension},
-    ])
-    expect(migrateExtensionsToUIExtension).toHaveBeenCalledWith({
-      extensionsToMigrate: [{local: EXTENSION_TO_MIGRATE, remote: legacyRemoteExtension}],
-      appId: REMOTE_APP.apiKey,
-      remoteExtensions: [legacyRemoteExtension],
-      migrationClient: expect.objectContaining({clientName: 'partners'}),
-    })
-    expect(deployOrReleaseConfirmationPrompt).toHaveBeenCalledWith(
-      expect.objectContaining({
-        extensionIdentifiersBreakdown: expect.objectContaining({
-          unchanged: [{title: EXTENSION_TO_MIGRATE.localIdentifier, uid: undefined, experience: 'extension'}],
-        }),
-      }),
-    )
-  })
-
-  test('aborts when extension migration is declined', async () => {
-    const legacyRemoteExtension = {
-      uuid: 'legacy-uuid-a',
-      id: '',
-      title: EXTENSION_TO_MIGRATE.localIdentifier,
-      type: 'CHECKOUT_UI_EXTENSION',
-    }
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: () =>
-        Promise.resolve({
-          app: {
-            extensionRegistrations: [legacyRemoteExtension],
-            dashboardManagedExtensionRegistrations: [],
-            configurationRegistrations: [],
-          },
-        }),
-    })
-    vi.mocked(extensionMigrationPrompt).mockResolvedValue(false)
-
-    await expect(
-      ensureDeployIdentifiersFromAppVersion(
-        deployOptions({
-          app: testApp({...APP, allExtensions: [EXTENSION_TO_MIGRATE]}),
-          developerPlatformClient,
-          activeAppVersion: {appModuleVersions: []},
-        }),
-      ),
-    ).rejects.toThrow(AbortSilentError)
-    expect(deployOrReleaseConfirmationPrompt).not.toHaveBeenCalled()
   })
 })

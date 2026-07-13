@@ -4,7 +4,6 @@ import {
   buildExtensionBreakdownInfo,
   ExtensionIdentifiersBreakdown,
 } from './breakdown-extensions.js'
-import {activeAppVersionAfterMigrations} from './deploy-app-version-migrations.js'
 import {EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {remoteAppConfigurationExtensionContent} from '../app/select-app.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -30,11 +29,11 @@ interface ClassifyDeployExtensionChangesOptions {
   activeAppVersion?: AppVersion
 }
 
-/** Builds deploy identifiers after migration, classification, and confirmation. */
+/** Builds deploy identifiers after classification and confirmation. */
 export async function ensureDeployIdentifiersFromAppVersion(
   options: EnsureDeploymentIdsPresenceOptions,
 ): Promise<DeployIdentifiers> {
-  const activeAppVersion = await activeAppVersionAfterMigrations(options)
+  const {activeAppVersion} = options
   const changes = await classifyDeployExtensionChanges({options, activeAppVersion})
   const extensionIdentifiersBreakdown = buildExtensionIdentifiersBreakdown(changes)
   const configExtensionIdentifiersBreakdown = await buildDeployConfigExtensionIdentifiersBreakdown(
