@@ -65,6 +65,7 @@ export async function getStoreInfo(options: GetStoreInfoOptions): Promise<StoreI
 
   if (isPreviewStoreSession(storedSession)) {
     await recordStoreFqdnMetadata(storedSession.store, true, storedSession.preview.shopId)
+    setLastSeenUserId(storedSession.userId)
     const previewStoreUrls = await fetchPreviewStoreUrls(storedSession)
     return buildPreviewStoreResult({
       store,
