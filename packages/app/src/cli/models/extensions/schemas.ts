@@ -20,7 +20,7 @@ const IframeCapabilitySchema = zod.object({
   sources: zod.array(zod.string()).optional(),
 })
 
-export const CapabilitiesSchema = zod.object({
+const CapabilitiesSchema = zod.object({
   network_access: zod.boolean().optional(),
   block_progress: zod.boolean().optional(),
   api_access: zod.boolean().optional(),
@@ -37,8 +37,27 @@ export const ExtensionsArraySchema = zod.object({
   extensions: zod.array(zod.any()).optional(),
 })
 
+const InterceptEventsSchema = zod
+  .array(
+    zod.string().regex(/^[a-z]+$/, {
+      message: 'Intercept event must contain only lowercase letters (a-z)',
+    }),
+  )
+  .superRefine((events, context) => {
+    const duplicates = [...new Set(events.filter((event, index) => events.indexOf(event) !== index))]
+    if (duplicates.length > 0) {
+      context.addIssue({
+        code: zod.ZodIssueCode.custom,
+        message: `Duplicate intercept events found: ${duplicates.join(
+          ', ',
+        )}. Each intercept event may only be declared once.`,
+      })
+    }
+  })
+
 const TargetCapabilitiesSchema = zod.object({
   allow_direct_linking: zod.boolean().optional(),
+  intercepts: InterceptEventsSchema.optional(),
 })
 
 const ShouldRenderSchema = zod.object({
