@@ -1,5 +1,11 @@
 # @shopify/plugin-did-you-mean
 
+## 4.5.0
+
+### Patch Changes
+
+- @shopify/cli-kit@4.5.0
+
 ## 4.4.0
 
 ### Patch Changes
