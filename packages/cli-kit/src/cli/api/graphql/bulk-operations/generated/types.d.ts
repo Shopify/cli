@@ -143,6 +143,20 @@ export type BulkMutationErrorCode =
    */
   | 'OPERATION_IN_PROGRESS';
 
+/** Represents an error that happens during execution of a bulk mutation. */
+export type BulkMutationOperationInput = {
+  /**
+   * A named GraphQL mutation document. The operation name is the plan-unique
+   * identity of this operation; anonymous operations are rejected.
+   */
+  mutation: Scalars['String']['input'];
+  /**
+   * The staged-upload path of the JSONL variables for this operation. One line per
+   * invocation. Rows may carry a reserved `$key` and `$ref:` string values.
+   */
+  stagedUploadPath: Scalars['String']['input'];
+};
+
 /** Error codes for failed bulk operations. */
 export type BulkOperationErrorCode =
   /**
@@ -161,6 +175,27 @@ export type BulkOperationErrorCode =
    * In some cases, timeouts can be avoided by modifying your `query` to select fewer fields.
    */
   | 'TIMEOUT';
+
+/** Possible error codes that can be returned by `BulkOperationRunMutationsUserError`. */
+export type BulkOperationRunMutationsUserErrorCode =
+  /** An operation document must be a named mutation. Anonymous operations are not allowed. */
+  | 'ANONYMOUS_OPERATION'
+  /** The operations' `$ref` dependencies form a cycle and can't be ordered. */
+  | 'CYCLIC_DEPENDENCY'
+  /** Each `$key` must be unique within its operation. */
+  | 'DUPLICATE_KEY'
+  /** Operation names must be unique across the plan. */
+  | 'DUPLICATE_OPERATION_NAME'
+  /** A `$ref` path isn't a valid traversal of the referenced operation's selection set. */
+  | 'INVALID_OUTPUT_PATH'
+  /** An operation document is invalid against the Admin schema. */
+  | 'SCHEMA_INVALID'
+  /** A `$ref` resolves to a type that isn't assignable to the consuming variable. */
+  | 'TYPE_MISMATCH'
+  /** A `$ref` references a `$key` that doesn't exist in the referenced operation. */
+  | 'UNKNOWN_KEY_REF'
+  /** A `$ref` references an operation that isn't declared in the plan. */
+  | 'UNKNOWN_OPERATION_REF';
 
 /** The valid values for the status of a bulk operation. */
 export type BulkOperationStatus =

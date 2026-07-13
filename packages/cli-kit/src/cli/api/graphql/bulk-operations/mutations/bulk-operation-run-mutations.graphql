@@ -1,0 +1,20 @@
+mutation BulkOperationRunMutations($operations: [BulkMutationOperationInput!]!) {
+  bulkOperationRunMutations(operations: $operations) {
+    bulkOperation {
+      type
+      completedAt
+      createdAt
+      errorCode
+      id
+      objectCount
+      partialDataUrl
+      status
+      url
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

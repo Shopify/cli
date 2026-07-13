@@ -264,6 +264,18 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "plan-file": {
+          "description": "Path to a JSON file describing an ordered plan of named mutation operations to run together as a single bulk operation. Each entry is {\"mutationFile\": \"...\", \"variableFile\": \"...\"} (inline \"mutation\"/\"variables\" are also accepted). Runs via bulkOperationRunMutations.",
+          "env": "SHOPIFY_FLAG_PLAN_FILE",
+          "exclusive": [
+            "variables",
+            "variable-file"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "plan-file",
+          "type": "option"
+        },
         "query": {
           "char": "q",
           "description": "The GraphQL query or mutation to run as a bulk operation.",
@@ -302,11 +314,19 @@
           "name": "store",
           "type": "option"
         },
+        "validate": {
+          "allowNo": true,
+          "description": "Validate operations against the store's Admin schema before submitting. Enabled by default; use --no-validate to skip.",
+          "env": "SHOPIFY_FLAG_VALIDATE",
+          "name": "validate",
+          "type": "boolean"
+        },
         "variable-file": {
           "description": "Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.",
           "env": "SHOPIFY_FLAG_VARIABLE_FILE",
           "exclusive": [
-            "variables"
+            "variables",
+            "plan-file"
           ],
           "hasDynamicHelp": false,
           "multiple": false,
@@ -318,7 +338,8 @@
           "description": "The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.",
           "env": "SHOPIFY_FLAG_VARIABLES",
           "exclusive": [
-            "variable-file"
+            "variable-file",
+            "plan-file"
           ],
           "hasDynamicHelp": false,
           "multiple": true,

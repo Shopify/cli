@@ -41,13 +41,21 @@ export const bulkOperationFlags = {
     description: 'The GraphQL query or mutation to run as a bulk operation.',
     env: 'SHOPIFY_FLAG_QUERY',
     required: false,
-    exactlyOne: ['query', 'query-file'],
+    exactlyOne: ['query', 'query-file', 'plan-file'],
   }),
   'query-file': Flags.string({
     description: "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
     env: 'SHOPIFY_FLAG_QUERY_FILE',
     parse: async (input) => resolvePath(input),
-    exactlyOne: ['query', 'query-file'],
+    exactlyOne: ['query', 'query-file', 'plan-file'],
+  }),
+  'plan-file': Flags.string({
+    description:
+      'Path to a JSON file describing an ordered plan of named mutation operations to run together as a single bulk operation. Each entry is {"mutationFile": "...", "variableFile": "..."} (inline "mutation"/"variables" are also accepted). Runs via bulkOperationRunMutations.',
+    env: 'SHOPIFY_FLAG_PLAN_FILE',
+    parse: async (input) => resolvePath(input),
+    exactlyOne: ['query', 'query-file', 'plan-file'],
+    exclusive: ['variables', 'variable-file'],
   }),
   variables: Flags.string({
     char: 'v',
@@ -55,20 +63,27 @@ export const bulkOperationFlags = {
       'The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.',
     env: 'SHOPIFY_FLAG_VARIABLES',
     multiple: true,
-    exclusive: ['variable-file'],
+    exclusive: ['variable-file', 'plan-file'],
   }),
   'variable-file': Flags.string({
     description:
       "Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.",
     env: 'SHOPIFY_FLAG_VARIABLE_FILE',
     parse: async (input) => resolvePath(input),
-    exclusive: ['variables'],
+    exclusive: ['variables', 'plan-file'],
   }),
   store: Flags.string({
     char: 's',
     description: 'The store domain. Must be an existing dev store.',
     env: 'SHOPIFY_FLAG_STORE',
     parse: async (input) => normalizeStoreFqdn(input),
+  }),
+  validate: Flags.boolean({
+    description:
+      "Validate operations against the store's Admin schema before submitting. Enabled by default; use --no-validate to skip.",
+    env: 'SHOPIFY_FLAG_VALIDATE',
+    default: true,
+    allowNo: true,
   }),
   watch: Flags.boolean({
     description: 'Wait for bulk operation results before exiting. Defaults to false.',

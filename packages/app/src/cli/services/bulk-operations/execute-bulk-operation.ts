@@ -9,6 +9,8 @@ import {OrganizationApp, Organization, OrganizationStore} from '../../models/org
 import {
   runBulkOperationQuery,
   runBulkOperationMutation,
+  runBulkOperationMutations,
+  validateBulkOperations,
   watchBulkOperation,
   shortBulkOperationPoll,
   formatBulkOperationStatus,
@@ -17,6 +19,8 @@ import {
   extractBulkOperationId,
   BULK_OPERATIONS_MIN_API_VERSION,
   type BulkOperation,
+  type BulkMutationPlanOperation,
+  type OperationToValidate,
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {
   renderSuccess,
@@ -35,9 +39,14 @@ interface ExecuteBulkOperationInput {
   organization: Organization
   remoteApp: OrganizationApp
   store: OrganizationStore
-  query: string
+  // Single-operation path: a query or a single mutation (+ its variables).
+  query?: string
   variables?: string[]
   variableFile?: string
+  // Plan path: an ordered set of named mutations run together (bulkOperationRunMutations).
+  operations?: BulkMutationPlanOperation[]
+  // Validate operations against the store's Admin schema before submitting (defaults to true).
+  validate?: boolean
   watch?: boolean
   outputFile?: string
   version?: string
@@ -68,6 +77,8 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     query,
     variables,
     variableFile,
+    operations,
+    validate = true,
     outputFile,
     watch = false,
     version: userSpecifiedVersion,
@@ -87,34 +98,70 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     renderOptions: {stdout: process.stderr},
   })
 
-  const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
+  // Fail fast: validate operation documents against the store's Admin schema before submitting.
+  if (validate) {
+    const validationOperations = await operationsToValidate({query, variables, variableFile, operations})
+    if (validationOperations.length > 0) {
+      const passed = await renderValidation({adminSession, version, operations: validationOperations})
+      if (!passed) return
+    }
+  }
 
-  validateBulkOperationVariables(query, variablesJsonl)
-  validateMutationStore(query, store)
+  const infoItems = formatOperationInfo({organization, remoteApp, storeFqdn: store.shopDomain, version})
 
-  renderInfo({
-    headline: 'Starting bulk operation.',
-    body: [
-      {
-        list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn: store.shopDomain, version}),
-        },
-      },
-    ],
-  })
+  let bulkOperationResponse
 
-  const bulkOperationResponse = isMutation(query)
-    ? await runBulkOperationMutation({adminSession, query, variablesJsonl, version})
-    : await runBulkOperationQuery({adminSession, query, version})
+  if (operations) {
+    // Plan path. Every operation is a mutation; mutations are only allowed on dev stores.
+    operations.forEach((operation) => validateMutationStore(operation.mutation, store))
+
+    renderInfo({
+      headline:
+        operations.length > 1
+          ? `Starting bulk operation plan (${operations.length} operations).`
+          : 'Starting bulk operation.',
+      body: [{list: {items: infoItems}}],
+    })
+
+    // Hybrid routing: a single operation uses the existing bulkOperationRunMutation; 2+ operations
+    // run as one plan via bulkOperationRunMutations.
+    if (operations.length === 1) {
+      const [operation] = operations
+      bulkOperationResponse = await runBulkOperationMutation({
+        adminSession,
+        query: operation!.mutation,
+        variablesJsonl: operation!.variablesJsonl,
+        version,
+      })
+    } else {
+      bulkOperationResponse = await runBulkOperationMutations({adminSession, operations, version})
+    }
+  } else {
+    // Single-operation path (query or single mutation).
+    if (query === undefined) {
+      throw new BugError('executeBulkOperation requires either a query or operations.')
+    }
+    const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
+
+    validateBulkOperationVariables(query, variablesJsonl)
+    validateMutationStore(query, store)
+
+    renderInfo({
+      headline: 'Starting bulk operation.',
+      body: [{list: {items: infoItems}}],
+    })
+
+    bulkOperationResponse = isMutation(query)
+      ? await runBulkOperationMutation({adminSession, query, variablesJsonl, version})
+      : await runBulkOperationQuery({adminSession, query, version})
+  }
 
   if (bulkOperationResponse?.userErrors?.length) {
     renderError({
       headline: 'Error creating bulk operation.',
       body: {
         list: {
-          items: bulkOperationResponse.userErrors.map((error) =>
-            error.field ? `${error.field.join('.')}: ${error.message}` : error.message,
-          ),
+          items: bulkOperationResponse.userErrors.map((error) => formatUserError(error)),
         },
       },
     })
@@ -242,6 +289,63 @@ function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl
       )} flags can only be used with mutations, not queries.`,
     )
   }
+}
+
+async function operationsToValidate(input: {
+  query?: string
+  variables?: string[]
+  variableFile?: string
+  operations?: BulkMutationPlanOperation[]
+}): Promise<OperationToValidate[]> {
+  const {query, variables, variableFile, operations} = input
+  if (operations) {
+    return operations.map((operation, index) => ({
+      label: `operation ${index + 1}`,
+      operation: operation.mutation,
+      representativeRow: firstJsonlRow(operation.variablesJsonl),
+    }))
+  }
+  if (query === undefined) return []
+  const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
+  return [{label: 'operation', operation: query, representativeRow: firstJsonlRow(variablesJsonl)}]
+}
+
+async function renderValidation(args: Parameters<typeof validateBulkOperations>[0]): Promise<boolean> {
+  const results = await validateBulkOperations(args)
+  const failures = results.filter((result) => result.errors.length > 0)
+  if (failures.length === 0) return true
+
+  renderError({
+    headline: 'Bulk operation validation failed.',
+    body: {
+      list: {
+        items: failures.flatMap((failure) => failure.errors.map((error) => `${failure.label}: ${error}`)),
+      },
+    },
+  })
+  return false
+}
+
+function firstJsonlRow(variablesJsonl?: string): {[key: string]: unknown} | undefined {
+  if (!variablesJsonl) return undefined
+  const line = variablesJsonl
+    .split('\n')
+    .map((entry) => entry.trim())
+    .find((entry) => entry.length > 0)
+  if (!line) return undefined
+  try {
+    const parsed = JSON.parse(line)
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? parsed : undefined
+  } catch (error) {
+    if (error instanceof SyntaxError) return undefined
+    throw error
+  }
+}
+
+function formatUserError(error: {code?: string | null; field?: ReadonlyArray<string> | null; message: string}): string {
+  const code = error.code ? `[${error.code}] ` : ''
+  const location = error.field && error.field.length > 0 ? `${error.field.join('.')}: ` : ''
+  return `${code}${location}${error.message}`
 }
 
 function statusCommandHelpMessage(operationId: string): TokenItem {

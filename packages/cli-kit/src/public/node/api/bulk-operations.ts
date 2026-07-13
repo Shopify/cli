@@ -16,6 +16,12 @@ export {
 export {resolveBulkOperationQuery} from './bulk-operations/query.js'
 export {runBulkOperationQuery} from './bulk-operations/run-query.js'
 export {runBulkOperationMutation} from './bulk-operations/run-mutation.js'
+export {runBulkOperationMutations, type BulkMutationPlanOperation} from './bulk-operations/run-mutations.js'
+export {
+  validateBulkOperations,
+  type OperationToValidate,
+  type OperationValidationResult,
+} from './bulk-operations/validate.js'
 export {stageFile} from './bulk-operations/stage-file.js'
 export {fetchBulkOperationById, fetchRecentBulkOperations} from './bulk-operations/fetch.js'
 export {cancelBulkOperationRequest} from './bulk-operations/cancel.js'
