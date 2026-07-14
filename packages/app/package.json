@@ -65,7 +65,7 @@
     "@shopify/plugin-cloudflare": "4.5.1",
     "@shopify/organizations": "4.5.1",
     "@shopify/theme": "4.5.1",
-    "@shopify/theme-check-node": "3.26.1",
+    "@shopify/theme-check-node": "3.27.0",
     "@shopify/toml-patch": "0.3.0",
     "chokidar": "3.6.0",
     "diff": "5.2.2",
