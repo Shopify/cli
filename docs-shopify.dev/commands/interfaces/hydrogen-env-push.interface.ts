@@ -5,6 +5,12 @@
  */
 export interface hydrogenenvpush {
   /**
+   * Preview environment variable changes without pushing them.
+   * @environment SHOPIFY_HYDROGEN_FLAG_DRY_RUN
+   */
+  '--dry-run'?: ''
+
+  /**
    * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
    *
    */
@@ -15,6 +21,12 @@ export interface hydrogenenvpush {
    *
    */
   '--env-file <value>'?: string
+
+  /**
+   * Push environment variable changes without confirmation.
+   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
+   */
+  '-f, --force'?: ''
 
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
