@@ -51,7 +51,7 @@ import {
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {CurrentAccountInfoQuery} from '../../api/graphql/partners/generated/current-account-info.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -1279,7 +1279,7 @@ const updateURLsResponse: UpdateURLsSchema = {
   },
 }
 
-const currentAccountInfoResponse: CurrentAccountInfoSchema = {
+const currentAccountInfoResponse: CurrentAccountInfoQuery = {
   currentAccountInfo: {
     __typename: 'UserAccount',
     email: 'user@example.com',
