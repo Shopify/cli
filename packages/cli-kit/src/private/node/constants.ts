@@ -44,7 +44,6 @@ export const environmentVariables = {
   otelURL: 'SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT',
   themeKitAccessDomain: 'SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN',
   json: 'SHOPIFY_FLAG_JSON',
-  neverUsePartnersApi: 'SHOPIFY_CLI_NEVER_USE_PARTNERS_API',
   skipNetworkLevelRetry: 'SHOPIFY_CLI_SKIP_NETWORK_LEVEL_RETRY',
   maxRequestTimeForNetworkCalls: 'SHOPIFY_CLI_MAX_REQUEST_TIME_FOR_NETWORK_CALLS',
   disableImportScanning: 'SHOPIFY_CLI_DISABLE_IMPORT_SCANNING',

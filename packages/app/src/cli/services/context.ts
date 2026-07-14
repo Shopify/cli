@@ -10,11 +10,7 @@ import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} fr
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
 
-import {
-  allDeveloperPlatformClients,
-  CreateAppOptions,
-  selectDeveloperPlatformClient,
-} from '../utilities/developer-platform-client.js'
+import {CreateAppOptions, defaultDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
@@ -62,26 +58,11 @@ interface AppFromIdOptions {
 }
 
 export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
-  const allClients = allDeveloperPlatformClients()
-
-  let app: OrganizationApp | undefined
-  for (const client of allClients) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      app = await client.appFromIdentifiers(options.apiKey)
-      if (app) break
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if ('statusCode' in error && error.statusCode === 404) {
-        // We don't want to throw an error if the first client can't find the app. Try the next client.
-        continue
-      }
-      throw error
-    }
-  }
+  const client = defaultDeveloperPlatformClient()
+  const app = await client.appFromIdentifiers(options.apiKey)
 
   if (!app) {
-    const accountInfo = (await allClients[0]?.accountInfo()) ?? {type: 'UnknownAccount'}
+    const accountInfo = (await client.accountInfo()) ?? {type: 'UnknownAccount'}
     let identifier = 'Unknown account'
     let isOrg = false
 
@@ -194,10 +175,10 @@ function renderWarningAboutIncludeConfigOnDeploy() {
 export async function fetchOrCreateOrganizationApp(
   options: CreateAppOptions & {organizationId?: string},
 ): Promise<OrganizationApp> {
+  const developerPlatformClient = defaultDeveloperPlatformClient()
   const org = options.organizationId
-    ? await fetchOrgFromId(options.organizationId, selectDeveloperPlatformClient())
+    ? await fetchOrgFromId(options.organizationId, developerPlatformClient)
     : await selectOrg()
-  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
   const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)
 

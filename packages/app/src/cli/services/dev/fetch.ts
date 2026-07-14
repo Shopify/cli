@@ -3,8 +3,7 @@ import {fetchCurrentAccountInformation} from '../context/partner-account-info.js
 import {
   DeveloperPlatformClient,
   Store,
-  allDeveloperPlatformClients,
-  selectDeveloperPlatformClient,
+  defaultDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
 import {AccountInfo, isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -76,16 +75,11 @@ export class NoOrgError extends AbortError {
  * @returns List of organizations
  */
 export async function fetchOrganizations(): Promise<Organization[]> {
-  const organizations: Organization[] = []
-  for (const client of allDeveloperPlatformClients()) {
-    // We don't want to run this in parallel because there could be port conflicts
-    // eslint-disable-next-line no-await-in-loop
-    const clientOrganizations = await client.organizations()
-    organizations.push(...clientOrganizations)
-  }
+  const client = defaultDeveloperPlatformClient()
+  const organizations: Organization[] = await client.organizations()
 
   if (organizations.length === 0) {
-    const developerPlatformClient = selectDeveloperPlatformClient()
+    const developerPlatformClient = defaultDeveloperPlatformClient()
     const session = await developerPlatformClient.session()
     const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient, session.userId)
     throw new NoOrgError(accountInfo)

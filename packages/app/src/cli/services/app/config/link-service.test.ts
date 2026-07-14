@@ -1,6 +1,6 @@
 import link from './link.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {defaultDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt} from '../../../prompts/dev.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -83,7 +83,7 @@ api_version = "2024-01"
       writeFileSync(joinPath(tmp, 'package.json'), '{}')
 
       const developerPlatformClient = buildDeveloperPlatformClient()
-      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+      vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('A user provided name')
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({
@@ -176,7 +176,7 @@ api_version = "2025-07"
       writeFileSync(joinPath(tmp, 'package.json'), '{}')
 
       const developerPlatformClient = buildDeveloperPlatformClient()
-      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+      vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('My App')
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({
@@ -224,7 +224,7 @@ required = true
       writeFileSync(joinPath(tmp, 'package.json'), '{}')
 
       const developerPlatformClient = buildDeveloperPlatformClient()
-      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+      vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('My App')
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({

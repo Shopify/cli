@@ -18,11 +18,7 @@ import {
 import {getAppConfigurationFileName, isWebType} from '../models/app/loader.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
-import {
-  allDeveloperPlatformClients,
-  DeveloperPlatformClient,
-  selectDeveloperPlatformClient,
-} from '../utilities/developer-platform-client.js'
+import {defaultDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {selectOrganizationPrompt} from '@shopify/organizations'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
@@ -187,7 +183,7 @@ describe('ensureDeployContext', () => {
       ...deployOptions(app, false, true),
       developerPlatformClient: buildDeveloperPlatformClient({}),
     }
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
     // When/Then
     await expect(ensureDeployContext(options)).resolves.toBeDefined()
@@ -381,7 +377,7 @@ describe('appFromIdentifiers', () => {
         }),
     })
 
-    vi.mocked(allDeveloperPlatformClients).mockReturnValue([developerPlatformClient])
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
 
     await expect(
       appFromIdentifiers({
@@ -407,7 +403,7 @@ describe('appFromIdentifiers', () => {
         }),
     })
 
-    vi.mocked(allDeveloperPlatformClients).mockReturnValue([developerPlatformClient])
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
 
     await expect(
       appFromIdentifiers({
