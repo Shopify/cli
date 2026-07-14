@@ -80,12 +80,16 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
+* [`shopify store auth list`](#shopify-store-auth-list)
 * [`shopify store bulk cancel`](#shopify-store-bulk-cancel)
 * [`shopify store bulk execute`](#shopify-store-bulk-execute)
 * [`shopify store bulk status`](#shopify-store-bulk-status)
+* [`shopify store create preview`](#shopify-store-create-preview)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify store graphiql`](#shopify-store-graphiql)
 * [`shopify store info`](#shopify-store-info)
+* [`shopify store list`](#shopify-store-list)
+* [`shopify store open`](#shopify-store-open)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -3403,6 +3407,41 @@ EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
 ```
 
+## `shopify store auth list`
+
+List stores authenticated directly with store auth.
+
+```
+USAGE
+  $ shopify store auth list [-j] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  List stores authenticated directly with store auth.
+
+  Lists stores authenticated directly on this machine with `shopify store auth`.
+
+  Use this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.
+  To list stores in a Shopify organization, run `shopify store list`.
+
+EXAMPLES
+  $ shopify store auth list
+
+  $ shopify store auth list --json
+```
+
 ## `shopify store bulk cancel`
 
 Cancel a bulk operation on a store.
@@ -3561,6 +3600,48 @@ EXAMPLES
   $ shopify store bulk status --store shop.myshopify.com
 
   $ shopify store bulk status --store shop.myshopify.com --id 123456789
+```
+
+## `shopify store create preview`
+
+Create a preview Shopify store.
+
+```
+USAGE
+  $ shopify store create preview [--country <value>] [-j] [--name <value>] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --country=<value>
+      Two-letter country code for the store, such as US, CA, or GB.
+      [env: SHOPIFY_FLAG_STORE_COUNTRY]
+
+  --name=<value>
+      The name of the store.
+      [env: SHOPIFY_FLAG_PREVIEW_STORE_NAME]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Create a preview Shopify store.
+
+  Creates a new Shopify store, with no need for an existing account.
+
+EXAMPLES
+  $ shopify store create preview --name "Lavender Candles"
+
+  $ shopify store create preview --name "Lavender Candles" --country US
+
+  $ shopify store create preview --name "Lavender Candles" --json
 ```
 
 ## `shopify store execute`
@@ -3730,6 +3811,80 @@ EXAMPLES
   $ shopify store info --store shop.myshopify.com
 
   $ shopify store info --store shop.myshopify.com --json
+```
+
+## `shopify store list`
+
+List stores in a Shopify organization.
+
+```
+USAGE
+  $ shopify store list [-j] [--no-color] [--organization-id <value>] [--verbose]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --organization-id=<value>
+      The numeric organization ID. Auto-selects if you belong to a single organization.
+      [env: SHOPIFY_FLAG_ORGANIZATION_ID]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  List stores in a Shopify organization.
+
+  Lists stores in a Shopify organization available to the current CLI account.
+
+  When more than one organization is available, the command prompts you to pick one unless you provide
+  `--organization-id`.
+  In non-interactive environments, `--organization-id` is required.
+
+  Run `shopify organization list` to find organization IDs.
+
+EXAMPLES
+  $ shopify store list
+
+  $ shopify store list --organization-id 1234567
+
+  $ shopify store list --json
+```
+
+## `shopify store open`
+
+Open your Shopify store in the default web browser.
+
+```
+USAGE
+  $ shopify store open -s <value> [--no-color] [--verbose]
+
+FLAGS
+  -s, --store=<value>
+      (required) The myshopify.com domain of the store.
+      [env: SHOPIFY_FLAG_STORE]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Open your Shopify store in the default web browser.
+
+  Opens the storefront for a store you have access to in your default web browser.
+
+EXAMPLES
+  $ shopify store open --store shop.myshopify.com
 ```
 
 ## `shopify theme check`

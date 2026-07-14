@@ -6342,7 +6342,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:auth:list",
@@ -6701,7 +6700,7 @@
       "flags": {
         "country": {
           "description": "Two-letter country code for the store, such as US, CA, or GB.",
-          "env": "SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY",
+          "env": "SHOPIFY_FLAG_STORE_COUNTRY",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "country",
@@ -6744,7 +6743,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:create:preview",
@@ -7070,7 +7068,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:list",
@@ -7120,7 +7117,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:open",
@@ -9510,5 +9506,5 @@
       "strict": true
     }
   },
-  "version": "4.4.0"
+  "version": "4.5.0"
 }
