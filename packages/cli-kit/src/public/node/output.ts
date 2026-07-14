@@ -144,29 +144,19 @@ export function outputContent(
   strings: TemplateStringsArray,
   ...keys: (ContentToken<unknown> | string)[]
 ): TokenizedString {
-  let output = ``
-  strings.forEach((string, i) => {
-    output += string
-    if (i >= keys.length) {
-      return
-    }
-
-    const token = keys[i]!
+  const output = strings.reduce((acc, string, i) => {
+    const token = keys[i]
+    let tokenValue = ''
 
     if (typeof token === 'string') {
-      output += token
+      tokenValue = token
     } else if (token) {
       const enumTokenOutput = token.output()
-
-      if (Array.isArray(enumTokenOutput)) {
-        enumTokenOutput.forEach((line: string) => {
-          output += line
-        })
-      } else {
-        output += enumTokenOutput
-      }
+      tokenValue = Array.isArray(enumTokenOutput) ? enumTokenOutput.join('') : enumTokenOutput
     }
-  })
+
+    return acc + string + tokenValue
+  }, '')
   return new TokenizedString(output)
 }
 
@@ -442,6 +432,6 @@ export function shouldDisplayColors(_process = process): boolean {
  * @returns The formatted message.
  */
 export function formatSection(title: string, body: string): string {
-  const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
+  const formattedTitle = title.toUpperCase().padEnd(35)
   return outputContent`${outputToken.heading(formattedTitle)}\n${body}`.value
 }
