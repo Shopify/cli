@@ -98,13 +98,18 @@
 ├─ search
 ├─ store
 │  ├─ auth
+│  │  └─ list
 │  ├─ bulk
 │  │  ├─ cancel
 │  │  ├─ execute
 │  │  └─ status
+│  ├─ create
+│  │  └─ preview
 │  ├─ execute
 │  ├─ graphiql
-│  └─ info
+│  ├─ info
+│  ├─ list
+│  └─ open
 ├─ theme
 │  ├─ check
 │  ├─ console
