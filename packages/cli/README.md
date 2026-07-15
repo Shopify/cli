@@ -2751,12 +2751,26 @@ Link a local project to one of your shop's Hydrogen storefronts.
 
 ```
 USAGE
-  $ shopify hydrogen link [-f] [--path <value>] [--storefront <value>]
+  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--name <value> | ] [--path <value>]
+    [-s <value>]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -s, --shop=<value>
+      Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
+      https://janes-apparel.myshopify.com).
+      [env: SHOPIFY_SHOP]
+
+  --create-storefront
+      Create a new Hydrogen storefront.
+      [env: SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT]
+
+  --name=<value>
+      The name to use when creating a new Hydrogen storefront.
+      [env: SHOPIFY_HYDROGEN_FLAG_NAME]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
