@@ -722,21 +722,15 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
 
 export async function addResolutionOrOverride(directory: string, dependencies: Record<string, string>): Promise<void> {
   const packageManager = await getPackageManager(directory)
-  const packageJsonPath = joinPath(directory, 'package.json')
-  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  const packageJsonContent = await readAndParsePackageJson(joinPath(directory, 'package.json'))
 
-  if (packageManager === 'yarn') {
-    packageJsonContent.resolutions = packageJsonContent.resolutions
-      ? {...packageJsonContent.resolutions, ...dependencies}
-      : dependencies
-  }
-  if (packageManager === 'npm' || packageManager === 'pnpm' || packageManager === 'bun') {
-    packageJsonContent.overrides = packageJsonContent.overrides
-      ? {...packageJsonContent.overrides, ...dependencies}
-      : dependencies
+  const key: keyof PackageJson = packageManager === 'yarn' ? 'resolutions' : 'overrides'
+  packageJsonContent[key] = {
+    ...(packageJsonContent[key] as Record<string, string>),
+    ...dependencies,
   }
 
-  await writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2))
+  await writePackageJSON(directory, packageJsonContent)
 }
 
 /**
