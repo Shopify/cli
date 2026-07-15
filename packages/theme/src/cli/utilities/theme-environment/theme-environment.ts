@@ -114,6 +114,7 @@ function handleThemeEditorSync(
         noDelete: ctx.options.noDelete,
         ignore: ctx.options.ignore,
         only: ctx.options.only,
+        reconciliationStrategy: ctx.options.reconciliationStrategy,
       },
       rejectBackgroundJob,
     )
