@@ -30,6 +30,7 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 export interface LinkOptions {
   directory: string
@@ -94,6 +95,20 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   return {remoteApp, configFileName, configuration: mergedAppConfiguration}
 }
 
+function abortIfLinkPromptCannotRun(missingFlags: string[]) {
+  if (terminalSupportsPrompting() || missingFlags.length === 0) return
+
+  const flags = missingFlags.map((flag) => `--${flag}`).join(' ')
+  throw new AbortError(
+    [{command: 'app config link'}, 'requires additional flags in non-interactive terminal environments.'],
+    [
+      'Run',
+      {command: `shopify app config link ${flags}`},
+      'with the required values, or run the command in an interactive terminal.',
+    ],
+  )
+}
+
 /**
  * Choose or create an app on the platform to link to.
  *
@@ -125,6 +140,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     }
   }
 
+  if (!options.organizationId) abortIfLinkPromptCannotRun(['client-id'])
   const remoteApp = await fetchOrCreateOrganizationApp({
     ...creationOptions,
     directory: appDirectory,
@@ -327,6 +343,7 @@ async function loadConfigurationFileName(
   // If no TOML files exist at all, use the default filename without prompting
   if (isEmpty(existingTomls)) return 'shopify.app.toml'
 
+  abortIfLinkPromptCannotRun(['file-name'])
   return selectConfigName(configDirectory, remoteApp.title)
 }
 
