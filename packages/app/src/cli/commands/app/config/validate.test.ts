@@ -79,6 +79,9 @@ describe('app config validate command', () => {
   test('skips active config prompts when --client-id is passed', async () => {
     const app = testAppLinked()
     mockHealthyProject()
+    vi.mocked(selectActiveConfig).mockResolvedValue({
+      file: new TomlFile('shopify.app.staging.toml', {}),
+    } as any)
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
     vi.mocked(validateApp).mockResolvedValue()
 
@@ -92,7 +95,7 @@ describe('app config validate command', () => {
       directory: expect.any(String),
       clientId: 'api-key',
       forceRelink: false,
-      userProvidedConfigName: undefined,
+      userProvidedConfigName: 'shopify.app.staging.toml',
       unsafeTolerateErrors: true,
     })
     expect(validateApp).toHaveBeenCalledWith(app, {json: false})

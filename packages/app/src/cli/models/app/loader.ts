@@ -926,7 +926,7 @@ type ConfigurationLoaderResult<
 export async function getAppConfigurationContext(
   workingDirectory: string,
   userProvidedConfigName?: string,
-  options?: {clientId?: string; skipPrompts?: boolean},
+  options?: {skipPrompts?: boolean},
 ): Promise<{project: Project; activeConfig: ActiveConfig}> {
   const project = await Project.load(workingDirectory)
   const activeConfig = await selectActiveConfig(project, userProvidedConfigName, options)

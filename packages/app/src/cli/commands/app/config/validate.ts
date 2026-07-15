@@ -9,6 +9,7 @@ import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {basename} from '@shopify/cli-kit/node/path'
 import {renderError} from '@shopify/cli-kit/node/ui'
 
 async function recordValidationFailure(issueCount: number, fileCount: number) {
@@ -93,7 +94,7 @@ export default class Validate extends AppLinkedCommand {
         directory: flags.path,
         clientId: flags['client-id'],
         forceRelink: flags.reset,
-        userProvidedConfigName: flags.config,
+        userProvidedConfigName: flags.config ?? (flags['client-id'] ? basename(activeConfig.file.path) : undefined),
         unsafeTolerateErrors: true,
       })
       app = context.app

@@ -97,10 +97,7 @@ export async function linkedAppContext({
     project = reloaded.project
     activeConfig = reloaded.activeConfig
   } else {
-    const loaded = await getAppConfigurationContext(directory, userProvidedConfigName, {
-      clientId,
-      skipPrompts: Boolean(clientId),
-    })
+    const loaded = await getAppConfigurationContext(directory, userProvidedConfigName)
     project = loaded.project
     activeConfig = loaded.activeConfig
 
