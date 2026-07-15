@@ -532,6 +532,41 @@ describe('classifyDeployExtensionChanges', () => {
     ])
   })
 
+  test('relinks a local to an un-migrated remote by slugified handle and type', async () => {
+    const localExtension = await buildUiExtension({
+      directory: '/extension-with-spaces',
+      name: 'Extension With Spaces',
+      type: 'checkout_post_purchase',
+      uid: 'uid-with-spaces',
+    })
+    const pendingRemote = {
+      registrationId: '',
+      registrationUuid: 'pending-uuid',
+      registrationTitle: 'extension-with-spaces',
+      type: 'checkout_post_purchase',
+      config: {},
+      specification: {
+        identifier: 'checkout_post_purchase',
+        name: 'Post purchase UI extension',
+        experience: 'extension',
+        options: {managementExperience: 'cli'},
+      },
+    } as AppModuleVersion
+
+    const changes = await classifyDeployExtensionChanges({
+      options: deployOptions({app: testApp({...APP, allExtensions: [localExtension]})}),
+      activeAppVersion: {appModuleVersions: [pendingRemote]},
+    })
+
+    expect(changes).toMatchObject([
+      {
+        status: 'updated',
+        local: {localIdentifier: localExtension.localIdentifier},
+        remote: {registrationUuid: 'pending-uuid'},
+      },
+    ])
+  })
+
   test('does not relink a remote that already has a UID even if handle and type match', async () => {
     const remoteWithUid = {
       registrationId: 'some-other-uid',

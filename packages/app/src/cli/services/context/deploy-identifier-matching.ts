@@ -15,6 +15,7 @@ import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js
 import {AppModuleVersion, AppVersion} from '../../utilities/developer-platform-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 type DeployExtensionChangeStatus = 'created' | 'updated' | 'deleted' | 'unchanged'
 
@@ -112,7 +113,7 @@ function uniqueHandleAndTypeMatch(
   remote: AppModuleVersion,
 ): ExtensionInstance | undefined {
   const sameHandleAndType = (local: ExtensionInstance, candidate: AppModuleVersion) =>
-    local.handle === candidate.registrationTitle &&
+    slugify(local.handle) === slugify(candidate.registrationTitle) &&
     (local.specification.identifier === candidate.specification?.identifier ||
       local.specification.externalIdentifier === candidate.specification?.identifier)
 
