@@ -3900,6 +3900,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--create-storefront",
+          "value": "''",
+          "description": "Create a new Hydrogen storefront.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--name <value>",
+          "value": "string",
+          "description": "The name to use when creating a new Hydrogen storefront.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_HYDROGEN_FLAG_NAME"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3923,9 +3941,18 @@
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-s, --shop <value>",
+          "value": "string",
+          "description": "Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_SHOP"
         }
       ],
-      "value": "export interface hydrogenlink {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")\n   * @environment SHOPIFY_HYDROGEN_STOREFRONT\n   */\n  '--storefront <value>'?: string\n}"
+      "value": "export interface hydrogenlink {\n  /**\n   * Create a new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT\n   */\n  '--create-storefront'?: ''\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The name to use when creating a new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_NAME\n   */\n  '--name <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")\n   * @environment SHOPIFY_HYDROGEN_STOREFRONT\n   */\n  '--storefront <value>'?: string\n}"
     }
   },
   "hydrogenlist": {

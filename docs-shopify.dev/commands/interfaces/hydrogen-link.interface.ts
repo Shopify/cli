@@ -5,16 +5,34 @@
  */
 export interface hydrogenlink {
   /**
+   * Create a new Hydrogen storefront.
+   * @environment SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT
+   */
+  '--create-storefront'?: ''
+
+  /**
    * Overwrites the destination directory and files if they already exist.
    * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
   '-f, --force'?: ''
 
   /**
+   * The name to use when creating a new Hydrogen storefront.
+   * @environment SHOPIFY_HYDROGEN_FLAG_NAME
+   */
+  '--name <value>'?: string
+
+  /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
    * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
+
+  /**
+   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).
+   * @environment SHOPIFY_SHOP
+   */
+  '-s, --shop <value>'?: string
 
   /**
    * The name of a Hydrogen Storefront (e.g. "Jane's Apparel")
