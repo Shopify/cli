@@ -653,9 +653,10 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value> | -c <value>]
-    [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
-    [--skip-dependencies-installation] [-s <value>] [--subscription-product-url <value>] [-t <value>]
-    [--theme-app-extension-port <value>] [--use-localhost | [--tunnel-url <value> | ]] [--verbose]
+    [--install-mkcert --use-localhost] [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>] [--path
+    <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
+    [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -681,6 +682,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --install-mkcert
+      Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.
+      [env: SHOPIFY_FLAG_INSTALL_MKCERT]
 
   --localhost-port=<value>
       Port to use for localhost. Must be between 1 and 65535.
@@ -710,6 +715,10 @@ FLAGS
   --skip-dependencies-installation
       Skips the installation of dependencies. Deprecated, use workspaces instead.
       [env: SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION]
+
+  --store-password=<value>
+      The password for storefronts with password protection.
+      [env: SHOPIFY_FLAG_STORE_PASSWORD]
 
   --subscription-product-url=<value>
       Resource URL for subscription UI extension. Format: "/products/{productId}"

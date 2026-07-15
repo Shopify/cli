@@ -33,6 +33,14 @@ vi.mock('./monorail.js')
 vi.mock('./cli.js')
 vi.mock('./error-handler.js')
 
+function restoreEnvVariable(key: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[key]
+  } else {
+    process.env[key] = value
+  }
+}
+
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
   let publishEventMock: MockedFunction<typeof publishMonorailEvent>
@@ -202,7 +210,7 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app'}
-      const argsWithPassword = args.concat(['--password', 'shptka_abc123'])
+      const argsWithPassword = args.concat(['--password', 'shptka_abc123', '--store-password', 'store-secret'])
       await startAnalytics({commandContent, args: argsWithPassword, currentTime: currentDate.getTime() - 100})
 
       // When
@@ -214,7 +222,7 @@ describe('event tracking', () => {
 
       // Then
       const expectedPayloadSensitive = {
-        args: expect.stringMatching(/.*password \*\*\*\*\*/),
+        args: expect.stringMatching(/.*password \*\*\*\*\*.*store-password \*\*\*\*\*/),
         metadata: expect.anything(),
       }
       expect(publishEventMock).toHaveBeenCalledOnce()
@@ -222,34 +230,67 @@ describe('event tracking', () => {
     })
   })
 
-  test('sends SHOPIFY_ environment variables in sensitive payload', async () => {
-    const originalEnv = {...process.env}
-    process.env.SHOPIFY_TEST_VAR = 'test_value'
-    process.env.SHOPIFY_ANOTHER_VAR = 'another_value'
-    process.env.NOT_SHOPIFY_VAR = 'should_not_appear'
-
+  test('does not send store password environment flags to Monorail', async () => {
     await inProjectWithFile('package.json', async (args) => {
       const commandContent = {command: 'dev', topic: 'app'}
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+      await addSensitiveMetadata(() => ({
+        environmentFlags: JSON.stringify({'store-password': 'store-secret'}),
+      }))
 
-      // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
       await reportAnalyticsEvent({config, exitMode: 'ok'})
 
-      // Then
-      const sensitivePayload = publishEventMock.mock.calls[0]![2]
       expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(sensitivePayload).toHaveProperty('env_shopify_variables')
-      expect(sensitivePayload.env_shopify_variables).toBeDefined()
-
-      const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
-      expect(shopifyVars).toHaveProperty('SHOPIFY_TEST_VAR', 'test_value')
-      expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
-      expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject({
+        cmd_all_environment_flags: JSON.stringify({'store-password': '*****'}),
+      })
     })
+  })
+
+  test('sends SHOPIFY_ environment variables in sensitive payload', async () => {
+    const originalShopifyTestVar = process.env.SHOPIFY_TEST_VAR
+    const originalShopifyAnotherVar = process.env.SHOPIFY_ANOTHER_VAR
+    const originalShopifyFlagStorePassword = process.env.SHOPIFY_FLAG_STORE_PASSWORD
+    const originalNotShopifyVar = process.env.NOT_SHOPIFY_VAR
+    process.env.SHOPIFY_TEST_VAR = 'test_value'
+    process.env.SHOPIFY_ANOTHER_VAR = 'another_value'
+    process.env.SHOPIFY_FLAG_STORE_PASSWORD = 'store-secret'
+    process.env.NOT_SHOPIFY_VAR = 'should_not_appear'
+
+    try {
+      await inProjectWithFile('package.json', async (args) => {
+        const commandContent = {command: 'dev', topic: 'app'}
+        await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+        // When
+        const config = {
+          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+          plugins: [],
+        } as any
+        await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+        // Then
+        const sensitivePayload = publishEventMock.mock.calls[0]![2]
+        expect(publishEventMock).toHaveBeenCalledOnce()
+        expect(sensitivePayload).toHaveProperty('env_shopify_variables')
+        expect(sensitivePayload.env_shopify_variables).toBeDefined()
+
+        const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+        expect(shopifyVars).toHaveProperty('SHOPIFY_TEST_VAR', 'test_value')
+        expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
+        expect(shopifyVars).toHaveProperty('SHOPIFY_FLAG_STORE_PASSWORD', '*****')
+        expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+      })
+    } finally {
+      restoreEnvVariable('SHOPIFY_TEST_VAR', originalShopifyTestVar)
+      restoreEnvVariable('SHOPIFY_ANOTHER_VAR', originalShopifyAnotherVar)
+      restoreEnvVariable('SHOPIFY_FLAG_STORE_PASSWORD', originalShopifyFlagStorePassword)
+      restoreEnvVariable('NOT_SHOPIFY_VAR', originalNotShopifyVar)
+    }
   })
 
   test('does nothing when analytics are disabled', async () => {

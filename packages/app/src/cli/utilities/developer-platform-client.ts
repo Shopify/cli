@@ -11,10 +11,6 @@ import {
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
 
-import {
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
@@ -257,9 +253,6 @@ export interface DeveloperPlatformClient {
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
-  convertToTransferDisabledStore: (
-    input: ConvertDevToTransferDisabledStoreVariables,
-  ) => Promise<ConvertDevToTransferDisabledSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
   apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>

@@ -40,11 +40,6 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {
-  ConvertDevToTransferDisabledStoreQuery,
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {
   FindStoreByDomainQuery,
   FindStoreByDomainQueryVariables,
   FindStoreByDomainSchema,
@@ -468,12 +463,6 @@ export class PartnersClient implements DeveloperPlatformClient {
       assetUrl: result.appVersionGenerateSignedUploadUrl.signedUploadUrl,
       userErrors: result.appVersionGenerateSignedUploadUrl.userErrors,
     }
-  }
-
-  async convertToTransferDisabledStore(
-    input: ConvertDevToTransferDisabledStoreVariables,
-  ): Promise<ConvertDevToTransferDisabledSchema> {
-    return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
   async storeByDomain(orgId: string, shopDomain: string, _storeTypes: Store[]): Promise<OrganizationStore | undefined> {
