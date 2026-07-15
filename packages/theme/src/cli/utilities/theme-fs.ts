@@ -547,8 +547,7 @@ export async function hasRequiredThemeDirectories(path: string) {
     }),
   )
 
-  const requiredDirectories = ['config', 'layout', 'sections', 'templates']
-
+  const requiredDirectories = ['config', 'layout', 'templates']
   return requiredDirectories.every((dir) => directories.has(dir))
 }
 
