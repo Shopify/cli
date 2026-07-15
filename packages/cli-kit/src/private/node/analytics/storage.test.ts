@@ -1,6 +1,6 @@
 import {recordTiming, recordError, recordRetry, recordEvent, compileData, reset} from './storage.js'
 import {ErrorCategory} from './error-categorizer.js'
-import {describe, test, expect, beforeEach} from 'vitest'
+import {describe, test, expect, beforeEach, vi} from 'vitest'
 
 describe('analytics/storage', () => {
   beforeEach(() => {
@@ -21,12 +21,16 @@ describe('analytics/storage', () => {
 
     test('completes a timing when called second time', () => {
       // Given
-      recordTiming('test-event')
+      vi.useFakeTimers()
+      const startTime = new Date('2026-01-01T00:00:00.000Z')
       const delay = 10
-      const delayPromise = new Promise((resolve) => setTimeout(resolve, delay))
 
-      // When
-      return delayPromise.then(() => {
+      try {
+        vi.setSystemTime(startTime)
+        recordTiming('test-event')
+
+        // When
+        vi.setSystemTime(new Date(startTime.getTime() + delay))
         recordTiming('test-event')
 
         // Then
@@ -35,12 +39,14 @@ describe('analytics/storage', () => {
 
         const timing = data.timings[0]
         expect(timing?.event).toBe('test-event')
-        expect(timing?.duration).toBeGreaterThanOrEqual(0)
+        expect(timing?.duration).toBe(delay)
 
         expect(data.events.length).toBe(2)
         expect(data.events[0]?.name).toBe('timing:start:test-event')
         expect(data.events[1]?.name).toBe('timing:end:test-event')
-      })
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     test('handles multiple concurrent timings', () => {
