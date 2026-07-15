@@ -4,9 +4,11 @@ import {
   createTypeDefinition,
   createToolsTypeDefinition,
   findNearestTsConfigDir,
+  findExplicitTsConfigFiles,
   getGeneratedTypesHelperImportPath,
   IntentSchemaFileSchema,
   parseApiVersion,
+  type TsConfigCache,
   ToolsFileSchema,
 } from './type-generation.js'
 import {Asset, AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
@@ -18,7 +20,7 @@ import {formatContent} from '../../../utilities/file-formatter.js'
 import {uniq} from '@shopify/cli-kit/common/array'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -210,6 +212,8 @@ const uiExtensionSpec = createExtensionSpecification({
     const fileToTargetsMap = new Map<string, string[]>()
     const fileToToolsMap = new Map<string, string>()
     const fileToIntentsMap = new Map<string, NonNullable<NewExtensionPointSchemaType['intents']>>()
+    const importCache = new Map<string, string[]>()
+    const tsConfigCache: TsConfigCache = new Map()
 
     // First pass: collect all entry point files and their targets
     for await (const extensionPoint of configuration.extension_points) {
@@ -254,7 +258,14 @@ const uiExtensionSpec = createExtensionSpecification({
       if (!exists) continue
 
       // Find all imported files recursively
-      const importedFiles = await findAllImportedFiles(fullPath)
+      const allowedFiles = await findExplicitTsConfigFiles(fullPath, extension.directory, {tsConfigCache})
+      const importedFiles = await findAllImportedFiles(fullPath, {
+        boundaryDirectory: extension.directory,
+        allowedFiles,
+        alwaysAllowedFiles: new Set([resolvePath(fullPath)]),
+        importCache,
+        tsConfigCache,
+      })
 
       // Associate imported files with this extension point's target
       for (const importedFile of importedFiles) {
@@ -271,7 +282,16 @@ const uiExtensionSpec = createExtensionSpecification({
         )
         const shouldRenderExists = await fileExists(shouldRenderPath)
         if (shouldRenderExists) {
-          const shouldRenderImports = await findAllImportedFiles(shouldRenderPath)
+          const shouldRenderAllowedFiles = await findExplicitTsConfigFiles(shouldRenderPath, extension.directory, {
+            tsConfigCache,
+          })
+          const shouldRenderImports = await findAllImportedFiles(shouldRenderPath, {
+            boundaryDirectory: extension.directory,
+            allowedFiles: shouldRenderAllowedFiles,
+            alwaysAllowedFiles: new Set([resolvePath(shouldRenderPath)]),
+            importCache,
+            tsConfigCache,
+          })
           for (const importedFile of shouldRenderImports) {
             const currentTargets = fileToTargetsMap.get(importedFile) ?? []
             currentTargets.push(getShouldRenderTarget(extensionPoint.target))
