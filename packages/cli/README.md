@@ -2380,7 +2380,8 @@ USAGE
 
 FLAGS
   -f, --force
-      Forces a deployment to proceed if there are uncommitted changes in its Git repository.
+      Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation
+      prompts for non-preview environments.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
 
   -s, --shop=<value>
@@ -2596,9 +2597,17 @@ Push environment variables from the local .env file to your linked Hydrogen stor
 
 ```
 USAGE
-  $ shopify hydrogen env push [--env <value> | ] [--env-file <value>] [--path <value>]
+  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--path <value>]
 
 FLAGS
+  -f, --force
+      Push environment variable changes without confirmation.
+      [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  --dry-run
+      Preview environment variable changes without pushing them.
+      [env: SHOPIFY_HYDROGEN_FLAG_DRY_RUN]
+
   --env=<value>
       Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
 
@@ -2751,12 +2760,26 @@ Link a local project to one of your shop's Hydrogen storefronts.
 
 ```
 USAGE
-  $ shopify hydrogen link [-f] [--path <value>] [--storefront <value>]
+  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--name <value> | ] [--path <value>]
+    [-s <value>]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -s, --shop=<value>
+      Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
+      https://janes-apparel.myshopify.com).
+      [env: SHOPIFY_SHOP]
+
+  --create-storefront
+      Create a new Hydrogen storefront.
+      [env: SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT]
+
+  --name=<value>
+      The name to use when creating a new Hydrogen storefront.
+      [env: SHOPIFY_HYDROGEN_FLAG_NAME]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
