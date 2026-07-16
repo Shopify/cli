@@ -249,13 +249,6 @@ export async function versionsList(
  *                                         In CI mode Ink suppresses prompt frames
  *                                         (only emitted on unmount), so waitForOutput
  *                                         hangs until the process is killed.
- *   SHOPIFY_CLI_NEVER_USE_PARTNERS_API=1 — skip Partners client in fetchOrganizations.
- *                                         Without this, fetchOrganizations iterates
- *                                         AppManagement AND Partners sequentially.
- *                                         Partners requires SHOPIFY_CLI_PARTNERS_TOKEN
- *                                         (not set in OAuth-auth'd tests) and hangs
- *                                         for minutes trying to authenticate. The e2e
- *                                         test org (161686155) lives in AppManagement.
  */
 export async function configLink(
   ctx: CLIContext & {
@@ -276,7 +269,6 @@ export async function configLink(
   const proc = await ctx.cli.spawn(args, {
     env: {
       CI: undefined,
-      SHOPIFY_CLI_NEVER_USE_PARTNERS_API: '1',
     },
   })
 

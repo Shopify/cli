@@ -6,13 +6,11 @@ import {
   testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {AppManagementClient} from '../../utilities/developer-platform-client/app-management-client.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 
 const ORG1: Organization = {
   id: '1',
@@ -35,9 +33,7 @@ const STORE1: OrganizationStore = {
 }
 
 vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('../../utilities/developer-platform-client/partners-client.js')
 vi.mock('../../utilities/developer-platform-client/app-management-client.js')
-vi.mock('@shopify/cli-kit/node/environment')
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -45,30 +41,8 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from available developer platform clients', async () => {
+  test('returns fetched organizations from App Management', async () => {
     // Given
-    vi.mocked(blockPartnersAccess).mockReturnValue(false)
-    const partnersClient: PartnersClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG1]),
-    }) as PartnersClient
-    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG2]),
-    }) as AppManagementClient
-    vi.mocked(PartnersClient.getInstance).mockReturnValue(partnersClient)
-    vi.mocked(AppManagementClient.getInstance).mockReturnValue(appManagementClient)
-
-    // When
-    const got = await fetchOrganizations()
-
-    // Then
-    expect(got).toEqual([ORG2, ORG1])
-    expect(partnersClient.organizations).toHaveBeenCalled()
-    expect(appManagementClient.organizations).toHaveBeenCalled()
-  })
-
-  test('returns fetched organizations from App Management for 3P development', async () => {
-    // Given
-    vi.mocked(blockPartnersAccess).mockReturnValue(true)
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG2]),
     }) as AppManagementClient
@@ -79,13 +53,11 @@ describe('fetchOrganizations', async () => {
 
     // Then
     expect(got).toEqual([ORG2])
-    expect(PartnersClient.getInstance).not.toHaveBeenCalled()
     expect(appManagementClient.organizations).toHaveBeenCalled()
   })
 
   test('throws if there are no organizations', async () => {
     // Given
-    vi.mocked(blockPartnersAccess).mockReturnValue(true)
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([]),
     }) as AppManagementClient

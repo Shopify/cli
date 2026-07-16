@@ -1,4 +1,3 @@
-import {PartnersClient} from './developer-platform-client/partners-client.js'
 import {AppManagementClient} from './developer-platform-client/app-management-client.js'
 import {
   MinimalAppIdentifiers,
@@ -45,7 +44,6 @@ import {
 import {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
-import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
@@ -60,40 +58,12 @@ export type Paginateable<T> = T & {
   hasMorePages: boolean
 }
 
-interface SelectDeveloperPlatformClientOptions {
-  organization?: Organization
-}
-
 export interface AppVersionIdentifiers {
   appVersionId: number
   versionId: string
 }
 
-export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
-  const clients: DeveloperPlatformClient[] = []
-
-  clients.push(AppManagementClient.getInstance())
-
-  if (!blockPartnersAccess()) {
-    clients.push(PartnersClient.getInstance())
-  }
-
-  return clients
-}
-
-export function selectDeveloperPlatformClient({
-  organization,
-}: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (organization) return selectDeveloperPlatformClientByOrg(organization)
-  return defaultDeveloperPlatformClient()
-}
-
-function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
-  if (organization.source === OrganizationSource.BusinessPlatform) return AppManagementClient.getInstance()
-  return PartnersClient.getInstance()
-}
-
-function defaultDeveloperPlatformClient(): DeveloperPlatformClient {
+export function defaultDeveloperPlatformClient(): DeveloperPlatformClient {
   return AppManagementClient.getInstance()
 }
 

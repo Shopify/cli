@@ -1,6 +1,6 @@
 import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {defaultDeveloperPlatformClient, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromIdentifiers, selectOrg} from '../../services/context.js'
 import {fetchOrgFromId} from '../../services/dev/fetch.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
@@ -91,7 +91,7 @@ export default class Init extends AppLinkedCommand {
     const name = flags.name ?? (await getAppName(flags.path))
 
     // Force user authentication before prompting.
-    let developerPlatformClient = selectDeveloperPlatformClient()
+    const developerPlatformClient = defaultDeveloperPlatformClient()
     await developerPlatformClient.session()
 
     const promptAnswers = await initPrompt({
@@ -105,7 +105,6 @@ export default class Init extends AppLinkedCommand {
       // If a client-id is provided we don't need to prompt the user and can link directly to that app.
       const selectedApp = await appFromIdentifiers({apiKey: flags['client-id']})
       appName = selectedApp.title
-      developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
     } else {
       let org: Organization
@@ -115,7 +114,6 @@ export default class Init extends AppLinkedCommand {
       } else {
         org = await selectOrg()
       }
-      developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
       selectAppResult = await selectAppOrNewAppName(
         flags.name !== undefined,

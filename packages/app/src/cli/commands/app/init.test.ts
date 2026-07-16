@@ -1,7 +1,7 @@
 import Init from './init.js'
 import initPrompt from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
-import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {defaultDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../../services/context.js'
 import {fetchOrgFromId, NoOrgError} from '../../services/dev/fetch.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
@@ -44,7 +44,7 @@ describe('Init command', () => {
       vi.mocked(validateTemplateValue).mockReturnValue(undefined)
       vi.mocked(validateFlavorValue).mockReturnValue(undefined)
       vi.mocked(inferPackageManager).mockReturnValue('npm')
-      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
+      vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
       vi.mocked(selectOrg).mockResolvedValue(mockOrganization)
 
       // Mock the orgAndApps method on the developer platform client
@@ -87,7 +87,7 @@ describe('Init command', () => {
       vi.mocked(validateTemplateValue).mockReturnValue(undefined)
       vi.mocked(validateFlavorValue).mockReturnValue(undefined)
       vi.mocked(inferPackageManager).mockReturnValue('npm')
-      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
+      vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
 
       // Mock fetchOrgFromId to return the organization
       vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)
@@ -149,7 +149,7 @@ describe('Init command', () => {
         vi.mocked(validateTemplateValue).mockReturnValue(undefined)
         vi.mocked(validateFlavorValue).mockReturnValue(undefined)
         vi.mocked(inferPackageManager).mockReturnValue('npm')
-        vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
+        vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
 
         // Mock fetchOrgFromId to throw NoOrgError for invalid organization
         vi.mocked(fetchOrgFromId).mockRejectedValue(
@@ -202,7 +202,7 @@ describe('Init command', () => {
       vi.mocked(validateTemplateValue).mockReturnValue(undefined)
       vi.mocked(validateFlavorValue).mockReturnValue(undefined)
       vi.mocked(inferPackageManager).mockReturnValue('npm')
-      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
+      vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
 
       // Mock fetchOrgFromId to return the organization
       vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)

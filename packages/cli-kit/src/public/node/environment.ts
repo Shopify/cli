@@ -77,15 +77,6 @@ export function jsonOutputEnabled(environment = getEnvironmentVariables()): bool
 }
 
 /**
- * If true, the CLI should not use the Partners API.
- *
- * @returns True when the CLI should not use the Partners API.
- */
-export function blockPartnersAccess(): boolean {
-  return isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi])
-}
-
-/**
  * If true, the CLI should not use the network level retry.
  *
  * If there is an error when calling a network API that looks like a DNS or connectivity issue, the CLI will by default
