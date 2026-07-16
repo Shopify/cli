@@ -1057,16 +1057,6 @@
           "name": "graphiql-port",
           "type": "option"
         },
-        "install-mkcert": {
-          "allowNo": false,
-          "dependsOn": [
-            "use-localhost"
-          ],
-          "description": "Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.",
-          "env": "SHOPIFY_FLAG_INSTALL_MKCERT",
-          "name": "install-mkcert",
-          "type": "boolean"
-        },
         "localhost-port": {
           "description": "Port to use for localhost. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
@@ -1132,14 +1122,6 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
-          "type": "option"
-        },
-        "store-password": {
-          "description": "The password for storefronts with password protection.",
-          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "store-password",
           "type": "option"
         },
         "subscription-product-url": {
@@ -6360,6 +6342,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:auth:list",
@@ -6718,7 +6701,7 @@
       "flags": {
         "country": {
           "description": "Two-letter country code for the store, such as US, CA, or GB.",
-          "env": "SHOPIFY_FLAG_STORE_COUNTRY",
+          "env": "SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "country",
@@ -6761,6 +6744,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:create:preview",
@@ -7086,6 +7070,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:list",
@@ -7135,6 +7120,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:open",
@@ -7763,22 +7749,6 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "port",
-          "type": "option"
-        },
-        "reconciliation-strategy": {
-          "dependsOn": [
-            "theme-editor-sync"
-          ],
-          "description": "How to resolve JSON conflicts when --theme-editor-sync is enabled. Use keep-local to keep local files, keep-remote to keep remote files, or abort to fail instead of prompting.",
-          "env": "SHOPIFY_FLAG_RECONCILIATION_STRATEGY",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "reconciliation-strategy",
-          "options": [
-            "keep-local",
-            "keep-remote",
-            "abort"
-          ],
           "type": "option"
         },
         "standard-events-inspector": {
@@ -9540,5 +9510,5 @@
       "strict": true
     }
   },
-  "version": "4.5.0"
+  "version": "4.4.0"
 }

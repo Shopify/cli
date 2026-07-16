@@ -17,7 +17,7 @@ export function isCountryCode(value: string): boolean {
 }
 
 export const previewStoreFlags = {
-  country: countryFlag('SHOPIFY_FLAG_STORE_COUNTRY'),
+  country: countryFlag('SHOPIFY_FLAG_PREVIEW_STORE_COUNTRY'),
 }
 
 export const storeFlags = {

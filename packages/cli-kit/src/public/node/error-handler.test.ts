@@ -88,20 +88,6 @@ describe('errorHandler', async () => {
     expect(outputMock.info()).toMatch('✨  Custom message')
     expect(process.exit).toBeCalledTimes(0)
   })
-
-  test('finishes the execution without exiting the proccess when AbortSilentError is raised', async () => {
-    // Given
-    vi.spyOn(process, 'exit').mockResolvedValue(null as never)
-    const outputMock = mockAndCaptureOutput()
-    outputMock.clear()
-
-    // When
-    await errorHandler(new error.AbortSilentError())
-
-    // Then
-    expect(outputMock.info()).toBe('')
-    expect(process.exit).toBeCalledTimes(0)
-  })
 })
 
 describe('bugsnag stack cleaning', () => {

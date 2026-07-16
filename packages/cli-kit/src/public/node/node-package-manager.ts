@@ -95,8 +95,16 @@ export class FindUpAndReadPackageJsonNotFoundError extends BugError {
  * @returns The dependency manager
  */
 export function packageManagerFromUserAgent(env = process.env): PackageManager {
-  const userAgent = env.npm_config_user_agent
-  return (['yarn', 'pnpm', 'bun', 'npm'] as const).find((pm) => userAgent?.includes(pm)) ?? 'unknown'
+  if (env.npm_config_user_agent?.includes('yarn')) {
+    return 'yarn'
+  } else if (env.npm_config_user_agent?.includes('pnpm')) {
+    return 'pnpm'
+  } else if (env.npm_config_user_agent?.includes('bun')) {
+    return 'bun'
+  } else if (env.npm_config_user_agent?.includes('npm')) {
+    return 'npm'
+  }
+  return 'unknown'
 }
 
 function hasBunLockfileSync(directory: string): boolean {

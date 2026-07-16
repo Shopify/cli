@@ -45,16 +45,17 @@ export async function errorHandler(
     if (error.message && error.message !== '') {
       outputInfo(`✨  ${error.message}`)
     }
-    return
+  } else if (error instanceof AbortSilentError) {
+    /* empty */
+  } else {
+    return errorMapper(error)
+      .then((error) => {
+        return handler(error)
+      })
+      .then((mappedError) => {
+        return reportError(mappedError, config)
+      })
   }
-
-  if (error instanceof AbortSilentError) {
-    return
-  }
-
-  const mappedError = await errorMapper(error)
-  await handler(mappedError)
-  await reportError(mappedError, config)
 }
 
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {

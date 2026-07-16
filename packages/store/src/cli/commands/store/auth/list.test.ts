@@ -25,6 +25,7 @@ describe('store auth list command', () => {
   })
 
   test('does not expose organization or source-selection flags', () => {
+    expect(StoreAuthList.hidden).toBe(true)
     expect(StoreAuthList.flags.json).toBeDefined()
     expect(StoreAuthList.flags).not.toHaveProperty('organization-id')
     expect(StoreAuthList.flags).not.toHaveProperty('from')

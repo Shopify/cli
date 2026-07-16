@@ -1,7 +1,13 @@
 import {startHRTime, endHRTimeInMs} from './hrtime.js'
-import {describe, test, expect, vi} from 'vitest'
+import {describe, test, expect, vi, afterEach} from 'vitest'
 
 describe('hrtime', () => {
+  afterEach(() => {
+    // In theory this shouldn't be necessary, but vitest doesn't restore spies automatically on some platforms.
+    // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
+    vi.restoreAllMocks()
+  })
+
   test('startHRTime returns the current high-resolution real time', () => {
     // Given
     const mockTime: [number, number] = [123, 456]

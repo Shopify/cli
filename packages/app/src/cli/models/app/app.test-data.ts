@@ -41,6 +41,7 @@ import {
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
@@ -1240,6 +1241,13 @@ const generateSignedUploadUrlResponse: AssetUrlSchema = {
   userErrors: [],
 }
 
+const convertedToTransferDisabledStoreResponse = {
+  convertDevToTestStore: {
+    convertedToTestStore: true,
+    userErrors: [],
+  },
+}
+
 const organizationsResponse: Organization[] = [testOrganization()]
 
 const sendSampleWebhookResponse: SendSampleWebhookSchema = {
@@ -1331,6 +1339,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
+    convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
+      Promise.resolve(convertedToTransferDisabledStoreResponse),
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),

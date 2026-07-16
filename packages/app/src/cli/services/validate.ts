@@ -4,7 +4,6 @@ import metadata from '../metadata.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {basename} from '@shopify/cli-kit/node/path'
 
 interface ValidateAppOptions {
   json: boolean
@@ -31,7 +30,7 @@ export async function validateApp(app: AppLinkedInterface, options: ValidateAppO
       return
     }
 
-    renderSuccess({headline: `App configuration '${basename(app.configPath)}' is valid.`})
+    renderSuccess({headline: 'App configuration is valid.'})
     return
   }
 
