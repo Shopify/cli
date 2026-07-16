@@ -1,56 +1,58 @@
 import {listBusinessPlatformStores} from './bp-source.js'
+import {type ListAccessibleShopsQuery} from '../../../api/graphql/business-platform-organizations/generated/list_accessible_shops.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {type Organization} from '@shopify/organizations'
 
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/session')
 
-const organization = {id: '1234', businessName: 'Acme'}
+const organization: Organization = {id: '1234', businessName: 'Acme'}
+
+type AccessibleShops = NonNullable<NonNullable<ListAccessibleShopsQuery['organization']>['accessibleShops']>
+type AccessibleShopNode = AccessibleShops['edges'][number]['node']
+
+function accessibleShopNode(overrides: Partial<AccessibleShopNode> = {}): AccessibleShopNode {
+  return {
+    id: 'gid://shopify/Shop/1',
+    shopifyShopId: '1',
+    name: 'Acme Production',
+    storeType: 'PRODUCTION',
+    primaryDomain: 'acme.myshopify.com',
+    url: null,
+    createdAt: '2026-01-15T00:00:00Z',
+    ...overrides,
+  }
+}
 
 function shopPage({
   organizationId = '1234',
-  shopifyShopId = '1',
-  name = 'Acme Production',
-  storeType = 'PRODUCTION',
-  primaryDomain = 'acme.myshopify.com',
-  url = null,
-  createdAt = '2026-01-15T00:00:00Z',
+  shops = [accessibleShopNode()],
   hasNextPage = false,
 }: {
   organizationId?: string
-  shopifyShopId?: string
-  name?: string
-  storeType?: string
-  primaryDomain?: string | null
-  url?: string | null
-  createdAt?: string
+  shops?: AccessibleShopNode[]
   hasNextPage?: boolean
-} = {}) {
+} = {}): ListAccessibleShopsQuery {
   return {
     organization: {
       id: organizationId,
       name: 'Ignored response org name',
       accessibleShops: {
-        edges: [
-          {
-            node: {
-              id: `gid://shopify/Shop/${shopifyShopId}`,
-              shopifyShopId,
-              name,
-              storeType,
-              primaryDomain,
-              url,
-              createdAt,
-            },
-          },
-        ],
-        pageInfo: {hasNextPage, endCursor: null},
+        edges: shops.map((node) => ({node})),
+        pageInfo: {hasNextPage},
       },
     },
   }
+}
+
+function latestBusinessPlatformRequestOptions() {
+  const [requestOptions] = vi.mocked(businessPlatformOrganizationsRequestDoc).mock.calls[0] ?? []
+  if (!requestOptions) throw new Error('Expected a Business Platform request')
+  return requestOptions
 }
 
 describe('listBusinessPlatformStores', () => {
@@ -62,7 +64,7 @@ describe('listBusinessPlatformStores', () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
-    const requestOptions = vi.mocked(businessPlatformOrganizationsRequestDoc).mock.calls[0]?.[0] as any
+    const requestOptions = latestBusinessPlatformRequestOptions()
 
     expect(JSON.stringify(requestOptions.query)).toContain('STORE_STATUS')
     expect(JSON.stringify(requestOptions.query)).toContain('EQUALS')
@@ -88,7 +90,7 @@ describe('listBusinessPlatformStores', () => {
 
   test('uses the selected organization name instead of the response organization name', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
-      shopPage({organizationId: '5678', primaryDomain: 'beta.myshopify.com'}),
+      shopPage({organizationId: '5678', shops: [accessibleShopNode({primaryDomain: 'beta.myshopify.com'})]}),
     )
 
     const result = await listBusinessPlatformStores({
@@ -101,7 +103,7 @@ describe('listBusinessPlatformStores', () => {
 
   test('skips accessible shops that have no URL or primary domain', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
-      shopPage({primaryDomain: null, url: null, name: 'Missing Domain Shop'}),
+      shopPage({shops: [accessibleShopNode({primaryDomain: null, url: null, name: 'Missing Domain Shop'})]}),
     )
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
@@ -110,39 +112,27 @@ describe('listBusinessPlatformStores', () => {
   })
 
   test('fetches a single bounded page for the selected organization and orders newest first', async () => {
-    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue({
-      organization: {
-        id: '1234',
-        name: 'Acme',
-        accessibleShops: {
-          edges: [
-            {
-              node: {
-                id: 'gid://shopify/Shop/1',
-                shopifyShopId: '1',
-                name: 'Older Shop',
-                storeType: 'PRODUCTION',
-                primaryDomain: 'older.myshopify.com',
-                url: null,
-                createdAt: '2025-01-01T00:00:00Z',
-              },
-            },
-            {
-              node: {
-                id: 'gid://shopify/Shop/2',
-                shopifyShopId: '2',
-                name: 'Newer Shop',
-                storeType: 'DEVELOPMENT',
-                primaryDomain: 'newer.myshopify.com',
-                url: null,
-                createdAt: '2026-05-01T00:00:00Z',
-              },
-            },
-          ],
-          pageInfo: {hasNextPage: false},
-        },
-      },
-    } as any)
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
+      shopPage({
+        shops: [
+          accessibleShopNode({
+            shopifyShopId: '1',
+            name: 'Older Shop',
+            storeType: 'PRODUCTION',
+            primaryDomain: 'older.myshopify.com',
+            createdAt: '2025-01-01T00:00:00Z',
+          }),
+          accessibleShopNode({
+            id: 'gid://shopify/Shop/2',
+            shopifyShopId: '2',
+            name: 'Newer Shop',
+            storeType: 'DEVELOPMENT',
+            primaryDomain: 'newer.myshopify.com',
+            createdAt: '2026-05-01T00:00:00Z',
+          }),
+        ],
+      }),
+    )
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
 
@@ -154,39 +144,27 @@ describe('listBusinessPlatformStores', () => {
   })
 
   test('sorts stores with matching created dates by store host', async () => {
-    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue({
-      organization: {
-        id: '1234',
-        name: 'Acme',
-        accessibleShops: {
-          edges: [
-            {
-              node: {
-                id: 'gid://shopify/Shop/2',
-                shopifyShopId: '2',
-                name: 'B Shop',
-                storeType: 'DEVELOPMENT',
-                primaryDomain: 'b-shop.myshopify.com',
-                url: null,
-                createdAt: '2026-05-01T00:00:00Z',
-              },
-            },
-            {
-              node: {
-                id: 'gid://shopify/Shop/1',
-                shopifyShopId: '1',
-                name: 'A Shop',
-                storeType: 'DEVELOPMENT',
-                primaryDomain: 'a-shop.myshopify.com',
-                url: null,
-                createdAt: '2026-05-01T00:00:00Z',
-              },
-            },
-          ],
-          pageInfo: {hasNextPage: false},
-        },
-      },
-    } as any)
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
+      shopPage({
+        shops: [
+          accessibleShopNode({
+            id: 'gid://shopify/Shop/2',
+            shopifyShopId: '2',
+            name: 'B Shop',
+            storeType: 'DEVELOPMENT',
+            primaryDomain: 'b-shop.myshopify.com',
+            createdAt: '2026-05-01T00:00:00Z',
+          }),
+          accessibleShopNode({
+            shopifyShopId: '1',
+            name: 'A Shop',
+            storeType: 'DEVELOPMENT',
+            primaryDomain: 'a-shop.myshopify.com',
+            createdAt: '2026-05-01T00:00:00Z',
+          }),
+        ],
+      }),
+    )
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
 
@@ -217,7 +195,7 @@ describe('listBusinessPlatformStores', () => {
 
     await listBusinessPlatformStores({token: 'bp-token', organization})
 
-    const requestOptions = vi.mocked(businessPlatformOrganizationsRequestDoc).mock.calls[0]?.[0] as any
+    const requestOptions = latestBusinessPlatformRequestOptions()
     await requestOptions.unauthorizedHandler.handler()
 
     expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: undefined})
