@@ -5,6 +5,20 @@ import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {describe, expect, test} from 'vitest'
 
+type StoreAuthStorage = NonNullable<Parameters<typeof listStoredStoreAuthSummaries>[0]>
+
+function createStoreAuthStorage(cwd: string): StoreAuthStorage {
+  return new LocalStorage({cwd})
+}
+
+function setRawStoreAuthBucket(
+  storage: StoreAuthStorage,
+  key: string,
+  bucket: {currentUserId: string; sessionsByUserId: Record<string, unknown>},
+): void {
+  ;(storage as unknown as LocalStorage<Record<string, unknown>>).set(key, bucket)
+}
+
 function buildSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
   return {
     store: 'shop.myshopify.com',
@@ -21,23 +35,23 @@ function buildSession(overrides: Partial<StoredStoreAppSession> = {}): StoredSto
 describe('listStoredStoreAuthSummaries', () => {
   test('returns an empty array when no store auth is persisted', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const storage = createStoreAuthStorage(cwd)
 
-      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([])
+      expect(listStoredStoreAuthSummaries(storage)).toEqual([])
     })
   })
 
   test('returns one summary per store sorted by newest auth using the current user session', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const storage = createStoreAuthStorage(cwd)
 
       setStoredStoreAppSession(
         buildSession({store: 'b-shop.myshopify.com', acquiredAt: '2026-03-27T00:00:00.000Z'}),
-        storage as any,
+        storage,
       )
       setStoredStoreAppSession(
         buildSession({store: 'a-shop.myshopify.com', userId: '41', accessToken: 'token-41'}),
-        storage as any,
+        storage,
       )
       setStoredStoreAppSession(
         buildSession({
@@ -46,10 +60,10 @@ describe('listStoredStoreAuthSummaries', () => {
           accessToken: 'token-84',
           acquiredAt: '2026-03-28T00:00:00.000Z',
         }),
-        storage as any,
+        storage,
       )
 
-      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([
+      expect(listStoredStoreAuthSummaries(storage)).toEqual([
         {
           store: 'a-shop.myshopify.com',
           userId: '84',
@@ -68,13 +82,13 @@ describe('listStoredStoreAuthSummaries', () => {
 
   test('persists dotted store domains as a single top-level key', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const storage = createStoreAuthStorage(cwd)
 
-      setStoredStoreAppSession(buildSession(), storage as any)
+      setStoredStoreAppSession(buildSession(), storage)
 
       const rawStorage = (storage as unknown as {config: {store: Record<string, unknown>}}).config.store
       expect(Object.keys(rawStorage)).toContain(`${STORE_AUTH_APP_CLIENT_ID}::shop.myshopify.com`)
-      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([
+      expect(listStoredStoreAuthSummaries(storage)).toEqual([
         {
           store: 'shop.myshopify.com',
           userId: '42',
@@ -87,7 +101,7 @@ describe('listStoredStoreAuthSummaries', () => {
 
   test('ignores legacy nested buckets written with unescaped dotted domains', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const storage = createStoreAuthStorage(cwd)
       storage.set(`${STORE_AUTH_APP_CLIENT_ID}::legacy.myshopify.com`, {
         currentUserId: '42',
         sessionsByUserId: {
@@ -95,19 +109,19 @@ describe('listStoredStoreAuthSummaries', () => {
         },
       })
 
-      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([])
+      expect(listStoredStoreAuthSummaries(storage)).toEqual([])
     })
   })
 
   test('sorts stores alphabetically when auth timestamps match', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const storage = createStoreAuthStorage(cwd)
       const acquiredAt = '2026-03-27T00:00:00.000Z'
 
-      setStoredStoreAppSession(buildSession({store: 'b-shop.myshopify.com', acquiredAt}), storage as any)
-      setStoredStoreAppSession(buildSession({store: 'a-shop.myshopify.com', acquiredAt}), storage as any)
+      setStoredStoreAppSession(buildSession({store: 'b-shop.myshopify.com', acquiredAt}), storage)
+      setStoredStoreAppSession(buildSession({store: 'a-shop.myshopify.com', acquiredAt}), storage)
 
-      expect(listStoredStoreAuthSummaries(storage as any).map((summary) => summary.store)).toEqual([
+      expect(listStoredStoreAuthSummaries(storage).map((summary) => summary.store)).toEqual([
         'a-shop.myshopify.com',
         'b-shop.myshopify.com',
       ])
@@ -116,7 +130,7 @@ describe('listStoredStoreAuthSummaries', () => {
 
   test('projects associated user metadata without exposing tokens', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const storage = createStoreAuthStorage(cwd)
 
       setStoredStoreAppSession(
         buildSession({
@@ -130,10 +144,10 @@ describe('listStoredStoreAuthSummaries', () => {
             accountOwner: true,
           },
         }),
-        storage as any,
+        storage,
       )
 
-      const [summary] = listStoredStoreAuthSummaries(storage as any)
+      const [summary] = listStoredStoreAuthSummaries(storage)
 
       expect(summary).toEqual({
         store: 'shop.myshopify.com',
@@ -157,9 +171,9 @@ describe('listStoredStoreAuthSummaries', () => {
 
   test('drops malformed sibling sessions while preserving the current session', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const storage = createStoreAuthStorage(cwd)
       const key = storeAuthSessionKey('shop.myshopify.com')
-      storage.set(key, {
+      setRawStoreAuthBucket(storage, key, {
         currentUserId: '42',
         sessionsByUserId: {
           '41': {userId: '41'},
@@ -167,7 +181,7 @@ describe('listStoredStoreAuthSummaries', () => {
         },
       })
 
-      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([
+      expect(listStoredStoreAuthSummaries(storage)).toEqual([
         {
           store: 'shop.myshopify.com',
           userId: '42',
@@ -175,21 +189,23 @@ describe('listStoredStoreAuthSummaries', () => {
           acquiredAt: '2026-03-27T00:00:00.000Z',
         },
       ])
-      expect(Object.keys((storage.get(key) as any).sessionsByUserId)).toEqual(['42'])
+      expect(Object.keys((storage.get(key) as {sessionsByUserId: Record<string, unknown>}).sessionsByUserId)).toEqual([
+        '42',
+      ])
     })
   })
 
   test('skips malformed persisted buckets while listing summaries', async () => {
     await inTemporaryDirectory((cwd) => {
-      const storage = new LocalStorage<Record<string, unknown>>({cwd})
-      storage.set(storeAuthSessionKey('broken-shop.myshopify.com'), {
+      const storage = createStoreAuthStorage(cwd)
+      setRawStoreAuthBucket(storage, storeAuthSessionKey('broken-shop.myshopify.com'), {
         currentUserId: '42',
         sessionsByUserId: {
           '42': {userId: '42'},
         },
       })
 
-      expect(listStoredStoreAuthSummaries(storage as any)).toEqual([])
+      expect(listStoredStoreAuthSummaries(storage)).toEqual([])
       expect(storage.get(storeAuthSessionKey('broken-shop.myshopify.com'))).toBeUndefined()
     })
   })
