@@ -39,7 +39,7 @@ describe('uploadExtensionsBundle', () => {
           {uuid: '123', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
         ],
         developerPlatformClient,
-        extensionIds: {},
+        appModuleRegistrationIds: {},
         release: true,
       })
 
@@ -85,7 +85,7 @@ describe('uploadExtensionsBundle', () => {
           {uuid: '123', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
         ],
         developerPlatformClient,
-        extensionIds: {},
+        appModuleRegistrationIds: {},
         release: true,
         message: 'test',
         version: '1.0.0',
@@ -129,7 +129,7 @@ describe('uploadExtensionsBundle', () => {
       bundlePath: undefined,
       appModules: [],
       developerPlatformClient,
-      extensionIds: {},
+      appModuleRegistrationIds: {},
       release: true,
     })
 
@@ -247,7 +247,7 @@ describe('uploadExtensionsBundle', () => {
             {uuid: '456', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
           ],
           developerPlatformClient,
-          extensionIds: {
+          appModuleRegistrationIds: {
             'amortizable-marketplace-ext': '123',
             'amortizable-marketplace-ext-2': '456',
           },
@@ -350,7 +350,7 @@ describe('uploadExtensionsBundle', () => {
           {uuid: '456', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
         ],
         developerPlatformClient,
-        extensionIds: {
+        appModuleRegistrationIds: {
           'amortizable-marketplace-ext': '123',
           'amortizable-marketplace-ext-2': '456',
         },

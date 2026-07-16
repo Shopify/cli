@@ -1,7 +1,7 @@
 import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore} from './dev/select-store.js'
-import {ensureDeploymentIdsPresence} from './context/identifiers.js'
+import {ensureDeployIdentifiersFromAppVersion} from './context/deploy-identifier-matching.js'
 import {appFromIdentifiers, ensureDeployContext} from './context.js'
 import {CachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
@@ -106,7 +106,7 @@ vi.mock('./dev/select-store')
 vi.mock('../prompts/dev')
 vi.mock('@shopify/organizations')
 vi.mock('../models/app/identifiers')
-vi.mock('./context/identifiers')
+vi.mock('./context/deploy-identifier-matching')
 vi.mock('../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -170,13 +170,7 @@ describe('ensureDeployContext', () => {
   test('does not abort when force is true and include_config_on_deploy is not set', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    }
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeployIdentifiersFromAppVersion).mockResolvedValue(emptyDeployIdentifiers())
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
 
     const options = {
@@ -192,13 +186,7 @@ describe('ensureDeployContext', () => {
   test('removes the include_config_on_deploy field when using app management API and the value is true', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    }
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeployIdentifiersFromAppVersion).mockResolvedValue(emptyDeployIdentifiers())
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     mockTomlFileRemove.mockResolvedValue(undefined)
 
@@ -234,13 +222,7 @@ describe('ensureDeployContext', () => {
   test('removes the include_config_on_deploy field when using app management API and the value is false', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: false}}})
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    }
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeployIdentifiersFromAppVersion).mockResolvedValue(emptyDeployIdentifiers())
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     mockTomlFileRemove.mockResolvedValue(undefined)
 
@@ -276,13 +258,7 @@ describe('ensureDeployContext', () => {
   test('sets didMigrateExtensionsToDevDash to true when app modules are missing registration IDs', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    }
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeployIdentifiersFromAppVersion).mockResolvedValue(emptyDeployIdentifiers())
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
 
     const activeAppVersion = {
@@ -321,13 +297,7 @@ describe('ensureDeployContext', () => {
   test('sets didMigrateExtensionsToDevDash to false when all app modules have registration IDs', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    }
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeployIdentifiersFromAppVersion).mockResolvedValue(emptyDeployIdentifiers())
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
 
     const activeAppVersion = {
@@ -417,6 +387,10 @@ describe('appFromIdentifiers', () => {
     )
   })
 })
+
+function emptyDeployIdentifiers() {
+  return {appModuleUuids: {}, appModuleRegistrationIds: {}}
+}
 
 const renderTryMessage = (isOrg: boolean, identifier: string) => [
   {

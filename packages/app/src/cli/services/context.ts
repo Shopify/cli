@@ -1,11 +1,11 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
-import {ensureDeploymentIdsPresence} from './context/identifiers.js'
+import {ensureDeployIdentifiersFromAppVersion} from './context/deploy-identifier-matching.js'
 import {CachedAppInfo} from './local-storage.js'
 import {DeployOptions} from './deploy.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
-import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
+import {DeployIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
@@ -82,7 +82,7 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
 }
 
 interface EnsureDeployContextResult {
-  identifiers: Identifiers
+  deployIdentifiers: DeployIdentifiers
   didMigrateExtensionsToDevDash: boolean
 }
 
@@ -112,7 +112,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     messages: [resetHelpMessage],
   })
 
-  const identifiers = await ensureDeploymentIdsPresence({
+  const deployIdentifiers = await ensureDeployIdentifiersFromAppVersion({
     app,
     appId: remoteApp.apiKey,
     appName: remoteApp.title,
@@ -125,15 +125,13 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     allowDeletes: options.allowDeletes,
   })
 
-  await updateAppIdentifiers({app, identifiers, command: 'deploy'})
-
   // if the current active app version is missing user_identifiers in some app module, then we are migrating to dev dash
   let didMigrateExtensionsToDevDash = false
   if (activeAppVersion) {
     didMigrateExtensionsToDevDash = activeAppVersion.appModuleVersions.some((version) => !version.registrationId)
   }
 
-  return {identifiers, didMigrateExtensionsToDevDash}
+  return {deployIdentifiers, didMigrateExtensionsToDevDash}
 }
 
 async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
