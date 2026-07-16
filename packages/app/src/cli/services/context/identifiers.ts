@@ -1,11 +1,7 @@
-import {deployConfirmed} from './identifiers-extensions.js'
-import {configExtensionsIdentifiersBreakdown, extensionsIdentifiersDeployBreakdown} from './breakdown-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {AppVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 export type PartnersAppForIdentifierMatching = MinimalOrganizationApp
 
@@ -41,60 +37,4 @@ export interface LocalSource {
   handle: string
   contextValue: string
   configuration?: object
-}
-
-export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
-  const {extensionIdentifiersBreakdown, extensionsToConfirm, remoteExtensionsRegistrations} =
-    await extensionsIdentifiersDeployBreakdown(options)
-
-  const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
-    developerPlatformClient: options.developerPlatformClient,
-    apiKey: options.appId,
-    localApp: options.app,
-    remoteApp: options.remoteApp,
-    release: options.release,
-    activeAppVersion: options.activeAppVersion,
-  })
-
-  const shouldWarn = options.release && !options.allowDeletes
-  const shouldFetchInstallCount = extensionIdentifiersBreakdown.onlyRemote.length > 0 && shouldWarn
-
-  let installCount: number | undefined
-  if (shouldFetchInstallCount) {
-    try {
-      installCount = await options.developerPlatformClient.appInstallCount({
-        id: options.remoteApp.id,
-        apiKey: options.remoteApp.apiKey,
-        organizationId: options.remoteApp.organizationId,
-      })
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_error) {
-      installCount = undefined
-    }
-  }
-
-  const confirmed = await deployOrReleaseConfirmationPrompt({
-    extensionIdentifiersBreakdown,
-    configExtensionIdentifiersBreakdown,
-    appTitle: options.remoteApp?.title,
-    release: options.release,
-    allowUpdates: options.allowUpdates,
-    allowDeletes: options.allowDeletes,
-    installCount,
-  })
-  if (!confirmed) throw new AbortSilentError()
-
-  const result = await deployConfirmed(
-    options,
-    remoteExtensionsRegistrations.extensionRegistrations,
-    remoteExtensionsRegistrations.configurationRegistrations,
-    extensionsToConfirm,
-  )
-
-  return {
-    app: options.appId,
-    extensions: result.extensions,
-    extensionIds: result.extensionIds,
-    extensionsNonUuidManaged: result.extensionsNonUuidManaged,
-  }
 }

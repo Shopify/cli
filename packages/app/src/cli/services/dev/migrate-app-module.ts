@@ -1,6 +1,5 @@
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
-import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
+import {ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
@@ -14,16 +13,6 @@ import {slugify} from '@shopify/cli-kit/common/string'
  * - The key is the NEW type
  * - The value is an array of OLD types that can be migrated to the new type
  */
-export const PaymentModulesMap = {
-  payments_extension: [
-    'payments_app',
-    'payments_app_credit_card',
-    'payments_app_custom_credit_card',
-    'payments_app_custom_onsite',
-    'payments_app_redeemable',
-  ],
-}
-
 export const MarketingModulesMap = {
   marketing_activity: ['marketing_activity_extension'],
 }
@@ -38,12 +27,21 @@ export const UIModulesMap = {
   ui_extension: ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION'],
 }
 
-export const SubscriptionModulesMap = {
-  subscription_link_extension: ['subscription_link'],
-}
-
 export const AdminLinkModulesMap = {
   admin_link: ['app_link', 'bulk_action'],
+}
+
+export interface LocalRemoteSource {
+  local: LocalSource
+  remote: RemoteSource
+}
+
+function getExtensionIds(
+  localSources: LocalSource[],
+  identifiers: ExtensionUuidsByLocalIdentifier,
+): ExtensionUuidsByLocalIdentifier {
+  const localSourceIds = new Set(localSources.map((source) => source.localIdentifier))
+  return Object.fromEntries(Object.entries(identifiers).filter(([identifier]) => localSourceIds.has(identifier)))
 }
 
 /**
@@ -58,7 +56,7 @@ export const AdminLinkModulesMap = {
 export function getModulesToMigrate(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
-  identifiers: IdentifiersExtensions,
+  identifiers: ExtensionUuidsByLocalIdentifier,
   typesMap: {[key: string]: string[]},
 ) {
   const ids = getExtensionIds(localSources, identifiers)

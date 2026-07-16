@@ -58,7 +58,7 @@ import {
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {CurrentAccountInfoQuery} from '../../api/graphql/partners/generated/current-account-info.js'
 import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
 import {
   MigrateToUiExtensionVariables,
@@ -948,7 +948,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {appUpdate: {userErrors: []}}
   }
 
-  async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
+  async currentAccountInfo(): Promise<CurrentAccountInfoQuery> {
     throw new BugError('Not implemented: currentAccountInfo')
   }
 

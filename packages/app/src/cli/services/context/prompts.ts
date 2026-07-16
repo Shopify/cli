@@ -1,35 +1,5 @@
-import {LocalRemoteSource} from './id-matching.js'
-import {LocalSource, RemoteSource} from './identifiers.js'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
-
-export async function matchConfirmationPrompt(
-  local: LocalSource,
-  remote: RemoteSource,
-  type: 'extension' | 'function' = 'extension',
-) {
-  return renderConfirmationPrompt({
-    message: `Match ${local.handle} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
-    confirmationMessage: `Yes, match to existing ${type}`,
-    cancellationMessage: `No, create as a new ${type}`,
-  })
-}
-
-export async function selectRemoteSourcePrompt(
-  localSource: LocalSource,
-  remoteSourcesOfSameType: RemoteSource[],
-): Promise<RemoteSource> {
-  const remoteOptions = remoteSourcesOfSameType.map((remote) => ({
-    label: `Match it to ${remote.title} (ID: ${remote.id} on Shopify Partners)`,
-    value: remote.uuid,
-  }))
-  remoteOptions.push({label: 'Create new extension', value: 'create'})
-  const uuid = await renderAutocompletePrompt({
-    message: `How would you like to deploy your "${localSource.handle}"?`,
-    choices: remoteOptions,
-  })
-
-  return remoteSourcesOfSameType.find((remote) => remote.uuid === uuid)!
-}
+import {LocalRemoteSource} from '../dev/migrate-app-module.js'
+import {renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
 
 export async function extensionMigrationPrompt(
   toMigrate: LocalRemoteSource[],
