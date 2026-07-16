@@ -37,7 +37,7 @@ export async function ensureExtensionsIds(
   }: AppWithExtensions,
 ) {
   let remoteExtensions = initialRemoteExtensions
-  const identifiers = options.envIdentifiers.extensions ?? {}
+  const identifiers = options.envIdentifiers ?? {}
   const localExtensions = options.app.allExtensions.filter((ext) => !ext.isAppConfigExtension)
 
   const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, UIModulesMap)
@@ -261,7 +261,7 @@ function loadExtensionIds(
   })
 }
 
-export async function ensureNonUuidManagedExtensionsIds(
+async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
   app: AppInterface,
   developerPlatformClient: DeveloperPlatformClient,
@@ -305,7 +305,7 @@ async function createExtensions(extensions: LocalSource[]) {
   return result
 }
 
-export function groupRegistrationByUidStrategy(
+function groupRegistrationByUidStrategy(
   extensionRegistrations: RemoteSource[],
   configurationRegistrations: RemoteSource[],
   specifications: ExtensionSpecification[],

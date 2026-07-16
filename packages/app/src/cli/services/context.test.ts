@@ -130,7 +130,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-  vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+  vi.mocked(getAppIdentifiers).mockReturnValue({})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1)

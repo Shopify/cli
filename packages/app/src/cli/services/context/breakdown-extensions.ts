@@ -443,7 +443,7 @@ export function configExtensionsIdentifiersReleaseBreakdown({
   return buildConfigExtensionIdentifiersBreakdown(versionConfig, activeConfig)
 }
 
-function buildConfigExtensionIdentifiersBreakdown(
+export function buildConfigExtensionIdentifiersBreakdown(
   localConfig: {[key: string]: unknown},
   remoteConfig: {[key: string]: unknown},
 ): ConfigExtensionIdentifiersBreakdown | undefined {
