@@ -8,12 +8,6 @@ export interface WebhookTopicsSchema {
   webhookTopics: string[]
 }
 
-export const getTopicsQuery = `
-  query getWebhookTopics($api_version: String!) {
-    webhookTopics(apiVersion: $api_version)
-  }
-`
-
 /**
  * Requests topics for an api-version in order to validate flags or present a list of options
  *

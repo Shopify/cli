@@ -116,13 +116,8 @@ module.exports = {
 }
 
 const knownFailures = {
-  'packages/app/src/cli/api/graphql/all_app_extension_registrations.ts':
-    'bbde8b08d13bdeeab3d586ffd76c75cfea31c5891ac9a0f957a7a273d520e9e2',
   'packages/app/src/cli/api/graphql/all_dev_stores_by_org.ts':
     'f48a44e2dae39f1b33ac685971740e3705f2754de5fdf1d6f1fbb3492bc62be2',
-  'packages/app/src/cli/api/graphql/app_release.ts': '3acace031157856c88dc57506d81364c084fb5ca66ab5c6ff59393ab5255846d',
-  'packages/app/src/cli/api/graphql/app_versions_diff.ts':
-    '233e2abb837d4cad52e985b373784314129163bf530a6caa501af2b711717b09',
   'packages/app/src/cli/api/graphql/convert_dev_to_transfer_disabled_store.ts':
     '0261459f988f5ba947ba52dc90dd049032196595cad5be8b7042ad1d0a22277c',
   'packages/app/src/cli/api/graphql/current_account_info.ts':
@@ -137,17 +132,10 @@ const knownFailures = {
     '812944a456b2ae439ebb01a97c19e3e0c445157dd3578bc48b0a8c4cebb6e12e',
   'packages/app/src/cli/api/graphql/extension_migrate_to_ui_extension.ts':
     'dd3fb42d0b9327de627bd02295de9e08087266885777602a34b44bdc460c0285',
-  'packages/app/src/cli/api/graphql/extension_specifications.ts':
-    '9a3dff21a92b5910a29f4893faef35a549a08f5675f67407cc415b10ba7091a3',
   'packages/app/src/cli/api/graphql/find_app_preview_mode.ts':
     '8311925b338d4aba1957974bb815cfa8c5d8272226f68b8e74a69d91acc9c8cb',
   'packages/app/src/cli/api/graphql/get_variant_id.ts':
     '805a7d8fb4b66ae23dc45cc37d401350c3d8eab4e262bd90e70afceb48be10de',
-  'packages/app/src/cli/api/graphql/get_versions_list.ts':
-    '36b6f90c6687ba50b84b31de9fa28b4e9d0cadb732cab6c0d83664b627f2969d',
-  'packages/app/src/cli/api/graphql/update_urls.ts': '37d20c418982a4bc4eed047ec48f52d93be1a0e59f1d905911b8519ab3adb5a4',
-  'packages/app/src/cli/services/webhook/request-sample.ts':
-    '05dd159152c528d7e785ef3476f6dbfca0be25046ce06584d5fd2ea89a23ed16',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/active-app-release.ts':
     'e1998153a015f9a7bb392aab6788a10a9afe76220eeb4515e958e679ec667ed1',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/app-version-by-id.ts':
