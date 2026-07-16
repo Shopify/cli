@@ -37,7 +37,6 @@ describe('partnersRequest', () => {
       responseOptions: {onResponse: handleDeprecations},
     })
   })
-
 })
 
 describe('handleDeprecations', () => {
