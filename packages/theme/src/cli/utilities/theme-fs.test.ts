@@ -628,6 +628,22 @@ describe('theme-fs', () => {
         expect(result).toBeFalsy()
       })
     })
+
+    test(`returns true for a valid theme directory`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = tmpDir
+        await mkdir(joinPath(root, 'config'))
+        await mkdir(joinPath(root, 'layout'))
+        await mkdir(joinPath(root, 'templates'))
+
+        // When
+        const result = await hasRequiredThemeDirectories(root)
+
+        // Then
+        expect(result).toBeTruthy()
+      })
+    })
   })
 
   describe('listing functionality', () => {
