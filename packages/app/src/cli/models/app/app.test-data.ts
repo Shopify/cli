@@ -34,6 +34,7 @@ import {
   ClientName,
   CreateAppOptions,
   DeveloperPlatformClient,
+  MigrationDeveloperPlatformClient,
   DevSessionCreateOptions,
   DevSessionDeleteOptions,
   DevSessionUpdateOptions,
@@ -1300,8 +1301,12 @@ const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
   },
 }
 
-export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
-  const clientStub: DeveloperPlatformClient = {
+type TestDeveloperPlatformClient = DeveloperPlatformClient & MigrationDeveloperPlatformClient
+
+export function testDeveloperPlatformClient(
+  stubs: Partial<TestDeveloperPlatformClient> = {},
+): TestDeveloperPlatformClient {
+  const clientStub: TestDeveloperPlatformClient = {
     clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
     organizationSource: OrganizationSource.BusinessPlatform,
@@ -1374,15 +1379,18 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       ),
     ...stubs,
   }
-  const retVal: Partial<DeveloperPlatformClient> = clientStub
+  const retVal: Partial<TestDeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[
-        key as keyof Omit<DeveloperPlatformClient, 'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat'>
+        key as keyof Omit<
+          TestDeveloperPlatformClient,
+          'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat'
+        >
       ] = vi.fn().mockImplementation(value)
     }
   }
-  return retVal as DeveloperPlatformClient
+  return retVal as TestDeveloperPlatformClient
 }
 
 export const testPartnersServiceSession: Session = {

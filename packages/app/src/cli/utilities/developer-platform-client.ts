@@ -226,8 +226,6 @@ export interface DeveloperPlatformClient {
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
   apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>
-  migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
-  migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
   currentAccountInfo: () => Promise<CurrentAccountInfoQuery>
   targetSchemaDefinition: (
@@ -240,7 +238,6 @@ export interface DeveloperPlatformClient {
     apiKey: string,
     organizationId: string,
   ) => Promise<string | null>
-  migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (
     input: AppLogsSubscribeMutationVariables,
@@ -252,6 +249,18 @@ export interface DeveloperPlatformClient {
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (org: Organization) => Promise<TokenItem>
+}
+
+/**
+ * The legacy extension migrations (Flow, app module, and UI extension) are only implemented by
+ * {@link PartnersClient}; the default {@link AppManagementClient} does not support them. Keeping
+ * these mutations on a dedicated interface lets the migration callers depend on just this surface
+ * rather than the full {@link DeveloperPlatformClient}.
+ */
+export interface MigrationDeveloperPlatformClient {
+  migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
+  migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
+  migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
 }
 
 const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()

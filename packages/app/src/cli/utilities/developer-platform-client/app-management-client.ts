@@ -53,18 +53,9 @@ import {
 } from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
-import {
-  MigrateFlowExtensionSchema,
-  MigrateFlowExtensionVariables,
-} from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoQuery} from '../../api/graphql/partners/generated/current-account-info.js'
 import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
-import {
-  MigrateToUiExtensionVariables,
-  MigrateToUiExtensionSchema,
-} from '../../api/graphql/extension_migrate_to_ui_extension.js'
-import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
@@ -935,14 +926,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
-    throw new BugError('Not implemented: migrateFlowExtension')
-  }
-
-  async migrateAppModule(_input: MigrateAppModuleVariables): Promise<MigrateAppModuleSchema> {
-    throw new BugError('Not implemented: migrateAppModule')
-  }
-
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
     outputDebug('⚠️ updateURLs is not implemented')
     return {appUpdate: {userErrors: []}}
@@ -995,10 +978,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     } catch (error) {
       throw new AbortError(`Failed to fetch schema definition: ${error}`)
     }
-  }
-
-  async migrateToUiExtension(_input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
-    throw new BugError('Not implemented: migrateToUiExtension')
   }
 
   toExtensionGraphQLType(input: string) {

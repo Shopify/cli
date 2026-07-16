@@ -45,7 +45,7 @@ describe('fetchOrganizations', async () => {
     // Given
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG2]),
-    }) as AppManagementClient
+    }) as unknown as AppManagementClient
     vi.mocked(AppManagementClient.getInstance).mockReturnValue(appManagementClient)
 
     // When
@@ -60,7 +60,7 @@ describe('fetchOrganizations', async () => {
     // Given
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([]),
-    }) as AppManagementClient
+    }) as unknown as AppManagementClient
     vi.mocked(AppManagementClient.getInstance).mockReturnValue(appManagementClient)
 
     // When
