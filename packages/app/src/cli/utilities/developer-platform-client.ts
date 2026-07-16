@@ -263,7 +263,10 @@ export interface MigrationDeveloperPlatformClient {
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
 }
 
-const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()
+/** The subset of a developer platform client needed to refresh an expired token. */
+type TokenRefreshableClient = Pick<DeveloperPlatformClient, 'session' | 'unsafeRefreshToken'>
+
+const inProgressRefreshes = new WeakMap<TokenRefreshableClient, Promise<string>>()
 
 /**
  * Creates an unauthorized handler for a developer platform client that will refresh the token
@@ -275,7 +278,7 @@ const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>
  * @returns The unauthorized handler.
  */
 export function createUnauthorizedHandler(
-  client: DeveloperPlatformClient,
+  client: TokenRefreshableClient,
   tokenType: 'default' | 'businessPlatform' = 'default',
 ): UnauthorizedHandler {
   return {
