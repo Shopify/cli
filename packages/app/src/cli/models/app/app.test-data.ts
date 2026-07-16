@@ -60,14 +60,16 @@ import {
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
-import {AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
-import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {
+  AppLogsSubscribeMutation,
+  AppLogsSubscribeMutationVariables,
+} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Project} from '../project/project.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
@@ -1294,7 +1296,7 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
   },
 }
 
-const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
+const appLogsSubscribeResponse: AppLogsSubscribeMutation = {
   appLogsSubscribe: {
     success: true,
     jwtToken: 'jwttoken',
