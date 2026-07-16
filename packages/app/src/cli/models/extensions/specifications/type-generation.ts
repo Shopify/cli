@@ -1,5 +1,5 @@
 import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
-import {dirname, isSubpath, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {compile} from 'json-schema-to-typescript'
 import {pascalize} from '@shopify/cli-kit/common/string'
@@ -46,44 +46,23 @@ export function parseApiVersion(apiVersion: string): {year: number; month: numbe
   return {year: parseInt(year, 10), month: parseInt(month, 10)}
 }
 
-interface LoadedTsConfig {
-  compilerOptions: ts.CompilerOptions
-  configPath: string | undefined
-  fileNames?: string[]
-  hasExplicitFiles: boolean
-}
-
-export type TsConfigCache = Map<string, LoadedTsConfig>
-
-async function loadTsConfig(startPath: string, cache?: TsConfigCache): Promise<LoadedTsConfig> {
+async function loadTsConfig(
+  startPath: string,
+): Promise<{compilerOptions: ts.CompilerOptions; configPath: string | undefined}> {
   const ts = await loadTypeScript()
   const configPath = ts.findConfigFile(startPath, ts.sys.fileExists.bind(ts.sys), 'tsconfig.json')
   if (!configPath) {
-    return {compilerOptions: {}, configPath: undefined, hasExplicitFiles: false}
-  }
-
-  const resolvedConfigPath = resolvePath(configPath)
-  const cachedConfig = cache?.get(resolvedConfigPath)
-  if (cachedConfig) {
-    return cachedConfig
+    return {compilerOptions: {}, configPath: undefined}
   }
 
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile.bind(ts.sys))
   if (configFile.error) {
-    return {compilerOptions: {}, configPath: resolvedConfigPath, hasExplicitFiles: false}
+    return {compilerOptions: {}, configPath}
   }
 
   const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configPath))
-  const hasExplicitFiles = Boolean(parsedConfig.raw?.files ?? parsedConfig.raw?.include)
-  const loadedConfig = {
-    compilerOptions: parsedConfig.options,
-    configPath: resolvedConfigPath,
-    fileNames: parsedConfig.fileNames,
-    hasExplicitFiles,
-  }
 
-  cache?.set(resolvedConfigPath, loadedConfig)
-  return loadedConfig
+  return {compilerOptions: parsedConfig.options, configPath}
 }
 
 async function fallbackResolve(importPath: string, baseDir: string): Promise<string | null> {
@@ -116,85 +95,14 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
   return null
 }
 
-interface FindAllImportedFilesOptions {
-  boundaryDirectory?: string
-  allowedFiles?: Set<string>
-  alwaysAllowedFiles?: Set<string>
-  importCache?: Map<string, string[]>
-  tsConfigCache?: TsConfigCache
-}
-
-interface ParseAndResolveImportsOptions {
-  importCache?: Map<string, string[]>
-  tsConfigCache?: TsConfigCache
-}
-
-function hasOnlyTypeOnlyElements(elements: ReadonlyArray<{isTypeOnly: boolean}>): boolean {
-  return elements.length > 0 && elements.every((element) => element.isTypeOnly)
-}
-
-function isTypeOnlyImport(node: ts.ImportDeclaration, typescript: typeof ts): boolean {
-  if (node.importClause?.isTypeOnly) return true
-
-  const namedBindings = node.importClause?.namedBindings
-  if (node.importClause?.name || !namedBindings) return false
-
-  return typescript.isNamedImports(namedBindings) && hasOnlyTypeOnlyElements(namedBindings.elements)
-}
-
-function isTypeOnlyExport(node: ts.ExportDeclaration, typescript: typeof ts): boolean {
-  if (node.isTypeOnly) return true
-
-  const exportClause = node.exportClause
-  if (!exportClause) return false
-
-  return typescript.isNamedExports(exportClause) && hasOnlyTypeOnlyElements(exportClause.elements)
-}
-
-function isWithinBoundary(filePath: string, boundaryDirectory?: string): boolean {
-  if (!boundaryDirectory) return true
-  return isSubpath(resolvePath(boundaryDirectory), resolvePath(filePath))
-}
-
-function isAllowedFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
-  if (!options.allowedFiles) return true
-
-  const resolvedPath = resolvePath(filePath)
-  return options.allowedFiles.has(resolvedPath) || Boolean(options.alwaysAllowedFiles?.has(resolvedPath))
-}
-
-function canIncludeImportedFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
-  return !filePath.includes('node_modules') && !filePath.endsWith('.d.ts') && isAllowedFile(filePath, options)
-}
-
-function canScanImportedFile(filePath: string, options: FindAllImportedFilesOptions): boolean {
-  const resolvedPath = resolvePath(filePath)
-  const isExplicitlyAllowed =
-    (options.allowedFiles?.has(resolvedPath) ?? false) || (options.alwaysAllowedFiles?.has(resolvedPath) ?? false)
-
-  return (
-    canIncludeImportedFile(filePath, options) &&
-    (isWithinBoundary(filePath, options.boundaryDirectory) || isExplicitlyAllowed)
-  )
-}
-
-async function parseAndResolveImports(
-  filePath: string,
-  options: ParseAndResolveImportsOptions = {},
-): Promise<string[]> {
+async function parseAndResolveImports(filePath: string): Promise<string[]> {
   try {
-    const resolvedFilePath = resolvePath(filePath)
-    const cachedImports = options.importCache?.get(resolvedFilePath)
-    if (cachedImports) {
-      return cachedImports
-    }
-
     const ts = await loadTypeScript()
     const content = readFileSync(filePath).toString()
     const resolvedPaths: string[] = []
 
     // Load TypeScript configuration once
-    const {compilerOptions} = await loadTsConfig(filePath, options.tsConfigCache)
+    const {compilerOptions} = await loadTsConfig(filePath)
 
     // Determine script kind based on file extension
     let scriptKind = ts.ScriptKind.JSX
@@ -211,10 +119,6 @@ async function parseAndResolveImports(
 
     const visit = (node: ts.Node): void => {
       if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        if (isTypeOnlyImport(node, ts)) {
-          return
-        }
-
         importPaths.push(node.moduleSpecifier.text)
       } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
         const firstArg = node.arguments[0]
@@ -222,10 +126,6 @@ async function parseAndResolveImports(
           importPaths.push(firstArg.text)
         }
       } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        if (isTypeOnlyExport(node, ts)) {
-          return
-        }
-
         importPaths.push(node.moduleSpecifier.text)
       }
 
@@ -260,7 +160,6 @@ async function parseAndResolveImports(
       }
     }
 
-    options.importCache?.set(resolvedFilePath, resolvedPaths)
     return resolvedPaths
   } catch (error) {
     // Re-throw AbortError as-is, wrap other errors
@@ -271,43 +170,24 @@ async function parseAndResolveImports(
   }
 }
 
-export async function findAllImportedFiles(
-  filePath: string,
-  options: FindAllImportedFilesOptions = {},
-  visited = new Set<string>(),
-): Promise<string[]> {
+export async function findAllImportedFiles(filePath: string, visited = new Set<string>()): Promise<string[]> {
   if (visited.has(filePath)) {
     return []
   }
 
   visited.add(filePath)
-  const resolvedPaths = (await parseAndResolveImports(filePath, options)).filter((resolvedPath) =>
-    canIncludeImportedFile(resolvedPath, options),
-  )
+  const resolvedPaths = await parseAndResolveImports(filePath)
 
   const allFiles = [...resolvedPaths]
 
   // Recursively find imports from the resolved files
   for (const resolvedPath of resolvedPaths) {
-    if (!canScanImportedFile(resolvedPath, options)) continue
-
     // eslint-disable-next-line no-await-in-loop
-    const nestedImports = await findAllImportedFiles(resolvedPath, options, visited)
+    const nestedImports = await findAllImportedFiles(resolvedPath, visited)
     allFiles.push(...nestedImports)
   }
 
   return uniq(allFiles)
-}
-
-export async function findExplicitTsConfigFiles(
-  fromFile: string,
-  _extensionDirectory: string,
-  options: {tsConfigCache?: TsConfigCache} = {},
-): Promise<Set<string> | undefined> {
-  const {configPath, fileNames, hasExplicitFiles} = await loadTsConfig(fromFile, options.tsConfigCache)
-  if (!configPath || !hasExplicitFiles) return
-
-  return new Set((fileNames ?? []).map((fileName) => resolvePath(fileName)))
 }
 
 interface CreateTypeDefinitionOptions {

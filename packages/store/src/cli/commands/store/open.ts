@@ -4,6 +4,8 @@ import {storeFlags} from '../../flags.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class StoreOpen extends StoreCommand {
+  static hidden = true
+
   static summary = 'Open your Shopify store in the default web browser.'
 
   static descriptionWithMarkdown = `Opens the storefront for a store you have access to in your default web browser.`

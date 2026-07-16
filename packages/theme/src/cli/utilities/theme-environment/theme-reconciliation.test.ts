@@ -104,26 +104,6 @@ describe('reconcileJsonFiles', () => {
   })
 
   describe('files only present on remote developer theme', () => {
-    test('should download assets from remote theme without prompting when keep-remote strategy is selected', async () => {
-      // Given
-      const assetToBeDownloaded = {checksum: '2', key: 'templates/second_asset.json', value: 'content'}
-      vi.mocked(fetchThemeAssets).mockResolvedValue([assetToBeDownloaded])
-
-      // When
-      await reconcileAndWaitForReconciliationFinish(
-        developmentTheme,
-        adminSession,
-        [assetToBeDownloaded],
-        defaultThemeFileSystem,
-        {...defaultOptions, reconciliationStrategy: 'keep-remote'},
-      )
-
-      // Then
-      expect(renderSelectPrompt).not.toHaveBeenCalled()
-      expect(fetchThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [assetToBeDownloaded.key], adminSession)
-      expect(defaultThemeFileSystem.files.get('templates/second_asset.json')).toEqual(assetToBeDownloaded)
-    })
-
     test('should download assets from remote theme when `remote` source is selected', async () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
@@ -166,24 +146,6 @@ describe('reconcileJsonFiles', () => {
       expect(deleteThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [assetToBeDeleted.key], adminSession)
       expect(defaultThemeFileSystem.files.get('templates/asset.json')).toBeUndefined()
     })
-
-    test('should delete assets from remote theme without prompting when keep-local strategy is selected', async () => {
-      // Given
-      const assetToBeDeleted = {checksum: '2', key: 'templates/asset.json'}
-
-      // When
-      await reconcileAndWaitForReconciliationFinish(
-        developmentTheme,
-        adminSession,
-        [assetToBeDeleted],
-        defaultThemeFileSystem,
-        {...defaultOptions, reconciliationStrategy: 'keep-local'},
-      )
-
-      // Then
-      expect(renderSelectPrompt).not.toHaveBeenCalled()
-      expect(deleteThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [assetToBeDeleted.key], adminSession)
-    })
   })
 
   describe('files only present on local developer theme', () => {
@@ -206,27 +168,6 @@ describe('reconcileJsonFiles', () => {
       )
 
       // Then
-      expect(spy).toHaveBeenCalledWith('templates/asset.json')
-    })
-
-    test('should delete files from local disk without prompting when keep-remote strategy is selected', async () => {
-      // Given
-      vi.mocked(fetchThemeAssets).mockResolvedValue([])
-      const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
-      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
-      const spy = vi.spyOn(localThemeFileSystem, 'delete')
-
-      // When
-      await reconcileAndWaitForReconciliationFinish(
-        developmentTheme,
-        adminSession,
-        remoteChecksums,
-        localThemeFileSystem,
-        {...defaultOptions, reconciliationStrategy: 'keep-remote'},
-      )
-
-      // Then
-      expect(renderSelectPrompt).not.toHaveBeenCalled()
       expect(spy).toHaveBeenCalledWith('templates/asset.json')
     })
 
@@ -279,58 +220,6 @@ describe('reconcileJsonFiles', () => {
   })
 
   describe('files with conflicting checksums', () => {
-    test('should keep local files without prompting when keep-local strategy is selected', async () => {
-      // Given
-      const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
-      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
-      const remoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
-
-      // When
-      await reconcileAndWaitForReconciliationFinish(
-        developmentTheme,
-        adminSession,
-        remoteChecksums,
-        localThemeFileSystem,
-        {...defaultOptions, reconciliationStrategy: 'keep-local'},
-      )
-
-      // Then
-      expect(renderSelectPrompt).not.toHaveBeenCalled()
-      expect(fetchThemeAssets).not.toHaveBeenCalled()
-      expect(deleteThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [remoteChecksums[0]!.key], adminSession)
-    })
-
-    test('should abort without prompting when abort strategy is selected', async () => {
-      // Given
-      const files = new Map([
-        ['templates/local_only.json', {checksum: '1', key: 'templates/local_only.json'}],
-        ['templates/conflict.json', {checksum: '1', key: 'templates/conflict.json'}],
-      ])
-      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
-      const remoteChecksums = [
-        {checksum: '2', key: 'templates/conflict.json'},
-        {checksum: '3', key: 'templates/remote_only.json'},
-      ]
-
-      // When
-      const result = reconcileAndWaitForReconciliationFinish(
-        developmentTheme,
-        adminSession,
-        remoteChecksums,
-        localThemeFileSystem,
-        {...defaultOptions, reconciliationStrategy: 'abort'},
-      )
-
-      // Then
-      await expect(result).rejects.toMatchObject({
-        message: 'Theme JSON files need reconciliation.',
-        tryMessage: expect.stringMatching(
-          /templates\/local_only\.json[\s\S]*templates\/remote_only\.json[\s\S]*templates\/conflict\.json/,
-        ),
-      })
-      expect(renderSelectPrompt).not.toHaveBeenCalled()
-    })
-
     test('should download files from remote theme when `remote` source is selected', async () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
@@ -353,7 +242,7 @@ describe('reconcileJsonFiles', () => {
       expect(fetchThemeAssets).toHaveBeenCalled()
     })
 
-    test('should delete files from remote when `local` source is selected', async () => {
+    test('should not download files from remote when `local` source is selected', async () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(LOCAL_STRATEGY)
       const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
@@ -371,7 +260,6 @@ describe('reconcileJsonFiles', () => {
 
       // Then
       expect(fetchThemeAssets).not.toHaveBeenCalled()
-      expect(deleteThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [remoteChecksums[0]!.key], adminSession)
     })
   })
 

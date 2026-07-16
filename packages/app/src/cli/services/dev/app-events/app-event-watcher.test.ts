@@ -74,20 +74,28 @@ const testAppConfiguration: CurrentAppConfiguration = {
   embedded: true,
 }
 
-/** Waits for the watcher to emit a given event. */
+/**
+ * Waits for the watcher to emit a given event by polling the emit spy.
+ * This replaces fragile fixed-timeout waits (setTimeout(10)) that cause flaky tests when the async
+ * event processing chain takes longer than expected.
+ */
 type EmitSpy = MockInstance<(eventName: string | symbol, ...args: unknown[]) => boolean>
 
 async function waitForWatcherEmit(emitSpy: EmitSpy, event: string, timeoutMs = 3000): Promise<void> {
-  await vi.waitFor(
-    () => {
-      const emittedEvents = emitSpy.mock.calls.map(([eventName]) => String(eventName))
-      expect(
-        emittedEvents,
-        `Expected watcher to emit "${event}". Emitted events: ${emittedEvents.join(', ')}`,
-      ).toContain(event)
-    },
-    {timeout: timeoutMs, interval: 10},
-  )
+  await new Promise<void>((resolve, reject) => {
+    const startTime = Date.now()
+    const poll = () => {
+      const emitted = emitSpy.mock.calls.some((call) => call[0] === event)
+      if (emitted) {
+        resolve()
+      } else if (Date.now() - startTime < timeoutMs) {
+        setTimeout(poll, 10)
+      } else {
+        reject(new Error(`Timeout waiting for watcher to emit "${event}" event`))
+      }
+    }
+    poll()
+  })
 }
 
 /** Waits until successful change handling finishes (`emit('all', ...)`). */

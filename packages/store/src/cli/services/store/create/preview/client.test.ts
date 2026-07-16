@@ -33,26 +33,14 @@ function response(status: number, body: unknown) {
   } as Awaited<ReturnType<typeof shopifyFetch>>
 }
 
-interface PreviewStoreClientStorageSchema {
-  cliInstanceId?: string
-}
-
-function inMemoryStorage(initial?: string): LocalStorage<PreviewStoreClientStorageSchema> {
-  const values = new Map<keyof PreviewStoreClientStorageSchema, string>()
+function inMemoryStorage(initial?: string) {
+  const values = new Map<string, unknown>()
   if (initial) values.set('cliInstanceId', initial)
   return {
-    get: vi.fn((key: keyof PreviewStoreClientStorageSchema) => values.get(key)),
-    set: vi.fn((key: keyof PreviewStoreClientStorageSchema, value?: string) => {
-      if (value === undefined) {
-        values.delete(key)
-      } else {
-        values.set(key, value)
-      }
-    }),
-    delete: vi.fn((key: keyof PreviewStoreClientStorageSchema) => {
-      values.delete(key)
-    }),
-  } as unknown as LocalStorage<PreviewStoreClientStorageSchema>
+    get: vi.fn((key: string) => values.get(key) as any),
+    set: vi.fn((key: string, value: unknown) => values.set(key, value)),
+    delete: vi.fn((key: string) => values.delete(key)),
+  } as unknown as LocalStorage<{cliInstanceId?: string}>
 }
 
 describe('preview store client', () => {

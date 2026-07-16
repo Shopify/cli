@@ -156,8 +156,6 @@ export async function deploy(options: DeployOptions) {
     allowDeletes,
   })
 
-  const appModuleUuids = {...identifiers.extensions, ...identifiers.extensionsNonUuidManaged}
-
   const release = !noRelease
   const apiKey = remoteApp.apiKey
 
@@ -180,13 +178,15 @@ export async function deploy(options: DeployOptions) {
     )
     await mkdir(dirname(candidateBundlePath))
 
-    const appManifest = await app.manifest(appManifestUuids(app, appModuleUuids))
+    const appManifest = await app.manifest(identifiers)
 
     const bundlePath = await bundleAndBuildExtensions({
       app,
       appManifest,
       bundlePath: candidateBundlePath,
+      identifiers,
       skipBuild: options.skipBuild,
+      isDevDashboardApp: true,
     })
 
     let uploadTaskTitle
@@ -209,7 +209,7 @@ export async function deploy(options: DeployOptions) {
         task: async () => {
           const appModules = await Promise.all(
             app.allExtensions.flatMap((ext) =>
-              ext.bundleConfig({appModuleUuids, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
+              ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
             ),
           )
 
@@ -345,12 +345,4 @@ async function outputCompletionMessage({
       ],
     ],
   })
-}
-
-function appManifestUuids(app: AppLinkedInterface, appModuleUuids: {[localIdentifier: string]: string}) {
-  return Object.fromEntries(
-    app.allExtensions
-      .filter((extension) => extension.isUUIDStrategyExtension)
-      .map((extension) => [extension.localIdentifier, appModuleUuids[extension.localIdentifier]!]),
-  )
 }

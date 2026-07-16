@@ -44,6 +44,10 @@ import {
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
+import {
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -125,7 +129,6 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
-import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {fetchOrganizations} from '@shopify/organizations'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
@@ -148,7 +151,6 @@ import {
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {encodeGid, numericIdFromEncodedGid, numericIdFromGid} from '@shopify/cli-kit/common/gid'
-import {uniq} from '@shopify/cli-kit/common/array'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {getCurrentCommandId} from '@shopify/cli-kit/node/global-context'
@@ -443,7 +445,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         managementExperience: 'cli',
         registrationLimit: spec.uidStrategy.appModuleLimit,
         uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
-        experience: normalizeExperience(spec.experience, spec.identifier),
+        experience: normalizeExperience(spec.experience),
         validationSchema: spec.validationSchema,
       }),
     )
@@ -685,7 +687,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience: normalizeExperience(mod.specification.experience, mod.specification.identifier),
+          experience: normalizeExperience(mod.specification.experience),
           options: {
             managementExperience: 'cli',
           },
@@ -861,13 +863,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const provisionable = isStoreProvisionable(org.currentUser?.organizationPermissions ?? [])
       return mapBusinessPlatformStoresToOrganizationStores(nodes, provisionable)
     })
-
-    // `accessibleShops` treats `domain` as a fuzzy, free-text `search` argument, so a domain that is
-    // a substring of another store's domain (e.g. `example.myshopify.com` vs
-    // `turbo-example.myshopify.com`) can return multiple hits. Return only the store whose domain
-    // matches exactly, otherwise we risk connecting to the wrong store.
-    const normalizedDomain = normalizeStoreFqdn(shopDomain)
-    return stores.find((store) => store.shopDomain === normalizedDomain)
+    return stores[0]
   }
 
   async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
@@ -891,6 +887,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const errorMessages = provisionResult.userErrors?.map((error) => error.message).join(', ') ?? ''
       throw new BugError(`Failed to provision user access to store: ${errorMessages}`)
     }
+  }
+
+  async convertToTransferDisabledStore(
+    _input: ConvertDevToTransferDisabledStoreVariables,
+  ): Promise<ConvertDevToTransferDisabledSchema> {
+    throw new BugError('Not implemented: convertToTransferDisabledStore')
   }
 
   async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
@@ -1322,8 +1324,8 @@ export async function allowedTemplates(
   version: string = CLI_KIT_VERSION,
 ): Promise<GatedExtensionTemplate[]> {
   // Extract both types of flags from templates
-  const allBetaFlags = uniq(templates.flatMap((ext) => ext.organizationBetaFlags ?? []))
-  const allExpFlags = uniq(templates.flatMap((ext) => ext.organizationExpFlags ?? []))
+  const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
+  const allExpFlags = Array.from(new Set(templates.map((ext) => ext.organizationExpFlags ?? []).flat()))
 
   // Fetch both flag types in parallel
   const [enabledBetaFlags, enabledExpFlags] = await Promise.all([
@@ -1362,8 +1364,7 @@ type SpecificationExperience = 'extension' | 'configuration' | 'deprecated'
  * Normalizes the raw experience string from the API into a known union value.
  * Falls back to 'extension' for any unexpected/unknown values and logs a debug message.
  */
-function normalizeExperience(raw: string, type: string): SpecificationExperience {
-  if (type === WebhookSubscriptionSpecIdentifier) return 'configuration'
+function normalizeExperience(raw: string): SpecificationExperience {
   switch (raw) {
     case 'extension':
     case 'configuration':
@@ -1421,7 +1422,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
       ...mod.specification,
       identifier: mod.specification.identifier,
       options: {managementExperience: mod.specification.managementExperience as 'cli' | 'custom' | 'dashboard'},
-      experience: normalizeExperience(mod.specification.experience, mod.specification.externalIdentifier),
+      experience: normalizeExperience(mod.specification.experience),
     },
   }
 }

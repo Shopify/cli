@@ -9,7 +9,6 @@ import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
-import {basename} from '@shopify/cli-kit/node/path'
 import {renderError} from '@shopify/cli-kit/node/ui'
 
 async function recordValidationFailure(issueCount: number, fileCount: number) {
@@ -57,10 +56,7 @@ export default class Validate extends AppLinkedCommand {
     // Stage 2: Select active config and check for TOML parse errors scoped to it
     let activeConfig
     try {
-      activeConfig = await selectActiveConfig(project, flags.config, {
-        clientId: flags['client-id'],
-        skipPrompts: Boolean(flags['client-id']),
-      })
+      activeConfig = await selectActiveConfig(project, flags.config)
     } catch (err) {
       if (err instanceof AbortError && flags.json) {
         await recordValidationFailure(1, 1)
@@ -94,7 +90,7 @@ export default class Validate extends AppLinkedCommand {
         directory: flags.path,
         clientId: flags['client-id'],
         forceRelink: flags.reset,
-        userProvidedConfigName: flags.config ?? (flags['client-id'] ? basename(activeConfig.file.path) : undefined),
+        userProvidedConfigName: flags.config,
         unsafeTolerateErrors: true,
       })
       app = context.app

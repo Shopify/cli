@@ -28,13 +28,6 @@ import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import {deleteStore, dismissDevConsole, isStoreAppsEmpty} from '../setup/store.js'
 import {refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
-import {
-  ListAppDevStores,
-  type ListAppDevStoresQuery,
-} from '../../app/dist/cli/api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
-import {businessPlatformOrganizationsRequestDoc} from '../../cli-kit/dist/public/node/api/business-platform.js'
-import {ensureAuthenticatedBusinessPlatform} from '../../cli-kit/dist/public/node/session.js'
-import {extractHost} from '../../cli-kit/dist/public/common/url.js'
 import type {Page} from '@playwright/test'
 
 // Load .env from packages/e2e/ (not cwd) only if not already configured
@@ -103,9 +96,7 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
   console.log('')
 
   if (!storageStatePath && (!email || !password)) {
-    throw new Error(
-      'E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required when no browser storage state is available',
-    )
+    throw new Error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required when no browser storage state is available')
   }
   if (!orgId) {
     throw new Error('E2E_ORG_ID is required')
@@ -135,9 +126,24 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
       console.log('[cleanup-stores] Logged in successfully.')
     }
 
-    // Step 2: Find matching stores. Prefer Business Platform API discovery because the Dev Dashboard
-    // stores page is virtualized/lazy-loaded and its rendered HTML does not always include myshopify domains.
-    const stores = await findStores(page, {pattern, orgId, email, password})
+    // Step 2: Navigate to stores page and find matching stores
+    console.log('[cleanup-stores] Navigating to stores page...')
+    await page.goto(`https://dev.shopify.com/dashboard/${orgId}/stores`, {waitUntil: 'domcontentloaded'})
+    if (isAccountsShopifyUrl(page.url()) && email && password) {
+      console.log('[cleanup-stores] Browser storage state was not accepted; logging in...')
+      await completeLogin(page, page.url(), email, password)
+      await page.goto(`https://dev.shopify.com/dashboard/${orgId}/stores`, {waitUntil: 'domcontentloaded'})
+    }
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+
+    // Handle account picker
+    const accountButton = email ? page.locator(`text=${email}`).first() : undefined
+    if (accountButton && (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false))) {
+      await accountButton.click()
+      await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+    }
+
+    const stores = await findStoresOnDashboard(page, pattern)
     console.log(`[cleanup-stores] Found ${stores.length} store(s) matching pattern "${pattern}"`)
     console.log('')
 
@@ -260,7 +266,7 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
 }
 
 // ---------------------------------------------------------------------------
-// Discovery and browser helpers
+// Browser helpers
 // ---------------------------------------------------------------------------
 
 interface StoreInfo {
@@ -269,116 +275,13 @@ interface StoreInfo {
   appCount: number
 }
 
-interface FindStoresOptions {
-  pattern: string
-  orgId: string
-  email?: string
-  password?: string
-}
-
-async function findStores(page: Page, opts: FindStoresOptions): Promise<StoreInfo[]> {
-  try {
-    return await findStoresWithBusinessPlatformApi(opts.pattern, opts.orgId)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (err) {
-    console.warn(
-      `[cleanup-stores] API discovery failed, falling back to Dev Dashboard UI: ${err instanceof Error ? err.message : err}`,
-    )
-  }
-
-  return findStoresOnDashboard(page, opts)
-}
-
-/** Find app development stores matching a name pattern using Business Platform GraphQL. */
-async function findStoresWithBusinessPlatformApi(namePattern: string, orgId: string): Promise<StoreInfo[]> {
-  console.log('[cleanup-stores] Discovering stores via Business Platform API...')
-
-  const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
-  const result = await businessPlatformOrganizationsRequestDoc({
-    query: ListAppDevStores,
-    token,
-    organizationId: orgId,
-    variables: {searchTerm: namePattern},
-    unauthorizedHandler: {
-      type: 'token_refresh',
-      handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
-    },
-  })
-
-  const accessibleShops = result.organization?.accessibleShops
-  if (!accessibleShops) return []
-  if (accessibleShops.pageInfo.hasNextPage) {
-    console.warn(
-      `[cleanup-stores] API discovery has more pages for pattern "${namePattern}"; use a narrower pattern if matches are missing.`,
-    )
-  }
-
-  const seen = new Set<string>()
-  const stores: StoreInfo[] = []
-  for (const edge of accessibleShops.edges) {
-    const store = toStoreInfo(edge.node, namePattern)
-    if (!store || seen.has(store.fqdn)) continue
-    seen.add(store.fqdn)
-    stores.push(store)
-  }
-
-  return stores
-}
-
-type AppDevStoreNode = NonNullable<
-  NonNullable<NonNullable<ListAppDevStoresQuery['organization']>['accessibleShops']>['edges'][number]['node']
->
-
-function toStoreInfo(node: AppDevStoreNode, namePattern: string): StoreInfo | undefined {
-  const fqdn =
-    normalizeStoreFqdn(node.primaryDomain) ??
-    normalizeStoreFqdn(node.url) ??
-    normalizeStoreFqdn(node.shortName) ??
-    normalizeStoreFqdn(node.name)
-  if (!fqdn) return undefined
-
-  const searchable = [node.name, node.shortName, node.primaryDomain, node.url, fqdn].filter(Boolean).join(' ')
-  if (!searchable.toLowerCase().includes(namePattern.toLowerCase())) return undefined
-
-  return {name: fqdn.replace('.myshopify.com', ''), fqdn, appCount: 0}
-}
-
-function normalizeStoreFqdn(rawValue?: string | null): string | undefined {
-  if (!rawValue) return undefined
-
-  const host = extractHost(rawValue) ?? rawValue.replace(/^https?:\/\//, '').split('/')[0]
-  const normalizedHost = host?.trim().toLowerCase()
-  if (!normalizedHost) return undefined
-  if (normalizedHost.endsWith('.myshopify.com')) return normalizedHost
-  if (/^[a-z0-9][a-z0-9-]*$/.test(normalizedHost)) return `${normalizedHost}.myshopify.com`
-  return undefined
-}
-
 /**
  * Find stores matching a name pattern on the stores page (dev dashboard).
  *
  * The stores page lazy-loads rows as you scroll — each scroll-to-bottom triggers another batch to render.
  * Keep scrolling until the row count has been stable for several consecutive passes, then scrape all FQDNs from the final HTML.
  */
-async function findStoresOnDashboard(page: Page, opts: FindStoresOptions): Promise<StoreInfo[]> {
-  const {pattern: namePattern, orgId, email, password} = opts
-
-  console.log('[cleanup-stores] Navigating to stores page...')
-  await page.goto(`https://dev.shopify.com/dashboard/${orgId}/stores`, {waitUntil: 'domcontentloaded'})
-  if (isAccountsShopifyUrl(page.url()) && email && password) {
-    console.log('[cleanup-stores] Browser storage state was not accepted; logging in...')
-    await completeLogin(page, page.url(), email, password)
-    await page.goto(`https://dev.shopify.com/dashboard/${orgId}/stores`, {waitUntil: 'domcontentloaded'})
-  }
-  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-  // Handle account picker
-  const accountButton = email ? page.locator(`text=${email}`).first() : undefined
-  if (accountButton && (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false))) {
-    await accountButton.click()
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-  }
-
+async function findStoresOnDashboard(page: Page, namePattern: string): Promise<StoreInfo[]> {
   // Recover from transient 500/502 before parsing.
   await refreshIfPageError(page)
 

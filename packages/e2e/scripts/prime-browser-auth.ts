@@ -1,11 +1,11 @@
 /* eslint-disable no-console, no-restricted-imports */
 
 /**
- * Prime CLI auth and Playwright browser storage state for standalone E2E maintenance scripts.
+ * Prime Playwright browser storage state for standalone E2E maintenance scripts.
  *
  * Playwright global setup creates this state before test workers start, but
  * standalone GitHub Actions jobs need a small auth-only entrypoint so follow-up
- * cleanup jobs can reuse Business Platform tokens and browser cookies without each cleanup operation going
+ * cleanup jobs can reuse browser cookies without each cleanup operation going
  * through Shopify Accounts again.
  */
 
@@ -14,13 +14,9 @@ import * as fs from 'fs'
 import * as path from 'path'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
-import {BROWSER_TIMEOUT, CLI_TIMEOUT} from '../setup/constants.js'
-import {executables} from '../setup/env.js'
+import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import {isVisibleWithin} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
-import {stripAnsi} from '../helpers/strip-ansi.js'
-import {waitForText} from '../helpers/wait-for-text.js'
-import {execa} from 'execa'
 import type {Page} from '@playwright/test'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -49,38 +45,9 @@ function isAccountsShopifyUrl(rawUrl: string): boolean {
   }
 }
 
-function defaultAuthDir(): string {
-  const tmpBase = process.env.E2E_TEMP_DIR ?? path.resolve(__dirname, '../../../.e2e-tmp')
-  return path.join(tmpBase, 'global-auth')
-}
-
 function defaultStorageStatePath(): string {
-  return path.join(defaultAuthDir(), 'browser-storage-state.json')
-}
-
-function cleanupAuthEnv(storageStatePath: string): NodeJS.ProcessEnv {
-  const authDir = defaultAuthDir()
-  return {
-    ...process.env,
-    XDG_DATA_HOME: path.join(authDir, 'XDG_DATA_HOME'),
-    XDG_CONFIG_HOME: path.join(authDir, 'XDG_CONFIG_HOME'),
-    XDG_STATE_HOME: path.join(authDir, 'XDG_STATE_HOME'),
-    XDG_CACHE_HOME: path.join(authDir, 'XDG_CACHE_HOME'),
-    E2E_BROWSER_STATE_PATH: storageStatePath,
-    SHOPIFY_RUN_AS_USER: '0',
-    SHOPIFY_CLI_NO_ANALYTICS: '1',
-    NODE_OPTIONS: '',
-    CI: '1',
-    SHOPIFY_FLAG_CLIENT_ID: undefined,
-  }
-}
-
-function persistAuthEnvForLaterSteps(env: NodeJS.ProcessEnv) {
-  const githubEnv = process.env.GITHUB_ENV
-  if (!githubEnv) return
-
-  const keys = ['XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_STATE_HOME', 'E2E_BROWSER_STATE_PATH']
-  fs.appendFileSync(githubEnv, keys.map((key) => `${key}=${env[key] ?? ''}`).join('\n') + '\n')
+  const tmpBase = process.env.E2E_TEMP_DIR ?? path.resolve(__dirname, '../../../.e2e-tmp')
+  return path.join(tmpBase, 'global-auth', 'browser-storage-state.json')
 }
 
 export async function primeBrowserAuthStorage(opts: PrimeBrowserAuthOptions = {}): Promise<string> {
@@ -97,17 +64,7 @@ export async function primeBrowserAuthStorage(opts: PrimeBrowserAuthOptions = {}
     throw new Error('E2E_ORG_ID is required')
   }
 
-  const authEnv = cleanupAuthEnv(storageStatePath)
-  for (const dir of [
-    path.dirname(storageStatePath),
-    authEnv.XDG_DATA_HOME,
-    authEnv.XDG_CONFIG_HOME,
-    authEnv.XDG_STATE_HOME,
-    authEnv.XDG_CACHE_HOME,
-  ]) {
-    if (dir) fs.mkdirSync(dir, {recursive: true})
-  }
-  persistAuthEnvForLaterSteps(authEnv)
+  fs.mkdirSync(path.dirname(storageStatePath), {recursive: true})
 
   const browser = await chromium.launch({headless: !opts.headed})
   try {
@@ -121,7 +78,7 @@ export async function primeBrowserAuthStorage(opts: PrimeBrowserAuthOptions = {}
     const page = await context.newPage()
 
     console.log('[prime-browser-auth] Logging in...')
-    await primeCliAuth(page, email, password, authEnv)
+    await completeLogin(page, 'https://accounts.shopify.com/lookup', email, password)
 
     await attemptVisitAndHandleAccountPicker(page, 'https://admin.shopify.com/', email, 'admin')
     await attemptVisitAndHandleAccountPicker(
@@ -136,53 +93,6 @@ export async function primeBrowserAuthStorage(opts: PrimeBrowserAuthOptions = {}
     return storageStatePath
   } finally {
     await browser.close()
-  }
-}
-
-async function primeCliAuth(page: Page, email: string, password: string, env: NodeJS.ProcessEnv) {
-  await execa('node', [executables.cli, 'auth', 'logout'], {
-    env,
-    reject: false,
-  })
-
-  const nodePty = await import('node-pty')
-  const spawnEnv: {[key: string]: string} = {}
-  for (const [key, value] of Object.entries(env)) {
-    if (value !== undefined) spawnEnv[key] = value
-  }
-  spawnEnv.CI = ''
-  spawnEnv.CODESPACES = 'true'
-
-  const ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {
-    name: 'xterm-color',
-    cols: 120,
-    rows: 30,
-    env: spawnEnv,
-  })
-
-  let output = ''
-  ptyProcess.onData((data: string) => {
-    output += data
-  })
-
-  try {
-    await waitForText(() => output, 'link to start the auth process', CLI_TIMEOUT.short)
-
-    const stripped = stripAnsi(output)
-    const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
-    if (!urlMatch) {
-      throw new Error('[prime-browser-auth] could not find login URL in Shopify auth output')
-    }
-
-    await completeLogin(page, urlMatch[0], email, password)
-    await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
-  } finally {
-    try {
-      ptyProcess.kill()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_error) {
-      // Process may already be dead.
-    }
   }
 }
 

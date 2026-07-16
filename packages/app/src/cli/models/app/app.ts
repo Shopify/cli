@@ -1,6 +1,6 @@
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
-import {ExtensionUuidsByLocalIdentifier} from './identifiers.js'
+import {Identifiers} from './identifiers.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
@@ -245,7 +245,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): CreateAppOptions
-  manifest: (appModuleUuids: ExtensionUuidsByLocalIdentifier | undefined) => Promise<AppManifest>
+  manifest: (identifiers: Identifiers | undefined) => Promise<AppManifest>
   removeExtension: (extensionUid: string) => void
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
@@ -331,7 +331,7 @@ export class App<
     this.realExtensions.forEach((ext) => ext.patchWithAppDevURLs(devApplicationURLs))
   }
 
-  async manifest(appModuleUuids: ExtensionUuidsByLocalIdentifier | undefined): Promise<AppManifest> {
+  async manifest(identifiers: Identifiers | undefined): Promise<AppManifest> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
         const config = await module.deployConfig({
@@ -342,7 +342,7 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
-          uuid: appModuleUuids?.[module.localIdentifier],
+          uuid: identifiers?.extensions[module.localIdentifier],
           assets: module.uid,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,

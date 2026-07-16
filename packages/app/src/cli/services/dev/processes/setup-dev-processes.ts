@@ -169,7 +169,6 @@ export async function setupDevProcesses({
       storeFqdn,
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
-      storePassword: commandOptions.storePassword,
     }),
     setupSendUninstallWebhookProcess({
       webs: reloadedApp.webs,

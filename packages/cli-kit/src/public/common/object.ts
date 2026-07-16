@@ -69,37 +69,6 @@ export function deepCompare(one: object, two: object): boolean {
 }
 
 /**
- * Deeply compares two values and treats arrays as order-insensitive.
- *
- * @param one - The first value to be compared.
- * @param two - The second value to be compared.
- * @returns True if the normalized values are equal, false otherwise.
- */
-export function deepCompareWithOrderInsensitiveArrays(one: unknown, two: unknown): boolean {
-  return lodashIsEqual(normalizeOrderInsensitiveArrays(one), normalizeOrderInsensitiveArrays(two))
-}
-
-function normalizeOrderInsensitiveArrays(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(normalizeOrderInsensitiveArrays).sort(compareNormalizedValues)
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value)
-        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
-        .map(([key, nestedValue]) => [key, normalizeOrderInsensitiveArrays(nestedValue)]),
-    )
-  }
-
-  return value ?? {}
-}
-
-function compareNormalizedValues(left: unknown, right: unknown) {
-  return JSON.stringify(left).localeCompare(JSON.stringify(right))
-}
-
-/**
  * Return the difference between two nested objects.
  *
  * @param one - The first object to be compared.

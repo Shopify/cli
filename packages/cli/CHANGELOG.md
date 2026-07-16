@@ -1,14 +1,5 @@
 # @shopify/cli
 
-## 4.5.0
-
-### Minor Changes
-
-- bacbcf2: Add `shopify store auth list` to list stores authenticated on this machine with `shopify store auth`.
-- bacbcf2: Add `shopify store create preview` to create a preview Shopify store with no existing account required.
-- bacbcf2: Add `shopify store list` to list stores in a Shopify organization.
-- bacbcf2: Add `shopify store open` to open a store's storefront in your default web browser.
-
 ## 4.4.0
 
 ### Minor Changes

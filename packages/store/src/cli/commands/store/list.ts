@@ -5,6 +5,8 @@ import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class StoreList extends StoreCommand {
+  static hidden = true
+
   static summary = 'List stores in a Shopify organization.'
 
   static descriptionWithMarkdown = `Lists stores in a Shopify organization available to the current CLI account.

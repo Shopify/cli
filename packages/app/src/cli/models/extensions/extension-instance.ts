@@ -3,7 +3,7 @@ import {FunctionConfigType} from './specifications/function.js'
 import {DevSessionWatchConfig, ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
-import {ExtensionUuidsByLocalIdentifier} from '../app/identifiers.js'
+import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
@@ -245,8 +245,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
-  getOutputFolderId() {
-    return this.uid
+  getOutputFolderId(outputId?: string) {
+    // Ideally we want to return `this.uid` always. To keep supporting Partners API we accept a value to override that.
+
+    return outputId ?? this.uid
   }
 
   // UI Specific properties
@@ -345,16 +347,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string) {
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory)
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
     await this.build(options)
 
-    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId())
+    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
-  getOutputPathForDirectory(directory: string) {
-    return joinPath(directory, this.getOutputFolderId(), this.outputRelativePath)
+  getOutputPathForDirectory(directory: string, outputId?: string) {
+    const id = this.getOutputFolderId(outputId)
+    return joinPath(directory, id, this.outputRelativePath)
   }
 
   get singleTarget() {
@@ -370,7 +373,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async bundleConfig({
-    appModuleUuids,
+    identifiers,
     developerPlatformClient,
     apiKey,
     appConfiguration,
@@ -384,7 +387,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       handle: this.handle,
     }
 
-    const uuid = appModuleUuids[this.localIdentifier]!
+    const uuid = this.isUUIDStrategyExtension
+      ? identifiers.extensions[this.localIdentifier]!
+      : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
 
     return {
       ...result,
@@ -538,7 +543,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         // Related issues: PR #559094 in old Core repo
         if ('topic' in this.configuration && 'uri' in this.configuration) {
           const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-          return `${subscription.topic}::${subscription.filter ?? ''}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
+          return `${subscription.topic}::${subscription.filter}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
         } else {
           return nonRandomUUID(JSON.stringify(this.configuration))
         }
@@ -552,7 +557,7 @@ interface ExtensionDeployConfigOptions {
 }
 
 interface ExtensionBundleConfigOptions {
-  appModuleUuids: ExtensionUuidsByLocalIdentifier
+  identifiers: Identifiers
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   appConfiguration: AppConfiguration

@@ -43,9 +43,8 @@ export interface ActiveConfig {
  *
  * Resolution priority:
  * 1. userProvidedConfigName (from --config flag)
- * 2. clientId (from --client-id flag)
- * 3. Cached selection (from `app config use`)
- * 4. Default (shopify.app.toml)
+ * 2. Cached selection (from `app config use`)
+ * 3. Default (shopify.app.toml)
  *
  * If the cached config file no longer exists on disk, prompts the user
  * to select a new one via `app config use`.
@@ -57,10 +56,9 @@ export interface ActiveConfig {
 export async function selectActiveConfig(
   project: Project,
   userProvidedConfigName?: string,
-  options?: {clientId?: string; skipPrompts?: boolean},
+  options?: {skipPrompts?: boolean},
 ): Promise<ActiveConfig> {
   let configName = userProvidedConfigName
-  const clientIdConfig = options?.clientId ? project.appConfigByClientId(options.clientId) : undefined
 
   // Check cache for previously selected config
   const cachedConfigName = getCachedAppInfo(project.directory)?.configFile
@@ -78,31 +76,21 @@ export async function selectActiveConfig(
     configName = await use({directory: project.directory, warningContent, shouldRenderSuccess: false})
   }
 
-  if (!configName && clientIdConfig) {
-    return buildActiveConfig(project, clientIdConfig, 'flag')
-  }
-
-  if (!configName && options?.clientId) {
-    throw new AbortError(
-      "The specified client ID couldn't be found in any TOML file, or the matching TOML file is malformed.",
-    )
-  }
-
   // Don't fall back to stale cached name — it points to a non-existent file
-  const resolvedConfigName = configName ?? (cacheIsStale ? undefined : cachedConfigName)
+  configName = configName ?? (cacheIsStale ? undefined : cachedConfigName)
 
   // Determine source after resolution so it reflects the actual selection path
   let source: ConfigSource
   if (userProvidedConfigName) {
     source = 'flag'
-  } else if (resolvedConfigName) {
+  } else if (configName) {
     source = 'cached'
   } else {
     source = 'default'
   }
 
   // Resolve the config file name and look it up in the project's pre-loaded files
-  const configurationFileName = getAppConfigurationFileName(resolvedConfigName)
+  const configurationFileName = getAppConfigurationFileName(configName)
   const file = project.appConfigByName(configurationFileName)
   if (!file) {
     throw new AbortError(

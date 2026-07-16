@@ -33,14 +33,26 @@ describe('bundleAndBuildExtensions', () => {
       themeExtension.buildForBundle = extensionBundleMock
       app = testApp({allExtensions: [uiExtension, themeExtension], directory: tmpDir})
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const extensions: {[key: string]: string} = {}
+      for (const extension of app.allExtensions) {
+        extensions[extension.localIdentifier] = extension.localIdentifier
+      }
+      const identifiers = {
+        app: 'app-id',
+        extensions,
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: false,
+        isDevDashboardApp: false,
       })
 
       // Then
@@ -63,14 +75,26 @@ describe('bundleAndBuildExtensions', () => {
       functionExtension.buildForBundle = extensionBundleMock
       const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const extensions: {[key: string]: string} = {}
+      for (const extension of app.allExtensions) {
+        extensions[extension.localIdentifier] = extension.localIdentifier
+      }
+      const identifiers = {
+        app: 'app-id',
+        extensions,
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: false,
+        isDevDashboardApp: false,
       })
 
       // Then
@@ -90,20 +114,33 @@ describe('bundleAndBuildExtensions', () => {
       functionExtension.buildForBundle = extensionBuildMock
       const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const extensions: {[key: string]: string} = {}
+      for (const extension of app.allExtensions) {
+        extensions[extension.localIdentifier] = extension.localIdentifier
+      }
+      const identifiers = {
+        app: 'app-id',
+        extensions,
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: true,
+        isDevDashboardApp: false,
       })
 
       // Then
       expect(extensionBuildMock).toHaveBeenCalledWith(
         expect.objectContaining({app, environment: 'production', skipBuild: true}),
         joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        functionExtension.localIdentifier,
       )
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
@@ -122,14 +159,22 @@ describe('bundleAndBuildExtensions', () => {
       functionExtension.buildForBundle = extensionBuildMock
       const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const identifiers = {
+        app: 'app-id',
+        extensions: {[functionExtension.localIdentifier]: functionExtension.localIdentifier},
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: true,
+        isDevDashboardApp: false,
       })
 
       // Then
@@ -137,6 +182,7 @@ describe('bundleAndBuildExtensions', () => {
       expect(extensionBuildMock).toHaveBeenCalledWith(
         expect.objectContaining({app, environment: 'production', skipBuild: true}),
         joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        functionExtension.localIdentifier,
       )
     })
   })
@@ -154,14 +200,22 @@ describe('bundleAndBuildExtensions', () => {
       functionExtension.buildForBundle = extensionBuildMock
       const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const identifiers = {
+        app: 'app-id',
+        extensions: {[functionExtension.localIdentifier]: functionExtension.localIdentifier},
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: false,
+        isDevDashboardApp: false,
       })
 
       // Then
@@ -184,20 +238,29 @@ describe('bundleAndBuildExtensions', () => {
 
       const app = testApp({allExtensions: [themeExtension], directory: tmpDir})
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const identifiers = {
+        app: 'app-id',
+        extensions: {[themeExtension.localIdentifier]: themeExtension.localIdentifier},
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: true,
+        isDevDashboardApp: false,
       })
 
       // Then
       expect(extensionBuildMock).toHaveBeenCalledWith(
         expect.objectContaining({app, environment: 'production', skipBuild: true}),
         joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        themeExtension.localIdentifier,
       )
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
@@ -235,27 +298,42 @@ describe('bundleAndBuildExtensions', () => {
         directory: tmpDir,
       })
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const extensions: {[key: string]: string} = {}
+      for (const extension of app.allExtensions) {
+        extensions[extension.localIdentifier] = extension.localIdentifier
+      }
+      const identifiers = {
+        app: 'app-id',
+        extensions,
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: true,
+        isDevDashboardApp: false,
       })
 
       expect(functionBuildMock).toHaveBeenCalledWith(
         expect.objectContaining({app, environment: 'production', skipBuild: true}),
         joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        functionExtension.localIdentifier,
       )
       expect(themeBuildMock).toHaveBeenCalledWith(
         expect.objectContaining({app, environment: 'production', skipBuild: true}),
         joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        themeExtension.localIdentifier,
       )
       expect(uiBuildMock).toHaveBeenCalledWith(
         expect.objectContaining({app, environment: 'production', skipBuild: true}),
         joinPath(tmpDir, '.shopify', 'deploy-bundle'),
+        uiExtension.localIdentifier,
       )
 
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
@@ -271,14 +349,22 @@ describe('bundleAndBuildExtensions', () => {
       const configExtension = await testAppConfigExtensions()
       const app = testApp({allExtensions: [configExtension], directory: tmpDir})
 
-      appManifest = await app.manifest(appModuleUuidsFor(app))
+      const identifiers = {
+        app: 'app-id',
+        extensions: {},
+        extensionIds: {},
+        extensionsNonUuidManaged: {[configExtension.localIdentifier]: configExtension.localIdentifier},
+      }
+      appManifest = await app.manifest(identifiers)
 
       // When
       const result = await bundleAndBuildExtensions({
         app,
         appManifest,
+        identifiers,
         bundlePath,
         skipBuild: false,
+        isDevDashboardApp: false,
       })
 
       // Then
@@ -288,9 +374,3 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 })
-
-function appModuleUuidsFor(app: AppInterface) {
-  return Object.fromEntries(
-    app.allExtensions.map((extension) => [extension.localIdentifier, extension.localIdentifier]),
-  )
-}
