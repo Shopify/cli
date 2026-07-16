@@ -21,7 +21,6 @@ import {
   MigrateFlowExtensionVariables,
 } from '../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../api/graphql/update_urls.js'
-import {CurrentAccountInfoQuery} from '../api/graphql/partners/generated/current-account-info.js'
 import {ExtensionTemplatesResult} from '../models/app/template.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
@@ -227,7 +226,6 @@ export interface DeveloperPlatformClient {
   apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
-  currentAccountInfo: () => Promise<CurrentAccountInfoQuery>
   targetSchemaDefinition: (
     input: SchemaDefinitionByTargetQueryVariables,
     apiKey: string,

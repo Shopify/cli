@@ -52,7 +52,6 @@ import {
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {CurrentAccountInfoQuery} from '../../api/graphql/partners/generated/current-account-info.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -1282,13 +1281,6 @@ const updateURLsResponse: UpdateURLsSchema = {
   },
 }
 
-const currentAccountInfoResponse: CurrentAccountInfoQuery = {
-  currentAccountInfo: {
-    __typename: 'UserAccount',
-    email: 'user@example.com',
-  },
-}
-
 const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
   migrateToUiExtension: {
     migratedToUiExtension: true,
@@ -1344,7 +1336,6 @@ export function testDeveloperPlatformClient(
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
     migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
-    currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
     targetSchemaDefinition: (_input: SchemaDefinitionByTargetQueryVariables & {apiKey?: string}, _orgId: string) =>
       Promise.resolve('schema'),
     apiSchemaDefinition: (_input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string}, _orgId: string) =>

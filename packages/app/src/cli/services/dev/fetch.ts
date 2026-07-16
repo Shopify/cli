@@ -1,5 +1,4 @@
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {fetchCurrentAccountInformation} from '../context/partner-account-info.js'
 import {
   DeveloperPlatformClient,
   Store,
@@ -79,10 +78,8 @@ export async function fetchOrganizations(): Promise<Organization[]> {
   const organizations: Organization[] = await client.organizations()
 
   if (organizations.length === 0) {
-    const developerPlatformClient = defaultDeveloperPlatformClient()
-    const session = await developerPlatformClient.session()
-    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient, session.userId)
-    throw new NoOrgError(accountInfo)
+    const session = await client.session()
+    throw new NoOrgError(session.accountInfo)
   }
   return organizations
 }

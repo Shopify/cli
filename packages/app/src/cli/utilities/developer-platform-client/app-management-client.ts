@@ -54,7 +54,6 @@ import {
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {CurrentAccountInfoQuery} from '../../api/graphql/partners/generated/current-account-info.js'
 import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
@@ -929,10 +928,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
     outputDebug('⚠️ updateURLs is not implemented')
     return {appUpdate: {userErrors: []}}
-  }
-
-  async currentAccountInfo(): Promise<CurrentAccountInfoQuery> {
-    throw new BugError('Not implemented: currentAccountInfo')
   }
 
   async targetSchemaDefinition(

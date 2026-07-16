@@ -38,7 +38,6 @@ vi.mock('../../../models/app/loader.js', async () => {
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('../../context/partner-account-info.js')
 vi.mock('../../context.js')
 vi.mock('../select-app.js')
 
