@@ -169,10 +169,7 @@ describe('ExtensionsPayloadStore()', () => {
 
       // Then
       expect(extensionsPayloadStore.getRawPayload().extensions.length).toEqual(1)
-      expect(extensionsPayloadStore.getRawPayload().extensions[0]?.uuid).toEqual('123')
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      expect(extensionsPayloadStore.getRawPayload().extensions[0]?.test).toEqual('value')
+      expect(extensionsPayloadStore.getRawPayload().extensions[0]).toMatchObject({uuid: '123', test: 'value'})
     })
 
     test('deep merge extension points with incoming payload when the target matches', () => {
@@ -204,8 +201,6 @@ describe('ExtensionsPayloadStore()', () => {
       ] as unknown as UIExtensionPayload[])
 
       // Then
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       expect(extensionsPayloadStore.getRawPayload().extensions[0]).toMatchObject({
         uuid: '123',
         extensionPoints: [
