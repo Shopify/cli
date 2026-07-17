@@ -304,7 +304,7 @@ jobs:
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
         run: |
           RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
-          pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern "r${RUN_TOKEN}a${GITHUB_RUN_ATTEMPT}"
+          pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern "r${RUN_TOKEN}"
       - name: Cleanup current-run E2E stores
         env:
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
@@ -312,7 +312,7 @@ jobs:
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
         run: |
           RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
-          pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern "r${RUN_TOKEN}a${GITHUB_RUN_ATTEMPT}"
+          pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern "r${RUN_TOKEN}"
 
   type-diff:
     if: github.event.pull_request.head.repo.full_name == github.repository
