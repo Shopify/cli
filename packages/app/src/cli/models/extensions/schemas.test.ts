@@ -1,4 +1,4 @@
-import {BaseSchema, MAX_UID_LENGTH} from './schemas.js'
+import {BaseSchema, MAX_UID_LENGTH, NewExtensionPointsSchema} from './schemas.js'
 import {describe, expect, test} from 'vitest'
 
 const validUIDTestCases = [
@@ -28,6 +28,51 @@ const invalidUIDTestCases = [
   ['-', "UID can't start or end with a hyphen"],
   ['-----', "UID can't start or end with a hyphen"],
 ]
+
+describe('NewExtensionPointsSchema', () => {
+  const extensionPoint = {
+    target: 'pos.app.ready.data',
+    module: './src/index.ts',
+  }
+
+  test('accepts free-form intercept event names for Core to validate', () => {
+    const result = NewExtensionPointsSchema.safeParse([
+      {
+        ...extensionPoint,
+        capabilities: {intercepts: ['beforecheckout', 'future:event']},
+      },
+    ])
+
+    expect(result.success).toBe(true)
+  })
+
+  test('rejects non-string intercept event names', () => {
+    const result = NewExtensionPointsSchema.safeParse([
+      {
+        ...extensionPoint,
+        capabilities: {intercepts: ['beforecheckout', 1]},
+      },
+    ])
+
+    expect(result.success).toBe(false)
+  })
+
+  test('rejects duplicate intercept event names', () => {
+    const result = NewExtensionPointsSchema.safeParse([
+      {
+        ...extensionPoint,
+        capabilities: {intercepts: ['beforecheckout', 'beforecheckout']},
+      },
+    ])
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        'Duplicate intercept events found: beforecheckout. Each intercept event may only be declared once.',
+      )
+    }
+  })
+})
 
 describe('UIDSchema', () => {
   describe('valid UIDs', () => {
