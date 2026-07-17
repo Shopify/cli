@@ -292,12 +292,15 @@ jobs:
       - name: Build CLI for cleanup auth
         run: pnpm nx run cli:build --skip-nx-cache
       - name: Prime cleanup auth state
+        continue-on-error: true
         env:
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
         run: pnpm --filter e2e exec tsx scripts/prime-browser-auth.ts
       - name: Cleanup current-run E2E apps
+        if: ${{ always() }}
+        continue-on-error: true
         env:
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
@@ -306,6 +309,8 @@ jobs:
           RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
           pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern "r${RUN_TOKEN}"
       - name: Cleanup current-run E2E stores
+        if: ${{ always() }}
+        continue-on-error: true
         env:
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
