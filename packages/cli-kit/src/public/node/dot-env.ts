@@ -130,14 +130,15 @@ export function createDotEnvFileLine(key: string, value?: string, quote?: string
   if (quote) {
     return `${key}=${quote}${value}${quote}`
   }
-  if (value?.includes('\n')) {
-    const quoteCharacter = ['"', "'", '`'].find((char) => !value.includes(char))
 
-    if (!quoteCharacter) {
-      throw new AbortError(`The environment file patch has an env value that can't be surrounded by quotes: ${value}`)
-    }
-
-    return `${key}=${quoteCharacter}${value}${quoteCharacter}`
+  if (!value?.includes('\n')) {
+    return `${key}=${value}`
   }
-  return `${key}=${value}`
+
+  const quoteCharacter = ['"', "'", '`'].find((char) => !value.includes(char))
+  if (!quoteCharacter) {
+    throw new AbortError(`The environment file patch has an env value that can't be surrounded by quotes: ${value}`)
+  }
+
+  return `${key}=${quoteCharacter}${value}${quoteCharacter}`
 }
