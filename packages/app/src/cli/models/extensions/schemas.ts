@@ -42,9 +42,7 @@ const InterceptEventsSchema = zod.array(zod.string()).superRefine((events, conte
   if (duplicates.length > 0) {
     context.addIssue({
       code: zod.ZodIssueCode.custom,
-      message: `Duplicate intercept events found: ${duplicates.join(
-        ', ',
-      )}. Each intercept event may only be declared once.`,
+      message: `Intercept events must be unique: ${duplicates.join(', ')}`,
     })
   }
 })

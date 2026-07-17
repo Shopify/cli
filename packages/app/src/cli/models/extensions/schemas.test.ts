@@ -67,9 +67,7 @@ describe('NewExtensionPointsSchema', () => {
 
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(
-        'Duplicate intercept events found: beforecheckout. Each intercept event may only be declared once.',
-      )
+      expect(result.error.issues[0]?.message).toBe('Intercept events must be unique: beforecheckout')
     }
   })
 })
