@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 4.5.2
+
+### Patch Changes
+
+- 06951bb: Bump Shopify/theme-tools packages
+- Updated dependencies [d55e90f]
+- Updated dependencies [06951bb]
+  - @shopify/theme@4.5.2
+  - @shopify/organizations@4.5.2
+  - @shopify/cli-kit@4.5.2
+  - @shopify/plugin-cloudflare@4.5.2
+
 ## 4.5.1
 
 ### Patch Changes

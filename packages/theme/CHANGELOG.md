@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 4.5.2
+
+### Patch Changes
+
+- d55e90f: Fix warning when running theme commands in valid theme directories
+- 06951bb: Bump Shopify/theme-tools packages
+  - @shopify/cli-kit@4.5.2
+
 ## 4.5.1
 
 ### Patch Changes
