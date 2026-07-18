@@ -89,11 +89,9 @@ export function createGitIgnore(directory: string, template: GitIgnoreTemplate):
   outputDebug(outputContent`Creating .gitignore at ${outputToken.path(directory)}...`)
   const filePath = `${directory}/.gitignore`
 
-  let fileContent = ''
-  for (const [section, lines] of Object.entries(template)) {
-    fileContent += `# ${section}\n`
-    fileContent += `${lines.join('\n')}\n\n`
-  }
+  const fileContent = Object.entries(template)
+    .map(([section, lines]) => `# ${section}\n${lines.join('\n')}\n\n`)
+    .join('')
 
   appendFileSync(filePath, fileContent)
 }
