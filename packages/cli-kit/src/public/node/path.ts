@@ -119,7 +119,10 @@ export function commonParentDirectory(first: string, second: string): string {
   while (i < firstParts.length && i < secondParts.length && firstParts[i] === secondParts[i]) {
     i++
   }
-  return i > 1 ? firstParts.slice(0, i).join('/') : '/'
+  if (i <= 1) {
+    return '/'
+  }
+  return firstParts.slice(0, i).join('/')
 }
 
 /**
