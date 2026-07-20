@@ -1,14 +1,21 @@
 import {TabPanel, Tab} from './TabPanel.js'
 import {
-  render,
+  render as renderUI,
   sendInputAndWait,
   sendInputAndWaitForChange,
+  waitForContent,
   waitForInputsToBeReady,
 } from '@shopify/cli-kit/node/testing/ui'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import {Text} from '@shopify/cli-kit/node/ink'
+import {MouseProvider, Text} from '@shopify/cli-kit/node/ink'
+
+const render = (element: React.ReactElement) => renderUI(<MouseProvider>{element}</MouseProvider>, {stdoutIsTTY: true})
+
+function mouseClick(column: number, row: number): [string, string] {
+  return [`\u001B[<0;${column};${row}M`, `\u001B[<0;${column};${row}m`]
+}
 
 const mocks = vi.hoisted(() => {
   return {
@@ -105,6 +112,34 @@ describe('TabPanel', () => {
 
     expect(renderInstance.lastFrame()!).toContain('Second tab content')
     expect(renderInstance.lastFrame()!).not.toContain('First tab content')
+
+    renderInstance.unmount()
+  })
+
+  test('switches to a different tab when its header is clicked', async () => {
+    const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+    await waitForContent(renderInstance, 'Second tab content', () =>
+      mouseClick(20, 2).forEach((input) => renderInstance.stdin.write(input)),
+    )
+
+    expect(renderInstance.lastFrame()).toContain('Second tab content')
+    expect(renderInstance.lastFrame()).not.toContain('First tab content')
+
+    renderInstance.unmount()
+  })
+
+  test('accounts for output rendered before the tab panel', async () => {
+    const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 60, '\u001B[40;1R')
+    await waitForContent(renderInstance, 'Second tab content', () =>
+      mouseClick(20, 37).forEach((input) => renderInstance.stdin.write(input)),
+    )
+
+    expect(renderInstance.lastFrame()).toContain('Second tab content')
 
     renderInstance.unmount()
   })
