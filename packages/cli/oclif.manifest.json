@@ -7196,6 +7196,92 @@
       "strict": true,
       "summary": "Open your Shopify store in the default web browser."
     },
+    "store:report": {
+      "aliases": [],
+      "args": {},
+      "description": "Answers a question about a store by asking the Shopify assistant to translate it into either a ShopifyQL analytics query or a raw Admin API GraphQL query, running that query against the store's Admin API, and printing the results.\n\nShopifyQL is used for time-series and aggregate analytics questions (sales trends, order counts, and so on), while raw Admin GraphQL is used for catalog and store-state lookups (products, orders, customers, and so on). Use `--api` to force one or the other.\n\nRun `shopify store auth` first to create stored auth for the store.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --analysis \"What were my sales last month?\"",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --analysis \"List my 5 most recent draft orders\" --api admin",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --analysis \"How many orders did I get this week?\" --json"
+      ],
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "json": {
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "analysis": {
+          "description": "The question to answer about the store, in natural language.",
+          "env": "SHOPIFY_FLAG_ANALYSIS",
+          "name": "analysis",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "version": {
+          "description": "The Admin API version to use. Defaults to the latest stable version.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "name": "version",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "api": {
+          "description": "Forces the query onto a specific API surface instead of letting the assistant choose.",
+          "env": "SHOPIFY_FLAG_API",
+          "name": "api",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "shopifyql",
+            "admin"
+          ],
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "store:report",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Turn a natural-language question into a store report.",
+      "descriptionWithMarkdown": "Answers a question about a store by asking the Shopify assistant to translate it into either a ShopifyQL analytics query or a raw Admin API GraphQL query, running that query against the store's Admin API, and printing the results.\n\nShopifyQL is used for time-series and aggregate analytics questions (sales trends, order counts, and so on), while raw Admin GraphQL is used for catalog and store-state lookups (products, orders, customers, and so on). Use `--api` to force one or the other.\n\nRun `shopify store auth` first to create stored auth for the store.",
+      "customPluginName": "@shopify/store"
+    },
     "store:stripe-auth": {
       "aliases": [
       ],

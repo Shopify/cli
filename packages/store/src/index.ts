@@ -11,6 +11,7 @@ import StoreGraphiQL from './cli/commands/store/graphiql.js'
 import StoreInfo from './cli/commands/store/info.js'
 import StoreList from './cli/commands/store/list.js'
 import StoreOpen from './cli/commands/store/open.js'
+import StoreReport from './cli/commands/store/report.js'
 
 export {loadAdminSessionFromStoreAuth} from './cli/services/store/auth/admin-session.js'
 
@@ -28,6 +29,7 @@ const COMMANDS = {
   'store:info': StoreInfo,
   'store:list': StoreList,
   'store:open': StoreOpen,
+  'store:report': StoreReport,
 }
 
 export default COMMANDS
