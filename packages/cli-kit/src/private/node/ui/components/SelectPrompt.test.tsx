@@ -105,7 +105,7 @@ describe('SelectPrompt', async () => {
             ninth
             tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
       "
     `)
   })
@@ -143,10 +143,10 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-         ┃  \u001b[1mAdd\u001b[22m
+         ┃  [1mAdd[22m
          ┃  + new-ext
          ┃
-         ┃  \u001b[1mRemove\u001b[22m
+         ┃  [1mRemove[22m
          ┃  - integrated-demand-ext
          ┃  - order-discount [2m(1)[22m
 
@@ -155,7 +155,7 @@ describe('SelectPrompt', async () => {
          third
          fourth
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
       "
     `)
   })
@@ -197,7 +197,7 @@ describe('SelectPrompt', async () => {
          third
          fourth
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
       "
     `)
   })
@@ -231,7 +231,7 @@ describe('SelectPrompt', async () => {
       >  a
 
 
-         Press ↑↓ arrows to select, enter to confirm.
+         Press ↑↓ arrows to select, enter to confirm, or click an option.
       "
     `)
   })
@@ -253,7 +253,7 @@ describe('SelectPrompt', async () => {
          a
       >  b
 
-         Press ↑↓ arrows to select, enter to confirm.
+         Press ↑↓ arrows to select, enter to confirm, or click an option.
       "
     `)
 
@@ -283,7 +283,7 @@ describe('SelectPrompt', async () => {
       >  a
          b
 
-         Press ↑↓ arrows to select, enter to confirm.
+         Press ↑↓ arrows to select, enter to confirm, or click an option.
       "
     `)
 
@@ -313,7 +313,7 @@ describe('SelectPrompt', async () => {
       >  (a) a
          (b) b
 
-         Press ↑↓ arrows to select, enter or a shortcut to confirm.
+         Use ↑↓ to select; press enter, use a shortcut, or click an option.
       "
     `)
 
@@ -364,7 +364,7 @@ describe('SelectPrompt', async () => {
                                                                                      [100m [49m
          [1mMerchant Admin[22m                                                              [100m [49m
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
       "
     `)
   })
@@ -390,7 +390,7 @@ describe('SelectPrompt', async () => {
          yes
       [36m>[39m  [36mno[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
       "
     `)
   })
@@ -418,7 +418,7 @@ describe('SelectPrompt', async () => {
          yes
       [36m>[39m  [36mno[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
       "
     `)
 
@@ -430,7 +430,7 @@ describe('SelectPrompt', async () => {
       [36m>[39m  [36myes[39m
          no
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
       "
     `)
   })
@@ -460,7 +460,7 @@ describe('SelectPrompt', async () => {
       >  a
          b
 
-         Press ↑↓ arrows to select, enter to confirm.
+         Press ↑↓ arrows to select, enter to confirm, or click an option.
       "
     `)
 

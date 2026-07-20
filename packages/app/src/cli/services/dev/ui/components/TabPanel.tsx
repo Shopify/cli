@@ -1,5 +1,14 @@
 import React, {useState, useRef, useLayoutEffect} from 'react'
-import {Box, Text, useInput, useStdin, useStdout, measureElement} from '@shopify/cli-kit/node/ink'
+import {
+  Box,
+  Text,
+  useInput,
+  useStdin,
+  useStdout,
+  measureElement,
+  useOnClick,
+  type DOMElement,
+} from '@shopify/cli-kit/node/ink'
 
 export interface Tab {
   label: string
@@ -26,6 +35,27 @@ interface TabPanelProps {
 
 // Using a width less than 100% reduces (but doesn't eliminate) screen artifacts when resizing the terminal
 const TAB_WIDTH_PERCENTAGE = 0.9
+
+interface ClickableTabProps {
+  active?: boolean
+  header: string
+  onClick: () => void
+}
+
+const ClickableTab: React.FunctionComponent<ClickableTabProps> = ({active = false, header, onClick}) => {
+  const tabRef = useRef<DOMElement>(null)
+  useOnClick(tabRef, (event) => {
+    if (event.button === 'left') onClick()
+  })
+
+  return (
+    <Box ref={tabRef}>
+      <Text bold={active} inverse={active} wrap="truncate">
+        {header}
+      </Text>
+    </Box>
+  )
+}
 
 export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialActiveTab}) => {
   const {stdout} = useStdout()
@@ -112,6 +142,19 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
   const contentTabs = tabsArray.filter((tab) => !tab.action)
   const actionTabs = tabsArray.filter((tab) => tab.action)
 
+  const activateTab = async (tab: TabDisplay) => {
+    if (tab.action) {
+      await tab.action()
+    } else {
+      setActiveTab(tab.inputKey)
+    }
+  }
+
+  const activateTabFromClick = (tab: TabDisplay) => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    activateTab(tab)
+  }
+
   return (
     <>
       <Box
@@ -126,27 +169,25 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
         borderTop
       >
         <Box ref={contentTabsRef} flexDirection="row" flexWrap="nowrap" flexShrink={0} marginRight={3}>
-          <Text wrap="truncate-end">
-            {'│'}
-            {contentTabs.map((tab) => {
-              return (
-                <React.Fragment key={tab.inputKey}>
-                  <Text bold={activeTab === tab.inputKey} inverse={activeTab === tab.inputKey} wrap="truncate">
-                    {tab.header}
-                  </Text>
-                  {'│'}
-                </React.Fragment>
-              )
-            })}
-          </Text>
+          <Text>│</Text>
+          {contentTabs.map((tab) => (
+            <React.Fragment key={tab.inputKey}>
+              <ClickableTab
+                active={activeTab === tab.inputKey}
+                header={tab.header}
+                onClick={() => activateTabFromClick(tab)}
+              />
+              <Text>│</Text>
+            </React.Fragment>
+          ))}
         </Box>
         {displayActions && (
           <Box flexGrow={1} justifyContent="flex-end">
             {actionTabs.map((tab, index) => (
-              <Text wrap="truncate" key={tab.inputKey}>
-                ({tab.inputKey}) {tab.label}
-                {index < actionTabs.length - 1 && ' │ '}
-              </Text>
+              <React.Fragment key={tab.inputKey}>
+                <ClickableTab header={`(${tab.inputKey}) ${tab.label}`} onClick={() => activateTabFromClick(tab)} />
+                {index < actionTabs.length - 1 && <Text> │ </Text>}
+              </React.Fragment>
             ))}
           </Box>
         )}

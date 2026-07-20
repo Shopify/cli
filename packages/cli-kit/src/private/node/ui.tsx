@@ -77,10 +77,20 @@ interface Instance {
   unmount: () => void
 }
 
+const mouseTrackingControlSequences = new Set([
+  '\u001B[6n',
+  '\u001B[?1003l\u001B[?1002l\u001B[?1000h',
+  '\u001B[?1003l\u001B[?1002l\u001B[?1000l',
+  '\u001B[?1000h\u001B[?1002h\u001B[?1003h\u001B[?1006h',
+  '\u001B[?1006l\u001B[?1003l\u001B[?1002l\u001B[?1000l',
+])
+const cursorControlSequences = new Set(['\u001B[?25h', '\u001B[?25l'])
+
 export class Stdout extends EventEmitter {
   columns: number
   rows: number
   readonly frames: string[] = []
+  readonly controlSequences: string[] = []
   private _lastFrame?: string
 
   constructor(options: {columns?: number; rows?: number}) {
@@ -90,7 +100,14 @@ export class Stdout extends EventEmitter {
   }
 
   write = (frame: string) => {
+    if (mouseTrackingControlSequences.has(frame)) {
+      this.controlSequences.push(frame)
+      return
+    }
+
     this.frames.push(frame)
+    if (cursorControlSequences.has(frame)) return
+
     // Ink writes `this.lastOutput + '\n'` to stdout during unmount when
     // running in a CI environment (detected via `is-in-ci`).  In debug
     // mode (which tests use), `lastOutput` is never updated, so the write
