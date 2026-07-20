@@ -11,7 +11,7 @@ type MetricRecorder =
   | 'console'
   | {
       type: 'otel'
-      otel: Pick<OtelService, 'record'>
+      otel: Pick<OtelService, 'getMeterProvider' | 'record'>
     }
 
 // this should be type, not interface
@@ -80,6 +80,9 @@ export async function recordMetrics(
 
   recordCommandCounter(recorder, labels)
   recordCommandTiming(recorder, labels, timing)
+  if (recorder !== 'console') {
+    await recorder.otel.getMeterProvider().forceFlush({})
+  }
 }
 
 const COMMAND_DURATION_BOUNDARIES_MS = [

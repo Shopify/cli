@@ -6314,6 +6314,24 @@
       "strict": true,
       "usage": "search [query]"
     },
+    "send-analytics": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "send-analytics",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "store:auth": {
       "aliases": [
       ],

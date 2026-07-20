@@ -277,11 +277,12 @@ function buildExec(
   }
   const executionCwd = options?.cwd ?? cwd()
   checkCommandSafety(command, {cwd: executionCwd})
+  const backgroundStdio = options?.input === undefined ? 'ignore' : (['pipe', 'ignore', 'ignore'] as const)
   const commandProcess = execa(command, args, {
     env,
     cwd: executionCwd,
     input: options?.input,
-    stdio: options?.background ? 'ignore' : options?.stdio,
+    stdio: options?.background ? backgroundStdio : options?.stdio,
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
