@@ -11,7 +11,9 @@ import {
   runAtMinimumInterval,
   getConfigStoreForPartnerStatus,
   getCachedPartnerAccountStatus,
+  getMouseEnabled,
   setCachedPartnerAccountStatus,
+  setMouseEnabled,
   runWithRateLimit,
 } from './conf-store.js'
 import {isLocalEnvironment} from './context/service.js'
@@ -70,6 +72,22 @@ describe('removeSession', () => {
 
       // Then
       expect(config.get('sessionStore')).toEqual(undefined)
+    })
+  })
+})
+
+describe('mouse preference', () => {
+  test('is enabled by default and persists an explicit preference', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      expect(getMouseEnabled(config)).toBe(true)
+
+      setMouseEnabled(false, config)
+      expect(getMouseEnabled(config)).toBe(false)
+
+      setMouseEnabled(true, config)
+      expect(getMouseEnabled(config)).toBe(true)
     })
   })
 })

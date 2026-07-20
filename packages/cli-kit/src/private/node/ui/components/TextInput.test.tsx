@@ -126,6 +126,28 @@ describe('TextInput', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
   })
 
+  test('ignores terminal cursor position responses', async () => {
+    const onChange = vi.fn()
+    const renderInstance = render(<TextInput value="" onChange={onChange} />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 10, '\u001B[40;1R')
+
+    expect(onChange).not.toHaveBeenCalled()
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
+  })
+
+  test('ignores terminal mouse responses', async () => {
+    const onChange = vi.fn()
+    const renderInstance = render(<TextInput value="" onChange={onChange} />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 10, '\u001B[<0;4;32M', '\u001B[<0;4;32m')
+
+    expect(onChange).not.toHaveBeenCalled()
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
+  })
+
   test('onChange', async () => {
     const onChange = vi.fn()
 

@@ -137,6 +137,9 @@
       "config:autocorrect": {
         "description": "Command autocorrection options. If enabled, Shopify CLI will automatically run a corrected version of your command if a correction is available. Off by default."
       },
+      "config:mouse": {
+        "description": "Mouse interaction options. Enabled by default; hold Option in iTerm2 or Shift in most other terminals while dragging to select text."
+      },
       "kitchen-sink": {
         "description": "View the available UI kit components.",
         "hidden": true
