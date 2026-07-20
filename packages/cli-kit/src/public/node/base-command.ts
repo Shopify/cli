@@ -33,6 +33,10 @@ interface EnvironmentFlags {
 abstract class BaseCommand extends Command {
   static baseFlags: FlagInput<{}> = {}
 
+  public static get requiresSyncAnalytics(): boolean {
+    return false
+  }
+
   public static nonTTYFlagRequirements(_flags: FlagOutput): NonTTYFlagRequirement[] {
     return []
   }

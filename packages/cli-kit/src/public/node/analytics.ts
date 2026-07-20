@@ -1,6 +1,6 @@
-import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from './context/local.js'
+import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, ciPlatform, isShopify} from './context/local.js'
 import * as metadata from './metadata.js'
-import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
+import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC, type Schemas} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
 import {sendErrorToBugsnag} from './error-handler.js'
 import {outputContent, outputDebug, outputToken} from './output.js'
@@ -36,6 +36,70 @@ interface ReportAnalyticsEventOptions {
   exitMode: CommandExitMode
 }
 
+type MonorailCommandPayload = Schemas[typeof MONORAIL_COMMAND_TOPIC]
+interface AnalyticsPayload {
+  public: MonorailCommandPayload['public'] & {cmd_all_exit: CommandExitMode}
+  sensitive: MonorailCommandPayload['sensitive']
+}
+
+async function sendAnalyticsEvent(
+  payload: AnalyticsPayload,
+  skipMonorailAnalytics: boolean,
+  skipMetricAnalytics: boolean,
+): Promise<void> {
+  const doMonorail = async () => {
+    if (skipMonorailAnalytics) return
+    const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
+    if (response.type === 'error') {
+      outputDebug(response.message)
+    }
+  }
+
+  const doOpenTelemetry = async () => {
+    const active = payload.public.cmd_all_timing_active_ms ?? 0
+    const network = payload.public.cmd_all_timing_network_ms ?? 0
+    const prompt = payload.public.cmd_all_timing_prompts_ms ?? 0
+
+    return recordMetrics(
+      {
+        skipMetricAnalytics,
+        cliVersion: payload.public.cli_version,
+        owningPlugin: payload.public.cmd_all_plugin ?? '@shopify/cli',
+        command: payload.public.command,
+        exitMode: payload.public.cmd_all_exit,
+      },
+      {
+        active,
+        network,
+        prompt,
+      },
+    )
+  }
+
+  await Promise.all([doMonorail(), doOpenTelemetry()])
+}
+
+export async function sendAnalyticsEventFromStdin(): Promise<void> {
+  try {
+    const {readStdinString} = await import('./system.js')
+    const payloadStr = await readStdinString()
+    if (payloadStr === undefined) throw new Error('No analytics payload received from stdin')
+
+    const {payload, skipMonorailAnalytics, skipMetricAnalytics} = JSON.parse(payloadStr) as {
+      payload: AnalyticsPayload
+      skipMonorailAnalytics: boolean
+      skipMetricAnalytics: boolean
+    }
+
+    await sendAnalyticsEvent(payload, skipMonorailAnalytics, skipMetricAnalytics)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    outputDebug(`Failed to send analytics in background: ${message}`)
+    await sendErrorToBugsnag(error, 'expected_error')
+  }
+}
+
 /**
  * Report an analytics event, sending it off to Monorail -- Shopify's internal analytics service.
  *
@@ -44,11 +108,11 @@ interface ReportAnalyticsEventOptions {
  */
 export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions): Promise<void> {
   try {
+    const commandStartOptions = metadata.getAllSensitiveMetadata().commandStartOptions
+    if (commandStartOptions?.startCommand === 'send-analytics') return
+
     const payload = await buildPayload(options)
-    if (payload === undefined) {
-      // Nothing to log
-      return
-    }
+    if (payload === undefined) return
 
     let withinRateLimit = false
     await runWithRateLimit({
@@ -65,40 +129,42 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
 
     const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
     const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
-    if (skipMonorailAnalytics || skipMetricAnalytics) {
+    if (skipMonorailAnalytics && skipMetricAnalytics) {
       outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
+      return
     }
 
-    const doMonorail = async () => {
-      if (skipMonorailAnalytics) {
-        return
-      }
-      const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
-      if (response.type === 'error') {
-        outputDebug(response.message)
-      }
-    }
-    const doOpenTelemetry = async () => {
-      const active = payload.public.cmd_all_timing_active_ms ?? 0
-      const network = payload.public.cmd_all_timing_network_ms ?? 0
-      const prompt = payload.public.cmd_all_timing_prompts_ms ?? 0
+    const [{platformAndArch}, {isInsideContainer}] = await Promise.all([import('./os.js'), import('./system.js')])
+    const sendInBackground =
+      !commandStartOptions?.requiresSyncAnalytics &&
+      platformAndArch().platform !== 'windows' &&
+      !ciPlatform().isCI &&
+      !isInsideContainer()
+    const deliveryDescription = sendInBackground ? ' in background' : ''
+    outputDebug(outputContent`Sending command analytics${deliveryDescription}, payload: ${outputToken.json(payload)}`)
 
-      return recordMetrics(
-        {
-          skipMetricAnalytics,
-          cliVersion: payload.public.cli_version,
-          owningPlugin: payload.public.cmd_all_plugin ?? '@shopify/cli',
-          command: payload.public.command,
-          exitMode: options.exitMode,
-        },
-        {
-          active,
-          network,
-          prompt,
-        },
-      )
+    if (!sendInBackground) {
+      await sendAnalyticsEvent(payload, skipMonorailAnalytics, skipMetricAnalytics)
+      return
     }
-    await Promise.all([doMonorail(), doOpenTelemetry()])
+
+    const {exec} = await import('./system.js')
+    const argv = process.argv
+    if (!argv[1]) return
+    const nodeBinary = process.execPath
+    const shopifyBinary = argv[1]
+    const args = [shopifyBinary, 'send-analytics']
+
+    const analyticsProcess = exec(nodeBinary, args, {
+      background: true,
+      env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
+      input: JSON.stringify({payload, skipMonorailAnalytics, skipMetricAnalytics}),
+      externalErrorHandler: async (error: unknown) => {
+        outputDebug(`Failed to send analytics in background: ${(error as Error).message}`)
+      },
+    })
+    // eslint-disable-next-line no-void
+    void analyticsProcess
 
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -111,7 +177,11 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
   }
 }
 
-async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEventOptions) {
+async function buildPayload({
+  config,
+  errorMessage,
+  exitMode,
+}: ReportAnalyticsEventOptions): Promise<AnalyticsPayload | undefined> {
   const {commandStartOptions, environmentFlags, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
   if (commandStartOptions === undefined) {
     outputDebug('Unable to log analytics event - no information on executed command')

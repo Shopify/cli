@@ -21,6 +21,7 @@ const COMMANDS_TO_SKIP = [
   'theme:init',
   'hydrogen:init',
   'cache:clear',
+  'send-analytics',
 ]
 
 function url(): string {
@@ -197,10 +198,10 @@ export function fetchNotificationsInBackground(
   environment: NodeJS.ProcessEnv = process.env,
 ): void {
   if (skipNotifications(currentCommand, environment)) return
-  if (!argv[0] || !argv[1]) return
+  if (!argv[1]) return
 
   // Run the Shopify command the same way as the current execution
-  const nodeBinary = argv[0]
+  const nodeBinary = process.execPath
   const shopifyBinary = argv[1]
   const args = [shopifyBinary, 'notifications', 'list', '--ignore-errors']
 
