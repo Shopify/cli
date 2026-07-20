@@ -316,6 +316,9 @@ importers:
       '@iarna/toml':
         specifier: 2.2.5
         version: 2.2.5
+      '@ink-tools/ink-mouse':
+        specifier: 2.1.0
+        version: 2.1.0(ink@6.8.0(@types/react@18.3.12)(react@19.2.4))(react@19.2.4)
       '@oclif/core':
         specifier: 4.8.3
         version: 4.8.3
@@ -2661,6 +2664,13 @@ packages:
 
   '@iarna/toml@2.2.5':
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==, tarball: https://registry.npmjs.org/@iarna/toml/-/toml-2.2.5.tgz}
+
+  '@ink-tools/ink-mouse@2.1.0':
+    resolution: {integrity: sha512-6EfKsu6R3VYRgRRWsQ7PI5kJy+OsS/VAVhbG+YvUeZePKuHSS2AvstFD5yU/748iQS6wBBENtMoCcBvCjbylog==, tarball: https://registry.npmjs.org/@ink-tools/ink-mouse/-/ink-mouse-2.1.0.tgz}
+    engines: {node: '>=20'}
+    peerDependencies:
+      ink: '>=6'
+      react: '>=17'
 
   '@inquirer/ansi@1.0.2':
     resolution: {integrity: sha512-S8qNSZiYzFd0wAcyG5AXCvUHC5Sr7xpZ9wZ2py9XR88jUz8wooStVx5M6dRzczbBWjic9NP7+rY0Xi7qqK/aMQ==, tarball: https://registry.npmjs.org/@inquirer/ansi/-/ansi-1.0.2.tgz}
@@ -8814,6 +8824,10 @@ packages:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==, tarball: https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz}
     engines: {node: '>=0.4'}
 
+  xterm-mouse@1.0.0:
+    resolution: {integrity: sha512-A+PkxOzlwgnhfeZclQvCNfLIcLbtTyDSgWs//adOYYUKdjhU9Lejot6wbnW5GEyNCWFFkfLHO8wdQ8eg35BMUg==, tarball: https://registry.npmjs.org/xterm-mouse/-/xterm-mouse-1.0.0.tgz}
+    engines: {node: '>=20'}
+
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==, tarball: https://registry.npmjs.org/y18n/-/y18n-5.0.8.tgz}
     engines: {node: '>=10'}
@@ -11253,6 +11267,12 @@ snapshots:
   '@humanwhocodes/retry@0.4.3': {}
 
   '@iarna/toml@2.2.5': {}
+
+  '@ink-tools/ink-mouse@2.1.0(ink@6.8.0(@types/react@18.3.12)(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      ink: 6.8.0(@types/react@18.3.12)(react@19.2.4)
+      react: 19.2.4
+      xterm-mouse: 1.0.0
 
   '@inquirer/ansi@1.0.2': {}
 
@@ -18268,6 +18288,8 @@ snapshots:
   xmlchars@2.2.0: {}
 
   xtend@4.0.2: {}
+
+  xterm-mouse@1.0.0: {}
 
   y18n@5.0.8: {}
 

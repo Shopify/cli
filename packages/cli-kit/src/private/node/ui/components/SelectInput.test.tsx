@@ -1,9 +1,12 @@
 import {SelectInput} from './SelectInput.js'
+import {MouseProvider} from './Mouse.js'
 import {
   sendInputAndWait,
   sendInputAndWaitForChange,
+  waitFor,
+  waitForChange,
   waitForInputsToBeReady,
-  render,
+  render as renderUI,
   getLastFrameAfterUnmount,
 } from '../../testing/ui.js'
 import {platformAndArch} from '../../../../public/node/os.js'
@@ -11,9 +14,47 @@ import {describe, expect, test, vi} from 'vitest'
 
 import React from 'react'
 
+const render = (element: React.ReactElement) => renderUI(<MouseProvider>{element}</MouseProvider>, {stdoutIsTTY: true})
+
 const ARROW_UP = '\u001B[A'
 const ARROW_DOWN = '\u001B[B'
 const ENTER = '\r'
+const CURSOR_POSITION_REQUEST = '\u001B[6n'
+
+function mouseClick(column: number, row: number): [string, string] {
+  return [`\u001B[<0;${column};${row}M`, `\u001B[<0;${column};${row}m`]
+}
+
+function mouseMove(column: number, row: number): string {
+  return `\u001B[<35;${column};${row}M`
+}
+
+async function clickWhenMouseOriginIsReady(
+  renderInstance: ReturnType<typeof render>,
+  onSubmit: ReturnType<typeof vi.fn>,
+  column: number,
+  row: number,
+): Promise<void> {
+  await vi.waitFor(() => {
+    if (onSubmit.mock.calls.length === 0) {
+      mouseClick(column, row).forEach((input) => renderInstance.stdin.write(input))
+    }
+    expect(onSubmit).toHaveBeenCalled()
+  })
+}
+
+async function respondToCursorPositionRequest(
+  renderInstance: ReturnType<typeof render>,
+  requestNumber: number,
+): Promise<void> {
+  await waitFor(
+    () => {},
+    () =>
+      renderInstance.stdout.controlSequences.filter((sequence) => sequence === CURSOR_POSITION_REQUEST).length >=
+      requestNumber,
+  )
+  await sendInputAndWait(renderInstance, 10, '\u001B[40;1R')
+}
 
 describe('SelectInput', async () => {
   test('move up with up arrow key', async () => {
@@ -46,7 +87,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36mSecond[39m
          Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
     expect(onChange).toHaveBeenLastCalledWith(items[1])
   })
@@ -79,9 +120,99 @@ describe('SelectInput', async () => {
       [36m>[39m  [36mSecond[39m
          Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[1])
+  })
+
+  test('selects and submits an option when clicked', async () => {
+    const onChange = vi.fn()
+    const onSubmit = vi.fn()
+    const items = [
+      {label: 'First', value: 'first'},
+      {label: 'Second', value: 'second'},
+    ]
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} onSubmit={onSubmit} />)
+
+    await waitForInputsToBeReady()
+    await waitFor(
+      () => mouseClick(4, 2).forEach((input) => renderInstance.stdin.write(input)),
+      () => onChange.mock.calls.some(([item]) => item === items[1]),
+    )
+
+    expect(onChange).toHaveBeenLastCalledWith(items[1])
+    expect(onSubmit).toHaveBeenCalledWith(items[1])
+  })
+
+  test('selects an option when hovered', async () => {
+    const onChange = vi.fn()
+    const items = [
+      {label: 'First', value: 'first'},
+      {label: 'Second', value: 'second'},
+    ]
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, mouseMove(4, 2))
+
+    expect(renderInstance.lastFrame()).toContain('>')
+    expect(onChange).toHaveBeenLastCalledWith(items[1])
+  })
+
+  test('selects each row at the correct boundary when hovering upward', async () => {
+    const onChange = vi.fn()
+    const items = [
+      {label: 'First', value: 'first'},
+      {label: 'Second', value: 'second'},
+      {label: 'Third', value: 'third'},
+    ]
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, mouseMove(4, 3))
+    expect(onChange).toHaveBeenLastCalledWith(items[2])
+
+    await sendInputAndWaitForChange(renderInstance, mouseMove(4, 2))
+    expect(onChange).toHaveBeenLastCalledWith(items[1])
+  })
+
+  test('accounts for output rendered before the interactive list', async () => {
+    const onSubmit = vi.fn()
+    const items = [
+      {label: 'First', value: 'first'},
+      {label: 'Second', value: 'second'},
+    ]
+    const renderInstance = render(<SelectInput items={items} onSubmit={onSubmit} />)
+
+    await waitForInputsToBeReady()
+    await respondToCursorPositionRequest(renderInstance, 1)
+    await clickWhenMouseOriginIsReady(renderInstance, onSubmit, 4, 37)
+
+    expect(onSubmit).toHaveBeenCalledWith(items[1])
+  })
+
+  test('recalculates the terminal origin when a list grows after loading', async () => {
+    const onSubmit = vi.fn()
+    let showAllItems = () => {}
+    const initialItems = [
+      {label: 'First', value: 'first'},
+      {label: 'Second', value: 'second'},
+    ]
+    const loadedItems = [...initialItems, {label: 'Third', value: 'third'}, {label: 'Fourth', value: 'fourth'}]
+    const DynamicSelectInput = () => {
+      const [items, setItems] = React.useState(initialItems)
+      showAllItems = () => setItems(loadedItems)
+      return <SelectInput items={items} onSubmit={onSubmit} />
+    }
+    const renderInstance = render(<DynamicSelectInput />)
+
+    await waitForInputsToBeReady()
+    await respondToCursorPositionRequest(renderInstance, 1)
+    await waitForChange(showAllItems, renderInstance.lastFrame)
+    await respondToCursorPositionRequest(renderInstance, 2)
+    await clickWhenMouseOriginIsReady(renderInstance, onSubmit, 4, 35)
+
+    expect(onSubmit).toHaveBeenCalledWith(loadedItems[1])
   })
 
   test('throws an error if a key has more than 1 character', async () => {
@@ -160,7 +291,7 @@ describe('SelectInput', async () => {
          Second
          Tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -202,7 +333,7 @@ describe('SelectInput', async () => {
             ninth
             tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -226,7 +357,7 @@ describe('SelectInput', async () => {
             ninth
             tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
     expect(onChange).toHaveBeenLastCalledWith(items[2])
   })
@@ -263,7 +394,7 @@ describe('SelectInput', async () => {
 
 
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -299,7 +430,7 @@ describe('SelectInput', async () => {
             item3
             item5
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -332,7 +463,7 @@ describe('SelectInput', async () => {
          Second
          Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -362,7 +493,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36mSecond[39m
          Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
   })
 
@@ -398,7 +529,7 @@ describe('SelectInput', async () => {
          Second
          Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m
          [1m1-3 of many[22m  Keep scrolling to see more items"
     `)
   })
@@ -431,7 +562,7 @@ describe('SelectInput', async () => {
          [1mOther[22m                                                                       [100m [49m
             first                                                                    [100m [49m
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -453,7 +584,7 @@ describe('SelectInput', async () => {
             first                                                                    [100m [49m
          [36m>[39m  [36msecond[39m                                                                   [100m [49m
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
   })
 
@@ -564,7 +695,7 @@ describe('SelectInput', async () => {
          [2mSecond[22m
       [36m>[39m  [36mThird[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
 
     await sendInputAndWait(renderInstance, 10, ENTER)
@@ -599,7 +730,7 @@ describe('SelectInput', async () => {
          [2mSecond[22m
          Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm, or click an option.[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -639,7 +770,7 @@ describe('SelectInput', async () => {
          [2m(s) Second[22m
       [36m>[39m  [36m(t) Third[39m
 
-         [2mPress ↑↓ arrows to select, enter or a shortcut to confirm.[22m"
+         [2mUse ↑↓ to select; press enter, use a shortcut, or click an option.[22m"
     `)
 
     await sendInputAndWait(renderInstance, 10, ENTER)
