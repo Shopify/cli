@@ -3748,6 +3748,46 @@
       "strict": true,
       "summary": "Check whether auto-upgrade is enabled, disabled, or not yet configured."
     },
+    "config:mouse:off": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Disable mouse interactions in Shopify CLI.\n\n  When mouse interactions are disabled, standard terminal text selection and scrolling are restored.\n\n  To enable clickable prompt options and app dev tabs, run `shopify config mouse on`.\n",
+      "descriptionWithMarkdown": "Disable mouse interactions in Shopify CLI.\n\n  When mouse interactions are disabled, standard terminal text selection and scrolling are restored.\n\n  To enable clickable prompt options and app dev tabs, run `shopify config mouse on`.\n",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:mouse:off",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Disable mouse interactions in Shopify CLI."
+    },
+    "config:mouse:on": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Enable mouse interactions in Shopify CLI.\n\n  Mouse interactions are enabled by default and allow you to click prompt options and app dev tabs. To select text while they are enabled, hold Option in iTerm2 or Shift in most other terminals while dragging.\n\n  To restore standard terminal text selection and scrolling, run `shopify config mouse off`.\n",
+      "descriptionWithMarkdown": "Enable mouse interactions in Shopify CLI.\n\n  Mouse interactions are enabled by default and allow you to click prompt options and app dev tabs. To select text while they are enabled, hold Option in iTerm2 or Shift in most other terminals while dragging.\n\n  To restore standard terminal text selection and scrolling, run `shopify config mouse off`.\n",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:mouse:on",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Enable mouse interactions in Shopify CLI."
+    },
     "debug:command-flags": {
       "aliases": [
       ],
