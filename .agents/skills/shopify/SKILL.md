@@ -28,11 +28,11 @@ Use this to confirm the exact surface of any command in this skill — including
 Before producing any answer, query, mutation, component, config, or scaffold, search shopify.dev:
 
 ```bash
-shopify doc search --query "<what you are building>" [--api-name admin|storefront|customer|partner|payments|functions|hydrogen|liquid|...] [--api-version latest|2025-10|...]
+shopify doc search --query "<what you are building>" [--api-name <api>] [--api-version latest|2025-10|...]
 ```
 
 - It queries the shopify.dev vector store and prints the most relevant documentation chunks as JSON.
-- Pass `--api-name` to scope to a surface; omit it to search across ALL APIs — that omission is the intended generic discovery / fallback path.
+- `--api-name` is an optional narrowing hint, not a required parameter. Its documented values are `admin`, `storefront`, `hydrogen`, and `functions` (`shopify doc search --help` shows these examples). The valid set is defined by shopify.dev, not the CLI, which does not validate the flag: **unrecognized values are silently ignored** — unlike `--api-version`, where an invalid value errors and lists the valid ones. So never invent an API name (there is no `polaris`, for example): pass `--api-name` only when you are confident the value is a real shopify.dev API, and omit it otherwise. Searching across ALL APIs is the supported default and the generic fallback.
 - Pass `--api-version latest` unless the task pins a version (for example `2025-10`).
 - Refine the query and re-run until the returned chunks genuinely cover the task. Thin or off-topic results mean you are not ready to answer yet.
 
@@ -54,8 +54,8 @@ Pick the family the task falls into, build to the docs you just retrieved, and s
 | Custom data | Metafields & metaobjects definitions/schemas extending products, customers, etc. | `--query "metaobject definition" --api-name admin` | `custom-data` |
 | Functions | Discount, cart/checkout validation, cart transform, delivery & payment customization, order routing location rule, fulfillment constraints, pickup/local delivery option generators | `--query "product discount function" --api-name functions` | `functions` |
 | Storefronts | Hydrogen recipes (B2B, bundles, combined listings, custom cart method, metaobjects, markets, subscriptions, infinite scroll, GTM, Partytown, third-party caching) and Storefront GraphQL cart operations | `--query "cart lines add" --api-name hydrogen` | `hydrogen` / `storefront` |
-| Themes | Liquid sections, blocks, snippets, and theme schemas | `--query "section schema settings" --api-name liquid` | `theme` |
-| Admin & extension UI | Polaris App Home embedded admin UI, plus Admin, Checkout, Customer Account, and POS UI extensions (scaffold via CLI) | `--query "checkout ui extension targets"` | `polaris` / `admin-extension` / `checkout-extension` / `customer-account-extension` / `pos-ui` |
+| Themes | Liquid sections, blocks, snippets, and theme schemas | `--query "liquid section schema settings"` | `theme` |
+| Admin & extension UI | Polaris App Home embedded admin UI, plus Admin, Checkout, Customer Account, and POS UI extensions (scaffold via CLI) | `--query "checkout ui extension targets"` | `app-home` / `admin-extension` / `checkout-extension` / `customer-account-extension` / `pos-ui` |
 | Onboarding | Developer setup (scaffold app/theme/project, create a dev store, set up a Partner account) and merchant setup (start selling, try before an account, `shopify store create preview`) | `--query "scaffold app dev store"` | `onboarding` |
 | CLI operations | Validate config on disk (`shopify.app.toml`, `shopify.extension.toml`); run store workflows (`shopify store auth`/`execute`); store-scoped reads/writes by handle/SKU/location on a named myshopify.com domain | `--query "app configuration toml"` | `config` |
 | Commerce (UCP) | UCP CLI: find/compare/buy/track products, `ucp profile init`, `ucp doctor`, carts, checkout, orders, merchant-hosted handoff fallback | `--query "ucp checkout order"` | `ucp` |
@@ -90,7 +90,7 @@ For either outcome:
 - Both brackets are required. Skipping the doc search is the most common failure — do it first, every time, even for questions that look trivial. Validation is not "best effort"; the task is complete only when `shopify validate [topic]` is clean.
 - Don't guess command names or flags. The command surface changes between versions — `shopify commands` lists what exists and `<command> --help` documents its flags. Confirm there before running, especially for `shopify validate`.
 - A code example in a chat reply is an outcome too. A snippet with `...` or placeholder values is not "done" — write it to a temp file and validate it exactly like a committed file before you show it.
-- `--api-name` narrows recall; if results look thin or miss the point, drop the flag and search across all APIs.
+- `--api-name` is optional and unvalidated: shopify.dev silently ignores a value it doesn't recognize, so a wrong name quietly returns unscoped results instead of erroring — you won't be warned. Only pass values you are sure of; when unsure, omit it and search all APIs. (`--api-version` is stricter — an invalid version errors and lists the valid ones.)
 - `shopify doc search` returns ranked chunks, not a full page. When a chunk points at a page you need in full, follow up with `shopify doc fetch --url`.
 - Match the API version between search and output; mixing versions produces subtly wrong fields.
 - "Polaris" alone means **App Home** (the embedded admin app UI); treat it as an extension only when the task names Admin, Checkout, Customer Account, or POS.
