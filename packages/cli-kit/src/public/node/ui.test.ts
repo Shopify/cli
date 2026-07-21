@@ -930,7 +930,8 @@ describe('renderSingleTask', async () => {
         onAbort,
         task: async () => {
           expect(process.listenerCount('SIGINT')).toBe(listeners.length + 1)
-          process.emit('SIGINT')
+          // Invoke the task's once listener without triggering unrelated Ink signal handlers.
+          process.rawListeners('SIGINT').at(-1)?.()
           expect(onAbort).toHaveBeenCalledOnce()
           expect(process.listeners('SIGINT')).toEqual(listeners)
         },
@@ -947,7 +948,7 @@ describe('renderSingleTask', async () => {
     const onAbort = vi.fn()
     const error = new Error('Cancelled')
     const task = vi.fn(async () => {
-      process.emit('SIGINT')
+      process.rawListeners('SIGINT').at(-1)?.()
       throw error
     })
 
