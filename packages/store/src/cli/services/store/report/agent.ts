@@ -1,5 +1,6 @@
 import {buildReportInstructions} from './prompt.js'
 import {createProxyRunner} from './client.js'
+import {buildDevMcpLaunch} from './dev-mcp-launch.js'
 import {createReportTools, type ReportToolExecutors} from './tools.js'
 import {Agent, MCPServerStdio} from '@openai/agents'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -65,7 +66,8 @@ function resolveDevMcpEntry(): string {
 async function runRealAgentLoop(params: RunAgentLoopParams): Promise<string> {
   const runner = createProxyRunner(params)
 
-  const devMcp = new MCPServerStdio({name: 'shopify-dev-mcp', command: 'node', args: [resolveDevMcpEntry()]})
+  const {command, args} = buildDevMcpLaunch(resolveDevMcpEntry())
+  const devMcp = new MCPServerStdio({name: 'shopify-dev-mcp', command, args})
   await devMcp.connect()
 
   try {
