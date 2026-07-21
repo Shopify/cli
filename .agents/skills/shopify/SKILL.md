@@ -13,6 +13,16 @@ Never answer from memory or write Shopify code from assumption. Shopify APIs, sc
 
 ## Pattern
 
+Every `shopify` command is discoverable and self-documenting — never guess a command name or a flag. List the full command tree with `shopify commands` (add `--tree` for a nested view), and append `--help` at any level for a description of a command, its subcommands, and its flags:
+
+```bash
+shopify commands          # every available command
+shopify app --help        # a topic's subcommands
+shopify doc search --help # one command's flags
+```
+
+Use this to confirm the exact surface of any command in this skill — including whether `shopify validate` and its topics exist in the installed version — before you run it.
+
 ### 1) Search the docs first — mandatory, non-skippable
 
 Before producing any answer, query, mutation, component, config, or scaffold, search shopify.dev:
@@ -68,6 +78,7 @@ shopify validate [topic]
 ## Gotchas
 
 - Both brackets are required. Skipping the doc search is the most common failure — do it first, every time, even for questions that look trivial. Validation is not "best effort"; the task is complete only when `shopify validate [topic]` is clean.
+- Don't guess command names or flags. The command surface changes between versions — `shopify commands` lists what exists and `<command> --help` documents its flags. Confirm there before running, especially for `shopify validate`.
 - `--api-name` narrows recall; if results look thin or miss the point, drop the flag and search across all APIs.
 - `shopify doc search` returns ranked chunks, not a full page. When a chunk points at a page you need in full, follow up with `shopify doc fetch --url`.
 - Match the API version between search and output; mixing versions produces subtly wrong fields.
