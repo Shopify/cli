@@ -102,7 +102,7 @@ For either outcome:
 
 - "Write an Admin mutation to create a metafield definition." → `shopify doc search --query "metafield definition create mutation" --api-name admin`, write the mutation, then `shopify validate admin` and resolve any findings.
 - "Add a discount Function." → `shopify doc search --query "product discount function" --api-name functions`, implement `run` against the retrieved input query, then `shopify validate functions`.
-- "Fetch orders in the customer account." → search `--api-name customer`, build the query, then `shopify validate customer`.
+- "Fetch orders in the customer account." → `shopify doc search --query "customer account api orders"` (no `--api-name` unless you confirm a valid one), build the query, then `shopify validate customer`.
 - "Scaffold a checkout UI extension." → search checkout extension targets, generate via the CLI, implement the target, then `shopify validate checkout-extension`.
 - "Help me start selling on Shopify." → merchant onboarding: search `--query "start selling create preview store"` (no `--api-name`), guide the preview/first store setup, then validate the store setup.
 - "Is my app ready to submit to the App Store?" → search app store review requirements, inspect the codebase, then `shopify validate app-store-review`.
