@@ -46,7 +46,7 @@ shopify doc fetch --url <shopify.dev url> [--output <file>]
 
 ### 2) Do the work for the matching family
 
-Pick the family the task falls into, build to the docs you just retrieved, and scaffold new apps, themes, or extensions through the CLI generators (for example `shopify app generate extension`, `shopify theme init`) rather than hand-writing boilerplate. Follow this repo's conventions: named exports, side-effect-free modules, and existing patterns first — look for a helper in `@shopify/cli-kit` before writing your own. Leave no TODOs, FIXMEs, or placeholders.
+Pick the family the task falls into, build to the docs you just retrieved, and scaffold new apps, themes, or extensions through the CLI generators (for example `shopify app generate extension`, `shopify theme init`) rather than hand-writing boilerplate. Follow this repo's conventions: named exports, side-effect-free modules, and existing patterns first — look for a helper in `@shopify/cli` before writing your own. Leave no TODOs, FIXMEs, or placeholders.
 
 | Family | Covers | Representative doc-search query | Validate topic (illustrative) |
 |---|---|---|---|
