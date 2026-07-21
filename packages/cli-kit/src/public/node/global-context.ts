@@ -31,3 +31,10 @@ export function getCurrentCommandId(): string {
 export function setCurrentCommandId(commandId: string): void {
   getGlobalContext().currentCommandId = commandId
 }
+
+/**
+ * Reset the global context (for testing purposes).
+ */
+export function _resetGlobalContext(): void {
+  _globalContext = undefined
+}
