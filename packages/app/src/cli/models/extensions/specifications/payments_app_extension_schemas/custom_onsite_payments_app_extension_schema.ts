@@ -1,6 +1,7 @@
 import {
   BasePaymentsAppExtensionSchema,
   BasePaymentsAppExtensionDeployConfigType,
+  AuthorizationExpirySchema,
   BuyerLabelSchema,
   ConfirmationSchema,
   DeferredPaymentsSchema,
@@ -15,7 +16,8 @@ export type CustomOnsitePaymentsAppExtensionConfigType = zod.infer<typeof Custom
 export const CUSTOM_ONSITE_TARGET = 'payments.custom-onsite.render'
 export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
-export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
+export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(AuthorizationExpirySchema)
+  .merge(BuyerLabelSchema)
   .merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
   .merge(SupportedBuyerContextsSchema)
@@ -58,6 +60,9 @@ export interface CustomOnsitePaymentsAppExtensionDeployConfigType extends BasePa
   confirmation_callback_url?: string
   supports_3ds: boolean
 
+  // AuthorizationExpirySchema
+  enforce_authorization_expiry?: boolean
+
   // CustomOnsite-specific fields
   start_verification_session_url?: string
   update_payment_session_url?: string
@@ -86,6 +91,7 @@ export function customOnsiteDeployConfigToCLIConfig(
     capture_session_url: config.start_capture_session_url,
     void_session_url: config.start_void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     update_payment_session_url: config.update_payment_session_url,
     start_verification_session_url: config.start_verification_session_url,
     merchant_label: config.merchant_label,
@@ -116,6 +122,7 @@ export async function customOnsitePaymentsAppExtensionDeployConfig(
     start_capture_session_url: config.capture_session_url,
     start_void_session_url: config.void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     update_payment_session_url: config.update_payment_session_url,
     start_verification_session_url: config.start_verification_session_url,
     merchant_label: config.merchant_label,

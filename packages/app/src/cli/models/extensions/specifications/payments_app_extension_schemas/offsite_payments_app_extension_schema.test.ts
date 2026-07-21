@@ -21,6 +21,7 @@ const config: OffsitePaymentsAppExtensionConfigType = {
   supports_3ds: false,
   supports_oversell_protection: false,
   test_mode_available: true,
+  enforce_authorization_expiry: true,
   supports_deferred_payments: false,
   supports_installments: false,
   targeting: [{target: 'payments.offsite.render'}],
@@ -41,6 +42,14 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
 
     // Then
     expect(success).toBe(true)
+  })
+
+  test('preserves enforce_authorization_expiry', () => {
+    // When
+    const result = OffsitePaymentsAppExtensionSchema.parse(config)
+
+    // Then
+    expect(result.enforce_authorization_expiry).toBe(true)
   })
 
   test('returns an error if no target is provided', async () => {
@@ -135,6 +144,7 @@ describe('offsitePaymentsAppExtensionDeployConfig', () => {
       start_capture_session_url: config.capture_session_url,
       start_void_session_url: config.void_session_url,
       confirmation_callback_url: config.confirmation_callback_url,
+      enforce_authorization_expiry: config.enforce_authorization_expiry,
       merchant_label: config.merchant_label,
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,

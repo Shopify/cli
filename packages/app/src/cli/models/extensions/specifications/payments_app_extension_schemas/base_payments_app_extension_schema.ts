@@ -57,6 +57,10 @@ export const MultipleCaptureSchema = zod.object({
   multiple_capture: zod.boolean().optional(),
 })
 
+export const AuthorizationExpirySchema = zod.object({
+  enforce_authorization_expiry: zod.boolean().optional(),
+})
+
 export const ConfirmationSchema = zod.object({
   confirmation_callback_url: zod.string().url().optional(),
   supports_3ds: zod.boolean(),

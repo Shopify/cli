@@ -1,6 +1,7 @@
 import {
   BasePaymentsAppExtensionSchema,
   BasePaymentsAppExtensionDeployConfigType,
+  AuthorizationExpirySchema,
   BuyerLabelSchema,
   ConfirmationSchema,
   DeferredPaymentsSchema,
@@ -13,7 +14,8 @@ export type OffsitePaymentsAppExtensionConfigType = zod.infer<typeof OffsitePaym
 
 export const OFFSITE_TARGET = 'payments.offsite.render'
 
-export const OffsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
+export const OffsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(AuthorizationExpirySchema)
+  .merge(BuyerLabelSchema)
   .merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
   .merge(MultipleCaptureSchema)
@@ -33,6 +35,9 @@ export const OffsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.
 export interface OffsitePaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
   // MultipleCaptureSchema
   multiple_capture?: boolean
+
+  // AuthorizationExpirySchema
+  enforce_authorization_expiry?: boolean
 
   // BuyerLabelSchema
   default_buyer_label?: string
@@ -58,6 +63,7 @@ export function offsiteDeployConfigToCLIConfig(
     void_session_url: config.start_void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
     multiple_capture: config.multiple_capture,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
@@ -83,6 +89,7 @@ export async function offsitePaymentsAppExtensionDeployConfig(
     start_void_session_url: config.void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
     multiple_capture: config.multiple_capture,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
