@@ -64,4 +64,29 @@ describe('MouseProvider', () => {
     expect(onClick).not.toHaveBeenCalled()
     renderInstance.unmount()
   })
+
+  test('stops handling clicks when mouse interactions become inactive', async () => {
+    const onClick = vi.fn()
+    const renderInstance = render(
+      <MouseProvider>
+        <Clickable onClick={onClick} />
+      </MouseProvider>,
+      {stdoutIsTTY: true},
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 10, ...mouseClick(2, 1))
+    expect(onClick).toHaveBeenCalledOnce()
+
+    renderInstance.rerender(
+      <MouseProvider isActive={false}>
+        <Clickable onClick={onClick} />
+      </MouseProvider>,
+    )
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 10, ...mouseClick(2, 1))
+
+    expect(onClick).toHaveBeenCalledOnce()
+    renderInstance.unmount()
+  })
 })

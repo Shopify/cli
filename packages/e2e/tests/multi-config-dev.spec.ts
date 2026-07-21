@@ -66,7 +66,7 @@ extensions_summary = "E2E staging app extensions"
       // --config and --client-id are mutually exclusive. CLIENT_ID is stripped globally in env.ts.
       const proc = await cli.spawn(
         ['app', 'dev', '--path', appDir, '-c', 'staging', '--skip-dependencies-installation'],
-        {env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn}},
+        {env: {CI: undefined, SHOPIFY_FLAG_STORE: storeFqdn}},
       )
 
       try {
@@ -145,7 +145,7 @@ extensions_summary = "E2E staging app extensions"
 
       // Start dev without -c flag — should use shopify.app.toml
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
+        env: {CI: undefined, SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {
