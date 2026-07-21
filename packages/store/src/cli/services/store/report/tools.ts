@@ -4,6 +4,7 @@ import {
   type AdminStoreGraphQLContext,
   type ReportQueryOutcome,
 } from './execute.js'
+import {parseRequiredScopes, reauthForReportScopes, type ReauthForScopes} from './reauth.js'
 import {tool} from '@openai/agents'
 import {z} from 'zod'
 import type {ReportQueryRecord, StoreReportApi} from './types.js'
@@ -23,34 +24,62 @@ const defaultReportToolExecutors: ReportToolExecutors = {
 }
 
 /**
- * Runs one query and turns the outcome into the value the model receives back from the tool. A
- * failure is returned to the model as `{error}` — NEVER thrown — so the model sees the error and
- * can self-correct on its next turn instead of the whole run aborting. On success the query is
- * appended to the accumulator (the run's record of ground truth) and the raw result is handed back.
- */
-async function executeAndRecord(
-  run: () => Promise<ReportQueryOutcome<unknown>>,
-  api: StoreReportApi,
-  query: string,
-  accumulator: ReportQueryRecord[],
-): Promise<unknown> {
-  const outcome = await run()
-  if (!outcome.success) return {error: outcome.failure.errorText}
-
-  accumulator.push({api, query, result: outcome.result})
-  return outcome.result
-}
-
-/**
  * Builds the two CLI-hosted tools the report agent uses to run queries against the store. Both take
  * a single explicit `query` string: the strict function-schema the proxy validates rejects
  * open-ended objects (`z.record`, bare `.optional()`), so the parameters must stay this simple.
+ *
+ * `reauthForScopes` is injectable so tests can exercise access-denied recovery without opening a
+ * browser or hitting the network.
  */
 export function createReportTools(
   context: AdminStoreGraphQLContext,
   accumulator: ReportQueryRecord[],
   executors: ReportToolExecutors = defaultReportToolExecutors,
+  reauthForScopes: ReauthForScopes = reauthForReportScopes,
 ) {
+  // The session can be refreshed mid-run (see the access-denied recovery below), so both tools read
+  // the context through this holder — once we re-auth, every later query uses the new token too.
+  let activeContext = context
+  // Scopes we've already re-authenticated for this run. A second access-denied on a scope we just
+  // requested means re-auth didn't actually grant it, so we stop rather than reopening the browser
+  // in a loop.
+  const reauthedScopes = new Set<string>()
+
+  /**
+   * Runs one query. On an access-denied failure the query itself is fine — the stored token just
+   * lacks a scope, which the model can't fix by rewriting the query — so we re-authenticate for the
+   * missing scope(s) and retry once. Any other failure is returned to the model as `{error}` (NEVER
+   * thrown) so it can self-correct on its next turn. A success is appended to the accumulator (the
+   * run's record of ground truth) and its raw result is handed back.
+   */
+  async function runQuery(
+    execute: (ctx: AdminStoreGraphQLContext) => Promise<ReportQueryOutcome<unknown>>,
+    api: StoreReportApi,
+    query: string,
+  ): Promise<unknown> {
+    let outcome = await execute(activeContext)
+
+    if (!outcome.success && outcome.failure.accessDenied) {
+      const missingScopes = parseRequiredScopes(outcome.failure).filter((scope) => !reauthedScopes.has(scope))
+      if (missingScopes.length > 0) {
+        missingScopes.forEach((scope) => reauthedScopes.add(scope))
+        // `reauthForScopes` returns a complete refreshed context, so this replaces `activeContext`
+        // outright rather than merging into it. The agent runs tool calls sequentially, so there is
+        // no concurrent writer this reassignment could race with — hence the require-atomic-updates
+        // false positive is disabled here.
+        const refreshedContext = await reauthForScopes(activeContext, missingScopes)
+        // eslint-disable-next-line require-atomic-updates
+        activeContext = refreshedContext
+        outcome = await execute(refreshedContext)
+      }
+    }
+
+    if (!outcome.success) return {error: outcome.failure.errorText}
+
+    accumulator.push({api, query, result: outcome.result})
+    return outcome.result
+  }
+
   const runShopifyql = tool({
     name: 'run_shopifyql',
     description:
@@ -59,7 +88,7 @@ export function createReportTools(
       'failure the error is returned so you can fix the query and try again.',
     parameters: z.object({query: z.string()}),
     async execute({query}) {
-      return executeAndRecord(() => executors.runShopifyql(context, query), 'shopifyql', query, accumulator)
+      return runQuery((ctx) => executors.runShopifyql(ctx, query), 'shopifyql', query)
     },
   })
 
@@ -70,7 +99,7 @@ export function createReportTools(
       'raw Admin GraphQL query. On failure the error is returned so you can fix the query and try again.',
     parameters: z.object({query: z.string()}),
     async execute({query}) {
-      return executeAndRecord(() => executors.runAdmin(context, query), 'admin', query, accumulator)
+      return runQuery((ctx) => executors.runAdmin(ctx, query), 'admin', query)
     },
   })
 
