@@ -70,18 +70,21 @@ export interface DevConfig {
   graphiqlKey?: string
 }
 
-export async function setupDevProcesses({
-  localApp,
-  remoteAppUpdated,
-  developerPlatformClient,
-  remoteApp,
-  storeFqdn,
-  storeId,
-  commandOptions,
-  network,
-  graphiqlPort,
-  graphiqlKey,
-}: DevConfig): Promise<{
+export async function setupDevProcesses(
+  {
+    localApp,
+    remoteAppUpdated,
+    developerPlatformClient,
+    remoteApp,
+    storeFqdn,
+    storeId,
+    commandOptions,
+    network,
+    graphiqlPort,
+    graphiqlKey,
+  }: DevConfig,
+  devSessionStatusManager = new DevSessionStatusManager(),
+): Promise<{
   processes: DevProcesses
   previewUrl: string
   graphiqlUrl: string | undefined
@@ -107,7 +110,7 @@ export async function setupDevProcesses({
 
   const appEmbedded = reloadedApp.configuration.embedded
   const hasExtensions = reloadedApp.nonConfigExtensions.length > 0
-  const devSessionStatusManager = new DevSessionStatusManager({
+  devSessionStatusManager.updateStatus({
     isReady: false,
     previewURL,
     graphiqlURL,
