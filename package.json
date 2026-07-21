@@ -98,7 +98,21 @@
     "printWidth": 120
   },
   "version": "0.0.0",
+  "packageExtensionsNotes": {
+    "@json-render/ink@0.19.0": "The published manifest omits its zod runtime dependency; pinning zod 4 prevents Ink from resolving zod 3 while core uses zod 4."
+  },
   "pnpm": {
+    "overrides": {
+      "@shopify/cli-kit>@types/react": "19.2.3",
+      "@shopify/store>@types/react": "19.2.3"
+    },
+    "packageExtensions": {
+      "@json-render/ink@0.19.0": {
+        "dependencies": {
+          "zod": "^4.3.6"
+        }
+      }
+    },
     "peerDependencyRules": {
       "allowedVersions": {
         "@shopify/cli-hydrogen>@graphql-codegen/cli": "6.0.1",

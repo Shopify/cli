@@ -24,14 +24,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.ts\"",
+        "command": "pnpm eslint src",
         "cwd": "packages/store"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "command": "pnpm eslint src --fix",
         "cwd": "packages/store"
       }
     },

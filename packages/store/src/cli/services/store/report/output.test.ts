@@ -45,12 +45,35 @@ describe('renderStoreReportResult', () => {
     mockAndCaptureOutput().clear()
   })
 
-  test('emits the full document as JSON when the format is json', () => {
+  test('emits byte-exact JSON when the format is json', () => {
     const output = mockAndCaptureOutput()
 
     renderStoreReportResult(shopifyqlResult, 'json')
 
-    expect(JSON.parse(output.output())).toEqual(shapeStoreReportJson(shopifyqlResult))
+    // The test capture stores the outputResult payload without consoleLog's trailing newline.
+    expect(`${output.output()}\n`).toBe(`{
+  "store": "my-shop.myshopify.com",
+  "apiVersion": "2026-04",
+  "question": "What were my sales last month?",
+  "api": "shopifyql",
+  "query": "FROM sales SHOW total_sales SINCE -30d",
+  "rationale": "Sales trend over the last 30 days.",
+  "result": {
+    "columns": [
+      {
+        "name": "total_sales",
+        "dataType": "money",
+        "displayName": "Total sales"
+      }
+    ],
+    "rows": [
+      {
+        "total_sales": 123.45
+      }
+    ]
+  }
+}
+`)
   })
 
   test('echoes the query and renders a table for a ShopifyQL result', () => {

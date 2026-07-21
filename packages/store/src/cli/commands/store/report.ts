@@ -1,4 +1,4 @@
-import {runStoreReport} from '../../services/store/report/index.js'
+import {readProxyConfig, runStoreReport} from '../../services/store/report/index.js'
 import {renderStoreReportResult} from '../../services/store/report/output.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
@@ -50,6 +50,12 @@ Run \`shopify store auth\` first to create stored auth for the store.`
       version: flags.version,
     })
 
-    renderStoreReportResult(result, flags.json ? 'json' : 'text')
+    if (flags.json) {
+      renderStoreReportResult(result, 'json')
+      return
+    }
+
+    const {renderStoreReportUi} = await import('../../services/store/report/ui/index.js')
+    await renderStoreReportUi({result, ...readProxyConfig()})
   }
 }

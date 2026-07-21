@@ -23,7 +23,7 @@ const defaultStoreReportDependencies: StoreReportDependencies = {
 const DEFAULT_PROXY_URL = 'https://proxy.shopify.ai/v1'
 const DEFAULT_MODEL = 'gpt-5.1'
 
-interface ProxyConfig {
+export interface ProxyConfig {
   proxyBaseUrl: string
   proxyToken: string
   model: string
@@ -34,7 +34,7 @@ interface ProxyConfig {
  * it the agent can't reach a model — so a missing token fails fast with an actionable next step,
  * before any store authentication or network work happens.
  */
-function readProxyConfig(): ProxyConfig {
+export function readProxyConfig(): ProxyConfig {
   const proxyToken = process.env.SHOPIFY_AI_PROXY_TOKEN
   if (!proxyToken) {
     throw new AbortError(

@@ -1,8 +1,8 @@
 import {buildReportInstructions} from './prompt.js'
+import {createProxyRunner} from './client.js'
 import {createReportTools, type ReportToolExecutors} from './tools.js'
-import {Agent, MCPServerStdio, OpenAIProvider, Runner, setTracingDisabled} from '@openai/agents'
+import {Agent, MCPServerStdio} from '@openai/agents'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {OpenAI} from 'openai'
 import {fileURLToPath} from 'node:url'
 import type {AdminStoreGraphQLContext} from './execute.js'
 import type {ReportQueryRecord, StoreReportApi} from './types.js'
@@ -65,15 +65,7 @@ function resolveDevMcpEntry(): string {
  * concurrent runs and tests never share mutable global state.
  */
 async function runRealAgentLoop(params: RunAgentLoopParams): Promise<string> {
-  // Tracing is a process-global in the SDK: the `Runner`'s `tracingDisabled` only skips per-run
-  // trace creation, but the global exporter still POSTs traces to api.openai.com using our proxy
-  // token as if it were an OpenAI API key (a noisy, non-fatal 401 that also echoes the token). This
-  // turns the global exporter off entirely. Scoped here so it only runs for the real loop, not tests.
-  setTracingDisabled(true)
-
-  const openAIClient = new OpenAI({baseURL: params.proxyBaseUrl, apiKey: params.proxyToken})
-  const modelProvider = new OpenAIProvider({openAIClient, useResponses: false})
-  const runner = new Runner({modelProvider, tracingDisabled: true})
+  const runner = createProxyRunner(params)
 
   const devMcp = new MCPServerStdio({name: 'shopify-dev-mcp', command: 'node', args: [resolveDevMcpEntry()]})
   await devMcp.connect()
