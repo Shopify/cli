@@ -40,9 +40,14 @@
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@oclif/core": "4.8.3",
+    "@openai/agents": "^0.13.0",
     "@shopify/cli-kit": "4.5.0",
-    "@shopify/organizations": "4.5.0"
+    "@shopify/dev-mcp": "^1.14.3",
+    "@shopify/organizations": "4.5.0",
+    "openai": "^6.46.0",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.2.6"

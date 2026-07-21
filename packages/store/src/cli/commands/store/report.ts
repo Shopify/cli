@@ -9,12 +9,13 @@ import type {StoreReportApi} from '../../services/store/report/types.js'
 export default class StoreReport extends StoreCommand {
   static summary = 'Turn a natural-language question into a store report.'
 
-  static descriptionWithMarkdown = `Answers a question about a store by asking the Shopify assistant to translate it into either a \
-ShopifyQL analytics query or a raw Admin API GraphQL query, running that query against the store's Admin API, and printing the results.
+  static descriptionWithMarkdown = `Answers a question about a store by running an AI agent that translates it into either a \
+ShopifyQL analytics query or a raw Admin API GraphQL query, runs that query against the store's Admin API (retrying \
+and consulting the Shopify dev docs to correct itself as needed), and prints the results.
 
 ShopifyQL is used for time-series and aggregate analytics questions (sales trends, order counts, and so on), while \
 raw Admin GraphQL is used for catalog and store-state lookups (products, orders, customers, and so on). Use \
-\`--api\` to force one or the other.
+\`--api\` to bias the agent toward one or the other.
 
 Run \`shopify store auth\` first to create stored auth for the store.`
 
@@ -40,7 +41,7 @@ Run \`shopify store auth\` first to create stored auth for the store.`
       env: 'SHOPIFY_FLAG_VERSION',
     }),
     api: Flags.string({
-      description: 'Forces the query onto a specific API surface instead of letting the assistant choose.',
+      description: 'Biases the agent toward a specific API surface instead of letting it choose.',
       env: 'SHOPIFY_FLAG_API',
       options: ['shopifyql', 'admin'],
     }),

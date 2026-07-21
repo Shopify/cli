@@ -63,6 +63,14 @@ describe('renderStoreReportResult', () => {
     expect(output.info()).toContain('123.45')
   })
 
+  test('does not reprint the agent summary in text mode (it already streamed live)', () => {
+    const output = mockAndCaptureOutput()
+
+    renderStoreReportResult(shopifyqlResult, 'text')
+
+    expect(output.info()).not.toContain('Sales trend over the last 30 days.')
+  })
+
   test('reports no data for a ShopifyQL result with no rows', () => {
     const output = mockAndCaptureOutput()
 

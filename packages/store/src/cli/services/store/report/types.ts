@@ -11,10 +11,15 @@ export interface ShopifyqlTableData {
   rows: {[key: string]: unknown}[]
 }
 
-export interface ParsedReportQuery {
+/**
+ * A query the agent successfully executed against the store during a run. The agent loop appends
+ * one of these each time a tool call succeeds; the LAST entry is treated as the ground-truth
+ * answer that gets surfaced to the user (the model may run several exploratory queries first).
+ */
+export interface ReportQueryRecord {
   api: StoreReportApi
   query: string
-  rationale: string
+  result: unknown
 }
 
 export interface StoreReportResult {

@@ -1,8 +1,8 @@
 import {runStoreReport} from './index.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import type {AdminStoreGraphQLContext, ReportQueryOutcome} from './execute.js'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import type {AdminStoreGraphQLContext} from './execute.js'
+import type {ReportAgentResult} from './agent.js'
 
 vi.mock('../attribution.js')
 
@@ -21,175 +21,91 @@ describe('runStoreReport', () => {
   }
 
   const prepareContext = vi.fn().mockResolvedValue(context)
-  const askAssistant = vi.fn()
-  const runShopifyqlQuery = vi.fn()
-  const runAdminQuery = vi.fn()
-
-  const dependencies = {prepareContext, askAssistant, runShopifyqlQuery, runAdminQuery}
+  const runAgent = vi.fn()
+  const dependencies = {prepareContext, runAgent}
 
   beforeEach(() => {
+    // A token is required; url and model fall back to defaults unless a test overrides them.
+    vi.stubEnv('SHOPIFY_AI_PROXY_TOKEN', 'test-token')
+    vi.stubEnv('SHOPIFY_AI_PROXY_URL', undefined)
+    vi.stubEnv('SHOPIFY_AI_PROXY_MODEL', undefined)
     prepareContext.mockClear().mockResolvedValue(context)
-    askAssistant.mockReset()
-    runShopifyqlQuery.mockReset()
-    runAdminQuery.mockReset()
+    runAgent.mockReset()
   })
 
-  test('resolves the assistant query and returns the ShopifyQL result on the first try', async () => {
-    askAssistant.mockResolvedValue(
-      '{"api": "shopifyql", "query": "FROM sales SHOW total_sales", "rationale": "sales trend"}',
-    )
-    const tableData = {
-      columns: [{name: 'total_sales', dataType: 'money', displayName: 'Total sales'}],
-      rows: [{total_sales: 100}],
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('assembles the report envelope from the agent result', async () => {
+    const agentResult: ReportAgentResult = {
+      api: 'shopifyql',
+      query: 'FROM sales SHOW total_sales SINCE -30d',
+      result: {columns: [], rows: []},
+      summary: 'Your total sales over the last 30 days were $100.',
     }
-    runShopifyqlQuery.mockResolvedValue({success: true, result: tableData} satisfies ReportQueryOutcome<unknown>)
+    runAgent.mockResolvedValue(agentResult)
 
     const result = await runStoreReport(
-      {store: 'shop.myshopify.com', analysis: 'What were my sales last month?'},
+      {store: 'shop.myshopify.com', analysis: 'What were my sales in the last 30 days?'},
       dependencies,
     )
 
     expect(result).toEqual({
       store: 'shop.myshopify.com',
       apiVersion: '2025-10',
-      question: 'What were my sales last month?',
+      question: 'What were my sales in the last 30 days?',
       api: 'shopifyql',
-      query: 'FROM sales SHOW total_sales',
-      rationale: 'sales trend',
-      result: tableData,
+      query: 'FROM sales SHOW total_sales SINCE -30d',
+      rationale: 'Your total sales over the last 30 days were $100.',
+      result: {columns: [], rows: []},
     })
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
     expect(prepareContext).toHaveBeenCalledWith({store: 'shop.myshopify.com', userSpecifiedVersion: undefined})
-    expect(runAdminQuery).not.toHaveBeenCalled()
-    expect(askAssistant).toHaveBeenCalledTimes(1)
   })
 
-  test('locks the assistant to the forced api and dispatches to the admin runner', async () => {
-    askAssistant.mockResolvedValue('{"api": "admin", "query": "{ shop { name } }", "rationale": "direct lookup"}')
-    runAdminQuery.mockResolvedValue({
-      success: true,
-      result: {shop: {name: 'My Shop'}},
-    } satisfies ReportQueryOutcome<unknown>)
+  test('passes the store context, question, forced api, and proxy defaults to the agent', async () => {
+    runAgent.mockResolvedValue({api: 'admin', query: '{ shop { name } }', result: {}, summary: 'ok'})
 
-    const result = await runStoreReport(
-      {store: 'shop.myshopify.com', analysis: 'What is my shop name?', api: 'admin'},
+    await runStoreReport(
+      {store: 'shop.myshopify.com', analysis: 'What is my shop name?', api: 'admin', version: '2025-07'},
       dependencies,
     )
 
-    expect(result.api).toBe('admin')
-    expect(askAssistant).toHaveBeenCalledWith(expect.stringContaining('This run is locked to the "admin" api'))
-    expect(runShopifyqlQuery).not.toHaveBeenCalled()
-  })
-
-  test('never runs the wrong surface when a disobedient assistant ignores the forced api, and aborts', async () => {
-    // Forced "admin", but the assistant disobeys and always replies with "shopifyql" — on both the
-    // initial attempt and the retry. Neither runner may ever be called with the wrong query.
-    askAssistant.mockResolvedValue('{"api": "shopifyql", "query": "FROM sales SHOW total_sales"}')
-
-    await expect(
-      runStoreReport({store: 'shop.myshopify.com', analysis: 'What is my shop name?', api: 'admin'}, dependencies),
-    ).rejects.toMatchObject({message: 'The assistant did not honor the required "admin" api, even after a retry.'})
-
-    expect(runShopifyqlQuery).not.toHaveBeenCalled()
-    expect(runAdminQuery).not.toHaveBeenCalled()
-    expect(askAssistant).toHaveBeenCalledTimes(2)
-    expect(askAssistant.mock.calls[1]![0]).toContain('locked to the "admin" api')
-    expect(askAssistant.mock.calls[1]![0]).toContain('You must set "api" to "admin"')
-  })
-
-  test('retries once with the failure context when the first query fails, then succeeds', async () => {
-    askAssistant
-      .mockResolvedValueOnce('{"api": "shopifyql", "query": "FROM sales SHOW bogus_metric"}')
-      .mockResolvedValueOnce('{"api": "shopifyql", "query": "FROM sales SHOW total_sales"}')
-    runShopifyqlQuery
-      .mockResolvedValueOnce({
-        success: false,
-        failure: {errorText: 'Unknown metric: bogus_metric', accessDenied: false, errors: []},
-      } satisfies ReportQueryOutcome<unknown>)
-      .mockResolvedValueOnce({success: true, result: {columns: [], rows: []}} satisfies ReportQueryOutcome<unknown>)
-
-    const result = await runStoreReport(
-      {store: 'shop.myshopify.com', analysis: 'What were my sales last month?'},
-      dependencies,
-    )
-
-    expect(result.query).toBe('FROM sales SHOW total_sales')
-    expect(askAssistant).toHaveBeenCalledTimes(2)
-    expect(askAssistant.mock.calls[1]![0]).toContain('Retry instructions: your previous "shopifyql" query failed:')
-    expect(askAssistant.mock.calls[1]![0]).toContain('FROM sales SHOW bogus_metric')
-    expect(askAssistant.mock.calls[1]![0]).toContain('Unknown metric: bogus_metric')
-  })
-
-  test('throws an actionable AbortError immediately on an access-denied failure, without retrying', async () => {
-    askAssistant.mockResolvedValue('{"api": "shopifyql", "query": "FROM sales SHOW total_sales"}')
-    runShopifyqlQuery.mockResolvedValue({
-      success: false,
-      failure: {errorText: 'Access denied', accessDenied: true, errors: []},
-    } satisfies ReportQueryOutcome<unknown>)
-
-    await expect(
-      runStoreReport({store: 'shop.myshopify.com', analysis: 'What were my sales last month?'}, dependencies),
-    ).rejects.toMatchObject({
-      message: "Stored app authentication for shop.myshopify.com isn't authorized to run this ShopifyQL query.",
-      nextSteps: [
-        [
-          'Run',
-          {command: 'shopify store auth --store shop.myshopify.com --scopes read_reports'},
-          'to grant the required scope',
-        ],
-      ],
+    expect(prepareContext).toHaveBeenCalledWith({store: 'shop.myshopify.com', userSpecifiedVersion: '2025-07'})
+    expect(runAgent).toHaveBeenCalledWith({
+      context,
+      question: 'What is my shop name?',
+      forcedApi: 'admin',
+      proxyBaseUrl: 'https://proxy.shopify.ai/v1',
+      proxyToken: 'test-token',
+      model: 'gpt-5.1',
     })
-    expect(askAssistant).toHaveBeenCalledTimes(1)
   })
 
-  test('throws an actionable AbortError when the retry attempt is access-denied', async () => {
-    askAssistant.mockResolvedValue('{"api": "admin", "query": "{ orders { edges { node { id } } } }"}')
-    runAdminQuery
-      .mockResolvedValueOnce({
-        success: false,
-        failure: {errorText: 'boom', accessDenied: false, errors: []},
-      } satisfies ReportQueryOutcome<unknown>)
-      .mockResolvedValueOnce({
-        success: false,
-        failure: {
-          errorText: 'Access denied',
-          accessDenied: true,
-          errors: [{message: 'requires the `read_orders` scope'}],
-        },
-      } satisfies ReportQueryOutcome<unknown>)
+  test('reads a custom proxy url and model from the environment', async () => {
+    vi.stubEnv('SHOPIFY_AI_PROXY_URL', 'https://custom.proxy/v2')
+    vi.stubEnv('SHOPIFY_AI_PROXY_MODEL', 'gpt-custom')
+    runAgent.mockResolvedValue({api: 'shopifyql', query: 'FROM sales SHOW orders', result: {}, summary: 's'})
+
+    await runStoreReport({store: 'shop.myshopify.com', analysis: 'How many orders?'}, dependencies)
+
+    expect(runAgent).toHaveBeenCalledWith(
+      expect.objectContaining({proxyBaseUrl: 'https://custom.proxy/v2', model: 'gpt-custom'}),
+    )
+  })
+
+  test('throws an actionable AbortError when SHOPIFY_AI_PROXY_TOKEN is not set, before any store work', async () => {
+    vi.stubEnv('SHOPIFY_AI_PROXY_TOKEN', undefined)
 
     await expect(
-      runStoreReport({store: 'shop.myshopify.com', analysis: 'List my orders'}, dependencies),
+      runStoreReport({store: 'shop.myshopify.com', analysis: 'What were my sales?'}, dependencies),
     ).rejects.toMatchObject({
-      message: "Stored app authentication for shop.myshopify.com isn't authorized to run this Admin GraphQL query.",
-      nextSteps: [
-        [
-          'Run',
-          {command: 'shopify store auth --store shop.myshopify.com --scopes read_orders'},
-          'to grant the required scope',
-        ],
-      ],
+      message: 'SHOPIFY_AI_PROXY_TOKEN is not set.',
+      tryMessage: expect.stringContaining('proxy.shopify.io'),
     })
-    expect(askAssistant).toHaveBeenCalledTimes(2)
-  })
 
-  test('throws a generic AbortError when the retry also fails without being access-denied', async () => {
-    askAssistant.mockResolvedValue('{"api": "shopifyql", "query": "FROM sales SHOW total_sales"}')
-    runShopifyqlQuery.mockResolvedValue({
-      success: false,
-      failure: {errorText: 'Unknown metric: total_sales', accessDenied: false, errors: []},
-    } satisfies ReportQueryOutcome<unknown>)
-
-    let captured: AbortError | undefined
-    await runStoreReport({store: 'shop.myshopify.com', analysis: 'What were my sales last month?'}, dependencies).catch(
-      (error) => {
-        captured = error as AbortError
-      },
-    )
-
-    expect(captured).toBeInstanceOf(AbortError)
-    expect(captured?.message).toBe('The report query failed again after one retry.')
-    expect(askAssistant).toHaveBeenCalledTimes(2)
-    expect(runShopifyqlQuery).toHaveBeenCalledTimes(2)
+    expect(prepareContext).not.toHaveBeenCalled()
+    expect(runAgent).not.toHaveBeenCalled()
   })
 })

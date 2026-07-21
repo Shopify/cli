@@ -54,6 +54,10 @@ export function renderStoreReportResult(result: StoreReportResult, format: Store
     return
   }
 
+  // The agent already streamed its summary to stderr live as it worked (see `agent.ts`), so we don't
+  // reprint `result.rationale` here — that would show the same sentence twice. `--json` still carries
+  // it in the `rationale` field. A blank line separates that streamed summary from the query below.
+  outputInfo('')
   outputInfo(outputContent`${outputToken.gray(result.query)}`)
 
   if (result.api === 'shopifyql') {
