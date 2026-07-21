@@ -4,13 +4,21 @@ import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-ses
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {buildDevConsoleURL} from '../../../../utilities/app/app-url.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {Alert, ConcurrentOutput, Link, LoadingIndicator, TabularData} from '@shopify/cli-kit/node/ui/components'
+import {
+  ConcurrentOutput,
+  type ConcurrentOutputChunk,
+  Link,
+  LoadingIndicator,
+  TabularData,
+} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
-import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
+import React, {FunctionComponent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {Box, MouseProvider, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
+import {Box, MouseProvider, Text, useInput, useStdin, useStdout} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL, terminalSupportsHyperlinks} from '@shopify/cli-kit/node/system'
+import {getMouseEnabled} from '@shopify/cli-kit/node/mouse'
+import {basename} from '@shopify/cli-kit/node/path'
 import figures from '@shopify/cli-kit/node/figures'
 import {waitForPostRunHookAndExit} from '@shopify/cli-kit/node/hooks/postrun'
 import {Writable} from 'stream'
@@ -20,6 +28,11 @@ interface DevStatusShortcut extends TabShortcut {
   linkLabel: string
   url?: string
 }
+
+// Three rows for the buttons, four for the largest tab, and breathing room between them.
+const BOTTOM_PANEL_HEIGHT = 9
+const MOUSE_TEXT_SELECTION_HINT =
+  'If you want to select text, try holding Option or Shift while dragging. Or disable mouse support with `shopify config mouse off`.'
 
 const StatusMessage = ({message, type}: NonNullable<DevSessionStatus['statusMessage']>) => {
   if (type === 'loading') return <LoadingIndicator title={message} />
@@ -41,7 +54,30 @@ interface DevSesionUIProps {
   organizationName?: string
   configPath?: string
   localURL?: string
+  usingLocalhost?: boolean
+  unavailableGraphiqlPort?: number
+  localhostPortUnavailable?: number
   onAbort: () => Promise<void>
+  onOutput?: (chunk: ConcurrentOutputChunk) => void
+}
+
+const FullScreenLayout: FunctionComponent<React.PropsWithChildren> = ({children}) => {
+  const {stdout} = useStdout()
+  const [terminalSize, setTerminalSize] = useState({columns: stdout.columns, rows: stdout.rows})
+
+  useLayoutEffect(() => {
+    const updateTerminalSize = () => setTerminalSize({columns: stdout.columns, rows: stdout.rows})
+    stdout.on('resize', updateTerminalSize)
+    return () => {
+      stdout.off('resize', updateTerminalSize)
+    }
+  }, [stdout])
+
+  return (
+    <Box flexDirection="column" height={terminalSize.rows} width={terminalSize.columns}>
+      {children}
+    </Box>
+  )
 }
 
 const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
@@ -54,22 +90,76 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   organizationName,
   configPath,
   localURL,
+  usingLocalhost = false,
+  unavailableGraphiqlPort,
+  localhostPortUnavailable,
   onAbort,
+  onOutput,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
+  const mouseEnabled = getMouseEnabled()
+  const processesWithInitialLogs = useMemo(() => {
+    const initialLogs: string[] = []
+    if (configPath) {
+      initialLogs.push(
+        `Using ${basename(configPath)} for default values. You can pass \`--reset\` to your command to reset your app configuration.`,
+      )
+    }
+    if (usingLocalhost) {
+      initialLogs.push(
+        '⚠️ `--use-localhost` is not compatible with Shopify features which directly invoke your app (such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another device (such as POS).',
+      )
+    }
+    if (unavailableGraphiqlPort !== undefined) {
+      initialLogs.push(
+        `⚠️ A random port will be used for GraphiQL because ${unavailableGraphiqlPort} is not available. You can choose one with \`--graphiql-port\`.`,
+      )
+    }
+    if (localhostPortUnavailable !== undefined) {
+      initialLogs.push(
+        `⚠️ A random port will be used for localhost because ${localhostPortUnavailable} is not available. You can choose one with \`--localhost-port\` flag.`,
+      )
+    }
+    if (initialLogs.length === 0) return processes
+
+    const initialLogProcess: OutputProcess = {
+      prefix: 'app-preview',
+      action: async (stdout) => {
+        stdout.write(initialLogs.join('\n'))
+      },
+    }
+    return [initialLogProcess, ...processes]
+  }, [configPath, localhostPortUnavailable, processes, unavailableGraphiqlPort, usingLocalhost])
 
   const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
-  const [error, setError] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DevSessionStatus>(devSessionStatusManager.status)
-  const [shouldShowPersistentDevInfo, setShouldShowPersistentDevInfo] = useState<boolean>(false)
+  const [availableLogPrefixes, setAvailableLogPrefixes] = useState<string[]>(() => [
+    ...new Set(processesWithInitialLogs.map(({prefix}) => prefix)),
+  ])
+  const availableLogPrefixesRef = useRef(new Set(availableLogPrefixes))
+  const [selectedLogPrefix, setSelectedLogPrefix] = useState<string | undefined>()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const {isAborted} = useAbortSignal(abortController.signal, async (err: any) => {
-    if (err) setError(typeof err === 'string' ? err : err.message)
-    const appPreviewReady = devSessionStatusManager.status.isReady
-    if (appPreviewReady) {
-      setShouldShowPersistentDevInfo(true)
-    } else {
+  const addAvailableLogPrefix = useCallback((prefix: string) => {
+    if (availableLogPrefixesRef.current.has(prefix)) return
+
+    availableLogPrefixesRef.current.add(prefix)
+    setAvailableLogPrefixes((currentPrefixes) => [...currentPrefixes, prefix])
+  }, [])
+
+  const filterOutputByPrefix = useCallback(
+    (prefix: string) => selectedLogPrefix === undefined || prefix === selectedLogPrefix,
+    [selectedLogPrefix],
+  )
+
+  const selectNextLogPrefix = () => {
+    setSelectedLogPrefix((currentPrefix) => {
+      const currentPrefixIndex = currentPrefix === undefined ? -1 : availableLogPrefixes.indexOf(currentPrefix)
+      return availableLogPrefixes[currentPrefixIndex + 1]
+    })
+  }
+
+  const {isAborted} = useAbortSignal(abortController.signal, async () => {
+    if (!devSessionStatusManager.status.isReady) {
       setIsShuttingDownMessage('Shutting down dev ...')
       await onAbort()
     }
@@ -77,7 +167,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   })
 
   const errorHandledProcesses = useMemo(() => {
-    return processes.map((process) => {
+    return processesWithInitialLogs.map((process) => {
       return {
         ...process,
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
@@ -90,7 +180,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         },
       }
     })
-  }, [processes, abortController])
+  }, [processesWithInitialLogs, abortController])
 
   // Subscribe to dev session status updates
   useEffect(() => {
@@ -100,6 +190,10 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       devSessionStatusManager.off('dev-session-update', setStatus)
     }
   }, [])
+
+  useEffect(() => {
+    processesWithInitialLogs.forEach(({prefix}) => addAvailableLogPrefix(prefix))
+  }, [addAvailableLogPrefix, processesWithInitialLogs])
 
   useInput(
     (input, key) => {
@@ -167,33 +261,41 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
             <StatusMessage message={status.statusMessage.message} type={status.statusMessage.type} />
           )}
           {canUseShortcuts && activeShortcuts.length > 0 && (
-            <Box marginTop={1} flexDirection="column">
+            <Box flexDirection="column" marginTop={1}>
               {activeShortcuts.map((shortcut) => (
-                <Text key={shortcut.key}>
+                <Text key={shortcut.key} wrap="truncate">
                   {figures.pointerSmall} <Text bold>({shortcut.key})</Text>{' '}
                   {terminalSupportsHyperlinks() && shortcut.url ? (
                     <Link url={shortcut.url} label={shortcut.shortcutLabel} />
                   ) : (
-                    shortcut.shortcutLabel
+                    <>
+                      {shortcut.shortcutLabel}
+                      {shortcut.url ? (
+                        <>
+                          : <Link url={shortcut.url} />
+                        </>
+                      ) : null}
+                    </>
                   )}
                 </Text>
               ))}
             </Box>
           )}
-          <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+          <Box flexDirection="column">
             {isShuttingDownMessage ? (
               <Text>{isShuttingDownMessage}</Text>
             ) : (
               <>
                 {status.isReady && !(canUseShortcuts && terminalSupportsHyperlinks()) && (
                   <>
-                    {activeShortcuts
-                      .filter((shortcut) => shortcut.url)
-                      .map((shortcut) => (
-                        <Text key={shortcut.key}>
-                          {shortcut.linkLabel} URL: <Link url={shortcut.url!} />
-                        </Text>
-                      ))}
+                    {!canUseShortcuts &&
+                      activeShortcuts
+                        .filter((shortcut) => shortcut.url)
+                        .map((shortcut) => (
+                          <Text key={shortcut.key}>
+                            {shortcut.linkLabel} URL: <Link url={shortcut.url!} />
+                          </Text>
+                        ))}
                   </>
                 )}
               </>
@@ -234,6 +336,13 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         </Box>
       ),
     },
+    // eslint-disable-next-line id-length
+    f: {
+      label: `Filter logs: ${selectedLogPrefix ?? 'all'}`,
+      action: async () => {
+        selectNextLogPrefix()
+      },
+    },
     q: {
       label: 'Quit',
       action: async () => {
@@ -249,24 +358,23 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         prefixColumnSize={MAX_EXTENSION_HANDLE_LENGTH}
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
+        scrollable={canUseShortcuts}
         useAlternativeColorPalette={true}
+        outputFilter={canUseShortcuts ? filterOutputByPrefix : undefined}
+        onOutputPrefix={canUseShortcuts ? addAvailableLogPrefix : undefined}
+        onOutput={onOutput}
+        mouseInteractionHint={
+          mouseEnabled
+            ? {
+                prefix: 'app-preview',
+                message: MOUSE_TEXT_SELECTION_HINT,
+              }
+            : undefined
+        }
       />
-      {shouldShowPersistentDevInfo && (
-        <Box marginTop={1} flexDirection="column">
-          <Alert
-            type={'info'}
-            headline={`A preview of your development changes is still available on ${shopFqdn}.`}
-            body={['Run', {command: 'shopify app dev clean'}, 'to restore the latest released version of your app.']}
-            link={{
-              label: 'Learn more about dev previews',
-              url: 'https://shopify.dev/beta/developer-dashboard/shopify-app-dev',
-            }}
-          />
-        </Box>
-      )}
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
-        <Box paddingTop={1} flexDirection="column" flexGrow={1}>
+        <Box flexDirection="column" flexShrink={0} height={BOTTOM_PANEL_HEIGHT}>
           {canUseShortcuts ? (
             <TabPanel tabs={tabs} initialActiveTab="d" />
           ) : (
@@ -287,17 +395,13 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           )}
         </Box>
       ) : null}
-      {error ? (
-        <Box marginTop={1} flexDirection="column">
-          <Text color="red">{error}</Text>
-        </Box>
-      ) : null}
     </>
   )
 
-  return canUseShortcuts && !isAborted ? (
-    <MouseProvider allowTerminalScrolling trackMouseMovement={false}>
-      {content}
+  // Even wheel-only mouse reporting prevents native terminal text selection.
+  return canUseShortcuts ? (
+    <MouseProvider isActive={!isAborted} mouseEnabled={mouseEnabled} trackMouseMovement={false}>
+      <FullScreenLayout>{content}</FullScreenLayout>
     </MouseProvider>
   ) : (
     content

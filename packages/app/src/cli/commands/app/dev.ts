@@ -108,55 +108,59 @@ export default class Dev extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Dev)
 
-    const tunnelMode = await getTunnelMode({
-      useLocalhost: flags['use-localhost'] ?? false,
-      tunnelUrl: flags['tunnel-url'],
-      localhostPort: flags['localhost-port'],
-    })
+    const prepareDevOptions = async () => {
+      const tunnelMode = await getTunnelMode({
+        useLocalhost: flags['use-localhost'] ?? false,
+        tunnelUrl: flags['tunnel-url'],
+        localhostPort: flags['localhost-port'],
+      })
 
-    await addPublicMetadata(() => {
-      return {
-        cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
-        cmd_app_reset_used: flags.reset,
-        cmd_dev_tunnel_type: tunnelMode.mode,
+      await addPublicMetadata(() => {
+        return {
+          cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
+          cmd_app_reset_used: flags.reset,
+          cmd_dev_tunnel_type: tunnelMode.mode,
+        }
+      })
+
+      await checkFolderIsValidApp(flags.path)
+
+      const appContextResult = await linkedAppContext({
+        directory: flags.path,
+        clientId: flags['client-id'],
+        forceRelink: flags.reset,
+        userProvidedConfigName: flags.config,
+      })
+      const store = await storeContext({
+        appContextResult,
+        storeFqdn: flags.store,
+        forceReselectStore: flags.reset,
+      })
+
+      const devOptions: DevOptions = {
+        ...appContextResult,
+        store,
+        directory: flags.path,
+        update: !flags['no-update'],
+        skipDependenciesInstallation: flags['skip-dependencies-installation'],
+        commandConfig: this.config,
+        subscriptionProductUrl: flags['subscription-product-url'],
+        checkoutCartUrl: flags['checkout-cart-url'],
+        theme: flags.theme,
+        themeExtensionPort: flags['theme-app-extension-port'],
+        storePassword: flags['store-password'],
+        notify: flags.notify,
+        graphiqlPort: flags['graphiql-port'],
+        graphiqlKey: flags['graphiql-key'],
+        // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
+        installMkcert: flags['install-mkcert'],
+        tunnel: tunnelMode,
       }
-    })
 
-    await checkFolderIsValidApp(flags.path)
-
-    const appContextResult = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-    })
-
-    const devOptions: DevOptions = {
-      ...appContextResult,
-      store,
-      directory: flags.path,
-      update: !flags['no-update'],
-      skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      commandConfig: this.config,
-      subscriptionProductUrl: flags['subscription-product-url'],
-      checkoutCartUrl: flags['checkout-cart-url'],
-      theme: flags.theme,
-      themeExtensionPort: flags['theme-app-extension-port'],
-      storePassword: flags['store-password'],
-      notify: flags.notify,
-      graphiqlPort: flags['graphiql-port'],
-      graphiqlKey: flags['graphiql-key'],
-      // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
-      installMkcert: flags['install-mkcert'],
-      tunnel: tunnelMode,
+      return devOptions
     }
 
-    await dev(devOptions)
-    return {app: appContextResult.app}
+    const app = await dev(await prepareDevOptions())
+    return {app}
   }
 }

@@ -1,10 +1,18 @@
 import {ConcurrentOutput, useConcurrentOutputContext} from './ConcurrentOutput.js'
-import {render, waitForContent} from '../../testing/ui.js'
+import {MouseProvider} from './Mouse.js'
+import {
+  render,
+  sendInputAndWait,
+  sendInputAndWaitForChange,
+  sendInputAndWaitForContent,
+  waitForContent,
+} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import {unstyled} from '../../../../public/node/output.js'
+import {Box} from 'ink'
 
 import React from 'react'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 import {Writable} from 'stream'
 
@@ -21,6 +29,18 @@ class Synchronizer {
       this.resolve = resolve
     })
   }
+}
+
+function mouseClick(column: number, row: number): [string, string] {
+  return [`\u001B[<0;${column};${row}M`, `\u001B[<0;${column};${row}m`]
+}
+
+function mouseDrag(startColumn: number, startRow: number, endColumn: number, endRow: number): [string, string, string] {
+  return [
+    `\u001B[<0;${startColumn};${startRow}M`,
+    `\u001B[<32;${endColumn};${endRow}M`,
+    `\u001B[<0;${endColumn};${endRow}m`,
+  ]
 }
 
 describe('ConcurrentOutput', () => {
@@ -108,6 +128,40 @@ describe('ConcurrentOutput', () => {
     gate.resolve()
   })
 
+  test('reports every output chunk after normalizing it for display', async () => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const onOutput = vi.fn()
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable, stderr: Writable) => {
+        stdout.write('\u001b[32mfirst line\nsecond line\u001b[39m\n')
+        useConcurrentOutputContext({outputPrefix: 'app-extension'}, () => stderr.write('third line'))
+        outputSync.resolve()
+        await gate.promise
+      },
+    }
+
+    const renderInstance = render(
+      <ConcurrentOutput processes={[process]} abortSignal={new AbortController().signal} onOutput={onOutput} />,
+    )
+    await outputSync.promise
+    await waitForContent(renderInstance, 'third line')
+
+    expect(onOutput).toHaveBeenNthCalledWith(1, {
+      lines: ['first line', 'second line'],
+      prefix: 'backend',
+      timestamp: expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/),
+    })
+    expect(onOutput).toHaveBeenNthCalledWith(2, {
+      lines: ['third line'],
+      prefix: 'app-extension',
+      timestamp: expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/),
+    })
+
+    gate.resolve()
+  })
+
   test('does not strip ansi codes from the output when stripAnsi is false', async () => {
     const output = '\u001b[32mfoo\u001b[39m'
 
@@ -174,6 +228,214 @@ describe('ConcurrentOutput', () => {
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
     expect(logColumns.length).toBe(3)
     expect(logColumns[1]?.trim()).toEqual(extensionName)
+    gate.resolve()
+  })
+
+  test('filters matching history and future output without restarting processes', async () => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const abortSignal = new AbortController().signal
+    const observedPrefixes: string[] = []
+    let writeBackend = (_message: string) => {}
+    let writeFrontend = (_message: string) => {}
+    const backendAction = vi.fn(async (stdout: Writable) => {
+      writeBackend = (message) => stdout.write(message)
+      writeBackend('backend message')
+      await gate.promise
+    })
+    const frontendAction = vi.fn(async (stdout: Writable) => {
+      writeFrontend = (message) =>
+        useConcurrentOutputContext({outputPrefix: 'custom-frontend'}, () => stdout.write(message))
+      writeFrontend('frontend message')
+      outputSync.resolve()
+      await gate.promise
+    })
+    const processes = [
+      {prefix: 'backend', action: backendAction},
+      {prefix: 'frontend', action: frontendAction},
+    ]
+
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={processes}
+        abortSignal={abortSignal}
+        outputFilter={() => true}
+        onOutputPrefix={(prefix) => observedPrefixes.push(prefix)}
+      />,
+    )
+    await outputSync.promise
+    await waitForContent(renderInstance, 'frontend message')
+    writeFrontend('second frontend message')
+    writeBackend('second backend message')
+    await waitForContent(renderInstance, 'second backend message')
+
+    renderInstance.rerender(
+      <ConcurrentOutput
+        processes={processes}
+        abortSignal={abortSignal}
+        outputFilter={(prefix) => prefix === 'backend'}
+        onOutputPrefix={(prefix) => observedPrefixes.push(prefix)}
+      />,
+    )
+    await waitForContent(renderInstance, 'backend message')
+
+    writeFrontend('filtered frontend message')
+    writeBackend('filtered backend message')
+    await waitForContent(renderInstance, 'filtered backend message')
+
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('backend message')
+    expect(output).toContain('filtered backend message')
+    expect(output).not.toContain('frontend message')
+    expect(output).not.toContain('filtered frontend message')
+    expect(observedPrefixes).toEqual([
+      'backend',
+      'custom-frontend',
+      'custom-frontend',
+      'backend',
+      'custom-frontend',
+      'backend',
+    ])
+    expect(backendAction).toHaveBeenCalledOnce()
+    expect(frontendAction).toHaveBeenCalledOnce()
+
+    gate.resolve()
+  })
+
+  test('renders output in a bounded viewport and scrolls with arrow and page keys', async () => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable) => {
+        stdout.write(Array.from({length: 10}, (_, index) => `message ${index + 1}`).join('\n'))
+        outputSync.resolve()
+        await gate.promise
+      },
+    }
+
+    const renderInstance = render(
+      <MouseProvider>
+        <Box height={6}>
+          <ConcurrentOutput
+            processes={[process]}
+            abortSignal={new AbortController().signal}
+            showTimestamps={false}
+            scrollable
+          />
+        </Box>
+      </MouseProvider>,
+    )
+    await outputSync.promise
+    await waitForContent(renderInstance, 'message 10')
+
+    let output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('message 1\n')
+    expect(output).toContain('message 10')
+
+    await sendInputAndWaitForChange(renderInstance, '\u001B[A')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('message 6')
+    expect(output).not.toContain('message 10')
+
+    await sendInputAndWaitForChange(renderInstance, '\u001B[B')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('message 6')
+    expect(output).toContain('message 10')
+
+    await sendInputAndWaitForChange(renderInstance, '\u001B[5~')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('message 3')
+    expect(output).not.toContain('message 10')
+
+    await sendInputAndWaitForChange(renderInstance, '\u001B[6~')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('message 3')
+    expect(output).toContain('message 10')
+
+    gate.resolve()
+  })
+
+  test('wraps long output and leaves timestamp and prefix columns blank on continuation rows', async () => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable) => {
+        useConcurrentOutputContext({stripAnsi: false}, () => {
+          stdout.write(
+            'A long log message that wraps onto another row and includes \u001B[32mCONTINUATION_END\u001B[39m',
+          )
+        })
+        outputSync.resolve()
+        await gate.promise
+      },
+    }
+
+    const renderInstance = render(
+      <MouseProvider>
+        <Box height={4} width={50}>
+          <ConcurrentOutput processes={[process]} abortSignal={new AbortController().signal} scrollable />
+        </Box>
+      </MouseProvider>,
+    )
+    await outputSync.promise
+    await waitForContent(renderInstance, 'CONTINUATION_END')
+
+    const output = unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))
+    expect(output).toContain('CONTINUATION_END')
+    expect(renderInstance.lastFrame()).toContain('\u001B[32mCONTINUATION_END\u001B[39m')
+    expect(output.split('\n').find((line) => line.includes('CONTINUATION_END'))).toMatch(/^│ {9}│ {9}│ /u)
+
+    await sendInputAndWaitForContent(renderInstance, 'A long log message', '\u001B[5~')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('A long log message')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('CONTINUATION_END')
+
+    gate.resolve()
+  })
+
+  test('adds a mouse interaction hint to scrollable output only once', async () => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const onOutput = vi.fn()
+    const hint = 'Hold Option or Shift while dragging to select text.'
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable) => {
+        stdout.write('backend output')
+        outputSync.resolve()
+        await gate.promise
+      },
+    }
+    const renderInstance = render(
+      <MouseProvider>
+        <Box height={6}>
+          <ConcurrentOutput
+            processes={[process]}
+            abortSignal={new AbortController().signal}
+            scrollable
+            mouseInteractionHint={{prefix: 'app-preview', message: hint}}
+            onOutput={onOutput}
+          />
+        </Box>
+      </MouseProvider>,
+      {stdoutIsTTY: true},
+    )
+    await outputSync.promise
+    await waitForContent(renderInstance, 'backend output')
+
+    await sendInputAndWait(renderInstance, 20, ...mouseDrag(2, 2, 10, 2))
+    await waitForContent(renderInstance, hint)
+    await sendInputAndWait(renderInstance, 20, ...mouseClick(2, 2))
+
+    expect(unstyled(renderInstance.lastFrame()!).match(/Hold Option or Shift/g)).toHaveLength(1)
+    expect(onOutput).toHaveBeenNthCalledWith(2, {
+      lines: [hint],
+      prefix: 'app-preview',
+      timestamp: expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/),
+    })
+    expect(onOutput).toHaveBeenCalledTimes(2)
+
     gate.resolve()
   })
 
