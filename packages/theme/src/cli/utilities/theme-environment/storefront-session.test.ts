@@ -57,14 +57,9 @@ describe('Storefront API', () => {
     })
 
     test('retrieves _shopify_essential and storefront_digest cookies when a password is provided', async () => {
-      // Given
+      // Given: POST /password runs first (cold, returns the digest), then the
+      // preview HEAD runs last and owns the final _shopify_essential.
       vi.mocked(shopifyFetch)
-        .mockResolvedValueOnce(
-          response({
-            status: 200,
-            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
-          }),
-        )
         .mockResolvedValueOnce(
           response({
             status: 302,
@@ -72,6 +67,12 @@ describe('Storefront API', () => {
               'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
               location: 'https://example-store.myshopify.com/',
             },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
           }),
         )
 
@@ -91,17 +92,17 @@ describe('Storefront API', () => {
       vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
-            status: 200,
-            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
-          }),
-        )
-        .mockResolvedValueOnce(
-          response({
             status: 302,
             headers: {
               'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
               location: 'https://example-store.myshopify.com/',
             },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
           }),
         )
 
@@ -117,9 +118,10 @@ describe('Storefront API', () => {
         },
       )
 
+      // Password POST runs first, then the preview HEAD.
       expect(shopifyFetch).toHaveBeenNthCalledWith(
         1,
-        'https://example-store.myshopify.com?preview_theme_id=123456&_fd=0&pb=0',
+        'https://example-store.myshopify.com/password',
         expect.objectContaining({
           headers: expect.objectContaining({
             Signature: 'signature-value',
@@ -130,7 +132,7 @@ describe('Storefront API', () => {
       )
       expect(shopifyFetch).toHaveBeenNthCalledWith(
         2,
-        'https://example-store.myshopify.com/password',
+        'https://example-store.myshopify.com?preview_theme_id=123456&_fd=0&pb=0',
         expect.objectContaining({
           headers: expect.objectContaining({
             Signature: 'signature-value',
@@ -139,6 +141,59 @@ describe('Storefront API', () => {
           }),
         }),
       )
+    })
+
+    test('runs POST /password first, then forwards the digest essential to the trailing preview HEAD', async () => {
+      const digestEssential = ':DIGEST==123:'
+      const finalEssential = ':DIGEST+PREVIEW==456:'
+
+      // Given: password POST returns the digest-bearing essential; the preview
+      // HEAD then returns the final essential carrying both fields.
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': `_shopify_essential=${digestEssential}; path=/; HttpOnly`,
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${finalEssential}; path=/; HttpOnly`},
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
+
+      // Then: exactly two fetches, in order — POST /password, then the preview HEAD.
+      expect(shopifyFetch).toHaveBeenCalledTimes(2)
+      expect(shopifyFetch).toHaveBeenNthCalledWith(
+        1,
+        'https://example-store.myshopify.com/password',
+        expect.objectContaining({method: 'POST'}),
+      )
+      // The preview HEAD carries the preview_theme_id AND forwards the digest essential.
+      expect(shopifyFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://example-store.myshopify.com?preview_theme_id=123456&_fd=0&pb=0',
+        expect.objectContaining({
+          method: 'HEAD',
+          headers: expect.objectContaining({
+            Cookie: `_shopify_essential=${digestEssential}`,
+          }),
+        }),
+      )
+      // The final cookie is the trailing preview HEAD's essential (both fields).
+      expect(cookies).toEqual({_shopify_essential: finalEssential})
     })
 
     test(`throws an ShopifyEssentialError when _shopify_essential can't be defined`, async () => {
@@ -185,21 +240,13 @@ describe('Storefront API', () => {
     })
 
     test('throws an error when the password is wrong', async () => {
-      // Given
-      vi.mocked(shopifyFetch)
-        .mockResolvedValueOnce(
-          response({
-            status: 200,
-            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
-            text: () => Promise.resolve(''),
-          }),
-        )
-        .mockResolvedValueOnce(
-          response({
-            status: 401,
-            text: () => Promise.resolve(''),
-          }),
-        )
+      // Given: the password POST runs first and rejects the credentials.
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
+        response({
+          status: 401,
+          text: () => Promise.resolve(''),
+        }),
+      )
 
       // When
       const cookies = getStorefrontSessionCookies(
@@ -255,23 +302,25 @@ describe('Storefront API', () => {
     })
 
     test('handles storefront_digest migration to _shopify_essential cookie', async () => {
-      const originalEssential = ':AABBCCDDEEFFGGHH==123:'
-      const authenticatedEssential = ':NEWESSENTIAL==456:'
+      const digestEssential = ':AABBCCDDEEFFGGHH==123:'
+      const finalEssential = ':NEWESSENTIAL==456:'
 
+      // Given: password POST mints the digest-bearing essential first; the
+      // trailing preview HEAD returns the final essential carrying both fields.
       vi.mocked(shopifyFetch)
-        .mockResolvedValueOnce(
-          response({
-            status: 200,
-            headers: {'set-cookie': `_shopify_essential=${originalEssential}; path=/; HttpOnly`},
-          }),
-        )
         .mockResolvedValueOnce(
           response({
             status: 302,
             headers: {
-              'set-cookie': `_shopify_essential=${authenticatedEssential}; path=/; HttpOnly`,
+              'set-cookie': `_shopify_essential=${digestEssential}; path=/; HttpOnly`,
               location: 'https://example-store.myshopify.com/',
             },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${finalEssential}; path=/; HttpOnly`},
           }),
         )
 
@@ -283,30 +332,32 @@ describe('Storefront API', () => {
         'password',
       )
 
-      // Then
+      // Then: the trailing preview HEAD's essential wins.
       expect(cookies).toEqual({
-        _shopify_essential: authenticatedEssential,
+        _shopify_essential: finalEssential,
       })
     })
 
     test('handles theme kit access with _shopify_essential cookies', async () => {
-      const originalEssential = ':AABBCCDDEEFFGGHH==123:'
-      const authenticatedEssential = ':NEWESSENTIAL==456:'
+      const digestEssential = ':AABBCCDDEEFFGGHH==123:'
+      const finalEssential = ':NEWESSENTIAL==456:'
 
+      // Given: password POST first, preview HEAD last (same order as the
+      // standard flow) even when routed through the theme kit access domain.
       vi.mocked(shopifyFetch)
-        .mockResolvedValueOnce(
-          response({
-            status: 200,
-            headers: {'set-cookie': `_shopify_essential=${originalEssential}; path=/; HttpOnly`},
-          }),
-        )
         .mockResolvedValueOnce(
           response({
             status: 302,
             headers: {
-              'set-cookie': `_shopify_essential=${authenticatedEssential}; path=/; HttpOnly`,
+              'set-cookie': `_shopify_essential=${digestEssential}; path=/; HttpOnly`,
               location: 'https://example-store.myshopify.com/',
             },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${finalEssential}; path=/; HttpOnly`},
           }),
         )
 
@@ -320,19 +371,15 @@ describe('Storefront API', () => {
 
       // Then
       expect(cookies).toEqual({
-        _shopify_essential: authenticatedEssential,
+        _shopify_essential: finalEssential,
       })
     })
 
     test('handles case when storefront_digest is present (non-migrated case)', async () => {
-      // Given: storefront_digest is still being used
+      // Given: storefront_digest is still a standalone cookie. Password POST
+      // runs first and returns only the digest; the trailing preview HEAD
+      // mints the _shopify_essential.
       vi.mocked(shopifyFetch)
-        .mockResolvedValueOnce(
-          response({
-            status: 200,
-            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
-          }),
-        )
         .mockResolvedValueOnce(
           response({
             status: 302,
@@ -340,6 +387,12 @@ describe('Storefront API', () => {
               'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
               location: 'https://example-store.myshopify.com/',
             },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
           }),
         )
 
@@ -359,21 +412,13 @@ describe('Storefront API', () => {
     })
 
     test('throws error when pasword page does not return a 302', async () => {
-      // Given: password redirects correctly but _shopify_essential doesn't change (shouldn't happen)
-      const sameEssential = ':AABBCCDDEEFFGGHH==123:'
-
-      vi.mocked(shopifyFetch)
-        .mockResolvedValueOnce(
-          response({
-            status: 200,
-            headers: {'set-cookie': `_shopify_essential=${sameEssential}; path=/; HttpOnly`},
-          }),
-        )
-        .mockResolvedValueOnce(
-          response({
-            status: 200,
-          }),
-        )
+      // Given: the password POST runs first and does not redirect to the
+      // storefront (no 302), so the session cannot be created.
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
+        response({
+          status: 200,
+        }),
+      )
 
       // When
       const cookies = getStorefrontSessionCookies(

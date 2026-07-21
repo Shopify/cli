@@ -65,33 +65,51 @@ export async function getStorefrontSessionCookies(
   headers: Record<string, string> = {},
 ): Promise<Record<string, string>> {
   const cookieRecord: Record<string, string> = {}
-  const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
-  const storeOrigin = prependHttps(storeFqdn)
-
-  cookieRecord._shopify_essential = shopifyEssential
 
   recordEvent(`theme-service:storefront-session:is-password-protected:${Boolean(password)}`)
 
   if (!password) {
     /**
      * When the store is not password protected, storefront_digest is not
-     * required.
+     * required, so a single preview HEAD mints the session cookie.
      */
+    cookieRecord._shopify_essential = await sessionEssentialCookie(storeUrl, themeId, headers)
     return cookieRecord
   }
 
-  const additionalCookies = await enrichSessionWithStorefrontPassword(
-    shopifyEssential,
+  const storeOrigin = prependHttps(storeFqdn)
+
+  /**
+   * For password-protected stores the session is primed in two ordered steps:
+   *   1. POST /password first (cold) to obtain the digest-bearing session.
+   *   2. HEAD /?preview_theme_id last, forwarding that digest session so SFR
+   *      stamps preview_theme_id into the same _shopify_essential.
+   * Running the preview HEAD last ensures the final cookie carries BOTH the
+   * password digest and the preview theme id.
+   */
+  const passwordCookies = await enrichSessionWithStorefrontPassword(storeUrl, storeOrigin, password, headers)
+
+  cookieRecord._shopify_essential = await sessionEssentialCookie(
     storeUrl,
-    storeOrigin,
-    password,
+    themeId,
     headers,
+    passwordCookies._shopify_essential,
   )
 
-  return {...cookieRecord, ...additionalCookies}
+  if (passwordCookies.storefront_digest) {
+    cookieRecord.storefront_digest = passwordCookies.storefront_digest
+  }
+
+  return cookieRecord
 }
 
-async function sessionEssentialCookie(storeUrl: string, themeId: string, headers: Record<string, string>, retries = 1) {
+async function sessionEssentialCookie(
+  storeUrl: string,
+  themeId: string,
+  headers: Record<string, string>,
+  incomingEssential?: string,
+  retries = 1,
+) {
   const params = new URLSearchParams({
     preview_theme_id: themeId,
     _fd: '0',
@@ -102,9 +120,18 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
 
   recordEvent(`theme-service:storefront-session:get-session-essential-cookie`)
 
-  const requestHeaders = {
+  const requestHeaders: Record<string, string> = {
     ...headers,
     ...defaultHeaders(),
+  }
+
+  /**
+   * When priming a password-protected session, forward the digest-bearing
+   * essential so SFR stamps preview_theme_id into that same cookie instead of
+   * minting a preview-only one.
+   */
+  if (incomingEssential) {
+    requestHeaders.Cookie = serializeCookies({_shopify_essential: incomingEssential})
   }
 
   const response = await shopifyFetch(url, {
@@ -139,14 +166,13 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
     outputDebug('Retrying to obtain the _shopify_essential cookie...')
     await sleep(retries)
 
-    return sessionEssentialCookie(storeUrl, themeId, headers, retries + 1)
+    return sessionEssentialCookie(storeUrl, themeId, headers, incomingEssential, retries + 1)
   }
 
   return shopifyEssential
 }
 
 async function enrichSessionWithStorefrontPassword(
-  shopifyEssential: string,
   storeUrl: string,
   storeOrigin: string,
   password: string,
@@ -154,10 +180,14 @@ async function enrichSessionWithStorefrontPassword(
 ): Promise<Record<string, string>> {
   const params = new URLSearchParams({password})
 
+  /**
+   * This runs first (cold) for password-protected stores, so it does not carry
+   * a pre-existing _shopify_essential — SFR mints a digest-bearing session on
+   * the response.
+   */
   const requestHeaders = {
     ...headers,
     ...defaultHeaders(),
-    Cookie: serializeCookies({_shopify_essential: shopifyEssential}),
   }
 
   const response = await shopifyFetch(`${storeUrl}/password`, {
