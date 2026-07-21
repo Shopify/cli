@@ -6,10 +6,8 @@ const reportResult: StoreReportResult = {
   store: 'shop.myshopify.com',
   apiVersion: '2026-04',
   question: 'What were my sales?',
-  api: 'shopifyql',
-  query: 'FROM sales SHOW total_sales',
   rationale: 'A sales total.',
-  result: {rows: [{total_sales: 10}]},
+  queries: [{api: 'shopifyql', query: 'FROM sales SHOW total_sales', result: {rows: [{total_sales: 10}]}}],
 }
 
 const input = {

@@ -7,23 +7,43 @@ const shopifyqlResult: StoreReportResult = {
   store: 'my-shop.myshopify.com',
   apiVersion: '2026-04',
   question: 'What were my sales last month?',
-  api: 'shopifyql',
-  query: 'FROM sales SHOW total_sales SINCE -30d',
   rationale: 'Sales trend over the last 30 days.',
-  result: {
-    columns: [{name: 'total_sales', dataType: 'money', displayName: 'Total sales'}],
-    rows: [{total_sales: 123.45}],
-  },
+  queries: [
+    {
+      api: 'shopifyql',
+      query: 'FROM sales SHOW total_sales SINCE -30d',
+      result: {
+        columns: [{name: 'total_sales', dataType: 'money', displayName: 'Total sales'}],
+        rows: [{total_sales: 123.45}],
+      },
+    },
+  ],
 }
 
 const adminResult: StoreReportResult = {
   store: 'my-shop.myshopify.com',
   apiVersion: '2026-04',
   question: 'What is my shop name?',
-  api: 'admin',
-  query: '{ shop { name } }',
   rationale: 'Direct catalog lookup.',
-  result: {shop: {name: 'My Shop'}},
+  queries: [{api: 'admin', query: '{ shop { name } }', result: {shop: {name: 'My Shop'}}}],
+}
+
+const multiQueryResult: StoreReportResult = {
+  store: 'my-shop.myshopify.com',
+  apiVersion: '2026-04',
+  question: 'Basic stats and my shop name?',
+  rationale: 'Sales were $123.45 and your shop is named My Shop.',
+  queries: [
+    {
+      api: 'shopifyql',
+      query: 'FROM sales SHOW total_sales SINCE -30d',
+      result: {
+        columns: [{name: 'total_sales', dataType: 'money', displayName: 'Total sales'}],
+        rows: [{total_sales: 123.45}],
+      },
+    },
+    {api: 'admin', query: '{ shop { name } }', result: {shop: {name: 'My Shop'}}},
+  ],
 }
 
 describe('shapeStoreReportJson', () => {
@@ -32,10 +52,8 @@ describe('shapeStoreReportJson', () => {
       store: 'my-shop.myshopify.com',
       apiVersion: '2026-04',
       question: 'What were my sales last month?',
-      api: 'shopifyql',
-      query: 'FROM sales SHOW total_sales SINCE -30d',
       rationale: 'Sales trend over the last 30 days.',
-      result: shopifyqlResult.result,
+      queries: shopifyqlResult.queries,
     })
   })
 })
@@ -55,23 +73,27 @@ describe('renderStoreReportResult', () => {
   "store": "my-shop.myshopify.com",
   "apiVersion": "2026-04",
   "question": "What were my sales last month?",
-  "api": "shopifyql",
-  "query": "FROM sales SHOW total_sales SINCE -30d",
   "rationale": "Sales trend over the last 30 days.",
-  "result": {
-    "columns": [
-      {
-        "name": "total_sales",
-        "dataType": "money",
-        "displayName": "Total sales"
+  "queries": [
+    {
+      "api": "shopifyql",
+      "query": "FROM sales SHOW total_sales SINCE -30d",
+      "result": {
+        "columns": [
+          {
+            "name": "total_sales",
+            "dataType": "money",
+            "displayName": "Total sales"
+          }
+        ],
+        "rows": [
+          {
+            "total_sales": 123.45
+          }
+        ]
       }
-    ],
-    "rows": [
-      {
-        "total_sales": 123.45
-      }
-    ]
-  }
+    }
+  ]
 }
 `)
   })
@@ -97,7 +119,10 @@ describe('renderStoreReportResult', () => {
   test('reports no data for a ShopifyQL result with no rows', () => {
     const output = mockAndCaptureOutput()
 
-    renderStoreReportResult({...shopifyqlResult, result: {columns: [], rows: []}}, 'text')
+    renderStoreReportResult(
+      {...shopifyqlResult, queries: [{...shopifyqlResult.queries[0]!, result: {columns: [], rows: []}}]},
+      'text',
+    )
 
     expect(output.info()).toContain('No data for this query.')
   })
@@ -114,8 +139,20 @@ describe('renderStoreReportResult', () => {
   test('reports no data for an Admin result with a null payload', () => {
     const output = mockAndCaptureOutput()
 
-    renderStoreReportResult({...adminResult, result: null}, 'text')
+    renderStoreReportResult({...adminResult, queries: [{...adminResult.queries[0]!, result: null}]}, 'text')
 
     expect(output.info()).toContain('No data for this query.')
+  })
+
+  test('renders every query in a compound answer, each in its own labeled section', () => {
+    const output = mockAndCaptureOutput()
+
+    renderStoreReportResult(multiQueryResult, 'text')
+
+    expect(output.info()).toContain('FROM sales SHOW total_sales SINCE -30d')
+    expect(output.info()).toContain('Total sales')
+    expect(output.info()).toContain('123.45')
+    expect(output.info()).toContain('{ shop { name } }')
+    expect(output.output()).toContain('"name": "My Shop"')
   })
 })

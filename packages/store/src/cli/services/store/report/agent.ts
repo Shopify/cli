@@ -5,7 +5,7 @@ import {Agent, MCPServerStdio} from '@openai/agents'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileURLToPath} from 'node:url'
 import type {AdminStoreGraphQLContext} from './execute.js'
-import type {ReportQueryRecord, StoreReportApi} from './types.js'
+import type {ReportQueryRecord} from './types.js'
 
 // A single run can involve several exploratory queries; give the loop plenty of room to confirm
 // syntax with the dev docs tools and self-correct before it has to give up.
@@ -20,9 +20,7 @@ export interface ReportAgentInput {
 }
 
 export interface ReportAgentResult {
-  api: StoreReportApi
-  query: string
-  result: unknown
+  queries: ReportQueryRecord[]
   summary: string
 }
 
@@ -95,9 +93,9 @@ const defaultReportAgentDependencies: ReportAgentDependencies = {
 
 /**
  * Runs the report agent loop and derives a structured answer from it. The accumulator is the source
- * of truth: its LAST successful query is the answer, and the model's final output is the summary.
- * If no query ever succeeded the accumulator is empty, so there is no answer to return — surface the
- * model's explanation as an error instead.
+ * of truth: every successful query it recorded, in call order, is surfaced as the answer, and the
+ * model's final output is the summary. If no query ever succeeded the accumulator is empty, so there
+ * is no answer to return — surface the model's explanation as an error instead.
  */
 export async function runReportAgent(
   input: ReportAgentInput,
@@ -118,8 +116,7 @@ export async function runReportAgent(
     maxTurns: MAX_TURNS,
   })
 
-  const lastSuccessfulQuery = accumulator.at(-1)
-  if (!lastSuccessfulQuery) {
+  if (accumulator.length === 0) {
     throw new AbortError(
       'The report agent finished without successfully running any query.',
       summary === '' ? undefined : summary,
@@ -127,9 +124,7 @@ export async function runReportAgent(
   }
 
   return {
-    api: lastSuccessfulQuery.api,
-    query: lastSuccessfulQuery.query,
-    result: lastSuccessfulQuery.result,
+    queries: [...accumulator],
     summary,
   }
 }

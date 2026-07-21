@@ -27,7 +27,7 @@ const baseInput: ReportAgentInput = {
 }
 
 describe('runReportAgent', () => {
-  test('surfaces the last successful query and the model summary as the result', async () => {
+  test('surfaces the successful query and the model summary as the result', async () => {
     const tableData = {
       columns: [{name: 'total_sales', dataType: 'money', displayName: 'Total sales'}],
       rows: [{total_sales: 100}],
@@ -50,14 +50,12 @@ describe('runReportAgent', () => {
     })
 
     expect(result).toEqual({
-      api: 'shopifyql',
-      query: 'FROM sales SHOW total_sales SINCE -30d',
-      result: tableData,
+      queries: [{api: 'shopifyql', query: 'FROM sales SHOW total_sales SINCE -30d', result: tableData}],
       summary: 'Your total sales over the last 30 days were $100.',
     })
   })
 
-  test('uses the last successful query when the model runs several', async () => {
+  test('records every successful query, in call order, when the model runs several', async () => {
     const executors: ReportToolExecutors = {
       runShopifyql: async (_context, query) => ({success: true, result: {ranQuery: query}}),
       runAdmin: async () => ({success: false, failure: {errorText: 'unused', accessDenied: false, errors: []}}),
@@ -72,8 +70,10 @@ describe('runReportAgent', () => {
       },
     })
 
-    expect(result.query).toBe('FROM sales SHOW total_sales')
-    expect(result.result).toEqual({ranQuery: 'FROM sales SHOW total_sales'})
+    expect(result.queries).toEqual([
+      {api: 'shopifyql', query: 'FROM sales SHOW orders', result: {ranQuery: 'FROM sales SHOW orders'}},
+      {api: 'shopifyql', query: 'FROM sales SHOW total_sales', result: {ranQuery: 'FROM sales SHOW total_sales'}},
+    ])
   })
 
   test('throws an AbortError when no query ever succeeds', async () => {

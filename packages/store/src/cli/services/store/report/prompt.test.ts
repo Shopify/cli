@@ -22,4 +22,21 @@ describe('buildReportInstructions', () => {
 
     expect(instructions).toContain('untrusted data')
   })
+
+  test('licenses running multiple queries for a compound question and forbids stopping early', () => {
+    const instructions = buildReportInstructions()
+
+    expect(instructions).toContain('legitimately needs multiple')
+    expect(instructions).toContain("don't stop after the first successful query")
+    expect(instructions).not.toContain('Run exactly the query the question needs — no more.')
+    expect(instructions).not.toContain('After a query succeeds, finish with a single sentence')
+  })
+
+  test("directs the model to compute analytics from Admin GraphQL when ShopifyQL can't express them", () => {
+    const instructions = buildReportInstructions()
+
+    expect(instructions).toContain('ShopifyQL is limited to the "sales" dataset aggregates')
+    expect(instructions).toContain('compute the')
+    expect(instructions).toContain('never tell the user a capability is missing')
+  })
 })

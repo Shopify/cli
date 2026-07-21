@@ -12,7 +12,10 @@ Output the JSON object only: no prose, Markdown fences, JSONL, or patches.
 - Never use visible, on, repeat, or watch. Never create events or interactive controls.
 - children is an array of element-id strings and is only useful for Box and Card containers.
 - Every root and child id must exist in elements, and the child graph must not contain cycles.
-- Every value in every Table row must be a pre-formatted string, including numbers and dates.`
+- Every value in every Table row must be a pre-formatted string, including numbers and dates.
+- The data may contain SEVERAL query result sets (a compound question answered with multiple
+  queries). Give each one its own clearly-labeled section (for example a Heading or Divider naming
+  what it shows, followed by a Card or Table for its data) so the visual reflects the whole answer.`
 
 const COMPONENT_CHEATSHEET = `Allowed component cheatsheet (a question mark means the prop is optional):
 - Box {flexDirection?, padding?, paddingX?, paddingY?, margin?, gap?, width?, borderStyle?, borderColor?} + children
@@ -52,13 +55,13 @@ export function buildReportVisualizationInstructions(): string {
 
 /** Frames report fields as untrusted user data without including any proxy configuration. */
 export function buildReportVisualizationRequest(
-  report: Pick<StoreReportResult, 'question' | 'query' | 'result'>,
+  report: Pick<StoreReportResult, 'question' | 'rationale' | 'queries'>,
 ): string {
   const reportData = JSON.stringify(
     {
       question: report.question,
-      query: report.query,
-      result: report.result,
+      rationale: report.rationale,
+      queries: report.queries,
     },
     null,
     2,

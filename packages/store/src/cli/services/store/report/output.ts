@@ -1,6 +1,6 @@
 import {outputContent, outputInfo, outputResult, outputToken} from '@shopify/cli-kit/node/output'
 import {renderTable} from '@shopify/cli-kit/node/ui'
-import type {ShopifyqlTableColumn, ShopifyqlTableData, StoreReportResult} from './types.js'
+import type {ReportQueryRecord, ShopifyqlTableColumn, ShopifyqlTableData, StoreReportResult} from './types.js'
 
 export type StoreReportOutputFormat = 'text' | 'json'
 
@@ -9,10 +9,8 @@ export function shapeStoreReportJson(result: StoreReportResult): unknown {
     store: result.store,
     apiVersion: result.apiVersion,
     question: result.question,
-    api: result.api,
-    query: result.query,
     rationale: result.rationale,
-    result: result.result,
+    queries: result.queries,
   }
 }
 
@@ -48,6 +46,16 @@ function renderAdminResult(data: unknown): void {
   outputResult(JSON.stringify(data, null, 2))
 }
 
+function renderQueryRecord(record: ReportQueryRecord): void {
+  outputInfo(outputContent`${outputToken.gray(record.query)}`)
+
+  if (record.api === 'shopifyql') {
+    renderShopifyqlTable(record.result as ShopifyqlTableData)
+  } else {
+    renderAdminResult(record.result)
+  }
+}
+
 export function renderStoreReportResult(result: StoreReportResult, format: StoreReportOutputFormat): void {
   if (format === 'json') {
     outputResult(JSON.stringify(shapeStoreReportJson(result), null, 2))
@@ -56,13 +64,11 @@ export function renderStoreReportResult(result: StoreReportResult, format: Store
 
   // The agent already streamed its summary to stderr live as it worked (see `agent.ts`), so we don't
   // reprint `result.rationale` here — that would show the same sentence twice. `--json` still carries
-  // it in the `rationale` field. A blank line separates that streamed summary from the query below.
-  outputInfo('')
-  outputInfo(outputContent`${outputToken.gray(result.query)}`)
-
-  if (result.api === 'shopifyql') {
-    renderShopifyqlTable(result.result as ShopifyqlTableData)
-  } else {
-    renderAdminResult(result.result)
+  // it in the `rationale` field. A blank line separates that streamed summary from the queries below,
+  // and each query gets its own blank-line-separated section so a compound answer's results don't run
+  // together.
+  for (const record of result.queries) {
+    outputInfo('')
+    renderQueryRecord(record)
   }
 }

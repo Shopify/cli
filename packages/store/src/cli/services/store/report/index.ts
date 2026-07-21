@@ -72,9 +72,7 @@ export async function runStoreReport(
     store: context.adminSession.storeFqdn,
     apiVersion: context.version,
     question: input.analysis,
-    api: agentResult.api,
-    query: agentResult.query,
     rationale: agentResult.summary,
-    result: agentResult.result,
+    queries: agentResult.queries,
   }
 }

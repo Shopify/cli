@@ -39,9 +39,7 @@ describe('runStoreReport', () => {
 
   test('assembles the report envelope from the agent result', async () => {
     const agentResult: ReportAgentResult = {
-      api: 'shopifyql',
-      query: 'FROM sales SHOW total_sales SINCE -30d',
-      result: {columns: [], rows: []},
+      queries: [{api: 'shopifyql', query: 'FROM sales SHOW total_sales SINCE -30d', result: {columns: [], rows: []}}],
       summary: 'Your total sales over the last 30 days were $100.',
     }
     runAgent.mockResolvedValue(agentResult)
@@ -55,17 +53,18 @@ describe('runStoreReport', () => {
       store: 'shop.myshopify.com',
       apiVersion: '2025-10',
       question: 'What were my sales in the last 30 days?',
-      api: 'shopifyql',
-      query: 'FROM sales SHOW total_sales SINCE -30d',
       rationale: 'Your total sales over the last 30 days were $100.',
-      result: {columns: [], rows: []},
+      queries: agentResult.queries,
     })
     expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
     expect(prepareContext).toHaveBeenCalledWith({store: 'shop.myshopify.com', userSpecifiedVersion: undefined})
   })
 
   test('passes the store context, question, and proxy defaults to the agent', async () => {
-    runAgent.mockResolvedValue({api: 'admin', query: '{ shop { name } }', result: {}, summary: 'ok'})
+    runAgent.mockResolvedValue({
+      queries: [{api: 'admin', query: '{ shop { name } }', result: {}}],
+      summary: 'ok',
+    })
 
     await runStoreReport(
       {store: 'shop.myshopify.com', analysis: 'What is my shop name?', version: '2025-07'},
@@ -85,7 +84,10 @@ describe('runStoreReport', () => {
   test('reads a custom proxy url and model from the environment', async () => {
     vi.stubEnv('SHOPIFY_AI_PROXY_URL', 'https://custom.proxy/v2')
     vi.stubEnv('SHOPIFY_AI_PROXY_MODEL', 'gpt-custom')
-    runAgent.mockResolvedValue({api: 'shopifyql', query: 'FROM sales SHOW orders', result: {}, summary: 's'})
+    runAgent.mockResolvedValue({
+      queries: [{api: 'shopifyql', query: 'FROM sales SHOW orders', result: {}}],
+      summary: 's',
+    })
 
     await runStoreReport({store: 'shop.myshopify.com', analysis: 'How many orders?'}, dependencies)
 
