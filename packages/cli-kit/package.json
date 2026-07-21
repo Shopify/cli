@@ -134,7 +134,6 @@
     "find-up": "6.3.0",
     "form-data": "4.0.6",
     "fs-extra": "11.1.0",
-    "gradient-string": "2.0.2",
     "graphql": "16.14.2",
     "graphql-request": "6.1.0",
     "h3": "1.15.11",
@@ -167,7 +166,6 @@
   "devDependencies": {
     "@types/diff": "^5.2.3",
     "@types/fs-extra": "9.0.13",
-    "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.17.24",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
