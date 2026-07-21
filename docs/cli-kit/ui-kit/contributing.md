@@ -14,7 +14,7 @@
     - [`Text` vs `Box`](#text-vs-box)
     - [Utility components](#utility-components)
       - [`TokenizedText`](#tokenizedtext)
-      - [`TextAnimation`](#textanimation)
+      - [`LoadingIndicator`](#loadingindicator)
   - [Helpful tips](#helpful-tips)
     - [Handling user input](#handling-user-input)
     - [Components that deal with async functions](#components-that-deal-with-async-functions)
@@ -166,11 +166,10 @@ add a new interface named `ItalicToken` in the `TokenizedText` and decide how it
 In this example we would use `inline`. But before you go ahead and add a new token, consider if all the users of UI kit
 might need this new token or not. If the answer is no, then a simple regular component will suffice.
 
-#### `TextAnimation`
+#### `LoadingIndicator`
 
-At the moment this component simply animates text with a rainbow effect, however it can be extended to support more animations.
-If you wish to do so you can take a look at how [chalk-animation](https://github.com/bokub/chalk-animation/blob/master/index.js)
-implemented animations and take inspiration from there.
+This component renders the branded loading indicator used by task-based UI components. `LoadingBar` renders it only in TTY
+environments so captured and redirected output remains static.
 
 ## Helpful tips
 
