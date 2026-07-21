@@ -138,6 +138,10 @@ export default class Push extends ThemeCommand {
     recordTiming('theme-command:push')
   }
 
+  protected airlockPolicy(): 'upload' {
+    return 'upload'
+  }
+
   protected storeAuthScopes(): string[] {
     return ['read_themes', 'write_themes']
   }

@@ -4,7 +4,7 @@ import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-export function ensureThemeStore(flags: {store: string | undefined}): string {
+export function ensureThemeStore(flags: {store: string | undefined; remember?: boolean}): string {
   const store = flags.store ?? getThemeStore()
   if (!store) {
     throw recordError(
@@ -18,6 +18,6 @@ export function ensureThemeStore(flags: {store: string | undefined}): string {
       ),
     )
   }
-  setThemeStore(store)
+  if (flags.remember ?? true) setThemeStore(store)
   return store
 }

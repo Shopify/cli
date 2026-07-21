@@ -45,6 +45,19 @@ describe('metafields-pull', () => {
     capturedOutput.clear()
   })
 
+  test('reuses a supplied session without store lookup or authentication', async () => {
+    const suppliedSession = {token: 'supplied-token', storeFqdn: 'example.myshopify.com'}
+    vi.mocked(metafieldDefinitionsByOwnerType).mockResolvedValue([])
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      await metafieldsPull({path: tmpDir}, suppliedSession)
+    })
+
+    expect(ensureThemeStore).not.toHaveBeenCalled()
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    expect(metafieldDefinitionsByOwnerType).toHaveBeenCalledWith('ARTICLE', suppliedSession)
+  })
+
   test('should download metafields for each ownerType and write to file', async () => {
     // Given
     vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation((type: any, _session: AdminSession) => {
