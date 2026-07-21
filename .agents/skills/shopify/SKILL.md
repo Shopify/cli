@@ -65,20 +65,31 @@ For a bare docs question that fits no family, answer straight from `shopify doc 
 
 ### 3) Validate the outcome last — mandatory, non-skippable
 
-After the work is complete, validate the final outcome for the surface you touched:
+Validation is always required, but *what* you validate depends on the outcome you produced. Identify which outcome it is, then apply the matching rule. In both cases use the topic that matches the surface you worked on (for example `shopify validate functions`, `shopify validate theme`, `shopify validate config`); the topics in the table are illustrative — run `shopify validate --help` for the current list.
 
-```bash
-shopify validate [topic]
-```
+**Outcome A — a chat reply containing an example (nothing written to disk).**
+The example you show the user must be a *complete, fully valid* artifact — never a fragment and never placeholder syntax:
 
-- Use the topic for what you produced (for example `shopify validate functions`, `shopify validate theme`, `shopify validate config`). The topics in the table are illustrative — run `shopify validate --help` for the current list.
-- Read everything it reports, **resolve every finding**, and re-run until it passes clean.
-- Do not present the task as finished while `shopify validate` reports outstanding issues. An unresolved finding means the task is not done.
+- No elisions or placeholders: no `...`, `// rest here`, `<your-value>`, `YOUR_TOKEN`, `TODO`, or omitted required fields. Every id, import, field, and closing brace is real and present.
+- It must stand alone: the user could copy it verbatim and it would parse and run as-is.
+- Prove it before sending. Write the example to a temporary file, run the appropriate `shopify validate [topic]` against that file, resolve anything it reports, then delete the temp file. Do not present an example you have not validated this way.
+
+**Outcome B — a change on the filesystem (files created or modified).**
+Validate *every* file you touched, each with the validation appropriate to that file's surface:
+
+- Run `shopify validate [topic]` for every surface your change spans — if you touched a Function and a theme file, validate both `functions` and `theme`. Validating one and stopping is not enough.
+- Do not validate only the "main" file while skipping the config, manifest, or generated files the same change modified.
+
+For either outcome:
+
+- Read everything validation reports, **resolve every finding**, and re-run until it passes clean.
+- Do not present the task as finished while validation reports outstanding issues. An unresolved finding means the task is not done.
 
 ## Gotchas
 
 - Both brackets are required. Skipping the doc search is the most common failure — do it first, every time, even for questions that look trivial. Validation is not "best effort"; the task is complete only when `shopify validate [topic]` is clean.
 - Don't guess command names or flags. The command surface changes between versions — `shopify commands` lists what exists and `<command> --help` documents its flags. Confirm there before running, especially for `shopify validate`.
+- A code example in a chat reply is an outcome too. A snippet with `...` or placeholder values is not "done" — write it to a temp file and validate it exactly like a committed file before you show it.
 - `--api-name` narrows recall; if results look thin or miss the point, drop the flag and search across all APIs.
 - `shopify doc search` returns ranked chunks, not a full page. When a chunk points at a page you need in full, follow up with `shopify doc fetch --url`.
 - Match the API version between search and output; mixing versions produces subtly wrong fields.
