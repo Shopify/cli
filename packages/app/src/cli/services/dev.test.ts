@@ -4,6 +4,7 @@ import {renderDev} from './dev/ui.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {DevSessionLogger} from './dev/processes/dev-session/dev-session-logger.js'
+import {installAppDependencies} from './dependencies.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -13,7 +14,7 @@ import {
   testProject,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -21,17 +22,27 @@ import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./dev/processes/setup-dev-processes.js')
 vi.mock('./dev/ui.js')
 vi.mock('./app/select-app.js')
+vi.mock('./dependencies.js')
 vi.mock('@shopify/cli-kit/node/analytics')
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('../utilities/mkcert.js')
+vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('dev', () => {
+  beforeEach(() => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
+  })
+
   test('logs store domain metadata when launching dev', async () => {
     const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
     const app = testAppLinked()
@@ -87,9 +98,81 @@ describe('dev', () => {
       }),
     )
     expect(reportAnalyticsEvent).toHaveBeenCalledWith({config: {}, exitMode: 'ok'})
+    expect(renderSingleTask).not.toHaveBeenCalled()
 
     addPublicMetadata.mockRestore()
     addSensitiveMetadata.mockRestore()
+  })
+
+  test('renders the interactive layout before installing dependencies', async () => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+    const app = testAppLinked()
+    const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
+    let loadingIndicatorStarted = false
+    let loadingIndicatorFinished = false
+    let dependencyInstallationStarted = () => {}
+    const dependencyInstallationStart = new Promise<void>((resolve) => {
+      dependencyInstallationStarted = resolve
+    })
+    let finishDependencyInstallation = () => {}
+    const dependencyInstallationFinished = new Promise<void>((resolve) => {
+      finishDependencyInstallation = resolve
+    })
+
+    vi.mocked(fetchAppRemoteConfiguration).mockImplementation(async () => {
+      expect(loadingIndicatorStarted).toBe(true)
+      return {name: 'Remote app', application_url: '', embedded: true}
+    })
+    vi.mocked(getAvailableTCPPort).mockResolvedValue(3456)
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
+      loadingIndicatorStarted = true
+      const result = await task(() => {})
+      loadingIndicatorFinished = true
+      return result
+    })
+    vi.mocked(installAppDependencies).mockImplementation(async () => {
+      dependencyInstallationStarted()
+      await dependencyInstallationFinished
+    })
+    vi.mocked(setupDevProcesses).mockResolvedValue({
+      processes: [],
+      previewUrl: 'https://dev-store.myshopify.com/admin/apps/api-key',
+      graphiqlUrl: undefined,
+      devSessionStatusManager: {} as any,
+    })
+    vi.mocked(renderDev).mockImplementation(async ({processes, abortController}) => {
+      expect(loadingIndicatorFinished).toBe(true)
+      await processes[0]?.action(process.stdout, process.stderr, abortController.signal)
+    })
+
+    const devPromise = dev({
+      app,
+      project: testProject({usesWorkspaces: false}),
+      remoteApp: testOrganizationApp({apiKey: 'api-key'}),
+      organization: testOrganization(),
+      specifications: [],
+      developerPlatformClient: testDeveloperPlatformClient(),
+      store,
+      directory: app.directory,
+      update: false,
+      commandConfig: {} as any,
+      skipDependenciesInstallation: false,
+      tunnel: {mode: 'custom', url: 'https://localhost:3456'},
+    })
+
+    await dependencyInstallationStart
+    expect(renderSingleTask).toHaveBeenCalledWith(
+      expect.objectContaining({title: expect.objectContaining({value: 'Starting dev preview'})}),
+    )
+    expect(renderSingleTask).toHaveBeenCalledOnce()
+    expect(renderDev).toHaveBeenCalledOnce()
+    expect(setupDevProcesses).not.toHaveBeenCalled()
+
+    finishDependencyInstallation()
+    await devPromise
+
+    expect(setupDevProcesses).toHaveBeenCalledOnce()
   })
 })
 

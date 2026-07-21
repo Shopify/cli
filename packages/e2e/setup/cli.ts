@@ -5,6 +5,11 @@ import {execa, type Options as ExecaOptions} from 'execa'
 import type {E2EEnv} from './env.js'
 import type * as pty from 'node-pty'
 
+// Full-screen Ink layouts redraw entire frames. Searching the complete PTY history
+// after every frame becomes progressively more expensive during long-running commands.
+const OUTPUT_SEARCH_WINDOW = 1_000_000
+const RAW_OUTPUT_OVERLAP = 4_096
+
 export interface ExecResult {
   stdout: string
   stderr: string
@@ -143,10 +148,27 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         })
 
         let output = ''
+        let rawOutputOverlap = ''
+        let searchableOutputLength = 0
+        const searchableOutputChunks: string[] = []
         const outputWaiters: {text: string; resolve: () => void; reject: (err: Error) => void}[] = []
+
+        const recentRawOutput = () => output.slice(-OUTPUT_SEARCH_WINDOW)
+        const searchableOutput = () => searchableOutputChunks.join('')
 
         ptyProcess.onData((data: string) => {
           output += data
+          // Include a small overlap so text split across PTY chunks remains
+          // searchable, then retain only a bounded amount of normalized output.
+          // This avoids repeatedly stripping the entire full-screen render history.
+          const normalizedChunk = stripAnsi(`${rawOutputOverlap}${data}`)
+          searchableOutputChunks.push(normalizedChunk)
+          searchableOutputLength += normalizedChunk.length
+          while (searchableOutputLength > OUTPUT_SEARCH_WINDOW) {
+            const removedChunk = searchableOutputChunks.shift()!
+            searchableOutputLength -= removedChunk.length
+          }
+          rawOutputOverlap = `${rawOutputOverlap}${data}`.slice(-RAW_OUTPUT_OVERLAP)
           if (process.env.DEBUG === '1') {
             process.stdout.write(data)
           }
@@ -154,9 +176,9 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           // Check if any waiters are satisfied (check both raw and stripped
           // output). resolve() removes the waiter from outputWaiters internally,
           // so we iterate over a snapshot to avoid index shifting during the loop.
-          const stripped = stripAnsi(output)
+          const raw = recentRawOutput()
           for (const waiter of [...outputWaiters]) {
-            if (stripped.includes(waiter.text) || output.includes(waiter.text)) {
+            if (normalizedChunk.includes(waiter.text) || raw.includes(waiter.text)) {
               waiter.resolve()
             }
           }
@@ -188,7 +210,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
               typeof opts === 'number' ? {timeoutMs: opts, signal: undefined} : opts
 
             // Check if already in output (raw or stripped)
-            if (stripAnsi(output).includes(text) || output.includes(text)) {
+            if (searchableOutput().includes(text) || recentRawOutput().includes(text)) {
               return Promise.resolve()
             }
             if (signal?.aborted) {

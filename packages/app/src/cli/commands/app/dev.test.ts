@@ -1,7 +1,7 @@
 import Dev from './dev.js'
 import DevClean from './dev/clean.js'
 import {devClean} from '../../services/dev-clean.js'
-import {dev, withDevSession} from '../../services/dev.js'
+import {dev, withDevSession, type DevOptions} from '../../services/dev.js'
 import {appDevOutputSchema} from '../../services/dev/schema.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
@@ -45,13 +45,20 @@ vi.mock('../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/metadata')
 
 describe('app dev command', () => {
+  let resolvedDevOptions: DevOptions | undefined
+
   beforeEach(() => {
     vi.mocked(dev).mockReset()
+    vi.mocked(dev).mockImplementation(async (commandOptions) => {
+      resolvedDevOptions = commandOptions
+      return resolvedDevOptions.app
+    })
     vi.mocked(linkedAppContext).mockReset()
     vi.mocked(storeContext).mockReset()
     vi.mocked(getTunnelMode).mockReset()
     vi.mocked(checkFolderIsValidApp).mockReset()
     vi.mocked(addPublicMetadata).mockReset()
+    resolvedDevOptions = undefined
   })
 
   function mockAppAndStore(directory: string) {
@@ -357,6 +364,7 @@ describe('app dev command', () => {
       expect(dev).toHaveBeenCalledWith(
         expect.objectContaining({installMkcert: undefined, unsafeValidation: false, tunnel: {mode: 'auto'}}),
       )
+      expect(resolvedDevOptions).toEqual(expect.objectContaining({installMkcert: undefined, tunnel: {mode: 'auto'}}))
     })
   })
 
