@@ -4738,6 +4738,26 @@
       "value": "export interface search {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
+  "skillinstall": {
+    "docs-shopify.dev/commands/interfaces/skill-install.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/skill-install.interface.ts",
+      "name": "skillinstall",
+      "description": "The following flags are available for the `skill install` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/skill-install.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--package-manager <value>",
+          "value": "string",
+          "description": "The package manager to use to download the latest version of the skills CLI.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PACKAGE_MANAGER"
+        }
+      ],
+      "value": "export interface skillinstall {\n  /**\n   * The package manager to use to download the latest version of the skills CLI.\n   * @environment SHOPIFY_FLAG_PACKAGE_MANAGER\n   */\n  '--package-manager <value>'?: string\n}"
+    }
+  },
   "storeauthlist": {
     "docs-shopify.dev/commands/interfaces/store-auth-list.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/store-auth-list.interface.ts",
