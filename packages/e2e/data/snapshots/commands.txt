@@ -96,6 +96,8 @@
 │  ├─ unlink
 │  └─ update
 ├─ search
+├─ skill
+│  └─ install
 ├─ store
 │  ├─ auth
 │  │  └─ list
