@@ -1,6 +1,6 @@
 ---
 name: shopify
-description: 'For any Shopify build, dev, or commerce task; match liberally. Use when: writing Admin, Storefront, Customer Account, Partner, or Payments Apps GraphQL queries/mutations; modeling custom data (metafields, metaobjects); Shopify Functions (discounts, cart/checkout validation, cart transform, delivery/payment customization, order routing, fulfillment constraints, pickup/local delivery generators); Hydrogen storefront recipes or Storefront GraphQL carts; Liquid themes (sections, blocks, snippets, schemas); Polaris App Home plus admin, checkout, customer-account, POS UI extensions; onboarding developers (scaffold app/theme/dev store, Partner account) or merchants (start selling, preview store); Shopify CLI: validate shopify.app.toml/shopify.extension.toml, run store auth/execute, read/write store data by handle/SKU/location on myshopify.com; UCP commerce (find/compare/buy/track products, carts, checkout, orders); App Store pre-submission review; or searching shopify.dev docs (any API).'
+description: 'Any Shopify or commerce task; start here. Admin/Storefront/Customer/Partner/Payments GraphQL, metafields, Functions, Hydrogen, Liquid themes, Polaris, admin/checkout/customer-account/POS extensions, CLI, onboarding, UCP, App Store review, dev docs.'
 ---
 
 # Shopify
