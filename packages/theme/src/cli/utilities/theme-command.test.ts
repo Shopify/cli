@@ -14,7 +14,13 @@ import {
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {resolvePath} from '@shopify/cli-kit/node/path'
-import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {
+  renderConcurrent,
+  renderConfirmationPrompt,
+  renderError,
+  renderInfo,
+  renderWarning,
+} from '@shopify/cli-kit/node/ui'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -165,6 +171,19 @@ class TestProtectedThemeCommand extends TestThemeCommand {
 
   protected airlockPreflight(targets: any[]): void {
     this.preflightTargets = targets
+  }
+}
+
+class TestDefaultProtectedThemeCommand extends TestThemeCommand {
+  events: string[] = []
+
+  async command(...args: Parameters<TestThemeCommand['command']>): Promise<void> {
+    this.events.push('command')
+    await super.command(...args)
+  }
+
+  protected airlockPolicy(): 'upload' {
+    return 'upload'
   }
 }
 
@@ -340,6 +359,41 @@ describe('ThemeCommand', () => {
         expect.objectContaining({store: 'test-store.myshopify.com', source: 'default'}),
       ])
       expect(command.commandCalls[0]).toMatchObject({flags: {store: 'test-store.myshopify.com'}})
+    })
+
+    test('protected trusted target renders the default preflight between authentication and command', async () => {
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'default', store: 'test-store.myshopify.com'}],
+      })
+      await CommandConfig.load()
+      const command = new TestDefaultProtectedThemeCommand([], CommandConfig)
+      vi.mocked(ensureAuthenticatedThemes).mockImplementation(async () => {
+        command.events.push('authentication')
+        return mockSession
+      })
+      vi.mocked(renderInfo).mockImplementation(() => {
+        command.events.push('preflight')
+        return undefined
+      })
+
+      await command.run()
+
+      expect(command.events).toEqual(['authentication', 'preflight', 'command'])
+      expect(renderInfo).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'Theme Airlock',
+          customSections: expect.arrayContaining([
+            expect.objectContaining({
+              body: expect.objectContaining({
+                tabularData: expect.arrayContaining([['Operation', 'theme testdefaultprotectedthemecommand']]),
+              }),
+            }),
+          ]),
+        }),
+      )
     })
 
     test('malformed project trust rejects before shared lifecycle work', async () => {

@@ -2,6 +2,7 @@ import {ensureThemeStore} from './theme-store.js'
 import {loadThemeProjectTrust} from './theme-airlock/config.js'
 import {resolveBatchAirlockTargets, resolveSingleAirlockTarget} from './theme-airlock/resolver.js'
 import {bootstrapThemeAirlock, interactiveBootstrapUI} from './theme-airlock/bootstrap.js'
+import {renderAirlockPreflight} from './theme-airlock/preflight.js'
 import {ThemeAirlockError} from './theme-airlock/types.js'
 import {configurationFileName} from '../constants.js'
 import {getThemeStore, useThemeStoreContext} from '../services/local-storage.js'
@@ -196,7 +197,9 @@ export default abstract class ThemeCommand extends Command {
     return undefined
   }
 
-  protected airlockPreflight(_targets: AirlockTarget[]): void {}
+  protected airlockPreflight(targets: AirlockTarget[]): void {
+    renderAirlockPreflight(this.constructor.name.toLowerCase(), targets)
+  }
 
   private async resolveAirlockSingle(
     flags: FlagValues,
