@@ -14,7 +14,6 @@ const MAX_TURNS = 25
 export interface ReportAgentInput {
   context: AdminStoreGraphQLContext
   question: string
-  forcedApi?: StoreReportApi
   proxyBaseUrl: string
   proxyToken: string
   model: string
@@ -118,7 +117,7 @@ export async function runReportAgent(
   const tools = createReportTools(input.context, accumulator, deps.executors)
 
   const summary = await deps.runAgentLoop({
-    instructions: buildReportInstructions({forcedApi: input.forcedApi}),
+    instructions: buildReportInstructions(),
     model: input.model,
     tools,
     question: input.question,

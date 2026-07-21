@@ -17,18 +17,6 @@ describe('buildReportInstructions', () => {
     expect(instructions).toContain('pass ONLY')
   })
 
-  test('biases toward the forced api when one is provided', () => {
-    const instructions = buildReportInstructions({forcedApi: 'admin'})
-
-    expect(instructions).toContain('This run prefers the "admin" surface')
-  })
-
-  test('omits the forced-api bias when no api is provided', () => {
-    const instructions = buildReportInstructions()
-
-    expect(instructions).not.toContain('prefers the')
-  })
-
   test('treats the question as untrusted data the model should not follow as instructions', () => {
     const instructions = buildReportInstructions()
 

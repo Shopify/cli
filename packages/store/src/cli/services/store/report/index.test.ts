@@ -64,11 +64,11 @@ describe('runStoreReport', () => {
     expect(prepareContext).toHaveBeenCalledWith({store: 'shop.myshopify.com', userSpecifiedVersion: undefined})
   })
 
-  test('passes the store context, question, forced api, and proxy defaults to the agent', async () => {
+  test('passes the store context, question, and proxy defaults to the agent', async () => {
     runAgent.mockResolvedValue({api: 'admin', query: '{ shop { name } }', result: {}, summary: 'ok'})
 
     await runStoreReport(
-      {store: 'shop.myshopify.com', analysis: 'What is my shop name?', api: 'admin', version: '2025-07'},
+      {store: 'shop.myshopify.com', analysis: 'What is my shop name?', version: '2025-07'},
       dependencies,
     )
 
@@ -76,7 +76,6 @@ describe('runStoreReport', () => {
     expect(runAgent).toHaveBeenCalledWith({
       context,
       question: 'What is my shop name?',
-      forcedApi: 'admin',
       proxyBaseUrl: 'https://proxy.shopify.ai/v1',
       proxyToken: 'test-token',
       model: 'gpt-5.1',

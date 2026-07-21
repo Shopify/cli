@@ -2,13 +2,12 @@ import {runReportAgent} from './agent.js'
 import {prepareAdminStoreGraphQLContext} from './execute.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import type {StoreReportApi, StoreReportResult} from './types.js'
+import type {StoreReportResult} from './types.js'
 
 export interface StoreReportInput {
   store: string
   analysis: string
   version?: string
-  api?: StoreReportApi
 }
 
 interface StoreReportDependencies {
@@ -64,7 +63,6 @@ export async function runStoreReport(
   const agentResult = await deps.runAgent({
     context,
     question: input.analysis,
-    forcedApi: input.api,
     proxyBaseUrl,
     proxyToken,
     model,
