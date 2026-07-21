@@ -28,11 +28,11 @@ Use this to confirm the exact surface of any command in this skill — including
 Before producing any answer, query, mutation, component, config, or scaffold, search shopify.dev:
 
 ```bash
-shopify doc search --query "<what you are building>" [--api-name admin|storefront|customer|partner|payments|functions|hydrogen|liquid|...] [--api-version latest|2025-10|...]
+shopify doc search --query "<what you are building>" [--api-name admin|storefront|customer|partner|payments-apps|functions|hydrogen|liquid|...] [--api-version latest|2025-10|...]
 ```
 
 - It queries the shopify.dev vector store and prints the most relevant documentation chunks as JSON.
-- Pass `--api-name` to scope to a surface; omit it to search across ALL APIs — that omission is the intended generic discovery / fallback path.
+- Pass `--api-name` to scope to a surface; omit it to search across ALL APIs — that omission is the intended generic discovery / fallback path. The valid API names are `admin`, `admin-extensions`, `checkout-ui-extensions`, `customer-account-ui-extensions`, `pos-ui-extensions`, `app-home`, `storefront`, `partner`, `customer`, `payments-apps`, `hydrogen`, `liquid`, `storefront-web-components`, and `functions`.
 - Pass `--api-version latest` unless the task pins a version (for example `2025-10`).
 - Refine the query and re-run until the returned chunks genuinely cover the task. Thin or off-topic results mean you are not ready to answer yet.
 
