@@ -22,10 +22,71 @@ import {
   copyDirectoryContents,
   symlink,
   fileRealPath,
+  readdir,
+  writeFileAtomically,
 } from './fs.js'
 import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
+import {rename as fsRename, stat} from 'node:fs/promises'
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>()
+  return {...actual, rename: vi.fn(actual.rename)}
+})
+
+describe('writeFileAtomically', () => {
+  test('replaces existing file content', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      await writeFile(path, 'original content')
+
+      await writeFileAtomically(path, 'replacement content')
+
+      await expect(readFile(path)).resolves.toBe('replacement content')
+    })
+  })
+
+  test('removes the temporary sibling after success', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const fileName = 'test-file'
+      const path = joinPath(tmpDir, fileName)
+
+      await writeFileAtomically(path, 'content')
+
+      const entries = await readdir(tmpDir)
+      expect(entries.filter((entry) => entry.startsWith(`${fileName}.`) && entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('preserves the mode of an existing file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      await writeFile(path, 'original content')
+      await chmod(path, 0o754)
+      const originalMode = (await stat(path)).mode
+
+      await writeFileAtomically(path, 'replacement content')
+
+      expect((await stat(path)).mode).toBe(originalMode)
+    })
+  })
+
+  test('leaves the original unchanged and removes the temporary sibling when replacement fails', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const fileName = 'test-file'
+      const path = joinPath(tmpDir, fileName)
+      await writeFile(path, 'original content')
+      vi.mocked(fsRename).mockRejectedValueOnce(new Error('replacement failed'))
+
+      await expect(writeFileAtomically(path, 'replacement content')).rejects.toThrow('replacement failed')
+
+      await expect(readFile(path)).resolves.toBe('original content')
+      const entries = await readdir(tmpDir)
+      expect(entries.filter((entry) => entry.startsWith(`${fileName}.`) && entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+})
 
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {

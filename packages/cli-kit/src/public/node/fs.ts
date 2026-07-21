@@ -54,6 +54,7 @@ import {
   symlink as fsSymlink,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
+import {randomUUID} from 'node:crypto'
 import * as os from 'os'
 
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
@@ -227,6 +228,25 @@ export async function writeFile(
 ): Promise<void> {
   outputDebug(outputContent`Writing some content to file at ${outputToken.path(path)}...`)
   await fsWriteFile(path, data, options)
+}
+
+/**
+ * Atomically writes text content to a file through a sibling temporary file.
+ *
+ * @param path - Path to the file to be written.
+ * @param data - Text content to be written.
+ */
+export async function writeFileAtomically(path: string, data: string): Promise<void> {
+  const temporaryPath = `${path}.${process.pid}.${randomUUID()}.tmp`
+  const existingMode = (await fileExists(path)) ? (await fsStat(path)).mode : undefined
+
+  try {
+    await writeFile(temporaryPath, data)
+    if (existingMode !== undefined) await chmod(temporaryPath, existingMode)
+    await renameFile(temporaryPath, path)
+  } finally {
+    await removeFile(temporaryPath)
+  }
 }
 
 /**
