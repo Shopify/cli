@@ -33,8 +33,6 @@ overrides:
   '@shopify/cli-hydrogen>@shopify/plugin-cloudflare': link:./packages/plugin-cloudflare
   nanoid: 3.3.8
   graphql: 16.14.2
-  '@shopify/cli-kit>@types/react': 19.2.3
-  '@shopify/store>@types/react': 19.2.3
 
 packageExtensionsChecksum: sha256-G4WULHf2u2nwhnVJAjqktHesCv0sgD5Gn1xGgTJII2g=
 
@@ -418,7 +416,7 @@ importers:
         version: 6.0.2
       ink:
         specifier: 6.8.0
-        version: 6.8.0(@types/react@19.2.3)(react@19.2.4)
+        version: 6.8.0(@types/react@18.3.12)(react@19.2.4)
       is-executable:
         specifier: 2.0.2
         version: 2.0.2
@@ -502,11 +500,11 @@ importers:
         specifier: 4.17.24
         version: 4.17.24
       '@types/react':
-        specifier: 19.2.3
-        version: 19.2.3
+        specifier: 18.3.12
+        version: 18.3.12
       '@types/react-dom':
         specifier: ^19.0.0
-        version: 19.2.3(@types/react@19.2.3)
+        version: 19.2.3(@types/react@18.3.12)
       '@types/semver':
         specifier: ^7.5.2
         version: 7.7.1
@@ -679,7 +677,7 @@ importers:
         version: 0.19.0(zod@4.4.3)
       '@json-render/ink':
         specifier: 0.19.0
-        version: 0.19.0(ink@6.8.0(@types/react@19.2.3)(react@19.2.4))(react@19.2.4)
+        version: 0.19.0(ink@6.8.0(@types/react@18.3.12)(react@19.2.4))(react@19.2.4)
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.29.0(zod@4.4.3)
@@ -700,7 +698,10 @@ importers:
         version: link:../organizations
       ink:
         specifier: ^6.8.0
-        version: 6.8.0(@types/react@19.2.3)(react@19.2.4)
+        version: 6.8.0(@types/react@18.3.12)(react@19.2.4)
+      marked:
+        specifier: 17.0.6
+        version: 17.0.6
       openai:
         specifier: ^6.46.0
         version: 6.48.0(@aws-sdk/credential-provider-node@3.972.37)(@smithy/signature-v4@5.4.6)(ws@8.21.0)(zod@4.4.3)
@@ -712,8 +713,8 @@ importers:
         version: 4.4.3
     devDependencies:
       '@types/react':
-        specifier: 19.2.3
-        version: 19.2.3
+        specifier: 18.3.12
+        version: 18.3.12
       '@vitest/coverage-istanbul':
         specifier: ^3.2.6
         version: 3.2.6(vitest@4.1.8)
@@ -4486,9 +4487,6 @@ packages:
 
   '@types/react@18.3.12':
     resolution: {integrity: sha512-D2wOSq/d6Agt28q7rSI3jhU7G6aiuzljDGZ2hTZHIkrTLUI+AF3WMeKkEZ9nN2fkBAlcktT6vcZjDFiIhMYEQw==, tarball: https://registry.npmjs.org/@types/react/-/react-18.3.12.tgz}
-
-  '@types/react@19.2.3':
-    resolution: {integrity: sha512-k5dJVszUiNr1DSe8Cs+knKR6IrqhqdhpUwzqhkS8ecQTSf3THNtbfIp/umqHMpX2bv+9dkx3fwDv/86LcSfvSg==, tarball: https://registry.npmjs.org/@types/react/-/react-19.2.3.tgz}
 
   '@types/readdir-glob@1.1.5':
     resolution: {integrity: sha512-raiuEPUYqXu+nvtY2Pe8s8FEmZ3x5yAH4VkLdihcPdalvsHltomrRC9BzuStrJ9yk06470hS0Crw0f1pXqD+Hg==, tarball: https://registry.npmjs.org/@types/readdir-glob/-/readdir-glob-1.1.5.tgz}
@@ -12644,10 +12642,10 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
-  '@json-render/ink@0.19.0(ink@6.8.0(@types/react@19.2.3)(react@19.2.4))(react@19.2.4)':
+  '@json-render/ink@0.19.0(ink@6.8.0(@types/react@18.3.12)(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@json-render/core': 0.19.0(zod@4.4.3)
-      ink: 6.8.0(@types/react@19.2.3)(react@19.2.4)
+      ink: 6.8.0(@types/react@18.3.12)(react@19.2.4)
       marked: 17.0.6
       react: 19.2.4
       zod: 4.4.3
@@ -14651,10 +14649,6 @@ snapshots:
     dependencies:
       '@types/react': 18.3.12
 
-  '@types/react-dom@19.2.3(@types/react@19.2.3)':
-    dependencies:
-      '@types/react': 19.2.3
-
   '@types/react-transition-group@4.4.12(@types/react@18.3.12)':
     dependencies:
       '@types/react': 18.3.12
@@ -14662,10 +14656,6 @@ snapshots:
   '@types/react@18.3.12':
     dependencies:
       '@types/prop-types': 15.7.15
-      csstype: 3.2.3
-
-  '@types/react@19.2.3':
-    dependencies:
       csstype: 3.2.3
 
   '@types/readdir-glob@1.1.5':
@@ -17409,7 +17399,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  ink@6.8.0(@types/react@19.2.3)(react@19.2.4):
+  ink@6.8.0(@types/react@18.3.12)(react@19.2.4):
     dependencies:
       '@alcalzone/ansi-tokenize': 0.2.5
       ansi-escapes: 7.3.0
@@ -17438,7 +17428,7 @@ snapshots:
       ws: 8.21.0
       yoga-layout: 3.2.1
     optionalDependencies:
-      '@types/react': 19.2.3
+      '@types/react': 18.3.12
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate

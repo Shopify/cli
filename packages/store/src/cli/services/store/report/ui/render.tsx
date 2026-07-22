@@ -1,30 +1,10 @@
 import {createFakeStdin} from './fake-stdin.js'
 import {reportCatalog} from './catalog.js'
-import {createRenderer, standardComponents} from '@json-render/ink'
+import {reportComponents} from './renderers/index.js'
+import {createRenderer} from '@json-render/ink'
 import {render} from 'ink'
 import React from 'react'
 import type {Spec} from '@json-render/core'
-
-// `standardComponents` is intentionally declared as an open registry by json-render. Selecting
-// the catalog entries explicitly gives `createRenderer` the exact closed component map it expects.
-const reportComponents = {
-  Box: standardComponents.Box!,
-  Text: standardComponents.Text!,
-  Heading: standardComponents.Heading!,
-  Divider: standardComponents.Divider!,
-  Badge: standardComponents.Badge!,
-  Table: standardComponents.Table!,
-  Card: standardComponents.Card!,
-  KeyValue: standardComponents.KeyValue!,
-  StatusLine: standardComponents.StatusLine!,
-  BarChart: standardComponents.BarChart!,
-  Sparkline: standardComponents.Sparkline!,
-  List: standardComponents.List!,
-  ListItem: standardComponents.ListItem!,
-  Markdown: standardComponents.Markdown!,
-  Metric: standardComponents.Metric!,
-  Callout: standardComponents.Callout!,
-}
 
 const ReportRenderer = createRenderer(reportCatalog, reportComponents)
 

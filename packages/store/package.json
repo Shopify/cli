@@ -49,6 +49,7 @@
     "@shopify/dev-mcp": "^1.14.3",
     "@shopify/organizations": "4.5.0",
     "ink": "^6.8.0",
+    "marked": "17.0.6",
     "openai": "^6.46.0",
     "react": "^19.2.4",
     "zod": "^4.0.0"
