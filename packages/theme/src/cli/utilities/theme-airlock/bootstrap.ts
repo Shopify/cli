@@ -1,8 +1,11 @@
 import {addTrustedThemeEnvironment} from './writer.js'
 import {ThemeAirlockError} from './types.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 import type {AirlockTarget} from './types.js'
+
+type BootstrapUI = Pick<BootstrapOptions<unknown>, 'confirmStore' | 'promptStore' | 'promptEnvironment'>
 
 interface BootstrapOptions<TSession> {
   themePath: string
@@ -34,6 +37,28 @@ function normalizeBootstrapStore(store: string): string {
 function requiredBootstrapValue(value: string | undefined, message: string): string {
   if (hasValue(value)) return value
   throw bootstrapCancelled(message)
+}
+
+export function interactiveBootstrapUI(): BootstrapUI {
+  return {
+    confirmStore: async (store) =>
+      renderSelectPrompt({
+        message: `The store ${store} is untrusted. Choose how to continue.`,
+        choices: [
+          {label: `Trust ${store}`, value: 'trust' as const},
+          {label: 'Choose a different store', value: 'choose' as const},
+          {label: 'Cancel', value: 'cancel' as const},
+        ],
+      }),
+    promptStore: async () => {
+      const store = await renderTextPrompt({message: 'Enter the Shopify store to trust'})
+      return hasValue(store) ? store : undefined
+    },
+    promptEnvironment: async () => {
+      const environment = await renderTextPrompt({message: 'Enter a name for this theme environment'})
+      return hasValue(environment) ? environment : undefined
+    },
+  }
 }
 
 export async function bootstrapThemeAirlock<TSession>(
