@@ -334,6 +334,9 @@ importers:
       '@shopify/plugin-did-you-mean':
         specifier: 4.5.0
         version: link:../plugin-did-you-mean
+      '@shopify/shopify-dev-tools':
+        specifier: workspace:*
+        version: link:../shopify-dev-tools
       '@shopify/store':
         specifier: 4.5.0
         version: link:../store
