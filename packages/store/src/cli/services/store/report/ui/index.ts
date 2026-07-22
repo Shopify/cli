@@ -4,6 +4,7 @@ import {renderStoreReportResult} from '../output.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import type {GenerateReportSpecInput, SpecGenerationFailure} from './spec.js'
 import type {StoreReportResult} from '../types.js'
+import type {Spec} from '@json-render/core'
 
 const MODEL_OUTPUT_SNIPPET_LENGTH = 2000
 
@@ -12,21 +13,43 @@ function describeThrownError(error: unknown): string {
   return String(error)
 }
 
-export interface RenderStoreReportUiInput {
-  result: StoreReportResult
-  proxyBaseUrl: string
-  proxyToken: string
-  model: string
+export type GenerateStoreReportSpecOutcome = {spec: Spec} | {fallback: true; failures?: SpecGenerationFailure[]}
+
+interface GenerateStoreReportSpecDependencies {
+  generateSpec: typeof generateValidatedReportSpec
 }
 
-export interface StoreReportUiDependencies {
-  generateSpec: typeof generateValidatedReportSpec
+const defaultGenerateStoreReportSpecDependencies: GenerateStoreReportSpecDependencies = {
+  generateSpec: generateValidatedReportSpec,
+}
+
+/**
+ * Runs the visualization model, inside the progress bar. Never throws: an exhausted validation
+ * budget returns the failures for `presentStoreReport` to report, and a thrown error (e.g. a network
+ * failure) is debug-logged and turned into a plain fallback so the bar can close normally either way.
+ */
+export async function generateStoreReportSpec(
+  input: GenerateReportSpecInput,
+  dependencies: Partial<GenerateStoreReportSpecDependencies> = {},
+): Promise<GenerateStoreReportSpecOutcome> {
+  const deps = {...defaultGenerateStoreReportSpecDependencies, ...dependencies}
+
+  return deps.generateSpec(input).then(
+    (result): GenerateStoreReportSpecOutcome =>
+      result.success ? {spec: result.spec} : {fallback: true, failures: result.failures},
+    (error: unknown): GenerateStoreReportSpecOutcome => {
+      outputDebug(`Report visualization failed: ${describeThrownError(error)}`)
+      return {fallback: true}
+    },
+  )
+}
+
+export interface PresentStoreReportDependencies {
   renderSpec: typeof renderReportSpec
   renderFallback: typeof renderStoreReportResult
 }
 
-const defaultStoreReportUiDependencies: StoreReportUiDependencies = {
-  generateSpec: generateValidatedReportSpec,
+const defaultPresentStoreReportDependencies: PresentStoreReportDependencies = {
   renderSpec: renderReportSpec,
   renderFallback: renderStoreReportResult,
 }
@@ -46,36 +69,30 @@ function reportGenerationFailures(failures: SpecGenerationFailure[]): void {
   })
 }
 
-/** Generates and renders a terminal visualization, falling back to the established text output. */
-export async function renderStoreReportUi(
-  input: RenderStoreReportUiInput,
-  dependencies: Partial<StoreReportUiDependencies> = {},
+/**
+ * Presents the outcome of `generateStoreReportSpec`, after the progress bar has closed: renders the
+ * generated spec if there is one, falling back to the established text report if rendering throws or
+ * generation didn't produce a spec (printing the failure summary first, when there is one).
+ */
+export async function presentStoreReport(
+  report: StoreReportResult,
+  generation: GenerateStoreReportSpecOutcome,
+  dependencies: Partial<PresentStoreReportDependencies> = {},
 ): Promise<void> {
-  const deps = {...defaultStoreReportUiDependencies, ...dependencies}
-  const generationInput: GenerateReportSpecInput = {
-    report: input.result,
-    proxyBaseUrl: input.proxyBaseUrl,
-    proxyToken: input.proxyToken,
-    model: input.model,
+  const deps = {...defaultPresentStoreReportDependencies, ...dependencies}
+
+  if ('spec' in generation) {
+    const rendered = await Promise.resolve(deps.renderSpec(generation.spec)).then(
+      () => true,
+      (error: unknown) => {
+        outputDebug(`Report visualization failed: ${describeThrownError(error)}`)
+        return false
+      },
+    )
+    if (rendered) return
+  } else if (generation.failures) {
+    reportGenerationFailures(generation.failures)
   }
 
-  // Generation, serialization, parsing, validation, and Ink rendering can all fail independently.
-  // A rejected attempt becomes the legacy text output; fallback errors still propagate normally.
-  const renderedVisualization = await Promise.resolve()
-    .then(async () => {
-      const result = await deps.generateSpec(generationInput)
-      if (!result.success) {
-        reportGenerationFailures(result.failures)
-        return false
-      }
-
-      await deps.renderSpec(result.spec)
-      return true
-    })
-    .catch((error: unknown) => {
-      outputDebug(`Report visualization failed: ${describeThrownError(error)}`)
-      return false
-    })
-
-  if (!renderedVisualization) deps.renderFallback(input.result, 'text')
+  deps.renderFallback(report, 'text')
 }

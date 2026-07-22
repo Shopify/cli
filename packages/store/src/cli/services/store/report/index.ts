@@ -1,23 +1,21 @@
 import {runReportAgent} from './agent.js'
-import {prepareAdminStoreGraphQLContext} from './execute.js'
+import {prepareAdminStoreGraphQLContext, type AdminStoreGraphQLContext} from './execute.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import type {ReportProgress} from './progress.js'
 import type {StoreReportResult} from './types.js'
 
-export interface StoreReportInput {
+export interface PrepareStoreReportInput {
   store: string
-  analysis: string
   version?: string
 }
 
-interface StoreReportDependencies {
+interface PrepareStoreReportDependencies {
   prepareContext: typeof prepareAdminStoreGraphQLContext
-  runAgent: typeof runReportAgent
 }
 
-const defaultStoreReportDependencies: StoreReportDependencies = {
+const defaultPrepareStoreReportDependencies: PrepareStoreReportDependencies = {
   prepareContext: prepareAdminStoreGraphQLContext,
-  runAgent: runReportAgent,
 }
 
 const DEFAULT_PROXY_URL = 'https://proxy.shopify.ai/v1'
@@ -50,22 +48,58 @@ export function readProxyConfig(): ProxyConfig {
   }
 }
 
-export async function runStoreReport(
-  input: StoreReportInput,
-  dependencies: Partial<StoreReportDependencies> = {},
-): Promise<StoreReportResult> {
-  const deps = {...defaultStoreReportDependencies, ...dependencies}
+export interface PreparedStoreReport {
+  context: AdminStoreGraphQLContext
+  proxyConfig: ProxyConfig
+}
+
+/**
+ * Runs everything that must happen before the progress bar goes up: store attribution, reading the
+ * proxy config, and preparing (and possibly prompting for) store auth. Any auth error or prompt this
+ * surfaces needs to reach the user directly, not be hidden behind a spinner.
+ */
+export async function prepareStoreReport(
+  input: PrepareStoreReportInput,
+  dependencies: Partial<PrepareStoreReportDependencies> = {},
+): Promise<PreparedStoreReport> {
+  const deps = {...defaultPrepareStoreReportDependencies, ...dependencies}
 
   await recordStoreFqdnMetadata(input.store, false)
-  const {proxyBaseUrl, proxyToken, model} = readProxyConfig()
+  const proxyConfig = readProxyConfig()
   const context = await deps.prepareContext({store: input.store, userSpecifiedVersion: input.version})
+
+  return {context, proxyConfig}
+}
+
+export interface RunStoreReportInput {
+  prepared: PreparedStoreReport
+  analysis: string
+  onProgress?: ReportProgress
+}
+
+interface RunStoreReportDependencies {
+  runAgent: typeof runReportAgent
+}
+
+const defaultRunStoreReportDependencies: RunStoreReportDependencies = {
+  runAgent: runReportAgent,
+}
+
+/** Runs the model phase — the agent loop — against an already-prepared store and shapes its result. */
+export async function runStoreReport(
+  input: RunStoreReportInput,
+  dependencies: Partial<RunStoreReportDependencies> = {},
+): Promise<StoreReportResult> {
+  const deps = {...defaultRunStoreReportDependencies, ...dependencies}
+  const {context, proxyConfig} = input.prepared
 
   const agentResult = await deps.runAgent({
     context,
     question: input.analysis,
-    proxyBaseUrl,
-    proxyToken,
-    model,
+    proxyBaseUrl: proxyConfig.proxyBaseUrl,
+    proxyToken: proxyConfig.proxyToken,
+    model: proxyConfig.model,
+    onProgress: input.onProgress,
   })
 
   return {

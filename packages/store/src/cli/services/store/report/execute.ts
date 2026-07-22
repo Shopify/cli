@@ -4,8 +4,6 @@ import {classifyAdminApiError, isGraphQLClientErrorLike, throwIfStoredStoreAuthI
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import type {ShopifyqlTableData} from './types.js'
 
 export {prepareAdminStoreGraphQLContext, type AdminStoreGraphQLContext}
@@ -61,18 +59,13 @@ async function runAdminGraphQLOperation<TResult>(
   const request = await prepareReportExecuteRequest(query, variables)
 
   try {
-    const result = await renderSingleTask({
-      title: outputContent`Running the report query`,
-      task: async () =>
-        graphqlRequest<TResult>({
-          query: request.query,
-          api: 'Admin',
-          url: adminUrl(context.adminSession.storeFqdn, context.version, context.adminSession),
-          token: context.adminSession.token,
-          variables: request.parsedVariables,
-          responseOptions: {handleErrors: false},
-        }),
-      renderOptions: {stdout: process.stderr},
+    const result = await graphqlRequest<TResult>({
+      query: request.query,
+      api: 'Admin',
+      url: adminUrl(context.adminSession.storeFqdn, context.version, context.adminSession),
+      token: context.adminSession.token,
+      variables: request.parsedVariables,
+      responseOptions: {handleErrors: false},
     })
 
     return {success: true, result}

@@ -1,13 +1,15 @@
 import StoreReport from './report.js'
-import {readProxyConfig, runStoreReport} from '../../services/store/report/index.js'
+import {prepareStoreReport, runStoreReport, type PreparedStoreReport} from '../../services/store/report/index.js'
 import {renderStoreReportResult} from '../../services/store/report/output.js'
-import {renderStoreReportUi} from '../../services/store/report/ui/index.js'
+import {generateStoreReportSpec, presentStoreReport} from '../../services/store/report/ui/index.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import type {StoreReportResult} from '../../services/store/report/types.js'
 
 vi.mock('../../services/store/report/index.js')
 vi.mock('../../services/store/report/output.js')
 vi.mock('../../services/store/report/ui/index.js')
+vi.mock('@shopify/cli-kit/node/ui')
 
 const reportResult: StoreReportResult = {
   store: 'shop.myshopify.com',
@@ -17,34 +19,65 @@ const reportResult: StoreReportResult = {
   queries: [{api: 'shopifyql', query: 'FROM sales SHOW total_sales', result: {rows: [{total_sales: 10}]}}],
 }
 
+const prepared: PreparedStoreReport = {
+  context: {
+    adminSession: {token: 'token', storeFqdn: 'shop.myshopify.com'},
+    version: '2026-04',
+    session: {
+      store: 'shop.myshopify.com',
+      clientId: 'client-id',
+      userId: 'user-id',
+      accessToken: 'token',
+      scopes: [],
+      acquiredAt: '2026-06-15T00:00:00Z',
+    },
+  },
+  proxyConfig: {proxyBaseUrl: 'https://proxy.test/v1', proxyToken: 'synthetic-proxy-token', model: 'test-model'},
+}
+
 describe('store report command', () => {
   beforeEach(() => {
+    vi.mocked(prepareStoreReport).mockResolvedValue(prepared)
     vi.mocked(runStoreReport).mockResolvedValue(reportResult)
-    vi.mocked(readProxyConfig).mockReturnValue({
-      proxyBaseUrl: 'https://proxy.test/v1',
-      proxyToken: 'synthetic-proxy-token',
-      model: 'test-model',
-    })
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
   })
 
-  test('returns through the existing renderer without loading UI work in json mode', async () => {
+  test('prepares the store before the bar and returns through the existing renderer in json mode', async () => {
     await StoreReport.run(['--store', 'shop.myshopify.com', '--analysis', 'What were my sales?', '--json'])
 
+    expect(prepareStoreReport).toHaveBeenCalledWith({store: 'shop.myshopify.com', version: undefined})
+    expect(runStoreReport).toHaveBeenCalledWith({
+      prepared,
+      analysis: 'What were my sales?',
+      onProgress: expect.any(Function),
+    })
     expect(renderStoreReportResult).toHaveBeenCalledWith(reportResult, 'json')
-    expect(readProxyConfig).not.toHaveBeenCalled()
-    expect(renderStoreReportUi).not.toHaveBeenCalled()
+    expect(generateStoreReportSpec).not.toHaveBeenCalled()
+    expect(presentStoreReport).not.toHaveBeenCalled()
   })
 
-  test('re-reads proxy config and invokes the dynamically loaded UI in text mode', async () => {
+  test('generates the spec inside the bar and presents it after the bar closes in text mode', async () => {
+    vi.mocked(generateStoreReportSpec).mockResolvedValue({spec: {root: 'x', elements: {}}})
+
     await StoreReport.run(['--store', 'shop.myshopify.com', '--analysis', 'What were my sales?'])
 
     expect(renderStoreReportResult).not.toHaveBeenCalled()
-    expect(readProxyConfig).toHaveBeenCalledOnce()
-    expect(renderStoreReportUi).toHaveBeenCalledWith({
-      result: reportResult,
+    expect(generateStoreReportSpec).toHaveBeenCalledWith({
+      report: reportResult,
       proxyBaseUrl: 'https://proxy.test/v1',
       proxyToken: 'synthetic-proxy-token',
       model: 'test-model',
     })
+    expect(presentStoreReport).toHaveBeenCalledWith(reportResult, {spec: {root: 'x', elements: {}}})
+  })
+
+  test('drives the single task bar title through onProgress, including a Building your report title before generation', async () => {
+    vi.mocked(generateStoreReportSpec).mockResolvedValue({fallback: true})
+    const titles: string[] = []
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task((status) => titles.push(status.value)))
+
+    await StoreReport.run(['--store', 'shop.myshopify.com', '--analysis', 'What were my sales?'])
+
+    expect(titles).toContain('Building your report')
   })
 })

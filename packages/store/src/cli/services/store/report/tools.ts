@@ -10,6 +10,14 @@ import {z} from 'zod'
 import type {ReportQueryRecord, StoreReportApi} from './types.js'
 
 /**
+ * Names of the two store-query tools, shared with `progress.ts` so it can classify a tool call as a
+ * store query (vs. a dev-mcp docs lookup) without duplicating these string literals.
+ */
+export const RUN_SHOPIFYQL_TOOL_NAME = 'run_shopifyql'
+export const RUN_ADMIN_GRAPHQL_TOOL_NAME = 'run_admin_graphql'
+export const STORE_QUERY_TOOL_NAMES = [RUN_SHOPIFYQL_TOOL_NAME, RUN_ADMIN_GRAPHQL_TOOL_NAME] as const
+
+/**
  * The store-side query runners the tools delegate to. Injectable so unit tests can supply fakes
  * that return canned outcomes without touching the network.
  */
@@ -81,7 +89,7 @@ export function createReportTools(
   }
 
   const runShopifyql = tool({
-    name: 'run_shopifyql',
+    name: RUN_SHOPIFYQL_TOOL_NAME,
     description:
       'Run a ShopifyQL analytics query against the store and return its table data. Provide ONLY the ShopifyQL ' +
       'string (for example "FROM sales SHOW total_sales SINCE -30d") — never wrap it in a GraphQL query. On ' +
@@ -93,7 +101,7 @@ export function createReportTools(
   })
 
   const runAdminGraphql = tool({
-    name: 'run_admin_graphql',
+    name: RUN_ADMIN_GRAPHQL_TOOL_NAME,
     description:
       'Run a read-only Shopify Admin GraphQL query against the store and return its JSON response. Provide the ' +
       'raw Admin GraphQL query. On failure the error is returned so you can fix the query and try again.',

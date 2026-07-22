@@ -1,8 +1,11 @@
-import {readProxyConfig, runStoreReport} from '../../services/store/report/index.js'
+import {prepareStoreReport, runStoreReport} from '../../services/store/report/index.js'
 import {renderStoreReportResult} from '../../services/store/report/output.js'
+import {REPORT_PROGRESS_TITLES, type ReportProgress} from '../../services/store/report/progress.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {outputContent} from '@shopify/cli-kit/node/output'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 
 export default class StoreReport extends StoreCommand {
@@ -44,18 +47,38 @@ Run \`shopify store auth\` first to create stored auth for the store.`
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreReport)
 
-    const result = await runStoreReport({
-      store: flags.store,
-      analysis: flags.analysis,
-      version: flags.version,
-    })
+    // Auth/context prep happens before the bar so an auth error or prompt isn't hidden behind it.
+    const prepared = await prepareStoreReport({store: flags.store, version: flags.version})
 
     if (flags.json) {
-      renderStoreReportResult(result, 'json')
+      const report = await renderSingleTask({
+        title: outputContent`${REPORT_PROGRESS_TITLES.analyzing}`,
+        task: async (updateStatus) => {
+          const onProgress: ReportProgress = (title) => updateStatus(outputContent`${title}`)
+          return runStoreReport({prepared, analysis: flags.analysis, onProgress})
+        },
+        renderOptions: {stdout: process.stderr},
+      })
+      renderStoreReportResult(report, 'json')
       return
     }
 
-    const {renderStoreReportUi} = await import('../../services/store/report/ui/index.js')
-    await renderStoreReportUi({result, ...readProxyConfig()})
+    const {generateStoreReportSpec, presentStoreReport} = await import('../../services/store/report/ui/index.js')
+
+    const {report, generation} = await renderSingleTask({
+      title: outputContent`${REPORT_PROGRESS_TITLES.analyzing}`,
+      task: async (updateStatus) => {
+        const onProgress: ReportProgress = (title) => updateStatus(outputContent`${title}`)
+        const report = await runStoreReport({prepared, analysis: flags.analysis, onProgress})
+        onProgress(REPORT_PROGRESS_TITLES.building)
+        const generation = await generateStoreReportSpec({report, ...prepared.proxyConfig})
+        return {report, generation}
+      },
+      renderOptions: {stdout: process.stderr},
+    })
+
+    // The Ink dashboard render happens after the bar closes — a live spinner and an Ink render can't
+    // coexist.
+    await presentStoreReport(report, generation)
   }
 }

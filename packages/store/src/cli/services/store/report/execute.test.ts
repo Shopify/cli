@@ -4,10 +4,8 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/api/graphql')
-vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
   const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>(
     '@shopify/cli-kit/node/api/admin',
@@ -41,7 +39,6 @@ describe('runShopifyqlReportQuery / runAdminReportQuery', () => {
 
   beforeEach(() => {
     vi.mocked(adminUrl).mockImplementation((shop, version) => `https://${shop}/admin/api/${version}/graphql.json`)
-    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
   })
 
   test('runShopifyqlReportQuery returns the table data on success', async () => {

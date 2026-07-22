@@ -106,4 +106,27 @@ describe('runReportAgent', () => {
       runReportAgent(baseInput, {executors, runAgentLoop: async () => 'no queries run'}),
     ).rejects.toBeInstanceOf(AbortError)
   })
+
+  test('forwards the caller-supplied onProgress through to the agent loop params', async () => {
+    const executors: ReportToolExecutors = {
+      runShopifyql: async () => ({success: true, result: {}}),
+      runAdmin: async () => ({success: false, failure: {errorText: 'unused', accessDenied: false, errors: []}}),
+    }
+    const onProgress = () => {}
+    let receivedOnProgress: unknown
+
+    await runReportAgent(
+      {...baseInput, onProgress},
+      {
+        executors,
+        runAgentLoop: async (params) => {
+          receivedOnProgress = params.onProgress
+          await params.tools.runShopifyql.invoke(new RunContext(), JSON.stringify({query: 'FROM sales SHOW orders'}))
+          return 'done'
+        },
+      },
+    )
+
+    expect(receivedOnProgress).toBe(onProgress)
+  })
 })
