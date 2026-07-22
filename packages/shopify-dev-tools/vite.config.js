@@ -136,9 +136,6 @@ export default defineConfig({
         "http/index": fileURLToPath(
           new URL("./src/http/index.ts", import.meta.url),
         ),
-        "experiments/index": fileURLToPath(
-          new URL("./src/experiments/index.ts", import.meta.url),
-        ),
         "internal/index": fileURLToPath(
           new URL("./src/internal/index.ts", import.meta.url),
         ),
@@ -163,7 +160,6 @@ export default defineConfig({
         "graphql",
         "typescript",
         "html-tags",
-        "@shopify/verdict/node",
       ],
       output: {
         interop: "auto",
@@ -185,9 +181,6 @@ export default defineConfig({
     alias: {
       // Similar to the moduleNameMapper in Jest config
       "^(\\.{1,2}/.*)\\.js$": "$1",
-      "@shopify/verdict/node": fileURLToPath(
-        new URL("./test-stubs/verdict.ts", import.meta.url),
-      ),
     },
   },
 });

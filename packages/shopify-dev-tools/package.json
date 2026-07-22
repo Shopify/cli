@@ -57,10 +57,6 @@
     "./config/api-mappings": {
       "import": "./dist/config/api-mappings.js",
       "types": "./dist/config/api-mappings.d.ts"
-    },
-    "./experiments": {
-      "import": "./dist/experiments/index.js",
-      "types": "./dist/experiments/index.d.ts"
     }
   },
   "scripts": {
@@ -87,7 +83,6 @@
     "@shopify/theme-check-common": "3.24.0",
     "@shopify/theme-check-docs-updater": "3.24.0",
     "@shopify/theme-check-node": "3.24.0",
-    "@shopify/verdict": "7.3.0",
     "@types/react": "catalog:",
     "graphql": "catalog:",
     "html-tags": "5.1.0",
