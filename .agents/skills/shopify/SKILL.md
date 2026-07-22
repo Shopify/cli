@@ -82,7 +82,7 @@ If the ranked chunks aren't enough, you can pull a full page verbatim as Markdow
 shopify doc fetch --url <shopify.dev url> [--output <file>]
 ```
 
-Correct the artifact against the retrieved docs, then **re-run `shopify validate [topic]`**. Read everything it reports, resolve every finding, and loop — fixing from the docs and re-validating — until it passes clean. Do not present the task as finished while validation reports outstanding issues; an unresolved finding means the task is not done. `shopify doc search` is the remediation path for ANY Shopify topic, including surfaces not in the table above.
+Correct the artifact against the retrieved docs, then **re-run `shopify validate [topic]`**. Read everything it reports, resolve every finding, and loop — fixing from the docs and re-validating — until it passes clean. Do not present the task as finished while validation reports outstanding issues; an unresolved finding means the task is not done. Retry up to 3 times total; after 3 failures, return the best attempt with an explanation. `shopify doc search` is the remediation path for ANY Shopify topic, including surfaces not in the table above.
 
 **When the outcome cannot be validated.** Some outcomes produce nothing `shopify validate` can gate — merchant onboarding guidance, App Store review's read-only analysis, a UCP buy/track flow, Hydrogen recipe code, or a bare documentation question. With no validator to catch stale recall, ground these in `shopify doc search` / `shopify doc fetch` *up front* and answer from the retrieved chunks. This is the narrow exception the missing safety net demands — not a general rule to search before answering when a validator does exist.
 
