@@ -61,19 +61,17 @@ const SCHEMA_DATA_DIR = join(PACKAGE_ROOT, "src/data");
 const SCRIPTS_SRC_DIR = join(PACKAGE_ROOT, "src/agent-skills/scripts");
 const SKILL_ASSETS_DIR = join(PACKAGE_ROOT, "src/skill-assets");
 const DEFAULT_AGENT_SKILLS_OUT_DIR = join(MONOREPO_ROOT, "packages", "skills");
-const PLUGIN_HOOKS_SCRIPTS_DIR = join(
-  MONOREPO_ROOT,
-  "packages",
-  "plugins",
+const SKILL_TELEMETRY_HOOKS_DIR = join(
+  PACKAGE_ROOT,
+  "src",
+  "agent-skills",
   "hooks",
-  "scripts",
 );
 
 // Files copied verbatim into each generated skill's `scripts/` directory so
 // the skill-frontmatter `hooks:` block (Claude Code only — see
 // `skillTelemetryHookBlock` in src/instructions/skill-blocks.ts) can resolve
-// `./scripts/track-telemetry.sh` on standalone installs that don't have the
-// plugin's hooks tree available.
+// `./scripts/track-telemetry.sh` on standalone installs.
 const SKILL_TELEMETRY_HOOK_FILES = [
   "track-telemetry.sh",
   "track-telemetry.ps1",
@@ -81,10 +79,10 @@ const SKILL_TELEMETRY_HOOK_FILES = [
 
 function copySkillTelemetryHook(scriptsDir: string): void {
   for (const file of SKILL_TELEMETRY_HOOK_FILES) {
-    const src = join(PLUGIN_HOOKS_SCRIPTS_DIR, file);
+    const src = join(SKILL_TELEMETRY_HOOKS_DIR, file);
     if (!existsSync(src)) {
       throw new Error(
-        `Expected ${src} to exist. The skill-frontmatter telemetry hook is bundled into each generated skill from packages/plugins/hooks/scripts/.`,
+        `Expected ${src} to exist. The skill-frontmatter telemetry hook is bundled into each generated skill from shopify-dev-tools.`,
       );
     }
     const dest = join(scriptsDir, file);

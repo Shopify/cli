@@ -48,7 +48,7 @@ function makeRawSchemaDir(adminVersions: string[] = []) {
   return { tmpDir, rawDir };
 }
 
-const ROOT_DIR = path.resolve(import.meta.dirname, "../../../..");
+const ROOT_DIR = path.resolve(import.meta.dirname, "../..");
 
 function runScript(
   args: string,
@@ -1266,7 +1266,7 @@ describe("scripts/update-apis.mjs CLI", () => {
     it("every API has exactly one latestVersion: true entry", () => {
       const supportedVersionsPath = path.join(
         ROOT_DIR,
-        "packages/shopify-dev-tools/src/data/supported-versions-schema.json",
+        "src/data/supported-versions-schema.json",
       );
       const config = JSON.parse(
         readFileSync(supportedVersionsPath, "utf-8"),
