@@ -325,10 +325,19 @@ function SelectInput<T>({
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
     const minHeight = hasAnyGroup ? 5 : 2
-    // On a pathologically short terminal (fewer usable rows than `minHeight + STACKED_HINT_RESERVE`)
-    // this `Math.max(minHeight, …)` floor can still cause ≤1 row of overflow. Real terminals are
-    // ≥24 rows, so the extra complexity to handle that isn't worth it.
-    const sectionHeight = Math.max(minHeight, Math.min(listAvailableLines, optionsHeight))
+    let sectionHeight = Math.max(minHeight, Math.min(listAvailableLines, optionsHeight))
+
+    // STACKED description case only: the preview line (+ its gap) render *below* the list, so the
+    // list plus that reserve must fit the real vertical budget. Treat the reserve as a HARD CEILING
+    // and clamp AFTER the `minHeight` floor — otherwise a grouped list (`minHeight=5`) in a small
+    // budget would push `sectionHeight + gap + preview` past the viewport and reintroduce the
+    // vertical ghosting the reserve was meant to prevent. A tiny budget may show fewer rows / scroll
+    // more; that tradeoff is accepted. `Math.max(1, …)` only guards against a non-positive height on
+    // a pathologically short terminal — real terminals are ≥24 rows. The no-description and beside
+    // paths are gated out here, so they stay byte-for-byte unchanged.
+    if (descriptionsEnabled && !showDescriptionBeside) {
+      sectionHeight = Math.min(sectionHeight, Math.max(1, availableLinesToUse - STACKED_HINT_RESERVE))
+    }
 
     // Shift+Tab takeover: replace the list + hint with the focused item's full description. Arrows
     // still navigate underneath, so this updates live as the highlighted item changes.

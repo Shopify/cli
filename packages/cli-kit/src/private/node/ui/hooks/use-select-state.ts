@@ -75,7 +75,12 @@ interface State<T> {
   value: T | undefined
 }
 
-type Action<T> = SelectNextOptionAction | SelectPreviousOptionAction | SelectOptionAction<T> | ResetAction<T>
+type Action<T> =
+  | SelectNextOptionAction
+  | SelectPreviousOptionAction
+  | SelectOptionAction<T>
+  | ResetAction<T>
+  | AdjustVisibleWindowAction
 
 interface SelectNextOptionAction {
   type: 'select-next-option'
@@ -93,6 +98,11 @@ interface SelectOptionAction<T> {
 interface ResetAction<T> {
   type: 'reset'
   state: State<T>
+}
+
+interface AdjustVisibleWindowAction {
+  type: 'adjust-visible-window'
+  visibleOptionCount: number
 }
 
 const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
@@ -195,6 +205,34 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
       }
     }
 
+    case 'adjust-visible-window': {
+      // The number of visible rows changed but the option set did NOT (e.g. a width-only resize that
+      // crosses the description-panel breakpoint). Preserve the current highlight (`value`) and only
+      // recompute the visible window so the highlighted item stays on screen, rather than resetting
+      // to the first option (which could silently move the selection out from under the user).
+      const total = state.optionMap.size
+      const nextVisibleOptionCount = Math.min(action.visibleOptionCount, total)
+      const currentIndex = typeof state.value === 'undefined' ? 0 : (state.optionMap.get(state.value)?.index ?? 0)
+
+      const maxFromIndex = Math.max(0, total - nextVisibleOptionCount)
+      let nextVisibleFromIndex = state.visibleFromIndex
+
+      // Slide the window just far enough to keep the highlighted item inside it.
+      if (currentIndex < nextVisibleFromIndex) {
+        nextVisibleFromIndex = currentIndex
+      } else if (currentIndex > nextVisibleFromIndex + nextVisibleOptionCount - 1) {
+        nextVisibleFromIndex = currentIndex - nextVisibleOptionCount + 1
+      }
+      nextVisibleFromIndex = Math.max(0, Math.min(nextVisibleFromIndex, maxFromIndex))
+
+      return {
+        ...state,
+        visibleOptionCount: nextVisibleOptionCount,
+        visibleFromIndex: nextVisibleFromIndex,
+        visibleToIndex: nextVisibleFromIndex + nextVisibleOptionCount - 1,
+      }
+    }
+
     case 'reset': {
       return action.state
     }
@@ -287,9 +325,13 @@ export const useSelectState = <T>({visibleOptionCount, options, defaultValue}: U
   }
 
   if (visibleOptionCount !== lastVisibleOptionCount) {
+    // Only the visible-row count changed (the option set is unchanged — that case is handled by the
+    // reset above). Keep the current highlight and just re-fit the visible window; do NOT reset to
+    // the first option, or a width-only resize across the description-panel breakpoint would jump
+    // the selection back to item 0.
     dispatch({
-      type: 'reset',
-      state: createDefaultState({visibleOptionCount, defaultValue, options}),
+      type: 'adjust-visible-window',
+      visibleOptionCount,
     })
 
     setLastVisibleOptionCount(visibleOptionCount)
