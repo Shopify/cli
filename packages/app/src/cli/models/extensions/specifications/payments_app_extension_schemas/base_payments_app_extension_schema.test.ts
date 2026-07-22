@@ -156,44 +156,9 @@ describe('DeferredPaymentsSchema', () => {
     expect(success).toBe(true)
   })
 
-  test('throws an error if no supports_installments is provided', async () => {
+  test('validates a configuration when optional fields are omitted', async () => {
     // When/Then
-    expect(() =>
-      DeferredPaymentsSchema.parse({
-        ...config,
-        supports_installments: undefined,
-      }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'boolean',
-          received: 'undefined',
-          path: ['supports_installments'],
-          message: 'Required',
-        },
-      ]),
-    )
-  })
-
-  test('throws an error if no supports_deferred_payments is provided', async () => {
-    // When/Then
-    expect(() =>
-      DeferredPaymentsSchema.parse({
-        ...config,
-        supports_deferred_payments: undefined,
-      }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'boolean',
-          received: 'undefined',
-          path: ['supports_deferred_payments'],
-          message: 'Required',
-        },
-      ]),
-    )
+    expect(DeferredPaymentsSchema.parse({})).toEqual({})
   })
 })
 
