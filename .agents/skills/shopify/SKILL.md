@@ -84,6 +84,7 @@ For either outcome:
 
 - Read everything validation reports, **resolve every finding**, and re-run until it passes clean.
 - Do not present the task as finished while validation reports outstanding issues. An unresolved finding means the task is not done.
+- Retry up to 3 times total; after 3 failures, return the best attempt with an explanation
 
 ## Gotchas
 
