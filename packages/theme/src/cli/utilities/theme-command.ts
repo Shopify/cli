@@ -558,11 +558,10 @@ export default abstract class ThemeCommand extends Command {
 
               // eslint-disable-next-line no-catch-all/no-catch-all
             } catch (error) {
-              if (error instanceof Error) {
-                error.message = `Environment ${environment} failed: \n\n${error.message}`
-                renderError({body: [error.message]})
-                if (throwOnActionError) actionErrors.push(error)
-              }
+              const normalizedError = error instanceof Error ? error : new Error(String(error))
+              normalizedError.message = `Environment ${environment} failed: \n\n${normalizedError.message}`
+              renderError({body: [normalizedError.message]})
+              if (throwOnActionError) actionErrors.push(normalizedError)
             }
           },
         })),

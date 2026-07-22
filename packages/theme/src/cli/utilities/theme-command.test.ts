@@ -87,6 +87,10 @@ class TestThemeCommand extends ThemeCommand {
     if (flags.environment && flags.environment[0] === 'command-error') {
       throw new Error('Mocking a command error')
     }
+    if (flags.environment && flags.environment[0] === 'command-string-error') {
+      // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
+      throw 'Mocking a string command error'
+    }
   }
 }
 
@@ -794,6 +798,44 @@ describe('ThemeCommand', () => {
       )
       expect(addPublicMetadata).toHaveBeenCalled()
       expect(addSensitiveMetadata).toHaveBeenCalled()
+    })
+
+    test('protected batch normalizes non-Error command failures after rendering all groups', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [
+          {name: 'command-string-error', store: 'store.myshopify.com'},
+          {name: 'development', store: 'store.myshopify.com'},
+        ],
+      })
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'command-string-error', '--environment', 'development'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toThrow(
+        'Environment command-string-error failed: \n\nMocking a string command error',
+      )
+      expect(renderConcurrent).toHaveBeenCalledTimes(2)
+      expect(command.commandCalls).toHaveLength(2)
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: ['Environment command-string-error failed: \n\nMocking a string command error'],
+        }),
+      )
     })
 
     test('protected batch with invalid required configuration rejects before confirmation even with force', async () => {
