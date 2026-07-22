@@ -9,7 +9,7 @@ import lockfile from 'proper-lockfile'
 
 const configurationLockOptions = {
   realpath: false,
-  retries: {retries: 10, factor: 1, minTimeout: 25, maxTimeout: 100},
+  retries: {retries: 40, factor: 1, minTimeout: 50, maxTimeout: 50},
 }
 const maximumConfigurationPathRedirects = 3
 

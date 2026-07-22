@@ -46,7 +46,7 @@ async function coordinateConcurrentRenames(): Promise<void> {
     renameCount += 1
     if (renameCount === 2) releaseSecondRename()
     if (renameCount === 1) {
-      await Promise.race([secondRename, new Promise<void>((resolve) => setTimeout(resolve, 250))])
+      await Promise.race([secondRename, new Promise<void>((resolve) => setTimeout(resolve, 350))])
     }
     return originalRename(...arguments_)
   })
