@@ -113,15 +113,55 @@ describe('commandChoices', () => {
     expect(choices.map((choice) => choice.value)).toEqual(['theme:dev', BROWSE_BY_TOPIC])
   })
 
+  test('carries an id-only label and the description in a separate field', () => {
+    // When
+    const choices = commandChoices(catalog, 'theme')
+
+    // Then: the label is the id alone (single-line rows), and the description is
+    // carried separately so cli-kit renders it in the panel — never baked into the
+    // label where it would wrap.
+    expect(choices[0]).toEqual({label: 'theme:dev', value: 'theme:dev', description: 'Run the theme'})
+  })
+
+  test('finds a command whose search term appears only in its description', () => {
+    // Given: a catalog where the term "storefront" is in the description, not the id.
+    const conceptCatalog = buildCommandCatalog([
+      loadable({id: 'theme:dev', summary: 'Preview your storefront locally'}),
+    ])
+
+    // When
+    const choices = commandChoices(conceptCatalog, 'storefront')
+
+    // Then: concept search still works even though the description is no longer in
+    // the label — the row stays id-only.
+    expect(choices[0]).toEqual({
+      label: 'theme:dev',
+      value: 'theme:dev',
+      description: 'Preview your storefront locally',
+    })
+    // And the underlying matcher confirms it matched on description, not id.
+    expect(searchCatalog(conceptCatalog, 'storefront').map((entry) => entry.id)).toEqual(['theme:dev'])
+  })
+
   test('offers only the browse affordance when nothing matches', () => {
     const choices = commandChoices(catalog, 'no-such-command')
     expect(choices.map((choice) => choice.value)).toEqual([BROWSE_BY_TOPIC])
   })
+
+  test('gives the browse affordance a descriptive panel entry', () => {
+    const choices = commandChoices(catalog, 'theme')
+    const browse = choices[choices.length - 1]
+    expect(browse).toEqual({
+      label: 'Browse commands by topic instead…',
+      value: BROWSE_BY_TOPIC,
+      description: 'Pick a topic, then a command within it.',
+    })
+  })
 })
 
 describe('commandChoiceLabel', () => {
-  test('shows the id and description when present, id alone otherwise', () => {
-    expect(commandChoiceLabel({id: 'app:dev', description: 'Run the app', topic: 'app'})).toBe('app:dev — Run the app')
+  test('returns the id alone, regardless of description', () => {
+    expect(commandChoiceLabel({id: 'app:dev', description: 'Run the app', topic: 'app'})).toBe('app:dev')
     expect(commandChoiceLabel({id: 'app:dev', description: '', topic: 'app'})).toBe('app:dev')
   })
 })

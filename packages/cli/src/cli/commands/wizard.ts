@@ -116,6 +116,9 @@ export default class Wizard extends Command {
       choices: commandsInTopic(catalog, topicName).map((entry) => ({
         label: commandChoiceLabel(entry),
         value: entry.id,
+        // Keep the row id-only and let the description render in the panel, matching
+        // the discovery search.
+        description: entry.description.length > 0 ? entry.description : undefined,
       })),
     })
   }

@@ -73,16 +73,24 @@ export function searchCatalog(catalog: WizardCatalogEntry[], term: string): Wiza
 /**
  * A single choice for the discovery search prompt: either a real command (its
  * `value` is the command id) or the browse-by-topic affordance (its `value` is
- * `BROWSE_BY_TOPIC`).
+ * `BROWSE_BY_TOPIC`). The `description`, when present, is rendered by cli-kit's
+ * side/below panel for the highlighted choice rather than inline in the label —
+ * this keeps list rows to a single line and avoids wrapping long `id — summary`
+ * strings.
  */
 export interface WizardCommandChoice {
   label: string
   value: string
+  description?: string
 }
 
 /**
  * Builds the ordered choices shown by the discovery search for a given term:
  * the matching commands first, then the browse-by-topic affordance APPENDED last.
+ *
+ * Each command choice carries its description separately (not baked into the
+ * label) so cli-kit shows it in the description panel; the list itself stays
+ * id-only and single-line.
  *
  * The affordance is deliberately last, not first: cli-kit's select resets the
  * highlight to the first result on every keystroke, so pinning "browse" at the top
@@ -93,16 +101,24 @@ export function commandChoices(catalog: WizardCatalogEntry[], term: string): Wiz
   const matches = searchCatalog(catalog, term).map((entry) => ({
     label: commandChoiceLabel(entry),
     value: entry.id,
+    description: entry.description.length > 0 ? entry.description : undefined,
   }))
-  return [...matches, {label: 'Browse commands by topic instead…', value: BROWSE_BY_TOPIC}]
+  return [
+    ...matches,
+    {
+      label: 'Browse commands by topic instead…',
+      value: BROWSE_BY_TOPIC,
+      description: 'Pick a topic, then a command within it.',
+    },
+  ]
 }
 
 /**
- * Builds the display label for a command choice: its id, followed by its
- * description when it has one.
+ * The label for a command choice: its id alone. The description is surfaced
+ * separately via the choice's `description` panel, keeping list rows single-line.
  */
 export function commandChoiceLabel(entry: WizardCatalogEntry): string {
-  return entry.description.length > 0 ? `${entry.id} — ${entry.description}` : entry.id
+  return entry.id
 }
 
 /**
