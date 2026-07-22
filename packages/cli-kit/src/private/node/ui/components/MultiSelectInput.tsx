@@ -1,6 +1,6 @@
 import {Item} from './SelectInput.js'
 import {Scrollbar} from './Scrollbar.js'
-import {DescriptionPanel, DESCRIPTION_PANEL_LINES_BELOW, MIN_SIDE_PANEL_WIDTH} from './DescriptionPanel.js'
+import {DescriptionPanel, MIN_SIDE_PANEL_WIDTH} from './DescriptionPanel.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {useSelectState} from '../hooks/use-select-state.js'
@@ -66,8 +66,14 @@ function MultiSelectItem<T>({
       minHeight={title ? 2 : 1}
     >
       {title ? (
+        // Always keep the group title on a single physical line. Without this, a long title wraps to
+        // 2+ rows, but `minHeight={title ? 2 : 1}` and `maximumLinesLostToGroups()` both assume a
+        // one-line title, so the `overflowY="hidden"` list box would clip the focused option row.
+        // The title Box stretches to the list column width, so `truncate-end` has a bound to clip to.
         <Box marginLeft={3}>
-          <Text bold>{title}</Text>
+          <Text bold wrap="truncate-end">
+            {title}
+          </Text>
         </Box>
       ) : null}
 
@@ -89,6 +95,11 @@ function MultiSelectItem<T>({
 }
 
 const MAX_AVAILABLE_LINES = 25
+
+// Physical rows the stacked description hint (+ its gap) occupies below the list. Reserved out of
+// the list's vertical budget so the list never fills the whole budget and then pushes the hint past
+// the viewport (which reintroduced the vertical ghosting bug).
+const STACKED_HINT_RESERVE = 2
 
 function MultiSelectInput<T>({
   items: rawItems,
@@ -127,17 +138,44 @@ function MultiSelectInput<T>({
 
   const availableLinesToUse = Math.min(availableLines, MAX_AVAILABLE_LINES)
 
+  const {fullWidth, twoThirds} = useLayout()
+
+  // The description panel is opt-in: it only activates when at least one item provides a
+  // description. When it does, rows become single-line/truncated and the focused item's
+  // description is shown in a panel. In a multi-select the panel follows FOCUS (the `>` cursor),
+  // not the set of toggled selections.
+  const descriptionsEnabled = items.some((item) => (item.description?.length ?? 0) > 0)
+
+  // useLayout clamps both `twoThirds` and `oneThird` up to a minimum of 80 columns, so they can't
+  // be placed side-by-side on typical terminals without overflowing (which would reintroduce the
+  // wrapped-row ghosting). Instead, keep the list at `twoThirds` and give the panel exactly the
+  // remaining width, so the two columns always sum to `fullWidth`. Only place the panel beside the
+  // list when that remainder is wide enough to be readable; otherwise stack it below.
+  const sidePanelWidth = fullWidth - twoThirds
+  const showDescriptionBeside = descriptionsEnabled && sidePanelWidth >= MIN_SIDE_PANEL_WIDTH
+
+  // `availableLines` is the real remaining vertical budget above the footer (see
+  // Prompts/PromptLayout.tsx). Only the STACKED description case adds a line (+ gap) *below* the
+  // list, so in that case we shrink the budget the list sizes itself against; otherwise the list
+  // would fill the whole budget and then push the stacked hint past the viewport, reintroducing the
+  // vertical ghosting bug. The beside/wide panel is side-by-side and costs no vertical rows, and the
+  // no-description path keeps the full budget, so both stay byte-for-byte unchanged.
+  const listAvailableLines =
+    descriptionsEnabled && !showDescriptionBeside
+      ? Math.max(2, availableLinesToUse - STACKED_HINT_RESERVE)
+      : availableLinesToUse
+
   function maximumLinesLostToGroups(items: Item<T>[]): number {
     // Calculate a safe estimate of the limit needed based on the space available
     const numberOfGroups = new Set(items.map((item) => item.group).filter((group) => group)).size
     // Add 1 to numberOfGroups because we also have a default Other group
-    const maxVisibleGroups = Math.ceil(Math.min((availableLinesToUse + 1) / 3, numberOfGroups + 1))
+    const maxVisibleGroups = Math.ceil(Math.min((listAvailableLines + 1) / 3, numberOfGroups + 1))
     // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
     return numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
   }
 
   const maxLinesLostToGroups = maximumLinesLostToGroups(items)
-  const limit = Math.max(2, availableLinesToUse - maxLinesLostToGroups)
+  const limit = Math.max(2, listAvailableLines - maxLinesLostToGroups)
   const hasLimit = items.length > limit
 
   const state = useSelectState({
@@ -145,6 +183,13 @@ function MultiSelectInput<T>({
     options: items,
     defaultValue: undefined,
   })
+
+  // The panel follows FOCUS (the `>` cursor / `state.value`), not the toggled selection set.
+  const highlightedItem = descriptionsEnabled ? items.find((item) => item.value === state.value) : undefined
+
+  // Shift+Tab toggles a full-screen "detail" takeover of the focused item's description. It is only
+  // meaningful when descriptions are on and the focused item actually has one.
+  const [showFullDescription, setShowFullDescription] = useState(false)
 
   const handleArrows = (key: Key) => {
     if (key.upArrow) {
@@ -182,6 +227,16 @@ function MultiSelectInput<T>({
     (input, key) => {
       handleCtrlC(input, key)
 
+      // Shift+Tab toggles the full-description takeover. TextInput ignores this exact combo, so it
+      // is free to reuse across autocomplete/select/multi-select. Only react when there is a
+      // description to show; otherwise leave the key alone.
+      if (key.shift && key.tab) {
+        if (descriptionsEnabled && (highlightedItem?.description?.length ?? 0) > 0) {
+          setShowFullDescription((previous) => !previous)
+        }
+        return
+      }
+
       if (key.return) {
         if (onSubmit && !noItems) {
           // Resolve in the order the choices were declared, not the order the
@@ -203,26 +258,13 @@ function MultiSelectInput<T>({
     },
     {isActive: focus},
   )
-  const {fullWidth, twoThirds} = useLayout()
-
-  // The description panel is opt-in: it only activates when at least one item provides a
-  // description. When it does, rows become single-line/truncated and the focused item's
-  // description is shown in a panel. In a multi-select the panel follows FOCUS (the `>` cursor),
-  // not the set of toggled selections.
-  const descriptionsEnabled = items.some((item) => (item.description?.length ?? 0) > 0)
-  const highlightedItem = descriptionsEnabled ? items.find((item) => item.value === state.value) : undefined
-
-  // useLayout clamps both `twoThirds` and `oneThird` up to a minimum of 80 columns, so they can't
-  // be placed side-by-side on typical terminals without overflowing (which would reintroduce the
-  // wrapped-row ghosting). Instead, keep the list at `twoThirds` and give the panel exactly the
-  // remaining width, so the two columns always sum to `fullWidth`. Only place the panel beside the
-  // list when that remainder is wide enough to be readable; otherwise stack it below.
-  const sidePanelWidth = fullWidth - twoThirds
-  const showDescriptionBeside = descriptionsEnabled && sidePanelWidth >= MIN_SIDE_PANEL_WIDTH
 
   const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
   const minHeight = hasAnyGroup ? 5 : 2
-  const sectionHeight = Math.max(minHeight, Math.min(availableLinesToUse, optionsHeight))
+  // On a pathologically short terminal (fewer usable rows than `minHeight + STACKED_HINT_RESERVE`)
+  // this `Math.max(minHeight, …)` floor can still cause ≤1 row of overflow. Real terminals are
+  // ≥24 rows, so the extra complexity to handle that isn't worth it.
+  const sectionHeight = Math.max(minHeight, Math.min(listAvailableLines, optionsHeight))
 
   const listSection = (
     <Box flexDirection="row" height={sectionHeight} width="100%">
@@ -262,12 +304,33 @@ function MultiSelectInput<T>({
       ) : (
         <Box marginLeft={3} flexDirection="column">
           <Text dimColor>
-            {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, space to toggle, enter to confirm.`}
+            {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, space to toggle, enter to confirm.${
+              descriptionsEnabled ? ' · ⇧⇥ full description' : ''
+            }`}
           </Text>
         </Box>
       )}
     </Box>
   )
+
+  // Shift+Tab takeover: replace the list + hint with the focused item's full description. Arrows
+  // still navigate underneath, so this updates live as the focused item changes.
+  if (descriptionsEnabled && showFullDescription && (highlightedItem?.description?.length ?? 0) > 0) {
+    const overlayWidth = showDescriptionBeside ? fullWidth : twoThirds
+    return (
+      <Box flexDirection="column" ref={ref} gap={1} width={overlayWidth}>
+        <DescriptionPanel
+          title={highlightedItem?.label}
+          description={highlightedItem?.description}
+          width={overlayWidth}
+          maxLines={availableLinesToUse}
+        />
+        <Box marginLeft={3}>
+          <Text dimColor>Press ⇧⇥ to go back.</Text>
+        </Box>
+      </Box>
+    )
+  }
 
   // No description on any item: render exactly as before (byte-for-byte).
   if (!descriptionsEnabled) {
@@ -298,16 +361,19 @@ function MultiSelectInput<T>({
     )
   }
 
-  // Narrow terminals: panel stacked below the list, bounded to a few lines.
+  // Narrow terminals: show only a single, truncated preview line of the focused item's description
+  // below the list (the focused row already shows its label). This costs exactly one row (reserved
+  // via `listAvailableLines`), keeping the total height within the viewport. The full text is one
+  // Shift+Tab away. The box stretches to `twoThirds`, so `marginLeft` leaves a bound for
+  // `truncate-end` to clip against.
   return (
     <Box flexDirection="column" ref={ref} gap={1} width={twoThirds}>
       {listSection}
-      <DescriptionPanel
-        title={highlightedItem?.label}
-        description={highlightedItem?.description}
-        width={twoThirds}
-        maxLines={DESCRIPTION_PANEL_LINES_BELOW}
-      />
+      <Box marginLeft={3}>
+        <Text dimColor wrap="truncate-end">
+          {highlightedItem?.description}
+        </Text>
+      </Box>
       {footer}
     </Box>
   )

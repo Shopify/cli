@@ -8,6 +8,10 @@ import React from 'react'
 
 const ARROW_DOWN = '[B'
 
+// Ink parses CSI Z (ESC [ Z, "back-tab") as Shift+Tab, which TextInput deliberately ignores, so it
+// is the free toggle key for the full-description overlay.
+const SHIFT_TAB = '[Z'
+
 // The default testing `render` helper hard-codes an 80/100-column stdout and reads frames from an
 // internal stdout instance. To exercise the responsive description panel we need to control the
 // terminal width and read frames from the same stdout that drives `useLayout`, so we pass our own
@@ -159,5 +163,89 @@ describe('MultiSelectInput with descriptions', () => {
     expect(frame).toContain('read_products')
     expect(frame).toContain('read_orders')
     expect(frame).toContain('read_customers')
+  })
+
+  test('truncates a long group title to a single physical line', async () => {
+    // Long enough to wrap to several rows if it were not truncated. No descriptions here on purpose:
+    // group-title truncation is unconditional, not gated on the descriptions feature.
+    const longGroupTitle = `Group ${'segment-'.repeat(30)}`.trim()
+    const groupedItems = [
+      {label: 'alpha', value: 'alpha', group: longGroupTitle},
+      {label: 'beta', value: 'beta', group: longGroupTitle},
+    ]
+
+    const {stdout} = renderWithWidth(<MultiSelectInput items={groupedItems} onSubmit={() => {}} />, 80)
+
+    await waitForInputsToBeReady()
+
+    const lines = lastUnstyledFrame(stdout).split('\n')
+    // If the title wrapped, more than one physical line would carry a chunk of it.
+    const titleLines = lines.filter((line) => line.includes('segment-'))
+    expect(titleLines).toHaveLength(1)
+    expect(lastUnstyledFrame(stdout)).toContain('…')
+    // The option rows below the title are still visible (not clipped by an overflowing title).
+    expect(lastUnstyledFrame(stdout)).toContain('alpha')
+    expect(lastUnstyledFrame(stdout)).toContain('beta')
+  })
+
+  test('keeps the stacked layout within the vertical budget while scrolling', async () => {
+    const manyLongItems = Array.from({length: 12}, (_, index) => ({
+      label: `scope:${index}`,
+      value: `scope-${index}`,
+      description: `Long description ${index} ${'word '.repeat(30)}`.trim(),
+    }))
+
+    // Narrow width forces the stacked layout; a small budget is where the old code overflowed.
+    const {renderInstance, stdout} = renderWithWidth(
+      <MultiSelectInput items={manyLongItems} onSubmit={() => {}} availableLines={6} />,
+      80,
+    )
+
+    await waitForInputsToBeReady()
+    const initialLineCount = lastUnstyledFrame(stdout).split('\n').length
+
+    // The stacked hint is reserved out of the list budget, so the whole block stays small and, more
+    // importantly, its height never grows as focus moves (which is what caused vertical ghosting).
+    expect(initialLineCount).toBeLessThanOrEqual(10)
+    for (let step = 0; step < 8; step++) {
+      // eslint-disable-next-line no-await-in-loop
+      await sendAndWaitForFrameChange(stdout, () => renderInstance.stdin.write(ARROW_DOWN))
+      expect(lastUnstyledFrame(stdout).split('\n').length).toBe(initialLineCount)
+    }
+  })
+
+  test('Shift+Tab toggles a full-description takeover', async () => {
+    // Long enough that the compact preview must truncate before the sentinel token at the end.
+    const longDescription =
+      'This description begins here and then continues far past a single terminal line so the compact ' +
+      'preview has to truncate it, right up to the sentinel token OMEGA_END_TOKEN.'
+    const items = [
+      {label: 'read_products', value: 'read_products', description: longDescription},
+      {label: 'read_orders', value: 'read_orders', description: 'Read-only access to orders.'},
+    ]
+
+    const {renderInstance, stdout} = renderWithWidth(<MultiSelectInput items={items} onSubmit={() => {}} />, 80)
+
+    await waitForInputsToBeReady()
+
+    // The footer can wrap on narrow terminals, so normalize whitespace before matching the hint.
+    const normalizeWhitespace = (frame: string) => frame.replace(/\s+/g, ' ')
+
+    const before = lastUnstyledFrame(stdout)
+    // Compact preview: hint present, sentinel truncated away.
+    expect(normalizeWhitespace(before)).toContain('⇧⇥ full description')
+    expect(before).not.toContain('OMEGA_END_TOKEN')
+
+    await sendAndWaitForFrameChange(stdout, () => renderInstance.stdin.write(SHIFT_TAB))
+    const overlay = lastUnstyledFrame(stdout)
+    // Takeover: the full text (including the sentinel) is now shown, with a back hint.
+    expect(overlay).toContain('OMEGA_END_TOKEN')
+    expect(overlay).toContain('Press ⇧⇥ to go back.')
+
+    await sendAndWaitForFrameChange(stdout, () => renderInstance.stdin.write(SHIFT_TAB))
+    const after = lastUnstyledFrame(stdout)
+    // Back to the list: sentinel hidden again, discoverability hint restored.
+    expect(after).not.toContain('OMEGA_END_TOKEN')
+    expect(normalizeWhitespace(after)).toContain('⇧⇥ full description')
   })
 })
