@@ -8,7 +8,14 @@ vi.mock('@shopify/cli-kit/node/system')
 
 describe('skill install', () => {
   test('infers the package manager', async () => {
-    const skillArguments = ['add', 'Shopify/cli', '--skill', 'shopify', '--global', '--yes']
+    const skillArguments = [
+      'add',
+      'Shopify/cli#feature/shopify-validate-command',
+      '--skill',
+      'shopify',
+      '--global',
+      '--yes',
+    ]
     vi.mocked(inferPackageManager).mockReturnValue('pnpm')
 
     await SkillInstall.run([], import.meta.url)
@@ -25,7 +32,15 @@ describe('skill install', () => {
     expect(inferPackageManager).toHaveBeenCalledWith('bun')
     expect(exec).toHaveBeenCalledWith(
       'bunx',
-      ['skills@latest', 'add', 'Shopify/cli', '--skill', 'shopify', '--global', '--yes'],
+      [
+        'skills@latest',
+        'add',
+        'Shopify/cli#feature/shopify-validate-command',
+        '--skill',
+        'shopify',
+        '--global',
+        '--yes',
+      ],
       {stdio: 'inherit'},
     )
   })

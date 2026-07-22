@@ -3,7 +3,17 @@ import {inferPackageManager, PackageManager} from '@shopify/cli-kit/node/node-pa
 import {exec} from '@shopify/cli-kit/node/system'
 import {Flags} from '@oclif/core'
 
-const shopifySkillArguments = ['add', 'Shopify/cli', '--skill', 'shopify', '--global', '--yes']
+// eslint-disable-next-line no-warning-comments
+// TODO: Point back to 'Shopify/cli' (default branch) before merging. The shopify skill
+// only exists on the feature/shopify-validate-command branch until PR #8142 lands on main.
+const shopifySkillArguments = [
+  'add',
+  'Shopify/cli#feature/shopify-validate-command',
+  '--skill',
+  'shopify',
+  '--global',
+  '--yes',
+]
 
 export default class SkillInstall extends Command {
   static summary = 'Install the Shopify skill for coding agents.'
