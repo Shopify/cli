@@ -39,4 +39,35 @@ describe('buildReportInstructions', () => {
     expect(instructions).toContain('compute the')
     expect(instructions).toContain('never tell the user a capability is missing')
   })
+
+  test('requires the model to run the queries itself rather than explaining the CLI to the user', () => {
+    const instructions = buildReportInstructions()
+
+    expect(instructions).toContain('DIRECT, already-authenticated access')
+    expect(instructions).toContain('You MUST run the queries yourself')
+    expect(instructions).toContain('you are not explaining the CLI to the user')
+  })
+
+  test('forbids emitting shell commands or CLI invocations for the user to run', () => {
+    const instructions = buildReportInstructions()
+
+    expect(instructions).toContain('You MUST NEVER emit shell commands or CLI invocations')
+    expect(instructions).toContain('shopify store auth')
+    expect(instructions).toContain('shopify store execute')
+    expect(instructions).toContain('hand the user a query or script to run')
+  })
+
+  test('forbids asking the user for the store domain, credentials, or any follow-up input', () => {
+    const instructions = buildReportInstructions()
+
+    expect(instructions).toContain('you MUST NOT ask the user for the store domain, credentials')
+    expect(instructions).toContain('defer the work back to them, or ask a clarifying question')
+    expect(instructions).toContain('Answer by executing the needed queries now')
+  })
+
+  test('only allows the final summary once the queries have actually been run', () => {
+    const instructions = buildReportInstructions()
+
+    expect(instructions).toContain('Only write your final summary after you have actually run the queries needed')
+  })
 })
