@@ -66,14 +66,14 @@ describe('interactiveBootstrapUI', () => {
       prompt: 'promptEnvironment' as const,
       message: 'Enter a name for this theme environment',
     },
-  ])('presents the $name prompt and returns non-empty input unchanged', async ({prompt, message}) => {
+  ])('presents the $name prompt and returns trimmed non-empty input', async ({prompt, message}) => {
     const input = '  response  '
     vi.mocked(renderTextPrompt).mockResolvedValue(input)
 
     const result = await interactiveBootstrapUI()[prompt]()
 
     expect(renderTextPrompt).toHaveBeenCalledWith({message})
-    expect(result).toBe(input)
+    expect(result).toBe('response')
   })
 
   test.each([

@@ -52,11 +52,11 @@ export function interactiveBootstrapUI(): BootstrapUI {
       }),
     promptStore: async () => {
       const store = await renderTextPrompt({message: 'Enter the Shopify store to trust'})
-      return hasValue(store) ? store : undefined
+      return hasValue(store) ? store.trim() : undefined
     },
     promptEnvironment: async () => {
       const environment = await renderTextPrompt({message: 'Enter a name for this theme environment'})
-      return hasValue(environment) ? environment : undefined
+      return hasValue(environment) ? environment.trim() : undefined
     },
   }
 }
