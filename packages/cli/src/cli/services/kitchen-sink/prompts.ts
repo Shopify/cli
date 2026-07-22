@@ -1,6 +1,7 @@
 import {
   renderAutocompletePrompt,
   renderConfirmationPrompt,
+  renderMultiSelectPrompt,
   renderSelectPrompt,
   renderTextPrompt,
   renderDangerousConfirmationPrompt,
@@ -35,6 +36,19 @@ export async function prompts() {
         bullet: '-',
       },
     ],
+  })
+
+  // renderMultiSelectPrompt
+  await renderMultiSelectPrompt({
+    message: 'Select the scopes to grant to your app',
+    choices: [
+      {label: 'read_products', value: 'read_products'},
+      {label: 'write_products', value: 'write_products'},
+      {label: 'read_orders', value: 'read_orders'},
+      {label: 'write_orders', value: 'write_orders', group: 'Advanced'},
+      {label: 'read_customers', value: 'read_customers', group: 'Advanced'},
+    ],
+    defaultValue: ['read_products', 'read_orders'],
   })
 
   // renderTextPrompt

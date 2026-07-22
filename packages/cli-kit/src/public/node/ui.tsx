@@ -24,6 +24,7 @@ import {
   DangerousConfirmationPromptProps,
 } from '../../private/node/ui/components/DangerousConfirmationPrompt.js'
 import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
+import {MultiSelectPrompt, MultiSelectPromptProps} from '../../private/node/ui/components/MultiSelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
@@ -294,6 +295,47 @@ export async function renderSelectPrompt<T>(
       },
     )
     return selectedValue!
+  })
+}
+
+export interface RenderMultiSelectPromptOptions<T> extends Omit<MultiSelectPromptProps<T>, 'onSubmit'> {
+  renderOptions?: RenderOptions
+}
+
+/**
+ * Renders a multi-select (checkbox) prompt to the console.
+ * @example
+ * ?  Select the extensions you want to add:
+ *
+ * >  ☒ first
+ *    ☐ second
+ *    ☒ third
+ *
+ *    Press ↑↓ arrows to select, space to toggle, enter to confirm.
+ *
+ */
+
+export async function renderMultiSelectPrompt<T>(
+  {renderOptions, ...props}: RenderMultiSelectPromptOptions<T>,
+  uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
+): Promise<T[]> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
+
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let selectedValues: T[] = []
+    await render(
+      <MultiSelectPrompt
+        {...props}
+        onSubmit={(values: T[]) => {
+          selectedValues = values
+        }}
+      />,
+      {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      },
+    )
+    return selectedValues
   })
 }
 
