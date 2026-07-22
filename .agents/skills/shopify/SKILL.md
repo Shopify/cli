@@ -76,7 +76,7 @@ shopify doc search --query "<what you are building>" [--api-name admin|storefron
 - Pass `--api-version latest` unless the task pins a version (for example `2025-10`); match the version between search and output, or you get subtly wrong fields.
 - Refine the query and re-run until the returned chunks genuinely cover the finding. Thin or off-topic results mean you are not ready to correct the artifact yet.
 
-To read a full referenced page verbatim, pull it as Markdown:
+If the ranked chunks aren't enough, you can pull a full page verbatim as Markdown — but sparingly: `doc fetch` returns the *entire* document, so only reach for it when a full page is genuinely needed and fetching it once is cheaper than a few more targeted `shopify doc search` queries.
 
 ```bash
 shopify doc fetch --url <shopify.dev url> [--output <file>]
@@ -92,7 +92,7 @@ Correct the artifact against the retrieved docs, then **re-run `shopify validate
 - Don't guess command names or flags. The command surface changes between versions — `shopify commands` lists what exists and `<command> --help` documents its flags. Confirm there before running, especially for `shopify validate`.
 - A code example in a chat reply is an outcome too. A snippet with `...` or placeholder values is not "done" — write it to a temp file and validate it exactly like a committed file before you show it.
 - On a failed validation, `--api-name` narrows recall; if results look thin or miss the point, drop the flag and search across all APIs.
-- `shopify doc search` returns ranked chunks, not a full page. When a chunk points at a page you need in full, follow up with `shopify doc fetch --url`.
+- Prefer `shopify doc search` over `shopify doc fetch`. Search returns only the ranked, relevant chunks; `doc fetch` pulls the whole document and is token-expensive. Reach for it only when you genuinely need a page verbatim and fetching it once is cheaper than several follow-up `shopify doc search` queries — otherwise refine the search instead.
 - "Polaris" alone means **App Home** (the embedded admin app UI); treat it as an extension only when the task names Admin, Checkout, Customer Account, or POS.
 - Developer onboarding (scaffold app/theme/project, create a dev store, Partner account) is not merchant onboarding (start selling online, first store, `shopify store create preview`) — the former scaffolds validatable config; the latter is guidance you ground with an up-front search.
 - App Store review is read-only analysis of the codebase — report likely blockers; do not silently rewrite the app.
