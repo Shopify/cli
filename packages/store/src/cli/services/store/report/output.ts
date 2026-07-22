@@ -62,11 +62,14 @@ export function renderStoreReportResult(result: StoreReportResult, format: Store
     return
   }
 
-  // The agent already streamed its summary to stderr live as it worked (see `agent.ts`), so we don't
-  // reprint `result.rationale` here — that would show the same sentence twice. `--json` still carries
-  // it in the `rationale` field. A blank line separates that streamed summary from the queries below,
-  // and each query gets its own blank-line-separated section so a compound answer's results don't run
-  // together.
+  // The agent's summary is no longer streamed live in normal mode (it's routed to `outputDebug`,
+  // visible only under `--verbose`), so we print `result.rationale` here as the headline answer,
+  // followed by each query's results. Each query gets its own blank-line-separated section so a
+  // compound answer's results don't run together.
+  if (result.rationale.trim().length > 0) {
+    outputInfo(result.rationale)
+  }
+
   for (const record of result.queries) {
     outputInfo('')
     renderQueryRecord(record)

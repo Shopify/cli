@@ -108,12 +108,22 @@ describe('renderStoreReportResult', () => {
     expect(output.info()).toContain('123.45')
   })
 
-  test('does not reprint the agent summary in text mode (it already streamed live)', () => {
+  test('prints the agent summary as the headline in text mode', () => {
     const output = mockAndCaptureOutput()
 
     renderStoreReportResult(shopifyqlResult, 'text')
 
-    expect(output.info()).not.toContain('Sales trend over the last 30 days.')
+    expect(output.info()).toContain('Sales trend over the last 30 days.')
+  })
+
+  test('does not print a stray blank line for an empty rationale', () => {
+    const output = mockAndCaptureOutput()
+
+    renderStoreReportResult({...shopifyqlResult, rationale: ''}, 'text')
+
+    // Only the per-query section's own leading blank line should appear, not an extra one for the rationale.
+    expect(output.info().startsWith('\n\n')).toBe(false)
+    expect(output.info()).toContain('FROM sales SHOW total_sales SINCE -30d')
   })
 
   test('reports no data for a ShopifyQL result with no rows', () => {
