@@ -11,6 +11,7 @@ import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stack
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
 import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
 import CliKitDedupPlugin from '../../../bin/bundling/esbuild-plugin-dedup-cli-kit.js'
+import {shopifyDevToolsDataPlugin} from './shopify-dev-tools-data.js'
 
 const require = createRequire(import.meta.url)
 
@@ -38,6 +39,15 @@ const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
 const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
+
+const shopifyDevToolsDataPath = joinPath(process.cwd(), '../shopify-dev-tools/dist/data')
+const shopifyDevToolsInternalApiIdsPath = joinPath(
+  process.cwd(),
+  '../shopify-dev-tools/src/internal/internal-api-ids.json',
+)
+const shopifyDevToolsInternalApiIds = Object.values(
+  JSON.parse(readFileSync(shopifyDevToolsInternalApiIdsPath, 'utf8')),
+)
 
 const commandEntryPoints = glob.sync('./src/cli/commands/**/*.ts', {
   ignore: ['**/*.test.ts', '**/*.d.ts'],
@@ -109,6 +119,11 @@ esBuild({
     GraphiQLImportsPlugin,
     ShopifyStacktraceyPlugin,
     CliKitDedupPlugin({require}),
+    shopifyDevToolsDataPlugin({
+      sourceDataDirectory: shopifyDevToolsDataPath,
+      targetDataDirectory: joinPath(process.cwd(), 'dist/data'),
+      internalApiIds: shopifyDevToolsInternalApiIds,
+    }),
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
