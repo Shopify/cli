@@ -633,9 +633,9 @@ export async function generateAgentSkills(
     await generateSkill(apiName, ctx);
   }
 
-  // Generic search skill is build-time canon, not part of any single api's
-  // instruction surface — skip it when scoped to a single api (e.g. experiments),
-  // except when the filter explicitly targets the generic skill by name.
+  // Generic search skill is build-time canon, not part of any single API's
+  // instruction surface. Skip it during filtered generation unless the filter
+  // explicitly targets the generic skill by name.
   if (!apiFilter || apiFilter === GENERIC_SKILL_NAME) {
     await generateGenericSearchSkill(ctx);
   }

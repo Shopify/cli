@@ -1,4 +1,0 @@
-# Sibling overlays for `pnpm eval --experiment`. Drop a
-# `<api>.experiment.md` next to the canonical `<api>.md` to A/B-test
-# instructions without committing the experiment.
-*.experiment.md

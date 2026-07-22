@@ -67,33 +67,17 @@
 ### Minor Changes
 
 - 716d22b: `shopify-app-store-review` skill now points the agent at the canonical shopify.dev requirements page (https://shopify.dev/docs/apps/launch/app-store-review/app-store-ai-self-review-requirements) instead of carrying a hand-maintained inline copy, and adds 5.x category-specific requirements. Output format and status taxonomy are unchanged. (Retroactive changeset for #722, which merged without one.)
-- b2e0788: Add a shippable experiments helper with explicit stable install-id lifecycle, opt-out short-circuiting, revocation support, and hardened Monorail error reporting.
 - 08f0921: Add a releasable UCP topic that publishes the standalone `ucp` skill and learn_shopify_api instructions.
 - 716d22b: Skill validate scripts (`validate_graphql`, `validate_components`, `validate_functions`, `validate_theme`) now emit the same markdown summary the MCP `validate_*_codeblocks` tools return, including artifact ID and revision lines. The id is auto-minted when not supplied and echoed back to the agent, matching the MCP behavior so retries can chain across revisions on either surface.
 
 ### Patch Changes
 
 - e236bad: fix polaris skills to use camelCase not kebab-case
-- d2545fd: Support eval-time instruction experiments. Drop a sibling
-  `<api>.experiment.md` next to any `src/instructions/<api>.md` and run
-  `pnpm --filter @shopify/ai-toolkit-evals run eval:experiment promptfoo/<topic>.yaml`
-  to see baseline and experiment columns side-by-side, plus a `None`
-  baseline (no instructions, no tools).
-
-  Internals: the api-instructions and agent-skills generators are now
-  callable as functions with `{ inputDir, outputDir, apiFilter }` (existing
-  `tsx`-invoked behavior is unchanged). The dev-mcp loader honors a new
-  `MCP_INSTRUCTIONS_OVERRIDE_DIR` env var that, when set, prepends an
-  overlay directory to its candidate list — falls back to canonical for
-  any api the overlay doesn't cover. Has no effect when the env var is
-  unset.
-
 - c2b8ff2: Update the Shopify CLI guidance topic to prefix `shopify` commands with `SHOPIFY_CLI_AGENT*` environment variables so agent-driven CLI executions can be attributed in Shopify CLI analytics.
 - f8d1abd: Disclose default-on telemetry more clearly in mirrored plugin install surfaces and generated skill privacy notices, including the opt-out environment variable. Clarify that validation and search scripts report specific request data to `shopify.dev/mcp/usage`.
 - 40cd7cd: Include the response body in `shopifyDevFetch` errors for 5xx responses, restoring the diagnostic detail previously surfaced by `search_docs.ts` and improving 5xx error messages for the MCP.
 - 9add652: Quote the packed `SHOPIFY_CLI_AGENT_INFO` and `SHOPIFY_CLI_AGENT_IDS` values in the Shopify CLI topic so exact executed command examples remain valid shell commands. Tighten the matching eval to require both packed env vars, including ordered `s:` / `r:` / `i:` ID segments.
 - 716d22b: Inject `--target` guidance into SKILL.md for extension-surface skills (Admin Extensions, Checkout Extensions, Customer Account Extensions, POS UI). The validate.mjs invocation example now includes `--target <extension-target>` plus a one-line note with a representative target value, since validation rejects extension-surface code without one. Non-extension skills are unchanged.
-- c976654: Fix Experiments constructor to thread config.env through to install-ID resolution.
 - 01d0288: Mirror the dual-mode pattern from `validate_graphql.ts` in
   `validate_functions.ts`: bundled per-skill builds inject a new
   `__BUNDLED__` esbuild define and resolve schemas via

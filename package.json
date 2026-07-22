@@ -109,9 +109,6 @@
         "use-resize-observer>react-dom": "19.2.4"
       }
     },
-    "overrides": {
-      "@shopify/shopify-dev-tools>@shopify/verdict": "-"
-    },
     "onlyBuiltDependencies": [
       "@parcel/watcher",
       "esbuild",
@@ -397,7 +394,6 @@
         "project": [
           "src/**/*.ts!",
           "scripts/*.{js,ts}!",
-          "test-stubs/**/*.ts!",
           "vite.config.js!"
         ],
         "ignore": [
@@ -411,7 +407,6 @@
           "@shopify/hydrogen",
           "@shopify/hydrogen-react",
           "@shopify/polaris-types",
-          "@shopify/verdict",
           "@types/react",
           "isbot",
           "preact",
