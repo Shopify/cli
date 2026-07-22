@@ -212,6 +212,7 @@ export function appendFileSync(path: string, data: string): void {
 
 export interface WriteOptions {
   encoding: BufferEncoding
+  mode?: number
 }
 
 /**
@@ -237,13 +238,32 @@ export async function writeFile(
  * @param data - Text content to be written.
  */
 export async function writeFileAtomically(path: string, data: string): Promise<void> {
-  const temporaryPath = `${path}.${process.pid}.${randomUUID()}.tmp`
-  const existingMode = (await fileExists(path)) ? (await fsStat(path)).mode : undefined
+  let destinationStats
+  try {
+    destinationStats = await fsLstat(path)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+
+  let destinationPath = path
+  if (destinationStats) {
+    try {
+      destinationPath = await fileRealPath(path)
+    } catch (error) {
+      if (destinationStats.isSymbolicLink() && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`Unable to atomically write ${path}: destination is a dangling symlink.`)
+      }
+      throw error
+    }
+  }
+
+  const existingMode = destinationStats ? (await fsStat(destinationPath)).mode & 0o7777 : undefined
+  const temporaryPath = `${destinationPath}.${process.pid}.${randomUUID()}.tmp`
 
   try {
-    await writeFile(temporaryPath, data)
+    await writeFile(temporaryPath, data, {encoding: 'utf8', mode: existingMode ?? 0o600})
     if (existingMode !== undefined) await chmod(temporaryPath, existingMode)
-    await renameFile(temporaryPath, path)
+    await renameFile(temporaryPath, destinationPath)
   } finally {
     await removeFile(temporaryPath)
   }

@@ -28,11 +28,11 @@ import {
 import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
-import {rename as fsRename, stat} from 'node:fs/promises'
+import {rename as fsRename, stat, lstat, writeFile as fsWriteFile} from 'node:fs/promises'
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>()
-  return {...actual, rename: vi.fn(actual.rename)}
+  return {...actual, rename: vi.fn(actual.rename), writeFile: vi.fn(actual.writeFile)}
 })
 
 describe('writeFileAtomically', () => {
@@ -59,15 +59,40 @@ describe('writeFileAtomically', () => {
     })
   })
 
+  test('passes a restrictive mode when creating the temporary sibling', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      vi.mocked(fsWriteFile).mockClear()
+
+      await writeFileAtomically(path, 'content')
+
+      const temporaryWrite = vi.mocked(fsWriteFile).mock.calls.find(([writePath]) => String(writePath).endsWith('.tmp'))
+      expect(temporaryWrite?.[2]).toMatchObject({encoding: 'utf8', mode: 0o600})
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('uses restrictive permissions for a new file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+
+      await writeFileAtomically(path, 'content')
+
+      expect((await stat(path)).mode & 0o777).toBe(0o600)
+    })
+  })
+
   test.skipIf(process.platform === 'win32')('preserves the mode of an existing file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const path = joinPath(tmpDir, 'test-file')
       await writeFile(path, 'original content')
       await chmod(path, 0o754)
       const originalMode = (await stat(path)).mode
+      vi.mocked(fsWriteFile).mockClear()
 
       await writeFileAtomically(path, 'replacement content')
 
+      const temporaryWrite = vi.mocked(fsWriteFile).mock.calls.find(([writePath]) => String(writePath).endsWith('.tmp'))
+      expect(temporaryWrite?.[2]).toMatchObject({mode: originalMode & 0o7777})
       expect((await stat(path)).mode).toBe(originalMode)
     })
   })
@@ -84,6 +109,36 @@ describe('writeFileAtomically', () => {
       await expect(readFile(path)).resolves.toBe('original content')
       const entries = await readdir(tmpDir)
       expect(entries.filter((entry) => entry.startsWith(`${fileName}.`) && entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+
+  test('writes through an existing file symlink and preserves the link', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const targetPath = joinPath(tmpDir, 'target-file')
+      const linkPath = joinPath(tmpDir, 'linked-file')
+      await writeFile(targetPath, 'original content')
+      await symlink(targetPath, linkPath)
+
+      await writeFileAtomically(linkPath, 'replacement content')
+
+      await expect(readFile(targetPath)).resolves.toBe('replacement content')
+      expect((await lstat(linkPath)).isSymbolicLink()).toBe(true)
+      const entries = await readdir(tmpDir)
+      expect(entries.filter((entry) => entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+
+  test('rejects a dangling symlink without replacing it', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const linkPath = joinPath(tmpDir, 'linked-file')
+      await symlink(joinPath(tmpDir, 'missing-target'), linkPath)
+
+      await expect(writeFileAtomically(linkPath, 'replacement content')).rejects.toThrow(
+        `Unable to atomically write ${linkPath}: destination is a dangling symlink`,
+      )
+
+      expect((await lstat(linkPath)).isSymbolicLink()).toBe(true)
+      await expect(readdir(tmpDir)).resolves.toEqual(['linked-file'])
     })
   })
 })
