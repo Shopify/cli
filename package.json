@@ -26,6 +26,7 @@
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
     "release": "./bin/release",
+    "resolve-package-publish-state": "node bin/resolve-package-publish-state.js",
     "post-release": "./bin/post-release",
     "update-observe": "node bin/update-observe.js",
     "shopify:run": "node packages/cli/bin/dev.js",

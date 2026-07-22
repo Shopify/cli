@@ -26,6 +26,7 @@ on:
           - nightly
           - latest
           - experimental
+          - shopify-dev-tools
 
 concurrency:
   group: changeset-${{ github.head_ref || github.run_id }}
@@ -183,10 +184,43 @@ jobs:
             -f make_latest=legacy >/dev/null
           echo "Created release $TAG"
 
-  # Manual/Cron release job - runs on schedule or manual trigger with tag
+  shopify-dev-tools-release:
+    name: Publish @shopify/shopify-dev-tools
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag == 'shopify-dev-tools')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: publish-shopify-dev-tools-to-cloudsmith
+      cancel-in-progress: false
+    env:
+      CLOUDSMITH_NPM_TOKEN_RO: ${{ secrets.CLOUDSMITH_NPM_TOKEN_RO }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 24.12.0
+      - name: Resolve @shopify/shopify-dev-tools publish state
+        id: publish-state
+        run: pnpm resolve-package-publish-state packages/shopify-dev-tools/package.json https://npm.shopify.io/node/
+      - name: Trigger Cloudsmith publish
+        if: steps.publish-state.outputs.should_publish == 'true'
+        uses: buildkite/trigger-pipeline-action@909fed762c73d5ae2b5d555ab910d66b3fae2670 # v2.4.1
+        with:
+          buildkite_api_access_token: ${{ secrets.BUILDKITE_API_TOKEN }}
+          pipeline: shopify/cli-shopify-dev-tools-publish-package
+          branch: main
+          commit: ${{ github.sha }}
+          message: 'Publish @shopify/shopify-dev-tools@${{ steps.publish-state.outputs.version }}'
+          build_env_vars: '{"SHOPIFY_DEV_TOOLS_RELEASE":"true"}'
+
+  # Manual/Cron release job - runs on schedule or manual trigger with a CLI release tag
   manual-cron-release:
     name: Manual & Cron Release
-    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') }}
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != 'shopify-dev-tools') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
