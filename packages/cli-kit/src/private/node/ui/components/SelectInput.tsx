@@ -1,4 +1,5 @@
 import {Scrollbar} from './Scrollbar.js'
+import {DescriptionPanel} from './DescriptionPanel.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {useSelectState} from '../hooks/use-select-state.js'
@@ -35,6 +36,12 @@ export interface Item<T> {
   group?: string
   helperText?: string
   disabled?: boolean
+  /**
+   * Optional longer description of the item. When at least one visible item provides a
+   * description, the list renders names-only, single-line rows and shows the highlighted
+   * item's description in a responsive side/below panel.
+   */
+  description?: string
 }
 
 function highlightedLabel(label: string, term: string | undefined) {
@@ -74,6 +81,7 @@ interface ItemProps<T> {
   enableShortcuts: boolean
   hasAnyGroup: boolean
   index: number
+  singleLine: boolean
 }
 
 function Item<T>({
@@ -85,6 +93,7 @@ function Item<T>({
   items,
   hasAnyGroup,
   index,
+  singleLine,
 }: ItemProps<T>): React.ReactElement {
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
@@ -115,9 +124,13 @@ function Item<T>({
         </Box>
       ) : null}
 
-      <Box key={index} marginLeft={hasAnyGroup ? 3 : 0}>
+      <Box key={index} marginLeft={hasAnyGroup ? 3 : 0} width={singleLine ? '100%' : undefined}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text wrap="end" color={labelColor}>
+        {/* When descriptions are active, keep every row to exactly one physical line so the list's
+            true height equals the option count (what the scrollbar/sectionHeight already assume),
+            which is what prevents the wrapped-row ghosting bug. Otherwise preserve the original
+            wrapping behavior byte-for-byte. */}
+        <Text wrap={singleLine ? 'truncate-end' : 'end'} color={labelColor}>
           {showKey ? `(${item.key}) ${label}` : label}
         </Text>
       </Box>
@@ -126,6 +139,14 @@ function Item<T>({
 }
 
 const MAX_AVAILABLE_LINES = 25
+
+// Minimum readable width (in columns) for the description panel when placed beside the list.
+// Below this the panel is stacked under the list instead.
+const MIN_SIDE_PANEL_WIDTH = 24
+
+// Number of physical lines the description panel occupies when stacked below the list. Kept small
+// so the combined list + panel height stays within the viewport.
+const DESCRIPTION_PANEL_LINES_BELOW = 5
 
 function SelectInput<T>({
   items: rawItems,
@@ -243,7 +264,21 @@ function SelectInput<T>({
     },
     {isActive: focus},
   )
-  const {twoThirds} = useLayout()
+  const {fullWidth, twoThirds} = useLayout()
+
+  // The description panel is opt-in: it only activates when at least one item provides a
+  // description. When it does, rows become single-line/truncated and the highlighted item's
+  // description is shown in a panel.
+  const descriptionsEnabled = items.some((item) => (item.description?.length ?? 0) > 0)
+  const highlightedItem = descriptionsEnabled ? items.find((item) => item.value === state.value) : undefined
+
+  // useLayout clamps both `twoThirds` and `oneThird` up to a minimum of 80 columns, so they can't
+  // be placed side-by-side on typical terminals without overflowing (which would reintroduce the
+  // wrapped-row ghosting). Instead, keep the list at `twoThirds` and give the panel exactly the
+  // remaining width, so the two columns always sum to `fullWidth`. Only place the panel beside the
+  // list when that remainder is wide enough to be readable; otherwise stack it below.
+  const sidePanelWidth = fullWidth - twoThirds
+  const showDescriptionBeside = descriptionsEnabled && sidePanelWidth >= MIN_SIDE_PANEL_WIDTH
 
   if (loading) {
     return (
@@ -262,56 +297,100 @@ function SelectInput<T>({
     const minHeight = hasAnyGroup ? 5 : 2
     const sectionHeight = Math.max(minHeight, Math.min(availableLinesToUse, optionsHeight))
 
+    const listSection = (
+      <Box flexDirection="row" height={sectionHeight} width="100%">
+        <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
+          {state.visibleOptions.map((item: Item<T>, index: number) => (
+            <Item
+              key={index}
+              item={item}
+              previousItem={state.visibleOptions[index - 1]}
+              highlightedTerm={highlightedTerm}
+              isSelected={item.value === state.value}
+              items={state.visibleOptions}
+              enableShortcuts={enableShortcuts}
+              hasAnyGroup={hasAnyGroup}
+              index={index}
+              singleLine={descriptionsEnabled}
+            />
+          ))}
+        </Box>
+
+        {hasLimit ? (
+          <Scrollbar
+            containerHeight={sectionHeight}
+            visibleListSectionLength={limit}
+            fullListLength={items.length}
+            visibleFromIndex={state.visibleFromIndex}
+          />
+        ) : null}
+      </Box>
+    )
+
+    const footer = (
+      <Box ref={inputFixedAreaRef}>
+        {noItems ? (
+          <Box marginLeft={3}>
+            <Text dimColor>Try again with a different keyword.</Text>
+          </Box>
+        ) : (
+          <Box marginLeft={3} flexDirection="column">
+            <Text dimColor>
+              {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
+                itemsHaveKeys ? 'or a shortcut ' : ''
+              }to confirm.`}
+            </Text>
+            {hasMorePages ? (
+              <Text>
+                <Text bold>1-{items.length} of many</Text>
+                {morePagesMessage ? `  ${morePagesMessage}` : null}
+              </Text>
+            ) : null}
+          </Box>
+        )}
+      </Box>
+    )
+
+    // No description on any item: render exactly as before (byte-for-byte).
+    if (!descriptionsEnabled) {
+      return (
+        <Box flexDirection="column" ref={ref} gap={1} width={twoThirds}>
+          {listSection}
+          {footer}
+        </Box>
+      )
+    }
+
+    // Wide terminals: list and panel side-by-side. The panel matches the list's height so the
+    // combined block stays bounded to `sectionHeight`.
+    if (showDescriptionBeside) {
+      return (
+        <Box flexDirection="column" ref={ref} gap={1} width={fullWidth}>
+          <Box flexDirection="row" width="100%">
+            <Box width={twoThirds}>{listSection}</Box>
+            <DescriptionPanel
+              title={highlightedItem?.label}
+              description={highlightedItem?.description}
+              width={sidePanelWidth}
+              maxLines={sectionHeight}
+            />
+          </Box>
+          {footer}
+        </Box>
+      )
+    }
+
+    // Narrow terminals: panel stacked below the list, bounded to a few lines.
     return (
       <Box flexDirection="column" ref={ref} gap={1} width={twoThirds}>
-        <Box flexDirection="row" height={sectionHeight} width="100%">
-          <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
-            {state.visibleOptions.map((item: Item<T>, index: number) => (
-              <Item
-                key={index}
-                item={item}
-                previousItem={state.visibleOptions[index - 1]}
-                highlightedTerm={highlightedTerm}
-                isSelected={item.value === state.value}
-                items={state.visibleOptions}
-                enableShortcuts={enableShortcuts}
-                hasAnyGroup={hasAnyGroup}
-                index={index}
-              />
-            ))}
-          </Box>
-
-          {hasLimit ? (
-            <Scrollbar
-              containerHeight={sectionHeight}
-              visibleListSectionLength={limit}
-              fullListLength={items.length}
-              visibleFromIndex={state.visibleFromIndex}
-            />
-          ) : null}
-        </Box>
-
-        <Box ref={inputFixedAreaRef}>
-          {noItems ? (
-            <Box marginLeft={3}>
-              <Text dimColor>Try again with a different keyword.</Text>
-            </Box>
-          ) : (
-            <Box marginLeft={3} flexDirection="column">
-              <Text dimColor>
-                {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
-                  itemsHaveKeys ? 'or a shortcut ' : ''
-                }to confirm.`}
-              </Text>
-              {hasMorePages ? (
-                <Text>
-                  <Text bold>1-{items.length} of many</Text>
-                  {morePagesMessage ? `  ${morePagesMessage}` : null}
-                </Text>
-              ) : null}
-            </Box>
-          )}
-        </Box>
+        {listSection}
+        <DescriptionPanel
+          title={highlightedItem?.label}
+          description={highlightedItem?.description}
+          width={twoThirds}
+          maxLines={DESCRIPTION_PANEL_LINES_BELOW}
+        />
+        {footer}
       </Box>
     )
   }

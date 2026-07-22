@@ -38,6 +38,35 @@ export async function prompts() {
     ],
   })
 
+  // renderSelectPrompt with descriptions (responsive description panel)
+  await renderSelectPrompt({
+    message: 'Which command do you want to run?',
+    choices: [
+      {
+        label: 'doc:fetch',
+        value: 'doc:fetch',
+        description:
+          'Fetch a documentation page by URL and print its contents so you can reference the docs without leaving your terminal.',
+      },
+      {
+        label: 'doc:search',
+        value: 'doc:search',
+        description:
+          'Search the documentation for a keyword and return the most relevant pages, ranked by how closely they match your query.',
+      },
+      {
+        label: 'app:dev',
+        value: 'app:dev',
+        description: 'Start a local development server for your app with live reload enabled.',
+      },
+      {
+        label: 'app:deploy',
+        value: 'app:deploy',
+        description: 'Build your app and deploy the current version to Shopify.',
+      },
+    ],
+  })
+
   // renderMultiSelectPrompt
   await renderMultiSelectPrompt({
     message: 'Select the scopes to grant to your app',
