@@ -207,6 +207,9 @@ jobs:
           SHARD_OPTIONS: ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
+      - name: shopify-dev-tools tests
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == env.DEFAULT_NODE_VERSION }}
+        run: pnpm nx test shopify-dev-tools --skip-nx-cache --output-style=stream
 
   unit-tests-gate:
     name: "Unit tests"

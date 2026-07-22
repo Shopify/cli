@@ -60,6 +60,8 @@ jobs:
           node-version: ${{ inputs.node-version }}
       - name: Unit tests
         run: pnpm test --output-style=stream
+      - name: shopify-dev-tools tests
+        run: pnpm nx test shopify-dev-tools --skip-nx-cache --output-style=stream
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
         uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113 # v3

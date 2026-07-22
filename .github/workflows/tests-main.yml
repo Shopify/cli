@@ -60,6 +60,9 @@ jobs:
           POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
+      - name: shopify-dev-tools tests
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == env.DEFAULT_NODE_VERSION }}
+        run: pnpm nx test shopify-dev-tools --skip-nx-cache --output-style=stream
       - name: Send Slack notification on failure
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
         if: ${{ failure() && !cancelled() }}
