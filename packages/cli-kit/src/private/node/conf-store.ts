@@ -33,6 +33,7 @@ export interface ConfSchema {
   currentDevSessionId?: string
   cache?: Cache
   autoUpgradeEnabled?: boolean
+  skillAutoInstallCompleted?: boolean
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -283,6 +284,25 @@ export function getAutoUpgradeEnabled(config: LocalStorage<ConfSchema> = cliKitS
  */
 export function setAutoUpgradeEnabled(enabled: boolean, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   config.set('autoUpgradeEnabled', enabled)
+}
+
+/**
+ * Get whether the Shopify skill auto-install has already completed.
+ *
+ * @param config - The cli-kit local storage.
+ * @returns Whether the skill was detected as installed at some point.
+ */
+export function getSkillAutoInstallCompleted(config: LocalStorage<ConfSchema> = cliKitStore()): boolean {
+  return config.get('skillAutoInstallCompleted') ?? false
+}
+
+/**
+ * Record that the Shopify skill auto-install has completed, so it is never attempted again.
+ *
+ * @param config - The cli-kit local storage.
+ */
+export function setSkillAutoInstallCompleted(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.set('skillAutoInstallCompleted', true)
 }
 
 export function getConfigStoreForPartnerStatus() {
