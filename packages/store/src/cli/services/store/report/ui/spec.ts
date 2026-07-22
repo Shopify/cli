@@ -1,5 +1,9 @@
 import {reportComponentDefinitions, type ReportComponentName} from './catalog.js'
-import {buildReportVisualizationInstructions, buildReportVisualizationRequest} from './prompt.js'
+import {
+  buildReportVisualizationInstructions,
+  buildReportVisualizationRepairRequest,
+  buildReportVisualizationRequest,
+} from './prompt.js'
 import {createProxyRunner} from '../client.js'
 import {Agent} from '@openai/agents'
 import {z} from 'zod'
@@ -8,6 +12,7 @@ import type {Spec} from '@json-render/core'
 import type {StoreReportResult} from '../types.js'
 
 const SPEC_GENERATION_MAX_TURNS = 1
+const SPEC_GENERATION_MAX_ATTEMPTS = 3
 const TOP_LEVEL_KEYS = new Set(['root', 'elements'])
 const ELEMENT_KEYS = new Set(['type', 'props', 'children'])
 
@@ -32,6 +37,15 @@ export interface ReportSpecDependencies {
 
 export type ReportSpecValidationResult = {success: true; spec: Spec} | {success: false; reason: string}
 
+export interface SpecGenerationFailure {
+  reason: string
+  output: string
+}
+
+export type GenerateValidatedReportSpecResult =
+  | {success: true; spec: Spec; attempts: number}
+  | {success: false; failures: SpecGenerationFailure[]}
+
 interface StructurallyValidElement {
   type: ReportComponentName
   props: Record<string, unknown>
@@ -52,22 +66,6 @@ async function runRealVisualizationModel(params: RunVisualizationModelParams): P
 
 const defaultReportSpecDependencies: ReportSpecDependencies = {
   runModel: runRealVisualizationModel,
-}
-
-/** Generates the model's complete static report-spec response without streaming it to output. */
-export async function generateReportSpecText(
-  input: GenerateReportSpecInput,
-  dependencies: Partial<ReportSpecDependencies> = {},
-): Promise<string> {
-  const deps = {...defaultReportSpecDependencies, ...dependencies}
-
-  return deps.runModel({
-    instructions: buildReportVisualizationInstructions(),
-    request: buildReportVisualizationRequest(input.report),
-    proxyBaseUrl: input.proxyBaseUrl,
-    proxyToken: input.proxyToken,
-    model: input.model,
-  })
 }
 
 function validationFailure(reason: string): ReportSpecValidationResult {
@@ -321,4 +319,68 @@ export function parseAndValidateReportSpec(modelOutput: string): ReportSpecValid
     if (!(error instanceof SyntaxError)) throw error
     return validationFailure('The model response contained malformed JSON.')
   }
+}
+
+interface SpecGenerationAttemptContext {
+  instructions: string
+  request: string
+  proxyBaseUrl: string
+  proxyToken: string
+  model: string
+  attempt: number
+  failures: SpecGenerationFailure[]
+}
+
+/**
+ * Runs one model attempt and, on validation failure, recurses into a repair attempt built from the
+ * prior output and validation reason. Recursion (rather than a loop) keeps each awaited call in its
+ * own stack frame, since attempts are inherently sequential: each repair request depends on the
+ * previous attempt's output.
+ */
+async function attemptSpecGeneration(
+  deps: ReportSpecDependencies,
+  context: SpecGenerationAttemptContext,
+): Promise<GenerateValidatedReportSpecResult> {
+  const output = await deps.runModel({
+    instructions: context.instructions,
+    request: context.request,
+    proxyBaseUrl: context.proxyBaseUrl,
+    proxyToken: context.proxyToken,
+    model: context.model,
+  })
+
+  const validation = parseAndValidateReportSpec(output)
+  if (validation.success) return {success: true, spec: validation.spec, attempts: context.attempt}
+
+  const failures = [...context.failures, {reason: validation.reason, output}]
+  if (context.attempt >= SPEC_GENERATION_MAX_ATTEMPTS) return {success: false, failures}
+
+  return attemptSpecGeneration(deps, {
+    ...context,
+    request: buildReportVisualizationRepairRequest(output, validation.reason),
+    attempt: context.attempt + 1,
+    failures,
+  })
+}
+
+/**
+ * Generates a report spec, retrying up to SPEC_GENERATION_MAX_ATTEMPTS times on validation
+ * failure by feeding the prior output and validation reason back to the model as a repair
+ * request. A thrown error from runModel (for example a network failure) propagates unchanged.
+ */
+export async function generateValidatedReportSpec(
+  input: GenerateReportSpecInput,
+  dependencies: Partial<ReportSpecDependencies> = {},
+): Promise<GenerateValidatedReportSpecResult> {
+  const deps = {...defaultReportSpecDependencies, ...dependencies}
+
+  return attemptSpecGeneration(deps, {
+    instructions: buildReportVisualizationInstructions(),
+    request: buildReportVisualizationRequest(input.report),
+    proxyBaseUrl: input.proxyBaseUrl,
+    proxyToken: input.proxyToken,
+    model: input.model,
+    attempt: 1,
+    failures: [],
+  })
 }

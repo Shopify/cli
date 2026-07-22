@@ -1,8 +1,16 @@
 import {renderReportSpec} from './render.js'
-import {generateReportSpecText, parseAndValidateReportSpec} from './spec.js'
+import {generateValidatedReportSpec} from './spec.js'
 import {renderStoreReportResult} from '../output.js'
-import type {GenerateReportSpecInput} from './spec.js'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import type {GenerateReportSpecInput, SpecGenerationFailure} from './spec.js'
 import type {StoreReportResult} from '../types.js'
+
+const MODEL_OUTPUT_SNIPPET_LENGTH = 2000
+
+function describeThrownError(error: unknown): string {
+  if (error instanceof Error) return error.stack ?? error.message
+  return String(error)
+}
 
 export interface RenderStoreReportUiInput {
   result: StoreReportResult
@@ -12,15 +20,30 @@ export interface RenderStoreReportUiInput {
 }
 
 export interface StoreReportUiDependencies {
-  generateSpecText: typeof generateReportSpecText
+  generateSpec: typeof generateValidatedReportSpec
   renderSpec: typeof renderReportSpec
   renderFallback: typeof renderStoreReportResult
 }
 
 const defaultStoreReportUiDependencies: StoreReportUiDependencies = {
-  generateSpecText: generateReportSpecText,
+  generateSpec: generateValidatedReportSpec,
   renderSpec: renderReportSpec,
   renderFallback: renderStoreReportResult,
+}
+
+/** Prints an always-visible failure summary, then routes each attempt's raw output to the debug log. */
+function reportGenerationFailures(failures: SpecGenerationFailure[]): void {
+  const attemptLines = failures.map((failure, index) => `  Attempt ${index + 1}: ${failure.reason}`)
+  outputWarn(
+    [
+      `Could not generate a valid report dashboard after ${failures.length} attempt(s); showing the text report instead.`,
+      ...attemptLines,
+    ].join('\n'),
+  )
+
+  failures.forEach((failure, index) => {
+    outputDebug(`Attempt ${index + 1} model output: ${failure.output.slice(0, MODEL_OUTPUT_SNIPPET_LENGTH)}`)
+  })
 }
 
 /** Generates and renders a terminal visualization, falling back to the established text output. */
@@ -40,14 +63,19 @@ export async function renderStoreReportUi(
   // A rejected attempt becomes the legacy text output; fallback errors still propagate normally.
   const renderedVisualization = await Promise.resolve()
     .then(async () => {
-      const modelOutput = await deps.generateSpecText(generationInput)
-      const validation = parseAndValidateReportSpec(modelOutput)
-      if (!validation.success) return false
+      const result = await deps.generateSpec(generationInput)
+      if (!result.success) {
+        reportGenerationFailures(result.failures)
+        return false
+      }
 
-      await deps.renderSpec(validation.spec)
+      await deps.renderSpec(result.spec)
       return true
     })
-    .catch(() => false)
+    .catch((error: unknown) => {
+      outputDebug(`Report visualization failed: ${describeThrownError(error)}`)
+      return false
+    })
 
   if (!renderedVisualization) deps.renderFallback(input.result, 'text')
 }

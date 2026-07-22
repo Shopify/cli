@@ -18,12 +18,12 @@ Output the JSON object only: no prose, Markdown fences, JSONL, or patches.
   what it shows, followed by a Card or Table for its data) so the visual reflects the whole answer.`
 
 const COMPONENT_CHEATSHEET = `Allowed component cheatsheet (a question mark means the prop is optional):
-- Box {flexDirection?, padding?, paddingX?, paddingY?, margin?, gap?, width?, borderStyle?, borderColor?} + children
+- Box {flexDirection?, padding?, paddingX?, paddingY?, margin?, gap?, width?, borderStyle?:"single"|"double"|"round"|"bold"|"singleDouble"|"doubleSingle"|"classic", borderColor?} + children
 - Text {text:string, color?, bold?, italic?, underline?, dimColor?, wrap?}
 - Heading {text:string, level?:"h1"|"h2"|"h3"|"h4", color?}
 - Divider {title?, character?, color?, dimColor?, width?}
 - Badge {label:string, variant?:"default"|"info"|"success"|"warning"|"error"}
-- Table {columns:{header:string,key:string,width?:number,align?:"left"|"center"|"right"}[], rows:Record<string,string>[], borderStyle?, headerColor?}
+- Table {columns:{header:string,key:string,width?:number,align?:"left"|"center"|"right"}[], rows:Record<string,string>[], borderStyle?:"single"|"double"|"round"|"bold"|"classic", headerColor?}
 - Card {title?, backgroundColor?, padding?} + children
 - KeyValue {label:string, value:string|number|string[], labelColor?, separator?}
 - StatusLine {text:string, status?:"info"|"success"|"warning"|"error", icon?}
@@ -72,5 +72,17 @@ export function buildReportVisualizationRequest(
     UNTRUSTED_DATA_START,
     reportData,
     UNTRUSTED_DATA_END,
+  ].join('\n')
+}
+
+/** Frames a validation failure as a repair request, asking for one corrected JSON object only. */
+export function buildReportVisualizationRepairRequest(previousOutput: string, validationError: string): string {
+  return [
+    'Your previous response was invalid and could not be used.',
+    `Validation error: ${validationError}`,
+    'Previous response:',
+    previousOutput,
+    'Return exactly one corrected complete JSON object only: no prose, Markdown fences, or explanation.',
+    'Follow all rules in the system message.',
   ].join('\n')
 }

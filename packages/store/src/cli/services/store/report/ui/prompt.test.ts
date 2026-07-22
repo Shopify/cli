@@ -1,5 +1,9 @@
 import {REPORT_COMPONENT_NAMES} from './catalog.js'
-import {buildReportVisualizationInstructions, buildReportVisualizationRequest} from './prompt.js'
+import {
+  buildReportVisualizationInstructions,
+  buildReportVisualizationRepairRequest,
+  buildReportVisualizationRequest,
+} from './prompt.js'
 import {describe, expect, test} from 'vitest'
 
 describe('buildReportVisualizationInstructions', () => {
@@ -15,6 +19,19 @@ describe('buildReportVisualizationInstructions', () => {
     expect(instructions).toContain('Never use visible, on, repeat, or watch')
     expect(instructions).toContain('Never use $state, $bindState, $item, $bindItem')
     expect(instructions).not.toContain('Spinner')
+  })
+
+  test('enumerates the legal borderStyle values for Box and Table', () => {
+    const instructions = buildReportVisualizationInstructions()
+
+    expect(instructions).toContain(
+      '- Box {flexDirection?, padding?, paddingX?, paddingY?, margin?, gap?, width?, ' +
+        'borderStyle?:"single"|"double"|"round"|"bold"|"singleDouble"|"doubleSingle"|"classic", borderColor?} + children',
+    )
+    expect(instructions).toContain(
+      '- Table {columns:{header:string,key:string,width?:number,align?:"left"|"center"|"right"}[], ' +
+        'rows:Record<string,string>[], borderStyle?:"single"|"double"|"round"|"bold"|"classic", headerColor?}',
+    )
   })
 })
 
@@ -35,5 +52,20 @@ describe('buildReportVisualizationRequest', () => {
     expect(request).toContain('"rationale": "Sales were $10."')
     expect(request).toContain('"query": "FROM sales SHOW total_sales"')
     expect(request).toContain('"total_sales": 10')
+  })
+})
+
+describe('buildReportVisualizationRepairRequest', () => {
+  test('includes the validation error, the prior output, and a JSON-object-only instruction', () => {
+    const previousOutput =
+      '{"root":"heading","elements":{"heading":{"type":"Heading","props":{"borderStyle":"rounded"}}}}'
+    const validationError = 'Element "heading" has invalid props: Invalid option at borderStyle.'
+
+    const request = buildReportVisualizationRepairRequest(previousOutput, validationError)
+
+    expect(request).toContain(validationError)
+    expect(request).toContain(previousOutput)
+    expect(request).toContain('JSON object only')
+    expect(request).toContain('no prose')
   })
 })

@@ -1,6 +1,7 @@
-import {generateReportSpecText, parseAndValidateReportSpec, validateReportSpec} from './spec.js'
+import {generateValidatedReportSpec, parseAndValidateReportSpec, validateReportSpec} from './spec.js'
 import {describe, expect, test} from 'vitest'
 import type {Spec} from '@json-render/core'
+import type {RunVisualizationModelParams} from './spec.js'
 import type {StoreReportResult} from '../types.js'
 
 const validHeadingSpec = {
@@ -22,42 +23,89 @@ function expectInvalid(value: unknown, reason: string): void {
   expect(result).toEqual({success: false, reason: expect.stringContaining(reason)})
 }
 
-describe('generateReportSpecText', () => {
+const report: StoreReportResult = {
+  store: 'shop.myshopify.com',
+  apiVersion: '2026-04',
+  question: 'What were my sales?',
+  rationale: 'A sales total.',
+  queries: [{api: 'shopifyql', query: 'FROM sales SHOW total_sales', result: {rows: [{total_sales: 10}]}}],
+}
+
+const generationInput = {
+  report,
+  proxyBaseUrl: 'https://proxy.test/v1',
+  proxyToken: 'synthetic-proxy-token',
+  model: 'test-model',
+}
+
+describe('generateValidatedReportSpec', () => {
   test('passes separated instructions and untrusted report data through the injected model seam', async () => {
-    const report: StoreReportResult = {
-      store: 'shop.myshopify.com',
-      apiVersion: '2026-04',
-      question: 'What were my sales?',
-      rationale: 'A sales total.',
-      queries: [{api: 'shopifyql', query: 'FROM sales SHOW total_sales', result: {rows: [{total_sales: 10}]}}],
-    }
     const proxyToken = 'synthetic-proxy-token'
+    const calls: RunVisualizationModelParams[] = []
 
-    const output = await generateReportSpecText(
-      {
-        report,
-        proxyBaseUrl: 'https://proxy.test/v1',
-        proxyToken,
-        model: 'test-model',
+    const result = await generateValidatedReportSpec(generationInput, {
+      runModel: async (params) => {
+        calls.push(params)
+        return JSON.stringify(validHeadingSpec)
       },
-      {
-        runModel: async (params) => {
-          expect(params.instructions).toContain('exactly one complete JSON object')
-          expect(params.request).toContain('BEGIN UNTRUSTED REPORT DATA')
-          expect(params.request).toContain('"question": "What were my sales?"')
-          expect(params.instructions).not.toContain(proxyToken)
-          expect(params.request).not.toContain(proxyToken)
-          expect(params).toMatchObject({
-            proxyBaseUrl: 'https://proxy.test/v1',
-            proxyToken,
-            model: 'test-model',
-          })
-          return JSON.stringify(validHeadingSpec)
-        },
-      },
-    )
+    })
 
-    expect(output).toBe(JSON.stringify(validHeadingSpec))
+    expect(result).toMatchObject({success: true, attempts: 1})
+    if (!result.success) throw new Error('expected success')
+    expect(result.spec).toMatchObject(validHeadingSpec)
+    expect(calls).toHaveLength(1)
+    expect(calls[0]?.instructions).toContain('exactly one complete JSON object')
+    expect(calls[0]?.request).toContain('BEGIN UNTRUSTED REPORT DATA')
+    expect(calls[0]?.request).toContain('"question": "What were my sales?"')
+    expect(calls[0]?.instructions).not.toContain(proxyToken)
+    expect(calls[0]?.request).not.toContain(proxyToken)
+    expect(calls[0]).toMatchObject({
+      proxyBaseUrl: 'https://proxy.test/v1',
+      proxyToken,
+      model: 'test-model',
+    })
+  })
+
+  test('repairs an invalid first attempt and succeeds on the second', async () => {
+    const invalidOutput = '{"root":"missing","elements":{}}'
+    const calls: RunVisualizationModelParams[] = []
+    const outputs = [invalidOutput, JSON.stringify(validHeadingSpec)]
+
+    const result = await generateValidatedReportSpec(generationInput, {
+      runModel: async (params) => {
+        calls.push(params)
+        return outputs[calls.length - 1] ?? ''
+      },
+    })
+
+    expect(result).toMatchObject({success: true, attempts: 2})
+    if (!result.success) throw new Error('expected success')
+    expect(result.spec).toMatchObject(validHeadingSpec)
+    expect(calls).toHaveLength(2)
+    expect(calls[1]?.instructions).toBe(calls[0]?.instructions)
+    expect(calls[1]?.request).toContain('Root element "missing" does not exist.')
+    expect(calls[1]?.request).toContain(invalidOutput)
+  })
+
+  test('reports every attempt as a failure once all attempts are invalid', async () => {
+    const invalidOutput = '{"root":"missing","elements":{}}'
+    const calls: RunVisualizationModelParams[] = []
+
+    const result = await generateValidatedReportSpec(generationInput, {
+      runModel: async (params) => {
+        calls.push(params)
+        return invalidOutput
+      },
+    })
+
+    expect(result.success).toBe(false)
+    if (result.success) throw new Error('expected failure')
+    expect(calls).toHaveLength(3)
+    expect(result.failures).toHaveLength(3)
+    result.failures.forEach((failure) => {
+      expect(failure.reason).toContain('Root element "missing" does not exist.')
+      expect(failure.output).toBe(invalidOutput)
+    })
   })
 })
 
