@@ -1,6 +1,11 @@
 import {ensureThemeStore} from './theme-store.js'
 import {loadThemeProjectTrust} from './theme-airlock/config.js'
-import {resolveBatchAirlockTargets, resolveSingleAirlockTarget} from './theme-airlock/resolver.js'
+import {
+  resolveBatchAirlockTargets,
+  resolveSingleAirlockTarget,
+  validateAirlockBatchEnvironmentSelections,
+  validateAirlockStoreSelectionSources,
+} from './theme-airlock/resolver.js'
 import {bootstrapThemeAirlock, interactiveBootstrapUI} from './theme-airlock/bootstrap.js'
 import {renderAirlockPreflight} from './theme-airlock/preflight.js'
 import {ThemeAirlockError} from './theme-airlock/types.js'
@@ -45,6 +50,7 @@ interface ValidEnvironment {
   storeAuthSession?: AdminSession
 }
 type EnvironmentName = string
+
 /**
  * Flags required to run a command in multiple environments
  *
@@ -91,7 +97,8 @@ export default abstract class ThemeCommand extends Command {
     const {args, flags} = await this.parse(klass)
     const commandRequiresAuth = 'password' in klass.flags
 
-    const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
+    const environmentSelectors = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
+    const environments = environmentSelectors.filter(Boolean)
 
     // Check if store flag is required by the command
     const storeIsRequired =
@@ -99,6 +106,10 @@ export default abstract class ThemeCommand extends Command {
       requiredFlags.some((flag) => (Array.isArray(flag) ? flag.includes('store') : flag === 'store'))
 
     const airlockPolicy = this.airlockPolicy()
+
+    if (airlockPolicy) {
+      validateAirlockBatchEnvironmentSelections({flags, argv: this.argv})
+    }
 
     // Single environment or no environment
     if (environments.length <= 1) {
@@ -141,6 +152,10 @@ export default abstract class ThemeCommand extends Command {
     if (requiredFlags === null) {
       renderWarning({body: 'This command does not support multiple environments.'})
       return
+    }
+
+    if (airlockPolicy) {
+      validateAirlockStoreSelectionSources({flags, argv: this.argv, env: process.env})
     }
 
     const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)

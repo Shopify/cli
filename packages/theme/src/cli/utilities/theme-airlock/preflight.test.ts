@@ -88,24 +88,29 @@ describe('renderAirlockPreflight', () => {
     })
   })
 
-  test('renders ordered environment and store pairs for explicitly selected stores', () => {
+  test('renders every explicitly selected store with source, status, and operation in request order', () => {
     const targets = [
       target({environment: 'first', store: 'first.myshopify.com'}),
-      target({environment: 'second', store: 'second.myshopify.com'}),
+      target({
+        environment: 'second',
+        store: 'second.myshopify.com',
+        source: 'explicit-store',
+        implicit: true,
+      }),
     ]
 
     renderAirlockPreflight('push', targets)
 
     const options = vi.mocked(renderInfo).mock.calls[0]?.[0]
     expect(options?.headline).toBe('Theme Airlock')
-    expect(JSON.stringify(options)).toContain('explicitly selected stores')
+    expect(options?.body).toBe('The following explicitly selected stores will be used.')
+    expect(options?.customSections?.[0]?.title).toBe('explicitly selected stores')
     expect(options?.customSections?.[0]?.body).toMatchObject({
       tabularData: [
-        ['Environment', 'Store'],
-        ['first', 'first.myshopify.com'],
-        ['second', 'second.myshopify.com'],
+        ['Environment', 'Store', 'Selected by', 'Status', 'Operation'],
+        ['first', 'first.myshopify.com', 'shopify.theme.toml', 'explicit', 'theme push'],
+        ['second', 'second.myshopify.com', '--store', 'implicit', 'theme push'],
       ],
     })
-    expect(JSON.stringify(options)).not.toContain('(implicit)')
   })
 })

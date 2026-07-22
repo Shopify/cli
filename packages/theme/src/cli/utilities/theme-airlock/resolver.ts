@@ -9,6 +9,7 @@ interface SuppliedValue {
   supplied: boolean
   value?: string
   occurrences: number
+  values: (string | undefined)[]
 }
 
 interface RawSelections {
@@ -24,7 +25,7 @@ interface NormalizedTrust {
 }
 
 function argvValue(argv: string[], longName: string, shortName: string): SuppliedValue {
-  let selection: SuppliedValue = {supplied: false, occurrences: 0}
+  let selection: SuppliedValue = {supplied: false, occurrences: 0, values: []}
 
   for (let index = 0; index < argv.length; index++) {
     const argument = argv[index]
@@ -48,7 +49,12 @@ function argvValue(argv: string[], longName: string, shortName: string): Supplie
     }
 
     if (matched) {
-      selection = {supplied: true, value, occurrences: selection.occurrences + 1}
+      selection = {
+        supplied: true,
+        value,
+        occurrences: selection.occurrences + 1,
+        values: [...selection.values, value],
+      }
     }
   }
 
@@ -57,7 +63,9 @@ function argvValue(argv: string[], longName: string, shortName: string): Supplie
 
 function environmentValue(env: NodeJS.ProcessEnv, name: string): SuppliedValue {
   const value = env[name]
-  return value === undefined ? {supplied: false, occurrences: 0} : {supplied: true, value, occurrences: 1}
+  return value === undefined
+    ? {supplied: false, occurrences: 0, values: []}
+    : {supplied: true, value, occurrences: 1, values: [value]}
 }
 
 function flagString(flags: FlagValues, name: string): string | undefined {
@@ -74,11 +82,13 @@ function rawSelections(flags: FlagValues, argv: string[], env: NodeJS.ProcessEnv
       supplied: cliStore.supplied,
       value: cliStore.value ?? (cliStore.supplied ? flagString(flags, 'store') : undefined),
       occurrences: cliStore.occurrences,
+      values: cliStore.values,
     },
     cliEnvironment: {
       supplied: cliEnvironment.supplied,
       value: cliEnvironment.value ?? (cliEnvironment.supplied ? flagString(flags, 'environment') : undefined),
       occurrences: cliEnvironment.occurrences,
+      values: cliEnvironment.values,
     },
     environmentStore: environmentValue(env, 'SHOPIFY_FLAG_STORE'),
     environmentName: environmentValue(env, 'SHOPIFY_FLAG_ENVIRONMENT'),
@@ -160,6 +170,65 @@ function selectedEnvironmentName(selections: RawSelections): string | undefined 
   return selections.cliEnvironment.supplied ? selections.cliEnvironment.value : selections.environmentName.value
 }
 
+function validateStoreSelectionSources(options: {flags: FlagValues; argv: string[]; env: NodeJS.ProcessEnv}): {
+  cliStore?: string
+  environmentStore?: string
+} {
+  const selections = rawSelections(options.flags, options.argv, options.env)
+  assertNoRepeatedSelection(selections.cliStore, '--store')
+  assertSelectionHasValue(selections.cliStore, '--store', 'unknown-store')
+  assertSelectionHasValue(selections.environmentStore, 'SHOPIFY_FLAG_STORE', 'unknown-store')
+
+  const cliStore = normalizeSelectedStore(selections.cliStore.value, '--store')
+  const environmentStore = normalizeSelectedStore(selections.environmentStore.value, 'SHOPIFY_FLAG_STORE')
+  assertCompatibleStoreSelections(cliStore, environmentStore)
+
+  return {cliStore, environmentStore}
+}
+
+export function validateAirlockStoreSelectionSources(options: {
+  flags: FlagValues
+  argv: string[]
+  env: NodeJS.ProcessEnv
+}): void {
+  validateStoreSelectionSources(options)
+}
+
+export function validateAirlockBatchEnvironmentSelections(options: {flags: FlagValues; argv: string[]}): void {
+  const selections = rawSelections(options.flags, options.argv, {})
+  let environmentValues: (string | undefined)[]
+  if (selections.cliEnvironment.supplied) {
+    environmentValues = selections.cliEnvironment.values
+  } else if (typeof options.flags.environment === 'string') {
+    environmentValues = [options.flags.environment]
+  } else if (Array.isArray(options.flags.environment)) {
+    environmentValues = options.flags.environment.filter((value): value is string => typeof value === 'string')
+  } else {
+    environmentValues = []
+  }
+
+  if (environmentValues.length < 2) return
+
+  const selectedEnvironments = new Set<string>()
+  for (const [index, environment] of environmentValues.entries()) {
+    if (environment === undefined || environment.length === 0) {
+      throw new ThemeAirlockError(
+        `Invalid batch environment selection: empty environment selector at position ${index + 1}.`,
+        'invalid-batch',
+      )
+    }
+
+    if (selectedEnvironments.has(environment)) {
+      throw new ThemeAirlockError(
+        `Invalid batch environment selection: environment "${environment}" was selected more than once.`,
+        'invalid-batch',
+      )
+    }
+
+    selectedEnvironments.add(environment)
+  }
+}
+
 export function resolveSingleAirlockTarget(options: {
   trust: ThemeProjectTrust
   flags: FlagValues
@@ -174,14 +243,8 @@ export function resolveSingleAirlockTarget(options: {
       allowRememberedCandidate: boolean
     } {
   const selections = rawSelections(options.flags, options.argv, options.env)
-  assertNoRepeatedSelection(selections.cliStore, '--store')
+  const {cliStore, environmentStore} = validateStoreSelectionSources(options)
   assertNoRepeatedSelection(selections.cliEnvironment, '--environment')
-  assertSelectionHasValue(selections.cliStore, '--store', 'unknown-store')
-  assertSelectionHasValue(selections.environmentStore, 'SHOPIFY_FLAG_STORE', 'unknown-store')
-
-  const cliStore = normalizeSelectedStore(selections.cliStore.value, '--store')
-  const environmentStore = normalizeSelectedStore(selections.environmentStore.value, 'SHOPIFY_FLAG_STORE')
-  assertCompatibleStoreSelections(cliStore, environmentStore)
 
   assertSelectionHasValue(selections.cliEnvironment, '--environment', 'unknown-environment')
   assertSelectionHasValue(selections.environmentName, 'SHOPIFY_FLAG_ENVIRONMENT', 'unknown-environment')

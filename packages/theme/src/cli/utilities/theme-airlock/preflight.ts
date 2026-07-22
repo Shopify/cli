@@ -64,8 +64,14 @@ export function renderAirlockPreflight(command: string, targets: AirlockTarget[]
         title: 'explicitly selected stores',
         body: {
           tabularData: [
-            ['Environment', 'Store'],
-            ...targets.map((target) => [target.environment ?? 'unknown environment', target.store]),
+            ['Environment', 'Store', 'Selected by', 'Status', 'Operation'],
+            ...targets.map((target) => [
+              target.environment ?? 'unknown environment',
+              target.store,
+              selectedByLabel(target),
+              target.implicit ? 'implicit' : 'explicit',
+              `theme ${command}`,
+            ]),
           ],
           firstColumnSubdued: true,
         },

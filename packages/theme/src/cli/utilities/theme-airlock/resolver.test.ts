@@ -1,4 +1,8 @@
-import {resolveBatchAirlockTargets, resolveSingleAirlockTarget} from './resolver.js'
+import {
+  resolveBatchAirlockTargets,
+  resolveSingleAirlockTarget,
+  validateAirlockStoreSelectionSources,
+} from './resolver.js'
 import {ThemeAirlockError} from './types.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -519,6 +523,51 @@ describe('resolveSingleAirlockTarget', () => {
     resolveSingleAirlockTarget({trust, flags, argv, env})
 
     expect({trust, flags, argv, env}).toEqual(originalInputs)
+  })
+})
+
+describe('validateAirlockStoreSelectionSources', () => {
+  test('rejects conflicting normalized CLI and environment-variable stores without reading process.env', () => {
+    vi.stubEnv('SHOPIFY_FLAG_STORE', 'ignored-store')
+
+    try {
+      const flags = {store: 'cli-store.myshopify.com'}
+      const argv = ['--store', 'https://CLI-STORE.myshopify.com/admin/']
+      const env = {SHOPIFY_FLAG_STORE: 'environment-store'}
+      const originalInputs = structuredClone({flags, argv, env})
+
+      const error = captureAirlockError(() => validateAirlockStoreSelectionSources({flags, argv, env}))
+      expect(error.reason).toBe('conflicting-selection')
+      expect(error.message).toBe(
+        'Store selections conflict: --store selects cli-store.myshopify.com, while SHOPIFY_FLAG_STORE selects environment-store.myshopify.com.',
+      )
+      expect({flags, argv, env}).toEqual(originalInputs)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
+  test.each([
+    {
+      name: 'a CLI-only store',
+      flags: {store: 'cli-store.myshopify.com'},
+      argv: ['--store', 'cli-store'],
+      env: {},
+    },
+    {
+      name: 'an environment-variable-only store',
+      flags: {},
+      argv: [],
+      env: {SHOPIFY_FLAG_STORE: 'environment-store'},
+    },
+    {
+      name: 'matching normalized stores',
+      flags: {store: 'cli-store.myshopify.com'},
+      argv: ['--store', 'https://CLI-STORE.myshopify.com/admin/'],
+      env: {SHOPIFY_FLAG_STORE: 'cli-store'},
+    },
+  ])('accepts $name', ({flags, argv, env}) => {
+    expect(() => validateAirlockStoreSelectionSources({flags, argv, env})).not.toThrow()
   })
 })
 

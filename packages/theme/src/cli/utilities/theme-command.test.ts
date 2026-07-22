@@ -253,6 +253,99 @@ describe('ThemeCommand', () => {
   })
 
   describe('run', () => {
+    test.each([
+      {
+        name: 'an empty environment selector',
+        argv: ['--environment', 'first', '--environment', ''],
+        message: 'Invalid batch environment selection: empty environment selector at position 2.',
+      },
+      {
+        name: 'a repeated environment selector',
+        argv: ['--environment', 'first', '--environment', 'first'],
+        message: 'Invalid batch environment selection: environment "first" was selected more than once.',
+      },
+    ])('protected batch rejects $name before any lifecycle work', async ({argv, message}) => {
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(argv, CommandConfig)
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'invalid-batch', message})
+      expect(loadEnvironment).not.toHaveBeenCalled()
+      expect(loadThemeProjectTrust).not.toHaveBeenCalled()
+      expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+      expect(listCurrentStoredStoreAppSessions).not.toHaveBeenCalled()
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected batch rejects conflicting CLI and environment-variable stores before loading environments', async () => {
+      vi.stubEnv('SHOPIFY_FLAG_STORE', 'environment-store')
+
+      try {
+        await CommandConfig.load()
+        const command = new TestProtectedThemeCommandWithForce(
+          ['--environment', 'first', '--environment', 'second', '--store', 'cli-store', '--force'],
+          CommandConfig,
+        )
+
+        await expect(command.run()).rejects.toMatchObject({
+          reason: 'conflicting-selection',
+          message:
+            'Store selections conflict: --store selects cli-store.myshopify.com, while SHOPIFY_FLAG_STORE selects environment-store.myshopify.com.',
+        })
+        expect(loadEnvironment).not.toHaveBeenCalled()
+        expect(loadThemeProjectTrust).not.toHaveBeenCalled()
+        expect(listCurrentStoredStoreAppSessions).not.toHaveBeenCalled()
+        expect(ensureThemeStore).not.toHaveBeenCalled()
+        expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+        expect(command.preflightTargets).toHaveLength(0)
+        expect(renderConcurrent).not.toHaveBeenCalled()
+        expect(command.commandCalls).toHaveLength(0)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+
+    test('protected batch accepts matching normalized CLI and environment-variable stores', async () => {
+      vi.stubEnv('SHOPIFY_FLAG_STORE', 'trusted-store')
+      vi.mocked(loadEnvironment).mockResolvedValue({store: 'trusted-store.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [
+          {name: 'first', store: 'trusted-store.myshopify.com'},
+          {name: 'second', store: 'trusted-store'},
+        ],
+      })
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      try {
+        await CommandConfig.load()
+        const command = new TestProtectedThemeCommand(
+          [
+            '--environment',
+            'first',
+            '--environment',
+            'second',
+            '--store',
+            'https://TRUSTED-STORE.myshopify.com/admin/',
+          ],
+          CommandConfig,
+        )
+
+        await command.run()
+
+        expect(loadEnvironment).toHaveBeenCalledTimes(2)
+        expect(command.preflightTargets).toHaveLength(2)
+        expect(renderConcurrent).toHaveBeenCalledTimes(2)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+
     test('protected malformed batch store rejects as invalid-batch before authentication or command work', async () => {
       vi.mocked(loadEnvironment)
         .mockResolvedValueOnce({store: 'trusted.myshopify.com'})
@@ -289,10 +382,9 @@ describe('ThemeCommand', () => {
 
       const error = await command.run().catch((error) => error)
       expect(error).toMatchObject({
-        reason: 'invalid-batch',
-        message: expect.stringContaining('trusted-a'),
+        reason: 'invalid-store',
+        message: 'Invalid store value for --store: invalid/store.',
       })
-      expect(error.message).toContain('No files were uploaded.')
       expect(ensureThemeStore).not.toHaveBeenCalled()
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
       expect(command.preflightTargets).toHaveLength(0)
