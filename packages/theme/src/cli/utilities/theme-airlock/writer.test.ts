@@ -3,9 +3,9 @@ import {loadThemeProjectTrust} from './config.js'
 import {ThemeAirlockError} from './types.js'
 import {configurationFileName} from '../../constants.js'
 import {describe, expect, test, vi} from 'vitest'
-import {chmod, inTemporaryDirectory, mkdir, readFile, readdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {chmod, inTemporaryDirectory, mkdir, readFile, readdir, symlink, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {rename as fsRename} from 'node:fs/promises'
+import {rename as fsRename, lstat} from 'node:fs/promises'
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>()
@@ -282,6 +282,45 @@ describe('addTrustedThemeEnvironment', () => {
       await expect(readdir(themePath)).resolves.not.toContain(`${configurationFileName}.lock`)
     })
   })
+
+  test.skipIf(process.platform === 'win32')(
+    'serializes distinct symlinked configurations on their shared target',
+    async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const firstThemePath = await createTheme(joinPath(tmpDir, 'first'))
+        const secondThemePath = await createTheme(joinPath(tmpDir, 'second'))
+        const targetPath = joinPath(tmpDir, 'shared', configurationFileName)
+        await mkdir(joinPath(tmpDir, 'shared'))
+        await writeFile(targetPath, 'name = "shared"\n')
+        const firstConfigurationPath = joinPath(firstThemePath, configurationFileName)
+        const secondConfigurationPath = joinPath(secondThemePath, configurationFileName)
+        await symlink(targetPath, firstConfigurationPath)
+        await symlink(targetPath, secondConfigurationPath)
+
+        const results = await Promise.all([
+          addTrustedThemeEnvironment({themePath: firstThemePath, environment: 'preview', store: 'preview-store'}),
+          addTrustedThemeEnvironment({
+            themePath: secondThemePath,
+            environment: 'production',
+            store: 'production-store',
+          }),
+        ])
+
+        expect(results).toEqual([
+          {path: firstConfigurationPath, store: 'preview-store.myshopify.com'},
+          {path: secondConfigurationPath, store: 'production-store.myshopify.com'},
+        ])
+        expect((await lstat(firstConfigurationPath)).isSymbolicLink()).toBe(true)
+        expect((await lstat(secondConfigurationPath)).isSymbolicLink()).toBe(true)
+        const targetContent = await readFile(targetPath)
+        expect(targetContent).toContain('preview-store.myshopify.com')
+        expect(targetContent).toContain('production-store.myshopify.com')
+        await expect(readdir(joinPath(tmpDir, 'shared'))).resolves.toEqual([configurationFileName])
+        await expect(readdir(firstThemePath)).resolves.toEqual([configurationFileName])
+        await expect(readdir(secondThemePath)).resolves.toEqual([configurationFileName])
+      })
+    },
+  )
 
   test('revalidates a concurrent environment conflict under the lock', async () => {
     await inTemporaryDirectory(async (tmpDir) => {

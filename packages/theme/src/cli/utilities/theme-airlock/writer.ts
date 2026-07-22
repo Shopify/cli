@@ -1,7 +1,7 @@
 import {loadThemeProjectTrust} from './config.js'
 import {ThemeAirlockError} from './types.js'
 import {configurationFileName} from '../../constants.js'
-import {fileHasWritePermissions} from '@shopify/cli-kit/node/fs'
+import {fileHasWritePermissions, fileRealPath} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, resolvePath} from '@shopify/cli-kit/node/path'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
@@ -18,7 +18,18 @@ interface TrustedEnvironmentResult {
   path: string
   store: string
 }
-type LockedWriteResult = {kind: 'redirect'; path: string} | {kind: 'written'; value: TrustedEnvironmentResult}
+type LockedWriteResult =
+  | {kind: 'redirect'; path: string; displayPath: string}
+  | {kind: 'written'; value: TrustedEnvironmentResult}
+
+async function canonicalConfigurationPath(path: string): Promise<string> {
+  try {
+    return await fileRealPath(path)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return path
+    throw error
+  }
+}
 
 function normalizeRequestedStore(store: string): string {
   try {
@@ -40,16 +51,17 @@ async function assertWritable(path: string, description: string): Promise<void> 
 
 async function writeTrustedThemeEnvironment(options: {
   configurationPath: string
+  displayPath: string
   trust: TrustedThemeTrust
   environment: string
   normalizedStore: string
 }): Promise<TrustedEnvironmentResult> {
-  const {configurationPath, trust, environment, normalizedStore} = options
+  const {configurationPath, displayPath, trust, environment, normalizedStore} = options
 
   if (trust.state === 'configured') {
     const existingEnvironment = trust.environments.find(({name}) => name === environment)
     if (existingEnvironment) {
-      if (existingEnvironment.store === normalizedStore) return {path: configurationPath, store: normalizedStore}
+      if (existingEnvironment.store === normalizedStore) return {path: displayPath, store: normalizedStore}
 
       throw conflictError(
         `Environment "${environment}" is already trusted for ${existingEnvironment.store}, not ${normalizedStore}.`,
@@ -78,7 +90,7 @@ async function writeTrustedThemeEnvironment(options: {
     await configuration.replace(changes)
   }
 
-  return {path: configurationPath, store: normalizedStore}
+  return {path: displayPath, store: normalizedStore}
 }
 
 function configurationLockError(configurationPath: string): ThemeAirlockError {
@@ -91,6 +103,7 @@ function configurationLockError(configurationPath: string): ThemeAirlockError {
 async function lockAndWriteConfiguration(options: {
   themePath: string
   configurationPath: string
+  displayPath: string
   environment: string
   normalizedStore: string
 }): Promise<LockedWriteResult> {
@@ -103,13 +116,15 @@ async function lockAndWriteConfiguration(options: {
     }
 
     const freshTrust = await loadThemeProjectTrust(options.themePath)
-    const freshConfigurationPath = resolvePath(freshTrust.path ?? joinPath(options.themePath, configurationFileName))
+    const freshDisplayPath = resolvePath(freshTrust.path ?? joinPath(options.themePath, configurationFileName))
+    const freshConfigurationPath = await canonicalConfigurationPath(freshDisplayPath)
     if (freshConfigurationPath !== options.configurationPath) {
-      return {kind: 'redirect', path: freshConfigurationPath}
+      return {kind: 'redirect', path: freshConfigurationPath, displayPath: freshDisplayPath}
     }
 
     const value = await writeTrustedThemeEnvironment({
       configurationPath: options.configurationPath,
+      displayPath: freshDisplayPath,
       trust: freshTrust,
       environment: options.environment,
       normalizedStore: options.normalizedStore,
@@ -126,6 +141,7 @@ async function writeWithConfigurationRedirects(options: {
   environment: string
   normalizedStore: string
   redirects: number
+  displayPath: string
 }): Promise<TrustedEnvironmentResult> {
   const result = await lockAndWriteConfiguration(options)
   if (result.kind === 'written') return result.value
@@ -134,6 +150,7 @@ async function writeWithConfigurationRedirects(options: {
   return writeWithConfigurationRedirects({
     ...options,
     configurationPath: result.path,
+    displayPath: result.displayPath,
     redirects: options.redirects + 1,
   })
 }
@@ -145,11 +162,13 @@ export async function addTrustedThemeEnvironment(options: {
 }): Promise<TrustedEnvironmentResult> {
   const normalizedStore = normalizeRequestedStore(options.store)
   const initialTrust = await loadThemeProjectTrust(options.themePath)
-  const configurationPath = resolvePath(initialTrust.path ?? joinPath(options.themePath, configurationFileName))
+  const displayPath = resolvePath(initialTrust.path ?? joinPath(options.themePath, configurationFileName))
+  const configurationPath = await canonicalConfigurationPath(displayPath)
 
   return writeWithConfigurationRedirects({
     themePath: options.themePath,
     configurationPath,
+    displayPath,
     environment: options.environment,
     normalizedStore,
     redirects: 0,
