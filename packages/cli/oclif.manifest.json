@@ -7274,6 +7274,80 @@
       "strict": true,
       "summary": "Authenticate for store commands."
     },
+    "theme:airlock:add": {
+      "aliases": [
+      ],
+      "args": {
+        "store": {
+          "description": "Store domain to trust.",
+          "name": "store",
+          "required": true
+        }
+      },
+      "customPluginName": "@shopify/theme",
+      "enableJsonFlag": false,
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "environment": {
+          "description": "Environment name to add.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "environment",
+          "required": true,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:airlock:add",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Trust a store for this theme project."
+    },
     "theme:check": {
       "aliases": [
       ],
