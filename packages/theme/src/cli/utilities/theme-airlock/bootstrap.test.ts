@@ -1,9 +1,12 @@
-import {bootstrapThemeAirlock} from './bootstrap.js'
+import {bootstrapThemeAirlock, interactiveBootstrapUI} from './bootstrap.js'
 import {ThemeAirlockError} from './types.js'
 import {configurationFileName} from '../../constants.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+
+vi.mock('@shopify/cli-kit/node/ui')
 
 interface Session {
   token: string
@@ -35,6 +38,55 @@ function optionsFor(themePath: string, overrides: Partial<Parameters<typeof boot
     ...overrides,
   }
 }
+
+describe('interactiveBootstrapUI', () => {
+  test('presents the untrusted store choices', async () => {
+    vi.mocked(renderSelectPrompt).mockResolvedValue('trust')
+
+    await interactiveBootstrapUI().confirmStore('example-store')
+
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: 'The store example-store is untrusted. Choose how to continue.',
+      choices: [
+        {label: 'Trust example-store', value: 'trust'},
+        {label: 'Choose a different store', value: 'choose'},
+        {label: 'Cancel', value: 'cancel'},
+      ],
+    })
+  })
+
+  test.each([
+    {
+      name: 'store',
+      prompt: 'promptStore' as const,
+      message: 'Enter the Shopify store to trust',
+    },
+    {
+      name: 'environment',
+      prompt: 'promptEnvironment' as const,
+      message: 'Enter a name for this theme environment',
+    },
+  ])('presents the $name prompt and returns non-empty input unchanged', async ({prompt, message}) => {
+    const input = '  response  '
+    vi.mocked(renderTextPrompt).mockResolvedValue(input)
+
+    const result = await interactiveBootstrapUI()[prompt]()
+
+    expect(renderTextPrompt).toHaveBeenCalledWith({message})
+    expect(result).toBe(input)
+  })
+
+  test.each([
+    {name: 'empty store', prompt: 'promptStore' as const, input: ''},
+    {name: 'whitespace-only store', prompt: 'promptStore' as const, input: '   '},
+    {name: 'empty environment', prompt: 'promptEnvironment' as const, input: ''},
+    {name: 'whitespace-only environment', prompt: 'promptEnvironment' as const, input: '   '},
+  ])('returns undefined for $name input', async ({prompt, input}) => {
+    vi.mocked(renderTextPrompt).mockResolvedValue(input)
+
+    await expect(interactiveBootstrapUI()[prompt]()).resolves.toBeUndefined()
+  })
+})
 
 describe('bootstrapThemeAirlock', () => {
   test('uses an explicit candidate instead of an unrelated remembered store', async () => {
