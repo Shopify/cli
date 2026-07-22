@@ -29,24 +29,24 @@ Use this to confirm the exact surface of any command in this skill — including
 
 Identify the family the task falls into (see the table), then build the query, mutation, component, config, or scaffold directly from what you know. Scaffold new apps, themes, or extensions through the CLI generators (for example `shopify app generate extension`, `shopify theme init`) rather than hand-writing boilerplate. Follow this repo's conventions: named exports, side-effect-free modules, and existing patterns first — look for a helper in `@shopify/cli` before writing your own. Leave no TODOs, FIXMEs, or placeholders. Do not search the docs yet — the validator, next, decides whether you need to.
 
-The table maps each family to the `shopify validate` topic that gates it and the doc-search scope to reach for *if* validation fails (or up front, when the outcome can't be validated).
+There are exactly four `shopify validate` topics — `theme`, `graphql`, `functions`, and `components` (`graphql`, `functions`, and `components` take an `--api` flag; `theme` does not). Run `shopify validate --help` to confirm. The table maps each family to the topic that gates it — or marks families that have no validator — plus the doc-search scope to reach for *if* validation fails (or up front, when the outcome can't be validated).
 
-| Family | Covers | `shopify validate` topic (illustrative) | Doc search on failure (`--query` / `--api-name`) |
+| Family | Covers | `shopify validate` topic | Doc search on failure (`--query` / `--api-name`) |
 |---|---|---|---|
-| GraphQL APIs | Admin, Storefront, Customer Account, Partner, Payments Apps queries & mutations; apps/integrations extending the admin | `admin` / `storefront` / `customer` / `partner` / `payments` | `--query "create product" --api-name admin` |
-| Custom data | Metafields & metaobjects definitions/schemas extending products, customers, etc. | `custom-data` | `--query "metaobject definition" --api-name admin` |
-| Functions | Discount, cart/checkout validation, cart transform, delivery & payment customization, order routing location rule, fulfillment constraints, pickup/local delivery option generators | `functions` | `--query "product discount function" --api-name functions` |
-| Storefronts | Hydrogen recipes (B2B, bundles, combined listings, custom cart method, metaobjects, markets, subscriptions, infinite scroll, GTM, Partytown, third-party caching) and Storefront GraphQL cart operations | `hydrogen` / `storefront` | `--query "cart lines add" --api-name hydrogen` |
+| GraphQL APIs | Admin, Storefront, Customer Account, Partner, Payments Apps queries & mutations; apps/integrations extending the admin | `graphql --api admin\|storefront\|customer\|partner\|payments-apps` | `--query "create product" --api-name admin` |
+| Custom data | Metafields & metaobjects definitions/schemas extending products, customers, etc. | `graphql --api admin` | `--query "metaobject definition" --api-name admin` |
+| Functions | Discount, cart/checkout validation, cart transform, delivery & payment customization, order routing location rule, fulfillment constraints, pickup/local delivery option generators | `functions --api functions_*` | `--query "product discount function" --api-name functions` |
+| Storefronts | Hydrogen recipes (B2B, bundles, combined listings, custom cart method, metaobjects, markets, subscriptions, infinite scroll, GTM, Partytown, third-party caching) and Storefront GraphQL cart operations | `graphql --api storefront` for Storefront GraphQL; Hydrogen recipe code has no validator | `--query "cart lines add" --api-name hydrogen` |
 | Themes | Liquid sections, blocks, snippets, and theme schemas | `theme` | `--query "section schema settings" --api-name liquid` |
-| Admin & extension UI | Polaris App Home embedded admin UI, plus Admin, Checkout, Customer Account, and POS UI extensions (scaffold via CLI) | `polaris` / `admin-extension` / `checkout-extension` / `customer-account-extension` / `pos-ui` | `--query "checkout ui extension targets"` |
-| Onboarding | Developer setup (scaffold app/theme/project, create a dev store, set up a Partner account) and merchant setup (start selling, try before an account, `shopify store create preview`) | `onboarding` (dev scaffolds only; merchant guidance can't be validated) | `--query "scaffold app dev store"` |
-| CLI operations | Validate config on disk (`shopify.app.toml`, `shopify.extension.toml`); run store workflows (`shopify store auth`/`execute`); store-scoped reads/writes by handle/SKU/location on a named myshopify.com domain | `config` | `--query "app configuration toml"` |
-| Commerce (UCP) | UCP CLI: find/compare/buy/track products, `ucp profile init`, `ucp doctor`, carts, checkout, orders, merchant-hosted handoff fallback | `ucp` (config only; a buy/track flow can't be validated) | `--query "ucp checkout order"` |
-| App Store review | Pre-submission compliance check of an app's codebase; surface likely review issues before submitting | — (read-only analysis; can't be validated) | `--query "app store review requirements"` |
+| Admin & extension UI | Polaris App Home embedded admin UI, plus Admin, Checkout, Customer Account, and POS UI extensions (scaffold via CLI) | `components --api <surface>` (e.g. `app-home`, `checkout-ui-extensions`, `pos-ui-extensions`) | `--query "checkout ui extension targets"` |
+| Onboarding | Developer setup (scaffold app/theme/project, create a dev store, set up a Partner account) and merchant setup (start selling, try before an account, `shopify store create preview`) | — no validator (merchant guidance; ground up front) | `--query "scaffold app dev store"` |
+| CLI operations | Validate config on disk (`shopify.app.toml`, `shopify.extension.toml`); run store workflows (`shopify store auth`/`execute`); store-scoped reads/writes by handle/SKU/location on a named myshopify.com domain | — no `shopify validate` topic (config: `shopify app config validate`) | `--query "app configuration toml"` |
+| Commerce (UCP) | UCP CLI: find/compare/buy/track products, `ucp profile init`, `ucp doctor`, carts, checkout, orders, merchant-hosted handoff fallback | — no validator (a buy/track flow; ground up front) | `--query "ucp checkout order"` |
+| App Store review | Pre-submission compliance check of an app's codebase; surface likely review issues before submitting | — no validator (read-only analysis; ground up front) | `--query "app store review requirements"` |
 
 ### 2) Validate the outcome — mandatory, always
 
-Validation is always required and is the gate that decides whether your knowledge held. *What* you validate depends on the outcome you produced. Identify which outcome it is, then apply the matching rule. In both cases use the topic that matches the surface you worked on (for example `shopify validate functions`, `shopify validate theme`, `shopify validate config`); the topics in the table are illustrative — run `shopify validate --help` for the current list.
+Validation is always required and is the gate that decides whether your knowledge held. *What* you validate depends on the outcome you produced. Identify which outcome it is, then apply the matching rule. Use the topic that matches the surface you worked on — there are exactly four: `shopify validate theme`, `shopify validate graphql`, `shopify validate functions`, and `shopify validate components` (`graphql`, `functions`, and `components` take `--api`; run `shopify validate --help` to confirm).
 
 **Outcome A — a chat reply containing an example (nothing written to disk).**
 The example you show the user must be a *complete, fully valid* artifact — never a fragment and never placeholder syntax:
@@ -84,7 +84,7 @@ shopify doc fetch --url <shopify.dev url> [--output <file>]
 
 Correct the artifact against the retrieved docs, then **re-run `shopify validate [topic]`**. Read everything it reports, resolve every finding, and loop — fixing from the docs and re-validating — until it passes clean. Do not present the task as finished while validation reports outstanding issues; an unresolved finding means the task is not done. `shopify doc search` is the remediation path for ANY Shopify topic, including surfaces not in the table above.
 
-**When the outcome cannot be validated.** Some outcomes produce nothing `shopify validate` can gate — merchant onboarding guidance, App Store review's read-only analysis, a UCP buy/track flow, or a bare documentation question. With no validator to catch stale recall, ground these in `shopify doc search` / `shopify doc fetch` *up front* and answer from the retrieved chunks. This is the narrow exception the missing safety net demands — not a general rule to search before answering when a validator does exist.
+**When the outcome cannot be validated.** Some outcomes produce nothing `shopify validate` can gate — merchant onboarding guidance, App Store review's read-only analysis, a UCP buy/track flow, Hydrogen recipe code, or a bare documentation question. With no validator to catch stale recall, ground these in `shopify doc search` / `shopify doc fetch` *up front* and answer from the retrieved chunks. This is the narrow exception the missing safety net demands — not a general rule to search before answering when a validator does exist.
 
 ## Gotchas
 
@@ -100,10 +100,10 @@ Correct the artifact against the retrieved docs, then **re-run `shopify validate
 
 ## Examples
 
-- "Write an Admin mutation to create a metafield definition." → write the mutation from knowledge, then `shopify validate admin`. If it flags a field, `shopify doc search --query "metafield definition create mutation" --api-name admin`, fix against the docs, and re-validate until clean.
-- "Add a discount Function." → implement `run` from knowledge, then `shopify validate functions`. On a failure, `shopify doc search --query "product discount function" --api-name functions`, correct the input query/return shape, and re-validate.
-- "Fetch orders in the customer account." → build the query, then `shopify validate customer`. If it reports stale fields, `shopify doc search --query "customer account api orders"` (no `--api-name` unless you confirm a valid one), fix, and re-validate.
-- "Scaffold a checkout UI extension." → generate via the CLI and implement the target from knowledge, then `shopify validate checkout-extension`. On a failure, search checkout extension targets, fix, and re-validate.
+- "Write an Admin mutation to create a metafield definition." → write the mutation from knowledge, then `shopify validate graphql --api admin`. If it flags a field, `shopify doc search --query "metafield definition create mutation" --api-name admin`, fix against the docs, and re-validate until clean.
+- "Add a discount Function." → implement `run` from knowledge, then `shopify validate functions --api functions_discount`. On a failure, `shopify doc search --query "product discount function" --api-name functions`, correct the input query/return shape, and re-validate.
+- "Fetch orders in the customer account." → build the query, then `shopify validate graphql --api customer`. If it reports stale fields, `shopify doc search --query "customer account api orders"` (no `--api-name` unless you confirm a valid one), fix, and re-validate.
+- "Scaffold a checkout UI extension." → generate via the CLI and implement the target from knowledge, then `shopify validate components --api checkout-ui-extensions`. On a failure, search checkout extension targets, fix, and re-validate.
 - "Help me start selling on Shopify." → merchant onboarding guidance has no validator, so ground up front: `shopify doc search --query "start selling create preview store"` (no `--api-name`), then guide the preview/first store setup from the retrieved docs.
 - "Is my app ready to submit to the App Store?" → read-only analysis, no validator: `shopify doc search --query "app store review requirements"` up front, inspect the codebase, and report likely blockers without rewriting the app.
 - "Buy this product with UCP." → a runtime flow, nothing to validate: `shopify doc search --query "ucp checkout"` up front, then run the flow.
