@@ -68,13 +68,15 @@
     "embed-schemas": "pnpm exec tsx scripts/embed-schemas.ts",
     "generate_api_instructions": "pnpm exec tsx scripts/generate-api-instructions.ts",
     "generate_agent_skills": "pnpm exec tsx scripts/generate-agent-skills.ts",
-    "build": "pnpm embed-schemas && pnpm exec tsx scripts/generate-api-instructions.ts && vite build && tsc --emitDeclarationOnly",
+    "update-apis": "node scripts/update-apis.mjs",
+    "build": "nx build",
     "build:watch": "pnpm embed-schemas && vite build --watch",
-    "test": "vitest run",
+    "clean": "nx clean",
+    "test": "nx test",
     "test:watch": "vitest",
-    "typecheck": "pnpm embed-schemas && tsc --noEmit",
-    "lint": "prettier --check --cache --ignore-unknown .",
-    "lint:fix": "prettier --write --ignore-unknown ."
+    "typecheck": "nx type-check",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix"
   },
   "dependencies": {
     "@shopify/app-bridge-react": "catalog:",

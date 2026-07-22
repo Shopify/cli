@@ -182,6 +182,9 @@ eslint-report.json
 docs/api
 docs-shopify.dev/commands/interfaces/
 
+# Generated Shopify developer skills
+packages/skills/
+
 vite.config.ts.timestamp*
 
 # from nested gitignores
