@@ -35,7 +35,6 @@
   },
   "files": [
     "/assets",
-    "/bin/postinstall.js",
     "/bin/run.cmd",
     "/bin/run.js",
     "/dist",
@@ -48,7 +47,6 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "postinstall": "node ./bin/postinstall.js",
     "prepack": "NODE_ENV=production node ../../bin/update-bugsnag cli && pnpm oclif manifest && cp ../../README.md README.md",
     "vitest": "vitest",
     "type-check": "nx type-check"
