@@ -3,7 +3,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 import type {AirlockTarget, StoreSelectionSource, ThemeProjectTrust, TrustedThemeEnvironment} from './types.js'
 
-export type FlagValues = Record<string, boolean | string | string[] | number | undefined>
+type FlagValues = Record<string, boolean | string | string[] | number | undefined>
 
 interface SuppliedValue {
   supplied: boolean
