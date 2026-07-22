@@ -4,6 +4,8 @@ Core GraphQL utilities for Shopify Dev MCP. This package provides the foundation
 
 ## Installation
 
+This is a private package published to Shopify's internal Cloudsmith registry. It is not published to the public npm registry. After configuring npm to resolve the `@shopify` scope from Cloudsmith, install it with:
+
 ```bash
 npm install @shopify/shopify-dev-tools
 ```

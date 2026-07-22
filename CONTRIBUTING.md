@@ -44,3 +44,11 @@ Before removing or incompatibly changing a stable interface:
 2. Ship the deprecation notice in a **minor** release — this starts the clock.
 3. Wait at least one minor release cycle before removing it.
 4. Ship the removal in a **major** release with a migration guide in the release notes.
+
+### Releasing `@shopify/shopify-dev-tools`
+
+`@shopify/shopify-dev-tools` is a private package with a version independent from the fixed-version Shopify CLI packages. User-facing changes to it should include a changeset that targets only `@shopify/shopify-dev-tools`.
+
+After the changeset is merged, the normal **Version Packages** PR bumps its version. Merging that PR to `main` makes the release workflow check Shopify's internal Cloudsmith registry and, when that version is missing, trigger the [`cli-shopify-dev-tools-publish-package`](https://buildkite.com/shopify/cli-shopify-dev-tools-publish-package) pipeline. The package remains private and is never published to the public npm registry.
+
+To retry an interrupted publish, manually run the **Release** workflow on `main` with the `shopify-dev-tools` target. The registry check makes retries idempotent.

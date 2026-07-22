@@ -1,0 +1,29 @@
+# Register once this configuration is on main:
+# @spy build setup cli-shopify-dev-tools-publish-package repo=Shopify/cli pr=false
+# GitHub activity should remain disabled; .github/workflows/release.yml triggers releases.
+
+containers:
+  default:
+    build:
+      from: ubuntu-24
+      node: 24.12.0
+      node_package_manager: pnpm
+      type: ci
+
+steps:
+  - label: Publish @shopify/shopify-dev-tools to Cloudsmith
+    if: build.branch == "main" && build.env("SHOPIFY_DEV_TOOLS_RELEASE") == "true"
+    timeout: 10m
+    run:
+      - pnpm: ~
+      - pnpm --filter @shopify/shopify-dev-tools build
+      - mkdir -p /tmp/shopify-dev-tools-package
+      - pnpm --filter @shopify/shopify-dev-tools pack --pack-destination /tmp/shopify-dev-tools-package
+    publish:
+      package:
+        repository_name: node
+        package_type: npm
+        fail_on_duplicate: false
+        artifacts:
+          - path: /tmp/shopify-dev-tools-package
+            patterns: ['*.tgz']
