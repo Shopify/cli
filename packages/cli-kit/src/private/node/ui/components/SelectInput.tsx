@@ -1,5 +1,5 @@
 import {Scrollbar} from './Scrollbar.js'
-import {DescriptionPanel} from './DescriptionPanel.js'
+import {DescriptionPanel, DESCRIPTION_PANEL_LINES_BELOW, MIN_SIDE_PANEL_WIDTH} from './DescriptionPanel.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {useSelectState} from '../hooks/use-select-state.js'
@@ -139,14 +139,6 @@ function Item<T>({
 }
 
 const MAX_AVAILABLE_LINES = 25
-
-// Minimum readable width (in columns) for the description panel when placed beside the list.
-// Below this the panel is stacked under the list instead.
-const MIN_SIDE_PANEL_WIDTH = 24
-
-// Number of physical lines the description panel occupies when stacked below the list. Kept small
-// so the combined list + panel height stays within the viewport.
-const DESCRIPTION_PANEL_LINES_BELOW = 5
 
 function SelectInput<T>({
   items: rawItems,

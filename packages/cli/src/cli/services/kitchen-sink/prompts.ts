@@ -67,15 +67,30 @@ export async function prompts() {
     ],
   })
 
-  // renderMultiSelectPrompt
+  // renderMultiSelectPrompt with descriptions (responsive description panel)
   await renderMultiSelectPrompt({
     message: 'Select the scopes to grant to your app',
     choices: [
-      {label: 'read_products', value: 'read_products'},
-      {label: 'write_products', value: 'write_products'},
-      {label: 'read_orders', value: 'read_orders'},
-      {label: 'write_orders', value: 'write_orders', group: 'Advanced'},
-      {label: 'read_customers', value: 'read_customers', group: 'Advanced'},
+      {
+        label: 'read_products',
+        value: 'read_products',
+        description:
+          'Grant read-only access to your products, variants, collections, and inventory so the app can list and report on your catalog without making changes.',
+      },
+      {label: 'write_products', value: 'write_products', description: 'Allow the app to create and update products.'},
+      {label: 'read_orders', value: 'read_orders', description: 'Grant read-only access to your orders.'},
+      {
+        label: 'write_orders',
+        value: 'write_orders',
+        group: 'Advanced',
+        description: 'Allow the app to create, update, and cancel orders.',
+      },
+      {
+        label: 'read_customers',
+        value: 'read_customers',
+        group: 'Advanced',
+        description: 'Grant read-only access to customer profiles.',
+      },
     ],
     defaultValue: ['read_products', 'read_orders'],
   })

@@ -1,6 +1,15 @@
 import React from 'react'
 import {Box, Text} from 'ink'
 
+// Minimum readable width (in columns) for the description panel when placed beside the list.
+// Below this the panel is stacked under the list instead. Shared by SelectInput and
+// MultiSelectInput so both make the same responsive decision.
+export const MIN_SIDE_PANEL_WIDTH = 24
+
+// Number of physical lines the description panel occupies when stacked below the list. Kept small
+// so the combined list + panel height stays within the viewport.
+export const DESCRIPTION_PANEL_LINES_BELOW = 5
+
 export interface DescriptionPanelProps {
   /**
    * Optional bold heading shown above the description (typically the highlighted item's label).
