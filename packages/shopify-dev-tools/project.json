@@ -1,0 +1,59 @@
+{
+  "name": "shopify-dev-tools",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/shopify-dev-tools/src",
+  "projectType": "library",
+  "tags": ["scope:feature"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/shopify-dev-tools"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "inputs": [
+        "{projectRoot}/src/**/*",
+        "{projectRoot}/scripts/**/*",
+        "{projectRoot}/package.json",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/vite.config.js"
+      ],
+      "options": {
+        "command": "pnpm embed-schemas && pnpm generate_api_instructions && pnpm exec vite build && pnpm exec tsc --emitDeclarationOnly",
+        "cwd": "packages/shopify-dev-tools"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec prettier --check --cache --ignore-unknown .",
+        "cwd": "packages/shopify-dev-tools"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec prettier --write --ignore-unknown .",
+        "cwd": "packages/shopify-dev-tools"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec vitest run --config vite.config.js",
+        "cwd": "packages/shopify-dev-tools"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm embed-schemas && pnpm exec tsc --noEmit",
+        "cwd": "packages/shopify-dev-tools"
+      }
+    }
+  }
+}

@@ -108,6 +108,9 @@
         "use-resize-observer>react-dom": "19.2.4"
       }
     },
+    "overrides": {
+      "@shopify/shopify-dev-tools>@shopify/verdict": "-"
+    },
     "onlyBuiltDependencies": [
       "@parcel/watcher",
       "esbuild",
@@ -379,6 +382,47 @@
           "@types/react-dom",
           "react-dom"
         ]
+      },
+      "packages/shopify-dev-tools": {
+        "entry": [
+          "src/index.ts!",
+          "src/instructions/skill-blocks.ts!",
+          "src/schemaOperations/loadAPISchemas.ts!",
+          "src/validation/extractComponentValidations.ts!",
+          "src/validation/format.ts!",
+          "scripts/*.{js,ts}!",
+          "src/agent-skills/scripts/*.ts!"
+        ],
+        "project": [
+          "src/**/*.ts!",
+          "scripts/*.{js,ts}!",
+          "test-stubs/**/*.ts!",
+          "vite.config.js!"
+        ],
+        "ignore": [
+          "src/data/**"
+        ],
+        "ignoreDependencies": [
+          "@react-router/dev",
+          "@react-router/node",
+          "@shopify/app-bridge-react",
+          "@shopify/app-bridge-types",
+          "@shopify/hydrogen",
+          "@shopify/hydrogen-react",
+          "@shopify/polaris-types",
+          "@shopify/verdict",
+          "@types/react",
+          "isbot",
+          "preact",
+          "react-router",
+          "schema-dts",
+          "type-fest"
+        ],
+        "vite": {
+          "config": [
+            "vite.config.js"
+          ]
+        }
       }
     }
   }
