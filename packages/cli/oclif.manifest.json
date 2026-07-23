@@ -6342,20 +6342,6 @@
       },
       "enableJsonFlag": false,
       "flags": {
-        "package-manager": {
-          "description": "The package manager to use to download the latest version of the skills CLI.",
-          "env": "SHOPIFY_FLAG_PACKAGE_MANAGER",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "package-manager",
-          "options": [
-            "npm",
-            "pnpm",
-            "yarn",
-            "bun"
-          ],
-          "type": "option"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [

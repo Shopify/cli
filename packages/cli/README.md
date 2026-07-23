@@ -3423,13 +3423,7 @@ Update the Shopify skill for coding agents when its source has changed.
 
 ```
 USAGE
-  $ shopify skill update [--package-manager npm|pnpm|yarn|bun]
-
-FLAGS
-  --package-manager=<option>
-      The package manager to use to download the latest version of the skills CLI.
-      [env: SHOPIFY_FLAG_PACKAGE_MANAGER]
-      <options: npm|pnpm|yarn|bun>
+  $ shopify skill update
 ```
 
 ## `shopify store auth`

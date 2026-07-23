@@ -1,31 +1,39 @@
 import SkillUpdate from './update.js'
-import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {exec} from '@shopify/cli-kit/node/system'
-import {describe, expect, test, vi} from 'vitest'
+import {updateShopifySkill} from '@shopify/cli-kit/node/skills'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/node-package-manager')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/skills')
+
+afterEach(() => {
+  mockAndCaptureOutput().clear()
+})
 
 describe('skill update', () => {
-  test('infers the package manager', async () => {
-    vi.mocked(inferPackageManager).mockReturnValue('pnpm')
+  test('reports when the skill was updated', async () => {
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(updateShopifySkill).mockResolvedValue('updated')
 
     await SkillUpdate.run([], import.meta.url)
 
-    expect(inferPackageManager).toHaveBeenCalledWith(undefined)
-    expect(exec).toHaveBeenCalledWith('pnpx', ['skills@latest', 'update', 'shopify', '--global', '--yes'], {
-      stdio: 'inherit',
-    })
+    expect(outputMock.info()).toContain('The Shopify skill was updated to the latest version.')
   })
 
-  test('uses the selected package manager', async () => {
-    vi.mocked(inferPackageManager).mockReturnValue('bun')
+  test('reports when the skill is already up to date', async () => {
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(updateShopifySkill).mockResolvedValue('already-up-to-date')
 
-    await SkillUpdate.run(['--package-manager', 'bun'], import.meta.url)
+    await SkillUpdate.run([], import.meta.url)
 
-    expect(inferPackageManager).toHaveBeenCalledWith('bun')
-    expect(exec).toHaveBeenCalledWith('bunx', ['skills@latest', 'update', 'shopify', '--global', '--yes'], {
-      stdio: 'inherit',
-    })
+    expect(outputMock.info()).toContain('The Shopify skill is already up to date.')
+  })
+
+  test('points to skill install when the skill is not installed', async () => {
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(updateShopifySkill).mockResolvedValue('not-installed')
+
+    await SkillUpdate.run([], import.meta.url)
+
+    expect(outputMock.info()).toContain('Run `shopify skill install` to install it.')
   })
 })

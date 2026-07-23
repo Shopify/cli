@@ -1,6 +1,8 @@
 import {homeDirectory, isDevelopment} from './context/local.js'
 import {isTruthy} from './context/utilities.js'
-import {fileExistsSync} from './fs.js'
+import {AbortError} from './error.js'
+import {fileExistsSync, readFile, writeFile} from './fs.js'
+import {fetch} from './http.js'
 import {outputDebug, outputInfo} from './output.js'
 import {joinPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
@@ -10,10 +12,18 @@ import {
   ConfSchema,
   getSkillInstallPromptDismissed,
   setSkillInstallPromptDismissed,
+  getSkillSourceEtag,
+  setSkillSourceEtag,
   runAtMinimumInterval,
 } from '../../private/node/conf-store.js'
 
 type SkillInstallPromptChoice = 'install' | 'later' | 'never'
+
+// eslint-disable-next-line no-warning-comments
+// TODO: Point at the skill's final hosting URL (or the main branch) before merging. The
+// shopify skill only exists on the feature/shopify-validate-command branch until PR #8142 lands.
+const SHOPIFY_SKILL_URL =
+  'https://raw.githubusercontent.com/Shopify/cli/feature/shopify-validate-command/.agents/skills/shopify/SKILL.md'
 
 /**
  * Options for {@link promptShopifySkillInstallIfNeeded}.
@@ -49,12 +59,73 @@ export interface PromptShopifySkillInstallOptions {
  * @returns Whether the Shopify skill is installed in any known global location.
  */
 export function shopifySkillIsInstalled(env: NodeJS.ProcessEnv = process.env, homeDir = homeDirectory()): boolean {
+  return installedShopifySkillPath(env, homeDir) !== undefined
+}
+
+function installedShopifySkillPath(env: NodeJS.ProcessEnv, homeDir: string): string | undefined {
   const configHome = env.XDG_CONFIG_HOME ?? joinPath(homeDir, '.config')
-  const skillDirectories = [
-    joinPath(homeDir, '.agents', 'skills', 'shopify'),
-    joinPath(configHome, 'agents', 'skills', 'shopify'),
+  const skillPaths = [
+    joinPath(homeDir, '.agents', 'skills', 'shopify', 'SKILL.md'),
+    joinPath(configHome, 'agents', 'skills', 'shopify', 'SKILL.md'),
   ]
-  return skillDirectories.some(fileExistsSync)
+  return skillPaths.find(fileExistsSync)
+}
+
+/**
+ * The outcome of a Shopify skill update check.
+ */
+export type ShopifySkillUpdateResult = 'updated' | 'already-up-to-date' | 'not-installed'
+
+/**
+ * Options for {@link updateShopifySkill}.
+ */
+export interface UpdateShopifySkillOptions {
+  /** The process environment. */
+  env?: NodeJS.ProcessEnv
+
+  /** The cli-kit local storage, injectable for testing. */
+  config?: LocalStorage<ConfSchema>
+
+  /** The user's home directory, injectable for testing. */
+  homeDir?: string
+}
+
+/**
+ * Updates the installed Shopify skill when its remote source has changed.
+ *
+ * Sends a conditional GET with the ETag recorded on the last update, so an
+ * unchanged source is answered with a bodiless 304. When the source has changed,
+ * the response body is written over the installed universal skill file, which
+ * propagates to every agent through the symlinks created at install time.
+ *
+ * @param options - See {@link UpdateShopifySkillOptions}.
+ * @returns The outcome of the update check.
+ */
+export async function updateShopifySkill(options: UpdateShopifySkillOptions = {}): Promise<ShopifySkillUpdateResult> {
+  const {env = process.env, config, homeDir = homeDirectory()} = options
+
+  const skillPath = installedShopifySkillPath(env, homeDir)
+  if (!skillPath) return 'not-installed'
+
+  const storedEtag = getSkillSourceEtag(config)
+  const response = await fetch(SHOPIFY_SKILL_URL, storedEtag ? {headers: {'If-None-Match': storedEtag}} : undefined)
+
+  if (response.status === 304) return 'already-up-to-date'
+  if (!response.ok) {
+    throw new AbortError(`Failed to check for Shopify skill updates: ${response.status} ${response.statusText}`)
+  }
+
+  const remoteContent = await response.text()
+  const etag = response.headers.get('etag')
+  if (etag) setSkillSourceEtag(etag, config)
+
+  // A 200 can still carry unchanged content, for example on the first check after
+  // installing (no recorded ETag yet) or when the source rotates ETags on redeploys.
+  const localContent = await readFile(skillPath)
+  if (localContent === remoteContent) return 'already-up-to-date'
+
+  await writeFile(skillPath, remoteContent)
+  return 'updated'
 }
 
 /**
