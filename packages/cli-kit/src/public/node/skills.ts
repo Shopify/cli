@@ -58,6 +58,60 @@ export function shopifySkillIsInstalled(env: NodeJS.ProcessEnv = process.env, ho
 }
 
 /**
+ * Options for {@link updateShopifySkillInBackground}.
+ */
+export interface UpdateShopifySkillInBackgroundOptions {
+  /** The command being run, used to avoid updating recursively from `skill` commands. */
+  currentCommand: string
+
+  /** The process argv, used to re-invoke the current CLI binary. */
+  argv?: string[]
+
+  /** The process environment. */
+  env?: NodeJS.ProcessEnv
+
+  /** The cli-kit local storage, injectable for testing. */
+  config?: LocalStorage<ConfSchema>
+
+  /** The user's home directory, injectable for testing. */
+  homeDir?: string
+}
+
+/**
+ * Keeps an installed Shopify skill up to date by running `shopify skill update`
+ * in a detached background process at most once per day. The skills CLI compares
+ * the recorded install hash against the remote source and only rewrites the
+ * skill when it has changed, so unchanged sources are a cheap no-op.
+ *
+ * Skipped when the skill is not installed (the install prompt owns that case),
+ * for `skill` commands (to avoid recursion), in CI, in unit tests, in development
+ * mode, and when `SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE` is set.
+ *
+ * @param options - See {@link UpdateShopifySkillInBackgroundOptions}.
+ */
+export async function updateShopifySkillInBackground(options: UpdateShopifySkillInBackgroundOptions): Promise<void> {
+  const {currentCommand, argv = process.argv, env = process.env, config, homeDir} = options
+
+  if (skipSkillMaintenance(currentCommand, env)) return
+  if (isTruthy(env.SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE)) return
+  if (!shopifySkillIsInstalled(env, homeDir)) return
+
+  const nodeBinary = argv[0]
+  const shopifyBinary = argv[1]
+  if (!nodeBinary || !shopifyBinary) return
+
+  // Check for skill updates at most once per day.
+  await runAtMinimumInterval(
+    'skill-update',
+    {days: 1},
+    async () => {
+      spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, 'update', env)
+    },
+    config,
+  )
+}
+
+/**
  * Asks the user whether to install the Shopify skill for coding agents when it
  * isn't installed yet. Selecting yes runs `shopify skill install` in a detached
  * background process, so the current command is never delayed.
@@ -104,16 +158,7 @@ export async function promptShopifySkillInstallIfNeeded(options: PromptShopifySk
 
       switch (choice) {
         case 'install':
-          // Run the Shopify command the same way as the current execution, detached
-          // from the current process so the CLI can exit before the install finishes.
-          // eslint-disable-next-line no-void
-          void exec(nodeBinary, [shopifyBinary, 'skill', 'install'], {
-            background: true,
-            env: {...env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
-            externalErrorHandler: async (error: unknown) => {
-              outputDebug(`Failed to install the Shopify skill in background: ${(error as Error).message}`)
-            },
-          })
+          spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, 'install', env)
           outputInfo(
             'Installing the Shopify skill in the background. Run `shopify skill install` to reinstall it at any time.',
           )
@@ -132,13 +177,32 @@ export async function promptShopifySkillInstallIfNeeded(options: PromptShopifySk
 
 function skipSkillInstallPrompt(currentCommand: string, args: string[], env: NodeJS.ProcessEnv): boolean {
   return (
-    currentCommand.startsWith('skill') ||
+    skipSkillMaintenance(currentCommand, env) ||
     args.includes('--json') ||
     isTruthy(env.SHOPIFY_FLAG_JSON) ||
-    isTruthy(env.CI) ||
-    isTruthy(env.SHOPIFY_UNIT_TEST) ||
     isTruthy(env.SHOPIFY_CLI_NO_SKILL_INSTALL_PROMPT) ||
-    isDevelopment(env) ||
     !terminalSupportsPrompting()
   )
+}
+
+function skipSkillMaintenance(currentCommand: string, env: NodeJS.ProcessEnv): boolean {
+  return currentCommand.startsWith('skill') || isTruthy(env.CI) || isTruthy(env.SHOPIFY_UNIT_TEST) || isDevelopment(env)
+}
+
+// Runs a `shopify skill` subcommand the same way as the current execution, detached
+// from the current process so the CLI can exit before it finishes.
+function spawnShopifySkillCommandInBackground(
+  nodeBinary: string,
+  shopifyBinary: string,
+  subcommand: 'install' | 'update',
+  env: NodeJS.ProcessEnv,
+): void {
+  // eslint-disable-next-line no-void
+  void exec(nodeBinary, [shopifyBinary, 'skill', subcommand], {
+    background: true,
+    env: {...env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
+    externalErrorHandler: async (error: unknown) => {
+      outputDebug(`Failed to run skill ${subcommand} in background: ${(error as Error).message}`)
+    },
+  })
 }
