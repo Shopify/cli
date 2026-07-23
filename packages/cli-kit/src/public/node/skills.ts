@@ -12,8 +12,6 @@ import {
   ConfSchema,
   getSkillInstallPromptDismissed,
   setSkillInstallPromptDismissed,
-  getSkillUpdateAnnouncementPending,
-  setSkillUpdateAnnouncementPending,
   runAtMinimumInterval,
 } from '../../private/node/conf-store.js'
 
@@ -80,14 +78,8 @@ export type ShopifySkillUpdateResult = 'updated' | 'already-up-to-date' | 'not-i
  * Options for {@link updateShopifySkill}.
  */
 export interface UpdateShopifySkillOptions {
-  /** Whether to announce a performed update on the next CLI run instead of the current output. */
-  announceOnNextRun?: boolean
-
   /** The process environment. */
   env?: NodeJS.ProcessEnv
-
-  /** The cli-kit local storage, injectable for testing. */
-  config?: LocalStorage<ConfSchema>
 
   /** The user's home directory, injectable for testing. */
   homeDir?: string
@@ -105,12 +97,18 @@ export interface UpdateShopifySkillOptions {
  * @returns The outcome of the update check.
  */
 export async function updateShopifySkill(options: UpdateShopifySkillOptions = {}): Promise<ShopifySkillUpdateResult> {
-  const {announceOnNextRun = false, env = process.env, config, homeDir = homeDirectory()} = options
+  const {env = process.env, homeDir = homeDirectory()} = options
 
   const skillPath = installedShopifySkillPath(env, homeDir)
   if (!skillPath) return 'not-installed'
 
-  const response = await fetch(SHOPIFY_SKILL_URL)
+  // Time-box the request tightly: this check runs before commands, so a slow or
+  // broken network must never noticeably delay whatever the user actually asked for.
+  const response = await fetch(SHOPIFY_SKILL_URL, undefined, {
+    useNetworkLevelRetry: false,
+    useAbortSignal: true,
+    timeoutMs: 3000,
+  })
   if (!response.ok) {
     throw new AbortError(`Failed to check for Shopify skill updates: ${response.status} ${response.statusText}`)
   }
@@ -120,32 +118,15 @@ export async function updateShopifySkill(options: UpdateShopifySkillOptions = {}
   if (localContent === remoteContent) return 'already-up-to-date'
 
   await writeFile(skillPath, remoteContent)
-  if (announceOnNextRun) setSkillUpdateAnnouncementPending(true, config)
   return 'updated'
 }
 
 /**
- * Announces a Shopify skill update performed in the background, once, on the next
- * CLI run. Background updates run detached with their output discarded, so this is
- * how the user learns a new skill version was installed.
- *
- * @param config - The cli-kit local storage, injectable for testing.
+ * Options for {@link updateShopifySkillIfNeeded}.
  */
-export function announcePendingSkillUpdate(config?: LocalStorage<ConfSchema>): void {
-  if (!getSkillUpdateAnnouncementPending(config)) return
-  setSkillUpdateAnnouncementPending(false, config)
-  renderInfo({body: 'The Shopify skill for coding agents was updated to the latest version.'})
-}
-
-/**
- * Options for {@link updateShopifySkillInBackground}.
- */
-export interface UpdateShopifySkillInBackgroundOptions {
+export interface UpdateShopifySkillIfNeededOptions {
   /** The command being run, used to avoid updating recursively from `skill` commands. */
   currentCommand: string
-
-  /** The process argv, used to re-invoke the current CLI binary. */
-  argv?: string[]
 
   /** The process environment. */
   env?: NodeJS.ProcessEnv
@@ -158,34 +139,40 @@ export interface UpdateShopifySkillInBackgroundOptions {
 }
 
 /**
- * Keeps an installed Shopify skill up to date by running `shopify skill update`
- * in a detached background process at most once per day. The skills CLI compares
- * the recorded install hash against the remote source and only rewrites the
- * skill when it has changed, so unchanged sources are a cheap no-op.
+ * Keeps an installed Shopify skill up to date, checking the remote source at most
+ * once per day. The check runs inline: a tightly time-boxed fetch compares the
+ * source with the installed skill, rewrites it when it changed, and announces the
+ * update immediately. Failures are logged and retried a day later.
  *
  * Skipped when the skill is not installed (the install prompt owns that case),
  * for `skill` commands (to avoid recursion), in CI, in unit tests, in development
  * mode, and when `SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE` is set.
  *
- * @param options - See {@link UpdateShopifySkillInBackgroundOptions}.
+ * @param options - See {@link UpdateShopifySkillIfNeededOptions}.
  */
-export async function updateShopifySkillInBackground(options: UpdateShopifySkillInBackgroundOptions): Promise<void> {
-  const {currentCommand, argv = process.argv, env = process.env, config, homeDir} = options
+export async function updateShopifySkillIfNeeded(options: UpdateShopifySkillIfNeededOptions): Promise<void> {
+  const {currentCommand, env = process.env, config, homeDir} = options
 
   if (skipSkillMaintenance(currentCommand, env)) return
   if (isTruthy(env.SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE)) return
   if (!shopifySkillIsInstalled(env, homeDir)) return
-
-  const nodeBinary = argv[0]
-  const shopifyBinary = argv[1]
-  if (!nodeBinary || !shopifyBinary) return
 
   // Check for skill updates at most once per day.
   await runAtMinimumInterval(
     'skill-update',
     {days: 1},
     async () => {
-      spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, ['update', '--background'], env)
+      try {
+        const result = await updateShopifySkill({env, homeDir})
+        if (result === 'updated') {
+          renderInfo({body: 'The Shopify skill for coding agents was updated to the latest version.'})
+        }
+        // A skill update must never break the command the user actually ran; failures
+        // are logged and naturally retried when the daily interval elapses.
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        outputDebug(`Failed to update the Shopify skill: ${(error as Error).message}`)
+      }
     },
     config,
   )
@@ -238,7 +225,16 @@ export async function promptShopifySkillInstallIfNeeded(options: PromptShopifySk
 
       switch (choice) {
         case 'install':
-          spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, ['install'], env)
+          // Run the Shopify command the same way as the current execution, detached
+          // from the current process so the CLI can exit before the install finishes.
+          // eslint-disable-next-line no-void
+          void exec(nodeBinary, [shopifyBinary, 'skill', 'install'], {
+            background: true,
+            env: {...env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
+            externalErrorHandler: async (error: unknown) => {
+              outputDebug(`Failed to install the Shopify skill in background: ${(error as Error).message}`)
+            },
+          })
           outputInfo(
             'Installing the Shopify skill in the background. Run `shopify skill install` to reinstall it at any time.',
           )
@@ -267,22 +263,4 @@ function skipSkillInstallPrompt(currentCommand: string, args: string[], env: Nod
 
 function skipSkillMaintenance(currentCommand: string, env: NodeJS.ProcessEnv): boolean {
   return currentCommand.startsWith('skill') || isTruthy(env.CI) || isTruthy(env.SHOPIFY_UNIT_TEST) || isDevelopment(env)
-}
-
-// Runs a `shopify skill` subcommand the same way as the current execution, detached
-// from the current process so the CLI can exit before it finishes.
-function spawnShopifySkillCommandInBackground(
-  nodeBinary: string,
-  shopifyBinary: string,
-  subcommand: string[],
-  env: NodeJS.ProcessEnv,
-): void {
-  // eslint-disable-next-line no-void
-  void exec(nodeBinary, [shopifyBinary, 'skill', ...subcommand], {
-    background: true,
-    env: {...env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
-    externalErrorHandler: async (error: unknown) => {
-      outputDebug(`Failed to run skill ${subcommand.join(' ')} in background: ${(error as Error).message}`)
-    },
-  })
 }

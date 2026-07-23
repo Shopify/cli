@@ -36,20 +36,4 @@ describe('skill update', () => {
 
     expect(outputMock.info()).toContain('Run `shopify skill install` to install it.')
   })
-
-  test('defers the announcement to the next run when running in background', async () => {
-    vi.mocked(updateShopifySkill).mockResolvedValue('updated')
-
-    await SkillUpdate.run(['--background'], import.meta.url)
-
-    expect(updateShopifySkill).toHaveBeenCalledWith({announceOnNextRun: true})
-  })
-
-  test('announces directly when running in the foreground', async () => {
-    vi.mocked(updateShopifySkill).mockResolvedValue('updated')
-
-    await SkillUpdate.run([], import.meta.url)
-
-    expect(updateShopifySkill).toHaveBeenCalledWith({announceOnNextRun: false})
-  })
 })

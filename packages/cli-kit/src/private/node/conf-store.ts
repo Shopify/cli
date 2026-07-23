@@ -34,7 +34,6 @@ export interface ConfSchema {
   cache?: Cache
   autoUpgradeEnabled?: boolean
   skillInstallPromptDismissed?: boolean
-  skillUpdateAnnouncementPending?: boolean
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -305,29 +304,6 @@ export function getSkillInstallPromptDismissed(config: LocalStorage<ConfSchema> 
  */
 export function setSkillInstallPromptDismissed(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   config.set('skillInstallPromptDismissed', true)
-}
-
-/**
- * Get whether a background Shopify skill update is waiting to be announced.
- *
- * @param config - The cli-kit local storage.
- * @returns Whether an announcement is pending.
- */
-export function getSkillUpdateAnnouncementPending(config: LocalStorage<ConfSchema> = cliKitStore()): boolean {
-  return config.get('skillUpdateAnnouncementPending') ?? false
-}
-
-/**
- * Record whether a background Shopify skill update is waiting to be announced.
- *
- * @param pending - Whether an announcement is pending.
- * @param config - The cli-kit local storage.
- */
-export function setSkillUpdateAnnouncementPending(
-  pending: boolean,
-  config: LocalStorage<ConfSchema> = cliKitStore(),
-): void {
-  config.set('skillUpdateAnnouncementPending', pending)
 }
 
 export function getConfigStoreForPartnerStatus() {
