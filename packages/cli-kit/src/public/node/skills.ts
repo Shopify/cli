@@ -1,23 +1,29 @@
 import {homeDirectory, isDevelopment} from './context/local.js'
 import {isTruthy} from './context/utilities.js'
 import {fileExistsSync} from './fs.js'
-import {outputDebug} from './output.js'
+import {outputDebug, outputInfo} from './output.js'
 import {joinPath} from './path.js'
-import {exec} from './system.js'
+import {exec, terminalSupportsPrompting} from './system.js'
+import {renderSelectPrompt} from './ui.js'
 import {LocalStorage} from './local-storage.js'
 import {
   ConfSchema,
-  getSkillAutoInstallCompleted,
-  setSkillAutoInstallCompleted,
+  getSkillInstallPromptDismissed,
+  setSkillInstallPromptDismissed,
   runAtMinimumInterval,
 } from '../../private/node/conf-store.js'
 
+type SkillInstallPromptChoice = 'install' | 'later' | 'never'
+
 /**
- * Options for {@link installShopifySkillInBackground}.
+ * Options for {@link promptShopifySkillInstallIfNeeded}.
  */
-export interface InstallShopifySkillInBackgroundOptions {
-  /** The command being run, used to avoid recursive installs from `skill` commands. */
+export interface PromptShopifySkillInstallOptions {
+  /** The command being run, used to avoid prompting recursively from `skill` commands. */
   currentCommand: string
+
+  /** The arguments of the command being run, used to avoid corrupting `--json` output. */
+  args?: string[]
 
   /** The process argv, used to re-invoke the current CLI binary. */
   argv?: string[]
@@ -52,25 +58,27 @@ export function shopifySkillIsInstalled(env: NodeJS.ProcessEnv = process.env, ho
 }
 
 /**
- * Installs the Shopify skill for coding agents by running `shopify skill install`
- * in a detached background process, so the current command is never delayed.
+ * Asks the user whether to install the Shopify skill for coding agents when it
+ * isn't installed yet. Selecting yes runs `shopify skill install` in a detached
+ * background process, so the current command is never delayed.
  *
- * The install is attempted at most once per day until it succeeds. Once the skill
- * is detected as installed, a completion flag is recorded and the check becomes a
- * no-op forever, so deliberately uninstalling the skill won't trigger a re-install.
+ * The prompt is shown at most once per day, and never again once the skill is
+ * detected as installed or the user opts out, so deliberately uninstalling the
+ * skill won't trigger new prompts.
  *
- * Skipped for `skill` commands (to avoid recursion), in CI, in unit tests, in
- * development mode, and when `SHOPIFY_CLI_NO_SKILL_AUTO_INSTALL` is set.
+ * Skipped for `skill` commands (to avoid recursion), for `--json` output, in
+ * non-interactive terminals, in CI, in unit tests, in development mode, and
+ * when `SHOPIFY_CLI_NO_SKILL_INSTALL_PROMPT` is set.
  *
- * @param options - See {@link InstallShopifySkillInBackgroundOptions}.
+ * @param options - See {@link PromptShopifySkillInstallOptions}.
  */
-export async function installShopifySkillInBackground(options: InstallShopifySkillInBackgroundOptions): Promise<void> {
-  const {currentCommand, argv = process.argv, env = process.env, config, homeDir} = options
+export async function promptShopifySkillInstallIfNeeded(options: PromptShopifySkillInstallOptions): Promise<void> {
+  const {currentCommand, args = [], argv = process.argv, env = process.env, config, homeDir} = options
 
-  if (skipSkillAutoInstall(currentCommand, env)) return
-  if (getSkillAutoInstallCompleted(config)) return
+  if (skipSkillInstallPrompt(currentCommand, args, env)) return
+  if (getSkillInstallPromptDismissed(config)) return
   if (shopifySkillIsInstalled(env, homeDir)) {
-    setSkillAutoInstallCompleted(config)
+    setSkillInstallPromptDismissed(config)
     return
   }
 
@@ -78,34 +86,59 @@ export async function installShopifySkillInBackground(options: InstallShopifySki
   const shopifyBinary = argv[1]
   if (!nodeBinary || !shopifyBinary) return
 
-  // Retry at most once per day until the skill install succeeds. The timestamp is
-  // recorded when the background process is spawned, not when it finishes, so a
-  // failed install is retried on the first command run a day later.
+  // Ask at most once per day: the timestamp is recorded when the prompt is shown,
+  // so both "ask me tomorrow" and a failed install naturally re-prompt a day later.
   await runAtMinimumInterval(
-    'skill-auto-install',
+    'skill-install-prompt',
     {days: 1},
     async () => {
-      // Run the Shopify command the same way as the current execution, detached
-      // from the current process so the CLI can exit before the install finishes.
-      // eslint-disable-next-line no-void
-      void exec(nodeBinary, [shopifyBinary, 'skill', 'install'], {
-        background: true,
-        env: {...env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
-        externalErrorHandler: async (error: unknown) => {
-          outputDebug(`Failed to install the Shopify skill in background: ${(error as Error).message}`)
-        },
+      const choice: SkillInstallPromptChoice = await renderSelectPrompt({
+        message:
+          'The Shopify skill helps coding agents like Claude Code, Cursor, and Codex build with Shopify. Install it?',
+        choices: [
+          {label: 'Yes, install it now', value: 'install'},
+          {label: 'No, ask me tomorrow', value: 'later'},
+          {label: 'No, never ask again', value: 'never'},
+        ],
       })
+
+      switch (choice) {
+        case 'install':
+          // Run the Shopify command the same way as the current execution, detached
+          // from the current process so the CLI can exit before the install finishes.
+          // eslint-disable-next-line no-void
+          void exec(nodeBinary, [shopifyBinary, 'skill', 'install'], {
+            background: true,
+            env: {...env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
+            externalErrorHandler: async (error: unknown) => {
+              outputDebug(`Failed to install the Shopify skill in background: ${(error as Error).message}`)
+            },
+          })
+          outputInfo(
+            'Installing the Shopify skill in the background. Run `shopify skill install` to reinstall it at any time.',
+          )
+          break
+        case 'later':
+          // Nothing to record: the daily interval re-prompts on the first command tomorrow.
+          break
+        case 'never':
+          setSkillInstallPromptDismissed(config)
+          break
+      }
     },
     config,
   )
 }
 
-function skipSkillAutoInstall(currentCommand: string, env: NodeJS.ProcessEnv): boolean {
+function skipSkillInstallPrompt(currentCommand: string, args: string[], env: NodeJS.ProcessEnv): boolean {
   return (
     currentCommand.startsWith('skill') ||
+    args.includes('--json') ||
+    isTruthy(env.SHOPIFY_FLAG_JSON) ||
     isTruthy(env.CI) ||
     isTruthy(env.SHOPIFY_UNIT_TEST) ||
-    isTruthy(env.SHOPIFY_CLI_NO_SKILL_AUTO_INSTALL) ||
-    isDevelopment(env)
+    isTruthy(env.SHOPIFY_CLI_NO_SKILL_INSTALL_PROMPT) ||
+    isDevelopment(env) ||
+    !terminalSupportsPrompting()
   )
 }

@@ -30,8 +30,7 @@ export const hook: Hook.Prerun = async (options) => {
   outputDebug(`Running command ${commandContent.command}`)
   await analyticsMod.startAnalytics({commandContent, args, commandClass: options.Command})
   notificationsMod.fetchNotificationsInBackground(options.Command.id)
-  // eslint-disable-next-line no-void
-  void skillsMod.installShopifySkillInBackground({currentCommand: options.Command.id})
+  await skillsMod.promptShopifySkillInstallIfNeeded({currentCommand: options.Command.id, args})
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
