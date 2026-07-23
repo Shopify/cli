@@ -5,25 +5,24 @@ description: 'Any Shopify or commerce task; start here. Admin/Storefront/Custome
 
 # Shopify
 
-Umbrella skill for building on and selling with Shopify. It spans every surface: Admin, Storefront, Customer Account, Partner, and Payments Apps GraphQL APIs, custom data, Functions, Hydrogen storefronts, Liquid themes, Polaris App Home, Admin/Checkout/Customer Account/POS UI extensions, developer and merchant onboarding, CLI operations, UCP commerce, and App Store review. Read the topic's agent file first, do the work from it plus your own knowledge, then **validate the outcome** — validation is the mandatory ground-truth gate, and you search the docs only when it fails. (The sole exception: an outcome with no `shopify validate` surface, where you ground in a doc search up front instead.) Match liberally: if a request touches Shopify at all, use this skill.
+Umbrella skill for building on and selling with Shopify. It spans every surface: Admin, Storefront, Customer Account, Partner, and Payments Apps GraphQL APIs, custom data, Functions, Hydrogen storefronts, Liquid themes, Polaris App Home, Admin/Checkout/Customer Account/POS UI extensions, developer and merchant onboarding, CLI operations, UCP commerce, and App Store review. Read the topic's agent file first, do the work from it plus your own knowledge, then **validate the outcome** — validation is the mandatory ground-truth gate. A doc search beforehand is optional: search if unsure, skip it if confident — the validator settles whether that was enough — and it becomes required only when validation fails. (An outcome with no `shopify validate` surface is different: ground it in a doc search up front.) Match liberally: if a request touches Shopify at all, use this skill.
 
 ## Principle
 
-Prime yourself with the topic's agent file, attempt the task from it plus your current knowledge, then prove it with the validator. A passing validator means your primed knowledge was current — no doc search was needed, and a forced up-front search would have been wasted work. A *failing* validator is the signal that your details for this surface are stale: Shopify APIs, schemas, extension targets, and CLI config change every release, so recalled details go out of date. The agent file front-loads the highest-risk corrections; the validator catches the rest. That failure — and only that failure — is when you ground the work in current documentation and correct it. Skipping validation is a defect, even for a change that "looks obvious."
+Prime yourself with the topic's agent file, attempt the task from it plus your current knowledge, then prove it with the validator. Searching the docs before you validate is optional, never required: a passing validator means your primed knowledge was current, and a search forced on a task you already knew would have been wasted work. If something *is* uncertain mid-write — an exact field, prop, component, extension target, config key, or type the agent file doesn't settle — searching to pin it down beats guessing into a validation failure; how much to search is your call. What is not optional is the gate itself. A *failing* validator is the signal that your details for this surface are stale: Shopify APIs, schemas, extension targets, and CLI config change every release, so recalled details go out of date. The agent file front-loads the highest-risk corrections; the validator catches the rest. On a failure, grounding the fix in current documentation stops being optional. Skipping validation is a defect, even for a change that "looks obvious."
 
-The exception is an outcome with no `shopify validate` surface (guidance you give, a read-only analysis you report, a flow you run, a bare documentation answer). With no validator to catch stale knowledge, those are the cases — and the only cases — where you ground in a doc search *up front*.
+The exception is an outcome with no `shopify validate` surface (guidance you give, a read-only analysis you report, a flow you run, a bare documentation answer). With no validator to catch stale knowledge, those are the cases where an up-front doc search is *required* rather than optional.
 
 ## Pattern
 
-Every `shopify` command is discoverable and self-documenting — never guess a command name or a flag. List the full command tree with `shopify commands` (add `--tree` for a nested view), and append `--help` at any level for a description of a command, its subcommands, and its flags:
+Every `shopify` command is self-documenting — never guess a command name or a flag you are unsure of. Append `--help` at any level for a description of a command, its subcommands, and its flags (`shopify commands` lists the full tree, `--tree` for a nested view):
 
 ```bash
-shopify commands          # every available command
-shopify app --help        # a topic's subcommands
 shopify validate --help   # one command's flags and topics
+shopify app --help        # a topic's subcommands
 ```
 
-Use this to confirm the exact surface of any command in this skill — including whether `shopify validate` and its topics exist in the installed version — before you run it.
+Check `--help` only for a command you are about to run and are not sure of — typically one look at `shopify validate --help` before your first validate of an unfamiliar topic. Do not tour the command tree or walk `--help` levels up front: every discovery call is a full agent loop, and the commands this skill relies on are already spelled out below.
 
 ### 1) Read the topic agent file
 
@@ -46,18 +45,23 @@ There are exactly four `shopify validate` topics — `theme`, `graphql`, `functi
 
 ### 2) Do the work from the agent file plus your own knowledge
 
-Build the query, mutation, component, config, or scaffold directly from the agent file and what you know. Scaffold new apps, themes, or extensions through the CLI generators (for example `shopify app generate extension`, `shopify theme init`) rather than hand-writing boilerplate. Follow this repo's conventions: named exports, side-effect-free modules, and existing patterns first — look for a helper in `@shopify/cli` before writing your own. Leave no TODOs, FIXMEs, or placeholders. Do not search the docs yet — the validator, next, decides whether you need to.
+Build the query, mutation, component, config, or scaffold directly from the agent file and what you know. Scaffold new apps, themes, or extensions through the CLI generators (for example `shopify app generate extension`, `shopify theme init`) rather than hand-writing boilerplate. Follow this repo's conventions: named exports, side-effect-free modules, and existing patterns first — look for a helper in `@shopify/cli` before writing your own. Leave no TODOs, FIXMEs, or placeholders. No doc search is required before validating — the validator, next, decides whether your knowledge held. While writing:
+
+- Unsure of an exact name — a field, prop, component, extension target, config key, or type — that the agent file doesn't pin down? A quick `shopify doc search --query "..."` settles it faster than guessing into a validation failure. Search as much or as little as your uncertainty warrants; just don't treat research as a prerequisite when you already know the answer.
+- Never hunt for API truth in installed packages. Do not grep, find, or cat through `node_modules/`, pnpm/npm stores, or cargo registries — their output is unbounded and their type definitions are not the docs. `shopify doc search` answers the same question authoritatively for a fraction of the cost.
 
 ### 3) Validate the outcome — mandatory, always
 
 Validation is always required and is the gate that decides whether your knowledge held. *What* you validate depends on the outcome you produced. Identify which outcome it is, then apply the matching rule. Use the topic that matches the surface you worked on — there are exactly four: `shopify validate theme`, `shopify validate graphql`, `shopify validate functions`, and `shopify validate components` (`graphql`, `functions`, and `components` take `--api`; run `shopify validate --help` to confirm).
 
-**Outcome A — a chat reply containing an example (nothing written to disk).**
+**Outcome A — a chat reply containing a code or config example (nothing written to disk).**
 The example you show the user must be a *complete, fully valid* artifact — never a fragment and never placeholder syntax:
 
 - No elisions or placeholders: no `...`, `// rest here`, `<your-value>`, `YOUR_TOKEN`, `TODO`, or omitted required fields. Every id, import, field, and closing brace is real and present.
 - It must stand alone: the user could copy it verbatim and it would parse and run as-is.
 - Prove it before sending. Write the example to a temporary file, run the appropriate `shopify validate [topic]` against that file, resolve anything it reports, then delete the temp file. Do not present an example you have not validated this way.
+
+A prose-only reply — guidance, analysis, an explanation with nothing runnable in it — has no artifact to validate: skip the temp file entirely. (A bare documentation answer is the no-validator case: ground it in an up-front doc search instead.)
 
 **Outcome B — a change on the filesystem (files created or modified).**
 Validate *every* file you touched, each with the validation appropriate to that file's surface:
@@ -69,7 +73,7 @@ If validation passes clean, the task is done — your primed knowledge was curre
 
 ### 4) On validation failure — search the docs, fix, re-validate
 
-A validation finding means your recalled details are stale for this surface. Now — and only now — ground the work in current documentation:
+A validation finding means your recalled details are stale for this surface. Grounding the fix in current documentation is now required, not optional:
 
 ```bash
 shopify doc search --query "<what you are building>" [--api-name admin|storefront|customer|partner|payments-apps|functions|hydrogen|liquid|...] [--api-version latest|2025-10|...]
@@ -88,14 +92,15 @@ shopify doc fetch --url <shopify.dev url> [--output <file>]
 
 Correct the artifact against the retrieved docs, then **re-run `shopify validate [topic]`**. Read everything it reports, resolve every finding, and loop — fixing from the docs and re-validating — until it passes clean. Do not present the task as finished while validation reports outstanding issues; an unresolved finding means the task is not done. Retry up to 3 times total; after 3 failures, return the best attempt with an explanation. `shopify doc search` is the remediation path for ANY Shopify topic, including surfaces not in the table above.
 
-**When the outcome cannot be validated.** Some outcomes produce nothing `shopify validate` can gate — merchant onboarding guidance, App Store review's read-only analysis, a UCP buy/track flow, Hydrogen recipe code, or a bare documentation question. With no validator to catch stale recall, still read the family's agent file first, then ground these in `shopify doc search` / `shopify doc fetch` *up front* and answer from the file and the retrieved chunks together. This is the narrow exception the missing safety net demands — not a general rule to search before answering when a validator does exist.
+**When the outcome cannot be validated.** Some outcomes produce nothing `shopify validate` can gate — merchant onboarding guidance, App Store review's read-only analysis, a UCP buy/track flow, Hydrogen recipe code, or a bare documentation question. With no validator to catch stale recall, still read the family's agent file first, then ground these in `shopify doc search` / `shopify doc fetch` *up front* and answer from the file and the retrieved chunks together. This is the one case where the up-front search is required — when a validator exists, searching first stays a judgment call, never a prerequisite.
 
 ## Gotchas
 
 - The agent file read is step 1, not optional context. Skipping it usually means shipping the exact stale detail it corrects and failing validation late — read it whole, and read every family's file the task spans.
 - Validation is the gate, not best effort. The task is complete only when `shopify validate [topic]` is clean — or, for an outcome with nothing to validate, grounded in a fresh doc search. Don't skip the gate because a change looks trivial.
-- Don't guess command names or flags. The command surface changes between versions — `shopify commands` lists what exists and `<command> --help` documents its flags. Confirm there before running, especially for `shopify validate`.
-- A code example in a chat reply is an outcome too. A snippet with `...` or placeholder values is not "done" — write it to a temp file and validate it exactly like a committed file before you show it.
+- Don't guess a command name or flag you're unsure of — `<command> --help` documents the surface, which changes between versions. But check it only for a command you're about to run; touring `shopify commands` or `--help` levels up front burns agent loops on ceremony.
+- A code example in a chat reply is an outcome too. A snippet with `...` or placeholder values is not "done" — write it to a temp file and validate it exactly like a committed file before you show it. A reply with no code in it needs no temp file: validate examples, not explanations.
+- Never grep or read `node_modules/`, package stores, or cargo registries to answer an API question. Type definitions there are not the docs, and the output is unbounded (and gets truncated anyway). `shopify doc search` is the lookup path — mid-write whenever you're unsure, and always after a validation failure.
 - On a failed validation, `--api-name` narrows recall; if results look thin or miss the point, drop the flag and search across all APIs.
 - Prefer `shopify doc search` over `shopify doc fetch`. Search returns only the ranked, relevant chunks; `doc fetch` pulls the whole document and is token-expensive. Reach for it only when you genuinely need a page verbatim and fetching it once is cheaper than several follow-up `shopify doc search` queries — otherwise refine the search instead.
 - "Polaris" alone means **App Home** (the embedded admin app UI); treat it as an extension only when the task names Admin, Checkout, Customer Account, or POS.
@@ -109,6 +114,7 @@ Correct the artifact against the retrieved docs, then **re-run `shopify validate
 - "Add a discount Function." → read `topics/functions.md`, implement `run`, then `shopify validate functions --api functions_discount`. On a failure, `shopify doc search --query "product discount function" --api-name functions`, correct the input query/return shape, and re-validate.
 - "Fetch orders in the customer account." → read `topics/customer.md`, build the query, then `shopify validate graphql --api customer`. If it reports stale fields, `shopify doc search --query "customer account api orders"` (no `--api-name` unless you confirm a valid one), fix, and re-validate.
 - "Scaffold a checkout UI extension." → read `topics/polaris-checkout-extensions.md`, generate via the CLI and implement the target, then `shopify validate components --api polaris-checkout-extensions`. On a failure, search checkout extension targets, fix, and re-validate.
+- "Add a POS smart-grid tile." → read `topics/pos-ui.md` and scaffold via the CLI; if unsure of the exact target name, a quick `shopify doc search --query "pos smart grid tile target" --api-name pos-ui-extensions` pins it — not a grep through `node_modules/` — then implement and `shopify validate components --api pos-ui`.
 - "Help me start selling on Shopify." → read `topics/onboarding-merchant.md`; merchant onboarding guidance has no validator, so also ground up front: `shopify doc search --query "start selling create preview store"` (no `--api-name`), then guide the preview/first store setup from the file and retrieved docs.
 - "Is my app ready to submit to the App Store?" → read `topics/app-store-review.md`; read-only analysis, no validator: `shopify doc search --query "app store review requirements"` up front, inspect the codebase, and report likely blockers without rewriting the app.
 - "Buy this product with UCP." → read `topics/ucp.md`; a runtime flow, nothing to validate: `shopify doc search --query "ucp checkout"` up front, then run the flow.
