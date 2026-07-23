@@ -4758,6 +4758,26 @@
       "value": "export interface skillinstall {\n  /**\n   * The package manager to use to download the latest version of the skills CLI.\n   * @environment SHOPIFY_FLAG_PACKAGE_MANAGER\n   */\n  '--package-manager <value>'?: string\n}"
     }
   },
+  "skillupdate": {
+    "docs-shopify.dev/commands/interfaces/skill-update.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/skill-update.interface.ts",
+      "name": "skillupdate",
+      "description": "The following flags are available for the `skill update` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/skill-update.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--package-manager <value>",
+          "value": "string",
+          "description": "The package manager to use to download the latest version of the skills CLI.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PACKAGE_MANAGER"
+        }
+      ],
+      "value": "export interface skillupdate {\n  /**\n   * The package manager to use to download the latest version of the skills CLI.\n   * @environment SHOPIFY_FLAG_PACKAGE_MANAGER\n   */\n  '--package-manager <value>'?: string\n}"
+    }
+  },
   "storeauthlist": {
     "docs-shopify.dev/commands/interfaces/store-auth-list.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/store-auth-list.interface.ts",

@@ -1,4 +1,4 @@
-import {promptShopifySkillInstallIfNeeded, shopifySkillIsInstalled} from './skills.js'
+import {promptShopifySkillInstallIfNeeded, shopifySkillIsInstalled, updateShopifySkillInBackground} from './skills.js'
 import {inTemporaryDirectory, mkdir} from './fs.js'
 import {joinPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
@@ -192,6 +192,87 @@ describe('promptShopifySkillInstallIfNeeded', () => {
 
       // Then
       expect(renderSelectPrompt).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('updateShopifySkillInBackground', () => {
+  test('spawns a background skill update when the skill is installed', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await mkdir(joinPath(cwd, '.agents', 'skills', 'shopify'))
+
+      // When
+      await updateShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+
+      // Then
+      expect(exec).toHaveBeenCalledWith(
+        '/path/to/node',
+        ['/path/to/shopify', 'skill', 'update'],
+        expect.objectContaining({background: true}),
+      )
+    })
+  })
+
+  test('spawns at most one update within the daily interval', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await mkdir(joinPath(cwd, '.agents', 'skills', 'shopify'))
+
+      // When
+      await updateShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+      await updateShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+
+      // Then
+      expect(exec).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  test('does nothing when the skill is not installed', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      // When
+      await updateShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+
+      // Then
+      expect(exec).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does nothing for skill commands', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await mkdir(joinPath(cwd, '.agents', 'skills', 'shopify'))
+
+      // When
+      await updateShopifySkillInBackground({currentCommand: 'skill:update', argv, env, config, homeDir: cwd})
+
+      // Then
+      expect(exec).not.toHaveBeenCalled()
+    })
+  })
+
+  test.each([
+    ['CI', {...env, CI: '1'}],
+    ['SHOPIFY_UNIT_TEST', {SHOPIFY_UNIT_TEST: 'true'}],
+    ['SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE', {...env, SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE: '1'}],
+    ['SHOPIFY_CLI_ENV=development', {...env, SHOPIFY_CLI_ENV: 'development'}],
+  ])('does nothing when %s is set', async (_name, skipEnv) => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await mkdir(joinPath(cwd, '.agents', 'skills', 'shopify'))
+
+      // When
+      await updateShopifySkillInBackground({currentCommand: 'theme:list', argv, env: skipEnv, config, homeDir: cwd})
+
+      // Then
+      expect(exec).not.toHaveBeenCalled()
     })
   })
 })
