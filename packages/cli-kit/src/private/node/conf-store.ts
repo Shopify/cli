@@ -33,6 +33,7 @@ export interface ConfSchema {
   currentDevSessionId?: string
   cache?: Cache
   autoUpgradeEnabled?: boolean
+  skillInstallPromptDismissed?: boolean
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -283,6 +284,26 @@ export function getAutoUpgradeEnabled(config: LocalStorage<ConfSchema> = cliKitS
  */
 export function setAutoUpgradeEnabled(enabled: boolean, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   config.set('autoUpgradeEnabled', enabled)
+}
+
+/**
+ * Get whether the Shopify skill install prompt has been dismissed, either because
+ * the skill was detected as installed or because the user opted out.
+ *
+ * @param config - The cli-kit local storage.
+ * @returns Whether the skill install prompt should never be shown again.
+ */
+export function getSkillInstallPromptDismissed(config: LocalStorage<ConfSchema> = cliKitStore()): boolean {
+  return config.get('skillInstallPromptDismissed') ?? false
+}
+
+/**
+ * Record that the Shopify skill install prompt should never be shown again.
+ *
+ * @param config - The cli-kit local storage.
+ */
+export function setSkillInstallPromptDismissed(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.set('skillInstallPromptDismissed', true)
 }
 
 export function getConfigStoreForPartnerStatus() {

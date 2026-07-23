@@ -16,10 +16,11 @@ export const hook: Hook.Prerun = async (options) => {
   const args = options.argv
 
   // Load heavy modules in parallel
-  const [{outputDebug}, analyticsMod, notificationsMod] = await Promise.all([
+  const [{outputDebug}, analyticsMod, notificationsMod, skillsMod] = await Promise.all([
     import('../output.js'),
     import('../../../private/node/analytics.js'),
     import('../notifications-system.js'),
+    import('../skills.js'),
   ])
 
   // Fire upgrade check in background (non-blocking)
@@ -29,6 +30,7 @@ export const hook: Hook.Prerun = async (options) => {
   outputDebug(`Running command ${commandContent.command}`)
   await analyticsMod.startAnalytics({commandContent, args, commandClass: options.Command})
   notificationsMod.fetchNotificationsInBackground(options.Command.id)
+  await skillsMod.promptShopifySkillInstallIfNeeded({currentCommand: options.Command.id, args})
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
