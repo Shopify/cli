@@ -1,11 +1,8 @@
-import {addTrustedThemeEnvironment} from '../../../utilities/theme-airlock/writer.js'
-import {ThemeAirlockError} from '../../../utilities/theme-airlock/types.js'
+import {themeAirlockAdd} from '../../../services/theme-airlock-add.js'
 import {themeFlags} from '../../../flags.js'
 import {Args, Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {authAliasFlag, globalFlags} from '@shopify/cli-kit/node/cli'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export default class Add extends BaseCommand {
@@ -33,23 +30,20 @@ export default class Add extends BaseCommand {
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Add)
-    const environment = flags.environment.trim()
-    if (!environment) {
-      throw new ThemeAirlockError("Environment name to add can't be empty.", 'invalid-environment')
-    }
-
-    const store = normalizeStoreFqdn(args.store)
-    await ensureAuthenticatedThemes(store, flags.password)
-
-    const result = await addTrustedThemeEnvironment({
+    const result = await themeAirlockAdd({
       themePath: flags.path,
-      environment,
-      store,
+      environment: flags.environment,
+      store: args.store,
+      password: flags.password,
     })
 
     renderSuccess({
       headline: 'Store added to Theme Airlock.',
-      body: [`Environment: ${environment}`, `Store: ${result.store}`, `Configuration: ${result.path}`],
+      body: [
+        `Environment: ${result.environment}`,
+        `Store: ${result.store}`,
+        `Configuration: ${result.configurationPath}`,
+      ],
     })
   }
 }
