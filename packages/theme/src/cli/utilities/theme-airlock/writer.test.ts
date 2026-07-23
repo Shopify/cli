@@ -228,6 +228,19 @@ describe('addTrustedThemeEnvironment', () => {
     })
   })
 
+  test('rejects a non-table environments value without modifying the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const themePath = await createTheme(tmpDir)
+      const original = '# important note\nenvironments = ["a", "b"]\nname = "keepme"\n'
+      const configurationPath = await writeConfiguration(tmpDir, original)
+
+      await expect(
+        addTrustedThemeEnvironment({themePath, environment: 'preview', store: 'preview-store'}),
+      ).rejects.toMatchObject({reason: 'malformed-configuration'})
+      await expect(readFile(configurationPath)).resolves.toBe(original)
+    })
+  })
+
   test('leaves malformed configuration unchanged', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const themePath = await createTheme(tmpDir)

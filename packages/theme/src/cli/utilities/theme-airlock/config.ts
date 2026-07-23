@@ -31,8 +31,14 @@ export async function loadThemeProjectTrust(themePath: string): Promise<ThemePro
 
   const configuration = await readConfiguration(configurationPath)
   const environmentsValue: unknown = configuration.content.environments
-  if (!isObject(environmentsValue)) {
+  if (environmentsValue === undefined) {
     return {state: 'unconfigured', path: configurationPath, themePath}
+  }
+  if (!isObject(environmentsValue)) {
+    throw new ThemeAirlockError(
+      `Invalid environments in ${configurationPath}: expected a table.`,
+      'malformed-configuration',
+    )
   }
 
   const environments: TrustedThemeEnvironment[] = []

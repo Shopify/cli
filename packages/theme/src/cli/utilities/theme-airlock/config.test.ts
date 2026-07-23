@@ -48,17 +48,16 @@ describe('loadThemeProjectTrust', () => {
   })
 
   test.each(['environments = "preview"\n', 'environments = []\n'])(
-    'returns unconfigured when environments is not an object: %s',
+    'throws when environments is not a table: %s',
     async (content) => {
       await inTemporaryDirectory(async (tmpDir) => {
         const themePath = joinPath(tmpDir, 'theme')
-        const configurationPath = await writeConfiguration(tmpDir, content)
+        await writeConfiguration(tmpDir, content)
         await mkdir(themePath)
 
-        await expect(loadThemeProjectTrust(themePath)).resolves.toEqual({
-          state: 'unconfigured',
-          path: configurationPath,
-          themePath,
+        await expect(loadThemeProjectTrust(themePath)).rejects.toMatchObject({
+          reason: 'malformed-configuration',
+          message: expect.stringContaining('environments'),
         })
       })
     },
