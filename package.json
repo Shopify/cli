@@ -185,11 +185,7 @@
       ".": {
         "entry": [
           "bin/**/*.js",
-          "configurations/vite.config.ts",
-          "docs-shopify.dev/**/*.ts",
-          "vite.config.ts",
-          "docs/api/cli-kit/**/*.js",
-          "graphql.config.ts"
+          "configurations/vite.config.ts"
         ],
         "ignoreBinaries": [
           "bin/*",
@@ -207,8 +203,7 @@
           "esbuild"
         ],
         "ignore": [
-          "configurations/vite.config.ts",
-          "packages/e2e/scripts/**"
+          "configurations/vite.config.ts"
         ]
       },
       "packages/app": {
@@ -221,9 +216,7 @@
           "**/graphql/**/generated/*.ts"
         ],
         "ignoreDependencies": [
-          "@graphql-typed-document-node/core",
-          "@shopify/plugin-cloudflare",
-          "http-proxy-node16"
+          "@shopify/plugin-cloudflare"
         ],
         "vite": {
           "config": [
@@ -239,9 +232,6 @@
         "ignore": [
           "**/graphql/**/generated/*.ts"
         ],
-        "ignoreDependencies": [
-          "@graphql-typed-document-node/core"
-        ],
         "vite": {
           "config": [
             "vite.config.ts"
@@ -256,9 +246,6 @@
         "project": "**/*.ts!",
         "ignore": [
           "**/graphql/**/generated/*.ts"
-        ],
-        "ignoreDependencies": [
-          "@graphql-typed-document-node/core"
         ],
         "vite": {
           "config": [
@@ -300,7 +287,6 @@
       },
       "packages/plugin-cloudflare": {
         "entry": [
-          "**/{commands,hooks}/**/*.ts!",
           "**/src/*.ts!"
         ],
         "project": "**/*.ts!",
@@ -350,9 +336,6 @@
         "ignoreBinaries": [
           "open"
         ],
-        "ignoreDependencies": [
-          "@graphql-typed-document-node/core"
-        ],
         "vite": {
           "config": [
             "vite.config.ts"
@@ -365,20 +348,13 @@
           "**/scripts/*.ts!",
           "**/src/testing/index.ts"
         ],
-        "project": "**/*.{ts,tsx}!",
-        "ignoreDependencies": [
-          "react-dom"
-        ]
+        "project": "**/*.{ts,tsx}!"
       },
       "packages/ui-extensions-test-utils": {
         "entry": [
           "**/src/index.ts"
         ],
-        "project": "**/*.{ts,tsx}",
-        "ignoreDependencies": [
-          "@types/react-dom",
-          "react-dom"
-        ]
+        "project": "**/*.{ts,tsx}"
       }
     }
   }
