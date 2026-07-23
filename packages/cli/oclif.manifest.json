@@ -6342,6 +6342,14 @@
       },
       "enableJsonFlag": false,
       "flags": {
+        "background": {
+          "allowNo": false,
+          "description": "Announce a performed update on the next CLI run instead of the current output.",
+          "env": "SHOPIFY_FLAG_BACKGROUND",
+          "hidden": true,
+          "name": "background",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [

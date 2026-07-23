@@ -1,4 +1,5 @@
 import {
+  announcePendingSkillUpdate,
   promptShopifySkillInstallIfNeeded,
   shopifySkillIsInstalled,
   updateShopifySkill,
@@ -8,7 +9,7 @@ import {inTemporaryDirectory, mkdir, readFile, writeFile} from './fs.js'
 import {fetch, Response} from './http.js'
 import {joinPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
-import {renderSelectPrompt} from './ui.js'
+import {renderInfo, renderSelectPrompt} from './ui.js'
 import {LocalStorage} from './local-storage.js'
 import {ConfSchema} from '../../private/node/conf-store.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -112,6 +113,72 @@ describe('updateShopifySkill', () => {
 
       // When / Then
       await expect(updateShopifySkill({env, homeDir: cwd})).rejects.toThrow('Failed to check for Shopify skill updates')
+    })
+  })
+
+  test('records a pending announcement when updating with announceOnNextRun', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await writeInstalledSkill(cwd, '# Old skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# New skill', {status: 200}))
+
+      // When
+      const result = await updateShopifySkill({announceOnNextRun: true, env, config, homeDir: cwd})
+
+      // Then
+      expect(result).toBe('updated')
+      expect(config.get('skillUpdateAnnouncementPending')).toBe(true)
+    })
+  })
+
+  test('does not record an announcement when nothing was updated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await writeInstalledSkill(cwd, '# Same skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# Same skill', {status: 200}))
+
+      // When
+      const result = await updateShopifySkill({announceOnNextRun: true, env, config, homeDir: cwd})
+
+      // Then
+      expect(result).toBe('already-up-to-date')
+      expect(config.get('skillUpdateAnnouncementPending')).toBeUndefined()
+    })
+  })
+})
+
+describe('announcePendingSkillUpdate', () => {
+  test('renders the announcement once and clears it', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('skillUpdateAnnouncementPending', true)
+
+      // When
+      announcePendingSkillUpdate(config)
+      announcePendingSkillUpdate(config)
+
+      // Then
+      expect(renderInfo).toHaveBeenCalledTimes(1)
+      expect(renderInfo).toHaveBeenCalledWith({
+        body: 'The Shopify skill for coding agents was updated to the latest version.',
+      })
+      expect(config.get('skillUpdateAnnouncementPending')).toBe(false)
+    })
+  })
+
+  test('does nothing when no announcement is pending', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      // When
+      announcePendingSkillUpdate(config)
+
+      // Then
+      expect(renderInfo).not.toHaveBeenCalled()
     })
   })
 })
@@ -283,7 +350,7 @@ describe('updateShopifySkillInBackground', () => {
       // Then
       expect(exec).toHaveBeenCalledWith(
         '/path/to/node',
-        ['/path/to/shopify', 'skill', 'update'],
+        ['/path/to/shopify', 'skill', 'update', '--background'],
         expect.objectContaining({background: true}),
       )
     })
