@@ -65,11 +65,8 @@ describe('shopifySkillIsInstalled', () => {
 describe('updateShopifySkill', () => {
   test('returns not-installed without fetching when the skill is missing', async () => {
     await inTemporaryDirectory(async (cwd) => {
-      // Given
-      const config = new LocalStorage<ConfSchema>({cwd})
-
       // When
-      const result = await updateShopifySkill({env, config, homeDir: cwd})
+      const result = await updateShopifySkill({env, homeDir: cwd})
 
       // Then
       expect(result).toBe('not-installed')
@@ -77,71 +74,44 @@ describe('updateShopifySkill', () => {
     })
   })
 
-  test('returns already-up-to-date on a 304 response and leaves the skill untouched', async () => {
+  test('writes the remote content over the installed skill when the source changed', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
-      const config = new LocalStorage<ConfSchema>({cwd})
-      config.set('skillSourceEtag', 'W/"stored"')
-      const skillPath = await writeInstalledSkill(cwd, '# Local skill')
-      vi.mocked(fetch).mockResolvedValue(new Response(null, {status: 304}))
-
-      // When
-      const result = await updateShopifySkill({env, config, homeDir: cwd})
-
-      // Then
-      expect(result).toBe('already-up-to-date')
-      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('SKILL.md'), {
-        headers: {'If-None-Match': 'W/"stored"'},
-      })
-      await expect(readFile(skillPath)).resolves.toBe('# Local skill')
-    })
-  })
-
-  test('writes the remote content and records the new ETag when the source changed', async () => {
-    await inTemporaryDirectory(async (cwd) => {
-      // Given
-      const config = new LocalStorage<ConfSchema>({cwd})
       const skillPath = await writeInstalledSkill(cwd, '# Old skill')
-      vi.mocked(fetch).mockResolvedValue(new Response('# New skill', {status: 200, headers: {etag: 'W/"new"'}}))
+      vi.mocked(fetch).mockResolvedValue(new Response('# New skill', {status: 200}))
 
       // When
-      const result = await updateShopifySkill({env, config, homeDir: cwd})
+      const result = await updateShopifySkill({env, homeDir: cwd})
 
       // Then
       expect(result).toBe('updated')
       await expect(readFile(skillPath)).resolves.toBe('# New skill')
-      expect(config.get('skillSourceEtag')).toBe('W/"new"')
     })
   })
 
-  test('returns already-up-to-date when a 200 response carries unchanged content', async () => {
+  test('returns already-up-to-date and leaves the skill untouched when the content matches', async () => {
     await inTemporaryDirectory(async (cwd) => {
-      // Given no recorded ETag yet, so the first check downloads the full body
-      const config = new LocalStorage<ConfSchema>({cwd})
-      await writeInstalledSkill(cwd, '# Same skill')
-      vi.mocked(fetch).mockResolvedValue(new Response('# Same skill', {status: 200, headers: {etag: 'W/"first"'}}))
+      // Given
+      const skillPath = await writeInstalledSkill(cwd, '# Same skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# Same skill', {status: 200}))
 
       // When
-      const result = await updateShopifySkill({env, config, homeDir: cwd})
+      const result = await updateShopifySkill({env, homeDir: cwd})
 
       // Then
       expect(result).toBe('already-up-to-date')
-      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('SKILL.md'), undefined)
-      expect(config.get('skillSourceEtag')).toBe('W/"first"')
+      await expect(readFile(skillPath)).resolves.toBe('# Same skill')
     })
   })
 
   test('throws when the source responds with an error', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
-      const config = new LocalStorage<ConfSchema>({cwd})
       await writeInstalledSkill(cwd, '# Local skill')
       vi.mocked(fetch).mockResolvedValue(new Response(null, {status: 500, statusText: 'Internal Server Error'}))
 
       // When / Then
-      await expect(updateShopifySkill({env, config, homeDir: cwd})).rejects.toThrow(
-        'Failed to check for Shopify skill updates',
-      )
+      await expect(updateShopifySkill({env, homeDir: cwd})).rejects.toThrow('Failed to check for Shopify skill updates')
     })
   })
 })

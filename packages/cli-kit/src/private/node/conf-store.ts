@@ -34,7 +34,6 @@ export interface ConfSchema {
   cache?: Cache
   autoUpgradeEnabled?: boolean
   skillInstallPromptDismissed?: boolean
-  skillSourceEtag?: string
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -305,26 +304,6 @@ export function getSkillInstallPromptDismissed(config: LocalStorage<ConfSchema> 
  */
 export function setSkillInstallPromptDismissed(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   config.set('skillInstallPromptDismissed', true)
-}
-
-/**
- * Get the ETag of the Shopify skill source recorded on the last skill update.
- *
- * @param config - The cli-kit local storage.
- * @returns The recorded ETag, if any.
- */
-export function getSkillSourceEtag(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
-  return config.get('skillSourceEtag')
-}
-
-/**
- * Record the ETag of the Shopify skill source, for conditional update checks.
- *
- * @param etag - The ETag returned by the skill source.
- * @param config - The cli-kit local storage.
- */
-export function setSkillSourceEtag(etag: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  config.set('skillSourceEtag', etag)
 }
 
 export function getConfigStoreForPartnerStatus() {
