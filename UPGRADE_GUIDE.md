@@ -18,3 +18,22 @@ root of your app and run `npm shopify migrate-app-toml-to-xml`.
 
 But seriously, PLEASE DO NOT MAKE THIS FILE NECESSARY.
 -->
+
+# Themes
+
+## Project trust for theme push and dev
+
+`shopify theme push` and `shopify theme dev` now require the target store to be trusted in the nearest `shopify.theme.toml` file. Existing non-interactive scripts must complete this one-time migration by adding a named environment:
+
+```toml
+[environments.production]
+store = "example.myshopify.com"
+```
+
+Then select that environment in the script:
+
+```sh
+shopify theme push --environment production
+```
+
+After this one-time project trust configuration, future runs remain non-interactive. Passing `--store` and valid credentials does not establish project trust.

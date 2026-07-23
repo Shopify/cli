@@ -2,4 +2,4 @@
 '@shopify/theme': minor
 ---
 
-Add Theme Airlock trust checks and preflight output to theme push and dev, with an explicit store trust command.
+Require project-trusted stores for theme push and dev, with visible preflight and an authenticated Airlock setup command.

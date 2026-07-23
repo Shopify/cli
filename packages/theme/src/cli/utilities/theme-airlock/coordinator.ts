@@ -35,6 +35,20 @@ interface RunSingleOptions<T> {
   execute: (flags: AirlockFlagValues, target: AirlockTarget, session?: AdminSession) => Promise<T>
 }
 
+function nonInteractiveSetupGuidance(resolution: {candidate?: string; proposedEnvironment?: string}): string {
+  const introduction = 'This theme project is not configured.'
+
+  if (resolution.candidate && resolution.proposedEnvironment) {
+    return `${introduction} Trust the selected store, then rerun this command:\n\`shopify theme airlock add ${resolution.candidate} --environment ${resolution.proposedEnvironment}\``
+  }
+
+  if (resolution.candidate) {
+    return `${introduction} You must choose the environment name, then run:\n\`shopify theme airlock add ${resolution.candidate} --environment <name>\``
+  }
+
+  return `${introduction} Choose the trusted store and environment name, then run:\n\`shopify theme airlock add <store.myshopify.com> --environment <name>\``
+}
+
 interface AirlockBatchEnvironment {
   environment: string
   flags: AirlockFlagValues
@@ -79,10 +93,7 @@ export class ThemeAirlockCoordinator {
 
     if ('bootstrap' in resolution) {
       if (!this.options.supportsPrompting()) {
-        throw new ThemeAirlockError(
-          'This theme project is not configured. Run `theme airlock add` before running this command without a terminal.',
-          'unconfigured-project',
-        )
+        throw new ThemeAirlockError(nonInteractiveSetupGuidance(resolution), 'unconfigured-project')
       }
 
       const rememberedStore = resolution.allowRememberedCandidate ? this.options.rememberedStore() : undefined

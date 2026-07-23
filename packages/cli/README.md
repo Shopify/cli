@@ -4283,6 +4283,9 @@ DESCRIPTION
   Uploads the current theme as the specified theme, or a "development theme"
   (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
 
+  The target store must be trusted in the nearest `shopify.theme.toml` file. To trust a store, run `shopify theme
+  airlock add`.
+
   This command returns the following information:
 
   - A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and
@@ -5114,6 +5117,9 @@ DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
 
   Uploads your local theme files to Shopify, overwriting the remote version if specified.
+
+  The target store must be trusted in the nearest `shopify.theme.toml` file. To trust a store, run `shopify theme
+  airlock add`.
 
   If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your
   store.

@@ -1,4 +1,5 @@
 import {ThemeAirlockCoordinator} from './coordinator.js'
+import {ThemeAirlockError} from './types.js'
 import {getThemeStore, setThemeStore} from '../../services/local-storage.js'
 import {configurationFileName} from '../../constants.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -14,11 +15,20 @@ const session: AdminSession = {token: 'theme-token', storeFqdn: trustedStore}
 
 type CoordinatorOptions = ConstructorParameters<typeof ThemeAirlockCoordinator>[0]
 
-async function createConfiguredTheme(root: string): Promise<string> {
+async function createUnconfiguredTheme(root: string): Promise<string> {
   const themePath = joinPath(root, 'theme')
   await mkdir(themePath)
-  await writeFile(joinPath(themePath, configurationFileName), `[environments.default]\nstore = "${trustedStore}"\n`)
   return themePath
+}
+
+async function createThemeWithTrust(root: string, configuration: string): Promise<string> {
+  const themePath = await createUnconfiguredTheme(root)
+  await writeFile(joinPath(themePath, configurationFileName), configuration)
+  return themePath
+}
+
+async function createConfiguredTheme(root: string): Promise<string> {
+  return createThemeWithTrust(root, `[environments.default]\nstore = "${trustedStore}"\n`)
 }
 
 async function createBatchTheme(root: string, environment: string, store: string): Promise<string> {
@@ -62,8 +72,192 @@ function environment(name: string, path: string, store: string, password?: strin
   }
 }
 
+async function captureAirlockError(operation: () => Promise<unknown>): Promise<ThemeAirlockError> {
+  try {
+    await operation()
+  } catch (error) {
+    expect(error).toBeInstanceOf(ThemeAirlockError)
+    if (error instanceof ThemeAirlockError) return error
+    throw error
+  }
+  throw new Error('Expected operation to throw')
+}
+
 describe('ThemeAirlockCoordinator', () => {
   describe('runSingle', () => {
+    test('guides a non-interactive explicit store and environment with the exact setup command', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themePath = await createUnconfiguredTheme(root)
+        const storage = await createStorage(root)
+        const authenticate = vi.fn()
+        const execute = vi.fn()
+        const coordinator = createCoordinator(storage, {
+          argv: ['--store', 'example.myshopify.com', '--environment', 'production'],
+          authenticate,
+        })
+
+        const error = await captureAirlockError(() =>
+          coordinator.runSingle({
+            flags: {path: themePath, store: 'example.myshopify.com', environment: 'production'},
+            requiresAuth: true,
+            execute,
+          }),
+        )
+
+        expect(error.message).toContain('shopify theme airlock add example.myshopify.com --environment production')
+        expect(authenticate).not.toHaveBeenCalled()
+        expect(execute).not.toHaveBeenCalled()
+      })
+    })
+
+    test('asks the developer to choose an environment name for an explicit store', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themePath = await createUnconfiguredTheme(root)
+        const storage = await createStorage(root)
+        const coordinator = createCoordinator(storage, {argv: ['--store', 'example.myshopify.com']})
+
+        const error = await captureAirlockError(() =>
+          coordinator.runSingle({
+            flags: {path: themePath, store: 'example.myshopify.com'},
+            requiresAuth: true,
+            execute: vi.fn(),
+          }),
+        )
+
+        expect(error.message).toContain('choose the environment name')
+        expect(error.message).toContain('shopify theme airlock add example.myshopify.com --environment <name>')
+      })
+    })
+
+    test('provides generic setup guidance when no candidate store is available', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themePath = await createUnconfiguredTheme(root)
+        const storage = await createStorage(root)
+        const coordinator = createCoordinator(storage)
+
+        const error = await captureAirlockError(() =>
+          coordinator.runSingle({
+            flags: {path: themePath},
+            requiresAuth: true,
+            execute: vi.fn(),
+          }),
+        )
+
+        expect(error.message).toContain('shopify theme airlock add <store.myshopify.com> --environment <name>')
+      })
+    })
+
+    test('does not include credential values in non-interactive setup guidance', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themePath = await createUnconfiguredTheme(root)
+        const storage = await createStorage(root)
+        const coordinator = createCoordinator(storage, {
+          argv: ['--store', 'example.myshopify.com', '--environment', 'production'],
+        })
+
+        const error = await captureAirlockError(() =>
+          coordinator.runSingle({
+            flags: {
+              path: themePath,
+              store: 'example.myshopify.com',
+              environment: 'production',
+              password: 'secret-password',
+              'auth-alias': 'secret-auth-alias',
+              token: 'secret-token',
+            },
+            requiresAuth: true,
+            execute: vi.fn(),
+          }),
+        )
+
+        expect(error.message).not.toContain('secret-password')
+        expect(error.message).not.toContain('secret-auth-alias')
+        expect(error.message).not.toContain('secret-token')
+      })
+    })
+
+    test('executes a configured named environment without prompting', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themePath = await createThemeWithTrust(
+          root,
+          `[environments.production]\nstore = "production.myshopify.com"\n`,
+        )
+        const storage = await createStorage(root)
+        const authenticate = vi.fn(async () => ({
+          token: 'production-token',
+          storeFqdn: 'production.myshopify.com',
+        }))
+        const execute = vi.fn()
+        const coordinator = createCoordinator(storage, {
+          argv: ['--environment', 'production'],
+          authenticate,
+          supportsPrompting: () => false,
+        })
+
+        await coordinator.runSingle({
+          flags: {path: themePath, environment: 'production'},
+          requiresAuth: true,
+          execute,
+        })
+
+        expect(authenticate).toHaveBeenCalledWith(expect.objectContaining({store: 'production.myshopify.com'}))
+        expect(execute).toHaveBeenCalledWith(
+          expect.objectContaining({store: 'production.myshopify.com'}),
+          expect.objectContaining({environment: 'production', store: 'production.myshopify.com'}),
+          expect.objectContaining({token: 'production-token'}),
+        )
+      })
+    })
+
+    test('executes the sole trusted store implicitly without prompting', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themePath = await createThemeWithTrust(root, `[environments.preview]\nstore = "preview.myshopify.com"\n`)
+        const storage = await createStorage(root)
+        const execute = vi.fn()
+        const coordinator = createCoordinator(storage, {supportsPrompting: () => false})
+
+        await coordinator.runSingle({
+          flags: {path: themePath},
+          requiresAuth: true,
+          execute,
+        })
+
+        expect(execute).toHaveBeenCalledWith(
+          expect.objectContaining({store: 'preview.myshopify.com'}),
+          expect.objectContaining({store: 'preview.myshopify.com', source: 'sole-store', implicit: true}),
+          expect.objectContaining({storeFqdn: 'preview.myshopify.com'}),
+        )
+      })
+    })
+
+    test('rejects multiple trusted stores without a non-interactive selection', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themePath = await createThemeWithTrust(
+          root,
+          '[environments.preview]\nstore = "preview.myshopify.com"\n\n[environments.production]\nstore = "production.myshopify.com"\n',
+        )
+        const storage = await createStorage(root)
+        const authenticate = vi.fn()
+        const execute = vi.fn()
+        const coordinator = createCoordinator(storage, {
+          authenticate,
+          supportsPrompting: () => false,
+        })
+
+        const error = await captureAirlockError(() =>
+          coordinator.runSingle({
+            flags: {path: themePath},
+            requiresAuth: true,
+            execute,
+          }),
+        )
+
+        expect(error.reason).toBe('ambiguous-selection')
+        expect(authenticate).not.toHaveBeenCalled()
+        expect(execute).not.toHaveBeenCalled()
+      })
+    })
+
     test('executes with the trusted store without changing a different remembered store', async () => {
       await inTemporaryDirectory(async (root) => {
         const themePath = await createConfiguredTheme(root)
