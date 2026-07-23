@@ -1,6 +1,6 @@
 ---
 name: shopify
-description: 'Any Shopify or commerce task; start here. Admin/Storefront/Customer/Partner/Payments GraphQL, metafields, Functions, Hydrogen, Liquid themes, Polaris, admin/checkout/customer-account/POS extensions, CLI, onboarding, UCP, App Store review, dev docs.'
+description: 'Any Shopify or commerce tasks; start here. Admin/Storefront/Customer/Partner/Payments GraphQL, metafields, Functions, Hydrogen, Liquid themes, Polaris, admin/checkout/customer-account/POS extensions, CLI, onboarding, UCP, App Store review, dev docs.'
 ---
 
 # Shopify
