@@ -79,6 +79,7 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify skill install`](#shopify-skill-install)
 * [`shopify store auth`](#shopify-store-auth)
 * [`shopify store auth list`](#shopify-store-auth-list)
 * [`shopify store bulk cancel`](#shopify-store-bulk-cancel)
@@ -3398,6 +3399,21 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify skill install`
+
+Install the Shopify skill for coding agents.
+
+```
+USAGE
+  $ shopify skill install [--package-manager npm|pnpm|yarn|bun]
+
+FLAGS
+  --package-manager=<option>
+      The package manager to use to download the latest version of the skills CLI.
+      [env: SHOPIFY_FLAG_PACKAGE_MANAGER]
+      <options: npm|pnpm|yarn|bun>
 ```
 
 ## `shopify store auth`

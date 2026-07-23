@@ -24,6 +24,7 @@ import ValidateComponents from './cli/commands/validate/components.js'
 import ValidateFunctions from './cli/commands/validate/functions.js'
 import ValidateGraphql from './cli/commands/validate/graphql.js'
 import ValidateTheme from './cli/commands/validate/theme.js'
+import SkillInstall from './cli/commands/skill/install.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import StoreCommands from '@shopify/store'
 import ThemeCommands from '@shopify/theme'
@@ -176,6 +177,7 @@ export const COMMANDS: any = {
   'validate:functions': ValidateFunctions,
   'validate:graphql': ValidateGraphql,
   'validate:theme': ValidateTheme,
+  'skill:install': SkillInstall,
 }
 
 export default runShopifyCLI
