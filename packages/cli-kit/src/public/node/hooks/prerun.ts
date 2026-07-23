@@ -30,6 +30,7 @@ export const hook: Hook.Prerun = async (options) => {
   outputDebug(`Running command ${commandContent.command}`)
   await analyticsMod.startAnalytics({commandContent, args, commandClass: options.Command})
   notificationsMod.fetchNotificationsInBackground(options.Command.id)
+  skillsMod.announcePendingSkillUpdate()
   await skillsMod.promptShopifySkillInstallIfNeeded({currentCommand: options.Command.id, args})
   // eslint-disable-next-line no-void
   void skillsMod.updateShopifySkillInBackground({currentCommand: options.Command.id})

@@ -6,12 +6,14 @@ import {fetch} from './http.js'
 import {outputDebug, outputInfo} from './output.js'
 import {joinPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
-import {renderSelectPrompt} from './ui.js'
+import {renderInfo, renderSelectPrompt} from './ui.js'
 import {LocalStorage} from './local-storage.js'
 import {
   ConfSchema,
   getSkillInstallPromptDismissed,
   setSkillInstallPromptDismissed,
+  getSkillUpdateAnnouncementPending,
+  setSkillUpdateAnnouncementPending,
   runAtMinimumInterval,
 } from '../../private/node/conf-store.js'
 
@@ -78,8 +80,14 @@ export type ShopifySkillUpdateResult = 'updated' | 'already-up-to-date' | 'not-i
  * Options for {@link updateShopifySkill}.
  */
 export interface UpdateShopifySkillOptions {
+  /** Whether to announce a performed update on the next CLI run instead of the current output. */
+  announceOnNextRun?: boolean
+
   /** The process environment. */
   env?: NodeJS.ProcessEnv
+
+  /** The cli-kit local storage, injectable for testing. */
+  config?: LocalStorage<ConfSchema>
 
   /** The user's home directory, injectable for testing. */
   homeDir?: string
@@ -97,7 +105,7 @@ export interface UpdateShopifySkillOptions {
  * @returns The outcome of the update check.
  */
 export async function updateShopifySkill(options: UpdateShopifySkillOptions = {}): Promise<ShopifySkillUpdateResult> {
-  const {env = process.env, homeDir = homeDirectory()} = options
+  const {announceOnNextRun = false, env = process.env, config, homeDir = homeDirectory()} = options
 
   const skillPath = installedShopifySkillPath(env, homeDir)
   if (!skillPath) return 'not-installed'
@@ -112,7 +120,21 @@ export async function updateShopifySkill(options: UpdateShopifySkillOptions = {}
   if (localContent === remoteContent) return 'already-up-to-date'
 
   await writeFile(skillPath, remoteContent)
+  if (announceOnNextRun) setSkillUpdateAnnouncementPending(true, config)
   return 'updated'
+}
+
+/**
+ * Announces a Shopify skill update performed in the background, once, on the next
+ * CLI run. Background updates run detached with their output discarded, so this is
+ * how the user learns a new skill version was installed.
+ *
+ * @param config - The cli-kit local storage, injectable for testing.
+ */
+export function announcePendingSkillUpdate(config?: LocalStorage<ConfSchema>): void {
+  if (!getSkillUpdateAnnouncementPending(config)) return
+  setSkillUpdateAnnouncementPending(false, config)
+  renderInfo({body: 'The Shopify skill for coding agents was updated to the latest version.'})
 }
 
 /**
@@ -163,7 +185,7 @@ export async function updateShopifySkillInBackground(options: UpdateShopifySkill
     'skill-update',
     {days: 1},
     async () => {
-      spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, 'update', env)
+      spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, ['update', '--background'], env)
     },
     config,
   )
@@ -216,7 +238,7 @@ export async function promptShopifySkillInstallIfNeeded(options: PromptShopifySk
 
       switch (choice) {
         case 'install':
-          spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, 'install', env)
+          spawnShopifySkillCommandInBackground(nodeBinary, shopifyBinary, ['install'], env)
           outputInfo(
             'Installing the Shopify skill in the background. Run `shopify skill install` to reinstall it at any time.',
           )
@@ -252,15 +274,15 @@ function skipSkillMaintenance(currentCommand: string, env: NodeJS.ProcessEnv): b
 function spawnShopifySkillCommandInBackground(
   nodeBinary: string,
   shopifyBinary: string,
-  subcommand: 'install' | 'update',
+  subcommand: string[],
   env: NodeJS.ProcessEnv,
 ): void {
   // eslint-disable-next-line no-void
-  void exec(nodeBinary, [shopifyBinary, 'skill', subcommand], {
+  void exec(nodeBinary, [shopifyBinary, 'skill', ...subcommand], {
     background: true,
     env: {...env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
     externalErrorHandler: async (error: unknown) => {
-      outputDebug(`Failed to run skill ${subcommand} in background: ${(error as Error).message}`)
+      outputDebug(`Failed to run skill ${subcommand.join(' ')} in background: ${(error as Error).message}`)
     },
   })
 }
