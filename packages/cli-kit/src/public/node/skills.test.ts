@@ -1,15 +1,21 @@
-import {installShopifySkillInBackground, shopifySkillIsInstalled} from './skills.js'
+import {promptShopifySkillInstallIfNeeded, shopifySkillIsInstalled} from './skills.js'
 import {inTemporaryDirectory, mkdir} from './fs.js'
 import {joinPath} from './path.js'
-import {exec} from './system.js'
+import {exec, terminalSupportsPrompting} from './system.js'
+import {renderSelectPrompt} from './ui.js'
 import {LocalStorage} from './local-storage.js'
 import {ConfSchema} from '../../private/node/conf-store.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./system.js')
+vi.mock('./ui.js')
 
 const argv = ['/path/to/node', '/path/to/shopify', 'theme', 'list']
 const env = {SHOPIFY_UNIT_TEST: 'false'}
+
+beforeEach(() => {
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+})
 
 describe('shopifySkillIsInstalled', () => {
   test('returns false when the skill is not installed', async () => {
@@ -36,14 +42,15 @@ describe('shopifySkillIsInstalled', () => {
   })
 })
 
-describe('installShopifySkillInBackground', () => {
-  test('spawns a background skill install when the skill is missing', async () => {
+describe('promptShopifySkillInstallIfNeeded', () => {
+  test('spawns a background skill install when the user accepts', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
+      vi.mocked(renderSelectPrompt).mockResolvedValue('install')
 
       // When
-      await installShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
 
       // Then
       expect(exec).toHaveBeenCalledWith(
@@ -51,49 +58,68 @@ describe('installShopifySkillInBackground', () => {
         ['/path/to/shopify', 'skill', 'install'],
         expect.objectContaining({background: true}),
       )
+      expect(config.get('skillInstallPromptDismissed')).toBeUndefined()
     })
   })
 
-  test('spawns at most one install within the daily interval', async () => {
+  test('re-prompts no earlier than a day later when the user asks for tomorrow', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
+      vi.mocked(renderSelectPrompt).mockResolvedValue('later')
 
       // When
-      await installShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
-      await installShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
 
       // Then
-      expect(exec).toHaveBeenCalledTimes(1)
+      expect(renderSelectPrompt).toHaveBeenCalledTimes(1)
+      expect(exec).not.toHaveBeenCalled()
+      expect(config.get('skillInstallPromptDismissed')).toBeUndefined()
     })
   })
 
-  test('marks the install as completed and does nothing when the skill is already installed', async () => {
+  test('never prompts again when the user opts out', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      vi.mocked(renderSelectPrompt).mockResolvedValue('never')
+
+      // When
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+
+      // Then
+      expect(exec).not.toHaveBeenCalled()
+      expect(config.get('skillInstallPromptDismissed')).toBe(true)
+    })
+  })
+
+  test('dismisses the prompt without asking when the skill is already installed', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
       await mkdir(joinPath(cwd, '.agents', 'skills', 'shopify'))
 
       // When
-      await installShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
 
       // Then
-      expect(exec).not.toHaveBeenCalled()
-      expect(config.get('skillAutoInstallCompleted')).toBe(true)
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+      expect(config.get('skillInstallPromptDismissed')).toBe(true)
     })
   })
 
-  test('does nothing once the install was previously marked as completed', async () => {
+  test('does nothing once the prompt was previously dismissed', async () => {
     await inTemporaryDirectory(async (cwd) => {
-      // Given a completed install whose skill directory was later removed by the user
+      // Given a dismissed prompt whose skill directory was later removed by the user
       const config = new LocalStorage<ConfSchema>({cwd})
-      config.set('skillAutoInstallCompleted', true)
+      config.set('skillInstallPromptDismissed', true)
 
       // When
-      await installShopifySkillInBackground({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
 
       // Then
-      expect(exec).not.toHaveBeenCalled()
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
     })
   })
 
@@ -103,17 +129,52 @@ describe('installShopifySkillInBackground', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // When
-      await installShopifySkillInBackground({currentCommand: 'skill:install', argv, env, config, homeDir: cwd})
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'skill:install', argv, env, config, homeDir: cwd})
 
       // Then
-      expect(exec).not.toHaveBeenCalled()
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does nothing when the command outputs JSON', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      // When
+      await promptShopifySkillInstallIfNeeded({
+        currentCommand: 'theme:list',
+        args: ['--json'],
+        argv,
+        env,
+        config,
+        homeDir: cwd,
+      })
+
+      // Then
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does nothing when the terminal does not support prompting', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+
+      // When
+      await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
+
+      // Then
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
     })
   })
 
   test.each([
     ['CI', {...env, CI: '1'}],
     ['SHOPIFY_UNIT_TEST', {SHOPIFY_UNIT_TEST: 'true'}],
-    ['SHOPIFY_CLI_NO_SKILL_AUTO_INSTALL', {...env, SHOPIFY_CLI_NO_SKILL_AUTO_INSTALL: '1'}],
+    ['SHOPIFY_CLI_NO_SKILL_INSTALL_PROMPT', {...env, SHOPIFY_CLI_NO_SKILL_INSTALL_PROMPT: '1'}],
+    ['SHOPIFY_FLAG_JSON', {...env, SHOPIFY_FLAG_JSON: '1'}],
     ['SHOPIFY_CLI_ENV=development', {...env, SHOPIFY_CLI_ENV: 'development'}],
   ])('does nothing when %s is set', async (_name, skipEnv) => {
     await inTemporaryDirectory(async (cwd) => {
@@ -121,10 +182,16 @@ describe('installShopifySkillInBackground', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // When
-      await installShopifySkillInBackground({currentCommand: 'theme:list', argv, env: skipEnv, config, homeDir: cwd})
+      await promptShopifySkillInstallIfNeeded({
+        currentCommand: 'theme:list',
+        argv,
+        env: skipEnv,
+        config,
+        homeDir: cwd,
+      })
 
       // Then
-      expect(exec).not.toHaveBeenCalled()
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
     })
   })
 })

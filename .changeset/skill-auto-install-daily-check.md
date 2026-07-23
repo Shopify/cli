@@ -3,4 +3,4 @@
 '@shopify/cli': patch
 ---
 
-Install the Shopify skill for coding agents automatically in the background, retrying daily until installed
+Prompt to install the Shopify skill for coding agents when it is missing, with install, ask-tomorrow, and never-ask-again options
