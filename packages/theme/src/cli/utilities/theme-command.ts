@@ -1,12 +1,9 @@
 import {ensureThemeStore} from './theme-store.js'
-import {loadThemeProjectTrust} from './theme-airlock/config.js'
+import {ThemeAirlockCoordinator} from './theme-airlock/coordinator.js'
 import {
-  resolveBatchAirlockTargets,
-  resolveSingleAirlockTarget,
   validateAirlockBatchEnvironmentSelections,
   validateAirlockStoreSelectionSources,
 } from './theme-airlock/resolver.js'
-import {bootstrapThemeAirlock, interactiveBootstrapUI} from './theme-airlock/bootstrap.js'
 import {renderAirlockPreflight} from './theme-airlock/preflight.js'
 import {ThemeAirlockError} from './theme-airlock/types.js'
 import {configurationFileName} from '../constants.js'
@@ -39,6 +36,7 @@ import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
+import type {AirlockBatchExecutionEnvironment} from './theme-airlock/coordinator.js'
 import type {AirlockTarget} from './theme-airlock/types.js'
 import type {Writable} from 'stream'
 
@@ -48,6 +46,7 @@ interface ValidEnvironment {
   flags: FlagValues
   requiresAuth: boolean
   storeAuthSession?: AdminSession
+  session?: AdminSession
 }
 type EnvironmentName = string
 
@@ -135,16 +134,20 @@ export default abstract class ThemeCommand extends Command {
         return
       }
 
-      const {flags: airlockFlags, target, session} = await this.resolveAirlockSingle(flags, commandRequiresAuth)
-      const commandName = this.constructor.name.toLowerCase()
-      recordEvent(`theme-command:${commandName}:single-env:authenticated`)
-      this.airlockPreflight([target])
+      await this.createAirlockCoordinator().runSingle({
+        flags,
+        requiresAuth: commandRequiresAuth,
+        execute: async (airlockFlags, _target, session) => {
+          const commandName = this.constructor.name.toLowerCase()
+          recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
-      try {
-        await this.command(airlockFlags, session, false, args)
-      } finally {
-        await this.logAnalyticsData(session)
-      }
+          try {
+            await this.command(airlockFlags, session, false, args)
+          } finally {
+            await this.logAnalyticsData(session)
+          }
+        },
+      })
       return
     }
 
@@ -172,23 +175,20 @@ export default abstract class ThemeCommand extends Command {
     )
 
     if (airlockPolicy) {
-      const protectedValidation = await this.validateProtectedEnvironments(
-        environmentsMap,
-        requiredFlags,
-        commandRequiresAuth,
-      )
       const commandAllowsForceFlag = 'force' in klass.flags
-      if (commandAllowsForceFlag && !flags.force) {
-        const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags, {
-          valid: protectedValidation.valid,
-          invalid: [],
-        })
-        if (!confirmed) return
-      }
+      const confirm =
+        commandAllowsForceFlag && !flags.force
+          ? (valid: AirlockBatchExecutionEnvironment[]) =>
+              this.showConfirmation(this.constructor.name, requiredFlags, {valid, invalid: []})
+          : undefined
 
-      await this.authenticateProtectedEnvironments(protectedValidation.valid)
-      this.airlockPreflight(protectedValidation.targets)
-      await this.runConcurrent(protectedValidation.valid, true)
+      await this.createAirlockCoordinator().runBatch({
+        environments: Array.from(environmentsMap, ([environment, value]) => ({environment, ...value})),
+        requiredFlags,
+        requiresAuth: commandRequiresAuth,
+        ...(confirm ? {confirm} : {}),
+        execute: (valid) => this.runConcurrent(valid, true),
+      })
       return
     }
 
@@ -216,49 +216,19 @@ export default abstract class ThemeCommand extends Command {
     renderAirlockPreflight(this.constructor.name.toLowerCase(), targets)
   }
 
-  private async resolveAirlockSingle(
-    flags: FlagValues,
-    commandRequiresAuth: boolean,
-  ): Promise<{flags: FlagValues; target: AirlockTarget; session?: AdminSession}> {
-    const themePath = typeof flags.path === 'string' ? flags.path : cwd()
-    if (!fileExistsSync(themePath)) {
-      throw new AbortError(`Path does not exist: ${themePath}`)
-    }
-
-    const trust = await loadThemeProjectTrust(themePath)
-    const resolution = resolveSingleAirlockTarget({trust, flags, argv: this.argv, env: process.env})
-
-    if ('bootstrap' in resolution) {
-      if (!terminalSupportsPrompting()) {
-        throw new ThemeAirlockError(
-          'This theme project is not configured. Run `theme airlock add` before running this command without a terminal.',
-          'unconfigured-project',
-        )
-      }
-
-      const rememberedStore = resolution.allowRememberedCandidate ? getThemeStore() : undefined
-      const bootstrapUI = interactiveBootstrapUI()
-      const bootstrap = await bootstrapThemeAirlock({
-        themePath,
-        candidate: resolution.candidate,
-        proposedEnvironment: resolution.proposedEnvironment,
-        rememberedStore,
-        confirmStore: bootstrapUI.confirmStore,
-        promptStore: bootstrapUI.promptStore,
-        promptEnvironment: bootstrapUI.promptEnvironment,
-        authenticate: async (store) => this.createSession({...flags, store}, undefined, false),
-      })
-      const mutableFlags = {...flags, store: bootstrap.target.store}
-      return {
-        flags: mutableFlags,
-        target: bootstrap.target,
-        session: commandRequiresAuth ? bootstrap.session : undefined,
-      }
-    }
-
-    const mutableFlags = {...flags, store: resolution.store}
-    const session = commandRequiresAuth ? await this.createSession(mutableFlags, undefined, false) : undefined
-    return {flags: mutableFlags, target: resolution, session}
+  private createAirlockCoordinator(): ThemeAirlockCoordinator {
+    return new ThemeAirlockCoordinator({
+      argv: this.argv,
+      env: process.env,
+      authenticate: (flags, suppliedSession) => this.createSession(flags, suppliedSession, false),
+      rememberedStore: getThemeStore,
+      supportsPrompting: terminalSupportsPrompting,
+      renderPreflight: (targets) => this.airlockPreflight(targets),
+      storedSessionsFor: (flagsList) => this.storeAuthSessionsForTheme(flagsList),
+      storedSessionFromCache: (flags, sessions) => this.storeAuthSessionFromCache(flags, sessions),
+      missingRequiredFlags: (flags, requiredFlags, suppliedSession) =>
+        this.missingRequiredFlags(flags, requiredFlags, suppliedSession),
+    })
   }
 
   /**
@@ -318,98 +288,6 @@ export default abstract class ThemeCommand extends Command {
     }
 
     return environmentMap
-  }
-
-  /**
-   * Split environments into valid and invalid based on flags
-   * @param environmentMap - The map of environments to validate
-   * @param requiredFlags - The required flags to check for
-   * @param requiresAuth - Whether the command requires authentication
-   * @returns An object containing valid and invalid environment arrays
-   */
-  private async validateProtectedEnvironments(
-    environmentMap: Map<EnvironmentName, {flags: FlagValues; validationFlags: FlagValues}>,
-    requiredFlags: Exclude<RequiredFlags, null>,
-    requiresAuth: boolean,
-  ): Promise<{valid: ValidEnvironment[]; targets: AirlockTarget[]}> {
-    const valid: ValidEnvironment[] = []
-    const targets: AirlockTarget[] = []
-    const validatedEnvironments: {
-      environmentName: EnvironmentName
-      environment: {flags: FlagValues; validationFlags: FlagValues}
-      target: AirlockTarget
-    }[] = []
-
-    for (const [environmentName, environment] of environmentMap.entries()) {
-      const themePath = typeof environment.flags.path === 'string' ? environment.flags.path : cwd()
-      if (!fileExistsSync(themePath)) {
-        throw new ThemeAirlockError(
-          `Invalid batch environment "${environmentName}": path does not exist: ${themePath}.`,
-          'invalid-batch',
-        )
-      }
-
-      // Trust is loaded from each environment's effective path so nested projects retain nearest-config semantics.
-      // eslint-disable-next-line no-await-in-loop
-      const trust = await loadThemeProjectTrust(themePath)
-      const [target] = resolveBatchAirlockTargets({
-        trust,
-        environments: [{name: environmentName, store: environment.flags.store as string}],
-      })
-      if (!target) {
-        throw new ThemeAirlockError(
-          `Invalid batch environment "${environmentName}": no trust target resolved.`,
-          'invalid-batch',
-        )
-      }
-
-      validatedEnvironments.push({environmentName, environment, target})
-    }
-
-    // Do not project cached sessions until all effective paths and trust targets have been validated.
-    const storeAuthSessionsByStore = requiresAuth
-      ? this.storeAuthSessionsForTheme(validatedEnvironments.map(({environment}) => environment.validationFlags))
-      : new Map<string, AdminSession>()
-
-    for (const {environmentName, environment, target} of validatedEnvironments) {
-      const storeAuthSession = this.storeAuthSessionFromCache(environment.validationFlags, storeAuthSessionsByStore)
-      const missingFlags = this.missingRequiredFlags(environment.validationFlags, requiredFlags, storeAuthSession)
-      if (missingFlags.length > 0) {
-        throw new ThemeAirlockError(
-          `Invalid batch environment "${environmentName}": missing required flags: ${missingFlags.join(', ')}.`,
-          'invalid-batch',
-        )
-      }
-
-      const mutableFlags = {...environment.flags, store: target.store}
-      valid.push({environment: environmentName, flags: mutableFlags, requiresAuth, storeAuthSession})
-      targets.push(target)
-    }
-
-    return {valid, targets}
-  }
-
-  private async authenticateProtectedEnvironments(validEnvironments: ValidEnvironment[]): Promise<void> {
-    const authenticatedSessionsByStore = new Map<string, Map<string, AdminSession>>()
-
-    for (const environment of validEnvironments) {
-      if (!environment.requiresAuth) continue
-
-      const store = normalizeStoreFqdn(environment.flags.store as string)
-      const password = typeof environment.flags.password === 'string' ? environment.flags.password : undefined
-      const sessionsByPassword = authenticatedSessionsByStore.get(store) ?? new Map<string, AdminSession>()
-      const cachedSession = sessionsByPassword.get(password ?? '')
-      if (cachedSession) {
-        environment.storeAuthSession = cachedSession
-        continue
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      const session = await this.createSession(environment.flags, environment.storeAuthSession, false)
-      environment.storeAuthSession = session
-      sessionsByPassword.set(password ?? '', session)
-      authenticatedSessionsByStore.set(store, sessionsByPassword)
-    }
   }
 
   private missingRequiredFlags(
@@ -531,20 +409,14 @@ export default abstract class ThemeCommand extends Command {
     for (const runGroup of runGroups) {
       // eslint-disable-next-line no-await-in-loop
       await renderConcurrent({
-        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthSession}) => ({
+        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthSession, session: suppliedSession}) => ({
           prefix: environment,
           action: async (stdout: Writable, stderr: Writable, _signal) => {
             try {
               const store = flags.store as string
               await useThemeStoreContext(store, async () => {
-                let session: AdminSession | undefined
-                if (requiresAuth) {
-                  if (this.airlockPolicy() === undefined) {
-                    session = await this.createSession(flags, storeAuthSession)
-                  } else {
-                    session = storeAuthSession ?? (await this.createSession(flags, undefined, false))
-                  }
-                }
+                const session =
+                  requiresAuth && !suppliedSession ? await this.createSession(flags, storeAuthSession) : suppliedSession
 
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
