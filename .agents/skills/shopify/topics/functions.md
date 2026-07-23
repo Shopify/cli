@@ -1,10 +1,10 @@
 # Shopify Functions
 Wasm extensions customizing Shopify backend logic: discounts, cart transforms, validation, delivery/payment customization, order routing, fulfillment constraints, pickup options.
 
-## Corrections to stale training data
+## Key facts
 - Latest stable API version: **2026-04** (quarterly; `unstable` exists). After changing `api_version` in `shopify.extension.toml`, run `shopify app function schema`.
 - The unified **Discount Function API** (kind `functions_discount`) replaces the deprecated Order/Product/Shipping Discount APIs (`purchase.order-discount.run` etc.; kinds `functions_order_discounts|product_discounts|shipping_discounts` — use only on explicit request). One function serves all `DiscountClass` values (`PRODUCT|ORDER|SHIPPING`), read from `discount.discountClasses`.
-- Cart Transform operations are `lineExpand`, `linesMerge` (plural), `lineUpdate` — old `expand`/`merge`/`update` names are gone.
+- Cart Transform operations are `lineExpand`, `linesMerge` (plural), `lineUpdate` — the singular `expand`/`merge`/`update` names are invalid.
 - Validation output is `{"operations":[{"validationAdd":{"errors":[{"message","target"}]}}]}` — not a bare `errors` array.
 - Discounts Allocator (`functions_discounts_allocator`) and Local Pickup / Pickup Point Generators are `unstable`-only (validator falls back).
 - Functions are pure and deterministic: no network (except fetch targets), clock, randomness, filesystem, or STDOUT debugging. Logs truncate at 1 kB.

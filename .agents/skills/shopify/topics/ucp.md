@@ -1,7 +1,7 @@
 # Universal Commerce Protocol (UCP)
 Agentic commerce on Shopify: cross-merchant catalog search, carts, checkout, and order tracking via UCP-compliant MCP servers (JSON-RPC 2.0) and the `ucp` CLI.
 
-## Corrections to stale training data
+## Key facts
 - Open protocol (ucp.dev). Live versions on Shopify: `2026-04-08` (current) and `2026-01-23`, negotiated per session from your agent profile.
 - Legacy Storefront MCP at `https://{shop}.myshopify.com/api/mcp` is deprecated: search/lookup tools removed 2026-06-15, cart tools (`get_cart`, `update_cart`) kept until 2026-08-31.
 - Endpoints: Global Catalog `https://catalog.shopify.com/api/ucp/mcp`; merchant-scoped (storefront catalog, cart, checkout, order) `https://{shop-domain}/api/ucp/mcp`. Shop business profile: `https://{shop}.myshopify.com/.well-known/ucp`.

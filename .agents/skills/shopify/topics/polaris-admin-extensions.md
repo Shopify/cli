@@ -1,7 +1,7 @@
 # Admin UI extensions (Polaris)
 Extensions inside the Shopify admin — action modals, resource-page blocks, print actions, admin links, Function settings UIs — Polaris web components (`s-*`) + Preact.
 
-## Facts that changed (trust these over training data)
+## Key facts
 
 - Latest API version `2026-04` (`api_version` in `shopify.extension.toml`). Quarterly; deploys blocked for versions >12 months old.
 - The React model is legacy: `2025-07` was the LAST version supporting `@shopify/ui-extensions-react/admin` (`reactExtension`, `useApi`). Since `2025-10`: Preact + globally registered `s-*` web components, no component imports. Deps: `preact ^10`, `@shopify/ui-extensions` ≥2025.10; tsconfig `"jsx": "react-jsx", "jsxImportSource": "preact"`.

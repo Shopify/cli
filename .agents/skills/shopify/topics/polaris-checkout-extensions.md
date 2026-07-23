@@ -1,12 +1,12 @@
 # Checkout UI extensions (Polaris)
 Checkout and Thank-you page app extensions: Preact + Polaris web components, configured in `shopify.extension.toml`, proven with `shopify validate components --api polaris-checkout-extensions --target <target>`.
 
-## Corrections to stale knowledge
+## Key facts
 - Latest docs version `2026-07` (quarterly; deploys older than 12 months rejected). Offline validator bundles up to `2026-04`.
 - The React model is legacy (pre-`2025-10`): `reactExtension(...)`, `@shopify/ui-extensions-react`, `useApi()` hooks. Now: the module default-exports a function calling Preact `render(<Extension/>, document.body)` after `import '@shopify/ui-extensions/preact'`; APIs live on a global `shopify` object. Deps `preact ^10.10`, `@preact/signals`, `@shopify/ui-extensions 2026.x`; tsconfig `"jsxImportSource": "preact"`; `shopify app dev` generates `shopify.d.ts`.
 - `s-*` components are globally registered — never import them. Attributes are camelCase (`gridTemplateColumns`), not kebab-case. Boolean attrs (`disabled`, `checked`, `multiple`) allow shorthand; string keyword attrs (`padding`, `gap`, `tone`, `variant`, `size`, `direction`) must be strings — `gap={true}` fails.
 - `useBuyerJourneyIntercept`/`buyerJourney.intercept` is deprecated — use a cart/checkout validation function; the rest of Buyer Journey API remains.
-- Checkout metafields removed in `2026-04`: `shopify.metafields`, `useMetafield(s)()`, change types `updateMetafield`/`removeMetafield` are gone. Read `shopify.appMetafields` (declare `[[extensions.metafields]]` in toml); write with `updateCartMetafield`/`removeCartMetafield` (thank-you targets read-only). Copying to orders needs `write_orders` + an order metafield definition with `cart_to_order_copyable`.
+- Checkout metafields removed in `2026-04`: `shopify.metafields`, `useMetafield(s)()`, change types `updateMetafield`/`removeMetafield`. Read `shopify.appMetafields` (declare `[[extensions.metafields]]` in toml); write with `updateCartMetafield`/`removeCartMetafield` (thank-you targets read-only). Copying to orders needs `write_orders` + an order metafield definition with `cart_to_order_copyable`.
 - `purchase.order-status.*` targets moved to customer account UI extensions. Thank-you exposes only `shopify.orderConfirmation` (`{order: {id}, number, isFirstOrder}`).
 - API values are signals (`SubscribableSignalLike<T>`): read `.value`, `.subscribe(fn)` — not plain values.
 - `shopify.buyerIdentity` needs protected customer data approval: `customer`/`purchasingCompany` level 1, `email`/`phone` level 2; `customer` is `undefined` for anonymous buyers.

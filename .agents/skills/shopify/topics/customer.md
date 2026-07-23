@@ -1,7 +1,7 @@
 # Customer Account API
 GraphQL-only API for authenticated customers to read and manage their own data — orders, addresses, profile, returns, subscriptions, B2B, store credit — from headless storefronts, Hydrogen, and customer account UI extensions.
 
-## Corrections to stale knowledge
+## Key facts
 - Current stable version: `2026-07`. Quarterly releases (`YYYY-MM`). Validate work with `shopify validate graphql --api customer` (add `--version 2026-07` to pin).
 - Legacy customer accounts (Liquid pages) are deprecated (Feb 2026) and unavailable to new stores. Storefront API customer mutations (`customerCreate`, `customerAccessTokenCreate`, `customerRecover`, etc.) are legacy — build new customer flows on this API instead.
 - `storefrontCustomerAccessTokenCreate` is deprecated. To keep the buyer authenticated into checkout: set `customerAccessToken` on the cart via Storefront `cartBuyerIdentityUpdate` and redirect to `checkoutUrl`, or append `sso=silent` to `checkoutUrl`.

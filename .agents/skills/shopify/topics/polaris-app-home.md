@@ -1,7 +1,7 @@
 # Polaris App Home
 The app's main UI embedded in the Shopify admin iframe: Polaris web components (`s-*`) inside, App Bridge `shopify` global + admin-chrome elements outside.
 
-## Corrections to stale training data
+## Key facts
 - Two build models: **iframe app** (recommended; any framework, self-hosted) and **App Home UI extension** (target `admin.app.home.render`, Preact-only, 64 kB, custom distribution). Below = iframe model.
 - Polaris React (`@shopify/polaris`) is legacy here. `s-*` components are custom HTML elements auto-registered by `<script src="https://cdn.shopify.com/shopifycloud/polaris.js">` — **no import, ever**. Types: `@shopify/polaris-types`. `@shopify/polaris-web-components` doesn't exist.
 - App Bridge = `<meta name="shopify-api-key">` + `<script src="https://cdn.shopify.com/shopifycloud/app-bridge.js">` in `<head>` → `shopify` global. v3 `createApp` is legacy; types `@shopify/app-bridge-types`; React `useAppBridge()` returns the same global.

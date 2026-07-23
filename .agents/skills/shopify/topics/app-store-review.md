@@ -1,7 +1,7 @@
 # App Store review
 Pre-submission compliance for Shopify App Store apps: numbered requirements (sections 1–5), review workflow, AI self-review, and rules that most often fail.
 
-## Corrections to stale training data
+## Key facts
 - Requirements were renumbered (Dec 2025) into IDs `1.1.1`–`5.x.x` under five sections; cite by number.
 - GraphQL Admin API is mandatory for new public apps since Apr 1 2025; REST Admin API is legacy since Oct 1 2024 (`2.2.4`). Only Theme/Asset API REST usage is exempt.
 - App Bridge: the CDN `app-bridge.js` script tag, before any other script (ideally first in `<head>`), is required since Mar 13 2024 (`2.2.3`). The `@shopify/app-bridge` npm package is outdated and gets flagged; use `@shopify/app-bridge-react` or `@shopify/app-bridge-react-router`.

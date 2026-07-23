@@ -1,11 +1,11 @@
 # Custom data (metafields & metaobjects)
 Metafield/metaobject definitions (TOML or GraphQL), reading/writing values via Admin/Storefront APIs, and use in Functions, checkout UI extensions, and Liquid.
 
-## Corrections to stale training data
+## Key facts
 - Current stable API version: `2026-07`. `shopify validate graphql` bundles `2026-04`. REST Admin API is legacy — use GraphQL.
 - Default pattern: declare app-owned definitions in `shopify.app.toml`, ship with `shopify app deploy`. Use `metafieldDefinitionCreate` / `metaobjectDefinitionCreate` ONLY for merchant-owned or runtime-dynamic schemas; merchant-owned definitions cannot be created in TOML.
 - TOML `[product.metafields.app.care_guide]` = namespace `$app`, key `care_guide` at runtime; `[metaobjects.app.author]` = type `$app:author`. `namespace: "app"` is wrong. Omit `namespace` in `metafieldsSet`/`metafield(key:)` — it defaults to `$app`. Sub-namespace: TOML segment `analytics` = GraphQL `$app:analytics`.
-- Write metafields with `metafieldsSet` or inline `metafields:` on owner mutations (`productUpdate` etc.). Legacy `metafieldCreate`/`metafieldUpdate`/`metafieldDelete` are gone; delete via `metafieldsDelete(metafields: [{ownerId, namespace, key}])`.
+- Write metafields with `metafieldsSet` or inline `metafields:` on owner mutations (`productUpdate` etc.). There are no `metafieldCreate`/`metafieldUpdate`/`metafieldDelete` mutations; delete via `metafieldsDelete(metafields: [{ownerId, namespace, key}])`.
 - Metafield `value` is always a String in mutations (JSON-encode complex types). Read with `jsonValue` (Admin, Functions); Storefront exposes `value`/`references`.
 - `metaobjectUpsert` (2026-07) takes `handle` plus EITHER `metaobject: MetaobjectUpsertInput` (partial: only given fields change) OR `values: JSON` (full replacement — omitted keys cleared). ≤2026-04: only `metaobject`.
 - Access — TOML: `access.admin = "merchant_read"` (default) | `"merchant_read_write"`; `access.storefront = "none"` (default) | `"public_read"`; `access.customer_account = "none"|"read"|"read_write"`. GraphQL: `admin: MERCHANT_READ|MERCHANT_READ_WRITE`, `storefront: NONE|PUBLIC_READ`, `customerAccount: NONE|READ|READ_WRITE`.

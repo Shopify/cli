@@ -2,7 +2,7 @@
 
 Shopify's headless storefront stack: `@shopify/hydrogen` on React Router, deployed to Oxygen. Import from `@shopify/hydrogen` only (it re-exports `@shopify/hydrogen-react`). Components RENDER Storefront API data; fetch in loaders via `context.storefront.query`.
 
-## Stale-training corrections
+## Key facts
 
 - Hydrogen versions pair with Storefront + Customer Account API versions quarterly (`2026.1.x` ↔ `2026-01`); docs/validator `latest` = **2026-04**. Framework is **React Router 7** (not Remix): import `useLoaderData`, `data`, `LoaderFunctionArgs` from `react-router`, NOT `@remix-run/react` (`@shopify/remix-oxygen` is only the Oxygen server adapter; server build: `virtual:react-router/server-build`).
 - Scaffold: `npm create @shopify/hydrogen@latest`. The framework-agnostic developer preview (`npx @shopify/hydrogen@preview setup`) has different APIs — don't mix.

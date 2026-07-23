@@ -1,8 +1,8 @@
 # Shopify CLI operations
 Running CLI workflows now: store-scoped Admin GraphQL reads/writes (`shopify store auth`/`execute`), app config validation on disk, the app/theme command trees, and command discovery.
 
-## Corrections to stale training data
-- The `shopify store` family (new in 2026; absent from older training data) runs Admin GraphQL directly from the terminal with no app project: `store auth`, `store auth list`, `store execute`, `store bulk execute|status|cancel`, `store graphiql`, `store info`, `store list`, `store open`, `store create preview`.
+## Key facts
+- The `shopify store` family runs Admin GraphQL directly from the terminal with no app project: `store auth`, `store auth list`, `store execute`, `store bulk execute|status|cancel`, `store graphiql`, `store info`, `store list`, `store open`, `store create preview`.
 - `shopify app execute` / `app bulk execute|status|cancel` (CLI 3.90.1+, Feb 2026) run Admin GraphQL *as your app* (client-credentials grant, scopes from app config) from the app root; they default to the last-used dev store and allow mutations **only on dev stores**. `store execute` works on any store you ran `store auth` against but gates every mutation behind `--allow-mutations`.
 - Latest stable API version: `2026-07` (quarterly `YYYY-MM` releases, each supported >=12 months). Execute commands take `--version`; default is latest stable.
 - `productByHandle` is deprecated — use `productByIdentifier(identifier: {handle: "..."})`.

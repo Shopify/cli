@@ -1,13 +1,13 @@
 # Merchant onboarding
 Take a merchant from "I want to start selling" to a working store: instant preview-store creation via Shopify CLI, opening/saving the store, seeding products and collections, publishing to the Online Store channel, plain-language next steps. Store owners, not developers.
 
-## Corrections to stale knowledge
+## Key facts
 - Preview stores exist and are the default first step: `shopify store create preview` creates a real, working Shopify store with **no account, no signup, no browser, no credit card**. Do not route new merchants to shopify.com free-trial signup first — that flow is superseded for agent-driven onboarding.
 - `shopify store create preview --json` returns `{status, message, store: {id, name, subdomain, country?, storefrontUrl}, next_steps}`. There is **no `saveUrl` in the create output** — read it later from `shopify store info --json` (fields `saveUrl`, `accessUrl`).
 - Preview-store creation silently stores an Admin API token locally (with preapproved scopes granted at creation). `shopify store execute` works on the preview store immediately — no `shopify store auth` needed. Preview stores are not a logged-in experience, so extra scopes **cannot** be granted later.
 - `shopify store execute`, `store graphiql`, and `store bulk execute` block mutations by default; pass `--allow-mutations` to write.
 - Current stable Admin GraphQL version: `2026-07` (CLI store commands default to latest stable; override with `--version`). REST Admin API is legacy — use GraphQL.
-- Old CLI 2.x commands (`shopify populate`, `shopify login`) are gone. Seed data via Admin GraphQL through `store execute`.
+- CLI 2.x commands (`shopify populate`, `shopify login`) do not exist in CLI 3+. Seed data via Admin GraphQL through `store execute`.
 - CLI requires Node.js ≥ 22.12. Install: `npm install -g @shopify/cli@latest` (or macOS: `brew tap shopify/shopify && brew install shopify-cli`). CLI 4.x auto-upgrades itself; force with `shopify upgrade`; toggle with `shopify config autoupgrade off|on`.
 - New stores default to the `Horizon` theme (Dawn superseded).
 

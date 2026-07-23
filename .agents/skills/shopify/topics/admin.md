@@ -2,11 +2,11 @@
 
 Server-side API for reading/writing shop data: products, orders, customers, inventory, metafields, discounts, webhooks, bulk operations.
 
-## Facts that changed (trust these over training data)
+## Key facts
 
-- Latest stable version: `2026-07`. Quarterly releases; currently supported: `2025-10`, `2026-01`, `2026-04`, `2026-07`. Requests to a retired version silently fall forward to the oldest supported one — always pin the version. Endpoint: `POST https://{shop}.myshopify.com/admin/api/2026-07/graphql.json` with headers `X-Shopify-Access-Token: {token}` and `Content-Type: application/json`.
+- Latest stable version: `2026-07`. Quarterly releases; supported: `2025-10`, `2026-01`, `2026-04`, `2026-07`. Requests to a retired version silently fall forward to the oldest supported one — always pin the version. Endpoint: `POST https://{shop}.myshopify.com/admin/api/2026-07/graphql.json` with headers `X-Shopify-Access-Token: {token}` and `Content-Type: application/json`.
 - REST Admin API is legacy since Oct 1, 2024. Build everything on GraphQL; `/products.json`, `/variants.json` etc. are deprecated.
-- Product model rewrite: `ProductInput.variants` and `.options` are gone (deprecated 2024-04). Define options via `productOptions` on `productCreate`; manage variants with `productVariantsBulkCreate|Update|Delete`, options with `productOptionsCreate`/`productOptionUpdate`/`productOptionsDelete`, or do a full declarative sync with `productSet`. Limit: 2048 variants per product.
+- Product model: `ProductInput.variants` and `.options` were removed (deprecated 2024-04). Define options via `productOptions` on `productCreate`; manage variants with `productVariantsBulkCreate|Update|Delete`, options with `productOptionsCreate`/`productOptionUpdate`/`productOptionsDelete`, or do a full declarative sync with `productSet`. Limit: 2048 variants per product.
 - `productCreate` creates an UNPUBLISHED product with only its default variant; publish with `publishablePublish`.
 - Inventory: the `@idempotent(key:)` directive (UUID key) is REQUIRED on `inventorySetQuantities` and `inventoryAdjustQuantities` since `2026-04`. `compareQuantity`/`ignoreCompareQuantity` were removed: each `quantities` item takes a mandatory `changeFromQuantity` (current expected qty for compare-and-swap, or explicit `null` to skip; mismatch fails with `CHANGE_FROM_QUANTITY_STALE`).
 - Metafields: write with `metafieldsSet` — there is no metafieldCreate/Update. Max 25 metafields per call, 10MB payload, atomic. `type` is required unless a definition exists for namespace+key+owner type. Optional `compareDigest` per metafield gives CAS safety. Omitting `namespace` uses the app-reserved namespace. `value` is always a string, even for types like `number_integer`, `boolean`, `json`, `list.single_line_text_field`, `product_reference`.

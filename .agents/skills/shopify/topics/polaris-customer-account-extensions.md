@@ -1,7 +1,7 @@
 # Customer Account UI extensions (Polaris)
 Preact + `s-*` web-component extensions for customer account Order index, Order status, Profile, and full pages.
 
-## Corrections to stale knowledge
+## Key facts
 - Current stable API version: `2026-07` (quarterly `YYYY-MM`); set it as `api_version` in `shopify.extension.toml`. Validate: `shopify validate components --api polaris-customer-account-extensions --target <target> --version 2026-07 --file <f>` — `--target` required; pass `--version` (bundled default may lag).
 - The React library (`@shopify/ui-extensions-react/customer-account`, `reactExtension`, `useApi`, `<BlockStack>`) is superseded. Current: Preact entry + globally registered web components, no component imports:
   `import '@shopify/ui-extensions/preact'; import {render} from 'preact'; export default () => render(<Extension/>, document.body);`

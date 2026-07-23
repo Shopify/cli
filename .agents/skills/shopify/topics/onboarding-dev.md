@@ -1,17 +1,17 @@
 # Developer onboarding
 Getting started building on Shopify: CLI install, developer accounts, dev stores, and scaffolding apps, themes, and Hydrogen storefronts.
 
-## Corrections to stale training data
+## Key facts
 - Latest stable API version: `2026-07`. Quarterly date-based versions (`2026-04`, `2026-10`, ...), each supported >=12 months. Requests to a retired version silently fall forward to the oldest accessible stable version; check the `X-Shopify-API-Version` response header.
 - The Partner Dashboard is replaced by the **Dev Dashboard** (`https://dev.shopify.com/dashboard/`) for all app-dev workflows (GA Sept 2025; requires CLI >=3.84.1). Apps, dev stores, client transfer stores, collaborations, monitoring/logs, and credentials all live there. `--organization-id` appears in its URL.
-- Dashboard-managed extensions no longer exist: extensions are created and managed only via Shopify CLI, and every extension needs a `uid` in its `shopify.extension.toml` (auto-added by `shopify app generate extension` and interactive `shopify app deploy`; `deploy --force` and `app dev` fail without it).
+- Extensions are created and managed only via Shopify CLI (there are no dashboard-managed extensions), and every extension needs a `uid` in its `shopify.extension.toml` (auto-added by `shopify app generate extension` and interactive `shopify app deploy`; `deploy --force` and `app dev` fail without it).
 - `shopify app config push` and `include_config_on_deploy` are removed. `shopify app deploy` always releases app config + extensions together as an app version.
 - Recommended app template: **React Router** (`--template reactRouter`, package `@shopify/shopify-app-react-router`); it supersedes the Remix template. Web files live at the project root, not `web/`.
 - `shopify theme init` clones the **Skeleton theme** (`https://github.com/Shopify/skeleton-theme.git`) by default — not Dawn.
 - Shopify CLI 4.x auto-upgrades itself via your package manager (skipped in CI, project-local installs, major bumps); manage with `shopify upgrade`, `shopify config autoupgrade on|off|status`. `@shopify/app` is bundled since CLI 3.59.0 — never install it separately.
 - Dev stores can be created on any plan: `Basic`, `Grow`, `Advanced`, `Plus`.
-- Private apps (deprecated 2022, auto-converted to custom apps 2023) and unpublished apps can no longer be created. Distribution methods: **Public** (Shopify App Store, review required) or **Custom** (one store, multiple stores in the same Plus org, or transfer-disabled dev stores; no Billing API). Selected once in the dashboard — irreversible.
-- `shopify app dev` no longer uses drafts: it creates a **dev preview** on the store without releasing a version. The preview persists after you stop dev — clean it with `shopify app dev clean` or the Dev Console in admin.
+- Private apps (deprecated 2022, auto-converted to custom apps 2023) and unpublished apps cannot be created. Distribution methods: **Public** (Shopify App Store, review required) or **Custom** (one store, multiple stores in the same Plus org, or transfer-disabled dev stores; no Billing API). Selected once in the dashboard — irreversible.
+- `shopify app dev` creates a **dev preview** on the store without releasing a version (it does not use app drafts). The preview persists after you stop dev — clean it with `shopify app dev clean` or the Dev Console in admin.
 
 ## Requirements and install
 Node.js 22.12+, a package manager (npm, Yarn 1.x, or pnpm), Git 2.28.0+.

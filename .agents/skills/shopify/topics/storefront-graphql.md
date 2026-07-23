@@ -5,8 +5,8 @@ Buyer-facing GraphQL API for custom storefronts: product/collection browse, sear
 - Latest stable `2026-07`; releases quarterly (`YYYY-01|04|07|10`). Single endpoint, POST only: `https://{store}.myshopify.com/api/{version}/graphql.json`.
 - Prove operations locally (offline, no login): `shopify validate graphql --api storefront-graphql --file q.graphql [--version 2026-07]`. Output names the schema version used.
 
-## Corrections to stale training data
-- Checkout APIs are GONE (shut off 2025-04-01): every `checkout*` mutation (`checkoutCreate`, `checkoutCompleteWithCreditCardV2`, `checkoutLineItemsAdd`, and the rest) and the `Checkout` object no longer exist. Build with the Cart API, then redirect to `cart.checkoutUrl` for Shopify web checkout.
+## Key facts
+- Checkout APIs were shut off 2025-04-01: every `checkout*` mutation (`checkoutCreate`, `checkoutCompleteWithCreditCardV2`, `checkoutLineItemsAdd`, and the rest) and the `Checkout` object do not exist. Build with the Cart API, then redirect to `cart.checkoutUrl` for Shopify web checkout.
 - `metafieldStorefrontVisibilityCreate` removed in 2025-01. Expose metafields via Admin API `metafieldDefinitionCreate`/`metafieldDefinitionUpdate` with `access: {storefront: "PUBLIC_READ"}`; unexposed metafields return `null` here.
 - Cart `cost.totalTaxAmount` / `cost.totalDutyAmount` deprecated 2025-01 — tax/duties are finalized only at checkout.
 - Removed since 2022-04: `Shop.products`, `Shop.productByHandle`, `Shop.collections`, `Shop.collectionByHandle`, `Shop.currencyCode`, `ProductVariant.available` (use `availableForSale`), and image args `maxWidth/maxHeight/scale/crop` (use `Image.url(transform: {maxWidth: 800})`).

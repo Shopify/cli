@@ -1,7 +1,7 @@
 # Liquid themes
 Shopify storefront themes: Liquid, sections, theme blocks, snippets, schemas, settings, locales. Prove work with `shopify validate theme`.
 
-## Corrections to stale training data
+## Key facts
 - `{% include %}` deprecated → `{% render %}` (isolated scope; pass variables as named args).
 - `img_url`/`img_tag`/`article_img_url`/`product_img_url`/`collection_img_url` deprecated → `image_url` + `image_tag`. `image_url` REQUIRES `width:` or `height:` (max `5760`px) or it errors.
 - Section schema `templates` attribute replaced by `enabled_on`/`disabled_on` (use exactly one).

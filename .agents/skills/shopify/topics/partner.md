@@ -1,12 +1,12 @@
 # Partner API
 GraphQL API over Partner Dashboard data: earnings transactions, app install/charge events, app credits, and (2026-07+) managed-pricing subscriptions. Read-heavy; not the Admin API.
 
-## Facts that override stale training data
+## Key facts
 - Endpoint: `POST https://partners.shopify.com/{organization_id}/api/{version}/graphql.json`. Auth header `X-Shopify-Access-Token: <partner-token>`. Tokens are Partner API client tokens created in Partner Dashboard → Settings → Partner API clients (org owners only) — never merchant/Admin tokens or OAuth.
 - Versions are quarterly `YYYY-MM`. Latest stable: `2026-07`, which adds `events`, `activeSubscription`, `appSubscriptionCancel`. List versions via `publicApiVersions { handle supported }`.
 - `PageInfo` has ONLY `hasNextPage`/`hasPreviousPage` — no `endCursor`/`startCursor`. Paginate by selecting `edges { cursor }` and passing the last cursor to `after`. Exception: the 2026-07 `events` connection's `pageInfo` does have `startCursor`/`endCursor`.
 - Root queries are only `app(id:)`, `transaction(id:)`, `transactions(...)`, `publicApiVersions` (+ `events`, `activeSubscription` in 2026-07). There is no `apps`, `shop`, or `organization` root — you cannot list your apps; you must already know the GID.
-- Stable mutations: `appCreditCreate`; 2026-07 adds `appSubscriptionCancel`. `eventsinkCreate`/`eventsinkDelete` are `unstable`-only. Experts Marketplace surfaces (`conversations`, `jobs`, `Conversation`, `Job`) from older docs fail schema validation on every current version incl. `unstable` — don't generate them.
+- Stable mutations: `appCreditCreate`; 2026-07 adds `appSubscriptionCancel`. `eventsinkCreate`/`eventsinkDelete` are `unstable`-only. Experts Marketplace surfaces (`conversations`, `jobs`, `Conversation`, `Job`) fail schema validation on every current version incl. `unstable` — don't generate them.
 - GID namespace is `gid://partners/...` (`gid://partners/App/1234`, `gid://partners/Shop/1234`, `gid://partners/ThemeSale/1234`). The new 2026-07 surfaces (`events` filter, `activeSubscription`, `appSubscriptionCancel`) instead take `gid://shopify/App/1234` / `gid://shopify/Shop/5678`.
 - Client permissions gate resources: View financials (transactions, `appCreditCreate`, `appSubscriptionCancel`), Manage apps (app, events, `activeSubscription`), Manage themes, Manage jobs.
 - Rate limit: 4 requests/s per API client → `{"errors":[{"message":"Too many requests","extensions":{"code":"429"}}]}`. Many errors return HTTP 200 with an `errors` array; check `extensions.code`. Max query length 50000 chars. `Accept-Language: es` etc. localizes error messages.
@@ -137,7 +137,7 @@ query RecentCharges($cursor: String) {
 
 ## Gotchas
 - `shopify validate graphql --api partner --file q.graphql` uses the CLI's bundled schema, which can lag (often 2026-04) — add `--version 2026-07` for `events`/`activeSubscription`. `appSubscriptionCancel` is absent from bundled schemas — check it against the docs.
-- `events` filter: `shopId` requires `subjectId`; `subjectType` currently only `APP`; no dates → last 30 days; max `occurredAtMin`→`occurredAtMax` span 365 days; `first` max 250 — violations are execution errors.
+- `events` filter: `shopId` requires `subjectId`; `subjectType` only `APP`; no dates → last 30 days; max `occurredAtMin`→`occurredAtMax` span 365 days; `first` max 250 — violations are execution errors.
 - `activeSubscription`: public apps only; returns `null` when no managed-pricing contract. During trial, `currentBillingCycle` is null and `trialEndsAt` set. Each `items[].price` resolves to `FlatRatePrice { amount currency }` or `TieredPrice { tiersMode tiers { upTo amountPerUnit amount } }` (`tiersMode`: `VOLUME`|`GRADUATED`). `legacySubscriptionId` = Admin API `AppSubscription` GID for Billing-API-migrated subs, else null.
 - `appSubscriptionCancel`: all three Boolean options required; `prorate: true` cannot combine with `skipFinalUsageCharge: true` or `deferCancellation: true`; deferred cancel → `cancelledAt: null`, `cancelAtEndOfCycle: true`. Errors arrive in `userErrors`, not top-level.
 - `Transaction.chargeId` can be null for pre-September-2020 transactions. `TAX` transactions are rolled up one-per-payout (negative for sale fees, positive tax on referral commissions). `LEGACY` marks retired types.

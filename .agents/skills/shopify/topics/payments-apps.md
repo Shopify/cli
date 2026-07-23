@@ -1,7 +1,7 @@
 # Payments Apps API
 Payments Partner GraphQL API: finalize payment/refund/capture/void sessions initiated by Shopify's HTTP calls to your payments extension; 3-D Secure, confirm, gateway readiness.
 
-## Facts that override stale training data
+## Key facts
 - Current stable: `2026-07` (quarterly). Own endpoint, NOT the Admin API: POST `https://{shop}.myshopify.com/payments_apps/api/2026-07/graphql.json`, header `X-Shopify-Access-Token`. Extension TOML `api_version` sets both the version Shopify sends and the version you must call; never `unstable` in production.
 - Only approved Payments Partners can build; custom payments extensions limited to eligible Shopify Plus merchants.
 - Scopes: `write_payment_sessions` (all *Session* mutations), `write_payment_gateways` (`paymentsAppConfigure`), `read_payment_sessions`. Write scopes are auto-granted through the payments extension — omit from `shopify.app.toml` on first deploy. Payments apps are extension-only: set `embedded = false`.
