@@ -2,4 +2,4 @@
 '@shopify/cli-kit': minor
 ---
 
-Add atomic text writes and use them for TOML configuration updates.
+Write TOML configuration updates atomically while preserving existing file permissions and creating new files securely.

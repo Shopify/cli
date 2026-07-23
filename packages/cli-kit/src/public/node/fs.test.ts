@@ -28,11 +28,19 @@ import {
 import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {remove as fsRemove} from 'fs-extra/esm'
 import {rename as fsRename, stat, lstat, writeFile as fsWriteFile} from 'node:fs/promises'
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>()
   return {...actual, rename: vi.fn(actual.rename), writeFile: vi.fn(actual.writeFile)}
+})
+
+vi.mock('fs-extra/esm', async (importOriginal) => {
+  const actual = await importOriginal<{remove: typeof fsRemove}>()
+  return {...actual, remove: vi.fn(actual.remove)}
 })
 
 describe('writeFileAtomically', () => {
@@ -92,7 +100,7 @@ describe('writeFileAtomically', () => {
       await writeFileAtomically(path, 'replacement content')
 
       const temporaryWrite = vi.mocked(fsWriteFile).mock.calls.find(([writePath]) => String(writePath).endsWith('.tmp'))
-      expect(temporaryWrite?.[2]).toMatchObject({mode: originalMode & 0o7777})
+      expect(temporaryWrite?.[2]).toMatchObject({encoding: 'utf8', mode: 0o600})
       expect((await stat(path)).mode).toBe(originalMode)
     })
   })
@@ -109,6 +117,27 @@ describe('writeFileAtomically', () => {
       await expect(readFile(path)).resolves.toBe('original content')
       const entries = await readdir(tmpDir)
       expect(entries.filter((entry) => entry.startsWith(`${fileName}.`) && entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+
+  test('rejects the cleanup error after a successful replacement', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      vi.mocked(fsRemove).mockRejectedValueOnce(new Error('cleanup failed'))
+
+      await expect(writeFileAtomically(path, 'replacement content')).rejects.toThrow('cleanup failed')
+      await expect(readFile(path)).resolves.toBe('replacement content')
+    })
+  })
+
+  test('preserves the replacement error when temporary cleanup also fails', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      await writeFile(path, 'original content')
+      vi.mocked(fsRename).mockRejectedValueOnce(new Error('replacement failed'))
+      vi.mocked(fsRemove).mockRejectedValueOnce(new Error('cleanup failed'))
+
+      await expect(writeFileAtomically(path, 'replacement content')).rejects.toThrow('replacement failed')
     })
   })
 

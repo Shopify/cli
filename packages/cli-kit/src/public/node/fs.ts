@@ -260,13 +260,30 @@ export async function writeFileAtomically(path: string, data: string): Promise<v
   const existingMode = destinationStats ? (await fsStat(destinationPath)).mode & 0o7777 : undefined
   const temporaryPath = `${destinationPath}.${process.pid}.${randomUUID()}.tmp`
 
+  let primaryOperationFailed = false
+  let cleanupFailed = false
+  let cleanupError: unknown
   try {
-    await writeFile(temporaryPath, data, {encoding: 'utf8', mode: existingMode ?? 0o600})
+    await writeFile(temporaryPath, data, {encoding: 'utf8', mode: 0o600})
     if (existingMode !== undefined) await chmod(temporaryPath, existingMode)
     await renameFile(temporaryPath, destinationPath)
+  } catch (error) {
+    primaryOperationFailed = true
+    throw error
   } finally {
-    await removeFile(temporaryPath)
+    try {
+      await removeFile(temporaryPath)
+      // Preserve the primary operation error when cleanup also fails.
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      if (!primaryOperationFailed) {
+        cleanupFailed = true
+        cleanupError = error
+      }
+    }
   }
+
+  if (cleanupFailed) throw cleanupError
 }
 
 /**
