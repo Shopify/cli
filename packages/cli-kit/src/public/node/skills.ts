@@ -12,8 +12,6 @@ import {
   ConfSchema,
   getSkillInstallPromptDismissed,
   setSkillInstallPromptDismissed,
-  getSkillSourceEtag,
-  setSkillSourceEtag,
   runAtMinimumInterval,
 } from '../../private/node/conf-store.js'
 
@@ -83,9 +81,6 @@ export interface UpdateShopifySkillOptions {
   /** The process environment. */
   env?: NodeJS.ProcessEnv
 
-  /** The cli-kit local storage, injectable for testing. */
-  config?: LocalStorage<ConfSchema>
-
   /** The user's home directory, injectable for testing. */
   homeDir?: string
 }
@@ -93,34 +88,26 @@ export interface UpdateShopifySkillOptions {
 /**
  * Updates the installed Shopify skill when its remote source has changed.
  *
- * Sends a conditional GET with the ETag recorded on the last update, so an
- * unchanged source is answered with a bodiless 304. When the source has changed,
- * the response body is written over the installed universal skill file, which
- * propagates to every agent through the symlinks created at install time.
+ * Fetches the skill source and compares it with the installed universal skill
+ * file, writing it over only when the content differs. The installed file is
+ * the only state involved, and updating it propagates to every agent through
+ * the symlinks created at install time.
  *
  * @param options - See {@link UpdateShopifySkillOptions}.
  * @returns The outcome of the update check.
  */
 export async function updateShopifySkill(options: UpdateShopifySkillOptions = {}): Promise<ShopifySkillUpdateResult> {
-  const {env = process.env, config, homeDir = homeDirectory()} = options
+  const {env = process.env, homeDir = homeDirectory()} = options
 
   const skillPath = installedShopifySkillPath(env, homeDir)
   if (!skillPath) return 'not-installed'
 
-  const storedEtag = getSkillSourceEtag(config)
-  const response = await fetch(SHOPIFY_SKILL_URL, storedEtag ? {headers: {'If-None-Match': storedEtag}} : undefined)
-
-  if (response.status === 304) return 'already-up-to-date'
+  const response = await fetch(SHOPIFY_SKILL_URL)
   if (!response.ok) {
     throw new AbortError(`Failed to check for Shopify skill updates: ${response.status} ${response.statusText}`)
   }
 
   const remoteContent = await response.text()
-  const etag = response.headers.get('etag')
-  if (etag) setSkillSourceEtag(etag, config)
-
-  // A 200 can still carry unchanged content, for example on the first check after
-  // installing (no recorded ETag yet) or when the source rotates ETags on redeploys.
   const localContent = await readFile(skillPath)
   if (localContent === remoteContent) return 'already-up-to-date'
 
