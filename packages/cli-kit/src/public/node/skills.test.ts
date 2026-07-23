@@ -1,14 +1,32 @@
-import {promptShopifySkillInstallIfNeeded, shopifySkillIsInstalled} from './skills.js'
-import {inTemporaryDirectory, mkdir} from './fs.js'
+import {
+  promptShopifySkillInstallIfNeeded,
+  shopifySkillIsInstalled,
+  updateShopifySkill,
+  updateShopifySkillIfNeeded,
+} from './skills.js'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from './fs.js'
+import {fetch, Response} from './http.js'
 import {joinPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
-import {renderSelectPrompt} from './ui.js'
+import {renderInfo, renderSelectPrompt} from './ui.js'
 import {LocalStorage} from './local-storage.js'
 import {ConfSchema} from '../../private/node/conf-store.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./system.js')
 vi.mock('./ui.js')
+vi.mock('./http.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./http.js')>()
+  return {...original, fetch: vi.fn()}
+})
+
+async function writeInstalledSkill(homeDir: string, content: string): Promise<string> {
+  const skillDir = joinPath(homeDir, '.agents', 'skills', 'shopify')
+  await mkdir(skillDir)
+  const skillPath = joinPath(skillDir, 'SKILL.md')
+  await writeFile(skillPath, content)
+  return skillPath
+}
 
 const argv = ['/path/to/node', '/path/to/shopify', 'theme', 'list']
 const env = {SHOPIFY_UNIT_TEST: 'false'}
@@ -26,7 +44,7 @@ describe('shopifySkillIsInstalled', () => {
 
   test('returns true when the skill is installed in the home agents directory', async () => {
     await inTemporaryDirectory(async (homeDir) => {
-      await mkdir(joinPath(homeDir, '.agents', 'skills', 'shopify'))
+      await writeInstalledSkill(homeDir, '# Shopify skill')
 
       expect(shopifySkillIsInstalled(env, homeDir)).toBe(true)
     })
@@ -35,9 +53,65 @@ describe('shopifySkillIsInstalled', () => {
   test('returns true when the skill is installed in the XDG config directory', async () => {
     await inTemporaryDirectory(async (homeDir) => {
       const xdgConfigHome = joinPath(homeDir, 'xdg-config')
-      await mkdir(joinPath(xdgConfigHome, 'agents', 'skills', 'shopify'))
+      const skillDir = joinPath(xdgConfigHome, 'agents', 'skills', 'shopify')
+      await mkdir(skillDir)
+      await writeFile(joinPath(skillDir, 'SKILL.md'), '# Shopify skill')
 
       expect(shopifySkillIsInstalled({...env, XDG_CONFIG_HOME: xdgConfigHome}, homeDir)).toBe(true)
+    })
+  })
+})
+
+describe('updateShopifySkill', () => {
+  test('returns not-installed without fetching when the skill is missing', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // When
+      const result = await updateShopifySkill({env, homeDir: cwd})
+
+      // Then
+      expect(result).toBe('not-installed')
+      expect(fetch).not.toHaveBeenCalled()
+    })
+  })
+
+  test('writes the remote content over the installed skill when the source changed', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const skillPath = await writeInstalledSkill(cwd, '# Old skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# New skill', {status: 200}))
+
+      // When
+      const result = await updateShopifySkill({env, homeDir: cwd})
+
+      // Then
+      expect(result).toBe('updated')
+      await expect(readFile(skillPath)).resolves.toBe('# New skill')
+    })
+  })
+
+  test('returns already-up-to-date and leaves the skill untouched when the content matches', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const skillPath = await writeInstalledSkill(cwd, '# Same skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# Same skill', {status: 200}))
+
+      // When
+      const result = await updateShopifySkill({env, homeDir: cwd})
+
+      // Then
+      expect(result).toBe('already-up-to-date')
+      await expect(readFile(skillPath)).resolves.toBe('# Same skill')
+    })
+  })
+
+  test('throws when the source responds with an error', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      await writeInstalledSkill(cwd, '# Local skill')
+      vi.mocked(fetch).mockResolvedValue(new Response(null, {status: 500, statusText: 'Internal Server Error'}))
+
+      // When / Then
+      await expect(updateShopifySkill({env, homeDir: cwd})).rejects.toThrow('Failed to check for Shopify skill updates')
     })
   })
 })
@@ -98,7 +172,7 @@ describe('promptShopifySkillInstallIfNeeded', () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
-      await mkdir(joinPath(cwd, '.agents', 'skills', 'shopify'))
+      await writeInstalledSkill(cwd, '# Shopify skill')
 
       // When
       await promptShopifySkillInstallIfNeeded({currentCommand: 'theme:list', argv, env, config, homeDir: cwd})
@@ -192,6 +266,120 @@ describe('promptShopifySkillInstallIfNeeded', () => {
 
       // Then
       expect(renderSelectPrompt).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('updateShopifySkillIfNeeded', () => {
+  test('updates the skill inline and announces it immediately', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      const skillPath = await writeInstalledSkill(cwd, '# Old skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# New skill', {status: 200}))
+
+      // When
+      await updateShopifySkillIfNeeded({currentCommand: 'theme:list', env, config, homeDir: cwd})
+
+      // Then
+      await expect(readFile(skillPath)).resolves.toBe('# New skill')
+      expect(renderInfo).toHaveBeenCalledWith({
+        body: 'The Shopify skill for coding agents was updated to the latest version.',
+      })
+    })
+  })
+
+  test('does not announce anything when the skill is already up to date', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await writeInstalledSkill(cwd, '# Same skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# Same skill', {status: 200}))
+
+      // When
+      await updateShopifySkillIfNeeded({currentCommand: 'theme:list', env, config, homeDir: cwd})
+
+      // Then
+      expect(fetch).toHaveBeenCalled()
+      expect(renderInfo).not.toHaveBeenCalled()
+    })
+  })
+
+  test('swallows fetch failures and leaves the skill untouched', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      const skillPath = await writeInstalledSkill(cwd, '# Local skill')
+      vi.mocked(fetch).mockRejectedValue(new Error('network down'))
+
+      // When
+      await updateShopifySkillIfNeeded({currentCommand: 'theme:list', env, config, homeDir: cwd})
+
+      // Then
+      await expect(readFile(skillPath)).resolves.toBe('# Local skill')
+      expect(renderInfo).not.toHaveBeenCalled()
+    })
+  })
+
+  test('checks at most once within the daily interval', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await writeInstalledSkill(cwd, '# Shopify skill')
+      vi.mocked(fetch).mockResolvedValue(new Response('# Shopify skill', {status: 200}))
+
+      // When
+      await updateShopifySkillIfNeeded({currentCommand: 'theme:list', env, config, homeDir: cwd})
+      await updateShopifySkillIfNeeded({currentCommand: 'theme:list', env, config, homeDir: cwd})
+
+      // Then
+      expect(fetch).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  test('does nothing when the skill is not installed', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      // When
+      await updateShopifySkillIfNeeded({currentCommand: 'theme:list', env, config, homeDir: cwd})
+
+      // Then
+      expect(fetch).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does nothing for skill commands', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await writeInstalledSkill(cwd, '# Shopify skill')
+
+      // When
+      await updateShopifySkillIfNeeded({currentCommand: 'skill:update', env, config, homeDir: cwd})
+
+      // Then
+      expect(fetch).not.toHaveBeenCalled()
+    })
+  })
+
+  test.each([
+    ['CI', {...env, CI: '1'}],
+    ['SHOPIFY_UNIT_TEST', {SHOPIFY_UNIT_TEST: 'true'}],
+    ['SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE', {...env, SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE: '1'}],
+    ['SHOPIFY_CLI_ENV=development', {...env, SHOPIFY_CLI_ENV: 'development'}],
+  ])('does nothing when %s is set', async (_name, skipEnv) => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      await writeInstalledSkill(cwd, '# Shopify skill')
+
+      // When
+      await updateShopifySkillIfNeeded({currentCommand: 'theme:list', env: skipEnv, config, homeDir: cwd})
+
+      // Then
+      expect(fetch).not.toHaveBeenCalled()
     })
   })
 })

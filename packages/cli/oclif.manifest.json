@@ -6335,6 +6335,24 @@
       "strict": true,
       "summary": "Install the Shopify skill for coding agents."
     },
+    "skill:update": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "skill:update",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Update the Shopify skill for coding agents when its source has changed."
+    },
     "store:auth": {
       "aliases": [
       ],

@@ -97,7 +97,8 @@
 │  └─ update
 ├─ search
 ├─ skill
-│  └─ install
+│  ├─ install
+│  └─ update
 ├─ store
 │  ├─ auth
 │  │  └─ list
@@ -134,4 +135,9 @@
 │  ├─ rename
 │  └─ share
 ├─ upgrade
+├─ validate
+│  ├─ components
+│  ├─ functions
+│  ├─ graphql
+│  └─ theme
 └─ version

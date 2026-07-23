@@ -1,10 +1,12 @@
 import {homeDirectory, isDevelopment} from './context/local.js'
 import {isTruthy} from './context/utilities.js'
-import {fileExistsSync} from './fs.js'
+import {AbortError} from './error.js'
+import {fileExistsSync, readFile, writeFile} from './fs.js'
+import {fetch} from './http.js'
 import {outputDebug, outputInfo} from './output.js'
 import {joinPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
-import {renderSelectPrompt} from './ui.js'
+import {renderInfo, renderSelectPrompt} from './ui.js'
 import {LocalStorage} from './local-storage.js'
 import {
   ConfSchema,
@@ -14,6 +16,12 @@ import {
 } from '../../private/node/conf-store.js'
 
 type SkillInstallPromptChoice = 'install' | 'later' | 'never'
+
+// eslint-disable-next-line no-warning-comments
+// TODO: Point at the skill's final hosting URL (or the main branch) before merging. The
+// shopify skill only exists on the feature/shopify-validate-command branch until PR #8142 lands.
+const SHOPIFY_SKILL_URL =
+  'https://raw.githubusercontent.com/Shopify/cli/feature/shopify-validate-command/.agents/skills/shopify/SKILL.md'
 
 /**
  * Options for {@link promptShopifySkillInstallIfNeeded}.
@@ -49,12 +57,125 @@ export interface PromptShopifySkillInstallOptions {
  * @returns Whether the Shopify skill is installed in any known global location.
  */
 export function shopifySkillIsInstalled(env: NodeJS.ProcessEnv = process.env, homeDir = homeDirectory()): boolean {
+  return installedShopifySkillPath(env, homeDir) !== undefined
+}
+
+function installedShopifySkillPath(env: NodeJS.ProcessEnv, homeDir: string): string | undefined {
   const configHome = env.XDG_CONFIG_HOME ?? joinPath(homeDir, '.config')
-  const skillDirectories = [
-    joinPath(homeDir, '.agents', 'skills', 'shopify'),
-    joinPath(configHome, 'agents', 'skills', 'shopify'),
+  const skillPaths = [
+    joinPath(homeDir, '.agents', 'skills', 'shopify', 'SKILL.md'),
+    joinPath(configHome, 'agents', 'skills', 'shopify', 'SKILL.md'),
   ]
-  return skillDirectories.some(fileExistsSync)
+  return skillPaths.find(fileExistsSync)
+}
+
+/**
+ * The outcome of a Shopify skill update check.
+ */
+export type ShopifySkillUpdateResult = 'updated' | 'already-up-to-date' | 'not-installed'
+
+/**
+ * Options for {@link updateShopifySkill}.
+ */
+export interface UpdateShopifySkillOptions {
+  /** The process environment. */
+  env?: NodeJS.ProcessEnv
+
+  /** The user's home directory, injectable for testing. */
+  homeDir?: string
+}
+
+/**
+ * Updates the installed Shopify skill when its remote source has changed.
+ *
+ * Fetches the skill source and compares it with the installed universal skill
+ * file, writing it over only when the content differs. The installed file is
+ * the only state involved, and updating it propagates to every agent through
+ * the symlinks created at install time.
+ *
+ * @param options - See {@link UpdateShopifySkillOptions}.
+ * @returns The outcome of the update check.
+ */
+export async function updateShopifySkill(options: UpdateShopifySkillOptions = {}): Promise<ShopifySkillUpdateResult> {
+  const {env = process.env, homeDir = homeDirectory()} = options
+
+  const skillPath = installedShopifySkillPath(env, homeDir)
+  if (!skillPath) return 'not-installed'
+
+  // Time-box the request tightly: this check runs before commands, so a slow or
+  // broken network must never noticeably delay whatever the user actually asked for.
+  const response = await fetch(SHOPIFY_SKILL_URL, undefined, {
+    useNetworkLevelRetry: false,
+    useAbortSignal: true,
+    timeoutMs: 3000,
+  })
+  if (!response.ok) {
+    throw new AbortError(`Failed to check for Shopify skill updates: ${response.status} ${response.statusText}`)
+  }
+
+  const remoteContent = await response.text()
+  const localContent = await readFile(skillPath)
+  if (localContent === remoteContent) return 'already-up-to-date'
+
+  await writeFile(skillPath, remoteContent)
+  return 'updated'
+}
+
+/**
+ * Options for {@link updateShopifySkillIfNeeded}.
+ */
+export interface UpdateShopifySkillIfNeededOptions {
+  /** The command being run, used to avoid updating recursively from `skill` commands. */
+  currentCommand: string
+
+  /** The process environment. */
+  env?: NodeJS.ProcessEnv
+
+  /** The cli-kit local storage, injectable for testing. */
+  config?: LocalStorage<ConfSchema>
+
+  /** The user's home directory, injectable for testing. */
+  homeDir?: string
+}
+
+/**
+ * Keeps an installed Shopify skill up to date, checking the remote source at most
+ * once per day. The check runs inline: a tightly time-boxed fetch compares the
+ * source with the installed skill, rewrites it when it changed, and announces the
+ * update immediately. Failures are logged and retried a day later.
+ *
+ * Skipped when the skill is not installed (the install prompt owns that case),
+ * for `skill` commands (to avoid recursion), in CI, in unit tests, in development
+ * mode, and when `SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE` is set.
+ *
+ * @param options - See {@link UpdateShopifySkillIfNeededOptions}.
+ */
+export async function updateShopifySkillIfNeeded(options: UpdateShopifySkillIfNeededOptions): Promise<void> {
+  const {currentCommand, env = process.env, config, homeDir} = options
+
+  if (skipSkillMaintenance(currentCommand, env)) return
+  if (isTruthy(env.SHOPIFY_CLI_NO_SKILL_AUTO_UPDATE)) return
+  if (!shopifySkillIsInstalled(env, homeDir)) return
+
+  // Check for skill updates at most once per day.
+  await runAtMinimumInterval(
+    'skill-update',
+    {days: 1},
+    async () => {
+      try {
+        const result = await updateShopifySkill({env, homeDir})
+        if (result === 'updated') {
+          renderInfo({body: 'The Shopify skill for coding agents was updated to the latest version.'})
+        }
+        // A skill update must never break the command the user actually ran; failures
+        // are logged and naturally retried when the daily interval elapses.
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        outputDebug(`Failed to update the Shopify skill: ${(error as Error).message}`)
+      }
+    },
+    config,
+  )
 }
 
 /**
@@ -132,13 +253,14 @@ export async function promptShopifySkillInstallIfNeeded(options: PromptShopifySk
 
 function skipSkillInstallPrompt(currentCommand: string, args: string[], env: NodeJS.ProcessEnv): boolean {
   return (
-    currentCommand.startsWith('skill') ||
+    skipSkillMaintenance(currentCommand, env) ||
     args.includes('--json') ||
     isTruthy(env.SHOPIFY_FLAG_JSON) ||
-    isTruthy(env.CI) ||
-    isTruthy(env.SHOPIFY_UNIT_TEST) ||
     isTruthy(env.SHOPIFY_CLI_NO_SKILL_INSTALL_PROMPT) ||
-    isDevelopment(env) ||
     !terminalSupportsPrompting()
   )
+}
+
+function skipSkillMaintenance(currentCommand: string, env: NodeJS.ProcessEnv): boolean {
+  return currentCommand.startsWith('skill') || isTruthy(env.CI) || isTruthy(env.SHOPIFY_UNIT_TEST) || isDevelopment(env)
 }
