@@ -33,18 +33,20 @@ export async function addRecommendedExtensions(directory: string, recommendation
   outputDebug(outputContent`Adding VSCode recommended extensions at ${outputToken.path(directory)}:
 ${outputToken.json(recommendations)}
   `)
-  const extensionsPath = joinPath(directory, '.vscode/extensions.json')
 
-  if (await isVSCode(directory)) {
-    let originalExtensionsJson = {recommendations: []}
-    if (await fileExists(extensionsPath)) {
-      const originalExtensionsFile = await readFile(extensionsPath)
-      originalExtensionsJson = JSON.parse(originalExtensionsFile)
-    }
-    const newExtensionsJson = {
-      ...originalExtensionsJson,
-      recommendations: [...originalExtensionsJson.recommendations, ...recommendations],
-    }
-    await writeFile(extensionsPath, JSON.stringify(newExtensionsJson, null, 2))
+  if (!(await isVSCode(directory))) {
+    return
   }
+
+  const extensionsPath = joinPath(directory, '.vscode/extensions.json')
+  let originalExtensionsJson = {recommendations: [] as string[]}
+  if (await fileExists(extensionsPath)) {
+    const originalExtensionsFile = await readFile(extensionsPath)
+    originalExtensionsJson = JSON.parse(originalExtensionsFile)
+  }
+  const newExtensionsJson = {
+    ...originalExtensionsJson,
+    recommendations: [...originalExtensionsJson.recommendations, ...recommendations],
+  }
+  await writeFile(extensionsPath, JSON.stringify(newExtensionsJson, null, 2))
 }
