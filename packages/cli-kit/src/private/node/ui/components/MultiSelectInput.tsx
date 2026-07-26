@@ -1,6 +1,6 @@
 import {Item} from './SelectInput.js'
 import {Scrollbar} from './Scrollbar.js'
-import {DescriptionPanel, MIN_SIDE_PANEL_WIDTH} from './DescriptionPanel.js'
+import {DescriptionPanel, MIN_SIDE_PANEL_WIDTH, PANEL_BORDER_ROWS} from './DescriptionPanel.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {useSelectState} from '../hooks/use-select-state.js'
@@ -284,6 +284,14 @@ function MultiSelectInput<T>({
     sectionHeight = Math.min(sectionHeight, Math.max(1, availableLinesToUse - STACKED_HINT_RESERVE))
   }
 
+  // The beside panel is boxed, and its border sits OUTSIDE its text, so give the panel the list's
+  // height plus the two border rows: the description keeps exactly the `sectionHeight` lines it had
+  // before the panel gained a border. Those extra rows come out of the beside layout's vertical slack
+  // (the panel is side-by-side, so nothing below it moves), and the clamp keeps the block inside the
+  // real budget when the list already fills the viewport — growing past it is what reintroduces the
+  // vertical ghosting.
+  const besidePanelHeight = Math.min(sectionHeight + PANEL_BORDER_ROWS, availableLinesToUse)
+
   const listSection = (
     <Box flexDirection="row" height={sectionHeight} width="100%">
       <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
@@ -360,8 +368,8 @@ function MultiSelectInput<T>({
     )
   }
 
-  // Wide terminals: list and panel side-by-side. The panel matches the list's height so the
-  // combined block stays bounded to `sectionHeight`.
+  // Wide terminals: list and panel side-by-side. The panel's text area matches the list's height, so
+  // the combined block stays bounded to `sectionHeight` plus the panel's border rows.
   if (showDescriptionBeside) {
     return (
       <Box flexDirection="column" ref={ref} gap={1} width={fullWidth}>
@@ -371,7 +379,7 @@ function MultiSelectInput<T>({
             title={highlightedItem?.label}
             description={highlightedItem?.description}
             width={sidePanelWidth}
-            maxLines={sectionHeight}
+            maxLines={besidePanelHeight}
           />
         </Box>
         {footer}

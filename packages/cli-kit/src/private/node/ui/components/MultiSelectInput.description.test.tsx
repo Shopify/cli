@@ -61,6 +61,26 @@ describe('MultiSelectInput with descriptions', () => {
     expect(frame).not.toContain('Read-only access to orders.')
   })
 
+  // The beside panel is visually contained in a box (`round` + `dim`, as in Banner). Pin the border
+  // characters so the panel cannot silently regress to borderless text.
+  test('draws the beside panel inside a bordered box', async () => {
+    const {stdout} = renderWithWidth(<MultiSelectInput items={itemsWithDescriptions} onSubmit={() => {}} />, 120)
+
+    await waitForInputsToBeReady()
+
+    const lines = lastUnstyledFrame(stdout)
+      .split('\n')
+      .map((line) => line.trimEnd())
+
+    // Top edge on the panel's first row, bottom edge below it, and the description itself sandwiched
+    // between the two vertical edges.
+    expect(lines[0]).toMatch(/╭─+╮$/)
+    expect(lines.some((line) => /╰─+╯$/.test(line))).toBe(true)
+    expect(lines.find((line) => line.includes('Read-only access to products.'))).toMatch(
+      /│ Read-only access to products\.\s*│$/,
+    )
+  })
+
   test('updates the shown description when arrowing focus', async () => {
     const {renderInstance, stdout} = renderWithWidth(
       <MultiSelectInput items={itemsWithDescriptions} onSubmit={() => {}} />,
@@ -168,6 +188,9 @@ describe('MultiSelectInput with descriptions', () => {
     expect(frame).toContain('read_products')
     expect(frame).toContain('read_orders')
     expect(frame).toContain('read_customers')
+    // No panel means no panel box either: the description-less layout stays exactly as it was.
+    expect(frame).not.toContain('╭')
+    expect(frame).not.toContain('╰')
   })
 
   test('truncates a long group title to a single physical line', async () => {

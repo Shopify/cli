@@ -60,6 +60,26 @@ describe('SelectInput with descriptions', () => {
     expect(frame).not.toContain('Search the docs for a keyword.')
   })
 
+  // The beside panel is visually contained in a box (`round` + `dim`, as in Banner). Pin the border
+  // characters so the panel cannot silently regress to borderless text.
+  test('draws the beside panel inside a bordered box', async () => {
+    const {stdout} = renderWithWidth(<SelectInput items={itemsWithDescriptions} onChange={() => {}} />, 120)
+
+    await waitForInputsToBeReady()
+
+    const lines = lastUnstyledFrame(stdout)
+      .split('\n')
+      .map((line) => line.trimEnd())
+
+    // Top edge on the panel's first row, bottom edge below it, and the description itself sandwiched
+    // between the two vertical edges.
+    expect(lines[0]).toMatch(/╭─+╮$/)
+    expect(lines.some((line) => /╰─+╯$/.test(line))).toBe(true)
+    expect(lines.find((line) => line.includes('Fetch a documentation page by URL.'))).toMatch(
+      /│ Fetch a documentation page by URL\.\s*│$/,
+    )
+  })
+
   test('updates the shown description when arrowing', async () => {
     const {renderInstance, stdout} = renderWithWidth(
       <SelectInput items={itemsWithDescriptions} onChange={() => {}} />,
@@ -164,6 +184,9 @@ describe('SelectInput with descriptions', () => {
     expect(frame).toContain('first')
     expect(frame).toContain('second')
     expect(frame).toContain('third')
+    // No panel means no panel box either: the description-less layout stays exactly as it was.
+    expect(frame).not.toContain('╭')
+    expect(frame).not.toContain('╰')
   })
 
   test('truncates a long group title to a single physical line', async () => {
