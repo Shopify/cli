@@ -33,9 +33,9 @@ export async function hookStart(port: number): Promise<TunnelStartReturn> {
     const client = new TunnelClientInstance(port)
     await client.startTunnel()
     return ok(client)
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    const tunnelError = new TunnelError('unknown', error.message)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    const tunnelError = new TunnelError('unknown', messageFromError(error))
     return err(tunnelError)
   }
 }
@@ -55,9 +55,9 @@ class TunnelClientInstance implements TunnelClient {
     try {
       await install()
       this.tunnel()
-      // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      this.currentStatus = {status: 'error', message: error.message, tryMessage: whatToTry()}
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      this.currentStatus = {status: 'error', message: messageFromError(error), tryMessage: whatToTry()}
     }
   }
 
@@ -134,18 +134,19 @@ class TunnelClientInstance implements TunnelClient {
       stdout: customStdout,
       stderr: customStdout,
       signal: this.abortController.signal,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      externalErrorHandler: async (error: any) => {
+      externalErrorHandler: async (error: unknown) => {
+        const message = messageFromError(error)
+
         // If already resolved, means that the CLI already received the tunnel URL.
         // Can't retry because the CLI is running with an invalid URL
         if (resolved) {
           throw new BugError(
-            `Could not start Cloudflare tunnel: process crashed after stablishing a connection: ${error.message}`,
+            `Could not start Cloudflare tunnel: process crashed after establishing a connection: ${message}`,
             whatToTry(),
           )
         }
 
-        outputDebug(`Cloudflare tunnel crashed: ${error.message}, restarting...`)
+        outputDebug(`Cloudflare tunnel crashed: ${message}, restarting...`)
 
         // wait 1 second before restarting the tunnel, to avoid rate limiting
         if (!isUnitTest()) await sleep(1)
@@ -153,6 +154,10 @@ class TunnelClientInstance implements TunnelClient {
       },
     })
   }
+}
+
+function messageFromError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
 
 function whatToTry() {
