@@ -1,5 +1,6 @@
+import {buildStoreAuthScopeChoices} from '../services/store/auth/scope-catalog.js'
 import {DevStorePlan, devStorePlanHandles} from '../services/store/constants.js'
-import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompleteMultiSelectPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 /** Human-readable labels for each `--plan` handle, shown in the interactive plan selector. */
 const PLAN_LABELS: {[plan in DevStorePlan]: string} = {
@@ -22,5 +23,15 @@ export async function storePlanPrompt(): Promise<DevStorePlan> {
       label: PLAN_LABELS[handle],
       value: handle,
     })),
+  })
+}
+
+export async function promptForStoreAuthScopes(): Promise<string[]> {
+  const {choices, groupOrder} = buildStoreAuthScopeChoices()
+
+  return renderAutocompleteMultiSelectPrompt({
+    message: 'Add the Shopify API access scopes to grant to the app',
+    choices,
+    groupOrder,
   })
 }

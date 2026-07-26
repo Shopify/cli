@@ -1,4 +1,5 @@
 import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScopes} from './scopes.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test} from 'vitest'
 
 describe('store auth scope helpers', () => {
@@ -27,6 +28,14 @@ describe('store auth scope helpers', () => {
       'read_inventory',
       'write_orders',
     ])
+  })
+
+  test('parseStoreAuthScopes throws when given an empty string', () => {
+    expect(() => parseStoreAuthScopes('')).toThrow(AbortError)
+  })
+
+  test('parseStoreAuthScopes throws when given only whitespace', () => {
+    expect(() => parseStoreAuthScopes('   ')).toThrow(AbortError)
   })
 
   test('resolveGrantedScopes succeeds when granted scopes are space-separated', () => {
