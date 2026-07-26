@@ -1,4 +1,4 @@
-import Wizard, {BROWSE_BY_TOPIC} from './wizard.js'
+import Wizard from './wizard.js'
 import {Command, Config} from '@oclif/core'
 import {
   renderAutocompletePrompt,
@@ -21,7 +21,7 @@ interface FakeCommandSpec {
   flags?: {[name: string]: unknown}
 }
 
-function buildConfig(specs: FakeCommandSpec[], topics: {name: string; hidden?: boolean}[] = []) {
+function buildConfig(specs: FakeCommandSpec[]) {
   const commands = specs.map((spec) => ({
     id: spec.id,
     summary: spec.summary,
@@ -32,7 +32,7 @@ function buildConfig(specs: FakeCommandSpec[], topics: {name: string; hidden?: b
   return {
     bin: 'shopify',
     commands,
-    topics,
+    topics: [],
     findCommand: (id: string) => commands.find((command) => command.id === id),
     runCommand: vi.fn(async () => undefined),
     // `this.parse(Wizard)` runs oclif's parse, which fires the `preparse` hook.
@@ -99,20 +99,61 @@ describe('Wizard', () => {
     expect(config.runCommand).toHaveBeenCalledWith('app:dev', ['--store', 'my-store', '--reset', '--path', './foo'])
   })
 
-  test('supports browsing by topic as a fallback to searching', async () => {
+  test('discovers commands through one list grouped by topic, with spaced labels and real ids', async () => {
     // Given
-    const config = buildConfig([{id: 'theme:dev', summary: 'Run the theme'}], [{name: 'theme'}])
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue(BROWSE_BY_TOPIC)
-    // First select: the topic; second select: the command within it.
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('theme').mockResolvedValueOnce('theme:dev')
+    const config = buildConfig([
+      {id: 'app:generate:extension', summary: 'Scaffold an extension'},
+      {id: 'theme:dev', summary: 'Run the theme'},
+      {id: 'upgrade', summary: 'Upgrade the CLI'},
+    ])
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('app:generate:extension')
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     const wizard = buildWizard(config)
 
     // When
     await wizard.run()
 
-    // Then
-    expect(config.runCommand).toHaveBeenCalledWith('theme:dev', [])
+    // Then: labels read as they're typed, values stay the canonical colon ids, and
+    // `upgrade` is left ungrouped so cli-kit files it under its automatic "Other".
+    const props = vi.mocked(renderAutocompletePrompt).mock.calls[0]?.[0]
+    expect(props?.choices).toEqual([
+      {
+        label: 'app generate extension',
+        value: 'app:generate:extension',
+        description: 'Scaffold an extension',
+        group: 'app',
+      },
+      {label: 'theme dev', value: 'theme:dev', description: 'Run the theme', group: 'theme'},
+      {label: 'upgrade', value: 'upgrade', description: 'Upgrade the CLI', group: undefined},
+    ])
+    // An explicit group order is required: without one cli-kit interleaves the groups.
+    expect(props?.groupOrder).toEqual(['app', 'theme'])
+    // The selected value is a real id, handed straight to the target command.
+    expect(config.runCommand).toHaveBeenCalledWith('app:generate:extension', [])
+  })
+
+  test('searches separator-agnostically and never offers a browse-by-topic affordance', async () => {
+    // Given
+    const config = buildConfig([
+      {id: 'app:generate:extension', summary: 'Scaffold an extension'},
+      {id: 'theme:dev', summary: 'Run the theme'},
+    ])
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('app:generate:extension')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    const wizard = buildWizard(config)
+
+    // When
+    await wizard.run()
+
+    // Then: both the spaced and the colon-separated spelling reach the same command,
+    // and nothing but real commands is ever offered.
+    const search = vi.mocked(renderAutocompletePrompt).mock.calls[0]?.[0]?.search
+    const spaced = await search?.('app generate')
+    const colonned = await search?.('app:generate')
+    expect(spaced?.data.map((choice) => choice.value)).toEqual(['app:generate:extension'])
+    expect(colonned?.data.map((choice) => choice.value)).toEqual(['app:generate:extension'])
+    // No select prompt is used for discovery any more — it's a single searchable list.
+    expect(renderSelectPrompt).not.toHaveBeenCalled()
   })
 
   test('uses controlled, generic prompt messages that never echo a command description', async () => {

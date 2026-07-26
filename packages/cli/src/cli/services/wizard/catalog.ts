@@ -1,17 +1,10 @@
-import {Command, Interfaces} from '@oclif/core'
+import {Command} from '@oclif/core'
 
 /**
  * The wizard command's own id. It's excluded from the catalog so the wizard can
  * never offer to run itself.
  */
 export const WIZARD_COMMAND_ID = 'wizard'
-
-/**
- * The sentinel value returned by the discovery search when the user picks the
- * "browse by topic" affordance instead of a real command. Chosen to never collide
- * with a real command id.
- */
-export const BROWSE_BY_TOPIC = '__wizard_browse_by_topic__'
 
 /**
  * A single, searchable entry in the wizard's in-memory command index. Built from
@@ -25,14 +18,6 @@ export interface WizardCatalogEntry {
   description: string
   /** The top-level topic segment of the id (eg `app` for `app:dev`). */
   topic: string
-}
-
-/**
- * A topic the user can browse into as a fallback to searching.
- */
-export interface WizardBrowsableTopic {
-  name: string
-  description: string
 }
 
 /**
@@ -56,11 +41,18 @@ export function buildCommandCatalog(commands: Command.Loadable[]): WizardCatalog
  * Case-insensitive substring match against BOTH the command id and its
  * description, so searching for either a name fragment or a concept surfaces the
  * command. An empty term matches everything.
+ *
+ * The match is separator-agnostic: the id and the term are both normalized so that
+ * any run of colons or whitespace collapses to a single space. Commands are shown
+ * with spaces rather than colons, so a user who types what they see (`app generate`)
+ * finds the same commands as one who types the canonical id (`app:generate`).
  */
 export function matchesSearchTerm(entry: WizardCatalogEntry, term: string): boolean {
-  const normalizedTerm = term.trim().toLowerCase()
+  const normalizedTerm = normalizeForSearch(term)
   if (normalizedTerm.length === 0) return true
-  return entry.id.toLowerCase().includes(normalizedTerm) || entry.description.toLowerCase().includes(normalizedTerm)
+  return (
+    normalizeForSearch(entry.id).includes(normalizedTerm) || entry.description.toLowerCase().includes(normalizedTerm)
+  )
 }
 
 /**
@@ -71,73 +63,77 @@ export function searchCatalog(catalog: WizardCatalogEntry[], term: string): Wiza
 }
 
 /**
- * A single choice for the discovery search prompt: either a real command (its
- * `value` is the command id) or the browse-by-topic affordance (its `value` is
- * `BROWSE_BY_TOPIC`). The `description`, when present, is rendered by cli-kit's
- * side/below panel for the highlighted choice rather than inline in the label —
- * this keeps list rows to a single line and avoids wrapping long `id — summary`
- * strings.
+ * A single choice for the discovery search prompt. The `value` is always the real,
+ * colon-separated command id — the label is display-only — so the wizard can hand
+ * the selection straight to `config.runCommand`.
+ *
+ * The `description`, when present, is rendered by cli-kit's side/below panel for the
+ * highlighted choice rather than inline in the label — this keeps list rows to a
+ * single line and avoids wrapping long `id — summary` strings. The `group`, when
+ * present, is the top-level topic cli-kit renders the choice under; leaving it
+ * undefined puts the choice in cli-kit's automatic "Other" group, which always
+ * renders last.
  */
 export interface WizardCommandChoice {
   label: string
   value: string
   description?: string
+  group?: string
 }
 
 /**
- * Builds the ordered choices shown by the discovery search for a given term:
- * the matching commands first, then the browse-by-topic affordance APPENDED last.
+ * Builds the choices shown by the discovery search for a given term: the matching
+ * commands, each tagged with the topic group it belongs to.
  *
  * Each command choice carries its description separately (not baked into the
  * label) so cli-kit shows it in the description panel; the list itself stays
  * id-only and single-line.
- *
- * The affordance is deliberately last, not first: cli-kit's select resets the
- * highlight to the first result on every keystroke, so pinning "browse" at the top
- * would make an exact-match search + Enter select "browse" instead of the command
- * the user just typed. Appending it keeps a real command as the default choice.
  */
 export function commandChoices(catalog: WizardCatalogEntry[], term: string): WizardCommandChoice[] {
-  const matches = searchCatalog(catalog, term).map((entry) => ({
+  return searchCatalog(catalog, term).map((entry) => ({
     label: commandChoiceLabel(entry),
     value: entry.id,
     description: entry.description.length > 0 ? entry.description : undefined,
+    group: groupForEntry(entry, catalog),
   }))
-  return [
-    ...matches,
-    {
-      label: 'Browse commands by topic instead…',
-      value: BROWSE_BY_TOPIC,
-      description: 'Pick a topic, then a command within it.',
-    },
-  ]
 }
 
 /**
- * The label for a command choice: its id alone. The description is surfaced
- * separately via the choice's `description` panel, keeping list rows single-line.
+ * The label for a command choice: its id with colons rendered as spaces, matching
+ * how the command is actually typed on the command line (`app generate extension`
+ * rather than `app:generate:extension`). Display only — the choice's `value` keeps
+ * the canonical colon id. The description is surfaced separately via the choice's
+ * `description` panel, keeping list rows single-line.
  */
 export function commandChoiceLabel(entry: WizardCatalogEntry): string {
-  return entry.id
+  return entry.id.split(':').join(' ')
 }
 
 /**
- * Returns the catalog entries that belong to a topic, either as the topic's own
- * command (eg `theme`) or as a command nested under it (eg `theme:dev`).
+ * The topic group a catalog entry is listed under:
+ * - a namespaced command (`app:dev`) belongs to its top-level segment (`app`);
+ * - a top-level command that other commands nest under (`theme`, with `theme:dev`
+ *   in the catalog) is that topic's own parent, so it belongs to its own group;
+ * - a standalone top-level command (`upgrade`, `version`) has no topic. Returning
+ *   `undefined` hands it to cli-kit's automatic "Other" group, rendered last.
  */
-export function commandsInTopic(catalog: WizardCatalogEntry[], topicName: string): WizardCatalogEntry[] {
-  return catalog.filter((entry) => entry.id === topicName || entry.id.startsWith(`${topicName}:`))
+export function groupForEntry(entry: WizardCatalogEntry, catalog: WizardCatalogEntry[]): string | undefined {
+  if (entry.id.includes(':')) return entry.topic
+  const isTopicParent = catalog.some((candidate) => candidate.id.startsWith(`${entry.id}:`))
+  return isTopicParent ? entry.id : undefined
 }
 
 /**
- * The topics that are worth browsing: non-hidden topics from the `Config` that
- * actually contain at least one visible command in the catalog. Sorted by name.
+ * The sorted, de-duplicated topic names to render groups in. cli-kit needs an
+ * explicit order: without one every grouped item sorts equal, leaving the groups
+ * interleaved and each item paying its own group title row. Ungrouped entries are
+ * excluded — cli-kit appends their "Other" group last on its own.
  */
-export function browsableTopics(topics: Interfaces.Topic[], catalog: WizardCatalogEntry[]): WizardBrowsableTopic[] {
-  return topics
-    .filter((topic) => !topic.hidden && commandsInTopic(catalog, topic.name).length > 0)
-    .map((topic) => ({name: topic.name, description: firstLine(topic.description ?? '')}))
-    .sort((first, second) => first.name.localeCompare(second.name))
+export function topicOrder(catalog: WizardCatalogEntry[]): string[] {
+  const groups = catalog
+    .map((entry) => groupForEntry(entry, catalog))
+    .filter((group): group is string => group !== undefined)
+  return [...new Set(groups)].sort((first, second) => first.localeCompare(second))
 }
 
 function topicOfCommandId(id: string): string {
@@ -146,4 +142,16 @@ function topicOfCommandId(id: string): string {
 
 function firstLine(text: string): string {
   return (text.split('\n')[0] ?? '').trim()
+}
+
+/**
+ * Lowercases and collapses every run of colons or whitespace into a single space,
+ * so `app:generate:extension`, `app generate extension` and `APP: GENERATE` all
+ * normalize to the same separator-agnostic form.
+ */
+function normalizeForSearch(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\s:]+/g, ' ')
+    .trim()
 }

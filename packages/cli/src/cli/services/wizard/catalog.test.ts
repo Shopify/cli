@@ -1,22 +1,17 @@
 import {
-  BROWSE_BY_TOPIC,
-  browsableTopics,
   buildCommandCatalog,
   commandChoiceLabel,
   commandChoices,
-  commandsInTopic,
+  groupForEntry,
   matchesSearchTerm,
   searchCatalog,
+  topicOrder,
 } from './catalog.js'
-import {Command, Interfaces} from '@oclif/core'
+import {Command} from '@oclif/core'
 import {describe, expect, test} from 'vitest'
 
 function loadable(command: {id: string; summary?: string; description?: string; hidden?: boolean}): Command.Loadable {
   return {hidden: false, ...command} as unknown as Command.Loadable
-}
-
-function topic(name: string, options: {description?: string; hidden?: boolean} = {}): Interfaces.Topic {
-  return {name, ...options}
 }
 
 describe('buildCommandCatalog', () => {
@@ -60,14 +55,28 @@ describe('buildCommandCatalog', () => {
 })
 
 describe('matchesSearchTerm', () => {
-  const entry = {id: 'app:dev', description: 'Run the app locally', topic: 'app'}
+  const entry = {id: 'app:generate:extension', description: 'Scaffold a new extension', topic: 'app'}
 
   test('matches against the id', () => {
-    expect(matchesSearchTerm(entry, 'APP:D')).toBe(true)
+    expect(matchesSearchTerm(entry, 'APP:G')).toBe(true)
   })
 
   test('matches against the description', () => {
-    expect(matchesSearchTerm(entry, 'locally')).toBe(true)
+    expect(matchesSearchTerm(entry, 'scaffold')).toBe(true)
+  })
+
+  test('matches a space-separated term against a colon-separated id', () => {
+    // The list shows `app generate extension`, so typing what you see has to work.
+    expect(matchesSearchTerm(entry, 'app generate')).toBe(true)
+  })
+
+  test('matches a colon-separated term against the same id', () => {
+    // And so does typing the canonical id.
+    expect(matchesSearchTerm(entry, 'app:generate')).toBe(true)
+  })
+
+  test('treats runs of colons and whitespace as a single separator', () => {
+    expect(matchesSearchTerm(entry, '  app:  generate ')).toBe(true)
   })
 
   test('an empty term matches everything', () => {
@@ -93,6 +102,20 @@ describe('searchCatalog', () => {
     // Then
     expect(results.map((entry) => entry.id)).toEqual(['theme:dev'])
   })
+
+  test('filters separator-agnostically', () => {
+    // Given
+    const catalog = buildCommandCatalog([
+      loadable({id: 'app:generate:extension', summary: 'Scaffold'}),
+      loadable({id: 'theme:dev', summary: 'Run the theme'}),
+    ])
+
+    // When
+    const results = searchCatalog(catalog, 'app generate')
+
+    // Then
+    expect(results.map((entry) => entry.id)).toEqual(['app:generate:extension'])
+  })
 })
 
 describe('commandChoices', () => {
@@ -101,26 +124,62 @@ describe('commandChoices', () => {
     loadable({id: 'theme:dev', summary: 'Run the theme'}),
   ])
 
-  test('lists matching commands first and appends the browse affordance last', () => {
+  test('returns only the matching commands, with no extra affordance', () => {
     // When
     const choices = commandChoices(catalog, 'theme')
 
-    // Then: a real command is the first (default-highlighted) choice, and the
-    // browse sentinel is appended at the very end — never pinned to the top, where
-    // cli-kit's highlight reset would make an exact-match Enter select "browse".
-    expect(choices[0]?.value).toBe('theme:dev')
-    expect(choices[choices.length - 1]?.value).toBe(BROWSE_BY_TOPIC)
-    expect(choices.map((choice) => choice.value)).toEqual(['theme:dev', BROWSE_BY_TOPIC])
+    // Then
+    expect(choices.map((choice) => choice.value)).toEqual(['theme:dev'])
   })
 
-  test('carries an id-only label and the description in a separate field', () => {
+  test('returns nothing when no command matches', () => {
+    expect(commandChoices(catalog, 'no-such-command')).toEqual([])
+  })
+
+  test('shows a spaced label while keeping the real colon id as the value', () => {
+    // Given: a deeply namespaced command.
+    const nestedCatalog = buildCommandCatalog([loadable({id: 'app:generate:extension', summary: 'Scaffold'})])
+
+    // When
+    const choices = commandChoices(nestedCatalog, '')
+
+    // Then: the label is display-only; the value is the id the wizard hands off.
+    expect(choices).toEqual([
+      {
+        label: 'app generate extension',
+        value: 'app:generate:extension',
+        description: 'Scaffold',
+        group: 'app',
+      },
+    ])
+  })
+
+  test('carries the description in a separate field and groups by topic', () => {
     // When
     const choices = commandChoices(catalog, 'theme')
 
-    // Then: the label is the id alone (single-line rows), and the description is
-    // carried separately so cli-kit renders it in the panel — never baked into the
-    // label where it would wrap.
-    expect(choices[0]).toEqual({label: 'theme:dev', value: 'theme:dev', description: 'Run the theme'})
+    // Then: the description is carried separately so cli-kit renders it in the
+    // panel — never baked into the label where it would wrap.
+    expect(choices[0]).toEqual({
+      label: 'theme dev',
+      value: 'theme:dev',
+      description: 'Run the theme',
+      group: 'theme',
+    })
+  })
+
+  test('leaves a standalone top-level command ungrouped so it lands in "Other"', () => {
+    // Given
+    const mixedCatalog = buildCommandCatalog([
+      loadable({id: 'app:dev', summary: 'Run the app'}),
+      loadable({id: 'upgrade', summary: 'Upgrade the CLI'}),
+    ])
+
+    // When
+    const choices = commandChoices(mixedCatalog, 'upgrade')
+
+    // Then: cli-kit renders an undefined group under its automatic "Other" title.
+    expect(choices).toEqual([{label: 'upgrade', value: 'upgrade', description: 'Upgrade the CLI', group: undefined}])
   })
 
   test('finds a command whose search term appears only in its description', () => {
@@ -135,75 +194,85 @@ describe('commandChoices', () => {
     // Then: concept search still works even though the description is no longer in
     // the label — the row stays id-only.
     expect(choices[0]).toEqual({
-      label: 'theme:dev',
+      label: 'theme dev',
       value: 'theme:dev',
       description: 'Preview your storefront locally',
+      group: 'theme',
     })
-    // And the underlying matcher confirms it matched on description, not id.
-    expect(searchCatalog(conceptCatalog, 'storefront').map((entry) => entry.id)).toEqual(['theme:dev'])
   })
 
-  test('offers only the browse affordance when nothing matches', () => {
-    const choices = commandChoices(catalog, 'no-such-command')
-    expect(choices.map((choice) => choice.value)).toEqual([BROWSE_BY_TOPIC])
-  })
+  test('omits an empty description rather than passing an empty panel string', () => {
+    // Given
+    const bareCatalog = buildCommandCatalog([loadable({id: 'app:dev'})])
 
-  test('gives the browse affordance a descriptive panel entry', () => {
-    const choices = commandChoices(catalog, 'theme')
-    const browse = choices[choices.length - 1]
-    expect(browse).toEqual({
-      label: 'Browse commands by topic instead…',
-      value: BROWSE_BY_TOPIC,
-      description: 'Pick a topic, then a command within it.',
-    })
+    // When
+    const choices = commandChoices(bareCatalog, '')
+
+    // Then
+    expect(choices[0]?.description).toBeUndefined()
   })
 })
 
 describe('commandChoiceLabel', () => {
-  test('returns the id alone, regardless of description', () => {
-    expect(commandChoiceLabel({id: 'app:dev', description: 'Run the app', topic: 'app'})).toBe('app:dev')
-    expect(commandChoiceLabel({id: 'app:dev', description: '', topic: 'app'})).toBe('app:dev')
+  test('renders colons as spaces', () => {
+    expect(commandChoiceLabel({id: 'app:generate:extension', description: 'Scaffold', topic: 'app'})).toBe(
+      'app generate extension',
+    )
+  })
+
+  test('leaves a top-level command id untouched', () => {
+    expect(commandChoiceLabel({id: 'upgrade', description: '', topic: 'upgrade'})).toBe('upgrade')
   })
 })
 
-describe('commandsInTopic', () => {
-  test('includes the topic command itself and its nested commands', () => {
-    // Given
-    const catalog = buildCommandCatalog([
-      loadable({id: 'theme', summary: 'Theme root'}),
-      loadable({id: 'theme:dev', summary: 'Theme dev'}),
-      loadable({id: 'app:dev', summary: 'App dev'}),
-    ])
+describe('groupForEntry', () => {
+  const catalog = buildCommandCatalog([
+    loadable({id: 'app:dev', summary: 'App dev'}),
+    loadable({id: 'theme', summary: 'Theme root'}),
+    loadable({id: 'theme:dev', summary: 'Theme dev'}),
+    loadable({id: 'upgrade', summary: 'Upgrade'}),
+  ])
 
-    // When
-    const results = commandsInTopic(catalog, 'theme')
+  function entryFor(id: string) {
+    const entry = catalog.find((candidate) => candidate.id === id)
+    if (!entry) throw new Error(`No catalog entry for "${id}"`)
+    return entry
+  }
 
-    // Then
-    expect(results.map((entry) => entry.id)).toEqual(['theme', 'theme:dev'])
+  test('groups a namespaced command under its top-level segment', () => {
+    expect(groupForEntry(entryFor('app:dev'), catalog)).toBe('app')
+  })
+
+  test('groups a top-level command that has nested commands under its own name', () => {
+    expect(groupForEntry(entryFor('theme'), catalog)).toBe('theme')
+  })
+
+  test('leaves a standalone top-level command ungrouped', () => {
+    expect(groupForEntry(entryFor('upgrade'), catalog)).toBeUndefined()
   })
 })
 
-describe('browsableTopics', () => {
-  test('keeps non-hidden topics that contain at least one command, sorted by name', () => {
-    // Given
+describe('topicOrder', () => {
+  test('lists the defined groups sorted, de-duplicated, and without the ungrouped ones', () => {
+    // Given: two `theme` commands (a duplicate group), an `app` one, and two
+    // standalone commands that belong in cli-kit's automatic "Other".
     const catalog = buildCommandCatalog([
-      loadable({id: 'app:dev', summary: 'App dev'}),
       loadable({id: 'theme:dev', summary: 'Theme dev'}),
+      loadable({id: 'theme:push', summary: 'Theme push'}),
+      loadable({id: 'app:dev', summary: 'App dev'}),
+      loadable({id: 'upgrade', summary: 'Upgrade'}),
+      loadable({id: 'version', summary: 'Version'}),
     ])
-    const topics = [
-      topic('theme', {description: 'Theme tools'}),
-      topic('app'),
-      topic('empty', {description: 'Nothing here'}),
-      topic('hidden-topic', {hidden: true}),
-    ]
 
     // When
-    const browsable = browsableTopics(topics, catalog)
+    const order = topicOrder(catalog)
 
-    // Then
-    expect(browsable).toEqual([
-      {name: 'app', description: ''},
-      {name: 'theme', description: 'Theme tools'},
-    ])
+    // Then: "Other" is not listed — cli-kit appends it last on its own.
+    expect(order).toEqual(['app', 'theme'])
+  })
+
+  test('is empty for a catalog of standalone commands only', () => {
+    const catalog = buildCommandCatalog([loadable({id: 'upgrade', summary: 'Upgrade'})])
+    expect(topicOrder(catalog)).toEqual([])
   })
 })

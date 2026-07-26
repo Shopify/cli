@@ -1,11 +1,4 @@
-import {
-  BROWSE_BY_TOPIC,
-  browsableTopics,
-  buildCommandCatalog,
-  commandChoiceLabel,
-  commandChoices,
-  commandsInTopic,
-} from '../services/wizard/catalog.js'
+import {buildCommandCatalog, commandChoices, topicOrder} from '../services/wizard/catalog.js'
 import {
   optionalFlagParameters,
   requiredArgParameters,
@@ -36,10 +29,6 @@ import {
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Command as OclifCommand} from '@oclif/core'
-
-// Re-exported for callers that key off the browse-by-topic sentinel; the source
-// of truth lives with the rest of the catalog logic.
-export {BROWSE_BY_TOPIC}
 
 export default class Wizard extends Command {
   static description =
@@ -80,46 +69,23 @@ export default class Wizard extends Command {
     await this.config.runCommand(commandId, tokens)
   }
 
+  /**
+   * A single searchable list of every command, grouped by top-level topic, with
+   * standalone commands (eg `upgrade`) falling into cli-kit's automatic "Other"
+   * group. The selected value is always a real command id.
+   */
   private async discoverCommandId(): Promise<string> {
     const catalog = buildCommandCatalog(this.config.commands)
 
-    const selected = await renderAutocompletePrompt({
+    return renderAutocompletePrompt({
       message: 'Search for a command to run',
       choices: commandChoices(catalog, ''),
       search: (term: string) => Promise.resolve({data: commandChoices(catalog, term)}),
       // The catalog is filtered locally, so there's no reason to debounce keystrokes.
       searchDebounceMs: 0,
-    })
-
-    if (selected === BROWSE_BY_TOPIC) {
-      return this.browseByTopic(catalog)
-    }
-    return selected
-  }
-
-  private async browseByTopic(catalog: ReturnType<typeof buildCommandCatalog>): Promise<string> {
-    const topics = browsableTopics(this.config.topics, catalog)
-    if (topics.length === 0) {
-      throw new AbortError('There are no topics to browse.')
-    }
-
-    const topicName = await renderSelectPrompt({
-      message: 'Which topic?',
-      choices: topics.map((topic) => ({
-        label: topic.description.length > 0 ? `${topic.name}  ${topic.description}` : topic.name,
-        value: topic.name,
-      })),
-    })
-
-    return renderSelectPrompt({
-      message: `Which command in "${topicName}"?`,
-      choices: commandsInTopic(catalog, topicName).map((entry) => ({
-        label: commandChoiceLabel(entry),
-        value: entry.id,
-        // Keep the row id-only and let the description render in the panel, matching
-        // the discovery search.
-        description: entry.description.length > 0 ? entry.description : undefined,
-      })),
+      // Required: without an explicit order cli-kit sorts every grouped item equally,
+      // which interleaves the groups and repeats their titles row by row.
+      groupOrder: topicOrder(catalog),
     })
   }
 
