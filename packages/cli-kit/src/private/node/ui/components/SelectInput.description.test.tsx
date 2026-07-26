@@ -80,6 +80,24 @@ describe('SelectInput with descriptions', () => {
     )
   })
 
+  test('shows a blank line between the title and description in the beside panel', async () => {
+    const {stdout} = renderWithWidth(<SelectInput items={itemsWithDescriptions} onChange={() => {}} />, 120)
+
+    await waitForInputsToBeReady()
+
+    const lines = lastUnstyledFrame(stdout)
+      .split('\n')
+      .map((line) => line.trimEnd())
+
+    const titleLine = lines.findIndex((line) => /│ doc:fetch\s*│$/.test(line))
+    const descriptionLine = lines.findIndex((line) => line.includes('Fetch a documentation page by URL.'))
+
+    expect(titleLine).toBeGreaterThanOrEqual(0)
+    // Title row, then exactly one blank row, then the description row.
+    expect(descriptionLine).toBe(titleLine + 2)
+    expect(lines[titleLine + 1]).toMatch(/│\s*│$/)
+  })
+
   test('updates the shown description when arrowing', async () => {
     const {renderInstance, stdout} = renderWithWidth(
       <SelectInput items={itemsWithDescriptions} onChange={() => {}} />,
@@ -111,14 +129,16 @@ describe('SelectInput with descriptions', () => {
     const wideDescriptionLine = wideLines.findIndex((line) => line.includes(description))
     const narrowDescriptionLine = narrowLines.findIndex((line) => line.includes(description))
 
-    // Side-by-side: the description sits on one of the first rows, aligned with the list.
-    // Stacked: the description appears only after all three list rows.
-    expect(wideDescriptionLine).toBeLessThan(3)
-    expect(narrowDescriptionLine).toBeGreaterThanOrEqual(3)
+    // Side-by-side: the description sits just past the panel's title + blank-line spacer (rows 0-2:
+    // border, title, spacer), aligned with the list. Stacked: the description appears only after all
+    // three list rows plus their own gap (row 4).
+    expect(wideDescriptionLine).toBeLessThan(4)
+    expect(narrowDescriptionLine).toBeGreaterThanOrEqual(4)
 
-    // When beside, the highlighted label appears twice on the same physical line: once as the list
-    // row and once as the panel title.
-    expect(wideLines[wideDescriptionLine - 1]).toContain('doc:fetch')
+    // When beside, the highlighted label appears twice on the same physical column of rows: once as
+    // the list row and once as the panel title, two rows above the description (title, then the
+    // blank-line spacer, then the description).
+    expect(wideLines[wideDescriptionLine - 2]).toContain('doc:fetch')
   })
 
   test('truncates long labels to a single physical line', async () => {

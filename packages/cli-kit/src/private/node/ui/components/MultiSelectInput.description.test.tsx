@@ -115,14 +115,16 @@ describe('MultiSelectInput with descriptions', () => {
     const wideDescriptionLine = wideLines.findIndex((line) => line.includes(description))
     const narrowDescriptionLine = narrowLines.findIndex((line) => line.includes(description))
 
-    // Side-by-side: the description sits on one of the first rows, aligned with the list.
-    // Stacked: the description appears only after all three list rows.
-    expect(wideDescriptionLine).toBeLessThan(3)
-    expect(narrowDescriptionLine).toBeGreaterThanOrEqual(3)
+    // Side-by-side: the description sits just past the panel's title + blank-line spacer (rows 0-2:
+    // border, title, spacer), aligned with the list. Stacked: the description appears only after all
+    // three list rows plus their own gap (row 4).
+    expect(wideDescriptionLine).toBeLessThan(4)
+    expect(narrowDescriptionLine).toBeGreaterThanOrEqual(4)
 
-    // When beside, the focused label appears twice on the same physical line: once as the list row
-    // and once as the panel title.
-    expect(wideLines[wideDescriptionLine - 1]).toContain('read_products')
+    // When beside, the focused label appears twice on the same physical column of rows: once as the
+    // list row and once as the panel title, two rows above the description (title, then the
+    // blank-line spacer, then the description).
+    expect(wideLines[wideDescriptionLine - 2]).toContain('read_products')
   })
 
   test('truncates long labels to a single physical line', async () => {

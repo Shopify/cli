@@ -70,6 +70,13 @@ export function DescriptionPanel({title, description, width, maxLines}: Descript
           </Text>
         </Box>
       ) : null}
+      {title && description ? (
+        // Fixed-height spacer, not compressible by yoga (same reasoning as the title box above).
+        // This row is spent from the existing `maxLines` budget, not added on top of it: it is one
+        // more line clipped by `overflowY="hidden"` when the description is long and the budget is
+        // tight, same as any other interior row.
+        <Box flexShrink={0} height={1} />
+      ) : null}
       {description ? <Text wrap="wrap">{description}</Text> : null}
     </Box>
   )
