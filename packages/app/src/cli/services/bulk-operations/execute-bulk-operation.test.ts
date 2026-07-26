@@ -4,6 +4,8 @@ import {OrganizationApp, OrganizationSource, OrganizationStore} from '../../mode
 import {
   runBulkOperationQuery,
   runBulkOperationMutation,
+  runBulkOperationMutations,
+  validateBulkOperations,
   watchBulkOperation,
   shortBulkOperationPoll,
   downloadBulkOperationResults,
@@ -23,6 +25,8 @@ vi.mock('@shopify/cli-kit/node/api/bulk-operations', async () => {
     ...actual,
     runBulkOperationQuery: vi.fn(),
     runBulkOperationMutation: vi.fn(),
+    runBulkOperationMutations: vi.fn(),
+    validateBulkOperations: vi.fn(),
     watchBulkOperation: vi.fn(),
     shortBulkOperationPoll: vi.fn(),
     downloadBulkOperationResults: vi.fn(),
@@ -98,6 +102,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
     vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
     vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
+    vi.mocked(validateBulkOperations).mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -199,6 +204,144 @@ describe('executeBulkOperation', () => {
       variablesJsonl: '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
       version: BULK_OPERATIONS_MIN_API_VERSION,
     })
+  })
+
+  test('runs a single-operation plan via runBulkOperationMutation (not the plural mutation)', async () => {
+    const mutation = 'mutation SetProducts($input: ProductSetInput!) { productSet(input: $input) { product { id } } }'
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationMutation>> = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      store: mockStore,
+      operations: [{mutation, variablesJsonl: '{"input":{}}'}],
+    })
+
+    expect(runBulkOperationMutation).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query: mutation,
+      variablesJsonl: '{"input":{}}',
+      version: BULK_OPERATIONS_MIN_API_VERSION,
+    })
+    expect(runBulkOperationMutations).not.toHaveBeenCalled()
+  })
+
+  test('runs a multi-operation plan via runBulkOperationMutations', async () => {
+    const operations = [
+      {
+        mutation: 'mutation SetProducts($input: ProductSetInput!) { productSet(input: $input) { product { id } } }',
+        variablesJsonl: '{"$key":"a","input":{}}',
+      },
+      {
+        mutation:
+          'mutation Publish($id: ID!) { publishablePublish(id: $id, input: []) { publishable { publishedOnCurrentPublication } } }',
+        variablesJsonl: '{"id":"$ref:SetProducts[a].product.id"}',
+      },
+    ]
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationMutations>> = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationMutations).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      store: mockStore,
+      operations,
+    })
+
+    expect(runBulkOperationMutations).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      operations,
+      version: BULK_OPERATIONS_MIN_API_VERSION,
+    })
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
+  })
+
+  test('renders plan user errors with the error code prefixed', async () => {
+    const operations = [
+      {
+        mutation: 'mutation A($input: ProductSetInput!) { productSet(input: $input) { product { id } } }',
+        variablesJsonl: '{"input":{}}',
+      },
+      {
+        mutation:
+          'mutation B($id: ID!) { publishablePublish(id: $id, input: []) { publishable { publishedOnCurrentPublication } } }',
+        variablesJsonl: '{"id":"$ref:A[missing].product.id"}',
+      },
+    ]
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationMutations>> = {
+      bulkOperation: null,
+      userErrors: [
+        {code: 'UNKNOWN_KEY_REF', field: ['operations', 'B'], message: 'unknown $key'},
+        {code: null, field: null, message: 'plain error'},
+      ],
+    }
+    vi.mocked(runBulkOperationMutations).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      store: mockStore,
+      operations,
+    })
+
+    expect(renderError).toHaveBeenCalledWith({
+      headline: 'Error creating bulk operation.',
+      body: {
+        list: {
+          items: ['[UNKNOWN_KEY_REF] operations.B: unknown $key', 'plain error'],
+        },
+      },
+    })
+    expect(renderSuccess).not.toHaveBeenCalled()
+  })
+
+  test('aborts before submitting when client-side validation fails', async () => {
+    vi.mocked(validateBulkOperations).mockResolvedValue([
+      {label: 'operation 1', errors: ["Field 'bogusField' doesn't exist on type 'ProductSetInput'"]},
+    ])
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      store: mockStore,
+      operations: [
+        {
+          mutation: 'mutation A($input: ProductSetInput!) { productSet(input: $input) { product { id } } }',
+          variablesJsonl: '{"input":{}}',
+        },
+      ],
+    })
+
+    expect(renderError).toHaveBeenCalledWith(expect.objectContaining({headline: 'Bulk operation validation failed.'}))
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
+    expect(runBulkOperationMutations).not.toHaveBeenCalled()
+  })
+
+  test('skips client-side validation when validate is false', async () => {
+    const mockResponse: Awaited<ReturnType<typeof runBulkOperationMutation>> = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      store: mockStore,
+      query: 'mutation A($input: ProductSetInput!) { productSet(input: $input) { product { id } } }',
+      variables: ['{"input":{}}'],
+      validate: false,
+    })
+
+    expect(validateBulkOperations).not.toHaveBeenCalled()
+    expect(runBulkOperationMutation).toHaveBeenCalled()
   })
 
   test('renders running message when bulk operation returns without user errors', async () => {

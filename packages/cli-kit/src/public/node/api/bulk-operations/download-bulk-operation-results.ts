@@ -10,6 +10,12 @@ import {AbortError} from '../../error.js'
 export async function downloadBulkOperationResults(url: string): Promise<string> {
   const response = await fetch(url)
 
+  // Guard against a missing response so a failed download surfaces a real error instead of a cryptic
+  // "Cannot read properties of undefined (reading 'ok')".
+  if (!response) {
+    throw new AbortError(`Failed to download bulk operation results: no response from ${url}.`)
+  }
+
   if (!response.ok) {
     throw new AbortError(`Failed to download bulk operation results: ${response.statusText}`)
   }

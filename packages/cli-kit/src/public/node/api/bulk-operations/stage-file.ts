@@ -126,6 +126,14 @@ async function uploadFileToStagedUrl(
     renderOptions: {stdout: process.stderr},
   })
 
+  // Guard against a missing response so a failed upload surfaces a real error instead of a cryptic
+  // "Cannot read properties of undefined (reading 'ok')".
+  if (!uploadResponse) {
+    throw new AbortError(
+      `Failed to upload bulk operation variables: no response from the staged upload target (${uploadUrl}).`,
+    )
+  }
+
   if (!uploadResponse.ok) {
     const errorText = await uploadResponse.text()
     throw new AbortError(`Failed to upload file to staged URL: ${uploadResponse.statusText}\n${errorText}`)

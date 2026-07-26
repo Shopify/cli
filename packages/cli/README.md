@@ -225,8 +225,8 @@ Execute bulk operations.
 ```
 USAGE
   $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--output-file
-    <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>] [--variable-file
-    <value> | -v <value>...] [--verbose] [--version <value>]
+    <value> --watch] [--path <value>] [--plan-file <value> | -v <value>... | --variable-file <value>] [-q <value>]
+    [--query-file <value>] [--reset | ] [-s <value>] [--validate] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
@@ -266,6 +266,12 @@ FLAGS
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
 
+  --plan-file=<value>
+      Path to a JSON file describing an ordered plan of named mutation operations to run together as a single bulk
+      operation. Each entry is {"mutationFile": "...", "variableFile": "..."} (inline "mutation"/"variables" are also
+      accepted). Runs via bulkOperationRunMutations.
+      [env: SHOPIFY_FLAG_PLAN_FILE]
+
   --query-file=<value>
       Path to a file containing the GraphQL query or mutation. Can't be used with --query.
       [env: SHOPIFY_FLAG_QUERY_FILE]
@@ -273,6 +279,11 @@ FLAGS
   --reset
       Reset all your settings.
       [env: SHOPIFY_FLAG_RESET]
+
+  --[no-]validate
+      Validate operations against the store's Admin schema before submitting. Enabled by default; use --no-validate to
+      skip.
+      [env: SHOPIFY_FLAG_VALIDATE]
 
   --variable-file=<value>
       Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with
