@@ -335,6 +335,16 @@ function SelectInput<T>({
     // more; that tradeoff is accepted. `Math.max(1, …)` only guards against a non-positive height on
     // a pathologically short terminal — real terminals are ≥24 rows. The no-description and beside
     // paths are gated out here, so they stay byte-for-byte unchanged.
+    //
+    // KNOWN LIMITATION (accepted): this bounds the list's PHYSICAL height only — the LOGICAL row
+    // budget (`limit`, passed to `useSelectState`) is untouched. A grouped item's smallest unit is 2
+    // physical rows (`minHeight={title ? 2 : 1}`: group title + option row), so once the budget
+    // leaves fewer rows than that group overhead, the clamped box renders the group title and
+    // `overflowY="hidden"` clips the focused option's row. At `availableLines=3` the list is a
+    // single row and shows only the title, so the focused option's label is not visible at all.
+    // Clipping a row at a budget no real terminal reaches beats dropping the clamp and
+    // reintroducing the ghosting. Pinned by the "documented limitation" test in
+    // SelectInput.description.test.tsx.
     if (descriptionsEnabled && !showDescriptionBeside) {
       sectionHeight = Math.min(sectionHeight, Math.max(1, availableLinesToUse - STACKED_HINT_RESERVE))
     }

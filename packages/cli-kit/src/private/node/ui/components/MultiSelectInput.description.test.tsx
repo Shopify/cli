@@ -3,6 +3,7 @@ import {render, waitForInputsToBeReady} from '../../testing/ui.js'
 import {Stdout} from '../../ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test} from 'vitest'
+import figures from 'figures'
 
 import React from 'react'
 
@@ -224,16 +225,35 @@ describe('MultiSelectInput with descriptions', () => {
   function stackedListHeight(frame: string): number {
     const lines = frame.split('\n')
     const previewIndex = lines.findIndex((line) => line.includes('Long description'))
+    if (previewIndex === -1) {
+      // Fail loudly instead of returning -1 - 1: a negative height makes every
+      // `height + STACKED_HINT_RESERVE <= availableLines` assertion below pass vacuously, so a
+      // completely broken stacked layout would look like a green test.
+      throw new Error(`No description preview line found in this stacked frame:\n${frame}`)
+    }
     return previewIndex - 1
   }
 
-  // Regression for R1: in the STACKED description layout a grouped list has `minHeight = 5`, which
-  // used to override the reduced list budget so `sectionHeight + gap + preview` overflowed the
-  // viewport (reintroducing vertical ghosting). The hard-ceiling clamp guarantees the exact
-  // invariant `listHeight + STACKED_HINT_RESERVE <= availableLines`. Pre-fix the list height was
-  // pinned at 5, so `5 + 2 = 7` blew both the 3- and 6-row budgets.
+  // A focused row renders as `>` then the checkbox then the label, indented by the grouped row
+  // margin. Match the whole row so that e.g. `scope:1` cannot satisfy an assertion about `scope:10`.
+  function hasFocusedRow(frame: string, label: string): boolean {
+    return frame.split('\n').some((line) => line.trimEnd() === `   >  ${figures.checkboxOff} ${label}`)
+  }
+
+  // Regression for R1, NO-OVERFLOW ONLY: in the STACKED description layout a grouped list has
+  // `minHeight = 5`, which used to override the reduced list budget so `sectionHeight + gap +
+  // preview` overflowed the viewport (reintroducing vertical ghosting). The hard-ceiling clamp
+  // guarantees the exact invariant `listHeight + STACKED_HINT_RESERVE <= availableLines`. Pre-fix
+  // the list height was pinned at 5, so `5 + 2 = 7` blew both the 3- and 6-row budgets.
+  //
+  // These two budgets are far below what a grouped row needs (a group title plus its option row is
+  // 2 physical rows), so they assert containment and stability ONLY: the block fits the budget and
+  // never grows while arrowing. They deliberately assert NOTHING about usability — at both 3 and 6
+  // rows the focused option's row is clipped for most or all of the walk. Usability is covered at a
+  // realistic budget by 'keeps the focused option visible …', and the clipping itself is pinned by
+  // 'clips the focused option at a pathological grouped budget …'.
   for (const availableLines of [3, 6]) {
-    test(`keeps a grouped stacked list within the vertical budget (availableLines=${availableLines})`, async () => {
+    test(`keeps a grouped stacked list within the vertical budget — no-overflow only (availableLines=${availableLines})`, async () => {
       const groupedItems = Array.from({length: 8}, (_, index) => ({
         label: `scope:${index}`,
         value: `scope-${index}`,
@@ -263,6 +283,84 @@ describe('MultiSelectInput with descriptions', () => {
       }
     })
   }
+
+  // The positive counterpart to the no-overflow-only tests above: proof that the R1 clamp leaves the
+  // case that actually ships fully usable. `availableLines` is `stdout.rows` minus the prompt and
+  // footer areas (see Prompts/PromptLayout.tsx), so 15 is roughly what a standard 24-row terminal
+  // leaves, and 12 items against `limit = 8` means the list genuinely scrolls. This walks every item
+  // and asserts the focused option is really on screen — its label AND the `>` cursor — while the
+  // block stays inside the budget.
+  test('keeps the focused option visible while arrowing a grouped stacked list at a realistic budget', async () => {
+    const availableLines = 15
+    const groupedItems = Array.from({length: 12}, (_, index) => ({
+      label: `scope:${index}`,
+      value: `scope-${index}`,
+      // Contiguous groups, the way a caller declares them: `sortBy` is stable, so each group costs a
+      // single title row. Groups that alternate per item instead cost a title row per item, which
+      // `maximumLinesLostToGroups()` does not budget for.
+      group: index < 6 ? 'Group A' : 'Group B',
+      description: `Long description ${index} ${'word '.repeat(30)}`.trim(),
+    }))
+
+    // Width 80 forces the stacked layout, the only one the clamp applies to.
+    const {renderInstance, stdout} = renderWithWidth(
+      <MultiSelectInput items={groupedItems} onSubmit={() => {}} availableLines={availableLines} />,
+      80,
+    )
+
+    await waitForInputsToBeReady()
+
+    const initialFrame = lastUnstyledFrame(stdout)
+    expect(hasFocusedRow(initialFrame, 'scope:0')).toBe(true)
+    expect(stackedListHeight(initialFrame) + STACKED_HINT_RESERVE).toBeLessThanOrEqual(availableLines)
+
+    // Walk to the last item (length - 1 presses; a further down-arrow is a no-op that never yields a
+    // new frame). Every frame must show the newly focused option and its description.
+    for (let step = 1; step < groupedItems.length; step++) {
+      // eslint-disable-next-line no-await-in-loop
+      await sendAndWaitForFrameChange(stdout, () => renderInstance.stdin.write(ARROW_DOWN))
+      const frame = lastUnstyledFrame(stdout)
+      expect(hasFocusedRow(frame, `scope:${step}`)).toBe(true)
+      expect(frame).toContain(`Long description ${step} word`)
+      expect(stackedListHeight(frame) + STACKED_HINT_RESERVE).toBeLessThanOrEqual(availableLines)
+    }
+  })
+
+  // Pins the documented, intentional consequence of the R1 hard-ceiling clamp in
+  // MultiSelectInput.tsx: the clamp bounds the list's physical height but not the logical `limit`,
+  // so at this pathological budget the list box is a single row, shows only the group title, and
+  // `overflowY="hidden"` clips the focused option's row. Real terminals are ≥24 rows and never reach
+  // it; clipping a row here was accepted over dropping the clamp, which reintroduced vertical
+  // ghosting. If the clamp is ever reworked this test fails, so the behaviour change is a deliberate
+  // decision rather than a surprise — update it together with the clamp comment.
+  test('clips the focused option at a pathological grouped budget (documented limitation)', async () => {
+    const availableLines = 3
+    const groupedItems = Array.from({length: 8}, (_, index) => ({
+      label: `scope:${index}`,
+      value: `scope-${index}`,
+      group: index % 2 === 0 ? 'Group A' : 'Group B',
+      description: `Long description ${index} ${'word '.repeat(30)}`.trim(),
+    }))
+
+    const {stdout} = renderWithWidth(
+      <MultiSelectInput items={groupedItems} onSubmit={() => {}} availableLines={availableLines} />,
+      80,
+    )
+
+    await waitForInputsToBeReady()
+
+    // The observed frame is exactly: group title, gap, description preview, gap, footer.
+    const frame = lastUnstyledFrame(stdout)
+    expect(frame).toContain('Group A')
+    expect(frame).toContain('Long description 0 word')
+    // The accepted casualty: no option row survives the 1-row list box, so neither the focused
+    // label, nor its checkbox, nor its `>` cursor is visible.
+    expect(frame).not.toContain('scope:')
+    expect(frame).not.toContain(figures.checkboxOff)
+    expect(hasFocusedRow(frame, 'scope:0')).toBe(false)
+    // The point of the clamp: the block still fits the budget instead of overflowing it.
+    expect(stackedListHeight(frame) + STACKED_HINT_RESERVE).toBeLessThanOrEqual(availableLines)
+  })
 
   // Regression for R2 (shared `useSelectState`): a WIDTH-only resize that crosses the panel
   // breakpoint changes `visibleOptionCount` without changing the option set. The hook must preserve
