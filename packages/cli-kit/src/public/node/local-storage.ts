@@ -3,6 +3,7 @@ import {fileHasWritePermissions, unixFileIsOwnedByCurrentUser} from './fs.js'
 import {dirname} from './path.js'
 import {TokenItem} from './ui.js'
 import Config from 'conf'
+import {chmodSync} from 'fs'
 
 /**
  * A wrapper around the `conf` package that provides a strongly-typed interface
@@ -14,6 +15,7 @@ export class LocalStorage<T extends Record<string, any>> {
 
   constructor(options: {projectName?: string; cwd?: string}) {
     this.config = new Config<T>(options)
+    this.ensureRestrictedPermissions()
   }
 
   /**
@@ -44,6 +46,7 @@ export class LocalStorage<T extends Record<string, any>> {
   set<TKey extends keyof T>(key: TKey, value?: T[TKey]): void {
     try {
       this.config.set(key, value)
+      this.ensureRestrictedPermissions()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       this.handleError(error, 'set')
@@ -60,6 +63,7 @@ export class LocalStorage<T extends Record<string, any>> {
   delete<TKey extends keyof T>(key: TKey): void {
     try {
       this.config.delete(key)
+      this.ensureRestrictedPermissions()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       this.handleError(error, 'delete')
@@ -75,9 +79,24 @@ export class LocalStorage<T extends Record<string, any>> {
   clear(): void {
     try {
       this.config.clear()
+      this.ensureRestrictedPermissions()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       this.handleError(error, 'clear')
+    }
+  }
+
+  /**
+   * Ensures the configuration file has restricted permissions (0600),
+   * so it's only readable/writable by the current user.
+   * This is important because the configuration file may contain sensitive information.
+   */
+  private ensureRestrictedPermissions() {
+    try {
+      chmodSync(this.config.path, 0o600)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // If we can't change permissions (e.g. on Windows or file doesn't exist), we ignore the error
     }
   }
 
