@@ -15,6 +15,14 @@ interface TextInputProps {
   focus?: boolean
   placeholder?: string
   noColor?: boolean
+  /**
+   * When true, the space key is ignored entirely (no character is inserted and the cursor does not
+   * move). Opt-in, for callers that need space as a hotkey for a sibling component — e.g. the search
+   * box of a searchable multi-select, where space toggles the focused checkbox. Stripping spaces in
+   * the caller's `onChange` instead would desync the cursor, because `cursorOffset` is advanced
+   * before the value diff is emitted.
+   */
+  ignoreSpace?: boolean
 }
 
 const TextInput: FunctionComponent<TextInputProps> = ({
@@ -26,6 +34,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   color = noColor ? undefined : 'cyan',
   password = false,
   focus = true,
+  ignoreSpace = false,
 }: TextInputProps) => {
   const [cursorOffset, setCursorOffset] = useState((originalValue || '').length)
 
@@ -74,7 +83,14 @@ const TextInput: FunctionComponent<TextInputProps> = ({
 
   useInput(
     (input, key) => {
-      if (key.upArrow || key.downArrow || (key.ctrl && input === 'c') || (key.shift && key.tab) || key.return) {
+      if (
+        key.upArrow ||
+        key.downArrow ||
+        (key.ctrl && input === 'c') ||
+        (key.shift && key.tab) ||
+        key.return ||
+        (ignoreSpace && input === ' ')
+      ) {
         return
       } else if (key.tab) {
         if (originalValue.length === 0 && placeholderText) {

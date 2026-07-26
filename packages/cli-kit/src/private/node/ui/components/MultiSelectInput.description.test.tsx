@@ -457,4 +457,67 @@ describe('MultiSelectInput with descriptions', () => {
     expect(after).not.toContain('OMEGA_END_TOKEN')
     expect(normalizeWhitespace(after)).toContain('⇧⇥ full description')
   })
+
+  // A search box above the list passes the filtered rows as `items` and the full list as
+  // `initialItems`. Whether the panel exists is a property of the CHOICES, not of whatever the
+  // current term happens to leave on screen — otherwise the whole layout reflows mid-typing.
+  describe('when a filter hides every described item', () => {
+    const allItems = [
+      ...itemsWithDescriptions,
+      {label: 'plain_scope', value: 'plain_scope'},
+      {label: 'plain_other', value: 'plain_other'},
+    ]
+    const filteredItems = [
+      {label: 'plain_scope', value: 'plain_scope'},
+      {label: 'plain_other', value: 'plain_other'},
+    ]
+
+    // T13
+    test('keeps the beside panel on a wide terminal', async () => {
+      const {stdout} = renderWithWidth(
+        <MultiSelectInput items={filteredItems} initialItems={allItems} onSubmit={() => {}} />,
+        120,
+      )
+
+      await waitForInputsToBeReady()
+
+      const lines = lastUnstyledFrame(stdout)
+        .split('\n')
+        .map((line) => line.trimEnd())
+
+      // The bordered panel is still drawn (empty, because the focused row has no description), so
+      // the list keeps its width and the rows keep their position.
+      expect(lines[0]).toMatch(/╭─+╮$/)
+      expect(lines.some((line) => /╰─+╯$/.test(line))).toBe(true)
+      expect(lastUnstyledFrame(stdout)).toContain('plain_scope')
+      // The panel follows focus, so a hidden item's description must not leak into it.
+      expect(lastUnstyledFrame(stdout)).not.toContain('Read-only access to products.')
+    })
+
+    // T14
+    test('keeps the stacked layout inside its budget on a narrow terminal', async () => {
+      const availableLines = 12
+      const {stdout} = renderWithWidth(
+        <MultiSelectInput
+          items={filteredItems}
+          initialItems={allItems}
+          availableLines={availableLines}
+          onSubmit={() => {}}
+        />,
+        80,
+      )
+
+      await waitForInputsToBeReady()
+
+      const frame = lastUnstyledFrame(stdout)
+      expect(frame).toContain('plain_scope')
+      // The footer wraps on an 80-column terminal, so normalize before matching the hint.
+      expect(frame.replace(/\s+/g, ' ')).toContain('⇧⇥ full description')
+
+      // The stacked preview row (+ its gap) must still fit: the whole block stays within the
+      // vertical budget the prompt handed down, which is what keeps the frame from ghosting.
+      const renderedRows = frame.replace(/\n$/, '').split('\n').length
+      expect(renderedRows).toBeLessThanOrEqual(availableLines)
+    })
+  })
 })

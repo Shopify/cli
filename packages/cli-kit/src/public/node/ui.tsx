@@ -28,6 +28,10 @@ import {MultiSelectPrompt, MultiSelectPromptProps} from '../../private/node/ui/c
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {
+  AutocompleteMultiSelectPrompt,
+  AutocompleteMultiSelectPromptProps,
+} from '../../private/node/ui/components/AutocompleteMultiSelectPrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import {SingleTask} from '../../private/node/ui/components/SingleTask.js'
@@ -305,13 +309,19 @@ export interface RenderMultiSelectPromptOptions<T> extends Omit<MultiSelectPromp
 /**
  * Renders a multi-select (checkbox) prompt to the console.
  * @example
- * ?  Select the extensions you want to add:
+ * ?  Add the scopes to grant to your app:
  *
- * >  ☒ first
- *    ☐ second
- *    ☒ third
+ *    Advanced
+ *    >  ☐ write_orders
+ *       ☐ read_customers
  *
- *    Press ↑↓ arrows to select, space to toggle, enter to confirm.
+ *    Other
+ *       ☒ read_products
+ *       ☐ write_products
+ *       ☐ read_orders
+ *
+ *    Press ↑↓ arrows to select, space to toggle, enter to
+ *    confirm.
  *
  */
 
@@ -325,6 +335,63 @@ export async function renderMultiSelectPrompt<T>(
     let selectedValues: T[] = []
     await render(
       <MultiSelectPrompt
+        {...props}
+        onSubmit={(values: T[]) => {
+          selectedValues = values
+        }}
+      />,
+      {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      },
+    )
+    return selectedValues
+  })
+}
+
+export interface RenderAutocompleteMultiSelectPromptOptions<T> extends Omit<
+  AutocompleteMultiSelectPromptProps<T>,
+  'onSubmit'
+> {
+  renderOptions?: RenderOptions
+}
+
+/**
+ * Renders a searchable multi-select (checkbox) prompt to the console.
+ * Selections persist across searches: filter, check, clear the filter, check more, submit all.
+ * Search is in-memory only; async search is a future upgrade (would require tracking selected
+ * items' labels as they leave the filtered set).
+ * @example
+ * ?  Add the scopes to grant to your app:   Type to search...
+ *
+ *    Products
+ *    >  ☐ read_products
+ *       ☐ write_products
+ *
+ *    Orders
+ *       ☐ read_orders
+ *       ☐ write_orders
+ *
+ *    Other
+ *       ☐ read_customers
+ *
+ *    0 selected · Press ↑↓ arrows to select, space to toggle,
+ *    enter to confirm.
+ *
+ */
+export async function renderAutocompleteMultiSelectPrompt<T>(
+  {renderOptions, ...props}: RenderAutocompleteMultiSelectPromptOptions<T>,
+  uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
+): Promise<T[]> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
+
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    // Unlike the single-select autocomplete, an interrupt is NOT distinguishable from a legitimate
+    // answer here: submitting zero items is valid. So an empty array is returned in both cases
+    // rather than throwing.
+    let selectedValues: T[] = []
+    await render(
+      <AutocompleteMultiSelectPrompt
         {...props}
         onSubmit={(values: T[]) => {
           selectedValues = values

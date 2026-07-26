@@ -478,4 +478,4 @@ function SelectInput<T>({
   }
 }
 
-export {SelectInput}
+export {SelectInput, highlightedLabel}

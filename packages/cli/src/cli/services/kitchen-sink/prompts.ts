@@ -1,4 +1,5 @@
 import {
+  renderAutocompleteMultiSelectPrompt,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
   renderMultiSelectPrompt,
@@ -93,6 +94,61 @@ export async function prompts() {
       },
     ],
     defaultValue: ['read_products', 'read_orders'],
+  })
+
+  // renderAutocompleteMultiSelectPrompt — search + checkboxes; selections persist across searches
+  await renderAutocompleteMultiSelectPrompt({
+    message: 'Add the scopes to grant to your app',
+    choices: [
+      {
+        label: 'read_products',
+        value: 'read_products',
+        group: 'Products',
+        description: 'Grant read-only access to products, variants, collections, and inventory.',
+      },
+      {
+        label: 'write_products',
+        value: 'write_products',
+        group: 'Products',
+        description: 'Allow the app to create and update products.',
+      },
+      {
+        label: 'read_orders',
+        value: 'read_orders',
+        group: 'Orders',
+        description: 'Grant read-only access to orders.',
+      },
+      {
+        label: 'write_orders',
+        value: 'write_orders',
+        group: 'Orders',
+        description: 'Allow the app to create, update, and cancel orders.',
+      },
+      {
+        label: 'read_customers',
+        value: 'read_customers',
+        group: 'Customers',
+        description: 'Grant read-only access to customer profiles.',
+      },
+      {
+        label: 'write_customers',
+        value: 'write_customers',
+        group: 'Customers',
+        description: 'Allow the app to create and update customer profiles.',
+      },
+      {label: 'read_inventory', value: 'read_inventory', description: 'Read inventory levels.'},
+      {label: 'write_inventory', value: 'write_inventory', description: 'Adjust inventory levels.'},
+      {label: 'read_fulfillments', value: 'read_fulfillments', description: 'Read fulfillment records.'},
+      {
+        label: 'read_shipping',
+        value: 'read_shipping',
+        group: 'Deprecated',
+        disabled: true,
+        description: 'Deprecated. Use read_fulfillments instead.',
+      },
+    ],
+    groupOrder: ['Products', 'Orders', 'Customers'],
+    defaultValue: ['read_products'],
   })
 
   // renderTextPrompt

@@ -1,4 +1,4 @@
-import {Item} from './SelectInput.js'
+import {Item, highlightedLabel} from './SelectInput.js'
 import {Scrollbar} from './Scrollbar.js'
 import {DescriptionPanel, MIN_SIDE_PANEL_WIDTH, PANEL_BORDER_ROWS} from './DescriptionPanel.js'
 import {handleCtrlC} from '../../ui.js'
@@ -20,6 +20,24 @@ export interface MultiSelectInputProps<T> {
   inputFixedAreaRef?: React.Ref<DOMElement>
   ref?: React.Ref<DOMElement>
   groupOrder?: string[]
+  /**
+   * Controlled selection. When BOTH selectedValues and onSelectedValuesChange are provided the
+   * component is controlled and keeps no internal selection state, so the checked set survives
+   * anything that remounts this component (e.g. a search box above it swapping the items array).
+   * Omit both for the existing uncontrolled behaviour.
+   */
+  selectedValues?: Set<T>
+  onSelectedValuesChange?: (next: Set<T>) => void
+  /**
+   * When set, the matching substring of each rendered label is bolded. Intended for a search box
+   * above the list; the same helper the single-select autocomplete uses.
+   */
+  highlightedTerm?: string
+  /**
+   * When true, the footer hint is prefixed with how many items are currently checked. Off by
+   * default so the existing pinned frames stay unchanged.
+   */
+  showSelectionCount?: boolean
 }
 
 interface MultiSelectItemProps<T> {
@@ -28,6 +46,7 @@ interface MultiSelectItemProps<T> {
   items: Item<T>[]
   isFocused: boolean
   isSelected: boolean
+  highlightedTerm?: string
   hasAnyGroup: boolean
   index: number
   singleLine: boolean
@@ -38,11 +57,13 @@ function MultiSelectItem<T>({
   previousItem,
   isFocused,
   isSelected,
+  highlightedTerm,
   items,
   hasAnyGroup,
   index,
   singleLine,
 }: MultiSelectItemProps<T>): React.ReactElement {
+  const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
   let labelColor
 
@@ -87,7 +108,7 @@ function MultiSelectItem<T>({
             which is what prevents the wrapped-row ghosting bug. Otherwise preserve the original
             wrapping behavior byte-for-byte. */}
         <Text wrap={singleLine ? 'truncate-end' : 'end'} color={labelColor}>
-          {item.label}
+          {label}
         </Text>
       </Box>
     </Box>
@@ -112,6 +133,10 @@ function MultiSelectInput<T>({
   inputFixedAreaRef,
   ref,
   groupOrder,
+  selectedValues,
+  onSelectedValuesChange,
+  highlightedTerm,
+  showSelectionCount = false,
 }: MultiSelectInputProps<T>): React.ReactElement | null {
   let noItems = false
 
@@ -121,7 +146,12 @@ function MultiSelectInput<T>({
     noItems = true
   }
 
-  const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
+  // Derive the grouped layout from `initialItems` (which defaults to `rawItems`, so this is a no-op
+  // for callers that don't filter). When a search box above the list narrows `items`, deriving this
+  // from the filtered array makes the 3-column group indent appear and disappear mid-typing.
+  // `!noItems &&` is load-bearing: without it, the "No results found." placeholder renders indented
+  // under a bold "Other" heading.
+  const hasAnyGroup = !noItems && initialItems.some((item) => typeof item.group !== 'undefined')
   const items = sortBy(rawItems, (item) => {
     // Items without groups ("Other") always go last
     if (!item.group) return Number.MAX_SAFE_INTEGER + 1
@@ -133,8 +163,24 @@ function MultiSelectInput<T>({
   })
 
   // The set of values the user has toggled on. Selecting zero items is valid,
-  // so this can legitimately be empty when the prompt is submitted.
-  const [selectedValues, setSelectedValues] = useState<Set<T>>(() => new Set(defaultValue ?? []))
+  // so this can legitimately be empty when the prompt is submitted. Only used when the component is
+  // uncontrolled; a controlled parent owns the set instead (see `selectedValues` in the props).
+  const [uncontrolledValues, setUncontrolledValues] = useState<Set<T>>(() => new Set(defaultValue ?? []))
+  const isControlled = selectedValues !== undefined && onSelectedValuesChange !== undefined
+  const currentValues = isControlled ? selectedValues : uncontrolledValues
+
+  // Both props are re-tested here rather than reusing `isControlled`, so TypeScript narrows them to
+  // non-undefined inside the branch.
+  const applyValues = useCallback(
+    (update: (previous: Set<T>) => Set<T>) => {
+      if (selectedValues !== undefined && onSelectedValuesChange !== undefined) {
+        onSelectedValuesChange(update(selectedValues))
+      } else {
+        setUncontrolledValues(update)
+      }
+    },
+    [onSelectedValuesChange, selectedValues],
+  )
 
   const availableLinesToUse = Math.min(availableLines, MAX_AVAILABLE_LINES)
 
@@ -143,8 +189,10 @@ function MultiSelectInput<T>({
   // The description panel is opt-in: it only activates when at least one item provides a
   // description. When it does, rows become single-line/truncated and the focused item's
   // description is shown in a panel. In a multi-select the panel follows FOCUS (the `>` cursor),
-  // not the set of toggled selections.
-  const descriptionsEnabled = items.some((item) => (item.description?.length ?? 0) > 0)
+  // not the set of toggled selections. Derived from `initialItems` (which defaults to `rawItems`, so
+  // this is a no-op for callers that don't filter) so that a search term narrowing `items` down to
+  // description-less rows doesn't tear the panel down and reflow the layout mid-typing.
+  const descriptionsEnabled = initialItems.some((item) => (item.description?.length ?? 0) > 0)
 
   // useLayout clamps both `twoThirds` and `oneThird` up to a minimum of 80 columns, so they can't
   // be placed side-by-side on typical terminals without overflowing (which would reintroduce the
@@ -210,7 +258,7 @@ function MultiSelectInput<T>({
       return
     }
 
-    setSelectedValues((previousValues) => {
+    applyValues((previousValues) => {
       const nextValues = new Set(previousValues)
 
       if (nextValues.has(focusedItem.value)) {
@@ -221,7 +269,7 @@ function MultiSelectInput<T>({
 
       return nextValues
     })
-  }, [items, state.value])
+  }, [applyValues, items, state.value])
 
   useInput(
     (input, key) => {
@@ -238,12 +286,17 @@ function MultiSelectInput<T>({
       }
 
       if (key.return) {
-        if (onSubmit && !noItems) {
+        // `noItems` means nothing is currently listed — but a caller that filters the list (a search
+        // box above it) can have checked items that the current term hides, and those are still a
+        // valid answer, so allow the submit whenever something is checked.
+        if (onSubmit && (!noItems || currentValues.size > 0)) {
           // Resolve in the order the choices were declared, not the order the
           // user toggled them nor the group-sorted display order. `items` is
           // sorted by group, so we filter `initialItems` (the original,
           // declared-order choices) to honour the stable-result contract.
-          onSubmit(initialItems.filter((item) => selectedValues.has(item.value)))
+          // `initialItems` is THE submit source: a caller that filters `items` MUST pass the
+          // unfiltered list here, or checked-but-hidden items are dropped from the answer.
+          onSubmit(initialItems.filter((item) => currentValues.has(item.value)))
         }
         return
       }
@@ -301,7 +354,8 @@ function MultiSelectInput<T>({
             item={item}
             previousItem={state.visibleOptions[index - 1]}
             isFocused={item.value === state.value}
-            isSelected={selectedValues.has(item.value)}
+            isSelected={currentValues.has(item.value)}
+            highlightedTerm={highlightedTerm}
             items={state.visibleOptions}
             hasAnyGroup={hasAnyGroup}
             index={index}
@@ -321,16 +375,28 @@ function MultiSelectInput<T>({
     </Box>
   )
 
+  // The count goes in FRONT of the hint: at 80 columns the trailing `· ⇧⇥ full description` already
+  // competes for the row, and how many items are checked is the higher-value token to keep visible.
+  const selectionCountPrefix = showSelectionCount ? `${currentValues.size} selected · ` : ''
+
   const footer = (
     <Box ref={inputFixedAreaRef}>
       {noItems ? (
         <Box marginLeft={3}>
-          <Text dimColor>Try again with a different keyword.</Text>
+          {/* Reassure the user their checks survived a search term that matches nothing — otherwise
+              an empty list reads as "my selections are gone". */}
+          <Text dimColor>
+            {showSelectionCount && currentValues.size > 0
+              ? `${currentValues.size} selected — clear the search to see them.`
+              : 'Try again with a different keyword.'}
+          </Text>
         </Box>
       ) : (
         <Box marginLeft={3} flexDirection="column">
           <Text dimColor>
-            {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, space to toggle, enter to confirm.${
+            {`${selectionCountPrefix}Press ${
+              figures.arrowUp
+            }${figures.arrowDown} arrows to select, space to toggle, enter to confirm.${
               descriptionsEnabled ? ' · ⇧⇥ full description' : ''
             }`}
           </Text>

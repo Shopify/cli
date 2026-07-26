@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  renderAutocompleteMultiSelectPrompt,
   renderAutocompletePrompt,
   renderConcurrent,
+  renderMultiSelectPrompt,
   renderConfirmationPrompt,
   renderDangerousConfirmationPrompt,
   renderError,
@@ -453,6 +455,67 @@ export const examples: {[key in string]: Example} = {
       await waitFor(
         () => {},
         () => Boolean(stdout.lastFrame()?.includes('Release a new version of nightly-app-2023-06-19?')),
+      )
+
+      return stdout.lastFrame()!
+    },
+  },
+  renderMultiSelectPrompt: {
+    type: 'prompt',
+    basic: async () => {
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
+
+      renderMultiSelectPrompt({
+        message: 'Add the scopes to grant to your app',
+        choices: [
+          {label: 'read_products', value: 'read_products'},
+          {label: 'write_products', value: 'write_products'},
+          {label: 'read_orders', value: 'read_orders'},
+          {label: 'write_orders', value: 'write_orders', group: 'Advanced'},
+          {label: 'read_customers', value: 'read_customers', group: 'Advanced'},
+        ],
+        defaultValue: ['read_products'],
+        renderOptions: {
+          stdout: stdout as any,
+          stdin: stdin as any,
+          debug: true
+        },
+      })
+
+      await waitFor(
+        () => {},
+        () => Boolean(stdout.lastFrame()?.includes('Add the scopes to grant to your app')),
+      )
+
+      return stdout.lastFrame()!
+    },
+  },
+  renderAutocompleteMultiSelectPrompt: {
+    type: 'prompt',
+    basic: async () => {
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
+
+      renderAutocompleteMultiSelectPrompt({
+        message: 'Add the scopes to grant to your app',
+        choices: [
+          {label: 'read_products', value: 'read_products', group: 'Products'},
+          {label: 'write_products', value: 'write_products', group: 'Products'},
+          {label: 'read_orders', value: 'read_orders', group: 'Orders'},
+          {label: 'write_orders', value: 'write_orders', group: 'Orders'},
+          {label: 'read_customers', value: 'read_customers'},
+        ],
+        renderOptions: {
+          stdout: stdout as any,
+          stdin: stdin as any,
+          debug: true
+        },
+      })
+
+      await waitFor(
+        () => {},
+        () => Boolean(stdout.lastFrame()?.includes('Add the scopes to grant to your app')),
       )
 
       return stdout.lastFrame()!
