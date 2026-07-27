@@ -71,6 +71,7 @@ describe('createDevStore', () => {
           priceLookupKey: 'SHOPIFY_PLUS_APP_DEVELOPMENT',
           prepopulateTestData: false,
           developerPreviewHandle: undefined,
+          country: undefined,
         },
       }),
     )
@@ -159,6 +160,84 @@ describe('createDevStore', () => {
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"plan": "basic"'))
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"featurePreview": "extended_variants"'))
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"demoData": true'))
+  })
+
+  test('passes the country to the mutation', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', country: 'CA', json: false})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: expect.objectContaining({country: 'CA'}),
+      }),
+    )
+  })
+
+  test('includes the country in JSON output when provided', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'basic', country: 'CA', json: true})
+
+    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"country": "CA"'))
+  })
+
+  test('includes the country in the success output when provided', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', country: 'CA', json: false})
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customSections: [
+          expect.objectContaining({
+            body: expect.objectContaining({
+              tabularData: expect.arrayContaining([['Country', 'CA']]),
+            }),
+          }),
+        ],
+      }),
+    )
+  })
+
+  test('renders Admin as N/A in the success output when the admin URL is missing', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce({
+        createAppDevelopmentStore: {
+          shopAdminUrl: null,
+          shopDomain: 'test-store.myshopify.com',
+          userErrors: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'COMPLETE'}},
+      })
+
+    await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', json: false})
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customSections: [
+          expect.objectContaining({
+            body: expect.objectContaining({
+              tabularData: expect.arrayContaining([['Admin', 'N/A']]),
+            }),
+          }),
+        ],
+      }),
+    )
   })
 
   test('outputs JSON when --json flag is set', async () => {
