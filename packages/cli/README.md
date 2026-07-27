@@ -3648,7 +3648,7 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --country=<value>
-      Two-letter country code for the store, such as US, CA, or GB.
+      Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.
       [env: SHOPIFY_FLAG_STORE_COUNTRY]
 
   --name=<value>

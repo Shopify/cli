@@ -19,7 +19,7 @@ function isCountryCode(value: string): boolean {
  * body executes.
  */
 export const countryFlag = Flags.string({
-  description: 'Two-letter country code for the store, such as US, CA, or GB.',
+  description: 'Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.',
   env: 'SHOPIFY_FLAG_STORE_COUNTRY',
   required: false,
   parse: async (value) => {
