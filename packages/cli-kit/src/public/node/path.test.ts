@@ -1,5 +1,14 @@
-import {relativizePath, normalizePath, cwd, sniffForPath, commonParentDirectory} from './path.js'
-import {describe, test, expect} from 'vitest'
+import {
+  relativizePath,
+  normalizePath,
+  cwd,
+  sniffForPath,
+  commonParentDirectory,
+  isSubpath,
+  sniffForJson,
+  sanitizeRelativePath,
+} from './path.js'
+import {describe, test, expect, vi} from 'vitest'
 
 describe('relativize', () => {
   test('relativizes the path', () => {
@@ -91,5 +100,61 @@ describe('sniffForPath', () => {
 
     // Then
     expect(path).toStrictEqual('/path/to/project')
+  })
+})
+
+describe('isSubpath', () => {
+  test('returns true if the second path is a subpath of the first path', () => {
+    expect(isSubpath('/foo', '/foo/bar')).toBe(true)
+    expect(isSubpath('/foo', '/foo/bar/baz')).toBe(true)
+  })
+
+  test('returns false if the second path is not a subpath of the first path', () => {
+    expect(isSubpath('/foo', '/bar')).toBe(false)
+    expect(isSubpath('/foo/bar', '/foo')).toBe(false)
+  })
+
+  test('returns true if the paths are identical', () => {
+    expect(isSubpath('/foo', '/foo')).toBe(true)
+  })
+})
+
+describe('sniffForJson', () => {
+  test('returns true if --json is present', () => {
+    expect(sniffForJson(['node', 'script.js', '--json'])).toBe(true)
+  })
+
+  test('returns true if -j is present', () => {
+    expect(sniffForJson(['node', 'script.js', '-j'])).toBe(true)
+  })
+
+  test('returns false if neither is present', () => {
+    expect(sniffForJson(['node', 'script.js', '--other-flag'])).toBe(false)
+  })
+})
+
+describe('sanitizeRelativePath', () => {
+  test('does not modify standard relative paths and does not warn', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('foo/bar', warn)).toBe('foo/bar')
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test('removes double dots and warns', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('foo/../bar', warn)).toBe('bar')
+    expect(warn).toHaveBeenCalledWith("Warning: path 'foo/../bar' contains '..' traversal — sanitized to 'bar'\n")
+  })
+
+  test('collapses nested double dots to top-level directory and warns', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('foo/../../bar', warn)).toBe('bar')
+    expect(warn).toHaveBeenCalledWith("Warning: path 'foo/../../bar' contains '..' traversal — sanitized to 'bar'\n")
+  })
+
+  test('handles single dots by collapsing them and does not warn', () => {
+    const warn = vi.fn()
+    expect(sanitizeRelativePath('foo/./bar', warn)).toBe('foo/bar')
+    expect(warn).not.toHaveBeenCalled()
   })
 })
