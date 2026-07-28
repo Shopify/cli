@@ -112,6 +112,25 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
     )
   })
 
+  test('parses successfully when optional fields are omitted', async () => {
+    // Given
+    const configWithoutOptionalFields = {...config}
+    delete configWithoutOptionalFields.supports_installments
+    delete configWithoutOptionalFields.supports_deferred_payments
+    delete configWithoutOptionalFields.supports_3ds
+
+    // When
+    const result = CustomOnsitePaymentsAppExtensionSchema.safeParse(configWithoutOptionalFields)
+
+    // Then
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).not.toHaveProperty('supports_installments')
+      expect(result.data).not.toHaveProperty('supports_deferred_payments')
+      expect(result.data).not.toHaveProperty('supports_3ds')
+    }
+  })
+
   test('validates a configuration with valid start_verification_session_url', async () => {
     // Given
     const configWithVerificationUrl = {
