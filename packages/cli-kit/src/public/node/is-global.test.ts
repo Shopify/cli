@@ -1,9 +1,15 @@
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, installGlobalCLIPrompt} from './is-global.js'
+import {
+  currentProcessIsGlobal,
+  inferPackageManagerForGlobalCLI,
+  installGlobalCLIPrompt,
+  installGlobalShopifyCLI,
+} from './is-global.js'
 import {findPathUpSync} from './fs.js'
 import {cwd} from './path.js'
-import {terminalSupportsPrompting} from './system.js'
+import {exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {globalCLIVersion} from './version.js'
+import {outputInfo} from './output.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {realpathSync} from 'fs'
 
@@ -11,6 +17,7 @@ vi.mock('./system.js')
 vi.mock('./ui.js')
 vi.mock('which')
 vi.mock('./version.js')
+vi.mock('./output.js')
 
 // Mock fs.js to make findPathUpSync controllable for getProjectDir.
 // find-up v6 runs returned paths through locatePathSync which checks file existence,
@@ -321,5 +328,43 @@ describe('installGlobalCLIPrompt', () => {
 
     // Then
     expect(got).toEqual({install: false, alreadyInstalled: false})
+  })
+})
+
+describe('installGlobalShopifyCLI', () => {
+  test('calls exec with the correct arguments when using yarn', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    await installGlobalShopifyCLI('yarn')
+
+    // Then
+    expect(outputInfo).toHaveBeenCalledWith('Running yarn global add @shopify/cli@latest...')
+    expect(exec).toHaveBeenCalledWith('yarn', ['global', 'add', '@shopify/cli@latest'], {stdio: 'inherit'})
+  })
+
+  test('calls exec with the correct arguments when using npm', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    await installGlobalShopifyCLI('npm')
+
+    // Then
+    expect(outputInfo).toHaveBeenCalledWith('Running npm install -g @shopify/cli@latest...')
+    expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {stdio: 'inherit'})
+  })
+
+  test('calls exec with the correct arguments when using pnpm', async () => {
+    // Given
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    // When
+    await installGlobalShopifyCLI('pnpm')
+
+    // Then
+    expect(outputInfo).toHaveBeenCalledWith('Running pnpm install -g @shopify/cli@latest...')
+    expect(exec).toHaveBeenCalledWith('pnpm', ['install', '-g', '@shopify/cli@latest'], {stdio: 'inherit'})
   })
 })
