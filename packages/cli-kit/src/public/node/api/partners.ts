@@ -1,4 +1,3 @@
-import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {
   graphqlRequest,
   GraphQLVariables,
@@ -76,18 +75,6 @@ export async function partnersRequest<T>(
   )
 
   return result
-}
-
-export const generateFetchAppLogUrl = async (
-  cursor?: string,
-  filters?: {
-    status?: string
-    source?: string
-  },
-): Promise<string> => {
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/app_logs/poll`
-  return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
 }
 
 /**
