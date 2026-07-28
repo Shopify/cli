@@ -27,6 +27,24 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 const LatestApiVersionByFQDN = new Map<string, string>()
 
 /**
+ * Thrown when the Admin API rejects a request with a status a caller may need to act on. It carries
+ * the HTTP status so callers can classify the failure - for instance a stored `shopify store auth`
+ * session that stopped being accepted once its preview store was claimed - rather than parsing the
+ * rendered message. It renders exactly like any other abort error.
+ */
+export class AdminApiRequestError extends AbortError {
+  /**
+   * HTTP status the Admin API responded with.
+   */
+  public readonly status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
+/**
  * Executes a GraphQL query against the Admin API.
  *
  * @param query - GraphQL query to execute.
@@ -187,7 +205,11 @@ export async function fetchApiVersions(
       )
     }
     if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {
-      throw new AbortError(
+      // Every uncached `adminRequestDoc` runs version discovery first, so this is the dominant
+      // first-failure path. The status is preserved on the thrown error because higher-level
+      // classifiers (e.g. stored store-auth recovery) can't recover it from the message.
+      throw new AdminApiRequestError(
+        error.response.status,
         `Error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
       )
     }

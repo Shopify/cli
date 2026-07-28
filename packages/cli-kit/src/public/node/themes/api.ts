@@ -25,7 +25,7 @@ import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
+import {adminRequestDoc, AdminApiRequestError, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
@@ -65,10 +65,20 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
         name: theme.name,
       })
     }
-
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+
+    /**
+     * `undefined` means "this theme does not exist", and callers act on it by forgetting the
+     * cached theme id (see `ThemeManager.fetch`, which calls `removeTheme()`). An authentication
+     * failure says nothing about whether the theme exists, so it has to propagate: masking it
+     * would delete the cached development theme id and report a missing theme instead of the
+     * authentication that actually stopped working.
+     */
+    if (isUnauthorizedAdminApiError(error)) {
+      throw recordError(error)
+    }
+
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -621,6 +631,14 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
     abortIfMissingThemeAccessScope(error)
     throw error
   }
+}
+
+// A 401 from the Admin API reaches theme callers in two shapes: an `AdminApiRequestError` raised by
+// API-version discovery on the first (uncached) request, and a raw `ClientError` on every request
+// after the version has been cached.
+function isUnauthorizedAdminApiError(error: unknown): boolean {
+  if (error instanceof AdminApiRequestError) return error.status === 401
+  return error instanceof ClientError && error.response.status === 401
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {

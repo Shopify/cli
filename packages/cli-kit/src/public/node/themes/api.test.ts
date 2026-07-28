@@ -26,13 +26,19 @@ import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_f
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
-import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
+import {AdminApiRequestError, adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
 
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
 
-vi.mock('../api/admin.js')
+// Only the transport is mocked. `AdminApiRequestError` is a real class so that the `instanceof`
+// check `fetchTheme` uses to tell authentication failures apart from not-found still holds.
+vi.mock('../api/admin.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api/admin.js')>()),
+  adminRequestDoc: vi.fn(),
+  supportedApiVersions: vi.fn(),
+}))
 vi.mock('@shopify/cli-kit/node/system')
 vi.stubGlobal('fetch', vi.fn())
 
@@ -96,6 +102,30 @@ describe('fetchTheme', () => {
     await expect(fetchTheme(123, session)).rejects.toThrow(
       'The authenticated account or access token is missing `read_themes` access scope.',
     )
+  })
+
+  // A 401 says nothing about whether the theme exists, so it must not be flattened into the
+  // `undefined` that callers read as "this theme is gone".
+  test.each([
+    ['the API version is already cached', new ClientError({status: 401, errors: []}, {query: ''})],
+    [
+      'the API version still has to be discovered',
+      new AdminApiRequestError(401, 'Error connecting to your store store.myshopify.com: Unauthorized'),
+    ],
+  ])('propagates an authentication failure when %s', async (_description, error) => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(error)
+
+    // Identity, not equality: the caller classifies this error by its own type and status, so the
+    // very error the transport threw has to come back out.
+    await expect(fetchTheme(123, session)).rejects.toBe(error)
+  })
+
+  // The counterpart to the 401 cases: a 404 really does mean the theme is gone, so it keeps being
+  // reported as `undefined` no matter which shape the rejection arrives in.
+  test('returns undefined when a typed transport error reports the theme was not found', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(new AdminApiRequestError(404, 'Not Found'))
+
+    await expect(fetchTheme(123, session)).resolves.toBeUndefined()
   })
 })
 

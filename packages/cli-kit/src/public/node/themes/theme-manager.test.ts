@@ -2,7 +2,7 @@ import {ThemeManager} from './theme-manager.js'
 import {Theme} from './types.js'
 import {fetchTheme, findDevelopmentThemeByName, themeCreate} from './api.js'
 import {DEVELOPMENT_THEME_ROLE, UNPUBLISHED_THEME_ROLE} from './utils.js'
-import {BugError} from '../error.js'
+import {AbortError, BugError} from '../error.js'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('./api.js')
@@ -27,6 +27,13 @@ class TestThemeManager extends ThemeManager {
 
   setThemeId(themeId: string | undefined): void {
     this.themeId = themeId
+  }
+
+  // `setTheme` is the only writer of the stored id, so seeding through it is what a real manager
+  // does after a fetch or a create. Tests that assert on the stored id have to use this instead of
+  // `setThemeId`, which leaves the stored id undefined and makes such assertions vacuous.
+  storeTheme(themeId: string): void {
+    this.setTheme(themeId)
   }
 
   protected setTheme(themeId: string): void {
@@ -151,7 +158,7 @@ describe('ThemeManager', () => {
 
     test('removes theme when fetch returns undefined', async () => {
       // Given
-      manager.setThemeId('123')
+      manager.storeTheme('123')
       vi.mocked(fetchTheme).mockResolvedValue(undefined)
 
       // When
@@ -161,6 +168,24 @@ describe('ThemeManager', () => {
       expect(fetchTheme).toHaveBeenCalledWith(123, session)
       expect(result).toBeUndefined()
       expect(manager.getStoredThemeId()).toBeUndefined()
+    })
+
+    // Only `undefined` means "this theme is gone". An authentication failure has to propagate with
+    // the cached id intact, or the next successful run would recreate a theme that still exists.
+    test('propagates a failed fetch and keeps the stored theme id', async () => {
+      // Given
+      manager.storeTheme('123')
+      const authenticationFailure = new AbortError('Stored app authentication is no longer valid.')
+      vi.mocked(fetchTheme).mockRejectedValue(authenticationFailure)
+
+      // When
+      await expect(manager.fetch()).rejects.toBe(authenticationFailure)
+
+      // Then the id was not forgotten, so a later run still targets the same theme
+      expect(manager.getStoredThemeId()).toBe('123')
+      vi.mocked(fetchTheme).mockResolvedValue(mockTheme)
+      await expect(manager.fetch()).resolves.toEqual(mockTheme)
+      expect(fetchTheme).toHaveBeenLastCalledWith(123, session)
     })
   })
 
