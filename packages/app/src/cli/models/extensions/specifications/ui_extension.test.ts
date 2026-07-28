@@ -14,6 +14,18 @@ import * as output from '@shopify/cli-kit/node/output'
 import type {NewExtensionPointSchemaType} from '../schemas.js'
 
 describe('ui_extension', async () => {
+  describe('getShouldRenderTarget', () => {
+    test.each([
+      ['admin.product-details.configuration.render', 'admin.product-details.configuration.should-render'],
+      [
+        'admin.product-variant-details.configuration.render',
+        'admin.product-variant-details.configuration.should-render',
+      ],
+    ])('converts %s to %s', (target, expectedTarget) => {
+      expect(getShouldRenderTarget(target)).toBe(expectedTarget)
+    })
+  })
+
   interface GetUIExtensionProps {
     directory: string
     apiVersion?: string
