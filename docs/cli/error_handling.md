@@ -142,6 +142,8 @@ However, until then, we get a lot of leverage in the CLI from `FatalError`, so i
 
 When a command runs with JSON output active (`--json` or `-j`) and fails with a `FatalError`, the CLI writes a machine-readable error document instead of the human-readable banner. This is a public contract: scripts parse it, so treat changes to it as breaking.
 
+The shape of the document depends on `type`. Here is a typical `abort`, produced when the user can fix the problem themselves:
+
 ```json
 {
   "error": {
@@ -149,13 +151,37 @@ When a command runs with JSON output active (`--json` or `-j`) and fails with a 
     "message": "Couldn't find the app's configuration file",
     "tryMessage": "Run shopify app config link to create one",
     "nextSteps": ["Check that you're in the right directory"],
-    "customSections": [{"title": "Extensions", "body": [["name", "status"], ["my-ext", "failed"]]}],
-    "command": "npm",
-    "args": ["install"],
+    "customSections": [{"title": "Extensions", "body": [["name", "status"], ["my-ext", "failed"]]}]
+  }
+}
+```
+
+A `bug` is the only type that carries `stack`, since it is the only type where users are asked to file a report:
+
+```json
+{
+  "error": {
+    "type": "bug",
+    "message": "Unexpected error while parsing the theme manifest",
     "stack": "Error: ...\n    at ..."
   }
 }
 ```
+
+An `external` document additionally carries `command` and `args`, naming the subprocess that failed:
+
+```json
+{
+  "error": {
+    "type": "external",
+    "message": "npm install exited with a non-zero status",
+    "command": "npm",
+    "args": ["install"]
+  }
+}
+```
+
+`tryMessage`, `nextSteps`, and `customSections` are optional on any of the three types; they are simply omitted above where a real document wouldn't include them.
 
 ### The envelope
 
