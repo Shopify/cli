@@ -199,11 +199,24 @@ export function sniffForPath(argv = process.argv): string | undefined {
 /**
  * Returns whether the `--json` or `-j` flags are present in the arguments.
  *
+ * This is a deliberate approximation of oclif's own `jsonEnabled()`, which can't be called
+ * here because we run before parsing. It errs towards reporting JSON output as enabled: a
+ * `--json` consumed as the *value* of a preceding value-taking flag (`--path --json`) is
+ * counted as a request for JSON, because recognising it as a value would mean knowing every
+ * flag's arity, which is oclif's parser rather than a sniff.
+ *
  * @param argv - The arguments to search for the `--json` and `-j` flags.
  * @returns Whether the `--json` or `-j` flag is present in the arguments.
  */
 export function sniffForJson(argv = process.argv): boolean {
-  return argv.includes('--json') || argv.includes('-j')
+  // Everything after the `--` separator is a passthrough argument rather than a flag, so
+  // `shopify app function run -- --json` is not a request for JSON output.
+  const passthroughIndex = argv.indexOf('--')
+  const flags = passthroughIndex === -1 ? argv : argv.slice(0, passthroughIndex)
+  // `-j` is an alias for `--json`, and oclif accepts clustered short flags, so `-vj` enables
+  // JSON output just as much as `-j` does. The character class excludes a bare `-` and the
+  // long form, which is why `--json` is still matched explicitly.
+  return flags.some((token) => token === '--json' || (/^-[a-zA-Z]+$/.test(token) && token.includes('j')))
 }
 
 /**
