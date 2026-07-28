@@ -54,12 +54,8 @@ function adaptedTreeKill(
 
   // Security: Validate that the PID is a number to prevent command injection
   if (!/^\d+$/.test(rootPid)) {
-    if (callback) {
-      callback(new Error('pid must be a number'))
-      return
-    } else {
-      throw new Error('pid must be a number')
-    }
+    callback(new Error('pid must be a number'))
+    return
   }
 
   // A map from parent pid to an array of children pids
@@ -76,12 +72,10 @@ function adaptedTreeKill(
       // Security: Use spawn instead of exec to avoid shell injection when killing processes on Windows
       const taskkill = spawn('taskkill', ['/pid', rootPid, '/T', '/F'])
       taskkill.on('close', (code: number) => {
-        if (callback) {
-          if (code === 0) {
-            callback()
-          } else {
-            callback(new Error(`taskkill exited with code ${code}`))
-          }
+        if (code === 0) {
+          callback()
+        } else {
+          callback(new Error(`taskkill exited with code ${code}`))
         }
       })
       break
@@ -145,18 +139,13 @@ function killAll(
         killed.add(pid)
       }
     })
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err: unknown) {
-    if (callback) {
-      // @ts-ignore
-      callback(err)
-      return
-    } else {
-      throw err
-    }
+    // @ts-ignore
+    callback(err)
+    return
   }
-  if (callback) {
-    callback()
-  }
+  callback()
 }
 
 /**
