@@ -12,7 +12,6 @@ import {AbortSilentError} from '@shopify/cli-kit/node/error'
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
 vi.mock('./fetch-extensions.js')
-vi.mock('./context/partner-account-info.js')
 
 const organizationApp: OrganizationApp = {
   id: 'id',
