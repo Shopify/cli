@@ -92,6 +92,12 @@ class TestThemeCommandWithPathFlag extends TestThemeCommandWithForce {
   static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', 'path']
 }
 
+class TestScopedThemeCommandWithPathFlag extends TestThemeCommandWithPathFlag {
+  protected storeAuthScopes(): string[] {
+    return ['read_themes']
+  }
+}
+
 class TestThemeCommandWithUnionFlags extends TestThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = ['store', ['live', 'development', 'theme']]
 
@@ -262,12 +268,12 @@ describe('ThemeCommand', () => {
         clientId: 'store-auth-client-id',
         userId: 'preview:123',
         accessToken: 'shpat_preview_token',
-        scopes: [],
+        scopes: ['read_themes'],
         acquiredAt: '2026-06-08T11:00:00.000Z',
       })
 
       await CommandConfig.load()
-      const command = new TestThemeCommand([], CommandConfig)
+      const command = new TestScopedThemeCommand([], CommandConfig)
 
       await command.run()
 
@@ -284,12 +290,12 @@ describe('ThemeCommand', () => {
         clientId: 'store-auth-client-id',
         userId: 'preview:123',
         accessToken: 'shpat_preview_token',
-        scopes: [],
+        scopes: ['read_themes'],
         acquiredAt: '2026-06-08T11:00:00.000Z',
       })
 
       await CommandConfig.load()
-      const command = new TestThemeCommand(['--password', 'shptka_password'], CommandConfig)
+      const command = new TestScopedThemeCommand(['--password', 'shptka_password'], CommandConfig)
 
       await command.run()
 
@@ -300,7 +306,7 @@ describe('ThemeCommand', () => {
 
     test('falls back to theme authentication when no matching store auth cache session exists', async () => {
       await CommandConfig.load()
-      const command = new TestThemeCommand([], CommandConfig)
+      const command = new TestScopedThemeCommand([], CommandConfig)
 
       await command.run()
 
@@ -309,26 +315,24 @@ describe('ThemeCommand', () => {
       expect(command.commandCalls[0]).toMatchObject({session: mockSession})
     })
 
-    test('checks required scopes from the stored session before using a matching store auth cache session', async () => {
+    test('ignores the store auth cache when the command does not declare store auth scopes', async () => {
       vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
         store: 'test-store.myshopify.com',
         clientId: 'store-auth-client-id',
         userId: 'preview:123',
         accessToken: 'shpat_preview_token',
-        scopes: ['read_themes'],
+        scopes: ['read_themes', 'write_themes'],
         acquiredAt: '2026-06-08T11:00:00.000Z',
       })
 
       await CommandConfig.load()
-      const command = new TestScopedThemeCommand([], CommandConfig)
+      const command = new TestThemeCommand([], CommandConfig)
 
       await command.run()
 
-      expect(getCurrentStoredStoreAppSession).toHaveBeenCalledWith('test-store.myshopify.com')
-      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
-      expect(command.commandCalls[0]).toMatchObject({
-        session: {token: 'shpat_preview_token', storeFqdn: 'test-store.myshopify.com'},
-      })
+      expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', undefined)
+      expect(command.commandCalls[0]).toMatchObject({session: mockSession})
     })
 
     test('treats a matching write scope in the stored session as satisfying a required read scope', async () => {
@@ -421,7 +425,7 @@ describe('ThemeCommand', () => {
       })
 
       await CommandConfig.load()
-      const command = new TestThemeCommand([], CommandConfig)
+      const command = new TestScopedThemeCommand([], CommandConfig)
 
       await expect(command.run()).rejects.toThrow('cache read failed')
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
@@ -1032,7 +1036,7 @@ describe('ThemeCommand', () => {
           clientId: 'store-auth-client-id',
           userId: 'preview:123',
           accessToken: 'shpat_preview_token',
-          scopes: [],
+          scopes: ['read_themes'],
           acquiredAt: '2026-06-08T11:00:00.000Z',
         },
       ])
@@ -1046,7 +1050,7 @@ describe('ThemeCommand', () => {
       vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
 
       await CommandConfig.load()
-      const command = new TestThemeCommandWithPathFlag(
+      const command = new TestScopedThemeCommandWithPathFlag(
         ['--environment', 'preview', '--environment', 'another-preview'],
         CommandConfig,
       )
@@ -1069,6 +1073,39 @@ describe('ThemeCommand', () => {
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
 
       await CommandConfig.load()
+      const command = new TestScopedThemeCommandWithPathFlag(
+        ['--environment', 'preview', '--environment', 'another-preview'],
+        CommandConfig,
+      )
+
+      await command.run()
+
+      expect(renderWarning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: ['Missing required flags in environment configuration for preview:', {list: {items: ['password']}}],
+        }),
+      )
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+
+    test('multiple environment commands ignore the store auth cache when the command does not declare store auth scopes', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', path: '/home/path/to/theme1'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2', path: '/home/path/to/theme2'})
+      vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([
+        {
+          store: 'store1.myshopify.com',
+          clientId: 'store-auth-client-id',
+          userId: 'preview:123',
+          accessToken: 'shpat_preview_token',
+          scopes: ['read_themes'],
+          acquiredAt: '2026-06-08T11:00:00.000Z',
+        },
+      ])
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
       const command = new TestThemeCommandWithPathFlag(
         ['--environment', 'preview', '--environment', 'another-preview'],
         CommandConfig,
@@ -1076,6 +1113,7 @@ describe('ThemeCommand', () => {
 
       await command.run()
 
+      expect(listCurrentStoredStoreAppSessions).not.toHaveBeenCalled()
       expect(renderWarning).toHaveBeenCalledWith(
         expect.objectContaining({
           body: ['Missing required flags in environment configuration for preview:', {list: {items: ['password']}}],

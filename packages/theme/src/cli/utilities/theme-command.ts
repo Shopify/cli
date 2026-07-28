@@ -139,8 +139,13 @@ export default abstract class ThemeCommand extends Command {
     await this.runConcurrent(validationResults.valid)
   }
 
-  protected storeAuthScopes(): string[] {
-    return []
+  /**
+   * Admin API scopes that a stored `store auth` session must include for this
+   * command to reuse it. Commands opt in to reusing store auth sessions by
+   * returning the scopes they require; the default opts the command out.
+   */
+  protected storeAuthScopes(): string[] | undefined {
+    return undefined
   }
 
   /**
@@ -362,6 +367,9 @@ export default abstract class ThemeCommand extends Command {
   }
 
   private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {
+    const requiredScopes = this.storeAuthScopes()
+    if (!requiredScopes) return undefined
+
     const store = typeof flags.store === 'string' ? flags.store : undefined
     const password = flags.password
     if (!store || password) return undefined
@@ -370,10 +378,13 @@ export default abstract class ThemeCommand extends Command {
     const storedSession = getCurrentStoredStoreAppSession(storeFqdn)
     if (!storedSession) return undefined
 
-    return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn)
+    return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
   }
 
   private storeAuthSessionsForTheme(flagsList: FlagValues[]): Map<string, AdminSession> {
+    const requiredScopes = this.storeAuthScopes()
+    if (!requiredScopes) return new Map()
+
     const stores = new Set(
       flagsList
         .filter(({store, password}) => typeof store === 'string' && !password)
@@ -387,7 +398,7 @@ export default abstract class ThemeCommand extends Command {
           const storeFqdn = normalizeStoreFqdn(storedSession.store)
           if (!stores.has(storeFqdn)) return undefined
 
-          const session = this.adminSessionFromStoreAuthSession(storedSession, storeFqdn)
+          const session = this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
           return session ? ([storeFqdn, session] as const) : undefined
         })
         .filter((entry): entry is readonly [string, AdminSession] => entry !== undefined),
@@ -408,8 +419,9 @@ export default abstract class ThemeCommand extends Command {
   private adminSessionFromStoreAuthSession(
     storedSession: StoredStoreAppSession,
     storeFqdn: string,
+    requiredScopes: string[],
   ): AdminSession | undefined {
-    if (!this.hasRequiredStoreAuthScopes(storedSession.scopes)) {
+    if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
       return undefined
     }
 
@@ -434,11 +446,11 @@ export default abstract class ThemeCommand extends Command {
     return expandedScopes
   }
 
-  private hasRequiredStoreAuthScopes(scopes: string[]): boolean {
-    if (scopes.length === 0) return true
+  private hasRequiredStoreAuthScopes(sessionScopes: string[], requiredScopes: string[]): boolean {
+    if (sessionScopes.length === 0) return true
 
-    const expandedScopes = this.expandImpliedStoreAuthScopes(scopes)
-    return this.storeAuthScopes().every((scope) => expandedScopes.has(scope))
+    const expandedScopes = this.expandImpliedStoreAuthScopes(sessionScopes)
+    return requiredScopes.every((scope) => expandedScopes.has(scope))
   }
 
   /**
