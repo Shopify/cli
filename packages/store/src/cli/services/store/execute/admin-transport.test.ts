@@ -87,7 +87,7 @@ describe('runAdminStoreGraphQLOperation', () => {
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42', undefined)
   })
 
   test('also clears stored auth on a 401 ClientError-shaped rejection', async () => {
@@ -97,7 +97,7 @@ describe('runAdminStoreGraphQLOperation', () => {
     await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toMatchObject({
       message: `Stored app authentication for ${store} is no longer valid.`,
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42', undefined)
   })
 
   test('also treats a 404 as a stored-auth-no-longer-valid signal', async () => {
@@ -107,7 +107,7 @@ describe('runAdminStoreGraphQLOperation', () => {
     await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toMatchObject({
       message: `Stored app authentication for ${store} is no longer valid.`,
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42', undefined)
   })
 
   test('flags a likely claim and does not re-list scopes when a lingering preview session 401s', async () => {
@@ -133,7 +133,9 @@ describe('runAdminStoreGraphQLOperation', () => {
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    // Clearing is what makes the suggested `store auth` runnable: it refuses to start while a
+    // preview session is still stored for the store.
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, 'preview:placeholder-uuid', undefined)
   })
 
   test('throws a GraphQL operation error when errors are returned', async () => {
@@ -261,7 +263,7 @@ describe('fetchPublicApiVersions', () => {
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42', undefined)
   })
 
   test('also handles 404 as a stored-auth-no-longer-valid signal', async () => {
@@ -270,7 +272,7 @@ describe('fetchPublicApiVersions', () => {
     await expect(fetchPublicApiVersions({adminSession, session})).rejects.toMatchObject({
       message: `Stored app authentication for ${store} is no longer valid.`,
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42', undefined)
   })
 
   test('flags a likely claim and does not re-list scopes when a lingering preview session 401s', async () => {
@@ -292,7 +294,7 @@ describe('fetchPublicApiVersions', () => {
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, 'preview:placeholder-uuid', undefined)
   })
 
   test('maps 402 Unavailable Shop to an AbortError without clearing stored auth', async () => {

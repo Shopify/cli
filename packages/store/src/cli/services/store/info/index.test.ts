@@ -194,8 +194,10 @@ describe('getStoreInfo', () => {
     expect(result.adminUrl).toBeUndefined()
   })
 
+  // The session has to be cleared, not kept: `store auth` refuses to run while a preview session is
+  // stored for the store, so keeping it would make the next step printed here unreachable.
   test.each([401, 404])(
-    'prompts re-auth without clearing the stale preview session when the preview store lookup returns %s',
+    'prompts re-auth and clears the stale preview session when the preview store lookup returns %s',
     async (status) => {
       vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
         store: SHOP,
@@ -229,7 +231,7 @@ describe('getStoreInfo', () => {
           ],
         ],
       })
-      expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+      expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, 'placeholder-uuid')
     },
   )
 
@@ -559,7 +561,7 @@ The CLI is currently unable to prompt for reauthentication.`)
         ['Run', {command: `shopify store auth --store ${SHOP} --scopes read_products`}, 'to re-authenticate'],
       ],
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, '42')
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, '42', undefined)
   })
 
   test('flags a likely claim (not a generic invalid-auth error) for a lingering preview session that 401s against Admin', async () => {
@@ -582,7 +584,7 @@ The CLI is currently unable to prompt for reauthentication.`)
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, 'placeholder-uuid', undefined)
   })
 
   test('also treats Admin 404 as a stored-auth-no-longer-valid signal', async () => {
@@ -592,7 +594,7 @@ The CLI is currently unable to prompt for reauthentication.`)
     await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({
       message: `Stored app authentication for ${SHOP} is no longer valid.`,
     })
-    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, '42')
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, '42', undefined)
   })
 
   test('maps unavailable Admin stores to a user-facing AbortError', async () => {
