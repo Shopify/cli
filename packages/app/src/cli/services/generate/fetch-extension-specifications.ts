@@ -64,10 +64,13 @@ async function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: RemoteSpecification[],
 ): Promise<RemoteAwareExtensionSpecification[]> {
+  // Use a Map for O(1) lookups of local specs instead of an O(N) find inside remote.map
+  const localSpecsMap = new Map(local.map((spec) => [spec.identifier, spec]))
+
   // Iterate over the remote specs and merge them with the local ones
   // If the local spec is missing, and the remote one has a validation schema, create a new local spec using contracts
   const updated = remote.map(async (remoteSpec) => {
-    let localSpec = local.find((local) => local.identifier === remoteSpec.identifier)
+    let localSpec = localSpecsMap.get(remoteSpec.identifier)
     if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
       localSpec = await createRemoteOnlySpecification(remoteSpec, remoteSpec.validationSchema)
     }
@@ -86,12 +89,13 @@ async function mergeLocalAndRemoteSpecs(
 
   const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(await Promise.all(updated))
 
+  // Use a Set for O(1) lookups instead of nested O(N) find searches inside filters
+  const resultIdentifiers = new Set(result.map((spec) => spec.identifier))
+
   // Log the specs that were defined locally but aren't in the result
   // This usually means the spec is a gated one and the caller doesn't have adequate access. Or, we're in a test and
   // the mocked specification set is missing something.
-  const presentLocalMissingRemote = local.filter(
-    (spec) => !result.find((result) => result.identifier === spec.identifier),
-  )
+  const presentLocalMissingRemote = local.filter((spec) => !resultIdentifiers.has(spec.identifier))
   if (presentLocalMissingRemote.length > 0) {
     outputDebug(
       `The following extension specifications were defined locally but not found in the remote specifications: ${presentLocalMissingRemote
@@ -101,9 +105,7 @@ async function mergeLocalAndRemoteSpecs(
     )
   }
 
-  const presentRemoteMissingLocal = remote.filter(
-    (spec) => !result.find((result) => result.identifier === spec.identifier),
-  )
+  const presentRemoteMissingLocal = remote.filter((spec) => !resultIdentifiers.has(spec.identifier))
   if (presentRemoteMissingLocal.length > 0) {
     outputDebug(
       `The following extension specifications were found in the remote specifications but not defined locally: ${presentRemoteMissingLocal
