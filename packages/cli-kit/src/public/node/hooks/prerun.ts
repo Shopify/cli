@@ -15,6 +15,10 @@ export const hook: Hook.Prerun = async (options) => {
   })
   const args = options.argv
 
+  // Emit on every invocation; Claude Code owns deduplication and covers first-party and plugin commands.
+  const {emitClaudeCodePluginHint} = await import('../plugin-hints.js')
+  emitClaudeCodePluginHint()
+
   // Load heavy modules in parallel
   const [{outputDebug}, analyticsMod, notificationsMod] = await Promise.all([
     import('../output.js'),
