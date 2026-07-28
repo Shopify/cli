@@ -17,7 +17,14 @@ import {hashString} from '@shopify/cli-kit/node/crypto'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/store-auth-session')
+vi.mock('@shopify/cli-kit/node/store-auth-session', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/store-auth-session')>()
+  return {
+    ...original,
+    getCurrentStoredStoreAppSession: vi.fn(),
+    listCurrentStoredStoreAppSessions: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/environments')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/metadata', () => ({
@@ -395,7 +402,7 @@ describe('ThemeCommand', () => {
       expect(command.commandCalls[0]).toMatchObject({session: mockSession})
     })
 
-    test('does not check stored store auth cache session expiry', async () => {
+    test('falls back to theme authentication when the stored session is expired', async () => {
       vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
         store: 'test-store.myshopify.com',
         clientId: 'store-auth-client-id',
@@ -403,7 +410,27 @@ describe('ThemeCommand', () => {
         accessToken: 'shpat_preview_token',
         scopes: ['read_themes'],
         acquiredAt: '2026-06-08T11:00:00.000Z',
-        expiresAt: '2026-06-08T11:30:00.000Z',
+        expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
+      })
+
+      await CommandConfig.load()
+      const command = new TestScopedThemeCommand([], CommandConfig)
+
+      await command.run()
+
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', undefined)
+      expect(command.commandCalls[0]).toMatchObject({session: mockSession})
+    })
+
+    test('uses a stored session whose expiry is far enough in the future', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'preview:123',
+        accessToken: 'shpat_preview_token',
+        scopes: ['read_themes'],
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       })
 
       await CommandConfig.load()

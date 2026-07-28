@@ -9,6 +9,7 @@ import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-ki
 import {AdminSession, ensureAuthenticatedThemes, setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {
   getCurrentStoredStoreAppSession,
+  isSessionExpired,
   listCurrentStoredStoreAppSessions,
   type StoredStoreAppSession,
 } from '@shopify/cli-kit/node/store-auth-session'
@@ -421,6 +422,10 @@ export default abstract class ThemeCommand extends Command {
     storeFqdn: string,
     requiredScopes: string[],
   ): AdminSession | undefined {
+    if (isSessionExpired(storedSession)) {
+      return undefined
+    }
+
     if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
       return undefined
     }
