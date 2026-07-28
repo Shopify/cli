@@ -1,13 +1,16 @@
 import {StoreInfoBusinessPlatformStoreNotFoundError, fetchDestinationsContext} from './destinations.js'
 import {fetchOrganizationShop} from './organization-shop.js'
 import {mapPlanToPublicHandle} from './plan.js'
-import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
+import {classifyAdminApiError} from '../admin-errors.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
-import {throwStoredAuthInvalidError} from '../auth/recovery.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/client.js'
 import {storeTypeHandle} from '../store-type.js'
-import {getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import {
+  throwIfStoredStoreAuthIsInvalid,
+  throwStoredStoreAuthInvalidError,
+} from '@shopify/cli-kit/node/store-auth-recovery'
+import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -160,11 +163,15 @@ async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promi
     }
   } catch (error) {
     // The CLI has no local signal for when a preview store gets claimed via the browser; a
-    // 401/404 here is the first indication. The stored session is left uncleared on purpose: it
-    // isn't needed for `store auth` to take over, and keeping it means every `store info` run
-    // keeps producing this same actionable message instead of falling through to a full login.
+    // 401/404 here is the first indication. The stored session has to be cleared for the same
+    // reason `throwIfStoredStoreAuthIsInvalid` clears it: `throwIfPreviewStore` refuses to run
+    // `store auth` while a preview session is still stored, so keeping the record would make the
+    // `store auth` next step this error prints unreachable. Preview credentials are write-once and
+    // never expire, so a rejection here means they stopped being accepted outright and nothing
+    // usable is discarded.
     if (error instanceof PreviewStoreRequestError && (error.status === 401 || error.status === 404)) {
-      throwStoredAuthInvalidError(previewSession)
+      clearStoredStoreAppSession(previewSession.store, previewSession.userId)
+      throwStoredStoreAuthInvalidError(previewSession)
     }
 
     throw error

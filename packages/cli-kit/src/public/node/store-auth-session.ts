@@ -65,7 +65,11 @@ interface StoredStoreAppSessionBucket {
   sessionsByUserId: {[userId: string]: StoredStoreAppSession}
 }
 
-interface StoreAuthSessionSchema {
+/**
+ * Local-storage layout for store-auth sessions, keyed by {@link storeAuthSessionKey}. Exported so
+ * that sibling modules taking a storage override can type it the same way this module does.
+ */
+export interface StoreAuthSessionSchema {
   [key: string]: StoredStoreAppSessionBucket
 }
 

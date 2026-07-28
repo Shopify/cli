@@ -4,8 +4,10 @@ import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
+  clearStoredStoreAppSession,
   getCurrentStoredStoreAppSession,
   listCurrentStoredStoreAppSessions,
+  type StoredStoreAppSession,
 } from '@shopify/cli-kit/node/store-auth-session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
@@ -13,6 +15,7 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 import type {Writable} from 'stream'
 
@@ -110,6 +113,50 @@ class TestThemeCommandWithUnionFlags extends TestThemeCommand {
 }
 class TestThemeCommandWithPath extends TestThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = ['store', 'path']
+}
+
+class TestFailingThemeCommand extends TestThemeCommand {
+  failure: Error = new Error('Not configured')
+
+  async command(
+    flags: any,
+    session: AdminSession,
+    multiEnvironment = false,
+    args?: any,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ): Promise<void> {
+    await super.command(flags, session, multiEnvironment, args, context)
+    throw this.failure
+  }
+}
+
+// The shape a 401 has once the Admin API version is cached: graphql-request's `ClientError`, whose
+// HTTP status lives under `response`.
+function adminApiClientError(status: number, message = 'GraphQL Error'): Error {
+  const error = new Error(message) as Error & {response: {status: number; errors: {message: string}[]}}
+  error.response = {status, errors: [{message}]}
+  return error
+}
+
+function storedStoreAuthSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
+  return {
+    store: 'test-store.myshopify.com',
+    clientId: 'store-auth-client-id',
+    userId: '42',
+    accessToken: 'shpat_stored_token',
+    scopes: ['read_themes'],
+    acquiredAt: '2026-06-08T11:00:00.000Z',
+    ...overrides,
+  }
+}
+
+function storedPreviewStoreAuthSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
+  return storedStoreAuthSession({
+    userId: 'preview:123',
+    kind: 'preview',
+    preview: {shopId: '123', name: 'Lavender Candles', createdAt: '2026-06-08T11:00:00.000Z'},
+    ...overrides,
+  })
 }
 
 class TestUnauthenticatedThemeCommand extends ThemeCommand {
@@ -916,9 +963,37 @@ describe('ThemeCommand', () => {
       // Then
       expect(renderError).toHaveBeenCalledWith(
         expect.objectContaining({
-          body: ['Environment command-error failed: \n\nMocking a command error'],
+          headline: 'Environment command-error failed:',
+          body: 'Mocking a command error',
         }),
       )
+    })
+
+    // `renderError` renders a token array as one space-joined paragraph, so the `tryMessage` has to
+    // carry the paragraph break itself to stay the distinct block `renderFatalError` gets for free.
+    test("keeps a failure's try message a separate paragraph from its message", async () => {
+      vi.mocked(loadEnvironment).mockResolvedValue({store: 'store.myshopify.com'})
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestFailingThemeCommand(
+        ['--environment', 'broken', '--environment', 'development'],
+        CommandConfig,
+      )
+      command.failure = new AbortError('Theme could not be pushed.', ['Check the', {command: 'theme list'}, 'output.'])
+
+      await command.run()
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Environment broken failed:',
+        body: ['Theme could not be pushed.', '\n\nCheck the', {command: 'theme list'}, 'output.'],
+      })
     })
 
     test('commands should display an error if the --path flag is used', async () => {
@@ -1109,6 +1184,147 @@ describe('ThemeCommand', () => {
 
       // Then
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('stored store auth recovery', () => {
+    async function runFailingCommand(argv: string[], failure: Error): Promise<Error> {
+      await CommandConfig.load()
+      const command = new TestFailingThemeCommand(argv, CommandConfig)
+      command.failure = failure
+
+      return command.run().then(
+        () => {
+          throw new Error('Expected the command to fail')
+        },
+        (error: Error) => error,
+      )
+    }
+
+    // The session has to be cleared, not kept: `store auth` refuses to run while a preview session
+    // is stored for the store, so keeping it would make the next step printed here unreachable.
+    test('reports a likely claim and clears the session when a stored preview session gets a 401', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedPreviewStoreAuthSession())
+
+      const error = await runFailingCommand([], adminApiClientError(401))
+
+      expect(error).toMatchObject({
+        message:
+          'The preview store test-store.myshopify.com has likely been claimed, so its stored authentication is no longer valid.',
+        nextSteps: [
+          [
+            'Run',
+            {command: 'shopify store auth --store test-store.myshopify.com --scopes <comma-separated-scopes>'},
+            'to re-authenticate',
+          ],
+        ],
+      })
+      expect(clearStoredStoreAppSession).toHaveBeenCalledWith('test-store.myshopify.com', 'preview:123', undefined)
+    })
+
+    // `store` commands classify a standard session's 401 because they reach it only after
+    // refreshing an expired token. Theme commands use the stored access token as-is, so this
+    // session's 401 is the ordinary "expired, needs refreshing" case: re-authenticating isn't the
+    // fix, and clearing the record would throw away the refresh token that is.
+    test('leaves a stored standard session untouched when it gets a 401, refresh token included', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(
+        storedStoreAuthSession({
+          expiresAt: '2026-06-08T12:00:00.000Z',
+          refreshToken: 'refresh-token-that-would-still-work',
+        }),
+      )
+      const failure = adminApiClientError(401, '[API] Invalid API key or access token')
+
+      const error = await runFailingCommand([], failure)
+
+      expect(error).toBe(failure)
+      expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    })
+
+    test.each([
+      ['404, which theme commands never classify because `--theme <id>` can genuinely not exist', 404],
+      ['an unrelated HTTP status', 500],
+    ])('rethrows %s unchanged', async (_description, status) => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedPreviewStoreAuthSession())
+      const failure = adminApiClientError(status, 'Theme not found')
+
+      const error = await runFailingCommand([], failure)
+
+      expect(error).toBe(failure)
+      expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    })
+
+    // A stored preview session for the same store is arranged deliberately: it is the one session
+    // that would otherwise produce the claim message, so the test fails if `--password` consults
+    // stored auth at all. `shptka_` and `shpat_` are both covered because a custom-app token is
+    // byte-indistinguishable from a stored one - provenance can never be inferred from the prefix.
+    test.each(['shptka_theme_access_password', 'shpat_custom_app_password'])(
+      'never blames `shopify store auth` for a 401 from the explicitly supplied token %s',
+      async (password) => {
+        vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedPreviewStoreAuthSession())
+        vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([storedPreviewStoreAuthSession()])
+        vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+          token: password,
+          storeFqdn: 'test-store.myshopify.com',
+        })
+        const failure = adminApiClientError(401, '[API] Invalid API key or access token')
+
+        const error = await runFailingCommand(['--password', password], failure)
+
+        expect(error).toBe(failure)
+        expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+        expect(listCurrentStoredStoreAppSessions).not.toHaveBeenCalled()
+        expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+      },
+    )
+
+    test('recovers per environment, keeping the next steps and still running unaffected environments', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'claimed.myshopify.com'})
+        .mockResolvedValueOnce({store: 'healthy.myshopify.com'})
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+      vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([
+        storedPreviewStoreAuthSession({store: 'claimed.myshopify.com'}),
+        storedPreviewStoreAuthSession({store: 'healthy.myshopify.com'}),
+      ])
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestFailingThemeCommand(
+        ['--environment', 'claimed', '--environment', 'healthy'],
+        CommandConfig,
+      )
+      // Only the first environment's request is rejected; the second must still be attempted.
+      command.failure = adminApiClientError(401)
+      const originalCommand = command.command.bind(command)
+      command.command = async (flags, session, multiEnvironment, args, context) => {
+        if (flags.store !== 'claimed.myshopify.com') {
+          command.commandCalls.push({flags, session, multiEnvironment: multiEnvironment ?? false, args, context})
+          return
+        }
+        await originalCommand(flags, session, multiEnvironment, args, context)
+      }
+
+      await command.run()
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Environment claimed failed:',
+        body: 'The preview store claimed.myshopify.com has likely been claimed, so its stored authentication is no longer valid.',
+        nextSteps: [
+          [
+            'Run',
+            {command: 'shopify store auth --store claimed.myshopify.com --scopes <comma-separated-scopes>'},
+            'to re-authenticate',
+          ],
+        ],
+      })
+      expect(command.commandCalls.map(({flags}) => flags.store)).toContain('healthy.myshopify.com')
     })
   })
 })

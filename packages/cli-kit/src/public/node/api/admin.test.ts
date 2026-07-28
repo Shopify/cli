@@ -6,6 +6,7 @@ import * as http from '../http.js'
 import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
 
 import {test, vi, expect, describe} from 'vitest'
+import {ClientError} from 'graphql-request'
 
 vi.mock('./graphql.js')
 vi.mock('../../../private/node/api/headers.js')
@@ -191,5 +192,38 @@ describe('admin-rest-api', () => {
         method: 'GET',
       },
     )
+  })
+})
+
+describe('fetchApiVersions', () => {
+  // The HTTP status has to survive version discovery: callers such as the stored `store auth`
+  // recovery flow classify on the status, and they can't recover it from the rendered message.
+  test.each([401, 404])('preserves HTTP %i on the thrown error while keeping the message intact', async (status) => {
+    // Given a store whose API version has not been discovered yet
+    const session: AdminSession = {token, storeFqdn: `status-${status}.myshopify.com`}
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(
+      new ClientError({status, data: 'body', errors: []}, {query: 'query'}),
+    )
+
+    // When
+    const error = await admin.fetchApiVersions(session).catch((thrown: unknown) => thrown)
+
+    // Then
+    expect(error).toBeInstanceOf(admin.AdminApiRequestError)
+    expect(error).toMatchObject({status})
+    expect((error as Error).message).toContain(`Error connecting to your store status-${status}.myshopify.com:`)
+  })
+
+  test('leaves other statuses to the existing classification', async () => {
+    // Given
+    const session: AdminSession = {token, storeFqdn: 'forbidden.myshopify.com'}
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(new ClientError({status: 403, errors: []}, {query: 'query'}))
+
+    // When
+    const error = await admin.fetchApiVersions(session).catch((thrown: unknown) => thrown)
+
+    // Then
+    expect(error).not.toBeInstanceOf(admin.AdminApiRequestError)
+    expect((error as Error).message).toContain("Looks like you don't have access to this dev store")
   })
 })

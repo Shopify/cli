@@ -1,9 +1,5 @@
-import {
-  classifyAdminApiError,
-  isGraphQLClientErrorLike,
-  throwIfStoredStoreAuthIsInvalid,
-  ABORTED_FETCH_MESSAGE_FRAGMENTS,
-} from '../admin-errors.js'
+import {classifyAdminApiError, isGraphQLClientErrorLike, ABORTED_FETCH_MESSAGE_FRAGMENTS} from '../admin-errors.js'
+import {throwIfStoredStoreAuthIsInvalid} from '@shopify/cli-kit/node/store-auth-recovery'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
