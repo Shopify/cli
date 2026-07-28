@@ -226,8 +226,6 @@ export interface DeveloperPlatformClient {
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
   apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>
-  migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
-  migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
   currentAccountInfo: () => Promise<CurrentAccountInfoQuery>
   targetSchemaDefinition: (
@@ -240,7 +238,6 @@ export interface DeveloperPlatformClient {
     apiKey: string,
     organizationId: string,
   ) => Promise<string | null>
-  migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (
     input: AppLogsSubscribeMutationVariables,
@@ -254,7 +251,22 @@ export interface DeveloperPlatformClient {
   getCreateDevStoreLink: (org: Organization) => Promise<TokenItem>
 }
 
-const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()
+/**
+ * The legacy extension migrations (Flow, app module, and UI extension) are only implemented by
+ * {@link PartnersClient}; the default {@link AppManagementClient} does not support them. Keeping
+ * these mutations on a dedicated interface lets the migration callers depend on just this surface
+ * rather than the full {@link DeveloperPlatformClient}.
+ */
+export interface MigrationDeveloperPlatformClient {
+  migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
+  migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
+  migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
+}
+
+/** The subset of a developer platform client needed to refresh an expired token. */
+type TokenRefreshableClient = Pick<DeveloperPlatformClient, 'session' | 'unsafeRefreshToken'>
+
+const inProgressRefreshes = new WeakMap<TokenRefreshableClient, Promise<string>>()
 
 /**
  * Creates an unauthorized handler for a developer platform client that will refresh the token
@@ -266,7 +278,7 @@ const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>
  * @returns The unauthorized handler.
  */
 export function createUnauthorizedHandler(
-  client: DeveloperPlatformClient,
+  client: TokenRefreshableClient,
   tokenType: 'default' | 'businessPlatform' = 'default',
 ): UnauthorizedHandler {
   return {

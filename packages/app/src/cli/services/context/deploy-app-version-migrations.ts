@@ -10,7 +10,7 @@ import {
   migrateAppModules,
   UIModulesMap,
 } from '../dev/migrate-app-module.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MigrationDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -94,7 +94,7 @@ function migrationGroup(typesMap: {[key: string]: string[]}, type: string) {
       extensionsToMigrate: Parameters<typeof migrateAppModules>[0]['extensionsToMigrate']
       appId: string
       remoteExtensions: RemoteSource[]
-      migrationClient: DeveloperPlatformClient
+      migrationClient: MigrationDeveloperPlatformClient
     }) => migrateAppModules({...options, type}),
   }
 }
