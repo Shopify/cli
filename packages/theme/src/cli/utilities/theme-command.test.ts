@@ -13,6 +13,7 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 import type {Writable} from 'stream'
 
@@ -206,6 +207,7 @@ describe('ThemeCommand', () => {
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(undefined)
     vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([])
     vi.mocked(fileExistsSync).mockReturnValue(true)
+    mockAndCaptureOutput().clear()
   })
 
   describe('run', () => {
@@ -279,6 +281,8 @@ describe('ThemeCommand', () => {
         acquiredAt: '2026-06-08T11:00:00.000Z',
       })
 
+      const outputMock = mockAndCaptureOutput()
+
       await CommandConfig.load()
       const command = new TestScopedThemeCommand([], CommandConfig)
 
@@ -289,6 +293,9 @@ describe('ThemeCommand', () => {
       expect(command.commandCalls[0]).toMatchObject({
         session: {token: 'shpat_preview_token', storeFqdn: 'test-store.myshopify.com'},
       })
+      expect(outputMock.debug()).toContain(
+        'Using stored store auth session for test-store.myshopify.com (scopes: read_themes).',
+      )
     })
 
     test('uses the password flag instead of a matching store auth cache session', async () => {
@@ -391,6 +398,7 @@ describe('ThemeCommand', () => {
         scopes: ['read_products'],
         acquiredAt: '2026-06-08T11:00:00.000Z',
       })
+      const outputMock = mockAndCaptureOutput()
 
       await CommandConfig.load()
       const command = new TestScopedThemeCommand([], CommandConfig)
@@ -400,6 +408,9 @@ describe('ThemeCommand', () => {
       expect(getCurrentStoredStoreAppSession).toHaveBeenCalledWith('test-store.myshopify.com')
       expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', undefined)
       expect(command.commandCalls[0]).toMatchObject({session: mockSession})
+      expect(outputMock.debug()).toContain(
+        'Ignoring stored store auth session for test-store.myshopify.com: it is missing required scopes (has: read_products; needs: read_themes).',
+      )
     })
 
     test('falls back to theme authentication when the stored session is expired', async () => {
@@ -412,6 +423,7 @@ describe('ThemeCommand', () => {
         acquiredAt: '2026-06-08T11:00:00.000Z',
         expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
       })
+      const outputMock = mockAndCaptureOutput()
 
       await CommandConfig.load()
       const command = new TestScopedThemeCommand([], CommandConfig)
@@ -420,6 +432,9 @@ describe('ThemeCommand', () => {
 
       expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', undefined)
       expect(command.commandCalls[0]).toMatchObject({session: mockSession})
+      expect(outputMock.debug()).toContain(
+        'Ignoring stored store auth session for test-store.myshopify.com: it expired at',
+      )
     })
 
     test('uses a stored session whose expiry is far enough in the future', async () => {

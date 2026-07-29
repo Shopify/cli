@@ -25,6 +25,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -423,12 +424,22 @@ export default abstract class ThemeCommand extends Command {
     requiredScopes: string[],
   ): AdminSession | undefined {
     if (isSessionExpired(storedSession)) {
+      outputDebug(
+        `Ignoring stored store auth session for ${storeFqdn}: it expired at ${storedSession.expiresAt ?? 'unknown'}.`,
+      )
       return undefined
     }
 
     if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
+      outputDebug(
+        `Ignoring stored store auth session for ${storeFqdn}: it is missing required scopes (has: ${storedSession.scopes.join(
+          ', ',
+        )}; needs: ${requiredScopes.join(', ')}).`,
+      )
       return undefined
     }
+
+    outputDebug(`Using stored store auth session for ${storeFqdn} (scopes: ${storedSession.scopes.join(', ')}).`)
 
     setLastSeenUserId(storedSession.userId)
 
