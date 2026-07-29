@@ -352,6 +352,41 @@ describe.each(tokenExchangeMethods)(
       )
     })
 
+    test(`Executing ${tokenExchangeMethod.name} reports unknown_error when the response has no error field`, async () => {
+      // Given
+      const malformedError = {error_description: 'Token was revoked'}
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(malformedError), {status: 400}))
+
+      // When/Then
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(
+          `The custom token provided can't be used for the ${expectedErrorName} API.\nReason: unknown_error - Token was revoked`,
+          'Ensure the token is correct and not expired.',
+        ),
+      )
+      expect(outputDebug).toHaveBeenCalledWith(
+        'Token request to Identity failed with status 400: unknown_error - Token was revoked',
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} truncates and flattens a long multiline description`, async () => {
+      // Given
+      const identityError = {
+        error: 'invalid_request',
+        error_description: `line one\nline two ${'x'.repeat(300)}`,
+      }
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
+
+      // When/Then
+      const expectedDescription = `line one line two ${'x'.repeat(300)}`.slice(0, 200)
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(
+          `The custom token provided can't be used for the ${expectedErrorName} API.\nReason: invalid_request - ${expectedDescription}`,
+          'Ensure the token is correct and not expired.',
+        ),
+      )
+    })
+
     test(`Executing ${tokenExchangeMethod.name} falls back to the generic message when there is no reason to report`, async () => {
       // Given
       vi.mocked(shopifyFetch).mockImplementation(async () => {

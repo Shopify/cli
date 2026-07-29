@@ -258,16 +258,24 @@ async function tokenRequest(params: Record<string, string>): Promise<Result<Toke
     const payload = JSON.parse(responseText)
     if (res.ok) return ok(payload)
 
+    // The responder isn't always Identity: proxies and gateways can answer with arbitrary JSON, so neither
+    // field is guaranteed to be present or well-formed. Normalize both here, before they reach the debug
+    // log or any user-facing message, so downstream code can rely on their shape.
+    const oauthError = typeof payload.error === 'string' && payload.error !== '' ? payload.error : 'unknown_error'
+    const rawDescription = typeof payload.error_description === 'string' ? payload.error_description : ''
+    const cleanedDescription = rawDescription.replace(/\s+/g, ' ').trim().slice(0, 200)
+    const oauthDescription = cleanedDescription === '' ? undefined : cleanedDescription
+
     // Only logged for failed responses: a successful body contains the access token. An OAuth error body
     // carries just `error` and `error_description`, and both are logged rather than the raw body so an
     // unexpected payload can't leak into the debug output.
     outputDebug(
-      `Token request to Identity failed with status ${res.status}: ${payload.error ?? 'unknown_error'}${
-        payload.error_description ? ` - ${payload.error_description}` : ''
+      `Token request to Identity failed with status ${res.status}: ${oauthError}${
+        oauthDescription ? ` - ${oauthDescription}` : ''
       }`,
     )
 
-    return err({error: payload.error, description: payload.error_description, store: params.store})
+    return err({error: oauthError, description: oauthDescription, store: params.store})
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(
