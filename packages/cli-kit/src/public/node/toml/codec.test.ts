@@ -1,4 +1,4 @@
-import {decodeToml} from './codec.js'
+import {decodeToml, encodeToml} from './codec.js'
 import {describe, expect, test} from 'vitest'
 
 describe('decodeToml', () => {
@@ -26,5 +26,27 @@ describe('decodeToml', () => {
     `
     const result = decodeToml(input)
     expect(result).toStrictEqual({access: {admin: {direct_api_mode: 'online'}}})
+  })
+})
+
+describe('encodeToml', () => {
+  test('encodes simple key-value pairs into a TOML string', () => {
+    const content = {
+      name: 'app',
+      version: '1.0.0',
+    }
+    const result = encodeToml(content)
+    expect(result).toContain('name = "app"\n')
+    expect(result).toContain('version = "1.0.0"\n')
+  })
+
+  test('encodes nested properties into structured TOML blocks', () => {
+    const content = {
+      webhooks: {
+        api_version: '2023-07',
+      },
+    }
+    const result = encodeToml(content)
+    expect(result).toBe('[webhooks]\napi_version = "2023-07"\n')
   })
 })
