@@ -1,6 +1,6 @@
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
-import {StoreInfoDestinations} from '../../../api/graphql/business-platform-destinations/generated/store-info-destinations.js'
-import {StoreInfoOwningOrg} from '../../../api/graphql/business-platform-destinations/generated/store-info-owning-org.js'
+import {businessPlatformTokenRefreshHandler} from '../../services/store/business-platform.js'
+import {StoreInfoDestinations} from '../../api/graphql/business-platform-destinations/generated/store-info-destinations.js'
+import {StoreInfoOwningOrg} from '../../api/graphql/business-platform-destinations/generated/store-info-owning-org.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
@@ -10,12 +10,12 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {
   StoreInfoDestinationsQuery,
   StoreInfoDestinationsQueryVariables,
-} from '../../../api/graphql/business-platform-destinations/generated/store-info-destinations.js'
+} from '../../api/graphql/business-platform-destinations/generated/store-info-destinations.js'
 import type {
   StoreInfoOwningOrgQuery,
   StoreInfoOwningOrgQueryVariables,
-} from '../../../api/graphql/business-platform-destinations/generated/store-info-owning-org.js'
-import type {DestinationsContext, OwningOrgInternal} from './types.js'
+} from '../../api/graphql/business-platform-destinations/generated/store-info-owning-org.js'
+import type {DestinationsContext, StoreLookupOrganization} from './types.js'
 import type {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 type DestinationNodeFromQuery = NonNullable<
@@ -28,7 +28,7 @@ interface FetchDestinationsContextOptions {
   noPrompt?: boolean
 }
 
-export class StoreInfoBusinessPlatformStoreNotFoundError extends AbortError {}
+export class StoreLookupStoreNotFoundError extends AbortError {}
 
 export async function fetchDestinationsContext(options: FetchDestinationsContextOptions): Promise<DestinationsContext> {
   const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
@@ -55,7 +55,7 @@ export async function fetchDestinationsContext(options: FetchDestinationsContext
   const matchedNode = nodes.find((node) => matchesStore(node, targetHost))
 
   if (!matchedNode) {
-    throw new StoreInfoBusinessPlatformStoreNotFoundError(
+    throw new StoreLookupStoreNotFoundError(
       `Couldn't find a store with domain ${options.store} for the current account.`,
       'Verify the domain (must be the canonical `myshopify.com` FQDN) and that you are signed in to an account with access to the store. Inactive shops are not searchable.',
     )
@@ -70,7 +70,7 @@ async function fetchOwningOrg(
   destinationPublicId: string,
   token: string,
   unauthorizedHandler: UnauthorizedHandler,
-): Promise<OwningOrgInternal | undefined> {
+): Promise<StoreLookupOrganization | undefined> {
   try {
     const orgResponse = await businessPlatformRequestDoc<StoreInfoOwningOrgQuery, StoreInfoOwningOrgQueryVariables>({
       query: StoreInfoOwningOrg,

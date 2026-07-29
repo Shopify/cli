@@ -6831,6 +6831,75 @@
       "strict": true,
       "summary": "Create a preview Shopify store."
     },
+    "store:delete": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Deletes a development store from your organization.",
+      "descriptionWithMarkdown": "Deletes a development store from your organization.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --json"
+      ],
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "organization-id": {
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
+          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "organization-id",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "store:delete",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Delete a development store."
+    },
     "store:execute": {
       "aliases": [
       ],

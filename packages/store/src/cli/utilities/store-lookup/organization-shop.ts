@@ -1,13 +1,13 @@
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
-import {StoreInfoShop} from '../../../api/graphql/business-platform-organizations/generated/store-info-shop.js'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {businessPlatformTokenRefreshHandler} from '../../services/store/business-platform.js'
+import {StoreInfoShop} from '../../api/graphql/business-platform-organizations/generated/store-info-shop.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {extractHost} from '@shopify/cli-kit/common/url'
 import type {
   StoreInfoShopQuery,
   StoreInfoShopQueryVariables,
-} from '../../../api/graphql/business-platform-organizations/generated/store-info-shop.js'
+} from '../../api/graphql/business-platform-organizations/generated/store-info-shop.js'
 import type {OrganizationShopFields} from './types.js'
 
 interface FetchOrganizationShopOptions {
@@ -18,6 +18,21 @@ interface FetchOrganizationShopOptions {
 }
 
 export async function fetchOrganizationShop(options: FetchOrganizationShopOptions): Promise<OrganizationShopFields> {
+  const shop = await fetchOptionalOrganizationShop(options)
+
+  if (!shop) {
+    throw new AbortError(
+      `Couldn't find shop ${options.store} inside organization ${options.organizationId}.`,
+      'The shop matched a global lookup but is not listed under its parent organization. This usually means the search index is stale; try again in a moment.',
+    )
+  }
+
+  return shop
+}
+
+export async function fetchOptionalOrganizationShop(
+  options: FetchOrganizationShopOptions,
+): Promise<OrganizationShopFields | undefined> {
   const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
   const unauthorizedHandler = businessPlatformTokenRefreshHandler({noPrompt: options.noPrompt})
 
@@ -33,12 +48,7 @@ export async function fetchOrganizationShop(options: FetchOrganizationShopOption
   const lowerStore = options.store.toLowerCase()
   const matched = edges.map((edge) => edge.node).find((node) => extractHost(node.primaryDomain) === lowerStore)
 
-  if (!matched) {
-    throw new BugError(
-      `Couldn't find shop ${options.store} inside organization ${options.organizationId}.`,
-      'The shop matched a global lookup but is not listed under its parent organization. This usually means the search index is stale; try again in a moment.',
-    )
-  }
+  if (!matched) return undefined
 
   return {
     shopifyShopId: matched.shopifyShopId ?? undefined,
