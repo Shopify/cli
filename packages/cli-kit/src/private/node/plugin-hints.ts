@@ -1,6 +1,6 @@
-import {getEnvironmentVariables} from './environment.js'
-import {isTruthy} from './context/utilities.js'
-import {outputDebug} from './output.js'
+import {getEnvironmentVariables} from '../../public/node/environment.js'
+import {isTruthy} from '../../public/node/context/utilities.js'
+import {outputDebug} from '../../public/node/output.js'
 
 /** The Claude Code plugin hint protocol marker. */
 export const SHOPIFY_AI_TOOLKIT_PLUGIN_HINT =
@@ -17,7 +17,7 @@ export function runningUnderClaudeCode(environment = getEnvironmentVariables()):
 }
 
 /**
- * Emits the Claude Code plugin hint on every invocation under Claude Code.
+ * Emits the Claude Code plugin hint on every command invocation under Claude Code.
  * Claude Code handles deduplication and persistence. A failed optional integration
  * must not make the user's command fail.
  *
@@ -30,6 +30,11 @@ export function emitClaudeCodePluginHint(environment = getEnvironmentVariables()
     process.stderr.write(`${SHOPIFY_AI_TOOLKIT_PLUGIN_HINT}\n`)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    outputDebug(`Unable to emit Claude Code plugin hint: ${(error as Error).message}`)
+    try {
+      outputDebug(`Unable to emit Claude Code plugin hint: ${(error as Error).message}`)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // Hint emission and its diagnostics are both best effort.
+    }
   }
 }

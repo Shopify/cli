@@ -15,9 +15,15 @@ export const hook: Hook.Prerun = async (options) => {
   })
   const args = options.argv
 
-  // Emit on every invocation; Claude Code owns deduplication and covers first-party and plugin commands.
-  const {emitClaudeCodePluginHint} = await import('../plugin-hints.js')
-  emitClaudeCodePluginHint()
+  // Emit on every resolved command invocation; --help, --version, and parse errors exit before prerun.
+  // Claude Code owns deduplication and covers first-party and plugin commands.
+  try {
+    const {emitClaudeCodePluginHint} = await import('../../../private/node/plugin-hints.js')
+    emitClaudeCodePluginHint()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // This optional integration must never make a command fail.
+  }
 
   // Load heavy modules in parallel
   const [{outputDebug}, analyticsMod, notificationsMod] = await Promise.all([
