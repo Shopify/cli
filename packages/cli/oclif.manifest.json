@@ -6842,9 +6842,18 @@
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567",
-        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --json"
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --json",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --force"
       ],
       "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Skip confirmation.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
