@@ -70,6 +70,25 @@ describe('findOrSelectTheme', () => {
     })
   })
 
+  test('adds theme IDs as autocomplete helper text', async () => {
+    // Given
+    const themes = [mockTheme(7, 'development'), mockTheme(8, 'unpublished')]
+    vi.mocked(fetchStoreThemes).mockResolvedValue(themes)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(() => Promise.resolve(themes[0]))
+
+    // When
+    await findOrSelectTheme(session, {
+      header: 'Select a theme to open',
+      filter: {},
+    })
+
+    // Then
+    expect(renderAutocompletePrompt).toHaveBeenLastCalledWith({
+      message: 'Select a theme to open',
+      choices: [expect.objectContaining({helperText: '#7'}), expect.objectContaining({helperText: '#8'})],
+    })
+  })
+
   test('returns selected theme when filter is specified', async () => {
     // Given
     vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)

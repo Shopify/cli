@@ -1,7 +1,7 @@
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, type RenderAutocompleteOptions} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {themeCreate} from '@shopify/cli-kit/node/themes/api'
@@ -44,13 +44,14 @@ export async function findOrSelectTheme(session: AdminSession, options: FindOrSe
   }
 
   const message = options.header ?? ''
-  const choices = themes.map((theme) => {
+  const choices: RenderAutocompleteOptions<() => Promise<Theme>>['choices'] = themes.map((theme) => {
     const currentLabel = theme.id.toString() === getDevelopmentTheme() ? ' [current]' : ''
 
     return {
       value: async () => theme,
       label: `${theme.name}${currentLabel}`,
       group: capitalize(theme.role),
+      helperText: `#${theme.id}`,
     }
   })
 
