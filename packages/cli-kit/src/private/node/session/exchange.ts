@@ -8,6 +8,7 @@ import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
+import {outputDebug} from '../../../public/node/output.js'
 
 import * as jose from 'jose'
 
@@ -92,8 +93,13 @@ async function exchangeAppAutomationTokenForAccessToken(
     return {accessToken, userId}
   } catch (error) {
     const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+    const headline = `The custom token provided can't be used for the ${prettyName} API.`
+    // Surface whatever the upstream failure was (e.g. `invalid_request - Invalid 'subject_token' value: invalid`)
+    // so a revoked or expired token and an unreachable Identity aren't indistinguishable. The headline is
+    // kept as-is, and used on its own when there's no reason to report.
+    const reason = error instanceof Error ? error.message.trim() : ''
     throw new AbortError(
-      `The custom token provided can't be used for the ${prettyName} API.`,
+      reason === '' ? headline : `${headline}\nReason: ${reason}`,
       'Ensure the token is correct and not expired.',
     )
   }
@@ -196,20 +202,21 @@ interface TokenRequestResult {
   id_token?: string
 }
 
-function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
+function tokenRequestErrorHandler({error, description, store}: TokenRequestError) {
   const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
     store ? `: ${store}` : '.'
   }`
+  const reason = description === undefined || description === '' ? error : `${error} - ${description}`
 
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
     // using a valid refresh token. When that happens, we take the user through the authentication flow.
-    return new InvalidGrantError()
+    return new InvalidGrantError(reason)
   }
   if (error === 'invalid_request') {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
-    return new InvalidRequestError()
+    return new InvalidRequestError(reason)
   }
   if (error === 'invalid_target') {
     return new InvalidTargetError(invalidTargetErrorMessage, '', [
@@ -219,12 +226,18 @@ function tokenRequestErrorHandler({error, store}: {error: string; store?: string
     ])
   }
   // eslint-disable-next-line @shopify/cli/no-error-factory-functions
-  return new AbortError(error)
+  return new AbortError(reason)
 }
 
-async function tokenRequest(
-  params: Record<string, string>,
-): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
+interface TokenRequestError {
+  // The OAuth error code returned by Identity, e.g. `invalid_request`.
+  error: string
+  // The OAuth `error_description` returned by Identity, when present.
+  description?: string
+  store?: string
+}
+
+async function tokenRequest(params: Record<string, string>): Promise<Result<TokenRequestResult, TokenRequestError>> {
   const fqdn = await identityFqdn()
   const url = `https://${fqdn}/oauth/token`
 
@@ -245,7 +258,16 @@ async function tokenRequest(
     const payload = JSON.parse(responseText)
     if (res.ok) return ok(payload)
 
-    return err({error: payload.error, store: params.store})
+    // Only logged for failed responses: a successful body contains the access token. An OAuth error body
+    // carries just `error` and `error_description`, and both are logged rather than the raw body so an
+    // unexpected payload can't leak into the debug output.
+    outputDebug(
+      `Token request to Identity failed with status ${res.status}: ${payload.error ?? 'unknown_error'}${
+        payload.error_description ? ` - ${payload.error_description}` : ''
+      }`,
+    )
+
+    return err({error: payload.error, description: payload.error_description, store: params.store})
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(
