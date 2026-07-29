@@ -69,24 +69,13 @@ export async function getStorefrontSessionCookies(
   recordEvent(`theme-service:storefront-session:is-password-protected:${Boolean(password)}`)
 
   if (!password) {
-    /**
-     * When the store is not password protected, storefront_digest is not
-     * required, so a single preview HEAD mints the session cookie.
-     */
+    // When the store is not password protected, storefront_digest is not required.
     cookieRecord._shopify_essential = await sessionEssentialCookie(storeUrl, themeId, headers)
     return cookieRecord
   }
 
   const storeOrigin = prependHttps(storeFqdn)
 
-  /**
-   * For password-protected stores the session is primed in two ordered steps:
-   *   1. POST /password first (cold) to obtain the digest-bearing session.
-   *   2. HEAD /?preview_theme_id last, forwarding that digest session so SFR
-   *      stamps preview_theme_id into the same _shopify_essential.
-   * Running the preview HEAD last ensures the final cookie carries BOTH the
-   * password digest and the preview theme id.
-   */
   const passwordCookies = await enrichSessionWithStorefrontPassword(storeUrl, storeOrigin, password, headers)
 
   cookieRecord._shopify_essential = await sessionEssentialCookie(
@@ -125,11 +114,6 @@ async function sessionEssentialCookie(
     ...defaultHeaders(),
   }
 
-  /**
-   * When priming a password-protected session, forward the digest-bearing
-   * essential so SFR stamps preview_theme_id into that same cookie instead of
-   * minting a preview-only one.
-   */
   if (incomingEssential) {
     requestHeaders.Cookie = serializeCookies({_shopify_essential: incomingEssential})
   }
@@ -180,11 +164,6 @@ async function enrichSessionWithStorefrontPassword(
 ): Promise<Record<string, string>> {
   const params = new URLSearchParams({password})
 
-  /**
-   * This runs first (cold) for password-protected stores, so it does not carry
-   * a pre-existing _shopify_essential — SFR mints a digest-bearing session on
-   * the response.
-   */
   const requestHeaders = {
     ...headers,
     ...defaultHeaders(),

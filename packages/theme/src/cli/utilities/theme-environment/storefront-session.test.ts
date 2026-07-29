@@ -57,8 +57,7 @@ describe('Storefront API', () => {
     })
 
     test('retrieves _shopify_essential and storefront_digest cookies when a password is provided', async () => {
-      // Given: POST /password runs first (cold, returns the digest), then the
-      // preview HEAD runs last and owns the final _shopify_essential.
+      // Given
       vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
@@ -118,7 +117,6 @@ describe('Storefront API', () => {
         },
       )
 
-      // Password POST runs first, then the preview HEAD.
       expect(shopifyFetch).toHaveBeenNthCalledWith(
         1,
         'https://example-store.myshopify.com/password',
@@ -147,8 +145,7 @@ describe('Storefront API', () => {
       const digestEssential = ':DIGEST==123:'
       const finalEssential = ':DIGEST+PREVIEW==456:'
 
-      // Given: password POST returns the digest-bearing essential; the preview
-      // HEAD then returns the final essential carrying both fields.
+      // Given
       vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
@@ -174,14 +171,13 @@ describe('Storefront API', () => {
         'password',
       )
 
-      // Then: exactly two fetches, in order — POST /password, then the preview HEAD.
+      // Then
       expect(shopifyFetch).toHaveBeenCalledTimes(2)
       expect(shopifyFetch).toHaveBeenNthCalledWith(
         1,
         'https://example-store.myshopify.com/password',
         expect.objectContaining({method: 'POST'}),
       )
-      // The preview HEAD carries the preview_theme_id AND forwards the digest essential.
       expect(shopifyFetch).toHaveBeenNthCalledWith(
         2,
         'https://example-store.myshopify.com?preview_theme_id=123456&_fd=0&pb=0',
@@ -192,7 +188,6 @@ describe('Storefront API', () => {
           }),
         }),
       )
-      // The final cookie is the trailing preview HEAD's essential (both fields).
       expect(cookies).toEqual({_shopify_essential: finalEssential})
     })
 
@@ -240,7 +235,7 @@ describe('Storefront API', () => {
     })
 
     test('throws an error when the password is wrong', async () => {
-      // Given: the password POST runs first and rejects the credentials.
+      // Given
       vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 401,
@@ -305,8 +300,6 @@ describe('Storefront API', () => {
       const digestEssential = ':AABBCCDDEEFFGGHH==123:'
       const finalEssential = ':NEWESSENTIAL==456:'
 
-      // Given: password POST mints the digest-bearing essential first; the
-      // trailing preview HEAD returns the final essential carrying both fields.
       vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
@@ -332,7 +325,7 @@ describe('Storefront API', () => {
         'password',
       )
 
-      // Then: the trailing preview HEAD's essential wins.
+      // Then
       expect(cookies).toEqual({
         _shopify_essential: finalEssential,
       })
@@ -342,8 +335,7 @@ describe('Storefront API', () => {
       const digestEssential = ':AABBCCDDEEFFGGHH==123:'
       const finalEssential = ':NEWESSENTIAL==456:'
 
-      // Given: password POST first, preview HEAD last (same order as the
-      // standard flow) even when routed through the theme kit access domain.
+      // Given
       vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
@@ -376,9 +368,7 @@ describe('Storefront API', () => {
     })
 
     test('handles case when storefront_digest is present (non-migrated case)', async () => {
-      // Given: storefront_digest is still a standalone cookie. Password POST
-      // runs first and returns only the digest; the trailing preview HEAD
-      // mints the _shopify_essential.
+      // Given
       vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
@@ -411,9 +401,9 @@ describe('Storefront API', () => {
       })
     })
 
-    test('throws error when pasword page does not return a 302', async () => {
-      // Given: the password POST runs first and does not redirect to the
-      // storefront (no 302), so the session cannot be created.
+    test('throws an invalid-password error when POST /password does not redirect to the storefront', async () => {
+      // A correct password submission answers with a 302 back to the storefront.
+      // Here POST /password answers 200 (no redirect), which we treat as a wrong password.
       vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 200,
