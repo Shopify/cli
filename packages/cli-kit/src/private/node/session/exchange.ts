@@ -97,7 +97,7 @@ async function exchangeAppAutomationTokenForAccessToken(
     // Surface whatever the upstream failure was (e.g. `invalid_request - Invalid 'subject_token' value: invalid`)
     // so a revoked or expired token and an unreachable Identity aren't indistinguishable. The headline is
     // kept as-is, and used on its own when there's no reason to report.
-    const reason = error instanceof Error ? error.message.trim() : ''
+    const reason = error instanceof Error ? flattenAndTruncate(error.message) : ''
     throw new AbortError(
       reason === '' ? headline : `${headline}\nReason: ${reason}`,
       'Ensure the token is correct and not expired.',
@@ -137,7 +137,20 @@ export async function exchangeAppAutomationTokenForBusinessPlatformAccessToken(
   return exchangeAppAutomationTokenForAccessToken('business-platform', token, tokenExchangeScopes('business-platform'))
 }
 
-type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
+export type IdentityDeviceError =
+  | 'authorization_pending'
+  | 'access_denied'
+  | 'expired_token'
+  | 'slow_down'
+  | 'unknown_failure'
+
+const identityDeviceErrors: IdentityDeviceError[] = [
+  'authorization_pending',
+  'access_denied',
+  'expired_token',
+  'slow_down',
+  'unknown_failure',
+]
 
 /**
  * Given a deviceCode obtained after starting a device identity flow, request an identity token.
@@ -158,7 +171,11 @@ export async function exchangeDeviceCodeForAccessToken(
 
   const tokenResult = await tokenRequest(params)
   if (tokenResult.isErr()) {
-    return err(tokenResult.error.error as IdentityDeviceError)
+    // The poll loop in device-authorization.ts only understands the device error codes, so any other
+    // code (an unexpected Identity error, a proxy response) must map to 'unknown_failure' rather than
+    // pass through unchecked and leave the poll with a code it can't act on.
+    const deviceError = identityDeviceErrors.find((code) => code === tokenResult.error.error) ?? 'unknown_failure'
+    return err(deviceError)
   }
   const identityToken = buildIdentityToken(tokenResult.value)
   return ok(identityToken)
@@ -237,6 +254,13 @@ interface TokenRequestError {
   store?: string
 }
 
+// Upstream messages can be arbitrarily large or multiline (an Identity description, a proxy error page,
+// a network stack trace). Collapse whitespace and cap the length so they can't flood the terminal or
+// the debug log, wherever they end up being shown.
+function flattenAndTruncate(message: string): string {
+  return message.replace(/\s+/g, ' ').trim().slice(0, 200)
+}
+
 async function tokenRequest(params: Record<string, string>): Promise<Result<TokenRequestResult, TokenRequestError>> {
   const fqdn = await identityFqdn()
   const url = `https://${fqdn}/oauth/token`
@@ -263,7 +287,7 @@ async function tokenRequest(params: Record<string, string>): Promise<Result<Toke
     // log or any user-facing message, so downstream code can rely on their shape.
     const oauthError = typeof payload.error === 'string' && payload.error !== '' ? payload.error : 'unknown_error'
     const rawDescription = typeof payload.error_description === 'string' ? payload.error_description : ''
-    const cleanedDescription = rawDescription.replace(/\s+/g, ' ').trim().slice(0, 200)
+    const cleanedDescription = flattenAndTruncate(rawDescription)
     const oauthDescription = cleanedDescription === '' ? undefined : cleanedDescription
 
     // Only logged for failed responses: a successful body contains the access token. An OAuth error body
