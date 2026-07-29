@@ -14,6 +14,7 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {getLastSeenUserIdAfterAuth, getLastSeenAuthMethod} from '../session.js'
 import {AbortError} from '../../../public/node/error.js'
+import {outputDebug} from '../../../public/node/output.js'
 
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
@@ -42,6 +43,10 @@ const identityToken: IdentityToken = {
 vi.mock('../../../public/node/http.js')
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
+vi.mock('../../../public/node/output.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../public/node/output.js')>()),
+  outputDebug: vi.fn(),
+}))
 
 beforeEach(() => {
   vi.mocked(clientId).mockReturnValue('clientId')
@@ -319,21 +324,47 @@ describe.each(tokenExchangeMethods)(
     })
 
     test(`Executing ${tokenExchangeMethod.name} throws AbortError if an error is caught`, async () => {
-      const expectedErrorMessage = `The custom token provided can't be used for the ${expectedErrorName} API.`
+      const expectedErrorMessage = `The custom token provided can't be used for the ${expectedErrorName} API.\nReason: BAD ERROR`
       vi.mocked(shopifyFetch).mockImplementation(async () => {
         throw new Error('BAD ERROR')
       })
 
-      try {
-        await tokenExchangeMethod(automationToken)
-      } catch (error) {
-        if (error instanceof Error) {
-          expect(error).toBeInstanceOf(AbortError)
-          expect(error.message).toBe(expectedErrorMessage)
-        } else {
-          throw error
-        }
+      // When/Then
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(expectedErrorMessage, 'Ensure the token is correct and not expired.'),
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} surfaces the error and description returned by Identity`, async () => {
+      // Given
+      const identityError = {
+        error: 'invalid_request',
+        error_description: "Invalid 'subject_token' value: invalid",
       }
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
+
+      // When/Then
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        `The custom token provided can't be used for the ${expectedErrorName} API.\nReason: invalid_request - Invalid 'subject_token' value: invalid`,
+      )
+      expect(outputDebug).toHaveBeenCalledWith(
+        "Token request to Identity failed with status 400: invalid_request - Invalid 'subject_token' value: invalid",
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} falls back to the generic message when there is no reason to report`, async () => {
+      // Given
+      vi.mocked(shopifyFetch).mockImplementation(async () => {
+        throw new Error('')
+      })
+
+      // When/Then
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(
+          `The custom token provided can't be used for the ${expectedErrorName} API.`,
+          'Ensure the token is correct and not expired.',
+        ),
+      )
     })
   },
 )
