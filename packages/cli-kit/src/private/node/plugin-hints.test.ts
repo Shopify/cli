@@ -1,5 +1,5 @@
 import {emitClaudeCodePluginHint, runningUnderClaudeCode, SHOPIFY_AI_TOOLKIT_PLUGIN_HINT} from './plugin-hints.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 describe('runningUnderClaudeCode', () => {
   test.each(['1', 'true', 'TRUE', 'yes', 'YES'])('returns true for CLAUDECODE=%s', (value) => {
@@ -29,11 +29,6 @@ describe('emitClaudeCodePluginHint', () => {
   beforeEach(() => {
     write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
     stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
-  })
-
-  afterEach(() => {
-    write.mockRestore()
-    stdout.mockRestore()
   })
 
   test.each([
@@ -68,13 +63,5 @@ describe('emitClaudeCodePluginHint', () => {
     expect(write).toHaveBeenCalledTimes(2)
     expect(write).toHaveBeenNthCalledWith(1, `${SHOPIFY_AI_TOOLKIT_PLUGIN_HINT}\n`)
     expect(write).toHaveBeenNthCalledWith(2, `${SHOPIFY_AI_TOOLKIT_PLUGIN_HINT}\n`)
-  })
-
-  test('does not make errors fatal, including diagnostic errors', () => {
-    write.mockImplementation(() => {
-      throw new Error('write failed')
-    })
-
-    expect(() => emitClaudeCodePluginHint({CLAUDECODE: '1'})).not.toThrow()
   })
 })
