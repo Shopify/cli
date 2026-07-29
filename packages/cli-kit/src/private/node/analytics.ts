@@ -114,8 +114,17 @@ function getShopifyEnvironmentVariables() {
   // Monorail fields, e.g. SHOPIFY_CLI_AGENT, SHOPIFY_CLI_AGENT_VERSION,
   // SHOPIFY_CLI_AGENT_RUN_ID, SHOPIFY_CLI_AGENT_SESSION_ID, and
   // SHOPIFY_CLI_AGENT_PROVIDER.
-  return Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
-}
+  const ALLOWED_ANALYTICS_KEYS = [
+    "SHOPIFY_CLI_AGENT",
+    "SHOPIFY_CLI_AGENT_VERSION",
+    "SHOPIFY_CLI_AGENT_RUN_ID",
+    "SHOPIFY_CLI_AGENT_SESSION_ID",
+    "SHOPIFY_CLI_AGENT_PROVIDER",
+  ];
+  
+  return Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => ALLOWED_ANALYTICS_KEYS.includes(key))
+})
 
 function getPluginNames(config: Interfaces.Config) {
   const pluginNames = [...config.plugins.keys()]
