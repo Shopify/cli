@@ -5,7 +5,7 @@ import {
 } from './device-authorization.js'
 import {clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
-import {exchangeDeviceCodeForAccessToken} from './exchange.js'
+import {exchangeDeviceCodeForAccessToken, IdentityDeviceError} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY} from '../../../public/node/ui.js'
@@ -222,5 +222,29 @@ describe('pollForDeviceAuthorization', () => {
 
     // Then
     await expect(got).rejects.toThrow(new AbortError(`Device authorization failed: Token expired. Please try again.`))
+  })
+
+  test('when polling, if an unknown failure is received, stop polling and throw error', async () => {
+    // Given
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('unknown_failure'))
+
+    // When
+    const got = pollForDeviceAuthorization('device_code', 0.05)
+
+    // Then
+    await expect(got).rejects.toThrow(new Error('Device authorization failed: unknown_failure'))
+  })
+
+  test('when polling, if an unrecognized error code slips through, stop polling instead of hanging', async () => {
+    // Given: the exchange maps unknown codes to 'unknown_failure', but the switch must not rely on
+    // that — a code outside IdentityDeviceError reaching this poll once made it hang forever.
+    const unexpectedCode = 'invalid_client' as unknown as IdentityDeviceError
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err(unexpectedCode))
+
+    // When
+    const got = pollForDeviceAuthorization('device_code', 0.05)
+
+    // Then
+    await expect(got).rejects.toThrow(new Error('Device authorization failed: invalid_client'))
   })
 })

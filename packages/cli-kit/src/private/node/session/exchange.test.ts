@@ -3,6 +3,7 @@ import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
+  exchangeDeviceCodeForAccessToken,
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
@@ -15,6 +16,7 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {getLastSeenUserIdAfterAuth, getLastSeenAuthMethod} from '../session.js'
 import {AbortError} from '../../../public/node/error.js'
 import {outputDebug} from '../../../public/node/output.js'
+import {err, ok} from '../../../public/node/result.js'
 
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
@@ -377,11 +379,28 @@ describe.each(tokenExchangeMethods)(
       }
       vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
 
-      // When/Then
-      const expectedDescription = `line one line two ${'x'.repeat(300)}`.slice(0, 200)
+      // When/Then: the description is capped when parsed, and the whole reason is capped again when
+      // appended, so the final Reason line never exceeds 200 characters.
+      const expectedReason = `invalid_request - line one line two ${'x'.repeat(300)}`.slice(0, 200)
       await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
         new AbortError(
-          `The custom token provided can't be used for the ${expectedErrorName} API.\nReason: invalid_request - ${expectedDescription}`,
+          `The custom token provided can't be used for the ${expectedErrorName} API.\nReason: ${expectedReason}`,
+          'Ensure the token is correct and not expired.',
+        ),
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} flattens and truncates the message of a caught error`, async () => {
+      // Given
+      vi.mocked(shopifyFetch).mockImplementation(async () => {
+        throw new Error(`first line\nsecond line ${'y'.repeat(300)}`)
+      })
+
+      // When/Then
+      const expectedReason = `first line second line ${'y'.repeat(300)}`.slice(0, 200)
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(
+          `The custom token provided can't be used for the ${expectedErrorName} API.\nReason: ${expectedReason}`,
           'Ensure the token is correct and not expired.',
         ),
       )
@@ -403,3 +422,54 @@ describe.each(tokenExchangeMethods)(
     })
   },
 )
+
+describe('exchange device code for access token', () => {
+  test('returns the identity token when the exchange succeeds', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(data)))
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then: a fresh device login carries no pre-existing alias.
+    expect(result).toEqual(ok({...identityToken, alias: undefined}))
+  })
+
+  test('passes a recognized device error code through to the poll loop', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      new Response(JSON.stringify({error: 'authorization_pending'}), {status: 400}),
+    )
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then
+    expect(result).toEqual(err('authorization_pending'))
+  })
+
+  test('maps an unrecognized error code to unknown_failure', async () => {
+    // Given: Identity can return OAuth codes outside the device set, e.g. invalid_client.
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify({error: 'invalid_client'}), {status: 400}))
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then
+    expect(result).toEqual(err('unknown_failure'))
+  })
+
+  test('maps a response with no error field to unknown_failure', async () => {
+    // Given: tokenRequest normalizes a missing error field to 'unknown_error', which is not
+    // a device error code and must not leak into the poll loop.
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      new Response(JSON.stringify({error_description: 'no code'}), {status: 400}),
+    )
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then
+    expect(result).toEqual(err('unknown_failure'))
+  })
+})
