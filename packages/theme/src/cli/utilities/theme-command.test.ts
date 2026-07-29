@@ -356,7 +356,7 @@ describe('ThemeCommand', () => {
       })
     })
 
-    test('uses a matching store auth cache session when stored scopes are empty', async () => {
+    test('falls back to theme authentication when the stored session has no recorded scopes', async () => {
       vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
         store: 'test-store.myshopify.com',
         clientId: 'store-auth-client-id',
@@ -371,10 +371,8 @@ describe('ThemeCommand', () => {
 
       await command.run()
 
-      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
-      expect(command.commandCalls[0]).toMatchObject({
-        session: {token: 'shpat_preview_token', storeFqdn: 'test-store.myshopify.com'},
-      })
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('test-store.myshopify.com', undefined)
+      expect(command.commandCalls[0]).toMatchObject({session: mockSession})
     })
 
     test('falls back to theme authentication when matching store auth session lacks required scopes', async () => {

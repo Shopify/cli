@@ -447,8 +447,6 @@ export default abstract class ThemeCommand extends Command {
   }
 
   private hasRequiredStoreAuthScopes(sessionScopes: string[], requiredScopes: string[]): boolean {
-    if (sessionScopes.length === 0) return true
-
     const expandedScopes = this.expandImpliedStoreAuthScopes(sessionScopes)
     return requiredScopes.every((scope) => expandedScopes.has(scope))
   }
