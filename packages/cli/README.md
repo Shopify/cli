@@ -90,6 +90,7 @@
 * [`shopify store info`](#shopify-store-info)
 * [`shopify store list`](#shopify-store-list)
 * [`shopify store open`](#shopify-store-open)
+* [`shopify theme airlock add STORE`](#shopify-theme-airlock-add-store)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -3919,6 +3920,44 @@ EXAMPLES
   $ shopify store open --store shop.myshopify.com
 ```
 
+## `shopify theme airlock add STORE`
+
+Trust a store for this theme project.
+
+```
+USAGE
+  $ shopify theme airlock add STORE --environment <value> [--auth-alias <value>] [--no-color] [--password <value>]
+    [--path <value>] [--verbose]
+
+ARGUMENTS
+  STORE  Store domain to trust.
+
+FLAGS
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --environment=<value>
+      (required) Environment name to add.
+      [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --password=<value>
+      Password generated from the Theme Access app or an Admin API token.
+      [env: SHOPIFY_CLI_THEME_TOKEN]
+
+  --path=<value>
+      The path where you want to run the command. Defaults to the current working directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+```
+
 ## `shopify theme check`
 
 Validate the theme.
@@ -4243,6 +4282,9 @@ DESCRIPTION
 
   Uploads the current theme as the specified theme, or a "development theme"
   (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
+
+  The target store must be trusted in the nearest `shopify.theme.toml` file. To trust a store, run `shopify theme
+  airlock add`.
 
   This command returns the following information:
 
@@ -5075,6 +5117,9 @@ DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
 
   Uploads your local theme files to Shopify, overwriting the remote version if specified.
+
+  The target store must be trusted in the nearest `shopify.theme.toml` file. To trust a store, run `shopify theme
+  airlock add`.
 
   If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your
   store.

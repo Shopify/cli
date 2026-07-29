@@ -704,6 +704,9 @@ importers:
       h3:
         specifier: 1.15.11
         version: 1.15.11
+      proper-lockfile:
+        specifier: 4.1.2
+        version: 4.1.2
       yaml:
         specifier: 2.9.0
         version: 2.9.0
@@ -711,6 +714,9 @@ importers:
       '@shopify/theme-hot-reload':
         specifier: ^0.0.22
         version: 0.0.22
+      '@types/proper-lockfile':
+        specifier: 4.1.4
+        version: 4.1.4
       '@vitest/coverage-istanbul':
         specifier: ^3.2.7
         version: 3.2.7(vitest@4.1.10)

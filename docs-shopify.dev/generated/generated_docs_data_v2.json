@@ -5398,6 +5398,70 @@
       "value": "export interface storeopen {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The myshopify.com domain of the store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
+  "themeairlockadd": {
+    "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts",
+      "name": "themeairlockadd",
+      "description": "The following flags are available for the `theme airlock add` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--auth-alias <value>",
+          "value": "string",
+          "description": "Alias of the Shopify account to use for authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_AUTH_ALIAS"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--environment <value>",
+          "value": "string",
+          "description": "Environment name to add.",
+          "environmentValue": "SHOPIFY_FLAG_ENVIRONMENT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--password <value>",
+          "value": "string",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--path <value>",
+          "value": "string",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-airlock-add.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        }
+      ],
+      "value": "export interface themeairlockadd {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Environment name to add.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '--environment <value>': string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "themecheck": {
     "docs-shopify.dev/commands/interfaces/theme-check.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",

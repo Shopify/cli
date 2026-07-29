@@ -34,6 +34,16 @@ describe('ensureThemeStore', () => {
     expect(setThemeStore).toHaveBeenCalledWith('stored.myshopify.com')
   })
 
+  test('does not persist the store when remembering is disabled', () => {
+    const flags = {store: 'example.myshopify.com'}
+    vi.mocked(setThemeStore).mockClear()
+
+    const result = ensureThemeStore({store: flags.store, remember: false})
+
+    expect(result).toBe('example.myshopify.com')
+    expect(setThemeStore).not.toHaveBeenCalled()
+  })
+
   test('throws AbortError if store is not provided and not in local storage', () => {
     // Given
     const flags = {store: undefined}

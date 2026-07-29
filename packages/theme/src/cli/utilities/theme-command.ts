@@ -1,6 +1,13 @@
 import {ensureThemeStore} from './theme-store.js'
+import {ThemeAirlockCoordinator} from './theme-airlock/coordinator.js'
+import {
+  validateAirlockBatchEnvironmentSelections,
+  validateAirlockStoreSelectionSources,
+} from './theme-airlock/resolver.js'
+import {renderAirlockPreflight} from './theme-airlock/preflight.js'
+import {ThemeAirlockError} from './theme-airlock/types.js'
 import {configurationFileName} from '../constants.js'
-import {useThemeStoreContext} from '../services/local-storage.js'
+import {getThemeStore, useThemeStoreContext} from '../services/local-storage.js'
 
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
@@ -27,7 +34,10 @@ import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/met
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
+import type {AirlockBatchExecutionEnvironment} from './theme-airlock/coordinator.js'
+import type {AirlockTarget} from './theme-airlock/types.js'
 import type {Writable} from 'stream'
 
 type FlagValues = Record<string, boolean | string | string[] | number | undefined>
@@ -36,8 +46,10 @@ interface ValidEnvironment {
   flags: FlagValues
   requiresAuth: boolean
   storeAuthSession?: AdminSession
+  session?: AdminSession
 }
 type EnvironmentName = string
+
 /**
  * Flags required to run a command in multiple environments
  *
@@ -84,33 +96,58 @@ export default abstract class ThemeCommand extends Command {
     const {args, flags} = await this.parse(klass)
     const commandRequiresAuth = 'password' in klass.flags
 
-    const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
+    const environmentSelectors = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
+    const environments = environmentSelectors.filter(Boolean)
 
     // Check if store flag is required by the command
     const storeIsRequired =
       requiredFlags !== null &&
       requiredFlags.some((flag) => (Array.isArray(flag) ? flag.includes('store') : flag === 'store'))
 
+    const airlockPolicy = this.airlockPolicy()
+
+    if (airlockPolicy) {
+      validateAirlockBatchEnvironmentSelections({flags, argv: this.argv})
+    }
+
     // Single environment or no environment
     if (environments.length <= 1) {
-      if (environments[0] && !flags.store && storeIsRequired) {
+      if (!airlockPolicy && environments[0] && !flags.store && storeIsRequired) {
         throw new AbortError(`Please provide a valid environment.`)
       }
 
-      const session = commandRequiresAuth ? await this.createSession(flags) : undefined
-      const commandName = this.constructor.name.toLowerCase()
+      if (!airlockPolicy) {
+        const session = commandRequiresAuth ? await this.createSession(flags) : undefined
+        const commandName = this.constructor.name.toLowerCase()
 
-      recordEvent(`theme-command:${commandName}:single-env:authenticated`)
+        recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
-      if (flags.path && !fileExistsSync(flags.path)) {
-        throw new AbortError(`Path does not exist: ${flags.path}`)
+        if (flags.path && !fileExistsSync(flags.path)) {
+          throw new AbortError(`Path does not exist: ${flags.path}`)
+        }
+
+        try {
+          await this.command(flags, session, false, args)
+        } finally {
+          await this.logAnalyticsData(session)
+        }
+        return
       }
 
-      try {
-        await this.command(flags, session, false, args)
-      } finally {
-        await this.logAnalyticsData(session)
-      }
+      await this.createAirlockCoordinator().runSingle({
+        flags,
+        requiresAuth: commandRequiresAuth,
+        execute: async (airlockFlags, _target, session) => {
+          const commandName = this.constructor.name.toLowerCase()
+          recordEvent(`theme-command:${commandName}:single-env:authenticated`)
+
+          try {
+            await this.command(airlockFlags, session, false, args)
+          } finally {
+            await this.logAnalyticsData(session)
+          }
+        },
+      })
       return
     }
 
@@ -120,13 +157,41 @@ export default abstract class ThemeCommand extends Command {
       return
     }
 
+    if (airlockPolicy) {
+      validateAirlockStoreSelectionSources({flags, argv: this.argv, env: process.env})
+    }
+
     const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
     if ('path' in flagsWithoutDefaults) {
       this.errorOnGlobalPath()
       return
     }
 
-    const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
+    const environmentsMap = await this.loadEnvironments(
+      environments,
+      flags,
+      flagsWithoutDefaults,
+      airlockPolicy !== undefined,
+    )
+
+    if (airlockPolicy) {
+      const commandAllowsForceFlag = 'force' in klass.flags
+      const confirm =
+        commandAllowsForceFlag && !flags.force
+          ? (valid: AirlockBatchExecutionEnvironment[]) =>
+              this.showConfirmation(this.constructor.name, requiredFlags, {valid, invalid: []})
+          : undefined
+
+      await this.createAirlockCoordinator().runBatch({
+        environments: Array.from(environmentsMap, ([environment, value]) => ({environment, ...value})),
+        requiredFlags,
+        requiresAuth: commandRequiresAuth,
+        ...(confirm ? {confirm} : {}),
+        execute: (valid) => this.runConcurrent(valid, true),
+      })
+      return
+    }
+
     const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags, commandRequiresAuth)
 
     const commandAllowsForceFlag = 'force' in klass.flags
@@ -143,6 +208,29 @@ export default abstract class ThemeCommand extends Command {
     return []
   }
 
+  protected airlockPolicy(): 'upload' | undefined {
+    return undefined
+  }
+
+  protected airlockPreflight(targets: AirlockTarget[]): void {
+    renderAirlockPreflight(this.constructor.name.toLowerCase(), targets)
+  }
+
+  private createAirlockCoordinator(): ThemeAirlockCoordinator {
+    return new ThemeAirlockCoordinator({
+      argv: this.argv,
+      env: process.env,
+      authenticate: (flags, suppliedSession) => this.createSession(flags, suppliedSession, false),
+      rememberedStore: getThemeStore,
+      supportsPrompting: terminalSupportsPrompting,
+      renderPreflight: (targets) => this.airlockPreflight(targets),
+      storedSessionsFor: (flagsList) => this.storeAuthSessionsForTheme(flagsList),
+      storedSessionFromCache: (flags, sessions) => this.storeAuthSessionFromCache(flags, sessions),
+      missingRequiredFlags: (flags, requiredFlags, suppliedSession) =>
+        this.missingRequiredFlags(flags, requiredFlags, suppliedSession),
+    })
+  }
+
   /**
    * Create a map of environments from the shopify.theme.toml file
    * @param environments - Names of environments to load
@@ -150,7 +238,12 @@ export default abstract class ThemeCommand extends Command {
    * @param flagsWithoutDefaults - Flags provided via the CLI
    * @returns The map of environments
    */
-  private async loadEnvironments(environments: EnvironmentName[], flags: FlagValues, flagsWithoutDefaults: FlagValues) {
+  private async loadEnvironments(
+    environments: EnvironmentName[],
+    flags: FlagValues,
+    flagsWithoutDefaults: FlagValues,
+    protectedCommand: boolean,
+  ) {
     const environmentMap = new Map<EnvironmentName, {flags: FlagValues; validationFlags: FlagValues}>()
 
     for (const environmentName of environments) {
@@ -160,7 +253,7 @@ export default abstract class ThemeCommand extends Command {
         silent: true,
       })
 
-      if (environmentFlags?.store && typeof environmentFlags.store === 'string') {
+      if (!protectedCommand && environmentFlags?.store && typeof environmentFlags.store === 'string') {
         environmentFlags.store = normalizeStoreFqdn(environmentFlags.store)
       }
 
@@ -168,27 +261,49 @@ export default abstract class ThemeCommand extends Command {
         environmentFlags.path = resolvePath(environmentFlags.path)
       }
 
+      const effectiveFlags: FlagValues = {
+        ...flags,
+        ...environmentFlags,
+        ...flagsWithoutDefaults,
+        environment: [environmentName],
+      }
+      const effectiveValidationFlags = {...environmentFlags, ...flagsWithoutDefaults} as FlagValues
+
+      if (protectedCommand && typeof effectiveFlags.store === 'string') {
+        try {
+          effectiveFlags.store = normalizeStoreFqdn(effectiveFlags.store)
+          effectiveValidationFlags.store = effectiveFlags.store
+        } catch (error) {
+          throw new ThemeAirlockError(
+            `Invalid batch environment "${environmentName}": ${effectiveFlags.store} is not a valid store. No files were uploaded.`,
+            'invalid-batch',
+          )
+        }
+      }
+
       environmentMap.set(environmentName, {
-        flags: {
-          ...flags,
-          ...environmentFlags,
-          ...flagsWithoutDefaults,
-          environment: [environmentName],
-        },
-        validationFlags: {...environmentFlags, ...flagsWithoutDefaults} as FlagValues,
+        flags: effectiveFlags,
+        validationFlags: effectiveValidationFlags,
       })
     }
 
     return environmentMap
   }
 
-  /**
-   * Split environments into valid and invalid based on flags
-   * @param environmentMap - The map of environments to validate
-   * @param requiredFlags - The required flags to check for
-   * @param requiresAuth - Whether the command requires authentication
-   * @returns An object containing valid and invalid environment arrays
-   */
+  private missingRequiredFlags(
+    environmentFlags: FlagValues,
+    requiredFlags: Exclude<RequiredFlags, null>,
+    storeAuthSession?: AdminSession,
+  ): string[] {
+    return requiredFlags
+      .filter((flag) =>
+        Array.isArray(flag)
+          ? !flag.some((requiredFlag) => this.hasRequiredFlag(environmentFlags, requiredFlag, storeAuthSession))
+          : !this.hasRequiredFlag(environmentFlags, flag, storeAuthSession),
+      )
+      .map((flag) => (Array.isArray(flag) ? flag.join(' or ') : flag))
+  }
+
   private async validateEnvironments(
     environmentMap: Map<EnvironmentName, {flags: FlagValues; validationFlags: FlagValues}>,
     requiredFlags: Exclude<RequiredFlags, null>,
@@ -282,8 +397,9 @@ export default abstract class ThemeCommand extends Command {
    * Run the command in each valid environment concurrently
    * @param validEnvironments - The valid environments to run the command in
    */
-  private async runConcurrent(validEnvironments: ValidEnvironment[]) {
+  private async runConcurrent(validEnvironments: ValidEnvironment[], throwOnActionError = false) {
     const abortController = new AbortController()
+    const actionErrors: Error[] = []
 
     const stores = validEnvironments.map((env) => env.flags.store as string)
     const uniqueStores = new Set(stores)
@@ -293,13 +409,14 @@ export default abstract class ThemeCommand extends Command {
     for (const runGroup of runGroups) {
       // eslint-disable-next-line no-await-in-loop
       await renderConcurrent({
-        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthSession}) => ({
+        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthSession, session: suppliedSession}) => ({
           prefix: environment,
           action: async (stdout: Writable, stderr: Writable, _signal) => {
             try {
               const store = flags.store as string
               await useThemeStoreContext(store, async () => {
-                const session = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
+                const session =
+                  requiresAuth && !suppliedSession ? await this.createSession(flags, storeAuthSession) : suppliedSession
 
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
@@ -313,10 +430,10 @@ export default abstract class ThemeCommand extends Command {
 
               // eslint-disable-next-line no-catch-all/no-catch-all
             } catch (error) {
-              if (error instanceof Error) {
-                error.message = `Environment ${environment} failed: \n\n${error.message}`
-                renderError({body: [error.message]})
-              }
+              const normalizedError = error instanceof Error ? error : new Error(String(error))
+              normalizedError.message = `Environment ${environment} failed: \n\n${normalizedError.message}`
+              renderError({body: [normalizedError.message]})
+              if (throwOnActionError) actionErrors.push(normalizedError)
             }
           },
         })),
@@ -324,6 +441,11 @@ export default abstract class ThemeCommand extends Command {
         showTimestamps: true,
         renderOptions: {stdout: process.stderr},
       })
+    }
+
+    if (throwOnActionError && actionErrors.length > 0) {
+      const firstError = actionErrors[0]
+      if (firstError) throw firstError
     }
   }
 
@@ -349,8 +471,8 @@ export default abstract class ThemeCommand extends Command {
    * @param flags - The environment flags containing store and password
    * @returns The unauthenticated session object
    */
-  private async createSession(flags: FlagValues, storeAuthSession?: AdminSession) {
-    const store = ensureThemeStore({store: flags.store as string | undefined})
+  private async createSession(flags: FlagValues, storeAuthSession?: AdminSession, rememberStore = true) {
+    const store = ensureThemeStore({store: flags.store as string | undefined, remember: rememberStore})
     const password = flags.password as string | undefined
     const session = password
       ? await ensureAuthenticatedThemes(store, password)

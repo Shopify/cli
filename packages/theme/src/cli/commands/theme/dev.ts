@@ -23,6 +23,8 @@ export default class Dev extends ThemeCommand {
   static descriptionWithMarkdown = `
   Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
 
+The target store must be trusted in the nearest \`shopify.theme.toml\` file. To trust a store, run \`shopify theme airlock add\`.
+
 This command returns the following information:
 
 - A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.
@@ -200,14 +202,21 @@ You can run this command only in a directory that matches the [default Shopify t
       notify: flags.notify,
     })
 
-    await metafieldsPull({
-      path: flags.path,
-      password: flags.password,
-      store: flags.store,
-      force: flags.force,
-      verbose: flags.verbose,
-      noColor: flags['no-color'],
-      silent: true,
-    })
+    await metafieldsPull(
+      {
+        path: flags.path,
+        password: flags.password,
+        store: flags.store,
+        force: flags.force,
+        verbose: flags.verbose,
+        noColor: flags['no-color'],
+        silent: true,
+      },
+      adminSession,
+    )
+  }
+
+  protected airlockPolicy(): 'upload' {
+    return 'upload'
   }
 }

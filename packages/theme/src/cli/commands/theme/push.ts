@@ -19,6 +19,8 @@ export default class Push extends ThemeCommand {
 
   static descriptionWithMarkdown = `Uploads your local theme files to Shopify, overwriting the remote version if specified.
 
+  The target store must be trusted in the nearest \`shopify.theme.toml\` file. To trust a store, run \`shopify theme airlock add\`.
+
   If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.
 
   You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
@@ -136,6 +138,10 @@ export default class Push extends ThemeCommand {
       context,
     )
     recordTiming('theme-command:push')
+  }
+
+  protected airlockPolicy(): 'upload' {
+    return 'upload'
   }
 
   protected storeAuthScopes(): string[] {

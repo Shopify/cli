@@ -54,6 +54,7 @@ import {
   symlink as fsSymlink,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
+import {randomUUID} from 'node:crypto'
 import * as os from 'os'
 
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
@@ -211,6 +212,7 @@ export function appendFileSync(path: string, data: string): void {
 
 export interface WriteOptions {
   encoding: BufferEncoding
+  mode?: number
 }
 
 /**
@@ -227,6 +229,61 @@ export async function writeFile(
 ): Promise<void> {
   outputDebug(outputContent`Writing some content to file at ${outputToken.path(path)}...`)
   await fsWriteFile(path, data, options)
+}
+
+/**
+ * Atomically writes text content to a file through a sibling temporary file.
+ *
+ * @param path - Path to the file to be written.
+ * @param data - Text content to be written.
+ */
+export async function writeFileAtomically(path: string, data: string): Promise<void> {
+  let destinationStats
+  try {
+    destinationStats = await fsLstat(path)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+
+  let destinationPath = path
+  if (destinationStats) {
+    try {
+      destinationPath = await fileRealPath(path)
+    } catch (error) {
+      if (destinationStats.isSymbolicLink() && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`Unable to atomically write ${path}: destination is a dangling symlink.`)
+      }
+      throw error
+    }
+  }
+
+  const existingMode = destinationStats ? (await fsStat(destinationPath)).mode & 0o7777 : undefined
+  const temporaryPath = `${destinationPath}.${process.pid}.${randomUUID()}.tmp`
+
+  let primaryOperationFailed = false
+  let cleanupFailed = false
+  let cleanupError: unknown
+  try {
+    await writeFile(temporaryPath, data, {encoding: 'utf8', mode: 0o600})
+    if (existingMode !== undefined) await chmod(temporaryPath, existingMode)
+    await renameFile(temporaryPath, destinationPath)
+  } catch (error) {
+    primaryOperationFailed = true
+    throw error
+  } finally {
+    try {
+      await removeFile(temporaryPath)
+      // Preserve the primary operation error when cleanup also fails.
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      if (!primaryOperationFailed) {
+        cleanupFailed = true
+        cleanupError = error
+      }
+    }
+  }
+
+  if (cleanupFailed) throw cleanupError
 }
 
 /**

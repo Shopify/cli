@@ -1,3 +1,4 @@
+import AddCommand from './cli/commands/theme/airlock/add.js'
 import CheckCommand from './cli/commands/theme/check.js'
 import ConsoleCommand from './cli/commands/theme/console.js'
 import DeleteCommand from './cli/commands/theme/delete.js'
@@ -19,6 +20,7 @@ import Rename from './cli/commands/theme/rename.js'
 import Share from './cli/commands/theme/share.js'
 
 const COMMANDS = {
+  'theme:airlock:add': AddCommand,
   'theme:init': Init,
   'theme:check': CheckCommand,
   'theme:console': ConsoleCommand,

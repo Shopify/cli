@@ -1,8 +1,12 @@
 import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
+import {loadThemeProjectTrust} from './theme-airlock/config.js'
+import {bootstrapThemeAirlock, interactiveBootstrapUI} from './theme-airlock/bootstrap.js'
+import {ThemeAirlockError} from './theme-airlock/types.js'
+import {getThemeStore} from '../services/local-storage.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedThemes, setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {
   getCurrentStoredStoreAppSession,
   listCurrentStoredStoreAppSessions,
@@ -10,9 +14,17 @@ import {
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {resolvePath} from '@shopify/cli-kit/node/path'
-import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {
+  renderConcurrent,
+  renderConfirmationPrompt,
+  renderError,
+  renderInfo,
+  renderWarning,
+} from '@shopify/cli-kit/node/ui'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 import type {Writable} from 'stream'
 
@@ -26,6 +38,13 @@ vi.mock('@shopify/cli-kit/node/metadata', () => ({
 }))
 vi.mock('./theme-store.js')
 vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('./theme-airlock/config.js')
+vi.mock('./theme-airlock/bootstrap.js')
+vi.mock('@shopify/cli-kit/node/system')
+vi.mock('../services/local-storage.js', async () => {
+  const actual = await vi.importActual<typeof import('../services/local-storage.js')>('../services/local-storage.js')
+  return {...actual, getThemeStore: vi.fn()}
+})
 
 const CommandConfig = new Config({root: __dirname})
 
@@ -67,6 +86,10 @@ class TestThemeCommand extends ThemeCommand {
 
     if (flags.environment && flags.environment[0] === 'command-error') {
       throw new Error('Mocking a command error')
+    }
+    if (flags.environment && flags.environment[0] === 'command-string-error') {
+      // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
+      throw 'Mocking a string command error'
     }
   }
 }
@@ -143,6 +166,44 @@ class TestNoMultiEnvThemeCommand extends TestThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = null
 }
 
+class TestProtectedThemeCommand extends TestThemeCommand {
+  preflightTargets: any[] = []
+
+  protected airlockPolicy(): 'upload' {
+    return 'upload'
+  }
+
+  protected airlockPreflight(targets: any[]): void {
+    this.preflightTargets = targets
+  }
+}
+
+class TestDefaultProtectedThemeCommand extends TestThemeCommand {
+  events: string[] = []
+
+  async command(...args: Parameters<TestThemeCommand['command']>): Promise<void> {
+    this.events.push('command')
+    await super.command(...args)
+  }
+
+  protected airlockPolicy(): 'upload' {
+    return 'upload'
+  }
+}
+
+class TestProtectedThemeCommandWithForce extends TestProtectedThemeCommand {
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'password']
+
+  static flags = {
+    ...TestProtectedThemeCommand.flags,
+    force: Flags.boolean({
+      char: 'f',
+      description: 'Skip confirmation',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
+  }
+}
+
 class TestThemeCommandWithoutStoreRequired extends ThemeCommand {
   static flags = {
     environment: Flags.string({
@@ -196,6 +257,685 @@ describe('ThemeCommand', () => {
   })
 
   describe('run', () => {
+    test.each([
+      {
+        name: 'an empty environment selector',
+        argv: ['--environment', 'first', '--environment', ''],
+        message: 'Invalid batch environment selection: empty environment selector at position 2.',
+      },
+      {
+        name: 'a repeated environment selector',
+        argv: ['--environment', 'first', '--environment', 'first'],
+        message: 'Invalid batch environment selection: environment "first" was selected more than once.',
+      },
+    ])('protected batch rejects $name before any lifecycle work', async ({argv, message}) => {
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(argv, CommandConfig)
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'invalid-batch', message})
+      expect(loadEnvironment).not.toHaveBeenCalled()
+      expect(loadThemeProjectTrust).not.toHaveBeenCalled()
+      expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+      expect(listCurrentStoredStoreAppSessions).not.toHaveBeenCalled()
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected batch rejects conflicting CLI and environment-variable stores before loading environments', async () => {
+      vi.stubEnv('SHOPIFY_FLAG_STORE', 'environment-store')
+
+      try {
+        await CommandConfig.load()
+        const command = new TestProtectedThemeCommandWithForce(
+          ['--environment', 'first', '--environment', 'second', '--store', 'cli-store', '--force'],
+          CommandConfig,
+        )
+
+        await expect(command.run()).rejects.toMatchObject({
+          reason: 'conflicting-selection',
+          message:
+            'Store selections conflict: --store selects cli-store.myshopify.com, while SHOPIFY_FLAG_STORE selects environment-store.myshopify.com.',
+        })
+        expect(loadEnvironment).not.toHaveBeenCalled()
+        expect(loadThemeProjectTrust).not.toHaveBeenCalled()
+        expect(listCurrentStoredStoreAppSessions).not.toHaveBeenCalled()
+        expect(ensureThemeStore).not.toHaveBeenCalled()
+        expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+        expect(command.preflightTargets).toHaveLength(0)
+        expect(renderConcurrent).not.toHaveBeenCalled()
+        expect(command.commandCalls).toHaveLength(0)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+
+    test('protected batch accepts matching normalized CLI and environment-variable stores', async () => {
+      vi.stubEnv('SHOPIFY_FLAG_STORE', 'trusted-store')
+      vi.mocked(loadEnvironment).mockResolvedValue({store: 'trusted-store.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [
+          {name: 'first', store: 'trusted-store.myshopify.com'},
+          {name: 'second', store: 'trusted-store'},
+        ],
+      })
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      try {
+        await CommandConfig.load()
+        const command = new TestProtectedThemeCommand(
+          [
+            '--environment',
+            'first',
+            '--environment',
+            'second',
+            '--store',
+            'https://TRUSTED-STORE.myshopify.com/admin/',
+          ],
+          CommandConfig,
+        )
+
+        await command.run()
+
+        expect(loadEnvironment).toHaveBeenCalledTimes(2)
+        expect(command.preflightTargets).toHaveLength(2)
+        expect(renderConcurrent).toHaveBeenCalledTimes(2)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+
+    test('protected malformed batch store rejects as invalid-batch before authentication or command work', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'trusted.myshopify.com'})
+        .mockResolvedValueOnce({store: 'invalid/store'})
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'trusted', '--environment', 'malformed'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toMatchObject({
+        reason: 'invalid-batch',
+        message: expect.stringContaining('malformed'),
+      })
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected malformed effective batch store rejects as invalid-batch before authentication or command work', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'trusted-a.myshopify.com'})
+        .mockResolvedValueOnce({store: 'trusted-b.myshopify.com'})
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'trusted-a', '--environment', 'trusted-b', '--store', 'invalid/store'],
+        CommandConfig,
+      )
+
+      const error = await command.run().catch((error) => error)
+      expect(error).toMatchObject({
+        reason: 'invalid-store',
+        message: 'Invalid store value for --store: invalid/store.',
+      })
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('unprotected malformed batch store retains the generic normalization error', async () => {
+      vi.mocked(loadEnvironment).mockResolvedValue({store: 'invalid/store'})
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'malformed-a', '--environment', 'malformed-b'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toBeInstanceOf(AbortError)
+      expect(loadThemeProjectTrust).not.toHaveBeenCalled()
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected unknown store rejects before authentication or command work', async () => {
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'default', store: 'trusted.myshopify.com'}],
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(['--store', 'unknown.myshopify.com'], CommandConfig)
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'unknown-store'})
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected trusted target authenticates without remembering the store', async () => {
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'default', store: 'test-store.myshopify.com'}],
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand([], CommandConfig)
+
+      await command.run()
+
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      expect(ensureThemeStore).toHaveBeenCalledTimes(1)
+      expect(ensureThemeStore).toHaveBeenCalledWith({store: 'test-store.myshopify.com', remember: false})
+      expect(command.preflightTargets).toEqual([
+        expect.objectContaining({store: 'test-store.myshopify.com', source: 'default'}),
+      ])
+      expect(command.commandCalls[0]).toMatchObject({flags: {store: 'test-store.myshopify.com'}})
+    })
+
+    test('protected trusted target renders the default preflight between authentication and command', async () => {
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'default', store: 'test-store.myshopify.com'}],
+      })
+      await CommandConfig.load()
+      const command = new TestDefaultProtectedThemeCommand([], CommandConfig)
+      vi.mocked(ensureAuthenticatedThemes).mockImplementation(async () => {
+        command.events.push('authentication')
+        return mockSession
+      })
+      vi.mocked(renderInfo).mockImplementation(() => {
+        command.events.push('preflight')
+        return undefined
+      })
+
+      await command.run()
+
+      expect(command.events).toEqual(['authentication', 'preflight', 'command'])
+      expect(renderInfo).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'Theme Airlock',
+          customSections: expect.arrayContaining([
+            expect.objectContaining({
+              body: expect.objectContaining({
+                tabularData: expect.arrayContaining([['Operation', 'theme testdefaultprotectedthemecommand']]),
+              }),
+            }),
+          ]),
+        }),
+      )
+    })
+
+    test('malformed project trust rejects before shared lifecycle work', async () => {
+      vi.mocked(loadThemeProjectTrust).mockRejectedValue(
+        new ThemeAirlockError('Malformed theme trust', 'malformed-configuration'),
+      )
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand([], CommandConfig)
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'malformed-configuration'})
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('ambiguous project trust rejects before shared lifecycle work', async () => {
+      vi.mocked(loadThemeProjectTrust).mockRejectedValue(
+        new ThemeAirlockError('Ambiguous theme trust', 'ambiguous-configuration'),
+      )
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand([], CommandConfig)
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'ambiguous-configuration'})
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('interactive bootstrap cancellation rejects before shared lifecycle work or store mutation', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+      vi.mocked(getThemeStore).mockReturnValue('remembered.myshopify.com')
+      vi.mocked(interactiveBootstrapUI).mockReturnValue({
+        confirmStore: vi.fn(),
+        promptStore: vi.fn(),
+        promptEnvironment: vi.fn(),
+      })
+      vi.mocked(bootstrapThemeAirlock).mockRejectedValue(
+        new ThemeAirlockError('Theme bootstrap was cancelled', 'bootstrap-cancelled'),
+      )
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'unconfigured',
+        themePath: 'current/working/directory',
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand([], CommandConfig)
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'bootstrap-cancelled'})
+      expect(bootstrapThemeAirlock).toHaveBeenCalledOnce()
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('interactive bootstrap authenticates with the supplied password and reuses its session', async () => {
+      const resolvedStore = 'resolved.myshopify.com'
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+      vi.mocked(interactiveBootstrapUI).mockReturnValue({
+        confirmStore: vi.fn(),
+        promptStore: vi.fn(),
+        promptEnvironment: vi.fn(),
+      })
+      vi.mocked(bootstrapThemeAirlock).mockImplementation(async (options) => {
+        const session = await options.authenticate(resolvedStore)
+        return {
+          target: {environment: 'default', store: resolvedStore, source: 'bootstrap', implicit: false},
+          session,
+          configurationPath: 'shopify.theme.toml',
+        }
+      })
+      vi.mocked(ensureThemeStore).mockImplementation(({store}) => store ?? '')
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'unconfigured',
+        themePath: 'current/working/directory',
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(['--password', 'supplied-password'], CommandConfig)
+
+      await command.run()
+
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith(resolvedStore, 'supplied-password')
+      expect(ensureThemeStore).toHaveBeenCalledOnce()
+      expect(ensureThemeStore).toHaveBeenCalledWith({store: resolvedStore, remember: false})
+      expect(command.commandCalls).toHaveLength(1)
+      expect(command.commandCalls[0]).toMatchObject({
+        flags: {password: 'supplied-password', store: resolvedStore},
+        session: mockSession,
+      })
+    })
+
+    test('noninteractive unconfigured resolution rejects before bootstrap or shared lifecycle work', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'unconfigured',
+        themePath: 'current/working/directory',
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand([], CommandConfig)
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'unconfigured-project'})
+      expect(bootstrapThemeAirlock).not.toHaveBeenCalled()
+      expect(getThemeStore).not.toHaveBeenCalled()
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected batch with an invalid trust target rejects before shared lifecycle work', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'first.myshopify.com'})
+        .mockResolvedValueOnce({store: 'second.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'first', store: 'first.myshopify.com'}],
+      })
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'second', store: 'other.myshopify.com'}],
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'first', '--environment', 'second'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'invalid-batch'})
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected batch validates every trust target before projecting cached sessions', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'first.myshopify.com'})
+        .mockResolvedValueOnce({store: 'second.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'first', store: 'first.myshopify.com'}],
+      })
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'second', store: 'other.myshopify.com'}],
+      })
+      vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([
+        {
+          store: 'first.myshopify.com',
+          clientId: 'store-auth-client-id',
+          userId: 'preview:123',
+          accessToken: 'shpat_preview_token',
+          scopes: [],
+          acquiredAt: '2026-06-08T11:00:00.000Z',
+        },
+      ])
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'first', '--environment', 'second'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'invalid-batch'})
+      expect(listCurrentStoredStoreAppSessions).not.toHaveBeenCalled()
+      expect(setLastSeenUserId).not.toHaveBeenCalled()
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+
+    test('protected batch reuses a newly authenticated session for the same normalized store and password', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'STORE.myshopify.com', password: 'same-password'})
+        .mockResolvedValueOnce({store: 'store.myshopify.com', password: 'same-password'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [
+          {name: 'first', store: 'store.myshopify.com'},
+          {name: 'second', store: 'store.myshopify.com'},
+        ],
+      })
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+      vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (store, password) => ({
+        token: password ?? '',
+        storeFqdn: store,
+      }))
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommandWithForce(
+        ['--environment', 'first', '--environment', 'second', '--force'],
+        CommandConfig,
+      )
+
+      await command.run()
+
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('store.myshopify.com', 'same-password')
+      expect(command.commandCalls).toHaveLength(2)
+      expect(command.commandCalls[0]?.session).toBe(command.commandCalls[1]?.session)
+    })
+
+    test('protected batch authenticates separately for distinct passwords on the same store', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store.myshopify.com', password: 'first-password'})
+        .mockResolvedValueOnce({store: 'STORE.myshopify.com', password: 'second-password'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [
+          {name: 'first', store: 'store.myshopify.com'},
+          {name: 'second', store: 'store.myshopify.com'},
+        ],
+      })
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+      vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (store, password) => ({
+        token: password ?? '',
+        storeFqdn: store,
+      }))
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommandWithForce(
+        ['--environment', 'first', '--environment', 'second', '--force'],
+        CommandConfig,
+      )
+
+      await command.run()
+
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(2)
+      expect(ensureAuthenticatedThemes).toHaveBeenNthCalledWith(1, 'store.myshopify.com', 'first-password')
+      expect(ensureAuthenticatedThemes).toHaveBeenNthCalledWith(2, 'store.myshopify.com', 'second-password')
+      expect(command.commandCalls[0]?.session).not.toBe(command.commandCalls[1]?.session)
+    })
+
+    test('protected batch throws the first command error after all concurrent groups finish', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [
+          {name: 'command-error', store: 'store.myshopify.com'},
+          {name: 'development', store: 'store.myshopify.com'},
+        ],
+      })
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'command-error', '--environment', 'development'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toThrow('Environment command-error failed')
+      expect(renderConcurrent).toHaveBeenCalledTimes(2)
+      expect(command.commandCalls).toHaveLength(2)
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({body: ['Environment command-error failed: \n\nMocking a command error']}),
+      )
+      expect(addPublicMetadata).toHaveBeenCalled()
+      expect(addSensitiveMetadata).toHaveBeenCalled()
+    })
+
+    test('protected batch normalizes non-Error command failures after rendering all groups', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValue({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [
+          {name: 'command-string-error', store: 'store.myshopify.com'},
+          {name: 'development', store: 'store.myshopify.com'},
+        ],
+      })
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'command-string-error', '--environment', 'development'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toThrow(
+        'Environment command-string-error failed: \n\nMocking a string command error',
+      )
+      expect(renderConcurrent).toHaveBeenCalledTimes(2)
+      expect(command.commandCalls).toHaveLength(2)
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: ['Environment command-string-error failed: \n\nMocking a string command error'],
+        }),
+      )
+    })
+
+    test('protected batch with invalid required configuration rejects before confirmation even with force', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'first.myshopify.com', password: 'first-password'})
+        .mockResolvedValueOnce({store: 'second.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust)
+        .mockResolvedValueOnce({
+          state: 'configured',
+          themePath: 'current/working/directory',
+          path: 'shopify.theme.toml',
+          environments: [{name: 'first', store: 'first.myshopify.com'}],
+        })
+        .mockResolvedValueOnce({
+          state: 'configured',
+          themePath: 'current/working/directory',
+          path: 'shopify.theme.toml',
+          environments: [{name: 'missing', store: 'second.myshopify.com'}],
+        })
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommandWithForce(
+        ['--environment', 'first', '--environment', 'missing', '--force'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toMatchObject({reason: 'invalid-batch'})
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(ensureThemeStore).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected batch authentication failure starts no commands and skips preflight and rendering', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'first.myshopify.com'})
+        .mockResolvedValueOnce({store: 'second.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'first', store: 'first.myshopify.com'}],
+      })
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'second', store: 'second.myshopify.com'}],
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(new Error('authentication failed'))
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'first', '--environment', 'second'],
+        CommandConfig,
+      )
+
+      await expect(command.run()).rejects.toThrow('authentication failed')
+      expect(ensureThemeStore).toHaveBeenCalledTimes(1)
+      expect(ensureThemeStore).toHaveBeenCalledWith({store: 'first.myshopify.com', remember: false})
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      expect(command.preflightTargets).toHaveLength(0)
+      expect(renderConcurrent).not.toHaveBeenCalled()
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(command.commandCalls).toHaveLength(0)
+    })
+
+    test('protected batch authentication does not remember stores', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'first.myshopify.com'})
+        .mockResolvedValueOnce({store: 'second.myshopify.com'})
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'first', store: 'first.myshopify.com'}],
+      })
+      vi.mocked(loadThemeProjectTrust).mockResolvedValueOnce({
+        state: 'configured',
+        themePath: 'current/working/directory',
+        path: 'shopify.theme.toml',
+        environments: [{name: 'second', store: 'second.myshopify.com'}],
+      })
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestProtectedThemeCommand(
+        ['--environment', 'first', '--environment', 'second'],
+        CommandConfig,
+      )
+
+      await command.run()
+
+      expect(ensureThemeStore).toHaveBeenCalledTimes(2)
+      expect(ensureThemeStore).toHaveBeenNthCalledWith(1, {store: 'first.myshopify.com', remember: false})
+      expect(ensureThemeStore).toHaveBeenNthCalledWith(2, {store: 'second.myshopify.com', remember: false})
+    })
+
     test('no environment provided', async () => {
       // Given
       await CommandConfig.load()

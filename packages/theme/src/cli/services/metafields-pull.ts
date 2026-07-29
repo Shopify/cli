@@ -58,11 +58,11 @@ export interface MetafieldsPullFlags {
  *
  * @param flags - All flags are optional.
  */
-export async function metafieldsPull(flags: MetafieldsPullFlags): Promise<void> {
+export async function metafieldsPull(flags: MetafieldsPullFlags, suppliedSession?: AdminSession): Promise<void> {
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
 
-  const store = ensureThemeStore({store: flags.store})
-  const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  const adminSession =
+    suppliedSession ?? (await ensureAuthenticatedThemes(ensureThemeStore({store: flags.store}), flags.password))
 
   await executeMetafieldsPull(adminSession, {
     path: flags.path ?? cwd(),
