@@ -8,7 +8,7 @@ import {
   getFlattenedLocalization,
   isFlattenedTranslations,
 } from '../i18n'
-import {isUIExtension, isValidSurface} from '../utilities'
+import {isUIExtension, isValidSurface, generateRandomId} from '../utilities'
 import {DeepPartial, ExtensionPayload, ExtensionPoint} from '../types'
 
 export class ExtensionServerClient implements ExtensionServer.Client {
@@ -32,7 +32,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   private uiExtensionsByUuid: Record<string, ExtensionServer.UIExtension> = {}
 
   constructor(options: DeepPartial<ExtensionServer.Options> = {}) {
-    this.id = (Math.random() + 1).toString(36).substring(7)
+    this.id = generateRandomId()
     this.options = getValidatedOptions({
       ...options,
       connection: {
