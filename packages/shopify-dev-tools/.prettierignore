@@ -1,0 +1,12 @@
+# Build outputs
+dist/
+
+# Dependencies
+node_modules/
+
+# Cache
+.cache
+*.log
+
+# Data files (generated/downloaded schemas)
+src/data/

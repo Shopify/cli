@@ -1,0 +1,139 @@
+{
+  "name": "@shopify/shopify-dev-tools",
+  "version": "1.12.1",
+  "private": true,
+  "description": "Core functionality for Shopify Dev Tools",
+  "main": "dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./schemaOperations": {
+      "import": "./dist/schemaOperations/index.js",
+      "types": "./dist/schemaOperations/index.d.ts"
+    },
+    "./introspection": {
+      "import": "./dist/introspection/index.js",
+      "types": "./dist/introspection/index.d.ts"
+    },
+    "./validation": {
+      "import": "./dist/validation/index.js",
+      "types": "./dist/validation/index.d.ts"
+    },
+    "./validation/graphql": {
+      "import": "./dist/validation/graphql.js",
+      "types": "./dist/validation/graphql.d.ts"
+    },
+    "./schema-embedded": {
+      "import": "./dist/schema-embedded.js",
+      "types": "./dist/schema-embedded.d.ts"
+    },
+    "./schema-embedded/*": {
+      "import": "./dist/data-embedded/*.js",
+      "types": "./dist/data-embedded/*.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./types/api-mapping": {
+      "import": "./dist/types/api-mapping.js",
+      "types": "./dist/types/api-mapping.d.ts"
+    },
+    "./types/api-types": {
+      "import": "./dist/types/api-types.js",
+      "types": "./dist/types/api-types.d.ts"
+    },
+    "./http": {
+      "import": "./dist/http/index.js",
+      "types": "./dist/http/index.d.ts"
+    },
+    "./internal": {
+      "import": "./dist/internal/index.js",
+      "types": "./dist/internal/index.d.ts"
+    },
+    "./config/api-mappings": {
+      "import": "./dist/config/api-mappings.js",
+      "types": "./dist/config/api-mappings.d.ts"
+    },
+    "./experiments": {
+      "import": "./dist/experiments/index.js",
+      "types": "./dist/experiments/index.d.ts"
+    }
+  },
+  "scripts": {
+    "compress-json": "node scripts/compress-json.js",
+    "embed-schemas": "pnpm exec tsx scripts/embed-schemas.ts",
+    "generate_api_instructions": "pnpm exec tsx scripts/generate-api-instructions.ts",
+    "generate_agent_skills": "pnpm exec tsx scripts/generate-agent-skills.ts",
+    "build": "pnpm embed-schemas && pnpm exec tsx scripts/generate-api-instructions.ts && vite build && tsc --emitDeclarationOnly",
+    "build:watch": "pnpm embed-schemas && vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "pnpm embed-schemas && tsc --noEmit",
+    "lint": "prettier --check --cache --ignore-unknown .",
+    "lint:fix": "prettier --write --ignore-unknown ."
+  },
+  "dependencies": {
+    "@shopify/app-bridge-react": "catalog:",
+    "@shopify/app-bridge-types": "catalog:",
+    "@shopify/hydrogen": "catalog:",
+    "@shopify/hydrogen-react": "catalog:",
+    "@shopify/polaris-types": "catalog:",
+    "@shopify/theme-check-common": "3.24.0",
+    "@shopify/theme-check-docs-updater": "3.24.0",
+    "@shopify/theme-check-node": "3.24.0",
+    "@shopify/verdict": "7.3.0",
+    "@types/react": "catalog:",
+    "graphql": "catalog:",
+    "html-tags": "5.1.0",
+    "preact": "catalog:",
+    "@react-router/dev": "catalog:",
+    "react-router": "catalog:",
+    "schema-dts": "catalog:",
+    "svg-tag-names": "3.0.1",
+    "type-fest": "catalog:",
+    "typescript": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "esbuild": "^0.25.0",
+    "prettier": "catalog:",
+    "terser": "^5.46.1",
+    "tsx": "4.21.0",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "!dist/**/*.test.*",
+    "dist/data/supported-versions-schema.json",
+    "dist/data/**/*.gz",
+    "dist/data/types/index.json",
+    "dist/internal-data/**/*.json.gz",
+    "src/instructions/**/*.md",
+    "src/data/mcp-instructions/**/*.md",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "keywords": [
+    "graphql",
+    "shopify",
+    "mcp",
+    "core"
+  ],
+  "sideEffects": false,
+  "prettier": {
+    "endOfLine": "auto"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "author": "",
+  "license": "ISC"
+}

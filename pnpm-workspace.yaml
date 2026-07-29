@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - '!packages/shopify-dev-tools'
   - workspace
 autoInstallPeers: true
 linkWorkspacePackages: true
