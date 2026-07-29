@@ -32,6 +32,12 @@ vi.mock('../../version.js')
 vi.mock('./monorail.js')
 vi.mock('./cli.js')
 vi.mock('./error-handler.js')
+// Rate limiting short-circuits reporting before the analytics-disabled branch is
+// reached, which would make the assertions below depend on prior local runs.
+vi.mock('../../private/node/conf-store.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../private/node/conf-store.js')>()),
+  runWithRateLimit: vi.fn(async ({task}: {task: () => Promise<void>}) => task()),
+}))
 
 function restoreEnvVariable(key: string, value: string | undefined): void {
   if (value === undefined) {
@@ -251,17 +257,32 @@ describe('event tracking', () => {
     })
   })
 
-  test('sends SHOPIFY_ environment variables in sensitive payload', async () => {
-    const originalShopifyTestVar = process.env.SHOPIFY_TEST_VAR
-    const originalShopifyAnotherVar = process.env.SHOPIFY_ANOTHER_VAR
-    const originalShopifyFlagStorePassword = process.env.SHOPIFY_FLAG_STORE_PASSWORD
-    const originalNotShopifyVar = process.env.NOT_SHOPIFY_VAR
-    process.env.SHOPIFY_TEST_VAR = 'test_value'
-    process.env.SHOPIFY_ANOTHER_VAR = 'another_value'
-    process.env.SHOPIFY_FLAG_STORE_PASSWORD = 'store-secret'
-    process.env.NOT_SHOPIFY_VAR = 'should_not_appear'
+  // Every SHOPIFY_* variable the CLI reads a credential from. Kept in sync with
+  // `environmentVariables` in private/node/constants.ts.
+  const credentialEnvironmentVariables = {
+    SHOPIFY_APP_AUTOMATION_TOKEN: 'atkn_app_automation_secret',
+    SHOPIFY_CLI_PARTNERS_TOKEN: 'atkn_partners_secret',
+    SHOPIFY_CLI_IDENTITY_TOKEN: 'identity_secret',
+    SHOPIFY_CLI_REFRESH_TOKEN: 'refresh_secret',
+    SHOPIFY_CLI_THEME_TOKEN: 'shptka_theme_secret',
+    SHOPIFY_FLAG_STORE_PASSWORD: 'store_secret',
+  }
+
+  async function withEnvironment(variables: {[key: string]: string}, execute: () => Promise<void>): Promise<void> {
+    const originalValues = Object.keys(variables).map((key): [string, string | undefined] => [key, process.env[key]])
+    Object.entries(variables).forEach(([key, value]) => {
+      process.env[key] = value
+    })
 
     try {
+      await execute()
+    } finally {
+      originalValues.forEach(([key, value]) => restoreEnvVariable(key, value))
+    }
+  }
+
+  test('only sends allowlisted SHOPIFY_ environment variables in sensitive payload', async () => {
+    await withEnvironment({SHOPIFY_CLI_AGENT: 'some-agent', SHOPIFY_TEST_VAR: 'test_value'}, async () => {
       await inProjectWithFile('package.json', async (args) => {
         const commandContent = {command: 'dev', topic: 'app'}
         await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
@@ -276,21 +297,117 @@ describe('event tracking', () => {
         // Then
         const sensitivePayload = publishEventMock.mock.calls[0]![2]
         expect(publishEventMock).toHaveBeenCalledOnce()
-        expect(sensitivePayload).toHaveProperty('env_shopify_variables')
-        expect(sensitivePayload.env_shopify_variables).toBeDefined()
 
         const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
-        expect(shopifyVars).toHaveProperty('SHOPIFY_TEST_VAR', 'test_value')
-        expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
-        expect(shopifyVars).toHaveProperty('SHOPIFY_FLAG_STORE_PASSWORD', '*****')
-        expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+        expect(shopifyVars).toStrictEqual({SHOPIFY_CLI_AGENT: 'some-agent'})
       })
-    } finally {
-      restoreEnvVariable('SHOPIFY_TEST_VAR', originalShopifyTestVar)
-      restoreEnvVariable('SHOPIFY_ANOTHER_VAR', originalShopifyAnotherVar)
-      restoreEnvVariable('SHOPIFY_FLAG_STORE_PASSWORD', originalShopifyFlagStorePassword)
-      restoreEnvVariable('NOT_SHOPIFY_VAR', originalNotShopifyVar)
-    }
+    })
+  })
+
+  test('does not send credential environment variables to Monorail', async () => {
+    await withEnvironment(credentialEnvironmentVariables, async () => {
+      await inProjectWithFile('package.json', async (args) => {
+        const commandContent = {command: 'dev', topic: 'app'}
+        await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+        // When
+        const config = {
+          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+          plugins: [],
+        } as any
+        await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+        // Then
+        expect(publishEventMock).toHaveBeenCalledOnce()
+        const [, publicPayload, sensitivePayload] = publishEventMock.mock.calls[0]!
+        const serializedPayload = JSON.stringify({publicPayload, sensitivePayload})
+        Object.values(credentialEnvironmentVariables).forEach((secret) => {
+          expect(serializedPayload).not.toContain(secret)
+        })
+      })
+    })
+  })
+
+  // The payload is printed by outputDebug even when analytics are disabled, so
+  // asserting on the payload object alone would miss this sink.
+  test('does not print credentials when analytics are disabled', async () => {
+    await withEnvironment(credentialEnvironmentVariables, async () => {
+      await inProjectWithFile('package.json', async (args) => {
+        // Given
+        vi.mocked(analyticsDisabled).mockReturnValue(true)
+        const commandContent = {command: 'dev', topic: 'app'}
+        const argsWithCredentials = args.concat(['--client-secret', 'client_secret_value'])
+        await startAnalytics({commandContent, args: argsWithCredentials, currentTime: currentDate.getTime() - 100})
+        const outputMock = mockAndCaptureOutput()
+
+        // When
+        const config = {
+          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+          plugins: [],
+        } as any
+        await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+        // Then
+        const debugOutput = outputMock.debug()
+        // Asserts on the analytics-disabled sink specifically, not the rate-limited one.
+        expect(debugOutput).toMatch('Skipping command analytics, payload:')
+        Object.values(credentialEnvironmentVariables).forEach((secret) => {
+          expect(debugOutput).not.toContain(secret)
+        })
+        expect(debugOutput).not.toContain('client_secret_value')
+      })
+    })
+  })
+
+  test('does not send credentials passed as flags to Monorail', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      const argsWithCredentials = args.concat([
+        '--client-secret',
+        'client_secret_value',
+        '--token=token_value',
+        '--password',
+        'plain_password_value',
+      ])
+      await startAnalytics({commandContent, args: argsWithCredentials, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const reportedArgs = publishEventMock.mock.calls[0]![2].args as string
+      expect(reportedArgs).toContain('--client-secret *****')
+      expect(reportedArgs).toContain('--token=*****')
+      expect(reportedArgs).toContain('--password *****')
+      expect(reportedArgs).not.toContain('client_secret_value')
+      expect(reportedArgs).not.toContain('token_value')
+      expect(reportedArgs).not.toContain('plain_password_value')
+    })
+  })
+
+  test('keeps reporting the auth method, which is not a credential', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+      setLastSeenAuthMethod('partners_token')
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(publishEventMock.mock.calls[0]![1]).toMatchObject({env_auth_method: 'partners_token'})
+    })
   })
 
   test('does nothing when analytics are disabled', async () => {

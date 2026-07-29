@@ -195,13 +195,28 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   return sanitizePayload(payload)
 }
 
+// Names that identify a credential wherever they show up in the payload -- as a
+// flag (`--client-secret`), an object key (`"store-password"`), or an environment
+// variable name (`SHOPIFY_CLI_PARTNERS_TOKEN`).
+//
+// Deliberately excludes `key` and `auth`: `api_key` is an app's public client ID
+// (redacted separately in monorail.ts) and `env_auth_method` reports which auth
+// method was used, so matching those would drop legitimate telemetry.
+const CREDENTIAL_NAME_PATTERN = 'password|token|secret|credential'
+
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
-  // Remove Theme Access passwords from the payload
   const sanitizedPayloadString = payloadString
+    // Theme Access passwords, which are recognisable wherever they appear.
     .replace(/shptka_\w*/g, '*****')
-    .replace(/(--store-password(?:=|\s+))(?:"[^"]*"|'[^']*'|[^\s"]+)/g, '$1*****')
-    .replace(/((?:store-password|SHOPIFY_FLAG_STORE_PASSWORD)\\?":\\?")[^"\\]*/g, '$1*****')
+    // Credentials passed as flags, e.g. `--password abc`, `--client-secret=abc`.
+    .replace(
+      new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME_PATTERN})(?:=|\\s+))(?:"[^"]*"|'[^']*'|[^\\s"]+)`, 'gi'),
+      '$1*****',
+    )
+    // Credentials held under a credential-shaped key. Keys are matched with an
+    // optional backslash because nested JSON strings arrive escaped.
+    .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME_PATTERN})[\\w.-]*\\\\?":\\\\?")[^"\\\\]*`, 'gi'), '$1*****')
   return JSON.parse(sanitizedPayloadString)
 }
 

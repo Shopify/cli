@@ -107,14 +107,28 @@ export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   }
 }
 
+// Agent callers can identify themselves today via SHOPIFY_* environment
+// variables. The current contract is intentionally lightweight and is kept in
+// the sensitive payload until we prove which dimensions deserve first-class
+// Monorail fields.
+//
+// This is an allowlist rather than a `SHOPIFY_*` prefix match on purpose: the CLI
+// reads several of its own credentials from the environment (see
+// `environmentVariables` in ./constants.ts), so a prefix match collects access
+// tokens along with the agent dimensions we actually want. Adding a new variable
+// here should come with a check that it can never hold a secret.
+const REPORTED_SHOPIFY_ENVIRONMENT_VARIABLES = new Set([
+  'SHOPIFY_CLI_AGENT',
+  'SHOPIFY_CLI_AGENT_VERSION',
+  'SHOPIFY_CLI_AGENT_RUN_ID',
+  'SHOPIFY_CLI_AGENT_SESSION_ID',
+  'SHOPIFY_CLI_AGENT_PROVIDER',
+])
+
 function getShopifyEnvironmentVariables() {
-  // Agent callers can identify themselves today via SHOPIFY_* environment
-  // variables. The current contract is intentionally lightweight and is kept in
-  // the sensitive payload until we prove which dimensions deserve first-class
-  // Monorail fields, e.g. SHOPIFY_CLI_AGENT, SHOPIFY_CLI_AGENT_VERSION,
-  // SHOPIFY_CLI_AGENT_RUN_ID, SHOPIFY_CLI_AGENT_SESSION_ID, and
-  // SHOPIFY_CLI_AGENT_PROVIDER.
-  return Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
+  return Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => REPORTED_SHOPIFY_ENVIRONMENT_VARIABLES.has(key)),
+  )
 }
 
 function getPluginNames(config: Interfaces.Config) {
