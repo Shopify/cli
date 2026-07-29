@@ -13,6 +13,12 @@ import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../.
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const EMPTY_CACHE_MESSAGE = 'Cache is empty'
+/**
+ * How long a cached notifications payload is considered fresh enough to skip the background refresh.
+ * Refreshing spawns a whole extra CLI process, so doing it on literally every command is wasteful for
+ * a static CDN document.
+ */
+const NOTIFICATIONS_REFRESH_INTERVAL_MS = 60 * 60 * 1000
 const COMMANDS_TO_SKIP = [
   'notifications:list',
   'notifications:generate',
@@ -167,6 +173,18 @@ async function cacheNotifications(notifications: string): Promise<void> {
 }
 
 /**
+ * Whether the cached notifications payload is recent enough that refreshing it can be skipped.
+ *
+ * @returns True when a cached payload exists and is younger than the refresh interval.
+ */
+function notificationsCacheIsFresh(): boolean {
+  const cacheKey: NotificationsKey = `notifications-${url()}`
+  const cached = cacheRetrieve(cacheKey)
+  if (cached?.value === undefined) return false
+  return Date.now() - cached.timestamp < NOTIFICATIONS_REFRESH_INTERVAL_MS
+}
+
+/**
  * Fetch notifications in background as a detached process.
  *
  * @param currentCommand - The current Shopify command being run.
@@ -180,6 +198,10 @@ export function fetchNotificationsInBackground(
 ): void {
   if (skipNotifications(currentCommand, environment)) return
   if (!argv[0] || !argv[1]) return
+  if (notificationsCacheIsFresh()) {
+    outputDebug('Notifications cache is still fresh, skipping background refresh')
+    return
+  }
 
   // Run the Shopify command the same way as the current execution
   const nodeBinary = argv[0]

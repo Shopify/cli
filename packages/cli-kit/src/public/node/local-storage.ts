@@ -67,6 +67,17 @@ export class LocalStorage<T extends Record<string, any>> {
   }
 
   /**
+   * The number of values held in the local storage.
+   *
+   * Useful to avoid an unnecessary write when there is nothing to clear.
+   *
+   * @returns The number of stored keys.
+   */
+  get size(): number {
+    return this.config.size
+  }
+
+  /**
    * Clear the local storage (delete all values).
    *
    * @throws AbortError if a permission error occurs.

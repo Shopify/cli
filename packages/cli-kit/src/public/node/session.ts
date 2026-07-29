@@ -17,10 +17,10 @@ import {
   PartnersAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
-  setCommandSessionId,
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
+import {setCommandSessionId} from '../../private/node/session/command-session-id.js'
 import {isThemeAccessSession} from '../../private/node/api/rest.js'
 
 /**
