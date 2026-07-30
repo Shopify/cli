@@ -70,8 +70,8 @@ Besides the scripts for building and running the CLIs, there are others that mig
 - `pnpm test`: Runs the tests of all the packages.
 - `pnpm prettier`: Checks formatting for all linted source files.
 - `pnpm prettier:fix`: Formats all linted source files.
-- `pnpm lint`: Runs Prettier, Oxlint, and ESLint checks for all the packages.
-- `pnpm lint:fix`: Runs Prettier and ESLint for all the packages and fixes the fixable issues.
+- `pnpm lint`: Runs Prettier, Oxlint, and ESLint compatibility checks for all the packages.
+- `pnpm lint:fix`: Runs Prettier, Oxlint, and ESLint compatibility checks and fixes supported issues.
 - `pnpm type-check`: Type-checks all the packagesusing the Typescript `tsc` tool.
 - `pnpm clean`: Removes the `dist` directory from all the packages.
 
