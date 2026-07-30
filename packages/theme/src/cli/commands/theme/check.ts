@@ -160,7 +160,7 @@ export async function runThemeCheck(path: string, outputFormat: string, config?:
   const offensesByFile = sortOffenses(offenses)
 
   if (outputFormat === 'text') {
-    renderOffensesText(offensesByFile, path, environment)
+    renderOffensesText(offensesByFile, path, theme, environment)
 
     // Use renderSuccess when theres no offenses
     const render = offenses.length ? renderInfo : renderSuccess
