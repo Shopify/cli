@@ -12,6 +12,7 @@ export default defineConfig({
       'packages/app/vite.config.ts',
       'packages/cli/vite.config.ts',
       'packages/cli-kit/vite.config.ts',
+      'packages/eslint-plugin-cli/vite.config.ts',
       'packages/organizations/vite.config.ts',
       'packages/plugin-cloudflare/vite.config.ts',
       'packages/plugin-did-you-mean/vite.config.ts',
