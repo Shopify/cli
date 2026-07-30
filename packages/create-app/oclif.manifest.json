@@ -107,7 +107,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
