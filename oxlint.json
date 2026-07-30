@@ -12,8 +12,14 @@
       "name": "@shopify/cli",
       "specifier": "./packages/eslint-plugin-cli/index.js"
     },
-    "eslint-plugin-no-catch-all",
-    "eslint-plugin-tsdoc"
+    {
+      "name": "no-catch-all",
+      "specifier": "./packages/eslint-plugin-cli/no-catch-all.js"
+    },
+    {
+      "name": "tsdoc",
+      "specifier": "./packages/eslint-plugin-cli/tsdoc.js"
+    }
   ],
   "categories": {
     "correctness": "off"
@@ -574,6 +580,14 @@
       ],
       "env": {
         "node": true
+      }
+    },
+    {
+      "files": [
+        "**/api/graphql/**/generated/*.ts"
+      ],
+      "rules": {
+        "typescript/array-type": "off"
       }
     },
     {

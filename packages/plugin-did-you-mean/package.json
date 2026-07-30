@@ -34,11 +34,6 @@
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
-  "eslintConfig": {
-    "extends": [
-      "../../.eslintrc.cjs"
-    ]
-  },
   "dependencies": {
     "@oclif/core": "4.8.3",
     "@shopify/cli-kit": "4.5.0",

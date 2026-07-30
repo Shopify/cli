@@ -49,11 +49,6 @@
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
-  "eslintConfig": {
-    "extends": [
-      "../../.eslintrc.cjs"
-    ]
-  },
   "dependencies": {
     "esbuild": "0.28.1"
   },

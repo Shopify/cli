@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+/* oxlint-disable typescript/consistent-type-definitions */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -12,7 +12,7 @@ export type AppVersionByIdQuery = {
   version: {
     id: string
     metadata: {message?: string | null; versionTag?: string | null}
-    appModules: {
+    appModules: Array<{
       uuid: string
       userIdentifier: string
       handle: string
@@ -25,14 +25,14 @@ export type AppVersionByIdQuery = {
         experience: string
         managementExperience: string
       }
-    }[]
+    }>
   }
 }
 
 export type VersionInfoFragment = {
   id: string
   metadata: {message?: string | null; versionTag?: string | null}
-  appModules: {
+  appModules: Array<{
     uuid: string
     userIdentifier: string
     handle: string
@@ -45,7 +45,7 @@ export type VersionInfoFragment = {
       experience: string
       managementExperience: string
     }
-  }[]
+  }>
 }
 
 export const VersionInfoFragmentDoc = {

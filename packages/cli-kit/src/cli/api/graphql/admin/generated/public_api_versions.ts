@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type PublicApiVersionsQueryVariables = Types.Exact<{[key: string]: never}>
 
-export type PublicApiVersionsQuery = {publicApiVersions: {handle: string; supported: boolean}[]}
+export type PublicApiVersionsQuery = {publicApiVersions: Array<{handle: string; supported: boolean}>}
 
 export const PublicApiVersions = {
   kind: 'Document',

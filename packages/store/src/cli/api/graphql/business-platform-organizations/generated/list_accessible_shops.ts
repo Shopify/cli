@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -12,7 +12,7 @@ export type ListAccessibleShopsQuery = {
     id: string
     name: string
     accessibleShops?: {
-      edges: {
+      edges: Array<{
         node: {
           id: string
           shopifyShopId?: string | null
@@ -22,7 +22,7 @@ export type ListAccessibleShopsQuery = {
           url?: string | null
           createdAt: unknown
         }
-      }[]
+      }>
       pageInfo: {hasNextPage: boolean}
     } | null
   } | null

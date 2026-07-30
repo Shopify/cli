@@ -24,14 +24,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.ts\"",
+        "command": "pnpm oxlint --config ../../oxlint.json --deny-warnings src",
         "cwd": "packages/plugin-did-you-mean"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "command": "pnpm oxlint --config ../../oxlint.json --fix src",
         "cwd": "packages/plugin-did-you-mean"
       }
     },

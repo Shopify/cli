@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -9,7 +9,7 @@ export type ListAppsQueryVariables = Types.Exact<{
 
 export type ListAppsQuery = {
   appsConnection?: {
-    edges: {node: {id: string; key: string; activeRelease: {id: string; version: {name: string}}}}[]
+    edges: Array<{node: {id: string; key: string; activeRelease: {id: string; version: {name: string}}}}>
     pageInfo: {hasNextPage: boolean}
   } | null
 }

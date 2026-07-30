@@ -1,17 +1,17 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type ThemeFilesUpsertMutationVariables = Types.Exact<{
-  files: Types.OnlineStoreThemeFilesUpsertFileInput[] | Types.OnlineStoreThemeFilesUpsertFileInput
+  files: Array<Types.OnlineStoreThemeFilesUpsertFileInput> | Types.OnlineStoreThemeFilesUpsertFileInput
   themeId: Types.Scalars['ID']['input']
 }>
 
 export type ThemeFilesUpsertMutation = {
   themeFilesUpsert?: {
-    upsertedThemeFiles?: {filename: string}[] | null
-    userErrors: {filename?: string | null; message: string}[]
+    upsertedThemeFiles?: Array<{filename: string}> | null
+    userErrors: Array<{filename?: string | null; message: string}>
   } | null
 }
 
