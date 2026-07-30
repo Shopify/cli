@@ -45,6 +45,9 @@ jobs:
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache  --target=build --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '26.1.0' }}
+      - name: Check formatting
+        run: pnpm prettier
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '26.1.0' }}
       - name: Lint
         run: pnpm nx run-many --all --skip-nx-cache  --target=lint --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '26.1.0' }}

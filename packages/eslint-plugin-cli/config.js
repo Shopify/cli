@@ -6,6 +6,11 @@ const noCatchAllPlugin = require('eslint-plugin-no-catch-all')
 const eslintConfigPrettier = require('eslint-config-prettier')
 const globals = require('globals')
 
+const [shopifyPrettierCompatibilityConfig, shopifyPrettierPluginConfig] = shopifyPlugin.configs.prettier
+const shopifyPrettierCompatibilityRules = Object.fromEntries(
+  Object.entries(shopifyPrettierPluginConfig.rules).filter(([ruleName]) => ruleName !== 'prettier/prettier'),
+)
+
 // Load rules directly to avoid circular dependency
 const rules = {
   'command-flags-with-env': require('./rules/command-flags-with-env'),
@@ -254,7 +259,8 @@ const config = [
   // Spread the Shopify configs (these already include typescript-eslint plugin)
   ...shopifyPlugin.configs.typescript,
   ...shopifyPlugin.configs.node,
-  ...shopifyPlugin.configs.prettier,
+  shopifyPrettierCompatibilityConfig,
+  {rules: shopifyPrettierCompatibilityRules},
 
   // Global ignores
   {

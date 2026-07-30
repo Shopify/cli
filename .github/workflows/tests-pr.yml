@@ -51,6 +51,8 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Check formatting
+        run: pnpm prettier
       - name: Lint
         run: pnpm nx run-many --all --skip-nx-cache --target=lint --output-style=stream
 
