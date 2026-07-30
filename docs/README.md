@@ -15,7 +15,7 @@ The list below contains valuable resources for people interested in contributing
 * [Conventions](./cli/conventions.md)
 * [Performance](./cli/performance.md)
 * [Debugging](./cli/debugging.md)
-* [ESLint rules](./cli/eslint-rules.md)
+* [Oxlint rules](./cli/oxlint-rules.md)
 * [Testing strategy](./cli/testing-strategy.md)
 * [Cross-OS compatibility](./cli/cross-os-compatibility.md)
 * [Troubleshooting](./cli/troubleshooting.md)

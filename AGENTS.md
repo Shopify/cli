@@ -54,7 +54,7 @@ If the change is not ready to be public, do not add a changeset.
 - [docs/cli/conventions.md](docs/cli/conventions.md)
 - [docs/cli/cross-os-compatibility.md](docs/cli/cross-os-compatibility.md)
 - [docs/cli/debugging.md](docs/cli/debugging.md)
-- [docs/cli/eslint-rules.md](docs/cli/eslint-rules.md)
+- [docs/cli/oxlint-rules.md](docs/cli/oxlint-rules.md)
 - [docs/cli/faq.md](docs/cli/faq.md)
 - [docs/cli/get-started.md](docs/cli/get-started.md)
 - [docs/cli/naming-conventions.md](docs/cli/naming-conventions.md)

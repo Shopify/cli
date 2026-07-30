@@ -10,24 +10,6 @@
     "lint:fix": "nx lint:fix",
     "type-check": "nx type-check"
   },
-  "eslintConfig": {
-    "extends": [
-      "../../.eslintrc.cjs"
-    ],
-    "ignorePatterns": [
-      "scripts/"
-    ],
-    "rules": {
-      "no-console": "off",
-      "import/extensions": [
-        "error",
-        "never",
-        {
-          "ignorePackages": true
-        }
-      ]
-    }
-  },
   "devDependencies": {
     "@iarna/toml": "2.2.5",
     "@playwright/test": "^1.61.1",

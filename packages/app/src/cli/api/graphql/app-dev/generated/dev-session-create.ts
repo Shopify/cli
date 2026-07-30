@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+/* oxlint-disable typescript/consistent-type-definitions */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -18,8 +18,8 @@ export type DevSessionCreateMutation = {
       user?: {id: string; email?: string | null} | null
       app: {id: string; key: string}
     } | null
-    warnings?: {message: string; code: Types.DevSessionWarningCode}[] | null
-    userErrors: {message: string; on: JsonMapType; field?: string[] | null; category: string}[]
+    warnings?: Array<{message: string; code: Types.DevSessionWarningCode}> | null
+    userErrors: Array<{message: string; on: JsonMapType; field?: Array<string> | null; category: string}>
   } | null
 }
 

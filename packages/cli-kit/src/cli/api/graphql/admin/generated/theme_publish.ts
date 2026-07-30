@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -10,7 +10,7 @@ export type ThemePublishMutationVariables = Types.Exact<{
 export type ThemePublishMutation = {
   themePublish?: {
     theme?: {id: string; name: string; role: Types.ThemeRole} | null
-    userErrors: {field?: string[] | null; message: string}[]
+    userErrors: Array<{field?: Array<string> | null; message: string}>
   } | null
 }
 

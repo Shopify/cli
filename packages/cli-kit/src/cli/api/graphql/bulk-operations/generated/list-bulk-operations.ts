@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -11,7 +11,7 @@ export type ListBulkOperationsQueryVariables = Types.Exact<{
 
 export type ListBulkOperationsQuery = {
   bulkOperations: {
-    nodes: {
+    nodes: Array<{
       id: string
       status: Types.BulkOperationStatus
       errorCode?: Types.BulkOperationErrorCode | null
@@ -20,7 +20,7 @@ export type ListBulkOperationsQuery = {
       completedAt?: unknown | null
       url?: string | null
       partialDataUrl?: string | null
-    }[]
+    }>
   }
 }
 
