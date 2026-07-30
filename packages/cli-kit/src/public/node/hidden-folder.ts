@@ -13,13 +13,14 @@ const HIDDEN_FOLDER_NAME = '.shopify'
  */
 export async function getOrCreateHiddenShopifyFolder(directory: string): Promise<string> {
   const hiddenFolder = joinPath(directory, HIDDEN_FOLDER_NAME)
-  const gitignorePath = joinPath(hiddenFolder, '.gitignore')
-  // Check if both the folder and .gitignore exist
-  const [folderExists, gitignoreExists] = await Promise.all([fileExists(hiddenFolder), fileExists(gitignorePath)])
+  const folderExists = await fileExists(hiddenFolder)
   if (!folderExists) {
     outputDebug(outputContent`Creating hidden .shopify folder at ${outputToken.path(hiddenFolder)}...`)
     await mkdir(hiddenFolder)
   }
+
+  const gitignorePath = joinPath(hiddenFolder, '.gitignore')
+  const gitignoreExists = folderExists && (await fileExists(gitignorePath))
   if (!gitignoreExists) {
     outputDebug(outputContent`Creating .gitignore in ${outputToken.path(hiddenFolder)}...`)
     await writeFile(gitignorePath, `# Ignore the entire ${HIDDEN_FOLDER_NAME} directory\n*`)
