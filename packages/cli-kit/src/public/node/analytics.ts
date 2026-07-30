@@ -204,6 +204,13 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
 // method was used, so matching those would drop legitimate telemetry.
 const CREDENTIAL_NAME_PATTERN = 'password|token|secret|credential'
 
+// A single space-delimited flag value as it appears in the serialised payload:
+// either a JSON escape sequence such as `\"` or `\\`, or a character that is
+// neither whitespace nor part of one. Consuming escape sequences whole is what
+// keeps the replacement from cutting a `\"` in half, which would unbalance the
+// surrounding string and make the payload fail to parse.
+const SERIALIZED_FLAG_VALUE_PATTERN = '(?:\\\\.|[^\\s"\\\\])*'
+
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
   const sanitizedPayloadString = payloadString
@@ -211,12 +218,14 @@ function sanitizePayload<T>(payload: T): T {
     .replace(/shptka_\w*/g, '*****')
     // Credentials passed as flags, e.g. `--password abc`, `--client-secret=abc`.
     .replace(
-      new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME_PATTERN})(?:=|\\s+))(?:"[^"]*"|'[^']*'|[^\\s"]+)`, 'gi'),
+      new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME_PATTERN})(?:=|\\s+))${SERIALIZED_FLAG_VALUE_PATTERN}`, 'gi'),
       '$1*****',
     )
-    // Credentials held under a credential-shaped key. Keys are matched with an
-    // optional backslash because nested JSON strings arrive escaped.
-    .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME_PATTERN})[\\w.-]*\\\\?":\\\\?")[^"\\\\]*`, 'gi'), '$1*****')
+    // Credentials held under a credential-shaped key. Quotes carry any number of
+    // leading backslashes so that keys nested one or more serialised JSON strings
+    // deep -- `metadata` is already-serialised JSON, and its values can be too --
+    // are covered as well as top-level ones.
+    .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME_PATTERN})[\\w.-]*\\\\*":\\\\*")[^"\\\\]*`, 'gi'), '$1*****')
   return JSON.parse(sanitizedPayloadString)
 }
 

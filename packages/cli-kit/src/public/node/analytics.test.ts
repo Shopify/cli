@@ -391,6 +391,65 @@ describe('event tracking', () => {
     })
   })
 
+  // Redaction rewrites the serialised payload, so a replacement that lands inside
+  // an escape sequence or past a closing quote makes the whole payload unparseable
+  // and drops the event. These values are the ones that get near those boundaries.
+  test.each([
+    ['an empty value', ['--client-secret', '']],
+    ['a value containing quotes', ['--client-secret', '"cs_secret_value"']],
+    ['a value containing a backslash', ['--client-secret', 'cs\\secret\\value']],
+  ])('still reports the event when a credential flag has %s', async (_description, credentialFlag) => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({
+        commandContent,
+        args: args.concat(credentialFlag),
+        currentTime: currentDate.getTime() - 100,
+      })
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(sendErrorToBugsnag).not.toHaveBeenCalled()
+      const reportedArgs = publishEventMock.mock.calls[0]![2].args as string
+      expect(reportedArgs).toContain('--client-secret *****')
+      expect(reportedArgs).not.toContain('secret_value')
+    })
+  })
+
+  // `metadata` is serialised JSON, and a plugin is free to put serialised JSON
+  // inside it, so credential keys can sit more than one escaping level deep.
+  test('does not send credentials nested inside serialized metadata', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+      await addSensitiveMetadata(() => ({
+        environmentFlags: JSON.stringify({nested: JSON.stringify({'client-secret': 'nested_secret_value'})}),
+      }))
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const environmentFlags = publishEventMock.mock.calls[0]![2].cmd_all_environment_flags as string
+      expect(environmentFlags).not.toContain('nested_secret_value')
+      expect(JSON.parse(JSON.parse(environmentFlags).nested)).toStrictEqual({'client-secret': '*****'})
+    })
+  })
+
   test('keeps reporting the auth method, which is not a credential', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
