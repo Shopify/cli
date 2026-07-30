@@ -1,6 +1,6 @@
 import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError} from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
-import {getUIExtensionPayload} from '../payload.js'
+import {getUIExtensionPayload, SOURCE_MAP_SUFFIX} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {resolveOutputDir} from '../../../build/steps/include-assets/generate-manifest.js'
@@ -53,6 +53,7 @@ export async function fileServerMiddleware(event: H3Event, options: {filePath: s
     '.html': 'text/html',
     '.js': 'text/javascript',
     '.json': 'application/json',
+    '.map': 'application/json',
     '.wasm': 'application/wasm',
     '.css': 'text/css',
     '.png': 'image/png',
@@ -93,12 +94,23 @@ export function getExtensionAssetMiddleware({getExtensions, payloadStore}: GetEx
     // Requests without a resolver entry fall through to direct outputDir serving
     // — covers uncommon direct fetches of compiled artefacts by filename.
     const resolver = payloadStore.getAssetResolver(extension.devUUID)
-    const filesystemPath = resolver?.get(assetPath) ?? assetPath
+    const resolvedPath = resolver?.get(assetPath)
+    const filesystemPath = resolvedPath ?? assetPath
 
-    const resolvedOutputDir = resolvePath(resolveOutputDir(extension.outputPath))
-    const candidate = resolvePath(joinPath(resolvedOutputDir, filesystemPath))
+    // Source maps are the one asset that is deliberately absent from the bundle:
+    // `keepBuiltSourcemapsLocally` moves them back into the extension directory so they
+    // never reach a deploy bundle. Serve those from the extension directory instead, and
+    // only when the payload registered them, so the resolver stays the allowlist and the
+    // extension directory isn't otherwise readable through this route.
+    const isSourceMap = filesystemPath.endsWith(SOURCE_MAP_SUFFIX)
+    if (isSourceMap && resolvedPath === undefined) {
+      return sendError(event, {statusCode: 404, statusMessage: 'Not Found'})
+    }
 
-    if (!isSubpath(resolvedOutputDir, candidate)) {
+    const rootDirectory = resolvePath(isSourceMap ? extension.directory : resolveOutputDir(extension.outputPath))
+    const candidate = resolvePath(joinPath(rootDirectory, filesystemPath))
+
+    if (!isSubpath(rootDirectory, candidate)) {
       return sendError(event, {statusCode: 404, statusMessage: 'Not Found'})
     }
 
