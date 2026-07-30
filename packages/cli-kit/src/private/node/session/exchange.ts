@@ -93,13 +93,15 @@ async function exchangeAppAutomationTokenForAccessToken(
     return {accessToken, userId}
   } catch (error) {
     const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-    const headline = `The custom token provided can't be used for the ${prettyName} API.`
-    // Surface whatever the upstream failure was (e.g. `invalid_request - Invalid 'subject_token' value: invalid`)
-    // so a revoked or expired token and an unreachable Identity aren't indistinguishable. The headline is
-    // kept as-is, and used on its own when there's no reason to report.
+    // When the request itself fails (e.g. the authentication service is unreachable) there is no OAuth
+    // body, so the debug line in tokenRequest never runs. Log the caught error here so --verbose always
+    // carries the reason for the failure.
     const reason = error instanceof Error ? flattenAndTruncate(error.message) : ''
+    if (reason !== '') {
+      outputDebug(`Token exchange for the ${prettyName} API failed: ${reason}`)
+    }
     throw new AbortError(
-      reason === '' ? headline : `${headline}\nReason: ${reason}`,
+      `The custom token provided can't be used for the ${prettyName} API.`,
       'Ensure the token is correct and not expired.',
     )
   }
@@ -219,21 +221,20 @@ interface TokenRequestResult {
   id_token?: string
 }
 
-function tokenRequestErrorHandler({error, description, store}: TokenRequestError) {
+function tokenRequestErrorHandler({error, store}: TokenRequestError) {
   const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
     store ? `: ${store}` : '.'
   }`
-  const reason = description === undefined || description === '' ? error : `${error} - ${description}`
 
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
     // using a valid refresh token. When that happens, we take the user through the authentication flow.
-    return new InvalidGrantError(reason)
+    return new InvalidGrantError()
   }
   if (error === 'invalid_request') {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
-    return new InvalidRequestError(reason)
+    return new InvalidRequestError()
   }
   if (error === 'invalid_target') {
     return new InvalidTargetError(invalidTargetErrorMessage, '', [
@@ -243,14 +244,12 @@ function tokenRequestErrorHandler({error, description, store}: TokenRequestError
     ])
   }
   // eslint-disable-next-line @shopify/cli/no-error-factory-functions
-  return new AbortError(reason)
+  return new AbortError(error)
 }
 
 interface TokenRequestError {
   // The OAuth error code returned by Identity, e.g. `invalid_request`.
   error: string
-  // The OAuth `error_description` returned by Identity, when present.
-  description?: string
   store?: string
 }
 
@@ -284,22 +283,21 @@ async function tokenRequest(params: Record<string, string>): Promise<Result<Toke
 
     // The responder isn't always Identity: proxies and gateways can answer with arbitrary JSON, so neither
     // field is guaranteed to be present or well-formed. Normalize both here, before they reach the debug
-    // log or any user-facing message, so downstream code can rely on their shape.
+    // log, so downstream code can rely on their shape.
     const oauthError = typeof payload.error === 'string' && payload.error !== '' ? payload.error : 'unknown_error'
     const rawDescription = typeof payload.error_description === 'string' ? payload.error_description : ''
-    const cleanedDescription = flattenAndTruncate(rawDescription)
-    const oauthDescription = cleanedDescription === '' ? undefined : cleanedDescription
+    const oauthDescription = flattenAndTruncate(rawDescription)
 
     // Only logged for failed responses: a successful body contains the access token. An OAuth error body
     // carries just `error` and `error_description`, and both are logged rather than the raw body so an
     // unexpected payload can't leak into the debug output.
     outputDebug(
       `Token request to Identity failed with status ${res.status}: ${oauthError}${
-        oauthDescription ? ` - ${oauthDescription}` : ''
+        oauthDescription === '' ? '' : ` - ${oauthDescription}`
       }`,
     )
 
-    return err({error: oauthError, description: oauthDescription, store: params.store})
+    return err({error: oauthError, store: params.store})
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(

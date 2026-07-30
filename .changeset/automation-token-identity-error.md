@@ -2,4 +2,4 @@
 '@shopify/cli-kit': patch
 ---
 
-Surface the error and description returned by Identity when a token exchange or refresh fails
+Log the reason a token exchange or refresh failed in verbose output
