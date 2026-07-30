@@ -61,13 +61,13 @@
       ],
       "options": {
         "commands": [
-          "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}'",
-          "pnpm eslint 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}'",
-          "pnpm eslint 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}'",
-          "pnpm eslint 'src/cli/api/graphql/app-management/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/app-management/generated/**/*.{ts,tsx}'",
-          "pnpm eslint 'src/cli/api/graphql/webhooks/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/webhooks/generated/**/*.{ts,tsx}'",
-          "pnpm eslint 'src/cli/api/graphql/functions/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/functions/generated/**/*.{ts,tsx}'",
-          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}'"
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}'",
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}'",
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}'",
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/app-management/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/app-management/generated/**/*.{ts,tsx}'",
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/webhooks/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/webhooks/generated/**/*.{ts,tsx}'",
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/functions/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/functions/generated/**/*.{ts,tsx}'",
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}'"
         ],
         "cwd": "packages/app"
       }

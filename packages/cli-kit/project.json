@@ -112,8 +112,8 @@
       ],
       "options": {
         "commands": [
-          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}'",
-          "pnpm eslint 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}'"
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}'",
+          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}'"
         ],
         "cwd": "packages/cli-kit"
       }

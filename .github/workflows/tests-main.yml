@@ -51,8 +51,8 @@ jobs:
       - name: Oxlint
         run: pnpm lint:oxlint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '26.1.0' }}
-      - name: Lint
-        run: pnpm nx run-many --all --skip-nx-cache  --target=lint --output-style=stream
+      - name: ESLint compatibility
+        run: pnpm lint:eslint --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '26.1.0' }}
       - name: Type-check
         run: pnpm nx run-many --all --skip-nx-cache  --target=type-check --output-style=stream

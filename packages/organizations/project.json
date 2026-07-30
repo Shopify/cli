@@ -51,7 +51,7 @@
       "dependsOn": ["graphql-codegen:postfix"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
       "options": {
-        "commands": ["pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}'"],
+        "commands": ["pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}'"],
         "cwd": "packages/organizations"
       }
     },
