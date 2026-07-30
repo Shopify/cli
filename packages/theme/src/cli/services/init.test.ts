@@ -175,7 +175,12 @@ describe('createAIInstructions()', () => {
     // Then
     expect(downloadGitRepository).toHaveBeenCalled()
     expect(readFile).toHaveBeenCalledWith('/tmp/ai/github/copilot-instructions.md')
-    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', expect.stringContaining('# AGENTS.md'))
+    expect(writeFile).toHaveBeenCalledWith(
+      '/path/to/theme/AGENTS.md',
+      expect.stringContaining(
+        'Use the [Shopify AI Toolkit](https://shopify.dev/docs/apps/build/ai-toolkit) for all Shopify API and platform work.',
+      ),
+    )
     expect(symlink).not.toHaveBeenCalled()
   })
 

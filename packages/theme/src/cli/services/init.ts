@@ -6,6 +6,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme.git'
 const AI_INSTRUCTIONS_REPO_URL = 'https://github.com/Shopify/theme-liquid-docs.git'
+const AI_TOOLKIT_RECOMMENDATION =
+  'Use the [Shopify AI Toolkit](https://shopify.dev/docs/apps/build/ai-toolkit) for all Shopify API and platform work. If missing, install it in the agent host per that page (or `npx skills add Shopify/shopify-ai-toolkit` for skill-compatible hosts).'
 
 const SUPPORTED_AI_INSTRUCTIONS = {
   all: 'All',
@@ -96,7 +98,7 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
             const sourceContent = await readFile(sourcePath)
 
             const agentsPath = joinPath(themeRoot, 'AGENTS.md')
-            const agentsContent = `# AGENTS.md\n\n${sourceContent}`
+            const agentsContent = `# AGENTS.md\n\n${AI_TOOLKIT_RECOMMENDATION}\n\n${sourceContent}`
             await writeFile(agentsPath, agentsContent)
 
             const results = await Promise.all(
