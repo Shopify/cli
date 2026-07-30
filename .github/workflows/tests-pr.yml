@@ -53,6 +53,8 @@ jobs:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Check formatting
         run: pnpm prettier
+      - name: Oxlint
+        run: pnpm lint:oxlint
       - name: Lint
         run: pnpm nx run-many --all --skip-nx-cache --target=lint --output-style=stream
 
