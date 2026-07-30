@@ -1,9 +1,38 @@
 import nxPlugin from '@nx/eslint-plugin'
 import cliPlugin from '@shopify/eslint-plugin-cli'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
+import {readFileSync} from 'node:fs'
+
+const oxlintConfig = JSON.parse(readFileSync(new URL('./oxlint.json', import.meta.url), 'utf8'))
+
+const eslintPluginNames = {
+  import: 'import-x',
+  node: 'n',
+  typescript: '@typescript-eslint',
+}
+
+const eslintRuleName = (oxlintRuleName) => {
+  const [pluginName, ...ruleNameParts] = oxlintRuleName.split('/')
+  const eslintPluginName = eslintPluginNames[pluginName]
+  return eslintPluginName ? `${eslintPluginName}/${ruleNameParts.join('/')}` : oxlintRuleName
+}
+
+const isEnabled = (ruleConfiguration) => {
+  const severity = Array.isArray(ruleConfiguration) ? ruleConfiguration[0] : ruleConfiguration
+  return severity !== 'off' && severity !== 0
+}
+
+const eslintCompatibilityConfig = ({files, rules}) => ({
+  ...(files ? {files} : {}),
+  rules: Object.fromEntries(
+    Object.entries(rules)
+      .filter(([, ruleConfiguration]) => isEnabled(ruleConfiguration))
+      .map(([ruleName]) => [eslintRuleName(ruleName), 'off']),
+  ),
+})
 
 // Spread the CLI plugin's base config which includes all necessary plugins
-const config = [
+export const eslintBaseConfig = [
   // Base config from @shopify/eslint-plugin-cli (includes shopify, typescript, prettier, etc.)
   ...cliPlugin.configs.config,
 
@@ -221,6 +250,19 @@ const config = [
       '@nx/enforce-module-boundaries': 'off',
     },
   },
+]
+
+const config = [
+  ...eslintBaseConfig,
+  // ESLint remains as a compatibility layer for rules that Oxlint does not support yet.
+  // A directive can target an Oxlint-owned rule, so ESLint alone cannot determine whether it is unused.
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+  },
+  eslintCompatibilityConfig(oxlintConfig),
+  ...oxlintConfig.overrides.map((override) => eslintCompatibilityConfig(override)),
 ]
 
 export default config
