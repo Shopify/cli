@@ -9,10 +9,7 @@ export type CreateAssetUrlMutationVariables = Types.Exact<{
 }>
 
 export type CreateAssetUrlMutation = {
-  appRequestSourceUploadUrl: {
-    sourceUploadUrl?: string | null
-    userErrors: {field?: string[] | null; message: string}[]
-  }
+  appRequestSourceUploadUrl: {sourceUploadUrl?: string | null; userErrors: {field?: string[] | null; message: string}[]}
 }
 
 export const CreateAssetUrl = {
