@@ -1,8 +1,26 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import {exec, expectSuccess, httpRequest, retry, spawnPty, tail} from '../proc.js'
+import {exec, expectSuccess, freePort, httpRequest, retry, spawnPty, tail} from '../proc.js'
 import type {PtyProcess} from '../proc.js'
 import type {SectionDef} from '../types.js'
+
+/** Probe both address families — MiniOxygen may bind IPv6 ::1 or IPv4 127.0.0.1. */
+async function probeLocalhost(port: number): Promise<{status: number; body: string; url: string}> {
+  const urls = [`http://127.0.0.1:${port}/`, `http://[::1]:${port}/`]
+  let lastError: unknown
+  for (const url of urls) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const response = await httpRequest(url, {timeoutMs: 20_000})
+      return {...response, url}
+    } catch (error) {
+      lastError = error
+    }
+  }
+  const message =
+    lastError instanceof Error ? (lastError.cause instanceof Error ? lastError.cause.message : lastError.message) : String(lastError)
+  throw new Error(`probe of port ${port} failed on IPv4 and IPv6: ${message}`)
+}
 
 /**
  * Press Enter on every prompt until `until` matches the output (the QA doc says
@@ -82,30 +100,23 @@ export const hydrogenSection: SectionDef = {
       doc: 'Run `shopify hydrogen dev`; follow the "View Hydrogen app" link and confirm you can see a storefront',
       kind: 'auto',
       run: async (ctx) => {
-        const proc = spawnPty(ctx, ['hydrogen', 'dev'], {cwd: hydrogenDirOrThrow(ctx)})
-        await proc.waitFor(/View [\w ]*app:|localhost:\d+/i, {timeoutMs: 5 * 60_000})
-        const announced =
-          proc.output().match(/https?:\/\/(?:127\.0\.0\.1|localhost):\d{4,5}\/?/)?.[0] ?? 'http://localhost:3000'
-        // Node's fetch resolves `localhost` to ::1 first on macOS while the dev
-        // server listens on IPv4 — probe 127.0.0.1 explicitly.
-        const url = announced.replace('localhost', '127.0.0.1')
+        // Pin the port so the probe is deterministic even if something else
+        // occupies hydrogen's default 3000.
+        const port = await freePort()
+        const proc = spawnPty(ctx, ['hydrogen', 'dev', '--port', String(port)], {cwd: hydrogenDirOrThrow(ctx)})
+        await proc.waitFor(new RegExp(`View [\\w ]*app:|localhost:${port}`, 'i'), {timeoutMs: 5 * 60_000})
         const response = await retry(async () => {
-          try {
-            const res = await httpRequest(url, {timeoutMs: 20_000})
-            if (res.status >= 500) throw new Error(`storefront returned HTTP ${res.status}`)
-            return res
-          } catch (error) {
-            const message = error instanceof Error ? (error.cause instanceof Error ? error.cause.message : error.message) : String(error)
-            throw new Error(`probe of ${url} failed: ${message}`)
-          }
+          const res = await probeLocalhost(port)
+          if (res.status >= 500) throw new Error(`storefront returned HTTP ${res.status}`)
+          return res
         }, 10, 5000)
         if (!/<!doctype html|<html/i.test(response.body)) {
-          throw new Error(`Storefront at ${url} did not return HTML (HTTP ${response.status})`)
+          throw new Error(`Storefront at ${response.url} did not return HTML (HTTP ${response.status})`)
         }
         // "Stop it with CTRL+C"
         proc.write('\u0003')
         await proc.waitForExit(60_000).catch(() => proc.kill())
-        return `storefront responded at ${url} (HTTP ${response.status}); stopped with CTRL+C`
+        return `storefront responded at ${response.url} (HTTP ${response.status}); stopped with CTRL+C`
       },
     },
   ],

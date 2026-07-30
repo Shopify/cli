@@ -11,10 +11,6 @@ export interface CtxState {
   appDir?: string
   /** Name given to the app created by `app init`. */
   appName?: string
-  /** GraphiQL server coordinates passed to `app dev`. */
-  graphiql?: {port: number; key: string}
-  /** The long-running `app dev` pty process. */
-  devProc?: PtyProcess
   /** Directory of the hydrogen app. */
   hydrogenDir?: string
   /** Name of the secondary config created by `app config link` (e.g. "staging"). */
@@ -33,7 +29,6 @@ export interface Ctx {
   /** Environment passed to every CLI invocation. */
   env: {[key: string]: string}
   orgId?: string
-  storeFqdn?: string
   /** When set, the version step asserts `shopify version` equals this. */
   expectedVersion?: string
   state: CtxState
@@ -52,7 +47,6 @@ function repoRoot(): string {
  *                       Defaults to the repo build at packages/cli/bin/run.js.
  * QA_EXPECTED_VERSION   Assert `shopify version` equals this value.
  * QA_ORG_ID             Organization id used for `app init` (falls back to E2E_ORG_ID).
- * QA_STORE_FQDN         Dev store passed to `app dev` (falls back to E2E_STORE_FQDN).
  * QA_WORK_DIR           Scratch dir (defaults to a fresh mkdtemp).
  * QA_ISOLATE            When "1", run with fresh XDG dirs so the ambient CLI session
  *                       is not used. CI sets this; local runs default to ambient auth.
@@ -88,6 +82,11 @@ export function createContext(log: (msg: string) => void = defaultLog): Ctx {
   // proc.ts re-points INIT_CWD/PWD at the effective cwd per invocation.
   delete env.INIT_CWD
   delete env.PWD
+  // Some environments (nix shells, agent harnesses) export NPM_CONFIG_NODE_VERSION;
+  // pnpm trusts it over the real node version and fails template engine checks.
+  for (const key of Object.keys(env)) {
+    if (key.toLowerCase() === 'npm_config_node_version') delete env[key]
+  }
 
   if (process.env.QA_ISOLATE === '1') {
     const authDir = path.join(workDir, 'xdg')
@@ -104,7 +103,6 @@ export function createContext(log: (msg: string) => void = defaultLog): Ctx {
     workDir,
     env,
     orgId: process.env.QA_ORG_ID ?? process.env.E2E_ORG_ID,
-    storeFqdn: process.env.QA_STORE_FQDN ?? process.env.E2E_STORE_FQDN,
     expectedVersion: process.env.QA_EXPECTED_VERSION,
     state: {ptyProcs: []},
     log,

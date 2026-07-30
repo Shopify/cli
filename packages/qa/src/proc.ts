@@ -54,9 +54,10 @@ export async function exec(ctx: Ctx, args: string[], opts: ExecOptions = {}): Pr
   const [command, ...prefix] = ctx.cliInvoke
   ctx.log(`$ shopify ${args.join(' ')}`)
   const cwd = opts.cwd ?? ctx.workDir
+  // CI=1 makes the CLI fail fast on unexpected prompts instead of hanging.
   const result = await execa(command as string, [...prefix, ...args], {
     cwd,
-    env: {...ctx.env, ...opts.env, INIT_CWD: cwd, PWD: cwd},
+    env: {...ctx.env, ...opts.env, INIT_CWD: cwd, PWD: cwd, CI: '1'},
     extendEnv: false,
     timeout: opts.timeoutMs ?? DEFAULT_EXEC_TIMEOUT,
     input: opts.input,
@@ -87,6 +88,28 @@ export interface WaitOptions {
   timeoutMs?: number
 }
 
+export function settle(ms = 250): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Allocate a free localhost port. */
+export async function freePort(): Promise<number> {
+  const net = await import('net')
+  return new Promise((resolve, reject) => {
+    const server = net.createServer()
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address()
+      if (address && typeof address === 'object') {
+        const port = address.port
+        server.close(() => resolve(port))
+      } else {
+        server.close(() => reject(new Error('Could not allocate a free port')))
+      }
+    })
+    server.on('error', reject)
+  })
+}
+
 export interface PtyProcess {
   /** Wait until the (ANSI-stripped) output matches. */
   waitFor(match: string | RegExp, opts?: WaitOptions): Promise<void>
@@ -112,12 +135,15 @@ export function spawnPty(
   ctx.log(`$ shopify ${args.join(' ')} (pty)`)
 
   const cwd = opts.cwd ?? ctx.workDir
+  // Interactive prompts only render when the CLI does not think it's on CI.
+  const env: {[key: string]: string} = {...ctx.env, ...opts.env, INIT_CWD: cwd, PWD: cwd}
+  delete env.CI
   const proc = pty.spawn(command as string, [...prefix, ...args], {
     name: 'xterm-color',
     cols: 120,
     rows: 40,
     cwd,
-    env: {...ctx.env, ...opts.env, INIT_CWD: cwd, PWD: cwd},
+    env,
   })
 
   let buffer = ''
@@ -161,7 +187,18 @@ export function spawnPty(
     write: (data) => proc.write(data),
     sendLine: (line) => proc.write(`${line}\r`),
     kill: () => {
-      if (!exited) proc.kill()
+      if (exited) return
+      // Kill the whole process group: dev servers spawn children (workerd,
+      // vite) that would otherwise survive and keep ports bound.
+      if (process.platform !== 'win32') {
+        try {
+          process.kill(-proc.pid, 'SIGTERM')
+          return
+        } catch {
+          // Fall through to killing the direct child only.
+        }
+      }
+      proc.kill()
     },
     waitFor: (match, waitOpts = {}) => {
       const from = 0
