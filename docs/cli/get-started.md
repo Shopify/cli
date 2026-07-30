@@ -68,8 +68,10 @@ You can also pass these optional flags:
 Besides the scripts for building and running the CLIs, there are others that might come handy when adding code to the project:
 
 - `pnpm test`: Runs the tests of all the packages.
-- `pnpm lint`: Runs ESLint and Prettier checks for all the packages.
-- `pnpm lint:fix`: Runs ESLint and Prettier checks for all the packages and fixes the fixable issues.
+- `pnpm prettier`: Checks formatting for all linted source files.
+- `pnpm prettier:fix`: Formats all linted source files.
+- `pnpm lint`: Runs Prettier and ESLint checks for all the packages.
+- `pnpm lint:fix`: Runs Prettier and ESLint for all the packages and fixes the fixable issues.
 - `pnpm type-check`: Type-checks all the packagesusing the Typescript `tsc` tool.
 - `pnpm clean`: Removes the `dist` directory from all the packages.
 

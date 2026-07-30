@@ -11,11 +11,7 @@ export type ThemeFilesDeleteMutationVariables = Types.Exact<{
 export type ThemeFilesDeleteMutation = {
   themeFilesDelete?: {
     deletedThemeFiles?: {filename: string}[] | null
-    userErrors: {
-      filename?: string | null
-      code?: Types.OnlineStoreThemeFilesUserErrorsCode | null
-      message: string
-    }[]
+    userErrors: {filename?: string | null; code?: Types.OnlineStoreThemeFilesUserErrorsCode | null; message: string}[]
   } | null
 }
 
