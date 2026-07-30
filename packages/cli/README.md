@@ -151,7 +151,7 @@ FLAGS
       [env: SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -209,7 +209,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -280,7 +280,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -349,7 +349,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -408,7 +408,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -456,7 +456,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -501,7 +501,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -550,7 +550,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -625,7 +625,7 @@ FLAGS
       [env: SHOPIFY_FLAG_SOURCE_CONTROL_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -738,7 +738,7 @@ FLAGS
       [env: SHOPIFY_FLAG_USE_LOCALHOST]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -787,7 +787,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -837,7 +837,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -884,7 +884,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -954,7 +954,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -1005,7 +1005,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1053,7 +1053,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1118,7 +1118,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1180,7 +1180,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1230,7 +1230,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STDOUT]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1278,7 +1278,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1337,7 +1337,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1400,7 +1400,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -1463,7 +1463,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1508,7 +1508,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1554,7 +1554,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --web-env
@@ -1624,7 +1624,7 @@ FLAGS
       [env: SHOPIFY_FLAG_TEMPLATE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 ```
 
@@ -1680,7 +1680,7 @@ FLAGS
       <options: success|failure>
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1731,7 +1731,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1785,7 +1785,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -1837,7 +1837,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -2140,7 +2140,7 @@ FLAGS
       [env: SHOPIFY_FLAG_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -2185,7 +2185,7 @@ FLAGS
       [env: SHOPIFY_FLAG_QUERY]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3091,7 +3091,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3383,7 +3383,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3426,7 +3426,7 @@ FLAGS
       [env: SHOPIFY_FLAG_SCOPES]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3461,7 +3461,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3500,7 +3500,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3559,7 +3559,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -3618,7 +3618,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3664,7 +3664,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3727,7 +3727,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -3784,7 +3784,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PORT]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -3830,7 +3830,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3871,7 +3871,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ORGANIZATION_ID]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3911,7 +3911,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3988,7 +3988,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PRINT]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4043,7 +4043,7 @@ FLAGS
       [env: SHOPIFY_FLAG_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4107,7 +4107,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4237,7 +4237,7 @@ FLAGS
       [env: SHOPIFY_FLAG_THEME_EDITOR_SYNC]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4323,7 +4323,7 @@ FLAGS
       [env: SHOPIFY_CLI_THEME_TOKEN]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4412,7 +4412,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4454,7 +4454,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4489,7 +4489,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4551,7 +4551,7 @@ FLAGS
       <options: live|unpublished|development>
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4594,7 +4594,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4657,7 +4657,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4696,7 +4696,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4771,7 +4771,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PREVIEW_ID]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4835,7 +4835,7 @@ FLAGS
       [env: SHOPIFY_FLAG_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4891,7 +4891,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4971,7 +4971,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -5072,7 +5072,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STRICT_PUSH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -5164,7 +5164,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -5216,7 +5216,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
