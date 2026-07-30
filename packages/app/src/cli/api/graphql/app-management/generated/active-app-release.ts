@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+/* oxlint-disable typescript/consistent-type-definitions */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -13,12 +13,12 @@ export type ActiveAppReleaseQuery = {
     id: string
     key: string
     organizationId: string
-    activeRoot: {grantedShopifyApprovalScopes: string[]; clientCredentials: {secrets: {key: string}[]}}
+    activeRoot: {grantedShopifyApprovalScopes: Array<string>; clientCredentials: {secrets: Array<{key: string}>}}
     activeRelease: {
       id: string
       version: {
         name: string
-        appModules: {
+        appModules: Array<{
           uuid: string
           userIdentifier: string
           handle: string
@@ -31,7 +31,7 @@ export type ActiveAppReleaseQuery = {
             experience: string
             managementExperience: string
           }
-        }[]
+        }>
       }
     }
   }
@@ -41,12 +41,12 @@ export type AppVersionInfoFragment = {
   id: string
   key: string
   organizationId: string
-  activeRoot: {grantedShopifyApprovalScopes: string[]; clientCredentials: {secrets: {key: string}[]}}
+  activeRoot: {grantedShopifyApprovalScopes: Array<string>; clientCredentials: {secrets: Array<{key: string}>}}
   activeRelease: {
     id: string
     version: {
       name: string
-      appModules: {
+      appModules: Array<{
         uuid: string
         userIdentifier: string
         handle: string
@@ -59,7 +59,7 @@ export type AppVersionInfoFragment = {
           experience: string
           managementExperience: string
         }
-      }[]
+      }>
     }
   }
 }

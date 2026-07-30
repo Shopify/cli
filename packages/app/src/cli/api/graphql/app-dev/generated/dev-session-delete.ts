@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -7,7 +7,7 @@ export type DevSessionDeleteMutationVariables = Types.Exact<{
   appId: Types.Scalars['String']['input']
 }>
 
-export type DevSessionDeleteMutation = {devSessionDelete?: {userErrors: {message: string}[]} | null}
+export type DevSessionDeleteMutation = {devSessionDelete?: {userErrors: Array<{message: string}>} | null}
 
 export const DevSessionDelete = {
   kind: 'Document',
