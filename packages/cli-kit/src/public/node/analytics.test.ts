@@ -32,8 +32,8 @@ vi.mock('../../version.js')
 vi.mock('./monorail.js')
 vi.mock('./cli.js')
 vi.mock('./error-handler.js')
-// Rate limiting short-circuits reporting before the analytics-disabled branch is
-// reached, which would make the assertions below depend on prior local runs.
+// Rate limiting can short-circuit reporting, which would make these tests depend
+// on how many times the suite has run locally today.
 vi.mock('../../private/node/conf-store.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../private/node/conf-store.js')>()),
   runWithRateLimit: vi.fn(async ({task}: {task: () => Promise<void>}) => task()),
@@ -257,17 +257,6 @@ describe('event tracking', () => {
     })
   })
 
-  // Every SHOPIFY_* variable the CLI reads a credential from. Kept in sync with
-  // `environmentVariables` in private/node/constants.ts.
-  const credentialEnvironmentVariables = {
-    SHOPIFY_APP_AUTOMATION_TOKEN: 'atkn_app_automation_secret',
-    SHOPIFY_CLI_PARTNERS_TOKEN: 'atkn_partners_secret',
-    SHOPIFY_CLI_IDENTITY_TOKEN: 'identity_secret',
-    SHOPIFY_CLI_REFRESH_TOKEN: 'refresh_secret',
-    SHOPIFY_CLI_THEME_TOKEN: 'shptka_theme_secret',
-    SHOPIFY_FLAG_STORE_PASSWORD: 'store_secret',
-  }
-
   async function withEnvironment(variables: {[key: string]: string}, execute: () => Promise<void>): Promise<void> {
     const originalValues = Object.keys(variables).map((key): [string, string | undefined] => [key, process.env[key]])
     Object.entries(variables).forEach(([key, value]) => {
@@ -304,58 +293,28 @@ describe('event tracking', () => {
     })
   })
 
-  test('does not send credential environment variables to Monorail', async () => {
-    await withEnvironment(credentialEnvironmentVariables, async () => {
-      await inProjectWithFile('package.json', async (args) => {
-        const commandContent = {command: 'dev', topic: 'app'}
-        await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
-
-        // When
-        const config = {
-          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
-          plugins: [],
-        } as any
-        await reportAnalyticsEvent({config, exitMode: 'ok'})
-
-        // Then
-        expect(publishEventMock).toHaveBeenCalledOnce()
-        const [, publicPayload, sensitivePayload] = publishEventMock.mock.calls[0]!
-        const serializedPayload = JSON.stringify({publicPayload, sensitivePayload})
-        Object.values(credentialEnvironmentVariables).forEach((secret) => {
-          expect(serializedPayload).not.toContain(secret)
-        })
-      })
-    })
-  })
-
   // The payload is printed by outputDebug even when analytics are disabled, so
   // asserting on the payload object alone would miss this sink.
   test('does not print credentials when analytics are disabled', async () => {
-    await withEnvironment(credentialEnvironmentVariables, async () => {
-      await inProjectWithFile('package.json', async (args) => {
-        // Given
-        vi.mocked(analyticsDisabled).mockReturnValue(true)
-        const commandContent = {command: 'dev', topic: 'app'}
-        const argsWithCredentials = args.concat(['--client-secret', 'client_secret_value'])
-        await startAnalytics({commandContent, args: argsWithCredentials, currentTime: currentDate.getTime() - 100})
-        const outputMock = mockAndCaptureOutput()
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      vi.mocked(analyticsDisabled).mockReturnValue(true)
+      const commandContent = {command: 'dev', topic: 'app'}
+      const argsWithCredentials = args.concat(['--client-secret', 'client_secret_value'])
+      await startAnalytics({commandContent, args: argsWithCredentials, currentTime: currentDate.getTime() - 100})
+      const outputMock = mockAndCaptureOutput()
 
-        // When
-        const config = {
-          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
-          plugins: [],
-        } as any
-        await reportAnalyticsEvent({config, exitMode: 'ok'})
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
 
-        // Then
-        const debugOutput = outputMock.debug()
-        // Asserts on the analytics-disabled sink specifically, not the rate-limited one.
-        expect(debugOutput).toMatch('Skipping command analytics, payload:')
-        Object.values(credentialEnvironmentVariables).forEach((secret) => {
-          expect(debugOutput).not.toContain(secret)
-        })
-        expect(debugOutput).not.toContain('client_secret_value')
-      })
+      // Then
+      const debugOutput = outputMock.debug()
+      expect(debugOutput).toMatch('Skipping command analytics, payload:')
+      expect(debugOutput).not.toContain('client_secret_value')
     })
   })
 

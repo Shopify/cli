@@ -195,36 +195,23 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   return sanitizePayload(payload)
 }
 
-// Names that identify a credential wherever they show up in the payload -- as a
-// flag (`--client-secret`), an object key (`"store-password"`), or an environment
-// variable name (`SHOPIFY_CLI_PARTNERS_TOKEN`).
-//
-// Deliberately excludes `key` and `auth`: `api_key` is an app's public client ID
-// (redacted separately in monorail.ts) and `env_auth_method` reports which auth
-// method was used, so matching those would drop legitimate telemetry.
+// Excludes `key` and `auth`, which would drop legitimate telemetry: `api_key` is
+// an app's public client ID and `env_auth_method` is the auth method used.
 const CREDENTIAL_NAME_PATTERN = 'password|token|secret|credential'
 
-// A single space-delimited flag value as it appears in the serialised payload:
-// either a JSON escape sequence such as `\"` or `\\`, or a character that is
-// neither whitespace nor part of one. Consuming escape sequences whole is what
-// keeps the replacement from cutting a `\"` in half, which would unbalance the
-// surrounding string and make the payload fail to parse.
-const SERIALIZED_FLAG_VALUE_PATTERN = '(?:\\\\.|[^\\s"\\\\])*'
+// One flag value, as an escape sequence or a plain character. Matching escapes
+// whole stops a replacement from cutting a `\"` in half and unbalancing the string.
+const FLAG_VALUE_PATTERN = '(?:\\\\.|[^\\s"\\\\])*'
 
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
   const sanitizedPayloadString = payloadString
-    // Theme Access passwords, which are recognisable wherever they appear.
+    // Theme Access passwords, recognisable wherever they appear.
     .replace(/shptka_\w*/g, '*****')
-    // Credentials passed as flags, e.g. `--password abc`, `--client-secret=abc`.
-    .replace(
-      new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME_PATTERN})(?:=|\\s+))${SERIALIZED_FLAG_VALUE_PATTERN}`, 'gi'),
-      '$1*****',
-    )
-    // Credentials held under a credential-shaped key. Quotes carry any number of
-    // leading backslashes so that keys nested one or more serialised JSON strings
-    // deep -- `metadata` is already-serialised JSON, and its values can be too --
-    // are covered as well as top-level ones.
+    // Credential flags, e.g. `--password abc`, `--client-secret=abc`.
+    .replace(new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME_PATTERN})(?:=|\\s+))${FLAG_VALUE_PATTERN}`, 'gi'), '$1*****')
+    // Credential keys. Quotes take any number of backslashes so that keys inside
+    // already-serialised JSON, such as `metadata`, are covered at any depth.
     .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME_PATTERN})[\\w.-]*\\\\*":\\\\*")[^"\\\\]*`, 'gi'), '$1*****')
   return JSON.parse(sanitizedPayloadString)
 }

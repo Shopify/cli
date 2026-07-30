@@ -107,16 +107,10 @@ export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   }
 }
 
-// Agent callers can identify themselves today via SHOPIFY_* environment
-// variables. The current contract is intentionally lightweight and is kept in
-// the sensitive payload until we prove which dimensions deserve first-class
-// Monorail fields.
-//
-// This is an allowlist rather than a `SHOPIFY_*` prefix match on purpose: the CLI
-// reads several of its own credentials from the environment (see
-// `environmentVariables` in ./constants.ts), so a prefix match collects access
-// tokens along with the agent dimensions we actually want. Adding a new variable
-// here should come with a check that it can never hold a secret.
+// How agent callers identify themselves, kept in the sensitive payload until we
+// prove which dimensions deserve first-class Monorail fields. An allowlist rather
+// than a `SHOPIFY_*` prefix match because the CLI also reads its own tokens from
+// the environment (see `environmentVariables` in ./constants.ts).
 const REPORTED_SHOPIFY_ENVIRONMENT_VARIABLES = new Set([
   'SHOPIFY_CLI_AGENT',
   'SHOPIFY_CLI_AGENT_VERSION',
