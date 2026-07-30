@@ -7,14 +7,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint .",
+        "command": "pnpm eslint \"**/*.js\"",
         "cwd": "packages/eslint-plugin-cli"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint . --fix",
+        "command": "pnpm eslint \"**/*.js\" --fix",
         "cwd": "packages/eslint-plugin-cli"
       }
     }

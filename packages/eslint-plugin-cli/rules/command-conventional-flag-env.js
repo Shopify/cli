@@ -1,4 +1,6 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
+const {findFlagOptions} = require('./flag-options')
+
 const VALID_FLAGS = ['SHOPIFY_FLAG_']
 
 module.exports = {
@@ -14,16 +16,14 @@ module.exports = {
       PropertyDefinition(node) {
         if (node.key.name === 'flags') {
           node.value.properties.forEach((flag) => {
-            const flagArguments = flag.value?.arguments ?? []
-            const argument = flagArguments[0]
-            if (!argument) {
-              return
-            }
-            const envProperty = argument.properties.find((property) => property.key.name === 'env')?.value?.value
+            const options = findFlagOptions(flag.value)
+            if (!options) return
+
+            const envProperty = options.properties.find((property) => property.key?.name === 'env')?.value?.value
             if (envProperty) {
-              if (!VALID_FLAGS.some((validFlag) => envProperty.startsWith(validFlag))) {
+              if (!VALID_FLAGS.some((validPrefix) => envProperty.startsWith(validPrefix))) {
                 context.report(
-                  argument,
+                  options,
                   `Flags' environment variable must start with ${new Intl.ListFormat('en', {
                     style: 'long',
                     type: 'disjunction',
