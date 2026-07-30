@@ -24,14 +24,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.ts\"",
+        "command": "pnpm oxlint --config ../../oxlint.json --deny-warnings src",
         "cwd": "packages/store"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "command": "pnpm oxlint --config ../../oxlint.json --fix src",
         "cwd": "packages/store"
       }
     },
@@ -56,8 +56,8 @@
       ],
       "options": {
         "commands": [
-          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}'",
-          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}'"
+          "pnpm oxlint --config ../../oxlint.json --fix --fix-suggestions src/cli/api/graphql/business-platform-destinations/generated && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}'",
+          "pnpm oxlint --config ../../oxlint.json --fix --fix-suggestions src/cli/api/graphql/business-platform-organizations/generated && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}'"
         ],
         "cwd": "packages/store"
       }

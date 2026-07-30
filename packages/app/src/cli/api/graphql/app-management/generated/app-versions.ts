@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -13,14 +13,14 @@ export type AppVersionsQuery = {
     versionsCount: number
     activeRelease: {id: string; version: {id: string}}
     versions?: {
-      edges: {
+      edges: Array<{
         node: {
           id: string
           createdAt: string
           createdBy?: string | null
           metadata: {message?: string | null; versionTag?: string | null}
         }
-      }[]
+      }>
     } | null
   }
 }

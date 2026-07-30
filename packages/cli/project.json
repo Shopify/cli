@@ -38,14 +38,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint src 'bin/*.js'",
+        "command": "pnpm oxlint --config ../../oxlint.json --deny-warnings src 'bin/*.js'",
         "cwd": "packages/cli"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint src 'bin/*.js' --fix",
+        "command": "pnpm oxlint --config ../../oxlint.json --fix src 'bin/*.js'",
         "cwd": "packages/cli"
       }
     },

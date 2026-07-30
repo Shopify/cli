@@ -17,13 +17,11 @@
     "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
     "graphql-codegen": "nx run-many --target=graphql-codegen --all",
     "knip": "knip",
-    "lint:affected": "pnpm prettier && pnpm lint:oxlint && pnpm lint:eslint:affected",
-    "lint:eslint:affected": "nx affected --target=lint",
-    "lint:fix:affected": "pnpm prettier:fix && pnpm lint:oxlint --fix && nx affected --target=lint:fix",
-    "lint:fix": "pnpm prettier:fix && pnpm lint:oxlint --fix && nx run-many --target=lint:fix --all --skip-nx-cache",
-    "lint": "pnpm prettier && pnpm lint:oxlint && pnpm lint:eslint",
-    "lint:eslint": "nx run-many --target=lint --all --skip-nx-cache",
-    "lint:oxlint": "oxlint --config oxlint.json --deny-warnings packages/app/src packages/cli-kit/src packages/cli/src packages/create-app/src packages/organizations/src packages/plugin-cloudflare/src packages/plugin-did-you-mean/src packages/store/src packages/theme/src packages/ui-extensions-server-kit/src packages/ui-extensions-test-utils/src packages/cli/bin packages/e2e",
+    "lint:affected": "pnpm prettier && nx affected --target=lint",
+    "lint:fix:affected": "pnpm prettier:fix && nx affected --target=lint:fix",
+    "lint:fix": "pnpm prettier:fix && nx run-many --target=lint:fix --all --skip-nx-cache",
+    "lint": "pnpm prettier && pnpm lint:oxlint",
+    "lint:oxlint": "oxlint --config oxlint.json --deny-warnings packages/app/src packages/cli-kit/src packages/cli/src packages/create-app/src packages/organizations/src packages/plugin-cloudflare/src packages/plugin-did-you-mean/src packages/store/src packages/theme/src packages/ui-extensions-server-kit/src packages/ui-extensions-test-utils/src packages/cli/bin packages/e2e && nx run workspace:lint",
     "prettier": "prettier --check \"packages/{app,cli-kit,cli,create-app,organizations,plugin-cloudflare,plugin-did-you-mean,store,theme,ui-extensions-server-kit,ui-extensions-test-utils}/src/**/*.{js,ts,tsx}\" \"packages/cli/bin/*.js\" \"packages/e2e/{setup,helpers,tests}/**/*.ts\" \"packages/e2e/*.ts\"",
     "prettier:fix": "prettier --write \"packages/{app,cli-kit,cli,create-app,organizations,plugin-cloudflare,plugin-did-you-mean,store,theme,ui-extensions-server-kit,ui-extensions-test-utils}/src/**/*.{js,ts,tsx}\" \"packages/cli/bin/*.js\" \"packages/e2e/{setup,helpers,tests}/**/*.ts\" \"packages/e2e/*.ts\"",
     "create-homebrew-pr": "bin/create-homebrew-pr.js",
@@ -53,19 +51,14 @@
     "@graphql-codegen/near-operation-file-preset": "4.0.0",
     "@graphql-codegen/typed-document-node": "6.1.8",
     "@graphql-codegen/typescript-operations": "5.1.0",
-    "@nx/eslint-plugin": "22.7.7",
     "@nx/workspace": "22.7.7",
     "@octokit/rest": "22.0.1",
-    "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/generate-docs": "1.2.3",
     "@types/node": "18.19.130",
-    "@typescript-eslint/parser": "8.56.1",
     "@vitest/coverage-istanbul": "^3.2.7",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "esbuild": "0.28.1",
-    "eslint": "^9.39.5",
-    "eslint-plugin-jsdoc": "50.8.0",
     "execa": "^7.2.0",
     "fast-glob": "3.3.3",
     "find-up": "^6.3.0",
@@ -130,14 +123,6 @@
   "resolutions": {
     "@types/react": "18.3.12",
     "vite": "6.4.3",
-    "@typescript-eslint/utils": "8.56.1",
-    "@typescript-eslint/type-utils": "8.56.1",
-    "@typescript-eslint/typescript-estree": "8.56.1",
-    "@typescript-eslint/types": "8.56.1",
-    "@typescript-eslint/scope-manager": "8.56.1",
-    "@typescript-eslint/visitor-keys": "8.56.1",
-    "@typescript-eslint/project-service": "8.56.1",
-    "@typescript-eslint/tsconfig-utils": "8.56.1",
     "@aws-sdk/core": "3.974.6",
     "@aws-sdk/credential-provider-env": "3.972.32",
     "@aws-sdk/credential-provider-http": "3.972.34",
@@ -184,18 +169,12 @@
       "packages/eslint-plugin-cli",
       "packages/e2e"
     ],
-    "paths": {
-      "@shopify/eslint-plugin-cli/configs": [
-        "./packages/eslint-plugin-cli/config.js"
-      ]
-    },
     "workspaces": {
       ".": {
         "entry": [
           "bin/**/*.js",
           "configurations/vite.config.ts",
           "docs-shopify.dev/**/*.ts",
-          "eslint.codegen.config.js",
           "vite.config.ts",
           "docs/api/cli-kit/**/*.js",
           "graphql.config.ts"

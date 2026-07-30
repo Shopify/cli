@@ -52,11 +52,6 @@
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
-  "eslintConfig": {
-    "extends": [
-      "../../.eslintrc.cjs"
-    ]
-  },
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",

@@ -65,14 +65,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint src",
+        "command": "pnpm oxlint --config ../../oxlint.json --deny-warnings src",
         "cwd": "packages/cli-kit"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint src --fix",
+        "command": "pnpm oxlint --config ../../oxlint.json --fix src",
         "cwd": "packages/cli-kit"
       }
     },
@@ -112,8 +112,8 @@
       ],
       "options": {
         "commands": [
-          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}'",
-          "pnpm eslint --config ../../eslint.codegen.config.js 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}'"
+          "pnpm oxlint --config ../../oxlint.json --fix --fix-suggestions src/cli/api/graphql/admin/generated && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}'",
+          "pnpm oxlint --config ../../oxlint.json --fix --fix-suggestions src/cli/api/graphql/bulk-operations/generated && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/bulk-operations/generated/**/*.{ts,tsx}'"
         ],
         "cwd": "packages/cli-kit"
       }

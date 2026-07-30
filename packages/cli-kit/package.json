@@ -60,47 +60,6 @@
     "type-check": "nx type-check",
     "refresh-code-documentation": "nx refresh-code-documentation"
   },
-  "eslintConfig": {
-    "extends": [
-      "../../.eslintrc.cjs"
-    ],
-    "ignorePatterns": [
-      "**/vendor/otel-js/**/*.ts",
-      "**/vendor/dev_server/**/*.ts"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "**/node/cli.ts"
-        ],
-        "rules": {
-          "@shopify/cli/specific-imports-in-bootstrap-code": [
-            "error",
-            {
-              "dynamic": [
-                "./node-package-manager.js",
-                "./error-handler.js",
-                "../../public/node/context/local.js",
-                "./context/local.js",
-                "@oclif/core",
-                "./path.js",
-                "./system.js",
-                "./ui.js"
-              ],
-              "static": [
-                "@oclif/core",
-                "./context/utilities.js",
-                "../../private/node/conf-store.js",
-                "../../private/node/constants.js",
-                "url",
-                "./cli-launcher.js"
-              ]
-            }
-          ]
-        }
-      }
-    ]
-  },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "11.9.3",
     "@bugsnag/js": "8.9.0",

@@ -1,8 +1,8 @@
-# ESLint Rules
+# Oxlint Rules
 
-To ensure the contributions to the project follow the conventions,
-the project leverages [ESLint](https://eslint.org/) with third-party and local rules.
-This page contains a list of all the local rules alongside the convention they enforce.
+To ensure contributions follow the project's conventions, the project uses
+[Oxlint](https://oxc.rs/docs/guide/usage/linter.html) with native and local rules.
+This page lists the local rules and the conventions they enforce.
 
 ### `command-flags-with-env`
 

@@ -43,14 +43,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint src",
+        "command": "pnpm oxlint --config ../../oxlint.json --deny-warnings src",
         "cwd": "packages/ui-extensions-server-kit"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint src --fix",
+        "command": "pnpm oxlint --config ../../oxlint.json --fix src",
         "cwd": "packages/ui-extensions-server-kit"
       }
     }
