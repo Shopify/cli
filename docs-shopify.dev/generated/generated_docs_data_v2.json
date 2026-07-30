@@ -1734,6 +1734,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--profile",
+          "value": "''",
+          "description": "Generate a WebAssembly performance profile for the function run. The profile can be viewed in Speedscope.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PROFILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--reset",
           "value": "''",
           "description": "Reset all your settings.",
@@ -1786,7 +1795,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appfunctionrun {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Name of the WebAssembly export to invoke.\n   * @environment SHOPIFY_FLAG_EXPORT\n   */\n  '-e, --export <value>'?: string\n\n  /**\n   * The input JSON to pass to the function. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appfunctionrun {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Name of the WebAssembly export to invoke.\n   * @environment SHOPIFY_FLAG_EXPORT\n   */\n  '-e, --export <value>'?: string\n\n  /**\n   * The input JSON to pass to the function. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate a WebAssembly performance profile for the function run. The profile can be viewed in Speedscope.\n   * @environment SHOPIFY_FLAG_PROFILE\n   */\n  '--profile'?: ''\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appfunctionschema": {
