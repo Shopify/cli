@@ -33,8 +33,12 @@ function hashFileSync(filePath, algorithm = 'sha256') {
 
 function checkKnownFailuresIfShouldFail(context) {
   const filePath = context.filename || context.getFilename()
-  const relativePath = path.relative(path.resolve(__dirname, '../../../../../../..'), filePath)
-  const fileHash = hashFileSync(filePath)
+  const absoluteFilePath = path.resolve(filePath)
+  const normalizedFilePath = absoluteFilePath.split(path.sep).join('/')
+  const relativePath = Object.keys(knownFailures).find((knownFailurePath) =>
+    normalizedFilePath.endsWith(knownFailurePath),
+  )
+  const fileHash = hashFileSync(absoluteFilePath)
   const shouldFail = !knownFailures[relativePath] || knownFailures[relativePath] !== fileHash
 
   if (shouldFail) {
