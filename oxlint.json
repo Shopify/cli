@@ -7,6 +7,12 @@
     "node",
     "unicorn"
   ],
+  "jsPlugins": [
+    {
+      "name": "@shopify/cli",
+      "specifier": "./packages/eslint-plugin-cli/index.js"
+    }
+  ],
   "categories": {
     "correctness": "off"
   },
@@ -332,6 +338,18 @@
     "node/no-new-require": "error",
     "node/no-path-concat": "error",
     "node/no-exports-assign": "error",
+    "@shopify/cli/command-flags-with-env": "error",
+    "@shopify/cli/command-conventional-flag-env": "error",
+    "@shopify/cli/command-reserved-flags": "error",
+    "@shopify/cli/no-error-factory-functions": "error",
+    "@shopify/cli/no-process-cwd": "error",
+    "@shopify/cli/no-trailing-js-in-cli-kit-imports": "error",
+    "@shopify/cli/no-vi-manual-mock-clear": "error",
+    "@shopify/cli/no-vi-mock-in-callbacks": "error",
+    "@shopify/cli/prompt-message-format": "error",
+    "@shopify/cli/banner-headline-format": "error",
+    "@shopify/cli/required-fields-when-loading-app": "error",
+    "@shopify/cli/no-inline-graphql": "error",
     "typescript/consistent-return": "error",
     "typescript/dot-notation": [
       "error",
