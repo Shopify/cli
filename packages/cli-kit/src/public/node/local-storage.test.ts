@@ -1,6 +1,7 @@
 import {LocalStorage} from './local-storage.js'
-import {inTemporaryDirectory} from './fs.js'
+import {inTemporaryDirectory, readFile, writeFile} from './fs.js'
 import {AbortError} from './error.js'
+import {joinPath} from './path.js'
 import * as fs from './fs.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -60,6 +61,36 @@ describe('storage', () => {
       // Then
       expect(got).toEqual('test')
       expect(got2).toEqual(undefined)
+    })
+  })
+
+  test('reads values from JSON prefixed with a byte order mark', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      await writeFile(joinPath(cwd, 'config.json'), '\uFEFF{"testValue":"test"}')
+
+      // When
+      const storage = new LocalStorage<TestSchema>({cwd})
+
+      // Then
+      expect(storage.get('testValue')).toEqual('test')
+    })
+  })
+
+  test('recovers from malformed JSON on the next write', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const configPath = joinPath(cwd, 'config.json')
+      await writeFile(configPath, '{"testValue":')
+
+      // When
+      const storage = new LocalStorage<TestSchema>({cwd})
+      const valueBeforeRecovery = storage.get('testValue')
+      storage.set('testValue', 'recovered')
+
+      // Then
+      expect(valueBeforeRecovery).toBeUndefined()
+      expect(JSON.parse(await readFile(configPath))).toEqual({testValue: 'recovered'})
     })
   })
 })
