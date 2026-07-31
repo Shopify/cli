@@ -107,28 +107,14 @@ export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   }
 }
 
-export const REDACTED = '*****'
-
-// Names that mark a value as a credential, wherever it appears in the payload.
-// Excludes `key` and `auth`, which would drop legitimate telemetry: `api_key` is
-// an app's public client ID and `env_auth_method` is the auth method used.
-export const CREDENTIAL_NAME = /password|token|secret|credential/i
-
-// Environment variables get the stricter check. `key` marks a credential here --
-// SHOPIFY_PROXY_KEY holds a signed token -- and unlike `api_key` in the payload
-// there is nothing we report from the environment that is named for one.
-const CREDENTIAL_ENVIRONMENT_NAME = new RegExp(`${CREDENTIAL_NAME.source}|key`, 'i')
-
-// Every SHOPIFY_* variable is reported, because callers identify themselves by
-// setting their own: agents use SHOPIFY_CLI_AGENT and friends, and
-// shopify-function-test-helpers uses SHOPIFY_INVOKED_BY. Knowing a variable was
-// set is the telemetry; the value only matters when it isn't a credential.
 function getShopifyEnvironmentVariables() {
-  return Object.fromEntries(
-    Object.entries(process.env)
-      .filter(([name]) => name.startsWith('SHOPIFY_'))
-      .map(([name, value]) => [name, CREDENTIAL_ENVIRONMENT_NAME.test(name) ? REDACTED : value]),
-  )
+  // Agent callers can identify themselves today via SHOPIFY_* environment
+  // variables. The current contract is intentionally lightweight and is kept in
+  // the sensitive payload until we prove which dimensions deserve first-class
+  // Monorail fields, e.g. SHOPIFY_CLI_AGENT, SHOPIFY_CLI_AGENT_VERSION,
+  // SHOPIFY_CLI_AGENT_RUN_ID, SHOPIFY_CLI_AGENT_SESSION_ID, and
+  // SHOPIFY_CLI_AGENT_PROVIDER.
+  return Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
 }
 
 function getPluginNames(config: Interfaces.Config) {

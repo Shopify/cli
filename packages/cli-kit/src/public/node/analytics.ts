@@ -12,12 +12,7 @@ import {
   compileData as storageCompileData,
   RuntimeData,
 } from '../../private/node/analytics/storage.js'
-import {
-  CREDENTIAL_NAME,
-  REDACTED,
-  getEnvironmentData,
-  getSensitiveEnvironmentData,
-} from '../../private/node/analytics.js'
+import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {recordMetrics} from '../../private/node/otel-metrics.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
@@ -199,6 +194,12 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
 
   return sanitizePayload(payload)
 }
+
+// Names that mark a value as a credential, wherever it appears in the payload.
+// Excludes `key` and `auth`, which would drop legitimate telemetry: `api_key` is
+// an app's public client ID and `env_auth_method` is the auth method used.
+const CREDENTIAL_NAME = /password|token|secret|credential/i
+const REDACTED = '*****'
 
 function isCredentialFlag(arg: string): boolean {
   return arg.startsWith('--') && CREDENTIAL_NAME.test(arg.split('=')[0]!)
