@@ -270,10 +270,10 @@ describe('event tracking', () => {
     }
   }
 
-  // Callers set their own SHOPIFY_* variable to identify themselves, so the field
-  // has to keep reporting names it doesn't know about -- SHOPIFY_INVOKED_BY comes
-  // from shopify-function-test-helpers, outside this repo.
-  test('sends SHOPIFY_ environment variables other than credentials', async () => {
+  // Callers set their own SHOPIFY_* variable to identify themselves -- agents use
+  // SHOPIFY_CLI_AGENT, shopify-function-test-helpers uses SHOPIFY_INVOKED_BY -- so
+  // every variable is still reported. Only credential values are masked.
+  test('sends SHOPIFY_ environment variables with credential values redacted', async () => {
     await withEnvironment(
       {
         SHOPIFY_CLI_AGENT: 'some-agent',
@@ -302,11 +302,11 @@ describe('event tracking', () => {
           expect(shopifyVars).toMatchObject({
             SHOPIFY_CLI_AGENT: 'some-agent',
             SHOPIFY_INVOKED_BY: 'function-test-helpers',
+            SHOPIFY_CLI_PARTNERS_TOKEN: '*****',
+            // `key` counts as a credential marker for environment variables:
+            // SHOPIFY_PROXY_KEY holds a signed token.
+            SHOPIFY_PROXY_KEY: '*****',
           })
-          // `key` counts as a credential marker for environment variables:
-          // SHOPIFY_PROXY_KEY holds a signed token.
-          expect(shopifyVars).not.toHaveProperty('SHOPIFY_CLI_PARTNERS_TOKEN')
-          expect(shopifyVars).not.toHaveProperty('SHOPIFY_PROXY_KEY')
           expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
         })
       },

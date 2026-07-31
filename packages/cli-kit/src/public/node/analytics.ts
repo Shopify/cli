@@ -12,7 +12,12 @@ import {
   compileData as storageCompileData,
   RuntimeData,
 } from '../../private/node/analytics/storage.js'
-import {CREDENTIAL_NAME, getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
+import {
+  CREDENTIAL_NAME,
+  REDACTED,
+  getEnvironmentData,
+  getSensitiveEnvironmentData,
+} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {recordMetrics} from '../../private/node/otel-metrics.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
@@ -194,8 +199,6 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
 
   return sanitizePayload(payload)
 }
-
-const REDACTED = '*****'
 
 function isCredentialFlag(arg: string): boolean {
   return arg.startsWith('--') && CREDENTIAL_NAME.test(arg.split('=')[0]!)

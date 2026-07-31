@@ -2,4 +2,4 @@
 '@shopify/cli-kit': patch
 ---
 
-Exclude credential-shaped environment variables and redact credential flag values in CLI analytics
+Redact credential environment variables and flag values in CLI analytics
