@@ -12,6 +12,7 @@ import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
 import {completeLogin} from '../helpers/browser-login.js'
+import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import {execa} from 'execa'
 import {chromium, type Page} from '@playwright/test'
 import * as path from 'path'
@@ -103,11 +104,8 @@ export default async function globalSetup() {
     // Complete login in a headless browser
     const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
     try {
-      const context = await browser.newContext({
-        extraHTTPHeaders: {
-          'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-        },
-      })
+      const context = await browser.newContext()
+      await addLoadtestHeader(context)
       context.setDefaultTimeout(BROWSER_TIMEOUT.max)
       context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
       const page = await context.newPage()
