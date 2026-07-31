@@ -437,6 +437,33 @@ describe('event tracking', () => {
     })
   })
 
+  // A failing subprocess reports the command line it ran, so a credential flag can
+  // reach the payload as part of some other value rather than through `args`.
+  test('does not send credential flags quoted inside an error message', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({
+        config,
+        errorMessage: 'Command failed: shopify theme dev --store-password store_secret_value',
+        exitMode: 'expected_error',
+      })
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const reportedError = publishEventMock.mock.calls[0]![2].error_message as string
+      expect(reportedError).toContain('--store-password *****')
+      expect(reportedError).not.toContain('store_secret_value')
+    })
+  })
+
   // `metadata` is serialised JSON, and a plugin is free to put serialised JSON
   // inside it, so credential keys can sit more than one escaping level deep.
   test('does not send credentials nested inside serialized metadata', async () => {

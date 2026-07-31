@@ -223,6 +223,15 @@ function sanitizePayload<T>(payload: T): T {
   const sanitizedPayloadString = payloadString
     // Theme Access passwords, recognisable wherever they appear.
     .replace(/shptka_\w*/g, REDACTED)
+    // Credential flags quoted inside some other value -- a failing subprocess
+    // reports the command line it ran, and that ends up in `error_message`.
+    // `args` is redacted as a list before it gets here; this catches the copies.
+    // Escape sequences are matched whole so a replacement can't cut a `\"` in
+    // half and leave the payload unparseable.
+    .replace(
+      new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME.source})(?:=|\\s+))(?:\\\\.|[^\\s"\\\\])*`, 'gi'),
+      `$1${REDACTED}`,
+    )
     // Credential keys. Quotes take any number of backslashes so that keys inside
     // already-serialised JSON, such as `metadata`, are covered at any depth.
     .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME.source})[\\w.-]*\\\\*":\\\\*")[^"\\\\]*`, 'gi'), `$1${REDACTED}`)
