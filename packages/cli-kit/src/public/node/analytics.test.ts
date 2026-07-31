@@ -293,6 +293,43 @@ describe('event tracking', () => {
     })
   })
 
+  // The allowlist keeps these out of env_shopify_variables, but they should not
+  // reach the payload through any other field either. Kept in sync with the
+  // credentials in `environmentVariables` in private/node/constants.ts.
+  test('does not send credential environment variables anywhere in the payload', async () => {
+    const credentials = {
+      SHOPIFY_APP_AUTOMATION_TOKEN: 'app_automation_secret',
+      SHOPIFY_CLI_PARTNERS_TOKEN: 'partners_secret',
+      SHOPIFY_CLI_IDENTITY_TOKEN: 'identity_secret',
+      SHOPIFY_CLI_REFRESH_TOKEN: 'refresh_secret',
+      SHOPIFY_CLI_THEME_TOKEN: 'theme_secret',
+      SHOPIFY_FLAG_STORE_PASSWORD: 'store_password_secret',
+    }
+
+    await withEnvironment(credentials, async () => {
+      await inProjectWithFile('package.json', async (args) => {
+        // Given
+        const commandContent = {command: 'dev', topic: 'app'}
+        await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+        // When
+        const config = {
+          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+          plugins: [],
+        } as any
+        await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+        // Then
+        expect(publishEventMock).toHaveBeenCalledOnce()
+        const [, publicPayload, sensitivePayload] = publishEventMock.mock.calls[0]!
+        const serializedPayload = JSON.stringify({publicPayload, sensitivePayload})
+        Object.values(credentials).forEach((secret) => {
+          expect(serializedPayload).not.toContain(secret)
+        })
+      })
+    })
+  })
+
   // The payload is printed by outputDebug even when analytics are disabled, so
   // asserting on the payload object alone would miss this sink.
   test('does not print credentials when analytics are disabled', async () => {
