@@ -2,12 +2,12 @@
 * @shopify/dev_experience
 
 # Theme team and CLI owners should review theme changes
-packages/cli-kit/src/private/themes/* @shopify/developer-platforms @shopify/dev_experience
-packages/cli-kit/src/public/**/themes/* @shopify/developer-platforms @shopify/dev_experience
-packages/theme/** @shopify/developer-platforms @shopify/dev_experience
+packages/cli-kit/src/private/themes/* @shopify/developer-platforms
+packages/cli-kit/src/public/**/themes/* @shopify/developer-platforms
+packages/theme/** @shopify/developer-platforms
 
 # These are metafiles that can be reviewed by anyone
-.changeset/* @shopify/developer-platforms @shopify/dev_experience
+.changeset/*
 .github/CODEOWNERS @shopify/developer-platforms @shopify/dev_experience
 docs-shopify.dev/**  @shopify/developer-platforms @shopify/dev_experience
 packages/cli/oclif.manifest.json @shopify/developer-platforms @shopify/dev_experience
