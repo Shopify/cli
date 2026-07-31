@@ -7,8 +7,8 @@ import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {ArgOutput} from '@shopify/cli-kit/node/base-command'
-
 import {Writable} from 'stream'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type PushFlags = InferredFlags<typeof Push.flags>
 
@@ -55,12 +55,14 @@ export default class Push extends ThemeCommand {
     ...jsonFlag,
     theme: Flags.string({
       char: 't',
-      description: 'Theme ID or name of the remote theme.',
+      description:
+        'Theme ID or name of the remote theme. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
     development: Flags.boolean({
       char: 'd',
-      description: 'Push theme files from your remote development theme.',
+      description:
+        'Push theme files from your remote development theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     'development-context': Flags.string({
@@ -73,12 +75,14 @@ export default class Push extends ThemeCommand {
     }),
     live: Flags.boolean({
       char: 'l',
-      description: 'Push theme files from your remote live theme.',
+      description:
+        'Push theme files from your remote live theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.',
       env: 'SHOPIFY_FLAG_LIVE',
     }),
     unpublished: Flags.boolean({
       char: 'u',
-      description: 'Create a new unpublished theme and push to it.',
+      description:
+        'Create a new unpublished theme and push to it. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.',
       env: 'SHOPIFY_FLAG_UNPUBLISHED',
     }),
     nodelete: Flags.boolean({
@@ -88,7 +92,8 @@ export default class Push extends ThemeCommand {
     }),
     'allow-live': Flags.boolean({
       char: 'a',
-      description: 'Allow push to a live theme.',
+      description:
+        'Allow push to a live theme. Required in non-interactive environments when targeting the live theme.',
       env: 'SHOPIFY_FLAG_ALLOW_LIVE',
     }),
     publish: Flags.boolean({
@@ -115,6 +120,14 @@ export default class Push extends ThemeCommand {
   }
 
   static multiEnvironmentsFlags = ['store', 'password', 'path', ['live', 'development', 'theme']]
+
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [
+      {flags: ['theme', 'development', 'live', 'unpublished']},
+      {flags: ['theme'], when: (parsedFlags) => Boolean(parsedFlags.unpublished && !parsedFlags.development)},
+      {flags: ['allow-live'], when: (parsedFlags) => Boolean(parsedFlags.live)},
+    ]
+  }
 
   async command(
     flags: PushFlags,

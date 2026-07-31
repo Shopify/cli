@@ -5684,7 +5684,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-a, --show-all",
           "value": "''",
-          "description": "Include others development themes in theme list.",
+          "description": "Include other development themes in the theme list. Use --show-all, --development, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_SHOW_ALL"
         },
@@ -5693,7 +5693,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-d, --development",
           "value": "''",
-          "description": "Delete your development theme.",
+          "description": "Delete your development theme. Use --show-all, --development, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
         },
@@ -5711,7 +5711,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
-          "description": "Skip confirmation.",
+          "description": "Skip confirmation. Required if non interactive.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_FORCE"
         },
@@ -5729,12 +5729,12 @@
           "syntaxKind": "PropertySignature",
           "name": "-t, --theme <value>",
           "value": "string",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --show-all, --development, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         }
       ],
-      "value": "export interface themedelete {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Delete your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Include others development themes in theme list.\n   * @environment SHOPIFY_FLAG_SHOW_ALL\n   */\n  '-a, --show-all'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themedelete {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Delete your development theme. Use --show-all, --development, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation. Required if non interactive.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Include other development themes in the theme list. Use --show-all, --development, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_SHOW_ALL\n   */\n  '-a, --show-all'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme. Use --show-all, --development, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themedev": {
@@ -6012,7 +6012,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
-          "description": "Force the duplicate operation to run without prompts or confirmations.",
+          "description": "Force the duplicate operation to run without prompts or confirmations. Required if non interactive outside CI.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_FORCE"
         },
@@ -6048,12 +6048,12 @@
           "syntaxKind": "PropertySignature",
           "name": "-t, --theme <value>",
           "value": "string",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Required if non interactive.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         }
       ],
-      "value": "export interface themeduplicate {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Force the duplicate operation to run without prompts or confirmations.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Name of the newly duplicated theme.\n   * @environment SHOPIFY_FLAG_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themeduplicate {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Force the duplicate operation to run without prompts or confirmations. Required if non interactive outside CI.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Name of the newly duplicated theme.\n   * @environment SHOPIFY_FLAG_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme. Required if non interactive.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themeinfo": {
@@ -6501,7 +6501,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-d, --development",
           "value": "''",
-          "description": "Open your development theme.",
+          "description": "Open your development theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
         },
@@ -6528,7 +6528,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-l, --live",
           "value": "''",
-          "description": "Open your live (published) theme.",
+          "description": "Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_LIVE"
         },
@@ -6546,12 +6546,12 @@
           "syntaxKind": "PropertySignature",
           "name": "-t, --theme <value>",
           "value": "string",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         }
       ],
-      "value": "export interface themeopen {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Open your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Open the theme editor for the specified theme in the browser.\n   * @environment SHOPIFY_FLAG_EDITOR\n   */\n  '-E, --editor'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Open your live (published) theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themeopen {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Open your development theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Open the theme editor for the specified theme in the browser.\n   * @environment SHOPIFY_FLAG_EDITOR\n   */\n  '-E, --editor'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themepackage": {
@@ -6894,7 +6894,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
-          "description": "Skip confirmation.",
+          "description": "Skip confirmation. Required if non interactive.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_FORCE"
         },
@@ -6912,12 +6912,12 @@
           "syntaxKind": "PropertySignature",
           "name": "-t, --theme <value>",
           "value": "string",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Required if non interactive.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         }
       ],
-      "value": "export interface themepublish {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themepublish {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation. Required if non interactive.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme. Required if non interactive.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themepull": {
@@ -6977,7 +6977,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-d, --development",
           "value": "''",
-          "description": "Pull theme files from your remote development theme.",
+          "description": "Pull theme files from your remote development theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
         },
@@ -6995,7 +6995,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-l, --live",
           "value": "''",
-          "description": "Pull theme files from your remote live theme.",
+          "description": "Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_LIVE"
         },
@@ -7031,7 +7031,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-t, --theme <value>",
           "value": "string",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         },
@@ -7045,7 +7045,7 @@
           "environmentValue": "SHOPIFY_FLAG_IGNORE"
         }
       ],
-      "value": "export interface themepull {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Pull theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Pull theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting local files that don't exist remotely.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themepull {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Pull theme files from your remote development theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting local files that don't exist remotely.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themepush": {
@@ -7123,7 +7123,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-a, --allow-live",
           "value": "''",
-          "description": "Allow push to a live theme.",
+          "description": "Allow push to a live theme. Required in non-interactive environments when targeting the live theme.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_ALLOW_LIVE"
         },
@@ -7141,7 +7141,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-d, --development",
           "value": "''",
-          "description": "Push theme files from your remote development theme.",
+          "description": "Push theme files from your remote development theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
         },
@@ -7168,7 +7168,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-l, --live",
           "value": "''",
-          "description": "Push theme files from your remote live theme.",
+          "description": "Push theme files from your remote live theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_LIVE"
         },
@@ -7213,7 +7213,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-t, --theme <value>",
           "value": "string",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         },
@@ -7222,7 +7222,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-u, --unpublished",
           "value": "''",
-          "description": "Create a new unpublished theme and push to it.",
+          "description": "Create a new unpublished theme and push to it. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_UNPUBLISHED"
         },
@@ -7236,7 +7236,7 @@
           "environmentValue": "SHOPIFY_FLAG_IGNORE"
         }
       ],
-      "value": "export interface themepush {\n  /**\n   * Allow push to a live theme.\n   * @environment SHOPIFY_FLAG_ALLOW_LIVE\n   */\n  '-a, --allow-live'?: ''\n\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Push theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Unique identifier for a development theme context (e.g., PR number, branch name). Reuses an existing development theme with this context name, or creates one if none exists.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT_CONTEXT\n   */\n  '-c, --development-context <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.\n   * @environment SHOPIFY_FLAG_LISTING\n   */\n  '--listing <value>'?: string\n\n  /**\n   * Push theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting remote files that don't exist locally.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Publish as the live theme after uploading.\n   * @environment SHOPIFY_FLAG_PUBLISH\n   */\n  '-p, --publish'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Require theme check to pass without errors before pushing. Warnings are allowed.\n   * @environment SHOPIFY_FLAG_STRICT_PUSH\n   */\n  '--strict'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Create a new unpublished theme and push to it.\n   * @environment SHOPIFY_FLAG_UNPUBLISHED\n   */\n  '-u, --unpublished'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themepush {\n  /**\n   * Allow push to a live theme. Required in non-interactive environments when targeting the live theme.\n   * @environment SHOPIFY_FLAG_ALLOW_LIVE\n   */\n  '-a, --allow-live'?: ''\n\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Push theme files from your remote development theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Unique identifier for a development theme context (e.g., PR number, branch name). Reuses an existing development theme with this context name, or creates one if none exists.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT_CONTEXT\n   */\n  '-c, --development-context <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.\n   * @environment SHOPIFY_FLAG_LISTING\n   */\n  '--listing <value>'?: string\n\n  /**\n   * Push theme files from your remote live theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting remote files that don't exist locally.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Publish as the live theme after uploading.\n   * @environment SHOPIFY_FLAG_PUBLISH\n   */\n  '-p, --publish'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Require theme check to pass without errors before pushing. Warnings are allowed.\n   * @environment SHOPIFY_FLAG_STRICT_PUSH\n   */\n  '--strict'?: ''\n\n  /**\n   * Theme ID or name of the remote theme. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Create a new unpublished theme and push to it. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.\n   * @environment SHOPIFY_FLAG_UNPUBLISHED\n   */\n  '-u, --unpublished'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themerename": {
@@ -7296,7 +7296,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-d, --development",
           "value": "''",
-          "description": "Rename your development theme.",
+          "description": "Rename your development theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
         },
@@ -7314,7 +7314,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-l, --live",
           "value": "''",
-          "description": "Rename your remote live theme.",
+          "description": "Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_LIVE"
         },
@@ -7323,7 +7323,7 @@
           "syntaxKind": "PropertySignature",
           "name": "-n, --name <value>",
           "value": "string",
-          "description": "The new name for the theme.",
+          "description": "The new name for the theme. Required if non interactive.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_NEW_NAME"
         },
@@ -7341,12 +7341,12 @@
           "syntaxKind": "PropertySignature",
           "name": "-t, --theme <value>",
           "value": "string",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         }
       ],
-      "value": "export interface themerename {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Rename your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Rename your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * The new name for the theme.\n   * @environment SHOPIFY_FLAG_NEW_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themerename {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Rename your development theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * The new name for the theme. Required if non interactive.\n   * @environment SHOPIFY_FLAG_NEW_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themeshare": {

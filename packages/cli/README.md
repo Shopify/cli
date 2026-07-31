@@ -4078,11 +4078,12 @@ USAGE
 
 FLAGS
   -a, --show-all
-      Include others development themes in theme list.
+      Include other development themes in the theme list. Use --show-all, --development, or --theme in non-interactive
+      environments.
       [env: SHOPIFY_FLAG_SHOW_ALL]
 
   -d, --development
-      Delete your development theme.
+      Delete your development theme. Use --show-all, --development, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -4090,7 +4091,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -f, --force
-      Skip confirmation.
+      Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
 
   -s, --store=<value>
@@ -4099,7 +4100,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>...
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --show-all, --development, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4302,7 +4303,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -f, --force
-      Force the duplicate operation to run without prompts or confirmations.
+      Force the duplicate operation to run without prompts or confirmations. Required if non interactive outside CI.
       [env: SHOPIFY_FLAG_FORCE]
 
   -j, --json
@@ -4319,7 +4320,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Required if non interactive.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4632,7 +4633,7 @@ FLAGS
       [env: SHOPIFY_FLAG_EDITOR]
 
   -d, --development
-      Open your development theme.
+      Open your development theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -4640,7 +4641,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -l, --live
-      Open your live (published) theme.
+      Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -s, --store=<value>
@@ -4649,7 +4650,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4874,7 +4875,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -f, --force
-      Skip confirmation.
+      Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
 
   -s, --store=<value>
@@ -4883,7 +4884,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Required if non interactive.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4932,7 +4933,8 @@ USAGE
 
 FLAGS
   -d, --development
-      Pull theme files from your remote development theme.
+      Pull theme files from your remote development theme. Use --development, --live, or --theme in non-interactive
+      environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -4940,7 +4942,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -l, --live
-      Pull theme files from your remote live theme.
+      Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -n, --nodelete
@@ -4958,7 +4960,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   -x, --ignore=<value>...
@@ -5005,7 +5007,7 @@ USAGE
 
 FLAGS
   -a, --allow-live
-      Allow push to a live theme.
+      Allow push to a live theme. Required in non-interactive environments when targeting the live theme.
       [env: SHOPIFY_FLAG_ALLOW_LIVE]
 
   -c, --development-context=<value>
@@ -5014,7 +5016,8 @@ FLAGS
       [env: SHOPIFY_FLAG_DEVELOPMENT_CONTEXT]
 
   -d, --development
-      Push theme files from your remote development theme.
+      Push theme files from your remote development theme. Use --development, --live, --theme, or --unpublished in
+      non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -5026,7 +5029,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
-      Push theme files from your remote live theme.
+      Push theme files from your remote live theme. Use --development, --live, --theme, or --unpublished in
+      non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -n, --nodelete
@@ -5047,11 +5051,14 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, --theme, or --unpublished in non-interactive
+      environments. When using --unpublished without --development, use --theme to provide the new theme name.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   -u, --unpublished
-      Create a new unpublished theme and push to it.
+      Create a new unpublished theme and push to it. Use --development, --live, --theme, or --unpublished in
+      non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme
+      name.
       [env: SHOPIFY_FLAG_UNPUBLISHED]
 
   -x, --ignore=<value>...
@@ -5135,7 +5142,7 @@ USAGE
 
 FLAGS
   -d, --development
-      Rename your development theme.
+      Rename your development theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -5143,11 +5150,11 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -l, --live
-      Rename your remote live theme.
+      Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -n, --name=<value>
-      The new name for the theme.
+      The new name for the theme. Required if non interactive.
       [env: SHOPIFY_FLAG_NEW_NAME]
 
   -s, --store=<value>
@@ -5156,7 +5163,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
