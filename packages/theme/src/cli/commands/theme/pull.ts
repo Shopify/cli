@@ -7,8 +7,8 @@ import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {ArgOutput} from '@shopify/cli-kit/node/base-command'
-
 import {Writable} from 'stream'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type PullFlags = InferredFlags<typeof Pull.flags>
 export default class Pull extends ThemeCommand {
@@ -26,17 +26,20 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     ...globFlags('download'),
     theme: Flags.string({
       char: 't',
-      description: 'Theme ID or name of the remote theme.',
+      description:
+        'Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
     development: Flags.boolean({
       char: 'd',
-      description: 'Pull theme files from your remote development theme.',
+      description:
+        'Pull theme files from your remote development theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     live: Flags.boolean({
       char: 'l',
-      description: 'Pull theme files from your remote live theme.',
+      description:
+        'Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_LIVE',
     }),
     nodelete: Flags.boolean({
@@ -53,6 +56,10 @@ If no theme is specified, then you're prompted to select the theme to pull from 
   }
 
   static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', 'path', ['live', 'development', 'theme']]
+
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [{flags: ['theme', 'development', 'live']}]
+  }
 
   async command(
     flags: PullFlags,

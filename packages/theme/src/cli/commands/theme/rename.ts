@@ -2,8 +2,9 @@ import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {RenameOptions, renameTheme} from '../../services/rename.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Rename extends ThemeCommand {
   static summary = 'Renames an existing theme.'
@@ -18,30 +19,39 @@ export default class Rename extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...themeFlags,
-    name: Flags.string({
-      char: 'n',
-      description: 'The new name for the theme.',
-      env: 'SHOPIFY_FLAG_NEW_NAME',
-      required: false,
-    }),
+    name: requiredIfNonInteractive(
+      Flags.string({
+        char: 'n',
+        description: 'The new name for the theme.',
+        env: 'SHOPIFY_FLAG_NEW_NAME',
+        required: false,
+      }),
+    ),
     development: Flags.boolean({
       char: 'd',
-      description: 'Rename your development theme.',
+      description:
+        'Rename your development theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     theme: Flags.string({
       char: 't',
-      description: 'Theme ID or name of the remote theme.',
+      description:
+        'Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
     live: Flags.boolean({
       char: 'l',
-      description: 'Rename your remote live theme.',
+      description:
+        'Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_LIVE',
     }),
   }
 
   static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', 'name', ['live', 'development', 'theme']]
+
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [{flags: ['theme', 'development', 'live']}]
+  }
 
   async command(flags: RenameOptions, adminSession: AdminSession) {
     await renameTheme(flags, adminSession)
