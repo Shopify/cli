@@ -5,9 +5,9 @@ import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {dirname, extname, joinPath} from '@shopify/cli-kit/node/path'
+import {basename, dirname, extname, joinPath} from '@shopify/cli-kit/node/path'
 
 export type GetUIExtensionPayloadOptions = Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
@@ -23,8 +23,21 @@ export type GetUIExtensionPayloadOptions = Omit<ExtensionsPayloadStoreOptions, '
  * dev-server middleware to serve the right file when two extension points
  * reference assets that share a basename (e.g. `../tools.json` and
  * `./tools.json` both collapsed to `tools` by `uniqueBasename`).
+ *
+ * Source-map entries (`.js.map`) are the exception: they are relative to the
+ * extension's own directory, because maps are kept out of the bundle. See
+ * `registerSourceMap`.
  */
 export type AssetResolver = Map<string, string>
+
+/**
+ * Suffix of the source maps esbuild writes next to a built asset (`<handle>.js.map`).
+ *
+ * Deploy bundles exclude every `.js.map` file unconditionally (`BUNDLE_EXCLUSION_PATTERNS`), so
+ * the suffix unambiguously identifies a resolver entry that lives in the extension directory
+ * rather than in the bundle.
+ */
+export const SOURCE_MAP_SUFFIX = '.js.map'
 
 /**
  * Fields that stay constant across every asset mapping within one extension-point
@@ -313,7 +326,32 @@ async function builtAssetMapper(
   manifestValue: string,
 ): Promise<Partial<DevNewExtensionPointSchema>> {
   const payload = await getAssetPayload(identifier, `${target}/${identifier}`, manifestValue, url, extension, resolver)
+  await registerSourceMap(target, manifestValue, extension, resolver)
   return {assets: {[payload.name]: payload}}
+}
+
+/**
+ * Registers the built asset's source map with the resolver, when one was generated.
+ *
+ * esbuild writes a `sourceMappingURL` relative to the built file, so the browser requests
+ * the map next to the asset's own URL — `<target>/<basename>.js.map` — a key no asset
+ * payload emits. The map itself is never in the bundle (`keepBuiltSourcemapsLocally` moves
+ * it into the extension directory to keep `.js.map` files out of deploy bundles), so the
+ * registered value is resolved against the extension directory by the dev server.
+ */
+async function registerSourceMap(
+  target: string,
+  filepath: string,
+  extension: ExtensionInstance,
+  resolver?: AssetResolver,
+): Promise<void> {
+  if (!resolver) return
+
+  const sourceMapPath = `${filepath}.map`
+  if (!sourceMapPath.endsWith(SOURCE_MAP_SUFFIX)) return
+  if (!(await fileExists(joinPath(extension.directory, sourceMapPath)))) return
+
+  resolver.set(`${target}/${basename(sourceMapPath)}`, sourceMapPath)
 }
 
 /**

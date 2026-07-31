@@ -364,6 +364,71 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test("registers the built asset's source map under the URL its sourceMappingURL resolves to", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [{target: 'CUSTOM_EXTENSION_POINT', module: './src/ExtensionPointA.js'}],
+        },
+        devUUID: 'devUUID',
+      })
+
+      // The map lives in the extension directory, not the bundle: `keepBuiltSourcemapsLocally`
+      // moves it there so `.js.map` files stay out of deploy bundles.
+      await setupBuildOutput(
+        uiExtension,
+        tmpDir,
+        {CUSTOM_EXTENSION_POINT: {main: 'dist/test-ui-extension.js'}},
+        {'dist/test-ui-extension.js.map': '{"version":3}'},
+      )
+
+      const resolver = new Map<string, string>()
+      await getUIExtensionPayload(
+        uiExtension,
+        tmpDir,
+        {
+          ...createMockOptions(tmpDir, [uiExtension]),
+          currentDevelopmentPayload: {hidden: true, status: 'success'},
+        },
+        resolver,
+      )
+
+      expect(resolver.get('CUSTOM_EXTENSION_POINT/test-ui-extension.js.map')).toBe('dist/test-ui-extension.js.map')
+    })
+  })
+
+  test('does not register a source map when the built asset has none', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [{target: 'CUSTOM_EXTENSION_POINT', module: './src/ExtensionPointA.js'}],
+        },
+        devUUID: 'devUUID',
+      })
+
+      await setupBuildOutput(uiExtension, tmpDir, {CUSTOM_EXTENSION_POINT: {main: 'dist/test-ui-extension.js'}}, {})
+
+      const resolver = new Map<string, string>()
+      await getUIExtensionPayload(
+        uiExtension,
+        tmpDir,
+        {
+          ...createMockOptions(tmpDir, [uiExtension]),
+          currentDevelopmentPayload: {hidden: true, status: 'success'},
+        },
+        resolver,
+      )
+
+      expect(resolver.has('CUSTOM_EXTENSION_POINT/test-ui-extension.js.map')).toBe(false)
+    })
+  })
+
   test('emits a directory-prefix URL and per-file resolver entries when the config points at a folder', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const uiExtension = await testUIExtension({
