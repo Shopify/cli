@@ -1,8 +1,14 @@
 import {TomlFile, TomlFileError} from './toml-file.js'
 import {shouldReportErrorAsUnexpected} from '../error.js'
-import {writeFile, readFile, inTemporaryDirectory} from '../fs.js'
+import {writeFile, readFile, inTemporaryDirectory, readdir} from '../fs.js'
 import {joinPath} from '../path.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+import {rename as fsRename} from 'node:fs/promises'
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>()
+  return {...actual, rename: vi.fn(actual.rename)}
+})
 
 describe('TomlFile', () => {
   describe('read', () => {
@@ -135,6 +141,24 @@ describe('TomlFile', () => {
 
         const content = file.content as {auth: {redirect_urls: string[]}}
         expect(content.auth.redirect_urls).toStrictEqual(['https://new.com', 'https://other.com'])
+      })
+    })
+
+    test('leaves the original unchanged when atomic replacement fails', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const fileName = 'test.toml'
+        const path = joinPath(dir, fileName)
+        const originalContent = 'name = "old"\n'
+        await writeFile(path, originalContent)
+        const file = await TomlFile.read(path)
+        vi.mocked(fsRename).mockRejectedValueOnce(new Error('replacement failed'))
+
+        await expect(file.patch({name: 'new'})).rejects.toThrow('replacement failed')
+
+        await expect(readFile(path)).resolves.toBe(originalContent)
+        expect(file.content).toStrictEqual({name: 'old'})
+        const entries = await readdir(dir)
+        expect(entries.filter((entry) => entry.startsWith(`${fileName}.`) && entry.endsWith('.tmp'))).toStrictEqual([])
       })
     })
   })

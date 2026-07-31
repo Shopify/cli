@@ -22,10 +22,155 @@ import {
   copyDirectoryContents,
   symlink,
   fileRealPath,
+  readdir,
+  writeFileAtomically,
 } from './fs.js'
 import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {remove as fsRemove} from 'fs-extra/esm'
+import {rename as fsRename, stat, lstat, writeFile as fsWriteFile} from 'node:fs/promises'
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>()
+  return {...actual, rename: vi.fn(actual.rename), writeFile: vi.fn(actual.writeFile)}
+})
+
+vi.mock('fs-extra/esm', async (importOriginal) => {
+  const actual = await importOriginal<{remove: typeof fsRemove}>()
+  return {...actual, remove: vi.fn(actual.remove)}
+})
+
+describe('writeFileAtomically', () => {
+  test('replaces existing file content', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      await writeFile(path, 'original content')
+
+      await writeFileAtomically(path, 'replacement content')
+
+      await expect(readFile(path)).resolves.toBe('replacement content')
+    })
+  })
+
+  test('removes the temporary sibling after success', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const fileName = 'test-file'
+      const path = joinPath(tmpDir, fileName)
+
+      await writeFileAtomically(path, 'content')
+
+      const entries = await readdir(tmpDir)
+      expect(entries.filter((entry) => entry.startsWith(`${fileName}.`) && entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+
+  test('passes a restrictive mode when creating the temporary sibling', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      vi.mocked(fsWriteFile).mockClear()
+
+      await writeFileAtomically(path, 'content')
+
+      const temporaryWrite = vi.mocked(fsWriteFile).mock.calls.find(([writePath]) => String(writePath).endsWith('.tmp'))
+      expect(temporaryWrite?.[2]).toMatchObject({encoding: 'utf8', mode: 0o600})
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('uses restrictive permissions for a new file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+
+      await writeFileAtomically(path, 'content')
+
+      expect((await stat(path)).mode & 0o777).toBe(0o600)
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('preserves the mode of an existing file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      await writeFile(path, 'original content')
+      await chmod(path, 0o754)
+      const originalMode = (await stat(path)).mode
+      vi.mocked(fsWriteFile).mockClear()
+
+      await writeFileAtomically(path, 'replacement content')
+
+      const temporaryWrite = vi.mocked(fsWriteFile).mock.calls.find(([writePath]) => String(writePath).endsWith('.tmp'))
+      expect(temporaryWrite?.[2]).toMatchObject({encoding: 'utf8', mode: 0o600})
+      expect((await stat(path)).mode).toBe(originalMode)
+    })
+  })
+
+  test('leaves the original unchanged and removes the temporary sibling when replacement fails', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const fileName = 'test-file'
+      const path = joinPath(tmpDir, fileName)
+      await writeFile(path, 'original content')
+      vi.mocked(fsRename).mockRejectedValueOnce(new Error('replacement failed'))
+
+      await expect(writeFileAtomically(path, 'replacement content')).rejects.toThrow('replacement failed')
+
+      await expect(readFile(path)).resolves.toBe('original content')
+      const entries = await readdir(tmpDir)
+      expect(entries.filter((entry) => entry.startsWith(`${fileName}.`) && entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+
+  test('rejects the cleanup error after a successful replacement', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      vi.mocked(fsRemove).mockRejectedValueOnce(new Error('cleanup failed'))
+
+      await expect(writeFileAtomically(path, 'replacement content')).rejects.toThrow('cleanup failed')
+      await expect(readFile(path)).resolves.toBe('replacement content')
+    })
+  })
+
+  test('preserves the replacement error when temporary cleanup also fails', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const path = joinPath(tmpDir, 'test-file')
+      await writeFile(path, 'original content')
+      vi.mocked(fsRename).mockRejectedValueOnce(new Error('replacement failed'))
+      vi.mocked(fsRemove).mockRejectedValueOnce(new Error('cleanup failed'))
+
+      await expect(writeFileAtomically(path, 'replacement content')).rejects.toThrow('replacement failed')
+    })
+  })
+
+  test('writes through an existing file symlink and preserves the link', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const targetPath = joinPath(tmpDir, 'target-file')
+      const linkPath = joinPath(tmpDir, 'linked-file')
+      await writeFile(targetPath, 'original content')
+      await symlink(targetPath, linkPath)
+
+      await writeFileAtomically(linkPath, 'replacement content')
+
+      await expect(readFile(targetPath)).resolves.toBe('replacement content')
+      expect((await lstat(linkPath)).isSymbolicLink()).toBe(true)
+      const entries = await readdir(tmpDir)
+      expect(entries.filter((entry) => entry.endsWith('.tmp'))).toStrictEqual([])
+    })
+  })
+
+  test('rejects a dangling symlink without replacing it', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const linkPath = joinPath(tmpDir, 'linked-file')
+      await symlink(joinPath(tmpDir, 'missing-target'), linkPath)
+
+      await expect(writeFileAtomically(linkPath, 'replacement content')).rejects.toThrow(
+        `Unable to atomically write ${linkPath}: destination is a dangling symlink`,
+      )
+
+      expect((await lstat(linkPath)).isSymbolicLink()).toBe(true)
+      await expect(readdir(tmpDir)).resolves.toEqual(['linked-file'])
+    })
+  })
+})
 
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {

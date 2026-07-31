@@ -1,6 +1,6 @@
 import {JsonMapType, decodeToml, encodeToml} from './codec.js'
 import {AbortError} from '../error.js'
-import {fileExists, readFile, writeFile} from '../fs.js'
+import {fileExists, readFile, writeFileAtomically} from '../fs.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 
 type TomlPatchValue = string | number | boolean | undefined | (string | number | boolean)[]
@@ -76,7 +76,7 @@ export class TomlFile {
     const raw = await readFile(this.path)
     const updated = updateTomlValues(raw, patches)
     const parsed = this.decode(updated)
-    await writeFile(this.path, updated)
+    await writeFileAtomically(this.path, updated)
     this.content = parsed
   }
 
@@ -94,7 +94,7 @@ export class TomlFile {
     const raw = await readFile(this.path)
     const updated = updateTomlValues(raw, [[keys, undefined]])
     const parsed = this.decode(updated)
-    await writeFile(this.path, updated)
+    await writeFileAtomically(this.path, updated)
     this.content = parsed
   }
 
@@ -111,7 +111,7 @@ export class TomlFile {
   async replace(content: JsonMapType): Promise<void> {
     const encoded = encodeToml(content)
     this.decode(encoded)
-    await writeFile(this.path, encoded)
+    await writeFileAtomically(this.path, encoded)
     this.content = content
   }
 
@@ -133,7 +133,7 @@ export class TomlFile {
     const raw = await readFile(this.path)
     const transformed = transform(raw)
     const parsed = this.decode(transformed)
-    await writeFile(this.path, transformed)
+    await writeFileAtomically(this.path, transformed)
     this.content = parsed
   }
 
