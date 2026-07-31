@@ -1,4 +1,4 @@
-import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -16,6 +16,9 @@ import {
 import YAML from 'yaml'
 
 type OffenseMap = Record<string, Offense[]>
+
+/** The contents of every theme file, keyed by its normalized uri. */
+type ThemeSourcesByUri = Map<string, string>
 
 interface TransformedOffense {
   check: string
@@ -70,12 +73,22 @@ function severityToLabel(severity: Severity) {
 }
 
 /**
- * Returns a code snippet from a file. All line numbers given MUST be zero indexed
+ * Theme check reads every theme file before running the checks, so their
+ * contents are already in memory by the time offenses are rendered. Snippets
+ * are built from that copy rather than read from disk again: a file can be
+ * deleted, moved, or become unreadable while the checks run (temporary
+ * directories, cloud-synced folders, other processes), and re-reading it made
+ * the command crash after all the checks had already passed.
  */
-function getSnippet(uri: string, startLine: number, endLine: number) {
-  const fsPath = pathUtils.fsPath(uri)
-  const fileContent = readFileSync(fsPath).toString()
-  const lines = fileContent.split('\n')
+function themeSourcesByUri(theme: Theme): ThemeSourcesByUri {
+  return new Map(theme.map((sourceCode) => [sourceCode.uri, sourceCode.source]))
+}
+
+/**
+ * Returns a code snippet from a file's contents. All line numbers given MUST be zero indexed
+ */
+function getSnippet(source: string, startLine: number, endLine: number) {
+  const lines = source.split('\n')
   const snippetLines = lines.slice(startLine, endLine + 1)
   const isSingleLine = snippetLines.length === 1
 
@@ -110,16 +123,20 @@ function severityToToken(severity: Severity) {
 /**
  * Format theme-check Offenses into a format for cli-kit to output.
  */
-export function formatOffenses(offenses: Offense[]) {
+export function formatOffenses(offenses: Offense[], themeSources: ThemeSourcesByUri) {
   const offenseBodies = offenses.map((offense, index) => {
     const {message, uri, start, end, check, severity} = offense
-    // Theme check line numbers are zero indexed, but intuitively 1-indexed
-    const codeSnippet = getSnippet(uri, start.line, end.line)
+    const source = themeSources.get(uri)
+
+    // Theme check line numbers are zero indexed, but intuitively 1-indexed.
+    // The snippet is omitted when the file contents are unavailable, so that a
+    // missing snippet never hides the offense itself.
+    const codeSnippet = source === undefined ? [] : [`\n\n${getSnippet(source, start.line, end.line)}`]
 
     // Ensure enough padding between offenses
     const offensePadding = index === offenses.length - 1 ? '' : '\n\n'
 
-    return [severityToToken(severity), {bold: check}, {subdued: `\n${message}`}, `\n\n${codeSnippet}`, offensePadding]
+    return [severityToToken(severity), {bold: check}, {subdued: `\n${message}`}, ...codeSnippet, offensePadding]
   })
 
   return offenseBodies.flat()
@@ -189,7 +206,13 @@ export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, t
   return summary
 }
 
-export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: string, environment?: string) {
+export function renderOffensesText(
+  offensesByFile: OffenseMap,
+  themeRootPath: string,
+  theme: Theme,
+  environment?: string,
+) {
+  const themeSources = themeSourcesByUri(theme)
   const fileNames = Object.keys(offensesByFile).sort()
 
   fileNames.forEach((filePath) => {
@@ -199,7 +222,7 @@ export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: st
 
     renderInfo({
       headline: environment ? `[${environment}] ${headlineFilePath}` : headlineFilePath,
-      body: formatOffenses(offensesByFile[filePath]!),
+      body: formatOffenses(offensesByFile[filePath]!, themeSources),
     })
   })
 }
