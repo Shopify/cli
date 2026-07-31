@@ -3473,7 +3473,7 @@
       "enableJsonFlag": false,
       "flags": {
         "alias": {
-          "description": "Alias of the session you want to login to.",
+          "description": "Alias of an existing session you want to use. Required if non interactive.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
