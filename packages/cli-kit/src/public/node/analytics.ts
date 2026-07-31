@@ -221,20 +221,16 @@ function redactCredentialFlags(args: string[]): string[] {
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
   const sanitizedPayloadString = payloadString
-    // Theme Access passwords, recognisable wherever they appear.
-    .replace(/shptka_\w*/g, REDACTED)
-    // Credential flags quoted inside some other value -- a failing subprocess
-    // reports the command line it ran, and that ends up in `error_message`.
-    // `args` is redacted as a list before it gets here; this catches the copies.
-    // Escape sequences are matched whole so a replacement can't cut a `\"` in
-    // half and leave the payload unparseable.
-    .replace(
-      new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME.source})(?:=|\\s+))(?:\\\\.|[^\\s"\\\\])*`, 'gi'),
-      `$1${REDACTED}`,
-    )
-    // Credential keys. Quotes take any number of backslashes so that keys inside
-    // already-serialised JSON, such as `metadata`, are covered at any depth.
-    .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME.source})[\\w.-]*\\\\*":\\\\*")[^"\\\\]*`, 'gi'), `$1${REDACTED}`)
+    // Remove Theme Access passwords from the payload
+    .replace(/shptka_\w*/g, '*****')
+    // Credential flags quoted inside another value, e.g. `--store-password abc` in
+    // the command line a failing subprocess reports. `args` is redacted as a list
+    // before it gets here; this catches the copies. `\\.` matches an escape
+    // sequence whole so a replacement can't cut a `\"` in half.
+    .replace(/(--[\w-]*(?:password|token|secret|credential)(?:=|\s+))(?:\\.|[^\s"\\])*/gi, '$1*****')
+    // Credential keys, e.g. `"store-password":"abc"`. The quotes take any number of
+    // backslashes so keys inside already-serialised JSON are covered at any depth.
+    .replace(/([\w.-]*(?:password|token|secret|credential)[\w.-]*\\*":\\*")[^"\\]*/gi, '$1*****')
   return JSON.parse(sanitizedPayloadString)
 }
 
