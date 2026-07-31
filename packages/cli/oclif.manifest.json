@@ -2018,6 +2018,13 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "profile": {
+          "allowNo": false,
+          "description": "Generate a WebAssembly performance profile for the function run. The profile can be viewed in Speedscope.",
+          "env": "SHOPIFY_FLAG_PROFILE",
+          "name": "profile",
+          "type": "boolean"
+        },
         "reset": {
           "allowNo": false,
           "description": "Reset all your settings.",

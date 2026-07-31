@@ -1136,7 +1136,7 @@ Run a function locally for testing.
 ```
 USAGE
   $ shopify app function run [--auth-alias <value>] [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--no-color] [--path <value>] [--profile] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1170,6 +1170,10 @@ FLAGS
   --path=<value>
       The path to your function directory.
       [env: SHOPIFY_FLAG_PATH]
+
+  --profile
+      Generate a WebAssembly performance profile for the function run. The profile can be viewed in Speedscope.
+      [env: SHOPIFY_FLAG_PROFILE]
 
   --reset
       Reset all your settings.
