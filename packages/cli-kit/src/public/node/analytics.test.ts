@@ -270,27 +270,47 @@ describe('event tracking', () => {
     }
   }
 
-  test('only sends allowlisted SHOPIFY_ environment variables in sensitive payload', async () => {
-    await withEnvironment({SHOPIFY_CLI_AGENT: 'some-agent', SHOPIFY_TEST_VAR: 'test_value'}, async () => {
-      await inProjectWithFile('package.json', async (args) => {
-        const commandContent = {command: 'dev', topic: 'app'}
-        await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+  // Callers set their own SHOPIFY_* variable to identify themselves, so the field
+  // has to keep reporting names it doesn't know about -- SHOPIFY_INVOKED_BY comes
+  // from shopify-function-test-helpers, outside this repo.
+  test('sends SHOPIFY_ environment variables other than credentials', async () => {
+    await withEnvironment(
+      {
+        SHOPIFY_CLI_AGENT: 'some-agent',
+        SHOPIFY_INVOKED_BY: 'function-test-helpers',
+        SHOPIFY_CLI_PARTNERS_TOKEN: 'partners_secret',
+        SHOPIFY_PROXY_KEY: 'proxy_key_secret',
+        NOT_SHOPIFY_VAR: 'should_not_appear',
+      },
+      async () => {
+        await inProjectWithFile('package.json', async (args) => {
+          const commandContent = {command: 'dev', topic: 'app'}
+          await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
-        // When
-        const config = {
-          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
-          plugins: [],
-        } as any
-        await reportAnalyticsEvent({config, exitMode: 'ok'})
+          // When
+          const config = {
+            runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+            plugins: [],
+          } as any
+          await reportAnalyticsEvent({config, exitMode: 'ok'})
 
-        // Then
-        const sensitivePayload = publishEventMock.mock.calls[0]![2]
-        expect(publishEventMock).toHaveBeenCalledOnce()
+          // Then
+          const sensitivePayload = publishEventMock.mock.calls[0]![2]
+          expect(publishEventMock).toHaveBeenCalledOnce()
 
-        const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
-        expect(shopifyVars).toStrictEqual({SHOPIFY_CLI_AGENT: 'some-agent'})
-      })
-    })
+          const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+          expect(shopifyVars).toMatchObject({
+            SHOPIFY_CLI_AGENT: 'some-agent',
+            SHOPIFY_INVOKED_BY: 'function-test-helpers',
+          })
+          // `key` counts as a credential marker for environment variables:
+          // SHOPIFY_PROXY_KEY holds a signed token.
+          expect(shopifyVars).not.toHaveProperty('SHOPIFY_CLI_PARTNERS_TOKEN')
+          expect(shopifyVars).not.toHaveProperty('SHOPIFY_PROXY_KEY')
+          expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+        })
+      },
+    )
   })
 
   // The allowlist keeps these out of env_shopify_variables, but they should not

@@ -107,21 +107,27 @@ export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   }
 }
 
-// How agent callers identify themselves, kept in the sensitive payload until we
-// prove which dimensions deserve first-class Monorail fields. An allowlist rather
-// than a `SHOPIFY_*` prefix match because the CLI also reads its own tokens from
-// the environment (see `environmentVariables` in ./constants.ts).
-const REPORTED_SHOPIFY_ENVIRONMENT_VARIABLES = new Set([
-  'SHOPIFY_CLI_AGENT',
-  'SHOPIFY_CLI_AGENT_VERSION',
-  'SHOPIFY_CLI_AGENT_RUN_ID',
-  'SHOPIFY_CLI_AGENT_SESSION_ID',
-  'SHOPIFY_CLI_AGENT_PROVIDER',
-])
+// Names that mark a value as a credential, wherever it appears in the payload.
+// Excludes `key` and `auth`, which would drop legitimate telemetry: `api_key` is
+// an app's public client ID and `env_auth_method` is the auth method used.
+export const CREDENTIAL_NAME = /password|token|secret|credential/i
 
+// Environment variables get the stricter check. `key` marks a credential here --
+// SHOPIFY_PROXY_KEY holds a signed token -- and unlike `api_key` in the payload
+// there is nothing we want from the environment that is named for one.
+const CREDENTIAL_ENVIRONMENT_NAME = new RegExp(`${CREDENTIAL_NAME.source}|key`, 'i')
+
+// Callers identify themselves by setting their own SHOPIFY_* variable -- agents
+// use SHOPIFY_CLI_AGENT and friends, shopify-function-test-helpers uses
+// SHOPIFY_INVOKED_BY -- so this stays a prefix match rather than an allowlist of
+// the names we happen to know about. What it drops is the variables holding the
+// CLI's own credentials (see `environmentVariables` in ./constants.ts), all of
+// which say so in their name.
 function getShopifyEnvironmentVariables() {
   return Object.fromEntries(
-    Object.entries(process.env).filter(([key]) => REPORTED_SHOPIFY_ENVIRONMENT_VARIABLES.has(key)),
+    Object.entries(process.env).filter(
+      ([name]) => name.startsWith('SHOPIFY_') && !CREDENTIAL_ENVIRONMENT_NAME.test(name),
+    ),
   )
 }
 
