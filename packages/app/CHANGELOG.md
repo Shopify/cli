@@ -1,5 +1,28 @@
 # @shopify/app
 
+## 4.6.0
+
+### Patch Changes
+
+- 9bafc2f: Add `--client-id` and `--file-name` options to `app config link`.
+- 7f4ec70: Allow `app config validate` to target configs by client ID and report the validated configuration.
+- c64f190: Add non-interactive `app dev` options: `--store-password` and `--install-mkcert`.
+- 6c6cc2a: Allow app and theme commands to authenticate with a Shopify account alias without changing the current CLI session.
+- 57eff80: Fix store lookup by domain to require an exact domain match.
+- 1c23036: Stop theme check from crashing when a theme file becomes unreadable while the checks run
+- e628b7e: Update function-runner to v9.2.1.
+- Updated dependencies [6c6cc2a]
+- Updated dependencies [196cea0]
+- Updated dependencies [77f8eca]
+- Updated dependencies [700bbe9]
+- Updated dependencies [1c23036]
+- Updated dependencies [5187101]
+- Updated dependencies [ba47dd4]
+  - @shopify/cli-kit@4.6.0
+  - @shopify/theme@4.6.0
+  - @shopify/organizations@4.6.0
+  - @shopify/plugin-cloudflare@4.6.0
+
 ## 4.5.0
 
 ### Patch Changes

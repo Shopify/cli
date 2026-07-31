@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 4.6.0
+
+### Patch Changes
+
+- 2049a1d: Improve extension type generation by avoiding unnecessary scans outside extension source files.
+
 ## 4.5.0
 
 ### Minor Changes
