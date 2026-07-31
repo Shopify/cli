@@ -8,6 +8,7 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Deploy extends AppLinkedCommand {
   static summary = 'Deploy your Shopify app.'
@@ -27,19 +28,19 @@ export default class Deploy extends AppLinkedCommand {
     'allow-updates': Flags.boolean({
       hidden: false,
       description:
-        'Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.',
+        'Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments. In non-interactive environments, provide this flag, --allow-deletes, or --no-release.',
       env: 'SHOPIFY_FLAG_ALLOW_UPDATES',
     }),
     'allow-deletes': Flags.boolean({
       hidden: false,
       description:
-        'Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.',
+        'Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates. In non-interactive environments, provide this flag, --allow-updates, or --no-release.',
       env: 'SHOPIFY_FLAG_ALLOW_DELETES',
     }),
     'no-release': Flags.boolean({
       hidden: false,
       description:
-        "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
+        "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required. In non-interactive environments, provide this flag, --allow-updates, or --allow-deletes.",
       env: 'SHOPIFY_FLAG_NO_RELEASE',
       default: false,
       exclusive: ['allow-updates', 'allow-deletes'],
@@ -69,6 +70,10 @@ export default class Deploy extends AppLinkedCommand {
     }),
   }
 
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [{flags: ['allow-updates', 'allow-deletes', 'no-release']}]
+  }
+
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Deploy)
 
@@ -86,14 +91,6 @@ export default class Deploy extends AppLinkedCommand {
     await addPublicMetadata(() => ({
       cmd_app_reset_used: flags.reset,
     }))
-
-    // When releasing, we require --no-release or --allow-updates or --allow-deletes for non-TTY.
-    const requiredNonTTYFlags: string[] = []
-    const hasAnyForceFlags = flags['no-release'] || flags['allow-updates'] || flags['allow-deletes']
-    if (!hasAnyForceFlags) {
-      requiredNonTTYFlags.push('allow-updates')
-    }
-    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
     const {app, project, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,

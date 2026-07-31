@@ -5,7 +5,7 @@ import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class AppGenerateExtension extends AppLinkedCommand {
   static summary = 'Generate a new app Extension.'
@@ -20,18 +20,22 @@ export default class AppGenerateExtension extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    template: Flags.string({
-      char: 't',
-      hidden: false,
-      description: `Extension template`,
-      env: 'SHOPIFY_FLAG_EXTENSION_TEMPLATE',
-    }),
-    name: Flags.string({
-      char: 'n',
-      hidden: false,
-      description: 'name of your Extension',
-      env: 'SHOPIFY_FLAG_NAME',
-    }),
+    template: requiredIfNonInteractive(
+      Flags.string({
+        char: 't',
+        hidden: false,
+        description: `Extension template`,
+        env: 'SHOPIFY_FLAG_EXTENSION_TEMPLATE',
+      }),
+    ),
+    name: requiredIfNonInteractive(
+      Flags.string({
+        char: 'n',
+        hidden: false,
+        description: 'name of your Extension',
+        env: 'SHOPIFY_FLAG_NAME',
+      }),
+    ),
     'clone-url': Flags.string({
       hidden: true,
       char: 'u',
@@ -41,7 +45,8 @@ export default class AppGenerateExtension extends AppLinkedCommand {
     }),
     flavor: Flags.string({
       hidden: false,
-      description: 'Choose a starting template for your extension, where applicable',
+      description:
+        'Choose a starting template for your extension, where applicable. Required if non interactive when the selected extension template supports multiple flavors.',
       options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_FLAVOR',
     }),

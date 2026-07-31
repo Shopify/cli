@@ -12,12 +12,15 @@ import {
   testOrganization,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('../../prompts/init/init.js')
+vi.mock('../../prompts/init/init.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../prompts/init/init.js')>()
+  return {...actual, default: vi.fn()}
+})
 vi.mock('../../services/init/init.js')
 vi.mock('../../utilities/developer-platform-client.js')
 vi.mock('../../services/context.js')
@@ -32,7 +35,59 @@ vi.mock('../../prompts/dev.js')
 vi.mock('../../services/init/validate.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
+let originalStdinIsTTY: boolean | undefined
+let originalStdoutIsTTY: boolean | undefined
+
+beforeEach(() => {
+  originalStdinIsTTY = process.stdin.isTTY
+  originalStdoutIsTTY = process.stdout.isTTY
+  vi.unstubAllEnvs()
+  Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
+  Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true, writable: true})
+  vi.stubEnv('CI', '')
+})
+
+afterEach(() => {
+  Object.defineProperty(process.stdin, 'isTTY', {value: originalStdinIsTTY, configurable: true, writable: true})
+  Object.defineProperty(process.stdout, 'isTTY', {value: originalStdoutIsTTY, configurable: true, writable: true})
+})
+
 describe('Init command', () => {
+  test('reports all unconditional requirements before running non-interactively', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      vi.stubEnv('CI', 'true')
+      const outputMock = mockAndCaptureOutput()
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      try {
+        await expect(Init.run(['--path', tmpDir])).rejects.toThrow('process.exit unexpectedly called with "1"')
+        expect(outputMock.error()).toContain('--template')
+        expect(outputMock.error()).toContain('--name or --client-id')
+        expect(outputMock.error()).toContain('--organization-id or --client-id')
+        expect(outputMock.error()).not.toContain('--flavor')
+      } finally {
+        consoleErrorSpy.mockRestore()
+      }
+    })
+  })
+
+  test('requires a flavor non-interactively when the selected template offers flavors', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      vi.stubEnv('CI', 'true')
+      const outputMock = mockAndCaptureOutput()
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      try {
+        await expect(
+          Init.run(['--path', tmpDir, '--template', 'reactRouter', '--name', 'my-app', '--organization-id', '1']),
+        ).rejects.toThrow('process.exit unexpectedly called with "1"')
+        expect(outputMock.error()).toContain('--flavor')
+      } finally {
+        consoleErrorSpy.mockRestore()
+      }
+    })
+  })
+
   test('runs init command with default flags', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -79,6 +134,7 @@ describe('Init command', () => {
   test('runs init command without prompts when organization-id, name, and template flags are provided', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
+      vi.stubEnv('CI', 'true')
       const mockOrganization = testOrganization()
       const mockDeveloperPlatformClient = testDeveloperPlatformClient()
       const mockApp = testAppLinked()
@@ -100,8 +156,8 @@ describe('Init command', () => {
       })
 
       vi.mocked(initPrompt).mockResolvedValue({
-        template: 'https://github.com/Shopify/shopify-app-template-remix',
-        templateType: 'remix',
+        template: 'https://github.com/Shopify/shopify-app-template-extension-only',
+        templateType: 'none',
         globalCLIResult: {install: false, alreadyInstalled: false},
       })
       vi.mocked(initService).mockResolvedValue({app: mockApp})
@@ -113,7 +169,7 @@ describe('Init command', () => {
         '--name',
         'my-app',
         '--template',
-        'remix',
+        'none',
         '--path',
         tmpDir,
       ])
@@ -130,7 +186,7 @@ describe('Init command', () => {
         expect.objectContaining({
           name: 'my-app',
           packageManager: 'npm',
-          template: 'https://github.com/Shopify/shopify-app-template-remix',
+          template: 'https://github.com/Shopify/shopify-app-template-extension-only',
         }),
       )
     })

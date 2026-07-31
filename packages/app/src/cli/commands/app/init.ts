@@ -1,4 +1,4 @@
-import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
+import initPrompt, {templateRequiresFlavor, visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {defaultDeveloperPlatformClient, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromIdentifiers, selectOrg} from '../../services/context.js'
@@ -10,7 +10,7 @@ import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompt
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
 import {isValidName} from '../../models/app/validation/common.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
@@ -18,9 +18,15 @@ import {installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Init extends AppLinkedCommand {
   static summary?: string | undefined = 'Create a new app project'
+
+  static examples = [
+    '<%= config.bin %> <%= command.id %> --name my-app --organization-id 123 --template reactRouter --flavor typescript',
+    '<%= config.bin %> <%= command.id %> --client-id 123 --template none',
+  ]
 
   static flags = {
     ...globalFlags,
@@ -29,7 +35,7 @@ export default class Init extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_NAME',
       hidden: false,
       description:
-        'The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.',
+        'The name for the new app. When provided, skips the app selection prompt and creates a new app with this name. Required in non-interactive environments unless --client-id is provided.',
     }),
     path: Flags.string({
       char: 'p',
@@ -38,14 +44,17 @@ export default class Init extends AppLinkedCommand {
       default: async () => cwd(),
       hidden: false,
     }),
-    template: Flags.string({
-      description: `The app template. Accepts one of the following:
+    template: requiredIfNonInteractive(
+      Flags.string({
+        description: `The app template. Accepts one of the following:
        - <${visibleTemplates.join('|')}>
        - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]`,
-      env: 'SHOPIFY_FLAG_TEMPLATE',
-    }),
+        env: 'SHOPIFY_FLAG_TEMPLATE',
+      }),
+    ),
     flavor: Flags.string({
-      description: 'Which flavor of the given template to use.',
+      description:
+        'Which flavor of the given template to use. Required in non-interactive environments when the selected template offers multiple flavors.',
       env: 'SHOPIFY_FLAG_TEMPLATE_FLAVOR',
     }),
     'package-manager': Flags.string({
@@ -63,17 +72,28 @@ export default class Init extends AppLinkedCommand {
     'client-id': Flags.string({
       hidden: false,
       description:
-        'The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.',
+        'The Client ID of your app. Use this to automatically link your new project to an existing app. In non-interactive environments, provide this flag or both --name and --organization-id.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
     'organization-id': Flags.string({
       hidden: false,
       description:
-        'The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
+        'The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>. Required in non-interactive environments unless --client-id is provided.',
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
       exclusive: ['client-id'],
     }),
+  }
+
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [
+      {flags: ['name', 'client-id']},
+      {flags: ['organization-id', 'client-id']},
+      {
+        flags: ['flavor'],
+        when: (flags) => templateRequiresFlavor(flags.template as string | undefined),
+      },
+    ]
   }
 
   async run(): Promise<AppLinkedCommandOutput> {
