@@ -3,7 +3,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigLink extends AppLinkedCommand {
   static summary = 'Fetch your app configuration from the Developer Dashboard.'
@@ -23,6 +23,7 @@ export default class ConfigLink extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
       exclusive: ['client-id'],
     }),
+    'client-id': requiredIfNonInteractive(appFlags['client-id']),
     'file-name': Flags.string({
       hidden: false,
       description: 'The name of the app configuration file to create or overwrite.',
