@@ -168,7 +168,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       request_ids: requestIdsCollection.getRequestIds(),
     },
     sensitive: {
-      args: startArgs.join(' '),
+      args: redactCredentialFlags(startArgs).join(' '),
       cmd_all_environment_flags: environmentFlags,
       error_message: errorMessage,
       ...internalPluginsSensitive,
@@ -197,22 +197,34 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
 
 // Excludes `key` and `auth`, which would drop legitimate telemetry: `api_key` is
 // an app's public client ID and `env_auth_method` is the auth method used.
-const CREDENTIAL_NAME_PATTERN = 'password|token|secret|credential'
+const CREDENTIAL_NAME = /password|token|secret|credential/i
+const REDACTED = '*****'
 
-// One flag value, as an escape sequence or a plain character. Matching escapes
-// whole stops a replacement from cutting a `\"` in half and unbalancing the string.
-const FLAG_VALUE_PATTERN = '(?:\\\\.|[^\\s"\\\\])*'
+function isCredentialFlag(arg: string): boolean {
+  return arg.startsWith('--') && CREDENTIAL_NAME.test(arg.split('=')[0]!)
+}
+
+// Redacting the arguments while they're still a list means we never have to work
+// out where a value ended once they've been joined into one string.
+function redactCredentialFlags(args: string[]): string[] {
+  return args.map((arg, index) => {
+    const previous = args[index - 1]
+    // `--client-secret abc`: the value is a separate argument.
+    if (previous !== undefined && isCredentialFlag(previous) && !previous.includes('=')) return REDACTED
+    // `--client-secret=abc`: the value is in this one.
+    if (isCredentialFlag(arg) && arg.includes('=')) return `${arg.split('=')[0]}=${REDACTED}`
+    return arg
+  })
+}
 
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
   const sanitizedPayloadString = payloadString
     // Theme Access passwords, recognisable wherever they appear.
-    .replace(/shptka_\w*/g, '*****')
-    // Credential flags, e.g. `--password abc`, `--client-secret=abc`.
-    .replace(new RegExp(`(--[\\w-]*(?:${CREDENTIAL_NAME_PATTERN})(?:=|\\s+))${FLAG_VALUE_PATTERN}`, 'gi'), '$1*****')
+    .replace(/shptka_\w*/g, REDACTED)
     // Credential keys. Quotes take any number of backslashes so that keys inside
     // already-serialised JSON, such as `metadata`, are covered at any depth.
-    .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME_PATTERN})[\\w.-]*\\\\*":\\\\*")[^"\\\\]*`, 'gi'), '$1*****')
+    .replace(new RegExp(`([\\w.-]*(?:${CREDENTIAL_NAME.source})[\\w.-]*\\\\*":\\\\*")[^"\\\\]*`, 'gi'), `$1${REDACTED}`)
   return JSON.parse(sanitizedPayloadString)
 }
 

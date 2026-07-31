@@ -350,20 +350,21 @@ describe('event tracking', () => {
     })
   })
 
-  // Redaction rewrites the serialised payload, so a replacement that lands inside
-  // an escape sequence or past a closing quote makes the whole payload unparseable
-  // and drops the event. These values are the ones that get near those boundaries.
+  // Values that used to be hard to delimit once the arguments had been joined
+  // into one string: quotes and backslashes are escaped by JSON, and a space
+  // makes the end of the value ambiguous.
   test.each([
-    ['an empty value', ['--client-secret', '']],
-    ['a value containing quotes', ['--client-secret', '"cs_secret_value"']],
-    ['a value containing a backslash', ['--client-secret', 'cs\\secret\\value']],
-  ])('still reports the event when a credential flag has %s', async (_description, credentialFlag) => {
+    ['is empty', ''],
+    ['contains quotes', '"cs_secret_value"'],
+    ['contains a backslash', 'cs\\secret_value'],
+    ['contains a space', '"cs secret_value"'],
+  ])('redacts a credential flag whose value %s', async (_description, credentialValue) => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app'}
       await startAnalytics({
         commandContent,
-        args: args.concat(credentialFlag),
+        args: args.concat(['--client-secret', credentialValue]),
         currentTime: currentDate.getTime() - 100,
       })
 
