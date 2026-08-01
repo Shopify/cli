@@ -46,6 +46,12 @@ export async function username(platform: typeof process.platform = process.platf
 
 type PlatformArch = Exclude<typeof process.arch, 'x64' | 'ia32'> | 'amd64' | '386'
 type PlatformStrings = Exclude<typeof process.platform, 'win32'> | 'windows'
+
+const ARCH_MAP: Record<string, PlatformArch> = {
+  x64: 'amd64',
+  ia32: '386',
+}
+
 /**
  * Returns the platform and architecture.
  * @returns Returns the current platform and architecture.
@@ -57,14 +63,7 @@ export function platformAndArch(
   platform: PlatformStrings
   arch: PlatformArch
 } {
-  let archString: PlatformArch
-  if (arch === 'x64') {
-    archString = 'amd64'
-  } else if (arch === 'ia32') {
-    archString = '386'
-  } else {
-    archString = arch
-  }
+  const archString = (ARCH_MAP[arch] ?? arch) as PlatformArch
   const platformString = (platform.match(/^win.+/) ? 'windows' : platform) as PlatformStrings
   return {platform: platformString, arch: archString}
 }
