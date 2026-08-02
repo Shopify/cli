@@ -479,6 +479,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   private readonly loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
   private readonly reloadState: ReloadState | undefined
   private readonly project: Project
+  private readonly specificationsByAnyIdentifier = new Map<string, TModuleSpec>()
 
   constructor({
     ignoreUnknownExtensions,
@@ -492,6 +493,22 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     this.loadedConfiguration = loadedConfiguration
     this.reloadState = reloadState
     this.project = project
+
+    for (const spec of this.specifications) {
+      if (spec.identifier && !this.specificationsByAnyIdentifier.has(spec.identifier)) {
+        this.specificationsByAnyIdentifier.set(spec.identifier, spec)
+      }
+      if (spec.externalIdentifier && !this.specificationsByAnyIdentifier.has(spec.externalIdentifier)) {
+        this.specificationsByAnyIdentifier.set(spec.externalIdentifier, spec)
+      }
+      if (spec.additionalIdentifiers) {
+        for (const id of spec.additionalIdentifiers) {
+          if (!this.specificationsByAnyIdentifier.has(id)) {
+            this.specificationsByAnyIdentifier.set(id, spec)
+          }
+        }
+      }
+    }
   }
 
   private get activeConfigFile(): TomlFile | undefined {
@@ -579,10 +596,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   }
 
   private findSpecificationForType(type: string) {
-    return this.specifications.find(
-      (spec) =>
-        spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
-    )
+    return this.specificationsByAnyIdentifier.get(type)
   }
 
   private validateWebs(webs: Web[]): void {
