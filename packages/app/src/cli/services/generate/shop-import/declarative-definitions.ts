@@ -711,8 +711,6 @@ function graphQLToAdminAccess(
     case 'MERCHANT_READ_WRITE':
       return 'merchant_read_write'
     case 'MERCHANT_READ':
-    case 'PRIVATE':
-    case 'PUBLIC_READ':
     case 'PUBLIC_READ_WRITE':
     case null:
     case undefined:
