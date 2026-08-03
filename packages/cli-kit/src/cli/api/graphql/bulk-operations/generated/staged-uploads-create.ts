@@ -10,11 +10,7 @@ export type StagedUploadsCreateMutationVariables = Types.Exact<{
 export type StagedUploadsCreateMutation = {
   stagedUploadsCreate?: {
     stagedTargets?:
-      | {
-          url?: string | null
-          resourceUrl?: string | null
-          parameters: {name: string; value: string}[]
-        }[]
+      | {url?: string | null; resourceUrl?: string | null; parameters: {name: string; value: string}[]}[]
       | null
     userErrors: {field?: string[] | null; message: string}[]
   } | null

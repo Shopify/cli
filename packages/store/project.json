@@ -56,8 +56,8 @@
       ],
       "options": {
         "commands": [
-          "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix",
-          "pnpm eslint 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix"
+          "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}'",
+          "pnpm eslint 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix && pnpm exec prettier --write --ignore-path ../../.prettierignore 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}'"
         ],
         "cwd": "packages/store"
       }
