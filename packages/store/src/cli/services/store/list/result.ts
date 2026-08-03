@@ -1,29 +1,19 @@
 import {STORE_LIST_LIMIT} from './constants.js'
+import {encodeStoreListJson} from './codec.js'
 import {type ListStoresResult, type StoreListEntry} from './types.js'
 import {extractSubdomain, formatShortDate} from '../display.js'
 import {storeTypeLabel} from '../store-type.js'
 import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 
-export function writeStoreListResult(result: ListStoresResult, format: 'text' | 'json'): void {
+export function presentStoreListResult(result: ListStoresResult, format: 'text' | 'json'): void {
   // Human diagnostics always go to stderr so they never corrupt the JSON document on stdout, and so
   // the truncation signal is visible in both formats.
   if (result.notice) outputWarn(result.notice)
   if (result.truncated) outputWarn(truncationWarning(result))
 
   if (format === 'json') {
-    outputResult(
-      JSON.stringify(
-        {
-          stores: result.stores,
-          ...(result.organization ? {organization: result.organization} : {}),
-          ...(result.notice ? {notice: result.notice} : {}),
-          ...(result.truncated ? {truncated: true} : {}),
-        },
-        null,
-        2,
-      ),
-    )
+    outputResult(encodeStoreListJson(result))
     return
   }
 
@@ -85,6 +75,8 @@ function emptyStateMessage(result: ListStoresResult): string {
     'Run `shopify store auth list` to list stores authenticated directly with `shopify store auth`.',
   ].join('\n')
 }
+
+export const writeStoreListResult = presentStoreListResult
 
 function subdomainFor(store: string): string {
   return extractSubdomain(store) ?? store
