@@ -236,7 +236,6 @@ describe('pollForDeviceAuthorization', () => {
   })
 
   test('when polling, if an unrecognized error code slips through, stop polling instead of hanging', async () => {
-
     const unexpectedCode = 'invalid_client' as never
     vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err(unexpectedCode))
 
