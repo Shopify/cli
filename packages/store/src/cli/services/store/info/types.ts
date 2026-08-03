@@ -1,3 +1,29 @@
+import type {DiagnosticEvent, SyncDiagnosticChannel} from '@shopify/diagnostics'
+
+export interface StoreInfoDiagnosticError {
+  message: string
+  name?: string
+  code?: string
+}
+
+/** Store-info events stay domain-owned while extending the generic, data-only event shape. */
+export type StoreInfoDiagnosticEvent =
+  | (DiagnosticEvent & {
+      type: 'business-platform-fallback'
+      level: 'debug'
+      error: StoreInfoDiagnosticError
+    })
+  | (DiagnosticEvent & {type: 'organization-shop-lookup-skipped'; level: 'debug'})
+  | (DiagnosticEvent & {
+      type: 'organization-shop-lookup-failed'
+      level: 'debug'
+      error: StoreInfoDiagnosticError
+    })
+
+export interface StoreInfoExecutionContext {
+  diagnostics: SyncDiagnosticChannel<StoreInfoDiagnosticEvent>
+}
+
 export interface StoreInfoStoreOwner {
   name?: string
   email?: string

@@ -2,6 +2,7 @@ import {
   collectedLogs,
   clearCollectedLogs,
   LogLevel,
+  debugMessageSink,
   outputDebug,
   outputWhereAppropriate,
   outputToken,
@@ -31,6 +32,15 @@ beforeEach(() => {
 })
 
 describe('Output helpers', () => {
+  test('delegates debug events only to outputDebug', () => {
+    isUnitTestMock.mockReturnValue(true)
+
+    debugMessageSink({level: 'debug', message: 'debug'})
+    debugMessageSink({level: 'info', message: 'info'})
+    debugMessageSink({level: 'warning', message: 'warning'})
+
+    expect(collectedLogs.debug).toEqual(['debug'])
+  })
   test('can format dependency manager commands with flags', () => {
     expect(outputToken.packagejsonScript('yarn', 'dev', '--reset').value).toEqual('yarn dev --reset')
     expect(outputToken.packagejsonScript('npm', 'dev', '--reset').value).toEqual('npm run dev -- --reset')

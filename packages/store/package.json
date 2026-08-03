@@ -42,6 +42,7 @@
     "@graphql-typed-document-node/core": "3.2.0",
     "@oclif/core": "4.8.3",
     "@shopify/cli-kit": "4.5.0",
+    "@shopify/diagnostics": "4.5.0",
     "@shopify/organizations": "4.5.0"
   },
   "devDependencies": {

@@ -37,6 +37,20 @@ export class TokenizedString {
 
 export type OutputMessage = string | TokenizedString
 
+interface DiagnosticEvent {
+  level: 'debug' | 'info' | 'warning'
+  message: string
+}
+
+/**
+ * Adapts diagnostic data to the CLI's existing debug output behavior.
+ *
+ * @param event - Diagnostic event to adapt.
+ */
+export function debugMessageSink(event: DiagnosticEvent): void {
+  if (event.level === 'debug') outputDebug(event.message)
+}
+
 export const outputToken = {
   raw(value: string): RawContentToken {
     return new RawContentToken(value)

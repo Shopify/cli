@@ -20,6 +20,7 @@ describe('store info command', () => {
 
     expect(getStoreInfo).toHaveBeenCalledWith({
       store: 'shop.myshopify.com',
+      context: expect.any(Object),
     })
     expect(renderStoreInfoResult).toHaveBeenCalledWith(
       expect.objectContaining({subdomain: 'shop.myshopify.com'}),

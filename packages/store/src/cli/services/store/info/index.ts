@@ -1,4 +1,5 @@
 import {mapPlanToPublicHandle} from './plan.js'
+import {defaultStoreInfoExecutionContext} from './context.js'
 import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {throwStoredAuthInvalidError} from '../auth/recovery.js'
@@ -14,13 +15,18 @@ import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {compact} from '@shopify/cli-kit/common/object'
 import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {DestinationsContext, OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
-import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
+import type {
+  StoreInfoDiagnosticError,
+  StoreInfoExecutionContext,
+  StoreInfoResult,
+  StoreInfoStoreOwner,
+} from './types.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 
 interface GetStoreInfoOptions {
   store?: string
+  context?: StoreInfoExecutionContext
 }
 
 interface AdminStoreInfoResponse {
@@ -55,6 +61,7 @@ const StoreInfoAdminShopQuery = `#graphql
 
 export async function getStoreInfo(options: GetStoreInfoOptions): Promise<StoreInfoResult> {
   const store = options.store
+  const context = options.context ?? defaultStoreInfoExecutionContext
   if (!store) {
     throw new AbortError(
       'No store specified.',
@@ -78,13 +85,19 @@ export async function getStoreInfo(options: GetStoreInfoOptions): Promise<StoreI
   const hasStoredStoreAuth = Boolean(storedSession)
 
   try {
-    return await getBusinessPlatformStoreInfo(store, {noPrompt: hasStoredStoreAuth})
+    return await getBusinessPlatformStoreInfo(store, {noPrompt: hasStoredStoreAuth}, context)
   } catch (error) {
     if (!hasStoredStoreAuth || !isBusinessPlatformFallbackError(error)) {
       throw error
     }
 
-    outputDebug(`BP store info lookup failed; falling back to stored store auth: ${errorMessage(error)}`)
+    const diagnosticError = toSafeDiagnosticError(error)
+    context.diagnostics.emit({
+      type: 'business-platform-fallback',
+      level: 'debug',
+      message: `BP store info lookup failed; falling back to stored store auth: ${diagnosticError.message}`,
+      error: diagnosticError,
+    })
     return getAdminStoreInfo(store)
   }
 }
@@ -101,9 +114,10 @@ async function getAdminStoreInfo(store: string): Promise<StoreInfoResult> {
 async function getBusinessPlatformStoreInfo(
   store: string,
   options: {noPrompt?: boolean} = {},
+  context: StoreInfoExecutionContext = defaultStoreInfoExecutionContext,
 ): Promise<StoreInfoResult> {
   const destinationsCtx = await fetchDestinationsContext({store, noPrompt: options.noPrompt})
-  const orgShop = await safeFetchOrganizationShop(destinationsCtx, store, {noPrompt: options.noPrompt})
+  const orgShop = await safeFetchOrganizationShop(destinationsCtx, store, {noPrompt: options.noPrompt}, context)
 
   return buildBusinessPlatformResult({store, destinationsCtx, orgShop})
 }
@@ -176,19 +190,30 @@ async function safeFetchOrganizationShop(
   ctx: DestinationsContext,
   store: string,
   options: {noPrompt?: boolean} = {},
+  context: StoreInfoExecutionContext = defaultStoreInfoExecutionContext,
 ): Promise<OrganizationShopFields | undefined> {
   if (!ctx.owningOrg?.id) {
     // Without an org id we can't address the BP Organizations API, so the shop-level fields
     // (id, owner, type, feature preview) are unavailable. The destination already gives us a
     // usable baseline (display name, admin URL).
-    outputDebug('Owning organization id is unknown; skipping BP Organizations shop lookup.')
+    context.diagnostics.emit({
+      type: 'organization-shop-lookup-skipped',
+      level: 'debug',
+      message: 'Owning organization id is unknown; skipping BP Organizations shop lookup.',
+    })
     return undefined
   }
   try {
     return await fetchOrganizationShop({store, organizationId: ctx.owningOrg.id, noPrompt: options.noPrompt})
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    outputDebug(`BP Organizations shop lookup failed: ${error instanceof Error ? error.message : String(error)}`)
+    const diagnosticError = toSafeDiagnosticError(error)
+    context.diagnostics.emit({
+      type: 'organization-shop-lookup-failed',
+      level: 'debug',
+      message: `BP Organizations shop lookup failed: ${diagnosticError.message}`,
+      error: diagnosticError,
+    })
     return undefined
   }
 }
@@ -201,9 +226,17 @@ function isNoPromptAuthenticationError(error: unknown): boolean {
   return error instanceof AbortError && error.message.includes('unable to prompt for reauthentication')
 }
 
-function errorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message
-  return String(error)
+function toSafeDiagnosticError(error: unknown): StoreInfoDiagnosticError {
+  if (error instanceof Error) {
+    const code = 'code' in error && typeof error.code === 'string' ? error.code : undefined
+    return {
+      message: error.message,
+      ...(error.name ? {name: error.name} : {}),
+      ...(code ? {code} : {}),
+    }
+  }
+
+  return {message: String(error)}
 }
 
 interface BuildAdminResultArgs {

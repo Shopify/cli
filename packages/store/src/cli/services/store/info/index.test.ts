@@ -5,6 +5,7 @@ import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/client.js'
+import {createSyncDiagnosticChannel} from '@shopify/diagnostics'
 import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
@@ -129,7 +130,11 @@ describe('getStoreInfo', () => {
   })
 
   test('uses BP destinations and org-shop when there is no stored store auth session', async () => {
-    const result = await getStoreInfo({store: SHOP})
+    const events: unknown[] = []
+    const result = await getStoreInfo({
+      store: SHOP,
+      context: {diagnostics: createSyncDiagnosticChannel((event) => events.push(event))},
+    })
 
     expect(getCurrentStoredStoreAppSession).toHaveBeenCalledWith(SHOP)
     expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: false})
@@ -149,6 +154,7 @@ describe('getStoreInfo', () => {
       featurePreview: 'extended_variants',
       adminUrl: 'https://admin.shopify.com/store/shop',
     })
+    expect(events).toEqual([])
   })
 
   test('returns fresh access and save URLs for locally stored preview stores', async () => {
@@ -346,10 +352,14 @@ describe('getStoreInfo', () => {
     expect(getPreviewStore).not.toHaveBeenCalled()
   })
 
-  test('falls back to stored store auth when BP cannot resolve a store-auth store', async () => {
+  test('falls back to stored store auth and emits a diagnostic when BP cannot resolve a store-auth store', async () => {
     mockStoreAuthFallback()
+    const events: unknown[] = []
 
-    const result = await getStoreInfo({store: SHOP})
+    const result = await getStoreInfo({
+      store: SHOP,
+      context: {diagnostics: createSyncDiagnosticChannel((event) => events.push(event))},
+    })
 
     expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: true})
     expect(fetchOrganizationShop).not.toHaveBeenCalled()
@@ -372,6 +382,20 @@ describe('getStoreInfo', () => {
       plan: 'Grow',
       adminUrl: 'https://admin.shopify.com/store/shop',
     })
+    expect(events).toEqual([
+      {
+        type: 'business-platform-fallback',
+        level: 'debug',
+        message: `BP store info lookup failed; falling back to stored store auth: Couldn't find a store with domain ${SHOP} for the current account.`,
+        error: {
+          message: `Couldn't find a store with domain ${SHOP} for the current account.`,
+          name: 'Error',
+        },
+      },
+    ])
+    expect(events[0]).not.toBeInstanceOf(Error)
+    expect((events[0] as {error: unknown}).error).not.toBeInstanceOf(Error)
+    expect(events[0]).not.toHaveProperty('stack')
   })
 
   test('falls back to stored store auth when BP auth would need to prompt', async () => {
@@ -519,22 +543,37 @@ The CLI is currently unable to prompt for reauthentication.`)
     expect(result.storeOwner).toBeUndefined()
   })
 
-  test('omits org-sourced fields when the owning org is unknown in the BP path', async () => {
+  test('omits org-sourced fields and emits a diagnostic when the owning org is unknown in the BP path', async () => {
     vi.mocked(fetchDestinationsContext).mockResolvedValue({})
+    const events: unknown[] = []
 
-    const result = await getStoreInfo({store: SHOP})
+    const result = await getStoreInfo({
+      store: SHOP,
+      context: {diagnostics: createSyncDiagnosticChannel((event) => events.push(event))},
+    })
 
     expect(fetchOrganizationShop).not.toHaveBeenCalled()
     expect(result).toEqual({
       subdomain: SHOP,
       adminUrl: 'https://admin.shopify.com/store/shop',
     })
+    expect(events).toEqual([
+      {
+        type: 'organization-shop-lookup-skipped',
+        level: 'debug',
+        message: 'Owning organization id is unknown; skipping BP Organizations shop lookup.',
+      },
+    ])
   })
 
-  test('omits org-sourced fields without throwing when the BP org-shop lookup fails', async () => {
+  test('omits org-sourced fields and emits a diagnostic when the BP org-shop lookup fails', async () => {
     vi.mocked(fetchOrganizationShop).mockRejectedValue(new Error('5xx'))
+    const events: unknown[] = []
 
-    const result = await getStoreInfo({store: SHOP})
+    const result = await getStoreInfo({
+      store: SHOP,
+      context: {diagnostics: createSyncDiagnosticChannel((event) => events.push(event))},
+    })
 
     expect(result).toEqual({
       subdomain: SHOP,
@@ -542,6 +581,17 @@ The CLI is currently unable to prompt for reauthentication.`)
       organizationName: 'Acme Holdings',
       adminUrl: 'https://admin.shopify.com/store/shop',
     })
+    expect(events).toEqual([
+      {
+        type: 'organization-shop-lookup-failed',
+        level: 'debug',
+        message: 'BP Organizations shop lookup failed: 5xx',
+        error: {message: '5xx', name: 'Error'},
+      },
+    ])
+    expect(events[0]).not.toBeInstanceOf(Error)
+    expect((events[0] as {error: unknown}).error).not.toBeInstanceOf(Error)
+    expect(events[0]).not.toHaveProperty('stack')
   })
 
   test('throws when Shopify does not return Admin shop info', async () => {

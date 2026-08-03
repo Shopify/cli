@@ -1,0 +1,40 @@
+{
+  "name": "@shopify/diagnostics",
+  "version": "4.5.0",
+  "packageManager": "pnpm@10.11.1",
+  "private": true,
+  "description": "Dependency-free synchronous diagnostic primitives",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["/dist"],
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "vitest": "vitest",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}

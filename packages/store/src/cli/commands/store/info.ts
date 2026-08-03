@@ -2,7 +2,9 @@ import {getStoreInfo} from '../../services/store/info/index.js'
 import {renderStoreInfoResult} from '../../services/store/info/result.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
+import {createSyncDiagnosticChannel} from '@shopify/diagnostics'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {debugMessageSink} from '@shopify/cli-kit/node/output'
 
 export default class StoreInfo extends StoreCommand {
   static summary = 'Surface metadata about a Shopify store.'
@@ -29,7 +31,10 @@ Use \`--json\` for machine-readable output.`
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreInfo)
 
-    const result = await getStoreInfo({store: flags.store})
+    const result = await getStoreInfo({
+      store: flags.store,
+      context: {diagnostics: createSyncDiagnosticChannel(debugMessageSink)},
+    })
 
     renderStoreInfoResult(result, flags.json ? 'json' : 'text')
   }
