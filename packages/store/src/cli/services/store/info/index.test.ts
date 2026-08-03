@@ -594,6 +594,66 @@ The CLI is currently unable to prompt for reauthentication.`)
     expect(events[0]).not.toHaveProperty('stack')
   })
 
+  test.each<[string, unknown, string]>([
+    ['a string', '5xx', '5xx'],
+    ['null', null, 'null'],
+    ['an object', {message: '5xx'}, 'Unknown error'],
+    [
+      'an object with a throwing toString',
+      {
+        toString: () => {
+          throw new Error('toString failed')
+        },
+      },
+      'Unknown error',
+    ],
+  ])('projects %s rejected values without changing the result', async (_label, error, expectedMessage) => {
+    vi.mocked(fetchOrganizationShop).mockRejectedValue(error as never)
+    const events: unknown[] = []
+
+    const result = await getStoreInfo({
+      store: SHOP,
+      context: {diagnostics: createSyncDiagnosticChannel((event) => events.push(event))},
+    })
+
+    expect(result).toMatchObject({
+      subdomain: SHOP,
+      organizationId: '149572536',
+      organizationName: 'Acme Holdings',
+    })
+    expect(events).toEqual([
+      expect.objectContaining({
+        type: 'organization-shop-lookup-failed',
+        error: expect.objectContaining({message: expectedMessage}),
+      }),
+    ])
+  })
+
+  test('protects the diagnostic projection from throwing Error accessors', async () => {
+    const error = new Error('ignored')
+    Object.defineProperty(error, 'message', {
+      configurable: true,
+      get: () => {
+        throw new Error('message failed')
+      },
+    })
+    Object.defineProperty(error, 'code', {
+      configurable: true,
+      get: () => {
+        throw new Error('code failed')
+      },
+    })
+    vi.mocked(fetchOrganizationShop).mockRejectedValue(error)
+    const events: unknown[] = []
+
+    await getStoreInfo({
+      store: SHOP,
+      context: {diagnostics: createSyncDiagnosticChannel((event) => events.push(event))},
+    })
+
+    expect((events[0] as {error: unknown}).error).toEqual({message: 'Unknown error', name: 'Error'})
+  })
+
   test('throws when Shopify does not return Admin shop info', async () => {
     mockStoreAuthFallback()
     vi.mocked(graphqlRequest).mockResolvedValue({shop: undefined})

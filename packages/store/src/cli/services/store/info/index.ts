@@ -227,16 +227,36 @@ function isNoPromptAuthenticationError(error: unknown): boolean {
 }
 
 function toSafeDiagnosticError(error: unknown): StoreInfoDiagnosticError {
-  if (error instanceof Error) {
-    const code = 'code' in error && typeof error.code === 'string' ? error.code : undefined
-    return {
-      message: error.message,
-      ...(error.name ? {name: error.name} : {}),
-      ...(code ? {code} : {}),
+  try {
+    if (error instanceof Error) {
+      const message = readSafeDiagnosticField(error, 'message') ?? 'Unknown error'
+      const name = readSafeDiagnosticField(error, 'name')
+      const code = readSafeDiagnosticField(error, 'code')
+      return {
+        message,
+        ...(name ? {name} : {}),
+        ...(code ? {code} : {}),
+      }
     }
-  }
 
-  return {message: String(error)}
+    if (error === null) return {message: 'null'}
+    if (typeof error === 'object' || typeof error === 'function') return {message: 'Unknown error'}
+
+    return {message: String(error)}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return {message: 'Unknown error'}
+  }
+}
+
+function readSafeDiagnosticField(error: Error, field: 'message' | 'name' | 'code'): string | undefined {
+  try {
+    const value = (error as unknown as Record<string, unknown>)[field]
+    return typeof value === 'string' ? value : undefined
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
 }
 
 interface BuildAdminResultArgs {
