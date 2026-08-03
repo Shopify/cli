@@ -14,8 +14,6 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
-      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
         "cwd": "packages/app"
@@ -49,7 +47,7 @@
     "graphql-codegen:formatting": {
       "executor": "nx:run-commands",
       "dependsOn": ["graphql-codegen:postfix"],
-      "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
+      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}, "sharedGlobals"],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts",
@@ -74,7 +72,11 @@
     },
     "graphql-codegen:generate:business-platform-destinations": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql"],
+      "inputs": [
+        "{workspaceRoot}/graphql.config.ts",
+        "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql",
+        "sharedGlobals"
+      ],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
       "options": {
         "commands": [
@@ -85,7 +87,11 @@
     },
     "graphql-codegen:generate:business-platform-organizations": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/business-platform-organizations/**/*.graphql"],
+      "inputs": [
+        "{workspaceRoot}/graphql.config.ts",
+        "{projectRoot}/src/cli/api/graphql/business-platform-organizations/**/*.graphql",
+        "sharedGlobals"
+      ],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts"],
       "options": {
         "commands": [
@@ -96,7 +102,7 @@
     },
     "graphql-codegen:generate:app-dev": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/app-dev/**/*.graphql"],
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/app-dev/**/*.graphql", "sharedGlobals"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/app-dev/generated/**/*.ts"],
       "options": {
         "commands": [
@@ -107,7 +113,7 @@
     },
     "graphql-codegen:generate:webhooks": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/webhooks/**/*.graphql"],
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/webhooks/**/*.graphql", "sharedGlobals"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/webhooks/generated/**/*.ts"],
       "options": {
         "commands": [
@@ -118,7 +124,7 @@
     },
     "graphql-codegen:generate:app-management": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/app-management/**/*.graphql"],
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/app-management/**/*.graphql", "sharedGlobals"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/app-management/generated/**/*.ts"],
       "options": {
         "commands": [
@@ -129,7 +135,7 @@
     },
     "graphql-codegen:generate:functions": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/functions/**/*.graphql"],
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/functions/**/*.graphql", "sharedGlobals"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/functions/generated/**/*.ts"],
       "options": {
         "commands": [
@@ -140,7 +146,7 @@
     },
     "graphql-codegen:generate:admin-as-app": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"],
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql", "sharedGlobals"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"],
       "options": {
         "commands": [
@@ -160,7 +166,7 @@
         "graphql-codegen:generate:functions",
         "graphql-codegen:generate:admin-as-app"
       ],
-      "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
+      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}, "sharedGlobals"],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts",

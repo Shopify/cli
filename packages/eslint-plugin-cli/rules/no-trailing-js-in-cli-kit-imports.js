@@ -19,7 +19,7 @@ module.exports = {
           context.report({
             node,
             messageId: 'noTrailingJsInCliKit',
-            fix: function (fixer) {
+            fix(fixer) {
               return fixer.replaceText(node.source, `'${source.slice(0, -3)}'`)
             },
           })

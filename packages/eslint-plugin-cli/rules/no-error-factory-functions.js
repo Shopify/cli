@@ -1,7 +1,4 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
-const path = require('pathe')
-const file = require('fs')
-
 const errors = ['AbortError', 'AbortSilentError', 'BugError', 'BugSilentError']
 
 module.exports = {
@@ -19,9 +16,9 @@ module.exports = {
         const moduleName = node.argument?.callee?.object?.name
         const moduleExport = node.argument?.callee?.property?.name
 
-        const isCLIKitError =
-          errors.includes(calleeName) || // When imported from within @shopify/cli-kit
-          (moduleName === 'error' && errors.includes(moduleExport)) // When importing from consumer package.
+        const isImportedFromCLIKit = errors.includes(calleeName)
+        const isImportedFromConsumerPackage = moduleName === 'error' && errors.includes(moduleExport)
+        const isCLIKitError = isImportedFromCLIKit || isImportedFromConsumerPackage
 
         if (isCLIKitError) {
           context.report(

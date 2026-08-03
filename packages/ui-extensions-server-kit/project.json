@@ -13,30 +13,12 @@
         "cwd": "packages/ui-extensions-server-kit"
       }
     },
-    "build:code": {
-      "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
-      "options": {
-        "command": "pnpm vite build --config vite.config.mts",
-        "cwd": "packages/ui-extensions-server-kit"
-      }
-    },
-    "build:types": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
-      "outputs": ["{workspaceRoot}/dist"],
-      "options": {
-        "command": "pnpm tsc --emitDeclarationOnly",
-        "cwd": "packages/ui-extensions-server-kit"
-      }
-    },
     "build": {
       "executor": "nx:run-commands",
-      "dependsOn": ["build:code", "build:types"],
-      "outputs": ["{workspaceRoot}/dist"],
-      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/testing.*", "{projectRoot}/index.*"],
+      "dependsOn": ["^build"],
       "options": {
-        "command": "cd .",
+        "commands": ["pnpm vite build --config vite.config.mts", "pnpm tsc --emitDeclarationOnly"],
+        "parallel": true,
         "cwd": "packages/ui-extensions-server-kit"
       }
     },
