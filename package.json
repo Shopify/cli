@@ -21,6 +21,8 @@
     "lint:fix:affected": "nx affected --target=lint:fix",
     "lint:fix": "nx run-many --target=lint:fix --all --skip-nx-cache",
     "lint": "nx run-many --target=lint --all --skip-nx-cache",
+    "perf": "pnpm nx bundle cli --output-style=stream && CI=1 SHOPIFY_CLI_NO_ANALYTICS=1 tak run",
+    "perf:record": "pnpm nx bundle cli --output-style=stream && CI=1 SHOPIFY_CLI_NO_ANALYTICS=1 tak run --record",
     "create-homebrew-pr": "bin/create-homebrew-pr.js",
     "refresh-code-documentation": "nx run-many --target=refresh-code-documentation --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",

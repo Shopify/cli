@@ -1,0 +1,92 @@
+name: Perf (main)
+
+# Records the CLI's startup cost for every commit that lands on main, into the
+# git-notes ref `refs/notes/tak`. The history lives in this repository: there is
+# no dashboard, service or account behind it, and
+# `git fetch origin refs/notes/tak:refs/notes/tak` gets you all of it.
+#
+# This workflow owns the baseline. perf-pr.yml reads it and never writes to it.
+#
+# See tak.toml for what is measured and why, and docs/cli/performance.md for how
+# to run the same measurement locally.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+# Never two at once. Concurrent runs race the notes push; tak retries with a
+# cat_sort_uniq merge so nothing is lost, but serialising avoids the churn.
+# cancel-in-progress is off deliberately: a cancelled run is a hole in the
+# series, and a push that contains several commits only records its tip.
+concurrency:
+  group: perf
+  cancel-in-progress: false
+
+# Deliberately NOT setting DEBUG, SHOPIFY_CLI_ENV or SHOPIFY_CONFIG the way the
+# test workflows do: each changes what the CLI does, so a measurement taken with
+# them set is not comparable with one taken without. tak.toml strips them from
+# the measured command anyway, as a second line of defence.
+env:
+  PNPM_VERSION: '10.11.1'
+  DEFAULT_NODE_VERSION: '26.1.0'
+
+jobs:
+  measure:
+    name: Measure and record
+    # Pinned rather than ubuntu-latest on purpose. When the latest label moves
+    # to a new image the glibc and kernel underneath change, which shifts
+    # absolute instruction counts. A series that wanders between images is
+    # unreadable.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write # pushing refs/notes/tak is a write to this repository
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Needed for the git-notes history tak reads and appends to.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+
+      - name: Setup tak
+        uses: ./.github/actions/setup-tak
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+
+      # The same command a developer runs locally, so the two cannot drift. It
+      # bundles the CLI first — the bundle is what ships to npm and what users
+      # start, and it costs about a third fewer instructions than the tsc
+      # output, so measuring the wrong one measures the wrong CLI.
+      #
+      # `--record` writes a git note locally. Nothing leaves the machine until
+      # `tak push` below.
+      - name: Measure and record
+        run: pnpm perf:record
+
+      # persist-credentials: false above means the push needs its own auth.
+      # Re-pointing origin rather than pushing to a one-shot URL gives tak's
+      # retry path a remote to fetch from when it loses a race.
+      #
+      # Only main publishes: workflow_dispatch can be pointed at any branch, and
+      # refs/notes/tak should hold main's history and nothing else. Gating the
+      # push rather than the whole job means a dispatch elsewhere still measures
+      # and still prints its numbers, it just keeps them local.
+      - name: Push measurements
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPOSITORY}.git"
+          tak push
+
+      - name: Summary
+        run: tak history >> "$GITHUB_STEP_SUMMARY"
