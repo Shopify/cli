@@ -138,7 +138,7 @@ export const globalFlags = {
   }),
   verbose: Flags.boolean({
     hidden: false,
-    description: 'Increase the verbosity of the output.',
+    description: 'Increase the verbosity of the output. May include sensitive data.',
     env: 'SHOPIFY_FLAG_VERBOSE',
   }),
 }
