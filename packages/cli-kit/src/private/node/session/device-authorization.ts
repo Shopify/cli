@@ -136,8 +136,6 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
         case 'expired_token':
           reject(new AbortError(`Device authorization failed: Token expired. Please try again.`))
           return
-        // The default guards against codes outside IdentityDeviceError reaching this switch: without
-        // it the poll would neither settle nor reschedule, and the login would hang with no output.
         case 'unknown_failure':
         default:
           reject(new Error(`Device authorization failed: ${error}`))

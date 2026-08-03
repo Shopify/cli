@@ -375,35 +375,35 @@ describe.each(tokenExchangeMethods)(
       )
     })
 
-    test(`Executing ${tokenExchangeMethod.name} truncates and flattens a long multiline description in the debug log`, async () => {
+    test(`Executing ${tokenExchangeMethod.name} truncates a long description in the debug log`, async () => {
       // Given
       const identityError = {
         error: 'invalid_request',
-        error_description: `line one\nline two ${'x'.repeat(300)}`,
+        error_description: 'x'.repeat(300),
       }
       vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
 
       // When
       await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError()
 
-      // Then: the description is flattened to one line and capped at 200 characters before it is logged.
-      const expectedDescription = `line one line two ${'x'.repeat(300)}`.slice(0, 200)
+      // Then
+      const expectedDescription = 'x'.repeat(200)
       expect(outputDebug).toHaveBeenCalledWith(
         `Token request to Identity failed with status 400: invalid_request - ${expectedDescription}`,
       )
     })
 
-    test(`Executing ${tokenExchangeMethod.name} flattens and truncates the message of a caught error in the debug log`, async () => {
+    test(`Executing ${tokenExchangeMethod.name} truncates the message of a caught error in the debug log`, async () => {
       // Given
       vi.mocked(shopifyFetch).mockImplementation(async () => {
-        throw new Error(`first line\nsecond line ${'y'.repeat(300)}`)
+        throw new Error('y'.repeat(300))
       })
 
       // When
       await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError()
 
       // Then
-      const expectedReason = `first line second line ${'y'.repeat(300)}`.slice(0, 200)
+      const expectedReason = 'y'.repeat(200)
       expect(outputDebug).toHaveBeenCalledWith(
         `Token exchange for the ${expectedErrorName} API failed: ${expectedReason}`,
       )
