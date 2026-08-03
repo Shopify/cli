@@ -1,38 +1,29 @@
+import {encodeStoreExecuteOutputDocument, encodeStoreExecuteResult} from './codec.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import type {StoreExecuteResult} from './types.js'
 
 type StoreExecuteOutputFormat = 'text' | 'json'
 
-function serializeStoreExecuteResult(result: unknown): string {
-  return JSON.stringify(result, null, 2)
-}
-
-function renderStoreExecuteSuccess(outputFile?: string): void {
-  if (outputFile) {
-    renderSuccess({
-      headline: 'Operation succeeded.',
-      body: `Results written to ${outputFile}`,
-    })
-    return
-  }
-
-  renderSuccess({headline: 'Operation succeeded.'})
-}
-
 export async function writeOrOutputStoreExecuteResult(
-  result: unknown,
+  result: StoreExecuteResult,
   outputFile?: string,
   format: StoreExecuteOutputFormat = 'text',
 ): Promise<void> {
-  const serializedResult = serializeStoreExecuteResult(result)
-
   if (outputFile) {
-    await writeFile(outputFile, serializedResult)
-    if (format === 'text') renderStoreExecuteSuccess(outputFile)
-    return
+    await writeFile(outputFile, encodeStoreExecuteResult(result))
+    if (format === 'json') outputResult(encodeStoreExecuteOutputDocument({outputFile, result}))
+    else if (result.failure) throw new AbortError(`GraphQL operation returned user errors (${result.failure.code}).`)
+    else renderSuccess({headline: 'Operation succeeded.', body: `Results written to ${outputFile}`})
+  } else if (format === 'json') {
+    outputResult(encodeStoreExecuteResult(result))
+  } else if (result.failure) {
+    throw new AbortError(`GraphQL operation returned user errors (${result.failure.code}).`)
+  } else {
+    renderSuccess({headline: 'Operation succeeded.'})
   }
 
-  if (format === 'text') renderStoreExecuteSuccess()
-  outputResult(serializedResult)
+  if (result.failure) throw new AbortError(`GraphQL operation returned user errors (${result.failure.code}).`)
 }
