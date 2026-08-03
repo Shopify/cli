@@ -93,10 +93,7 @@ async function exchangeAppAutomationTokenForAccessToken(
     return {accessToken, userId}
   } catch (error) {
     const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-    // When the request itself fails (e.g. the authentication service is unreachable) there is no OAuth
-    // body, so the debug line in tokenRequest never runs. Log the caught error here so --verbose always
-    // carries the reason for the failure.
-    const reason = error instanceof Error ? flattenAndTruncate(error.message) : ''
+    const reason = error instanceof Error ? error.message.slice(0, 200) : ''
     if (reason !== '') {
       outputDebug(`Token exchange for the ${prettyName} API failed: ${reason}`)
     }
@@ -139,20 +136,15 @@ export async function exchangeAppAutomationTokenForBusinessPlatformAccessToken(
   return exchangeAppAutomationTokenForAccessToken('business-platform', token, tokenExchangeScopes('business-platform'))
 }
 
-export type IdentityDeviceError =
-  | 'authorization_pending'
-  | 'access_denied'
-  | 'expired_token'
-  | 'slow_down'
-  | 'unknown_failure'
-
-const identityDeviceErrors: IdentityDeviceError[] = [
+const identityDeviceErrors = [
   'authorization_pending',
   'access_denied',
   'expired_token',
   'slow_down',
   'unknown_failure',
-]
+] as const
+
+type IdentityDeviceError = (typeof identityDeviceErrors)[number]
 
 /**
  * Given a deviceCode obtained after starting a device identity flow, request an identity token.
@@ -173,9 +165,6 @@ export async function exchangeDeviceCodeForAccessToken(
 
   const tokenResult = await tokenRequest(params)
   if (tokenResult.isErr()) {
-    // The poll loop in device-authorization.ts only understands the device error codes, so any other
-    // code (an unexpected Identity error, a proxy response) must map to 'unknown_failure' rather than
-    // pass through unchecked and leave the poll with a code it can't act on.
     const deviceError = identityDeviceErrors.find((code) => code === tokenResult.error.error) ?? 'unknown_failure'
     return err(deviceError)
   }
@@ -248,16 +237,8 @@ function tokenRequestErrorHandler({error, store}: TokenRequestError) {
 }
 
 interface TokenRequestError {
-  // The OAuth error code returned by Identity, e.g. `invalid_request`.
   error: string
   store?: string
-}
-
-// Upstream messages can be arbitrarily large or multiline (an Identity description, a proxy error page,
-// a network stack trace). Collapse whitespace and cap the length so they can't flood the terminal or
-// the debug log, wherever they end up being shown.
-function flattenAndTruncate(message: string): string {
-  return message.replace(/\s+/g, ' ').trim().slice(0, 200)
 }
 
 async function tokenRequest(params: Record<string, string>): Promise<Result<TokenRequestResult, TokenRequestError>> {
@@ -281,16 +262,11 @@ async function tokenRequest(params: Record<string, string>): Promise<Result<Toke
     const payload = JSON.parse(responseText)
     if (res.ok) return ok(payload)
 
-    // The responder isn't always Identity: proxies and gateways can answer with arbitrary JSON, so neither
-    // field is guaranteed to be present or well-formed. Normalize both here, before they reach the debug
-    // log, so downstream code can rely on their shape.
+    // Normalize malformed OAuth error responses before logging.
     const oauthError = typeof payload.error === 'string' && payload.error !== '' ? payload.error : 'unknown_error'
     const rawDescription = typeof payload.error_description === 'string' ? payload.error_description : ''
-    const oauthDescription = flattenAndTruncate(rawDescription)
+    const oauthDescription = rawDescription.slice(0, 200)
 
-    // Only logged for failed responses: a successful body contains the access token. An OAuth error body
-    // carries just `error` and `error_description`, and both are logged rather than the raw body so an
-    // unexpected payload can't leak into the debug output.
     outputDebug(
       `Token request to Identity failed with status ${res.status}: ${oauthError}${
         oauthDescription === '' ? '' : ` - ${oauthDescription}`

@@ -5,7 +5,7 @@ import {
 } from './device-authorization.js'
 import {clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
-import {exchangeDeviceCodeForAccessToken, IdentityDeviceError} from './exchange.js'
+import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY} from '../../../public/node/ui.js'
@@ -236,9 +236,8 @@ describe('pollForDeviceAuthorization', () => {
   })
 
   test('when polling, if an unrecognized error code slips through, stop polling instead of hanging', async () => {
-    // Given: the exchange maps unknown codes to 'unknown_failure', but the switch must not rely on
-    // that — a code outside IdentityDeviceError reaching this poll once made it hang forever.
-    const unexpectedCode = 'invalid_client' as unknown as IdentityDeviceError
+
+    const unexpectedCode = 'invalid_client' as never
     vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err(unexpectedCode))
 
     // When
