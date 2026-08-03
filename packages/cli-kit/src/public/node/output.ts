@@ -43,7 +43,7 @@ interface DiagnosticEvent {
 }
 
 /**
- * Adapts diagnostic data to the CLI's existing debug output behavior.
+ * Adapts a debug-level diagnostic event to the CLI's existing debug output behavior.
  *
  * @param event - Diagnostic event to adapt.
  */

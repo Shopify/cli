@@ -1,5 +1,4 @@
 import {mapPlanToPublicHandle} from './plan.js'
-import {defaultStoreInfoExecutionContext} from './context.js'
 import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {throwStoredAuthInvalidError} from '../auth/recovery.js'
@@ -23,6 +22,12 @@ import type {
   StoreInfoStoreOwner,
 } from './types.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+
+const noopSyncDiagnosticChannel: StoreInfoExecutionContext['diagnostics'] = {emit: () => {}}
+
+const defaultStoreInfoExecutionContext: StoreInfoExecutionContext = {
+  diagnostics: noopSyncDiagnosticChannel,
+}
 
 interface GetStoreInfoOptions {
   store?: string
@@ -113,8 +118,8 @@ async function getAdminStoreInfo(store: string): Promise<StoreInfoResult> {
 
 async function getBusinessPlatformStoreInfo(
   store: string,
-  options: {noPrompt?: boolean} = {},
-  context: StoreInfoExecutionContext = defaultStoreInfoExecutionContext,
+  options: {noPrompt?: boolean},
+  context: StoreInfoExecutionContext,
 ): Promise<StoreInfoResult> {
   const destinationsCtx = await fetchDestinationsContext({store, noPrompt: options.noPrompt})
   const orgShop = await safeFetchOrganizationShop(destinationsCtx, store, {noPrompt: options.noPrompt}, context)
@@ -189,8 +194,8 @@ async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promi
 async function safeFetchOrganizationShop(
   ctx: DestinationsContext,
   store: string,
-  options: {noPrompt?: boolean} = {},
-  context: StoreInfoExecutionContext = defaultStoreInfoExecutionContext,
+  options: {noPrompt?: boolean},
+  context: StoreInfoExecutionContext,
 ): Promise<OrganizationShopFields | undefined> {
   if (!ctx.owningOrg?.id) {
     // Without an org id we can't address the BP Organizations API, so the shop-level fields
