@@ -1,0 +1,116 @@
+# Instruction-counted benchmarks for the Shopify CLI, measured by tak
+# (https://tak.jdx.dev).
+#
+# Why instruction counts and not wall time: the CLI's startup cost is the thing
+# users feel first, and it is also the thing a shared CI runner is worst at
+# measuring. Wall clock on a GitHub-hosted runner moves by double-digit
+# percentages between runs, which is larger than almost any regression worth
+# catching. Retired instruction counts, read out of cachegrind, do not move.
+# tak therefore gates on instruction counts and reports wall time without
+# gating on it.
+#
+# ---------------------------------------------------------------------------
+# `node --predictable` is load-bearing. Do not remove it.
+# ---------------------------------------------------------------------------
+#
+# V8 randomises its string hash seed per process, tiers functions up on a
+# time-based budget, and marks the heap on background threads. All three make
+# the instruction count of a plain `node` invocation move far too much to gate
+# on. `--predictable` fixes the seed, makes optimisation decisions
+# deterministic, and runs V8 single-threaded.
+#
+# Measured on `shopify --version` (three cachegrind runs each):
+#
+#   plain node           2,242,137,664 / 2,246,359,516 / 2,245,626,358  → 0.188% spread
+#   node --predictable   2,344,654,834 / 2,344,659,033 / 2,344,651,185  → 0.00033% spread
+#
+# 570x tighter, which is what turns a 1% gate from "fires on noise" into
+# "fires on a real change". The absolute numbers shift under `--predictable`,
+# but a benchmark series only has to be comparable with itself.
+#
+# ---------------------------------------------------------------------------
+# Warmup is load-bearing too.
+# ---------------------------------------------------------------------------
+#
+# `packages/cli/bin/run.js` calls `module.enableCompileCache()`, so the first
+# invocation after a rebuild pays full parse and compile cost and every later
+# one does not: 2,499,297,579 instructions cold against 1,543,554,209 warm, a
+# 62% difference. tak's default of three warmup runs covers this. If you lower
+# `warmup` anywhere in this file, you will be measuring the cache, not the code.
+#
+# ---------------------------------------------------------------------------
+# Hermeticity
+# ---------------------------------------------------------------------------
+#
+# Every benchmark below was verified by running it inside a network namespace
+# with no network at all, not by assuming it. Each produced the same
+# instruction count it produces with a working network:
+#
+#   bench          with network      no network        delta
+#   version        1,543,545,676     1,543,559,947     0.0009%
+#   help           1,606,628,841     1,606,569,920     0.0037%
+#   app-dev-help   1,637,259,977     1,637,265,138     0.0003%
+#
+# `shopify commands` was measured and rejected: 12,027,416,226 instructions
+# with a network and 11,570,376,673 without, a 3.9% swing. It is the widest
+# manifest walk in the CLI and would have made a good benchmark, but something
+# on that path reaches the network, so its number depends on conditions that
+# have nothing to do with the code under test.
+#
+# The benchmarks measure the **bundled** CLI (`pnpm nx bundle cli`), not the
+# `tsc` output, because the bundle is what ships to npm and what users actually
+# start. The two differ by roughly a third: 1.54B instructions bundled against
+# 2.34B unbundled for the same command.
+
+[gate]
+# tak's default. Roughly thirty times the worst spread observed above, which
+# leaves room for the small movement a Node or dependency bump produces without
+# turning the gate into noise. Worth tightening once main has enough history to
+# show what the series actually does.
+pct = 1.0
+
+[env]
+# Replaces tak's default deny list rather than adding to it, so the two
+# defaults are repeated here.
+#
+# The Shopify entries matter locally more than in CI: `dev.yml` exports
+# SHOPIFY_CLI_ENV and SHOPIFY_SERVICE_ENV into every dev shell, and the repo's
+# own CI workflows set DEBUG=1 and SHOPIFY_CONFIG=debug. Any of them changes
+# what the CLI does, so a measurement taken with them set is not comparable
+# with one taken without.
+deny = [
+  "GITHUB_TOKEN",
+  "GH_TOKEN",
+  "DEBUG",
+  "SHOPIFY_CLI_ENV",
+  "SHOPIFY_SERVICE_ENV",
+  "SHOPIFY_CONFIG",
+  "SHOPIFY_CLI_PARTNERS_TOKEN",
+  "SHOPIFY_CLI_THEME_TOKEN",
+  "SHOPIFY_FLAG_STORE",
+  "NODE_OPTIONS",
+  "NODE_COMPILE_CACHE",
+]
+
+# The runner class is set by the workflows in .github/workflows/perf*.yml, not
+# here, because it has to encode the Node version the measurement was taken
+# with. Series are partitioned on it: a Node bump starts a fresh series rather
+# than showing up as a step change that looks like a regression.
+
+# The control. Process start, the bootstrap module, oclif init, and nothing
+# else — no command resolution, no manifest walk. Reading the other two against
+# this separates "the CLI got slower to start" from "this path got slower".
+[bench.version]
+cmd = ["node", "--predictable", "packages/cli/bin/run.js", "--version"]
+
+# Root help: loads the oclif manifest and renders the topic tree. 4% above the
+# control, and the cheapest command that touches the plugin machinery.
+[bench.help]
+cmd = ["node", "--predictable", "packages/cli/bin/run.js", "--help"]
+
+# A leaf command's help, which is the cheapest hermetic way to make oclif load
+# an actual command class rather than just its manifest entry. `app dev` is the
+# most-run command in the CLI, so its module graph is the one worth watching.
+# 6% above the control; the 2% gap over root help is the command class itself.
+[bench.app-dev-help]
+cmd = ["node", "--predictable", "packages/cli/bin/run.js", "app", "dev", "--help"]

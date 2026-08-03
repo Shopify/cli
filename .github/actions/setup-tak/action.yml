@@ -1,0 +1,62 @@
+name: 'Setup tak'
+description: 'Installs valgrind and a pinned tak release, then derives the runner class'
+inputs:
+  node-version:
+    required: true
+    description: 'Node version the measurement will be taken with. Encoded into the runner class.'
+runs:
+  using: 'composite'
+  steps:
+    # cachegrind is what makes any of this worth doing: it counts retired
+    # instructions, which reproduce to ~0.0003% run to run where wall clock on
+    # a hosted runner moves by double digits. Without it tak still records
+    # timing, but the series stops being precise enough to gate on.
+    - name: Install valgrind
+      shell: bash
+      run: |
+        command -v valgrind || {
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends valgrind
+        }
+        valgrind --version
+
+    # tak is pinned by version AND by checksum, for two separate reasons.
+    #
+    # Supply chain: this downloads a binary from a third-party release and runs
+    # it in CI, so the bytes are verified rather than trusted.
+    #
+    # Measurement: the instrument is part of the experiment. Changing tak can
+    # put a step in the series that looks like a change in the CLI, so it moves
+    # deliberately, in a commit that changes nothing else.
+    #
+    # Checksum from https://github.com/jdx/tak/releases/download/v0.0.5/SHA256SUMS
+    - name: Install tak
+      shell: bash
+      env:
+        TAK_VERSION: '0.0.5'
+        TAK_SHA256: '1430efa4e44f58921e27db931820187bbac297b33c0dd7c11ae5e382fa11b93e'
+      run: |
+        set -euo pipefail
+        asset="tak-x86_64-unknown-linux-gnu.tar.gz"
+        curl --fail --silent --show-error --location --retry 3 \
+          --output "/tmp/$asset" \
+          "https://github.com/jdx/tak/releases/download/v${TAK_VERSION}/${asset}"
+        echo "${TAK_SHA256}  /tmp/${asset}" | sha256sum --check --strict
+        mkdir -p /tmp/tak-bin
+        tar -xzf "/tmp/$asset" -C /tmp/tak-bin
+        echo "/tmp/tak-bin" >> "$GITHUB_PATH"
+
+    # Series are partitioned on the runner class, and must be: absolute
+    # instruction counts shift between machine and toolchain classes by more
+    # than a real regression does. Encoding the Node version means a Node bump
+    # starts a fresh series instead of landing in the old one as a step change
+    # that reads like a regression.
+    - name: Derive the runner class
+      shell: bash
+      env:
+        NODE_VERSION: ${{ inputs.node-version }}
+      run: echo "TAK_RUNNER=gha-ubuntu-24.04-x64-node${NODE_VERSION}" >> "$GITHUB_ENV"
+
+    - name: Report what is available
+      shell: bash
+      run: tak doctor

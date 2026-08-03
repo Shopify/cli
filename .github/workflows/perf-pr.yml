@@ -1,0 +1,233 @@
+name: Perf (PR)
+
+# Measures this pull request and compares it against the commit it branched
+# from, then says so in a sticky comment.
+#
+# Nothing here writes to refs/notes/tak. A pull request's measurements are
+# recorded locally, used for the comparison, and thrown away with the runner.
+# Only main contributes to the history: a branch's numbers are not the trunk's,
+# and a series that mixes them cannot be read.
+#
+# ---------------------------------------------------------------------------
+# The gate is off until main has history. See TAK_GATE below.
+# ---------------------------------------------------------------------------
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # Cheap changes should not pay ten minutes of valgrind. Note that if this
+    # workflow is ever made a required check, this list needs the usual
+    # required-check-with-path-filters workaround, or doc-only PRs will hang
+    # waiting for a job that never runs.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'docs-shopify.dev/**'
+      - '.changeset/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PNPM_VERSION: '10.11.1'
+  DEFAULT_NODE_VERSION: '26.1.0'
+  # Set to '1' to make an instruction-count regression fail this workflow.
+  #
+  # Off for now, on the tool's own advice: a gate needs a baseline series to
+  # compare against, and perf.yml has to run on main for a while before there
+  # is one. Until then every comparison would come back empty, and an empty
+  # comparison is not a pass — it means the base was never recorded. The
+  # comment and the job summary are posted either way, so the numbers are
+  # visible from day one.
+  #
+  # Turn it on once main has a few weeks of points and the series looks flat.
+  TAK_GATE: '0'
+
+jobs:
+  measure:
+    name: Compare instruction counts
+    # Same class as perf.yml. tak refuses to compare across runner classes, so a
+    # mismatch here produces "nothing was compared" rather than a wrong answer.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      # Read only. This job builds and runs code from the pull request, so it
+      # must not hold a token that can write anything. The comment is posted by
+      # the `report` job below, which runs none of it.
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Deliberately the base repository, not the head repository the test
+          # workflows check out: the base branch and refs/notes/tak only exist
+          # here, and a fork's copy of either would be stale or absent. A fork
+          # PR's head commit is still reachable from the base repo.
+          #
+          # The branch commit, not the synthetic merge commit actions/checkout
+          # defaults to for a pull_request event. That merge commit exists only
+          # for the run and changes whenever main advances, so a measurement of
+          # it belongs to a commit nobody can check out.
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Needed to find the merge base.
+          fetch-depth: 0
+          # Kept only for the trusted fetch in the next step, which runs before
+          # any code from the pull request does.
+          persist-credentials: true
+
+      - name: Fetch the comparison inputs
+        id: base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin "+$BASE_REF:refs/remotes/origin/$BASE_REF"
+          git fetch --quiet --depth 1 origin '+refs/notes/tak:refs/notes/tak' || \
+            echo "no notes ref yet — the comparison will be empty until perf.yml has run on main"
+          # The merge base, not the branch tip: comparing against a moving
+          # target attributes other people's commits to this pull request.
+          base=$(git merge-base "origin/$BASE_REF" HEAD)
+          echo "sha=$base" >> "$GITHUB_OUTPUT"
+          echo "comparing against $base on $BASE_REF"
+
+      # Drop the checkout token before any action reads pull-request-controlled
+      # files or any project code runs.
+      - name: Remove checkout credentials
+        run: git config --local --unset-all http.https://github.com/.extraheader
+
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+
+      - name: Setup tak
+        uses: ./.github/actions/setup-tak
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+
+      # The same command perf.yml and a developer's laptop run. `--record`
+      # writes a git note locally and nothing more: there is no `tak push` in
+      # this workflow and there should never be one.
+      - name: Measure this pull request
+        run: pnpm perf:record
+
+      # Not `continue-on-error`: that would hide a comparison that died for an
+      # unrelated reason behind a green check. The exit code is captured, the
+      # comment is posted either way, and the `report` job decides what to do
+      # with it.
+      - name: Compare against the base
+        env:
+          BASE_SHA: ${{ steps.base.outputs.sha }}
+        run: |
+          set +e
+          tak compare "$BASE_SHA" > /tmp/tak-report.md
+          echo $? > /tmp/tak-gate-status
+          set -e
+          cat /tmp/tak-report.md
+          cat /tmp/tak-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Package the report
+        if: always()
+        env:
+          BASE_SHA: ${{ steps.base.outputs.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p /tmp/tak-out
+          # A missing report means an earlier step died. Say so, rather than
+          # letting the reporting job find nothing and infer a pass.
+          if [ -f /tmp/tak-report.md ]; then
+            cp /tmp/tak-report.md /tmp/tak-out/report.md
+          else
+            echo "The comparison never ran — an earlier step failed." > /tmp/tak-out/report.md
+          fi
+          # 2, not 1: a missing status means the comparison never ran, which is
+          # a different failure from a regression and must not be reported as
+          # one.
+          cp /tmp/tak-gate-status /tmp/tak-out/status 2>/dev/null || echo 2 > /tmp/tak-out/status
+          printf '%s %s\n' "${HEAD_SHA:0:12}" "${BASE_SHA:0:12}" > /tmp/tak-out/shas
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tak-report
+          path: /tmp/tak-out
+          retention-days: 1
+          if-no-files-found: error
+
+  # A separate job so the write token is never in scope while pull-request code
+  # is executing. This one checks out nothing and runs no project code: it reads
+  # an artifact and talks to the API.
+  report:
+    name: Report
+    needs: measure
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pull-requests: write # the sticky comment, and nothing else
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tak-report
+          path: /tmp/tak-out
+
+      # Skipped for pull requests from forks, which get a read-only token. The
+      # comparison still runs there; only the comment is missing.
+      - name: Comment on the pull request
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          marker='<!-- shopify-cli-perf -->'
+          read -r head_sha base_sha < /tmp/tak-out/shas
+          {
+            printf '%s\n' "$marker"
+            printf '### Instruction counts\n\n'
+            cat /tmp/tak-out/report.md
+            printf '\n<sub>`%s` vs `%s` · measured on the runner, not pushed to the history.</sub>\n' \
+              "$head_sha" "$base_sha"
+          } > /tmp/tak-comment.md
+
+          # One comment per pull request, edited in place. A new comment on
+          # every push buries the conversation under numbers.
+          existing="$(gh api "repos/$REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"$marker\")) | .id" | tail -n1)"
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$REPOSITORY/issues/comments/$existing" \
+              --field body="$(cat /tmp/tak-comment.md)"
+          else
+            gh api --method POST "repos/$REPOSITORY/issues/$PR_NUMBER/comments" \
+              --field body="$(cat /tmp/tak-comment.md)"
+          fi
+
+      # `always()` on both this step and the job: a failed step stops the ones
+      # after it, and a `gh api` hiccup must not skip the gate once it is on.
+      - name: Fail on a regression
+        if: always()
+        run: |
+          status=$(cat /tmp/tak-out/status)
+          if [ "${TAK_GATE}" != '1' ]; then
+            echo "::notice::gate is off (TAK_GATE=${TAK_GATE}); compare exited ${status}"
+            exit 0
+          fi
+          if grep -Fq '**Nothing was compared' /tmp/tak-out/report.md; then
+            echo "::error::no comparable baseline was found — the base commit was never recorded, or the runner classes differ"
+            exit 1
+          fi
+          case "$status" in
+            0) ;;
+            2)
+              echo "::error::the comparison never ran — an earlier step failed, so nothing was gated"
+              exit 1
+              ;;
+            *)
+              echo "::error::an instruction count rose beyond the gate — see the comment or the job summary"
+              exit "$status"
+              ;;
+          esac
