@@ -1,6 +1,7 @@
 import {fetch} from './http.js'
 import {outputDebug, outputContent, outputToken} from './output.js'
 import {JsonMap} from '../../private/common/json.js'
+import {redactForOutput} from '../../private/node/analytics/redact-output.js'
 import {DeepRequired} from '../common/ts/deep-required.js'
 
 export {DeepRequired}
@@ -224,7 +225,7 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     const response = await fetch(url, {method: 'POST', body, headers}, 'non-blocking')
 
     if (response.status === 200) {
-      outputDebug(outputContent`Analytics event sent: ${outputToken.json(sanitizePayload(payload))}`)
+      outputDebug(outputContent`Analytics event sent: ${outputToken.json(redactForOutput(sanitizePayload(payload)))}`)
       return {type: 'ok'}
     } else {
       outputDebug(`Failed to report usage analytics: ${response.statusText}`)

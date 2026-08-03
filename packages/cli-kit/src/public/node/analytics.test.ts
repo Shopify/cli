@@ -346,6 +346,39 @@ describe('event tracking', () => {
     })
   })
 
+  // `key` marks a credential in the environment -- SHOPIFY_PROXY_KEY holds a signed
+  // token -- but `api_key` is an app's public client ID, so the name is only
+  // redacted on the way to a terminal, not on the way to Monorail.
+  test('sends key-named environment variables to Monorail but does not print them', async () => {
+    await withEnvironment({SHOPIFY_PROXY_KEY: 'proxy_key_value'}, async () => {
+      await inProjectWithFile('package.json', async (args) => {
+        // Given
+        const commandContent = {command: 'dev', topic: 'app'}
+        await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+        const config = {
+          runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+          plugins: [],
+        } as any
+
+        // When
+        await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+        // Then
+        const reportedVars = publishEventMock.mock.calls[0]![2].env_shopify_variables as string
+        expect(JSON.parse(reportedVars)).toMatchObject({SHOPIFY_PROXY_KEY: 'proxy_key_value'})
+
+        // And when the same payload is printed instead of sent
+        vi.mocked(analyticsDisabled).mockReturnValue(true)
+        const outputMock = mockAndCaptureOutput()
+        await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+        const debugOutput = outputMock.debug()
+        expect(debugOutput).toMatch('Skipping command analytics, payload:')
+        expect(debugOutput).not.toContain('proxy_key_value')
+      })
+    })
+  })
+
   // The payload is printed by outputDebug even when analytics are disabled, so
   // asserting on the payload object alone would miss this sink.
   test('does not print credentials when analytics are disabled', async () => {
