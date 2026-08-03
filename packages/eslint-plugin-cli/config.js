@@ -94,11 +94,15 @@ const baseRules = {
     },
   ],
   // Use .js extensions for TypeScript files (ESM convention)
-  'import-x/extensions': ['error', 'ignorePackages', {
-    ts: 'never',
-    tsx: 'never',
-    js: 'always',
-  }],
+  'import-x/extensions': [
+    'error',
+    'ignorePackages',
+    {
+      ts: 'never',
+      tsx: 'never',
+      js: 'always',
+    },
+  ],
   '@typescript-eslint/no-misused-promises': 'error',
   '@typescript-eslint/no-floating-promises': 'error',
   '@typescript-eslint/no-unnecessary-type-assertion': 'error',

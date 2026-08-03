@@ -12,6 +12,15 @@ const config = [
     ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.d.ts', '**/*.cjs'],
   },
 
+  // The local ESLint plugin uses CommonJS so its rules can load themselves.
+  {
+    files: ['packages/eslint-plugin-cli/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+    },
+  },
+
   // NX module boundaries
   {
     files: ['**/*.ts', '**/*.tsx'],

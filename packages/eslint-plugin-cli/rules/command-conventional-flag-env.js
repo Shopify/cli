@@ -14,14 +14,14 @@ module.exports = {
       PropertyDefinition(node) {
         if (node.key.name === 'flags') {
           node.value.properties.forEach((flag) => {
-            const arguments = flag.value?.arguments ?? []
-            const argument = arguments[0]
+            const flagArguments = flag.value?.arguments ?? []
+            const argument = flagArguments[0]
             if (!argument) {
               return
             }
             const envProperty = argument.properties.find((property) => property.key.name === 'env')?.value?.value
             if (envProperty) {
-              if (!VALID_FLAGS.some((flag) => envProperty.startsWith(flag))) {
+              if (!VALID_FLAGS.some((validFlag) => envProperty.startsWith(validFlag))) {
                 context.report(
                   argument,
                   `Flags' environment variable must start with ${new Intl.ListFormat('en', {

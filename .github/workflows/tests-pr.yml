@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Type check
-        run: pnpm nx run-many --all --skip-nx-cache --target=type-check --output-style=stream
+        run: pnpm nx run-many --all --target=type-check --output-style=stream
 
   lint:
     name: 'Lint'
@@ -52,7 +52,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Lint
-        run: pnpm nx run-many --all --skip-nx-cache --target=lint --output-style=stream
+        run: pnpm nx run-many --all --target=lint --output-style=stream
 
   bundle:
     name: 'Bundle'
@@ -69,9 +69,9 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: 'Build'
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: 'Bundle'
-        run: pnpm nx run-many --all --skip-nx-cache --target=bundle --output-style=stream
+        run: pnpm nx run-many --all --target=bundle --output-style=stream
 
   knip:
     name: 'Knip (unused code check)'
@@ -240,7 +240,7 @@ jobs:
         with:
           node-version: ${{ env.PLAYWRIGHT_NODE_VERSION }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium
         working-directory: packages/e2e
@@ -296,7 +296,7 @@ jobs:
         run: pnpm exec playwright install chromium
         working-directory: packages/e2e
       - name: Build CLI for cleanup auth
-        run: pnpm nx run cli:build --skip-nx-cache
+        run: pnpm nx run cli:build
       - name: Prime cleanup auth state
         continue-on-error: true
         env:
@@ -343,7 +343,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: Type-diff
         working-directory: workspace
         id: type-diff
@@ -375,7 +375,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+        run: pnpm nx run-many --all --target=build --output-style=stream
       - name: Check for breaking changes
         id: check
         run: node workspace/src/major-change-check.js
