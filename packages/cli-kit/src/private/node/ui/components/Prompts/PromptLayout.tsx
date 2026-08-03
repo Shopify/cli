@@ -1,6 +1,6 @@
 import {InfoTable, InfoTableProps} from './InfoTable.js'
 import {InfoMessage, InfoMessageProps} from './InfoMessage.js'
-import {InlineToken, LinkToken, TokenItem, TokenizedText} from '../TokenizedText.js'
+import {TokenizedText} from '../TokenizedText.js'
 import {messageWithPunctuation} from '../../utilities.js'
 import {AbortSignal} from '../../../../../public/node/abort.js'
 import useAbortSignal from '../../hooks/use-abort-signal.js'
@@ -9,6 +9,7 @@ import React, {ReactElement, cloneElement, useCallback, useLayoutEffect, useStat
 
 import {Box, measureElement, Text, useStdout, DOMElement} from 'ink'
 import figures from 'figures'
+import type {InlineToken, LinkToken, TokenItem} from '../token-item.js'
 
 export type Message = TokenItem<Exclude<InlineToken, LinkToken>>
 

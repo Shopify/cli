@@ -1,8 +1,7 @@
 import {takeRandomFromArray, uniq} from './array.js'
 import {unstyled} from '../node/output.js'
-import {Token, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
-
 import {camelCase, capitalCase, constantCase, paramCase, snakeCase, pascalCase} from 'change-case'
+import type {Token, TokenItem} from '../../private/node/ui/components/token-item.js'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [
   'commercial',
