@@ -251,15 +251,13 @@ describe('event tracking', () => {
     })
   })
 
-  test('sends SHOPIFY_ environment variables in sensitive payload', async () => {
-    const originalShopifyTestVar = process.env.SHOPIFY_TEST_VAR
-    const originalShopifyAnotherVar = process.env.SHOPIFY_ANOTHER_VAR
-    const originalShopifyFlagStorePassword = process.env.SHOPIFY_FLAG_STORE_PASSWORD
-    const originalNotShopifyVar = process.env.NOT_SHOPIFY_VAR
-    process.env.SHOPIFY_TEST_VAR = 'test_value'
-    process.env.SHOPIFY_ANOTHER_VAR = 'another_value'
-    process.env.SHOPIFY_FLAG_STORE_PASSWORD = 'store-secret'
-    process.env.NOT_SHOPIFY_VAR = 'should_not_appear'
+  test('sends only allowlisted Shopify environment variables in sensitive payload', async () => {
+    const originalShopifyInvokedBy = process.env.SHOPIFY_INVOKED_BY
+    const originalShopifyCliAgent = process.env.SHOPIFY_CLI_AGENT
+    const originalShopifySomethingKey = process.env.SHOPIFY_SOMETHING_KEY
+    process.env.SHOPIFY_INVOKED_BY = 'shopify-function-test-helpers'
+    process.env.SHOPIFY_CLI_AGENT = 'test-agent'
+    process.env.SHOPIFY_SOMETHING_KEY = '123'
 
     try {
       await inProjectWithFile('package.json', async (args) => {
@@ -280,16 +278,14 @@ describe('event tracking', () => {
         expect(sensitivePayload.env_shopify_variables).toBeDefined()
 
         const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
-        expect(shopifyVars).toHaveProperty('SHOPIFY_TEST_VAR', 'test_value')
-        expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
-        expect(shopifyVars).toHaveProperty('SHOPIFY_FLAG_STORE_PASSWORD', '*****')
-        expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+        expect(shopifyVars).toHaveProperty('SHOPIFY_INVOKED_BY', 'shopify-function-test-helpers')
+        expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT', 'test-agent')
+        expect(shopifyVars).not.toHaveProperty('SHOPIFY_SOMETHING_KEY')
       })
     } finally {
-      restoreEnvVariable('SHOPIFY_TEST_VAR', originalShopifyTestVar)
-      restoreEnvVariable('SHOPIFY_ANOTHER_VAR', originalShopifyAnotherVar)
-      restoreEnvVariable('SHOPIFY_FLAG_STORE_PASSWORD', originalShopifyFlagStorePassword)
-      restoreEnvVariable('NOT_SHOPIFY_VAR', originalNotShopifyVar)
+      restoreEnvVariable('SHOPIFY_INVOKED_BY', originalShopifyInvokedBy)
+      restoreEnvVariable('SHOPIFY_CLI_AGENT', originalShopifyCliAgent)
+      restoreEnvVariable('SHOPIFY_SOMETHING_KEY', originalShopifySomethingKey)
     }
   })
 
