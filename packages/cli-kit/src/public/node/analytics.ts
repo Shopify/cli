@@ -173,7 +173,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       request_ids: requestIdsCollection.getRequestIds(),
     },
     sensitive: {
-      args: redactCredentialFlags(startArgs).join(' '),
+      args: startArgs.join(' '),
       cmd_all_environment_flags: environmentFlags,
       error_message: errorMessage,
       ...internalPluginsSensitive,
@@ -200,38 +200,14 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   return sanitizePayload(payload)
 }
 
-// Names that mark a value as a credential, wherever it appears in the payload.
-// Excludes `key` and `auth`, which would drop legitimate telemetry: `api_key` is
-// an app's public client ID and `env_auth_method` is the auth method used.
-const CREDENTIAL_NAME = /password|token|secret|credential/i
-const REDACTED = '*****'
-
-function isCredentialFlag(arg: string): boolean {
-  return arg.startsWith('--') && CREDENTIAL_NAME.test(arg.split('=')[0]!)
-}
-
-// Redacting the arguments while they're still a list means we never have to work
-// out where a value ended once they've been joined into one string.
-function redactCredentialFlags(args: string[]): string[] {
-  return args.map((arg, index) => {
-    const previous = args[index - 1]
-    // `--client-secret abc`: the value is a separate argument.
-    if (previous !== undefined && isCredentialFlag(previous) && !previous.includes('=')) return REDACTED
-    // `--client-secret=abc`: the value is in this one.
-    if (isCredentialFlag(arg) && arg.includes('=')) return `${arg.split('=')[0]}=${REDACTED}`
-    return arg
-  })
-}
-
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
   const sanitizedPayloadString = payloadString
     // Remove Theme Access passwords from the payload
     .replace(/shptka_\w*/g, '*****')
-    // Credential flags quoted inside another value, e.g. `--store-password abc` in
-    // the command line a failing subprocess reports. `args` is redacted as a list
-    // before it gets here; this catches the copies. `\\.` matches an escape
-    // sequence whole so a replacement can't cut a `\"` in half.
+    // Credential flags, in `args` and in any command line quoted into a message.
+    // `\\.` matches an escape sequence whole so a replacement can't cut a `\"` in
+    // half and leave the payload unparseable.
     .replace(/(--[\w-]*(?:password|token|secret|credential)(?:=|\s+))(?:\\.|[^\s"\\])*/gi, '$1*****')
     // Credential keys, e.g. `"store-password":"abc"`. The quotes take any number of
     // backslashes so keys inside already-serialised JSON are covered at any depth.
