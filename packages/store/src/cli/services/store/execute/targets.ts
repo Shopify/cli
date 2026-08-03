@@ -2,6 +2,7 @@ import {prepareAdminStoreGraphQLContext, type AdminStoreGraphQLContext} from './
 import {runAdminStoreGraphQLOperation} from './admin-transport.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 import type {PreparedStoreExecuteRequest} from './request.js'
+import type {StoreExecuteResult} from './types.js'
 
 export type StoreGraphQLApi = 'admin'
 
@@ -18,7 +19,7 @@ interface ExecuteStoreGraphQLTargetInput<TContext> {
 interface StoreGraphQLTarget<TContext> {
   id: StoreGraphQLApi
   prepareContext(input: PrepareStoreGraphQLTargetContextInput): Promise<TContext>
-  execute(input: ExecuteStoreGraphQLTargetInput<TContext>): Promise<unknown>
+  execute(input: ExecuteStoreGraphQLTargetInput<TContext>): Promise<StoreExecuteResult>
 }
 
 const adminStoreGraphQLTarget: StoreGraphQLTarget<AdminStoreGraphQLContext> = {
