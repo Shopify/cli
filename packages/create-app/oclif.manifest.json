@@ -5,6 +5,10 @@
       ],
       "args": {
       },
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --name my-app --organization-id 123 --template reactRouter --flavor typescript",
+        "<%= config.bin %> <%= command.id %> --client-id 123 --template none"
+      ],
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -15,7 +19,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
+          "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. In non-interactive environments, provide this flag or both --name and --organization-id.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -27,7 +31,7 @@
           "type": "option"
         },
         "flavor": {
-          "description": "Which flavor of the given template to use.",
+          "description": "Which flavor of the given template to use. Required in non-interactive environments when the selected template offers multiple flavors.",
           "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -44,7 +48,7 @@
         },
         "name": {
           "char": "n",
-          "description": "The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.",
+          "description": "The name for the new app. When provided, skips the app selection prompt and creates a new app with this name. Required in non-interactive environments unless --client-id is provided.",
           "env": "SHOPIFY_FLAG_NAME",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -61,7 +65,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>",
+          "description": "The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>. Required in non-interactive environments unless --client-id is provided.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "exclusive": [
             "client-id"
@@ -98,7 +102,7 @@
           "type": "option"
         },
         "template": {
-          "description": "The app template. Accepts one of the following:\n       - <reactRouter|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
+          "description": "The app template. Accepts one of the following:\n       - <reactRouter|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]. Required if non interactive.",
           "env": "SHOPIFY_FLAG_TEMPLATE",
           "hasDynamicHelp": false,
           "multiple": false,

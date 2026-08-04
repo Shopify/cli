@@ -384,7 +384,7 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app.
+      The Client ID of your app. Required if non interactive.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --file-name=<value>
@@ -577,12 +577,13 @@ FLAGS
 
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
-      recommended flag is --allow-updates.
+      recommended flag is --allow-updates. In non-interactive environments, provide this flag, --allow-updates, or
+      --no-release.
       [env: SHOPIFY_FLAG_ALLOW_DELETES]
 
   --allow-updates
       Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for
-      CI/CD environments.
+      CI/CD environments. In non-interactive environments, provide this flag, --allow-deletes, or --no-release.
       [env: SHOPIFY_FLAG_ALLOW_UPDATES]
 
   --auth-alias=<value>
@@ -609,7 +610,7 @@ FLAGS
 
   --no-release
       Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation
-      is not required.
+      is not required. In non-interactive environments, provide this flag, --allow-updates, or --allow-deletes.
       [env: SHOPIFY_FLAG_NO_RELEASE]
 
   --path=<value>
@@ -1090,7 +1091,7 @@ FLAGS
 
   -l, --log=<value>
       Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of
-      `shopify app dev` and is the suffix of the log file name.
+      `shopify app dev` and is the suffix of the log file name. Required if non interactive.
       [env: SHOPIFY_FLAG_LOG]
 
   -w, --[no-]watch
@@ -1304,11 +1305,11 @@ FLAGS
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
   -n, --name=<value>
-      name of your Extension
+      name of your Extension. Required if non interactive.
       [env: SHOPIFY_FLAG_NAME]
 
   -t, --template=<value>
-      Extension template
+      Extension template. Required if non interactive.
       [env: SHOPIFY_FLAG_EXTENSION_TEMPLATE]
 
   --auth-alias=<value>
@@ -1320,7 +1321,8 @@ FLAGS
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --flavor=<option>
-      Choose a starting template for your extension, where applicable
+      Choose a starting template for your extension, where applicable. Required if non interactive when the selected
+      extension template supports multiple flavors.
       [env: SHOPIFY_FLAG_FLAVOR]
       <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
 
@@ -1590,6 +1592,7 @@ FLAGS
 
   -n, --name=<value>
       The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.
+      Required in non-interactive environments unless --client-id is provided.
       [env: SHOPIFY_FLAG_NAME]
 
   -p, --path=<value>
@@ -1600,12 +1603,13 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag
-      avoids the app selection prompt.
+      The Client ID of your app. Use this to automatically link your new project to an existing app. In non-interactive
+      environments, provide this flag or both --name and --organization-id.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --flavor=<value>
-      Which flavor of the given template to use.
+      Which flavor of the given template to use. Required in non-interactive environments when the selected template
+      offers multiple flavors.
       [env: SHOPIFY_FLAG_TEMPLATE_FLAVOR]
 
   --no-color
@@ -1614,18 +1618,25 @@ FLAGS
 
   --organization-id=<value>
       The organization ID. Your organization ID can be found in your Dev Dashboard URL:
-      https://dev.shopify.com/dashboard/<organization-id>
+      https://dev.shopify.com/dashboard/<organization-id>. Required in non-interactive environments unless --client-id is
+      provided.
       [env: SHOPIFY_FLAG_ORGANIZATION_ID]
 
   --template=<value>
       The app template. Accepts one of the following:
       - <reactRouter|none>
-      - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]
+      - Any GitHub repo with optional branch and subpath, e.g.,
+      https://github.com/Shopify/<repository>/[subpath]#[branch]. Required if non interactive.
       [env: SHOPIFY_FLAG_TEMPLATE]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
+
+EXAMPLES
+  $ shopify app init --name my-app --organization-id 123 --template reactRouter --flavor typescript
+
+  $ shopify app init --client-id 123 --template none
 ```
 
 ## `shopify app logs`
@@ -1756,12 +1767,12 @@ FLAGS
 
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
-      recommended flag is --allow-updates.
+      recommended flag is --allow-updates. Required in non-interactive environments unless --allow-updates is provided.
       [env: SHOPIFY_FLAG_ALLOW_DELETES]
 
   --allow-updates
       Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for
-      CI/CD environments.
+      CI/CD environments. Required in non-interactive environments unless --allow-deletes is provided.
       [env: SHOPIFY_FLAG_ALLOW_UPDATES]
 
   --auth-alias=<value>
@@ -1867,11 +1878,12 @@ FLAGS
       · For remote HTTP testing, use a URL that starts with https://
       · For local HTTP testing, use http://localhost:{port}/{url-path}
       · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}
-      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:
+      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:. Required if non
+      interactive.
       [env: SHOPIFY_FLAG_ADDRESS]
 
   --api-version=<value>
-      The API Version of the webhook topic.
+      The API Version of the webhook topic. Required if non interactive.
       [env: SHOPIFY_FLAG_API_VERSION]
 
   --auth-alias=<value>
@@ -1906,7 +1918,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --topic=<value>
-      The requested webhook topic.
+      The requested webhook topic. Required if non interactive.
       [env: SHOPIFY_FLAG_TOPIC]
 
 DESCRIPTION
