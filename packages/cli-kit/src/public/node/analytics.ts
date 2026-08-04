@@ -1,4 +1,4 @@
-import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from './context/local.js'
+import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify, isVerbose} from './context/local.js'
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
@@ -44,6 +44,16 @@ interface ReportAnalyticsEventOptions {
  */
 export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions): Promise<void> {
   try {
+    const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
+    const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
+
+    // Building the payload fans out `public_command_metadata` to every plugin, which for app
+    // commands loads the app. When neither destination will receive anything there is nothing to
+    // build it for -- unless the user asked to see it, in which case we still build it to log it.
+    if (skipMonorailAnalytics && skipMetricAnalytics && !isVerbose()) {
+      return
+    }
+
     const payload = await buildPayload(options)
     if (payload === undefined) {
       // Nothing to log
@@ -63,8 +73,6 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       return
     }
 
-    const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
-    const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
     if (skipMonorailAnalytics || skipMetricAnalytics) {
       outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
     }

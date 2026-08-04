@@ -61,6 +61,8 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
       lastArgs = null
     } else if (!timeout && trailing !== false) {
       timeout = setTimeout(later, remaining)
+      // A trailing metrics export must never hold the CLI process open waiting to fire.
+      timeout.unref?.()
     }
     return result
   }

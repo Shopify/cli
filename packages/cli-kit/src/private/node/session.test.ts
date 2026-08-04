@@ -4,10 +4,10 @@ import {
   getLastSeenUserIdAfterAuth,
   OAuthApplications,
   OAuthSession,
-  setCommandSessionId,
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
 } from './session.js'
+import {setCommandSessionId} from './session/command-session-id.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,

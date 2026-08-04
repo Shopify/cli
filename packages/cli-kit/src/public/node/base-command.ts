@@ -2,7 +2,6 @@ import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {outputContent, outputResult, outputToken} from './output.js'
-import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
@@ -106,7 +105,7 @@ abstract class BaseCommand extends Command {
   ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs> & {argv: string[]}> {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
-    await setCurrentSessionAlias(result.flags['auth-alias'])
+    await this.selectSessionAlias(result.flags['auth-alias'])
     await addFromParsedFlags(result.flags)
     return {...result, ...{argv: result.argv as string[]}}
   }
@@ -131,6 +130,22 @@ This flag is required in non-interactive terminal environments, such as a CI env
         )
       }
     })
+  }
+
+  /**
+   * Resolving an alias needs the session/identity/API graph, so it is imported on demand. Almost no
+   * invocation passes `--auth-alias`, and clearing the selection only needs the tiny state module.
+   *
+   * @param alias - The account alias passed via `--auth-alias`, if any.
+   */
+  private async selectSessionAlias(alias?: string): Promise<void> {
+    if (alias) {
+      const {setCurrentSessionAlias} = await import('./session.js')
+      await setCurrentSessionAlias(alias)
+      return
+    }
+    const {setCommandSessionId} = await import('../../private/node/session/command-session-id.js')
+    setCommandSessionId(undefined)
   }
 
   private async resultWithEnvironment<
