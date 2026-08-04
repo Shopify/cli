@@ -410,22 +410,17 @@ describe.each(tokenExchangeMethods)(
     })
 
     test(`logs unknown error for ${expectedErrorName}`, async () => {
-        // Given
-        vi.mocked(shopifyFetch).mockRejectedValue(
-          'non-Error rejection',
-        )
+      // Given
+      vi.mocked(shopifyFetch).mockRejectedValue('non-Error rejection')
 
-        // When/Then
-        const result = tokenExchangeMethod(automationToken)
-        await expect(result).rejects.toBeInstanceOf(AbortError)
+      // When/Then
+      const result = tokenExchangeMethod(automationToken)
+      await expect(result).rejects.toBeInstanceOf(AbortError)
 
-        const expectedMessage = [
-          `Token exchange for the ${expectedErrorName} API`,
-          'failed: unknown error',
-        ].join(' ')
+      const expectedMessage = [`Token exchange for the ${expectedErrorName} API`, 'failed: unknown error'].join(' ')
 
-        expect(outputDebug).toHaveBeenCalledWith(expectedMessage)
-      })
+      expect(outputDebug).toHaveBeenCalledWith(expectedMessage)
+    })
   },
 )
 
