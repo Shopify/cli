@@ -3879,7 +3879,8 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --organization-id=<value>
-      The numeric organization ID. Auto-selects if you belong to a single organization.
+      The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive when
+      more than one organization is available.
       [env: SHOPIFY_FLAG_ORGANIZATION_ID]
 
   --verbose
@@ -3892,8 +3893,7 @@ DESCRIPTION
   Lists stores in a Shopify organization available to the current CLI account.
 
   When more than one organization is available, the command prompts you to pick one unless you provide
-  `--organization-id`.
-  In non-interactive environments, `--organization-id` is required.
+  `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.
 
   Run `shopify organization list` to find organization IDs.
 

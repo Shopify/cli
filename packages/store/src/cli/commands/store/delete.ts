@@ -30,7 +30,7 @@ export default class StoreDelete extends Command {
     'organization-id': storeFlags['organization-id'],
     force: Flags.boolean({
       char: 'f',
-      description: 'Skip confirmation.',
+      description: 'Skip confirmation. Required if non interactive.',
       env: 'SHOPIFY_FLAG_FORCE',
       default: false,
     }),

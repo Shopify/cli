@@ -6710,7 +6710,7 @@
           "type": "boolean"
         },
         "name": {
-          "description": "Name for the new development store.",
+          "description": "Name for the new development store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_NAME",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6726,7 +6726,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6734,7 +6734,7 @@
           "type": "option"
         },
         "plan": {
-          "description": "The Shopify plan to use for the new development store.",
+          "description": "The Shopify plan to use for the new development store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_PLAN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6860,7 +6860,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Skip confirmation.",
+          "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
@@ -7193,8 +7193,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
-      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
+      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
+      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
       "examples": [
         "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --organization-id 1234567",
@@ -7219,7 +7219,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive when more than one organization is available.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
