@@ -1,9 +1,7 @@
 import {searchForAppsByNameFactory} from './prompt-helpers.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
-import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
 import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationFileName} from '../../models/app/loader.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -46,10 +44,6 @@ export async function selectOrCreateApp(
     const name = await appNamePrompt(options.name)
     return developerPlatformClient.createApp(org, {...options, name})
   } else {
-    // Capture app selection context
-    const cachedData = getCachedCommandInfo()
-    const tomls = (cachedData?.tomls as {[key: string]: AppConfigurationFileName}) ?? {}
-
     for (let attempt = 0; attempt < MAX_PROMPT_RETRIES; attempt++) {
       // eslint-disable-next-line no-await-in-loop
       const app = await selectAppPrompt(
@@ -60,9 +54,6 @@ export async function selectOrCreateApp(
       )
 
       if (app) {
-        const selectedToml = tomls[app.apiKey]
-        if (selectedToml) setCachedCommandTomlPreference(selectedToml)
-
         // eslint-disable-next-line no-await-in-loop
         const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app.apiKey)
 
