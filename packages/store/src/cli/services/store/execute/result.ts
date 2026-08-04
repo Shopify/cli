@@ -1,4 +1,4 @@
-import {encodeStoreExecuteOutputDocument, encodeStoreExecuteResult} from './codec.js'
+import {encodeStoreExecuteWriteReceipt, encodeStoreExecuteResult} from './codec.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
@@ -19,7 +19,7 @@ export async function writeOrOutputStoreExecuteResult(
     await writeFile(outputFile, payload)
 
     if (format === 'json') {
-      outputResult(encodeStoreExecuteOutputDocument({outputFile, result}))
+      outputResult(encodeStoreExecuteWriteReceipt({outputFile, result}))
     } else if (succeeded) {
       renderSuccess({headline: 'Operation succeeded.', body: `Results written to ${outputFile}`})
     } else {
