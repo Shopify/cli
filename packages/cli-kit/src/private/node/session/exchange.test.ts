@@ -409,21 +409,23 @@ describe.each(tokenExchangeMethods)(
       )
     })
 
-    test(`Executing ${tokenExchangeMethod.name} does not log a reason when the caught error has an empty message`, async () => {
-      // Given
-      vi.mocked(shopifyFetch).mockImplementation(async () => {
-        throw new Error('')
-      })
+    test(`logs unknown error for ${expectedErrorName}`, async () => {
+        // Given
+        vi.mocked(shopifyFetch).mockRejectedValue(
+          'non-Error rejection',
+        )
 
-      // When/Then
-      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
-        new AbortError(
-          `The custom token provided can't be used for the ${expectedErrorName} API.`,
-          'Ensure the token is correct and not expired.',
-        ),
-      )
-      expect(outputDebug).not.toHaveBeenCalled()
-    })
+        // When/Then
+        const result = tokenExchangeMethod(automationToken)
+        await expect(result).rejects.toBeInstanceOf(AbortError)
+
+        const expectedMessage = [
+          `Token exchange for the ${expectedErrorName} API`,
+          'failed: unknown error',
+        ].join(' ')
+
+        expect(outputDebug).toHaveBeenCalledWith(expectedMessage)
+      })
   },
 )
 
