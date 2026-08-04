@@ -1,4 +1,4 @@
-import {encodeStoreExecuteOutputDocument, encodeStoreExecuteResult} from './codec.js'
+import {encodeStoreExecuteWriteReceipt, encodeStoreExecuteResult} from './codec.js'
 import {describe, expect, test} from 'vitest'
 
 describe('store execute codecs', () => {
@@ -16,7 +16,7 @@ describe('store execute codecs', () => {
   })
 
   test('omits failureCode from a successful output document', () => {
-    expect(encodeStoreExecuteOutputDocument({outputFile: 'results.json', result: {data: {ok: true}}})).toBe(`{
+    expect(encodeStoreExecuteWriteReceipt({outputFile: 'results.json', result: {data: {ok: true}}})).toBe(`{
   "outputFile": "results.json",
   "success": true
 }`)
@@ -24,7 +24,7 @@ describe('store execute codecs', () => {
 
   test('includes failureCode only for a failed output document', () => {
     expect(
-      encodeStoreExecuteOutputDocument({
+      encodeStoreExecuteWriteReceipt({
         outputFile: 'results.json',
         result: {data: {ok: false}, failure: {code: 'USER_ERRORS', details: []}},
       }),

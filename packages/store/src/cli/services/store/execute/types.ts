@@ -10,3 +10,13 @@ export interface StoreExecuteResult {
   data: JsonValue
   failure?: StoreExecuteFailure
 }
+
+/**
+ * Describes where an operation payload was written. This is not the payload itself: the payload is
+ * the caller's own GraphQL result in `StoreExecuteResult.data`.
+ */
+export interface StoreExecuteWriteReceipt {
+  outputFile: string
+  success: boolean
+  failureCode?: string
+}
