@@ -1,7 +1,7 @@
 import Command from './base-command.js'
 import {Environments} from './environments.js'
 import {encodeToml as encodeTOML} from './toml/codec.js'
-import {globalFlags} from './cli.js'
+import {globalFlags, requiredIfNonInteractive} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
@@ -76,6 +76,50 @@ class MockCommandWithRequiredFlagInNonTTY extends MockCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(MockCommandWithRequiredFlagInNonTTY)
     this.failMissingNonTTYFlags(flags, ['nonTTYRequiredFlag'])
+  }
+}
+
+class MockCommandWithDeclarativeNonTTYRequirements extends MockCommand {
+  /* eslint-disable @shopify/cli/command-flags-with-env */
+  static flags = {
+    ...MockCommand.flags,
+    'first-required': requiredIfNonInteractive(
+      Flags.string({env: 'SHOPIFY_FLAG_TEST_FIRST_REQUIRED', description: 'The first required flag.'}),
+    ),
+    'second-required': requiredIfNonInteractive(
+      Flags.string({env: 'SHOPIFY_FLAG_TEST_SECOND_REQUIRED', description: 'The second required flag.'}),
+    ),
+    'alternative-one': Flags.string({}),
+    'alternative-two': Flags.string({}),
+    conditional: Flags.string({}),
+    'require-conditional': Flags.boolean({}),
+  }
+  /* eslint-enable @shopify/cli/command-flags-with-env */
+
+  static nonTTYFlagRequirements() {
+    return [
+      {flags: ['alternative-one', 'alternative-two']},
+      {flags: ['conditional'], when: (flags: Record<string, unknown>) => Boolean(flags['require-conditional'])},
+    ]
+  }
+
+  async run(): Promise<void> {
+    const {flags} = await this.parse(MockCommandWithDeclarativeNonTTYRequirements)
+    testResult = flags
+  }
+}
+
+class MockCommandWithDefaultFalseNonTTYRequirement extends MockCommand {
+  /* eslint-disable @shopify/cli/command-flags-with-env */
+  static flags = {
+    ...MockCommand.flags,
+    force: requiredIfNonInteractive(Flags.boolean({default: false})),
+  }
+  /* eslint-enable @shopify/cli/command-flags-with-env */
+
+  async run(): Promise<void> {
+    const {flags} = await this.parse(MockCommandWithDefaultFalseNonTTYRequirement)
+    testResult = flags
   }
 }
 
@@ -446,8 +490,89 @@ describe('applying environments', async () => {
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
 
     // Then
-    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\nnonTTYRequiredFlag')
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
   })
+
+  runTestInTmpDir('reports all missing declarative non-TTY requirements', async (tmpDir: string) => {
+    // Given
+    vi.stubEnv('CI', 'true')
+
+    // When
+    await MockCommandWithDeclarativeNonTTYRequirements.run(['--path', tmpDir])
+
+    // Then
+    expect(unstyled(testError!.message)).toContain(`Flags not specified:
+
+--first-required
+--second-required
+--alternative-one or --alternative-two`)
+  })
+
+  runTestInTmpDir('accepts annotated flags supplied through environment variables', async (tmpDir: string) => {
+    // Given
+    vi.stubEnv('CI', 'true')
+    vi.stubEnv('SHOPIFY_FLAG_TEST_FIRST_REQUIRED', 'first')
+    vi.stubEnv('SHOPIFY_FLAG_TEST_SECOND_REQUIRED', 'second')
+
+    // When
+    await MockCommandWithDeclarativeNonTTYRequirements.run(['--path', tmpDir, '--alternative-two', 'alternative'])
+
+    // Then
+    expect(testError).toBeUndefined()
+    expect(testResult).toMatchObject({
+      'first-required': 'first',
+      'second-required': 'second',
+      'alternative-two': 'alternative',
+    })
+  })
+
+  runTestInTmpDir('does not treat a false boolean default as a supplied flag', async (tmpDir: string) => {
+    // Given
+    vi.stubEnv('CI', 'true')
+
+    // When
+    await MockCommandWithDefaultFalseNonTTYRequirement.run(['--path', tmpDir])
+
+    // Then
+    expect(unstyled(testError!.message)).toContain('--force')
+
+    // When
+    testError = undefined
+    await MockCommandWithDefaultFalseNonTTYRequirement.run(['--path', tmpDir, '--force'])
+
+    // Then
+    expect(testError).toBeUndefined()
+  })
+
+  runTestInTmpDir(
+    'applies conditional non-TTY requirements only when their condition matches',
+    async (tmpDir: string) => {
+      // Given
+      vi.stubEnv('CI', 'true')
+      const requiredFlags = [
+        '--path',
+        tmpDir,
+        '--first-required',
+        'first',
+        '--second-required',
+        'second',
+        '--alternative-one',
+        'alternative',
+      ]
+
+      // When
+      await MockCommandWithDeclarativeNonTTYRequirements.run(requiredFlags)
+
+      // Then
+      expect(testError).toBeUndefined()
+
+      // When
+      await MockCommandWithDeclarativeNonTTYRequirements.run([...requiredFlags, '--require-conditional'])
+
+      // Then
+      expect(unstyled(testError!.message)).toContain('--conditional')
+    },
+  )
 
   runTestInTmpDir('reports environment settings that do not match defaults', async (tmpDir: string) => {
     // Given

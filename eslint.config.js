@@ -21,6 +21,17 @@ const config = [
     },
   },
 
+  {
+    files: ['packages/eslint-plugin-cli/**/*.test.js'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        expect: 'readonly',
+        test: 'readonly',
+      },
+    },
+  },
+
   // NX module boundaries
   {
     files: ['**/*.ts', '**/*.tsx'],
