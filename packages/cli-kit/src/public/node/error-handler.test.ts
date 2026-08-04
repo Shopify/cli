@@ -13,6 +13,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 const onNotify = vi.fn()
 const capturedEventHandler = vi.fn()
+const addOnError = vi.hoisted(() => vi.fn())
 let lastBugsnagEvent: {addMetadata: ReturnType<typeof vi.fn>; groupingHash?: string} | undefined
 
 vi.mock('process')
@@ -34,7 +35,7 @@ vi.mock('@bugsnag/js', () => {
         callback(null)
       },
       isStarted: () => true,
-      addOnError: vi.fn(),
+      addOnError,
     },
   }
 })
@@ -282,6 +283,18 @@ describe('sends errors to Bugsnag', () => {
 
     const mockEvent = capturedEventHandler.mock.calls[0]![0]
     expect(mockEvent.setUser).toHaveBeenCalledWith(undefined)
+  })
+
+  test('registers plugin stack cleanup once before reporting errors', async () => {
+    const config = {
+      plugins: [],
+      runHook: vi.fn().mockResolvedValue({successes: []}),
+    } as unknown as NonNullable<Parameters<typeof sendErrorToBugsnag>[2]>
+
+    await sendErrorToBugsnag(new Error('first error'), 'unexpected_error', config)
+    await sendErrorToBugsnag(new Error('second error'), 'unexpected_error', config)
+
+    expect(addOnError).toHaveBeenCalledOnce()
   })
 
   test('attaches custom metadata with allowed slice_name when startCommand is present', async () => {

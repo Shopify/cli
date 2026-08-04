@@ -449,10 +449,12 @@ describe('fetchNotificationsInBackground', () => {
     })
 
     // Then
-    expect(exec).toHaveBeenCalledWith(
-      '/path/to/node',
-      ['/path/to/shopify', 'notifications', 'list', '--ignore-errors'],
-      expect.anything(),
-    )
+    await vi.waitFor(() => {
+      expect(exec).toHaveBeenCalledWith(
+        '/path/to/node',
+        ['/path/to/shopify', 'notifications', 'list', '--ignore-errors'],
+        expect.anything(),
+      )
+    })
   })
 })

@@ -1,15 +1,14 @@
 import {versionSatisfies} from './node-package-manager.js'
-import {renderError, renderInfo, renderWarning} from './ui.js'
 import {getCurrentCommandId} from './global-context.js'
 import {outputDebug} from './output.js'
-import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
 import {isTruthy} from './context/utilities.js'
-import {exec} from './system.js'
 import {jsonOutputEnabled} from './environment.js'
-import {fetch} from './http.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../../private/node/conf-store.js'
+import type {Notification, Notifications} from '../../private/node/notifications-schema.js'
+
+export type {Notification, Notifications} from '../../private/node/notifications-schema.js'
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const EMPTY_CACHE_MESSAGE = 'Cache is empty'
@@ -26,31 +25,6 @@ const COMMANDS_TO_SKIP = [
 function url(): string {
   return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
 }
-
-const NotificationSchema = zod.object({
-  id: zod.string(),
-  message: zod.string(),
-  type: zod.enum(['info', 'warning', 'error']),
-  frequency: zod.enum(['always', 'once', 'once_a_day', 'once_a_week']),
-  ownerChannel: zod.string(),
-  cta: zod
-    .object({
-      label: zod.string(),
-      url: zod.string().url(),
-    })
-    .optional(),
-  title: zod.string().optional(),
-  minVersion: zod.string().optional(),
-  maxVersion: zod.string().optional(),
-  minDate: zod.string().optional(),
-  maxDate: zod.string().optional(),
-  commands: zod.array(zod.string()).optional(),
-  surface: zod.string().optional(),
-})
-export type Notification = zod.infer<typeof NotificationSchema>
-
-const NotificationsSchema = zod.object({notifications: zod.array(NotificationSchema)})
-export type Notifications = zod.infer<typeof NotificationsSchema>
 
 /**
  * Shows notifications to the user if they meet the criteria specified in the notifications.json file.
@@ -98,7 +72,11 @@ function skipNotifications(currentCommand: string, environment: NodeJS.ProcessEn
  * @param notifications - The notifications to render.
  */
 async function renderNotifications(notifications: Notification[]) {
-  notifications.slice(0, 2).forEach((notification) => {
+  const notificationsToRender = notifications.slice(0, 2)
+  if (notificationsToRender.length === 0) return
+
+  const {renderError, renderInfo, renderWarning} = await import('./ui.js')
+  notificationsToRender.forEach((notification) => {
     const content = {
       headline: notification.title,
       body: notification.message.replace(/\\n/g, '\n'),
@@ -132,6 +110,7 @@ export async function getNotifications(): Promise<Notifications> {
   const rawNotifications = cacheRetrieve(cacheKey)?.value as unknown as string
   if (!rawNotifications) throw new Error(EMPTY_CACHE_MESSAGE)
   const notifications: object = JSON.parse(rawNotifications)
+  const {NotificationsSchema} = await import('../../private/node/notifications-schema.js')
   return NotificationsSchema.parse(notifications)
 }
 
@@ -142,6 +121,10 @@ export async function getNotifications(): Promise<Notifications> {
  */
 export async function fetchNotifications(): Promise<Notifications> {
   outputDebug(`Fetching notifications...`)
+  const [{fetch}, {NotificationsSchema}] = await Promise.all([
+    import('./http.js'),
+    import('../../private/node/notifications-schema.js'),
+  ])
   const response = await fetch(url(), undefined, {
     useNetworkLevelRetry: false,
     useAbortSignal: true,
@@ -187,13 +170,19 @@ export function fetchNotificationsInBackground(
   const args = [shopifyBinary, 'notifications', 'list', '--ignore-errors']
 
   // eslint-disable-next-line no-void
-  void exec(nodeBinary, args, {
-    background: true,
-    env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
-    externalErrorHandler: async (error: unknown) => {
+  void import('./system.js')
+    .then(({exec}) =>
+      exec(nodeBinary, args, {
+        background: true,
+        env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
+        externalErrorHandler: async (error: unknown) => {
+          outputDebug(`Failed to fetch notifications in background: ${(error as Error).message}`)
+        },
+      }),
+    )
+    .catch((error: unknown) => {
       outputDebug(`Failed to fetch notifications in background: ${(error as Error).message}`)
-    },
-  })
+    })
 }
 
 /**
