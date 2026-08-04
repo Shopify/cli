@@ -14,6 +14,8 @@ const external = [
   'react-devtools-core',
   // esbuild can't be bundled per design
   'esbuild',
+  // Oclif only uses TypeScript to load source plugins during development
+  'typescript',
   'lightningcss',
 ]
 
