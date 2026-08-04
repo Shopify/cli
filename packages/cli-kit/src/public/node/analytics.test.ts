@@ -254,9 +254,13 @@ describe('event tracking', () => {
   test('sends only allowlisted Shopify environment variables in sensitive payload', async () => {
     const originalShopifyInvokedBy = process.env.SHOPIFY_INVOKED_BY
     const originalShopifyCliAgent = process.env.SHOPIFY_CLI_AGENT
+    const originalShopifyCliAgentInfo = process.env.SHOPIFY_CLI_AGENT_INFO
+    const originalShopifyCliAgentIds = process.env.SHOPIFY_CLI_AGENT_IDS
     const originalShopifySomethingKey = process.env.SHOPIFY_SOMETHING_KEY
     process.env.SHOPIFY_INVOKED_BY = 'shopify-function-test-helpers'
     process.env.SHOPIFY_CLI_AGENT = 'test-agent'
+    process.env.SHOPIFY_CLI_AGENT_INFO = 'n:test-agent|v:1.0.0|p:test-provider|m:test-model'
+    process.env.SHOPIFY_CLI_AGENT_IDS = 's:session-id|r:run-id|i:instance-id'
     process.env.SHOPIFY_SOMETHING_KEY = '123'
 
     try {
@@ -280,11 +284,18 @@ describe('event tracking', () => {
         const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
         expect(shopifyVars).toHaveProperty('SHOPIFY_INVOKED_BY', 'shopify-function-test-helpers')
         expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT', 'test-agent')
+        expect(shopifyVars).toHaveProperty(
+          'SHOPIFY_CLI_AGENT_INFO',
+          'n:test-agent|v:1.0.0|p:test-provider|m:test-model',
+        )
+        expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT_IDS', 's:session-id|r:run-id|i:instance-id')
         expect(shopifyVars).not.toHaveProperty('SHOPIFY_SOMETHING_KEY')
       })
     } finally {
       restoreEnvVariable('SHOPIFY_INVOKED_BY', originalShopifyInvokedBy)
       restoreEnvVariable('SHOPIFY_CLI_AGENT', originalShopifyCliAgent)
+      restoreEnvVariable('SHOPIFY_CLI_AGENT_INFO', originalShopifyCliAgentInfo)
+      restoreEnvVariable('SHOPIFY_CLI_AGENT_IDS', originalShopifyCliAgentIds)
       restoreEnvVariable('SHOPIFY_SOMETHING_KEY', originalShopifySomethingKey)
     }
   })
