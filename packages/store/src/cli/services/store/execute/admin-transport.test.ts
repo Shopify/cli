@@ -56,7 +56,7 @@ describe('runAdminStoreGraphQLOperation', () => {
   })
 
   test('executes the GraphQL request successfully', async () => {
-    vi.mocked(graphqlRequest).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
+    vi.mocked(graphqlRequest).mockResolvedValue({shop: {name: 'Test shop'}})
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
 
     const result = await runAdminStoreGraphQLOperation({context, request})
@@ -141,6 +141,27 @@ describe('runAdminStoreGraphQLOperation', () => {
     const request = await prepareStoreExecuteRequest({query: 'query { nope }'})
 
     await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toThrow('GraphQL operation failed.')
+  })
+
+  test('documents current behavior: read-only responses can be classified by nested userErrors', async () => {
+    vi.mocked(graphqlRequest).mockResolvedValue({shop: {userErrors: [{message: 'Upstream warning'}]}})
+    const request = await prepareStoreExecuteRequest({query: 'query { shop { userErrors { message } } }'})
+
+    await expect(runAdminStoreGraphQLOperation({context, request})).resolves.toEqual({
+      data: {shop: {userErrors: [{message: 'Upstream warning'}]}},
+      failure: {code: 'USER_ERRORS', details: [{message: 'Upstream warning'}]},
+    })
+  })
+
+  test('documents current behavior: HTTP-200 top-level GraphQL errors are discarded and partial data succeeds', async () => {
+    // cli-kit's graphqlRequest returns response.data, so top-level HTTP-200 errors are
+    // discarded before this adapter receives the payload.
+    vi.mocked(graphqlRequest).mockResolvedValue({shop: null})
+    const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
+
+    await expect(runAdminStoreGraphQLOperation({context, request})).resolves.toEqual({
+      data: {shop: null},
+    })
   })
 
   test('maps a 402 ClientError to a store-unavailable AbortError even when the response also carries `errors`', async () => {
