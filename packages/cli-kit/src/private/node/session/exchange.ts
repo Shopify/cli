@@ -93,10 +93,8 @@ async function exchangeAppAutomationTokenForAccessToken(
     return {accessToken, userId}
   } catch (error) {
     const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-    const reason = error instanceof Error ? error.message.slice(0, 200) : ''
-    if (reason !== '') {
-      outputDebug(`Token exchange for the ${prettyName} API failed: ${reason}`)
-    }
+    const reason = error instanceof Error ? error.message.slice(0, 200) : 'unknown error'
+    outputDebug(`Token exchange for the ${prettyName} API failed: ${reason}`)
     throw new AbortError(
       `The custom token provided can't be used for the ${prettyName} API.`,
       'Ensure the token is correct and not expired.',
