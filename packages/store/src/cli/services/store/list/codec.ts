@@ -1,12 +1,4 @@
-import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './types.js'
-
-/** The version-one JSON document emitted by `store:list --json`. */
-export interface StoreListDocument {
-  stores: StoreListEntry[]
-  organization?: StoreListOrganization
-  notice?: string
-  truncated?: boolean
-}
+import {type ListStoresResult, type StoreListDocument} from './types.js'
 
 /** Project execution data onto the stable store:list JSON contract. */
 export function toStoreListDocument(result: ListStoresResult): StoreListDocument {
