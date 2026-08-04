@@ -19,16 +19,47 @@ import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/out
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
-import {findPathUp, inTemporaryDirectory, readFile, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, findPathUp, inTemporaryDirectory, readFile, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {packageManagerBinaryCommandForDirectory} from '@shopify/cli-kit/node/node-package-manager'
+import {
+  packageManagerBinaryCommandForDirectory,
+  readAndParsePackageJson,
+} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
 
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
+
+interface FunctionCodegenConfig {
+  config?: {
+    scalars?: Record<string, unknown> | null
+    [key: string]: unknown
+  } | null
+  [key: string]: unknown
+}
+
+interface FunctionPackageJson {
+  codegen?: FunctionCodegenConfig
+}
+
+const shopifyFunctionCodegenDefaults = {
+  defaultScalarType: 'unknown',
+  scalars: {
+    Date: 'string',
+    DateTime: 'string',
+    DateTimeWithoutTimezone: 'string',
+    Decimal: 'string',
+    Handle: 'string',
+    ID: 'string',
+    JSON: 'unknown',
+    TimeWithoutTimezone: 'string',
+    URL: 'string',
+    Void: 'null',
+  },
+} as const
 
 class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
@@ -145,11 +176,41 @@ export async function buildGraphqlTypes(
     )
   }
 
+  const packageJsonPath = joinPath(fun.directory, 'package.json')
+  if (!(await fileExists(packageJsonPath))) {
+    return runGraphqlCodegen(fun, options, 'package.json')
+  }
+
+  const packageJson = (await readAndParsePackageJson(packageJsonPath)) as FunctionPackageJson
+  if (!packageJson.codegen) {
+    return runGraphqlCodegen(fun, options, 'package.json')
+  }
+
+  const codegenConfig = {
+    ...packageJson.codegen,
+    config: {
+      ...shopifyFunctionCodegenDefaults,
+      ...(packageJson.codegen.config ?? {}),
+      scalars: {
+        ...shopifyFunctionCodegenDefaults.scalars,
+        ...(packageJson.codegen.config?.scalars ?? {}),
+      },
+    },
+  }
+
+  return inTemporaryDirectory(async (temporaryDirectory) => {
+    const codegenConfigPath = joinPath(temporaryDirectory, 'codegen.json')
+    await writeFile(codegenConfigPath, JSON.stringify(codegenConfig))
+    return runGraphqlCodegen(fun, options, codegenConfigPath)
+  })
+}
+
+async function runGraphqlCodegen(fun: {directory: string}, options: JSFunctionBuildOptions, codegenConfigPath: string) {
   const command = await packageManagerBinaryCommandForDirectory(
     fun.directory,
     'graphql-code-generator',
     '--config',
-    'package.json',
+    codegenConfigPath,
   )
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
