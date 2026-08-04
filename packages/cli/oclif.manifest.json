@@ -7646,7 +7646,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Delete your development theme.",
+          "description": "Delete your development theme. Use --show-all, --development, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -7663,7 +7663,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Skip confirmation.",
+          "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
@@ -7696,7 +7696,7 @@
         "show-all": {
           "allowNo": false,
           "char": "a",
-          "description": "Include others development themes in theme list.",
+          "description": "Include other development themes in the theme list. Use --show-all, --development, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_SHOW_ALL",
           "name": "show-all",
           "type": "boolean"
@@ -7712,7 +7712,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --show-all, --development, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7737,7 +7737,8 @@
         "password",
         [
           "development",
-          "theme"
+          "theme",
+          "show-all"
         ]
       ],
       "pluginAlias": "@shopify/cli",
@@ -8021,7 +8022,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Force the duplicate operation to run without prompts or confirmations.",
+          "description": "Force the duplicate operation to run without prompts or confirmations. Required if non interactive outside CI.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
@@ -8071,7 +8072,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Required if non interactive.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -8565,7 +8566,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Open your development theme.",
+          "description": "Open your development theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -8590,7 +8591,7 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Open your live (published) theme.",
+          "description": "Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
@@ -8631,7 +8632,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -8985,7 +8986,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Skip confirmation.",
+          "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
@@ -9026,7 +9027,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Required if non interactive.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9078,7 +9079,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Pull theme files from your remote development theme.",
+          "description": "Pull theme files from your remote development theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -9113,7 +9114,7 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Pull theme files from your remote live theme.",
+          "description": "Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
@@ -9171,7 +9172,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9220,7 +9221,7 @@
         "allow-live": {
           "allowNo": false,
           "char": "a",
-          "description": "Allow push to a live theme.",
+          "description": "Allow push to a live theme. Required in non-interactive environments when targeting the live theme.",
           "env": "SHOPIFY_FLAG_ALLOW_LIVE",
           "name": "allow-live",
           "type": "boolean"
@@ -9236,7 +9237,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Push theme files from your remote development theme.",
+          "description": "Push theme files from your remote development theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -9303,7 +9304,7 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Push theme files from your remote live theme.",
+          "description": "Push theme files from your remote live theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
@@ -9376,7 +9377,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9386,7 +9387,7 @@
         "unpublished": {
           "allowNo": false,
           "char": "u",
-          "description": "Create a new unpublished theme and push to it.",
+          "description": "Create a new unpublished theme and push to it. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.",
           "env": "SHOPIFY_FLAG_UNPUBLISHED",
           "name": "unpublished",
           "type": "boolean"
@@ -9445,7 +9446,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Rename your development theme.",
+          "description": "Rename your development theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -9462,14 +9463,14 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Rename your remote live theme.",
+          "description": "Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
         },
         "name": {
           "char": "n",
-          "description": "The new name for the theme.",
+          "description": "The new name for the theme. Required if non interactive.",
           "env": "SHOPIFY_FLAG_NEW_NAME",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9513,7 +9514,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
