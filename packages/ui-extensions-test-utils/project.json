@@ -14,8 +14,6 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
-      "inputs": ["{projectRoot}/src/**/*"],
       "options": {
         "command": "pnpm tsc",
         "cwd": "packages/ui-extensions-test-utils"

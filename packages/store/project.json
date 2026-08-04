@@ -14,8 +14,6 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
-      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
         "cwd": "packages/store"
@@ -49,7 +47,7 @@
     "graphql-codegen:formatting": {
       "executor": "nx:run-commands",
       "dependsOn": ["graphql-codegen:postfix"],
-      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}],
+      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}, "sharedGlobals"],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts"
@@ -66,7 +64,8 @@
       "executor": "nx:run-commands",
       "inputs": [
         "{workspaceRoot}/graphql.config.ts",
-        "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql"
+        "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql",
+        "sharedGlobals"
       ],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
       "options": {
@@ -78,7 +77,8 @@
       "executor": "nx:run-commands",
       "inputs": [
         "{workspaceRoot}/graphql.config.ts",
-        "{projectRoot}/src/cli/api/graphql/business-platform-organizations/**/*.graphql"
+        "{projectRoot}/src/cli/api/graphql/business-platform-organizations/**/*.graphql",
+        "sharedGlobals"
       ],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts"],
       "options": {
@@ -92,7 +92,7 @@
         "graphql-codegen:generate:business-platform-destinations",
         "graphql-codegen:generate:business-platform-organizations"
       ],
-      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}],
+      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}, "sharedGlobals"],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts"

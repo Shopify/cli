@@ -28,11 +28,11 @@ module.exports = {
             if (!flagName) {
               return
             }
-            if (!reservedFlags.hasOwnProperty(flagName)) {
+            if (!Object.hasOwn(reservedFlags, flagName)) {
               return
             }
-            const arguments = flag.value?.arguments ?? []
-            const argument = arguments[0]
+            const flagArguments = flag.value?.arguments ?? []
+            const argument = flagArguments[0]
             if (!argument) {
               return
             }

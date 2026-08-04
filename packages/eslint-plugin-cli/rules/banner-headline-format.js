@@ -13,12 +13,12 @@ module.exports = {
     },
   },
 
-  create: function (context) {
+  create(context) {
     function checkForPunctuation(value, node) {
       const punctuationRegex = /[!.:?]+$/
       if (typeof value === 'string' && !value.match(punctuationRegex)) {
         context.report({
-          node: node,
+          node,
           messageId: 'missingPunctuation',
         })
       }
@@ -37,7 +37,7 @@ module.exports = {
         }
       } else {
         context.report({
-          node: node,
+          node,
           messageId: 'missingPunctuation',
         })
       }
