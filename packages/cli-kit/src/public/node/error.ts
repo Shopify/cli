@@ -1,5 +1,6 @@
 import {normalizePath} from './path.js'
-import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
+import {jsonOutputEnabled} from './environment.js'
+import {outputDebug, OutputMessage, stringifyMessage, TokenizedString} from './output.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 import {hasRateLimitCode} from '../../private/node/analytics/graphql-error-codes.js'
 
@@ -10,10 +11,112 @@ import type {AlertCustomSection} from './ui.js'
 
 export {ExtendableError} from 'ts-error'
 
+/**
+ * How the program should behave when a `FatalError` reaches the top-level handler.
+ *
+ * The values are written out explicitly because they are effectively a cross-version wire
+ * format: `resolveJsonErrorType` reads this number off errors that may have been built by a
+ * different copy of cli-kit (see `bin/bundling/esbuild-plugin-dedup-cli-kit.js`), so a given
+ * number has to keep meaning the same thing across versions. This list is append-only: add
+ * new members with new values, and never reorder or renumber the existing ones.
+ */
 export enum FatalErrorType {
-  Abort,
-  AbortSilent,
-  Bug,
+  Abort = 0,
+  AbortSilent = 1,
+  Bug = 2,
+}
+
+/**
+ * Every `JsonErrorType`, as a runtime value.
+ *
+ * `JsonErrorType` is derived from this array rather than declared separately so that the
+ * compile-time union and the runtime allow-list in `isJsonErrorType` cannot drift apart.
+ */
+const jsonErrorTypes = ['abort', 'abortSilent', 'bug', 'external'] as const
+
+/**
+ * Stable, machine-readable classification of a fatal error, used to derive the `error.type`
+ * field of the JSON error document produced when `--json` is active.
+ *
+ * Not every member reaches the wire: see `EmittedJsonErrorType` for the subset that can
+ * actually appear in a document.
+ *
+ * These are string literals rather than class or enum names on purpose: the published npm
+ * bundle is built with `minifyIdentifiers: true` (see `packages/cli/bin/bundle.js`), which
+ * rewrites `constructor.name` to a single letter that changes between builds. String
+ * literals survive minification.
+ *
+ * `FatalErrorType` on its own is too coarse to use here, because `AbortError` and
+ * `ExternalError` both carry `FatalErrorType.Abort`.
+ */
+export type JsonErrorType = (typeof jsonErrorTypes)[number]
+
+/**
+ * The `JsonErrorType` values that can appear as `error.type` in an emitted document.
+ *
+ * `abortSilent` is an internal classification only: `AbortSilentError` exists to terminate
+ * the process without printing anything, so no document is emitted for it at all. Excluding
+ * it here keeps the emitted discriminator a closed union that consumers can switch on
+ * exhaustively without handling a value they can never receive.
+ */
+export type EmittedJsonErrorType = Exclude<JsonErrorType, 'abortSilent'>
+
+/**
+ * Whether a value is one of the discriminators this version of cli-kit knows about.
+ *
+ * @param value - The value to check.
+ * @returns Whether the value is a known `JsonErrorType`.
+ */
+function isJsonErrorType(value: unknown): value is JsonErrorType {
+  return typeof value === 'string' && (jsonErrorTypes as ReadonlyArray<string>).includes(value)
+}
+
+/**
+ * The `JsonErrorType` each `FatalErrorType` maps to by default. Subclasses needing a
+ * finer-grained discriminator than the enum can express override `jsonErrorType` in their
+ * own constructor.
+ *
+ * The `satisfies` clause is the exhaustiveness guard: adding a member to `FatalErrorType`
+ * without giving it a discriminator here is a compile error.
+ */
+const jsonErrorTypeForFatalErrorType = {
+  [FatalErrorType.Abort]: 'abort',
+  [FatalErrorType.AbortSilent]: 'abortSilent',
+  [FatalErrorType.Bug]: 'bug',
+} as const satisfies Record<FatalErrorType, JsonErrorType>
+
+/**
+ * The fields `resolveJsonErrorType` needs, both optional.
+ *
+ * `isFatal` duck-types on the presence of `type` rather than using `instanceof`, so an error
+ * can reach us having been built by a different copy of cli-kit (see
+ * `bin/bundling/esbuild-plugin-dedup-cli-kit.js`) that predates `jsonErrorType`, or carrying
+ * an enum member this version doesn't know about.
+ */
+interface JsonErrorTypeSource {
+  type?: FatalErrorType
+  jsonErrorType?: JsonErrorType
+}
+
+/**
+ * Resolves the JSON classification for a fatal error.
+ *
+ * Anything unrecognised is reported as a bug rather than silently mislabelled.
+ *
+ * @param error - The error to resolve a classification for.
+ * @returns The classification for the error.
+ */
+export function resolveJsonErrorType(error: JsonErrorTypeSource): JsonErrorType {
+  // `jsonErrorType` is validated rather than trusted: the type is erased at compile time and
+  // the field is publicly writable, so an error built by a newer copy of cli-kit can carry a
+  // discriminator this version has never heard of. Passing it through would put an
+  // unadvertised value on the wire and break the closed union consumers switch on, so an
+  // unknown value is ignored in favour of the numeric fallback.
+  if (isJsonErrorType(error.jsonErrorType)) {
+    return error.jsonErrorType
+  }
+  const knownTypes: Record<number, JsonErrorType | undefined> = jsonErrorTypeForFatalErrorType
+  return (error.type === undefined ? undefined : knownTypes[error.type]) ?? 'bug'
 }
 
 export class CancelExecution extends Error {}
@@ -25,6 +128,7 @@ export class CancelExecution extends Error {}
 export abstract class FatalError extends Error {
   tryMessage: TokenItem | null
   type: FatalErrorType
+  jsonErrorType: JsonErrorType
   nextSteps?: TokenItem<InlineToken>[]
   formattedMessage?: TokenItem
   customSections?: AlertCustomSection[]
@@ -61,6 +165,7 @@ export abstract class FatalError extends Error {
     }
 
     this.type = type
+    this.jsonErrorType = jsonErrorTypeForFatalErrorType[type]
     this.nextSteps = nextSteps
     this.customSections = customSections
     this.skipOclifErrorHandling = true
@@ -104,6 +209,9 @@ export class ExternalError extends FatalError {
     tryMessage: TokenItem | OutputMessage | null = null,
   ) {
     super(message, FatalErrorType.Abort, tryMessage)
+    // `FatalErrorType.Abort` is shared with `AbortError`, so override the discriminator to
+    // keep the two distinguishable in JSON output.
+    this.jsonErrorType = 'external'
     this.command = command
     this.args = args
   }
@@ -149,8 +257,29 @@ export async function handler(error: unknown): Promise<unknown> {
     }
   }
 
-  const {renderFatalError} = await import('./ui.js')
-  renderFatalError(fatal)
+  // This is the single choke point for fatal error rendering, so it's the only place that
+  // can guarantee exactly one JSON document per invocation. The other `renderFatalError`
+  // call sites are either outside the command lifecycle (the `uncaughtException` handlers)
+  // or render and carry on inside long-running dev servers, where emitting a document each
+  // time would produce unparseable output.
+  let renderedAsJson = false
+  if (jsonOutputEnabled()) {
+    try {
+      const {renderFatalErrorAsJson} = await import('../../private/node/json-error.js')
+      renderFatalErrorAsJson(fatal)
+      renderedAsJson = true
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (serializationError) {
+      // A failure to serialize must not hide the error or stop the caller from reporting it
+      // to analytics, so fall through to the human-readable banner instead of rethrowing.
+      outputDebug(`Failed to render the error as JSON: ${serializationError}`)
+    }
+  }
+
+  if (!renderedAsJson) {
+    const {renderFatalError} = await import('./ui.js')
+    renderFatalError(fatal)
+  }
   return Promise.resolve(error)
 }
 

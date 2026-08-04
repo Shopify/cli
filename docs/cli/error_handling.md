@@ -138,6 +138,83 @@ The `FatalError` pattern will not work well in an architecture where app develop
 
 However, until then, we get a lot of leverage in the CLI from `FatalError`, so it can continue to exist as a high leverage counter-example to some of our general principles.
 
+## Errors in JSON output
+
+When a command runs with JSON output active (`--json` or `-j`) and fails with a `FatalError`, the CLI writes a machine-readable error document instead of the human-readable banner. This is a public contract: scripts parse it, so treat changes to it as breaking.
+
+The shape of the document depends on `type`. Here is a typical `abort`, produced when the user can fix the problem themselves:
+
+```json
+{
+  "error": {
+    "type": "abort",
+    "message": "Couldn't find the app's configuration file",
+    "tryMessage": "Run shopify app config link to create one",
+    "nextSteps": ["Check that you're in the right directory"],
+    "customSections": [{"title": "Extensions", "body": [["name", "status"], ["my-ext", "failed"]]}]
+  }
+}
+```
+
+A `bug` is the only type that carries `stack`, since it is the only type where users are asked to file a report:
+
+```json
+{
+  "error": {
+    "type": "bug",
+    "message": "Unexpected error while parsing the theme manifest",
+    "stack": "Error: ...\n    at ..."
+  }
+}
+```
+
+An `external` document additionally carries `command` and `args`, naming the subprocess that failed:
+
+```json
+{
+  "error": {
+    "type": "external",
+    "message": "npm install exited with a non-zero status",
+    "command": "npm",
+    "args": ["install"]
+  }
+}
+```
+
+`tryMessage`, `nextSteps`, and `customSections` are optional on any of the three types; they are simply omitted above where a real document wouldn't include them.
+
+### The envelope
+
+Everything is nested under a single `error` key. That key is what lets a script tell failure from success without duck-typing: successful `--json` payloads are bare values (arrays, or objects shaped by the command), so an error object emitted at the top level would be ambiguous. This also matches oclif's and npm's own JSON error shape.
+
+### `type`
+
+A stable, machine-readable discriminator. It is one of:
+
+| `type` | Meaning |
+| --- | --- |
+| `abort` | An expected failure the user can act on (`AbortError`). |
+| `bug` | An unexpected failure worth reporting to us (`BugError`, and anything unrecognised). |
+| `external` | A subprocess the CLI invoked failed (`ExternalError`); `command` and `args` say which. |
+
+The values are string literals rather than class or enum names because the published bundle is minified with `minifyIdentifiers`, which rewrites class names. There is no `abortSilent` value: `AbortSilentError` exists to exit without printing anything, so it produces **no document at all** rather than a document describing itself. An unrecognised error is reported as `bug` rather than being mislabelled or emitted with an unknown `type`, so the list above is closed and safe to `switch` on exhaustively.
+
+### Field presence
+
+**Absent fields are omitted rather than emitted as `null`.** Use a presence check (`if ("nextSteps" in error)`), not a null comparison. Only `type` and `message` are guaranteed.
+
+`stack` appears **only when `type` is `bug`**, since that is the only type where users are asked to file a report. Do not rely on it for `abort` or `external`.
+
+### Streams and exit status
+
+The document goes to **stdout**; all human-readable output goes to **stderr**. Redirecting stdout to a file or a pipe therefore captures the document alone.
+
+**The process exit status is the status contract.** No `exitCode` field is emitted, deliberately: the error mapper constructs a fresh `AbortError` that does not carry oclif's exit code, so any code in the payload could disagree with the status the process actually exits with. Check the exit status, and use the document for the details.
+
+### One known approximation
+
+JSON mode has to be detected before oclif parses the arguments, so `sniffForJson` inspects `argv` directly. It errs towards enabling JSON: a `--json` that is really the *value* of a preceding value-taking flag (`shopify app info --path --json`) is treated as a request for JSON output. Distinguishing that case would mean knowing every flag's arity, which is oclif's parser rather than a sniff.
+
 ## Report a result from a function
 There are scenarios where a function needs to inform the caller about the success or failure of the operation. For that, `@shopify/cli-kit` provides a result utility:
 

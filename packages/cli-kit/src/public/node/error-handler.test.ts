@@ -7,6 +7,7 @@ import {hashString} from './crypto.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {GraphQLClientError} from '../../private/node/api/headers.js'
+import {environmentVariables} from '../../private/node/constants.js'
 
 import {settings} from '@oclif/core'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -48,6 +49,12 @@ vi.mock('@oclif/core', () => ({
     debug: false,
   },
   Interfaces: {},
+  // `errorMapper` checks `error instanceof Errors.CLIError`. Tests whose error reaches it
+  // (rather than being short-circuited by the CancelExecution/AbortSilentError early returns)
+  // need this to be a real constructor.
+  Errors: {
+    CLIError: class CLIError extends Error {},
+  },
 }))
 
 beforeEach(() => {
@@ -101,6 +108,88 @@ describe('errorHandler', async () => {
     // Then
     expect(outputMock.info()).toBe('')
     expect(process.exit).toBeCalledTimes(0)
+  })
+})
+
+describe('errorHandler with JSON output active', () => {
+  /**
+   * Enables JSON output through the real detection path — `SHOPIFY_FLAG_JSON` rather than a
+   * mock — so these tests also cover the env-var half of `jsonOutputEnabled`. The variable is
+   * always removed, even if an assertion fails, to keep tests independent.
+   */
+  async function withJsonOutputEnabled(runTest: () => Promise<void>): Promise<void> {
+    process.env[environmentVariables.json] = '1'
+    try {
+      await runTest()
+    } finally {
+      delete process.env[environmentVariables.json]
+    }
+  }
+
+  test('still reports the error to Bugsnag after writing the JSON document', async () => {
+    await withJsonOutputEnabled(async () => {
+      // Given
+      vi.spyOn(process, 'exit').mockResolvedValue(null as never)
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await errorHandler(new error.BugError('boom'))
+
+      // Then
+      expect(JSON.parse(outputMock.info()).error.type).toBe('bug')
+      expect(onNotify).toHaveBeenCalledOnce()
+    })
+  })
+
+  test('still reports the error to Bugsnag when serializing the JSON document throws', async () => {
+    await withJsonOutputEnabled(async () => {
+      // Given
+      vi.spyOn(process, 'exit').mockResolvedValue(null as never)
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+      // A malformed token makes `tokenItemToString` throw, which is the realistic way
+      // serialization can fail.
+      const bugError = new error.BugError('boom', {unrecognisedToken: true} as unknown as string)
+
+      // When
+      await errorHandler(bugError)
+
+      // Then
+      expect(outputMock.info()).toBe('')
+      expect(onNotify).toHaveBeenCalledOnce()
+    })
+  })
+
+  test('keeps CancelExecution on its existing human-readable path', async () => {
+    await withJsonOutputEnabled(async () => {
+      // Given
+      vi.spyOn(process, 'exit').mockResolvedValue(null as never)
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await errorHandler(new error.CancelExecution('Custom message'))
+
+      // Then
+      expect(outputMock.info()).toMatch('✨  Custom message')
+      expect(() => JSON.parse(outputMock.info())).toThrow()
+    })
+  })
+
+  test('keeps AbortSilentError silent', async () => {
+    await withJsonOutputEnabled(async () => {
+      // Given
+      vi.spyOn(process, 'exit').mockResolvedValue(null as never)
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await errorHandler(new error.AbortSilentError())
+
+      // Then
+      expect(outputMock.output()).toBe('')
+    })
   })
 })
 
