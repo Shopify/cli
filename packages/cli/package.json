@@ -150,7 +150,6 @@
     ],
     "hooks": {
       "init": [
-        "./dist/hooks/app-init.js",
         "./dist/hooks/hydrogen-init.js"
       ],
       "prerun": "./dist/hooks/prerun.js",

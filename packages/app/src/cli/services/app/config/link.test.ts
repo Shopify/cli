@@ -9,7 +9,6 @@ import {
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp, loadOpaqueApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromIdentifiers} from '../../context.js'
-import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -35,7 +34,6 @@ vi.mock('../../../models/app/loader.js', async () => {
     loadOpaqueApp: vi.fn(),
   }
 })
-vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../context.js')
@@ -838,6 +836,7 @@ describe('link', () => {
           },
         } as CurrentAppConfiguration,
       }
+      writeFileSync(joinPath(tmp, 'shopify.app.foo.toml'), 'client_id = "12345"\n')
       await mockLoadOpaqueAppWithApp(tmp, localApp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
@@ -845,8 +844,6 @@ describe('link', () => {
           developerPlatformClient,
         }),
       )
-      vi.mocked(getCachedCommandInfo).mockReturnValue({askConfigName: false, selectedToml: 'shopify.app.foo.toml'})
-
       // When
       const {configuration} = await link(options)
       const content = await readFile(joinPath(tmp, 'shopify.app.foo.toml'))

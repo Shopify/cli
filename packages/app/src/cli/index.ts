@@ -27,7 +27,6 @@ import ConfigValidate from './commands/app/config/validate.js'
 import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
-import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppLinkedCommand from './utilities/app-linked-command.js'
@@ -79,5 +78,4 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
 }
 
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
-export const AppInitHook = init
 export const AppPublicMetadataHook = gatherPublicMetadata
