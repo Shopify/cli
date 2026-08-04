@@ -8,19 +8,30 @@ export const NotProvidedStoreFQDNError = new AbortError(
 )
 
 /**
+ * Generic helper to resolve FQDN values based on service environment.
+ *
+ * @param productionFqdn - The production FQDN to return by default.
+ * @param localService - The local service name to use under local development.
+ * @param isCore - Whether the service uses DevServerCore instead of DevServer.
+ * @returns Fully-qualified domain of the service.
+ */
+async function getFqdn(productionFqdn: string, localService: string, isCore = false): Promise<string> {
+  const environment = serviceEnvironment()
+  switch (environment) {
+    case 'local':
+      return isCore ? new DevServerCore().host(localService) : new DevServer(localService).host()
+    default:
+      return productionFqdn
+  }
+}
+
+/**
  * It returns the Partners' API service we should interact with.
  *
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
 export async function partnersFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'partners.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServer('partners').host()
-    default:
-      return productionFqdn
-  }
+  return getFqdn('partners.shopify.com', 'partners')
 }
 
 /**
@@ -29,14 +40,7 @@ export async function partnersFqdn(): Promise<string> {
  * @returns Fully-qualified domain of the Admin service we should interact with.
  */
 export async function adminFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'admin.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServerCore().host('admin')
-    default:
-      return productionFqdn
-  }
+  return getFqdn('admin.shopify.com', 'admin', true)
 }
 
 /**
@@ -45,14 +49,7 @@ export async function adminFqdn(): Promise<string> {
  * @returns Fully-qualified domain of the App Management service we should interact with.
  */
 export async function appManagementFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'app.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServerCore().host('app')
-    default:
-      return productionFqdn
-  }
+  return getFqdn('app.shopify.com', 'app', true)
 }
 
 /**
@@ -62,28 +59,16 @@ export async function appManagementFqdn(): Promise<string> {
  * @returns Fully-qualified domain of the App Dev service we should interact with.
  */
 export async function appDevFqdn(storeFqdn: string): Promise<string> {
-  const environment = serviceEnvironment()
-  switch (environment) {
-    case 'local':
-      return new DevServerCore().host('app')
-    default:
-      return storeFqdn
-  }
+  return getFqdn(storeFqdn, 'app', true)
 }
+
 /**
  * It returns the Developer Dashboard domain we should interact with.
  *
  * @returns Fully-qualified domain of the Developer Dashboard we should interact with.
  */
 export async function developerDashboardFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'dev.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServerCore().host('dev')
-    default:
-      return productionFqdn
-  }
+  return getFqdn('dev.shopify.com', 'dev', true)
 }
 
 /**
@@ -92,14 +77,7 @@ export async function developerDashboardFqdn(): Promise<string> {
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
 export async function businessPlatformFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'destinations.shopifysvc.com'
-  switch (environment) {
-    case 'local':
-      return new DevServer('business-platform').host()
-    default:
-      return productionFqdn
-  }
+  return getFqdn('destinations.shopifysvc.com', 'business-platform')
 }
 
 /**
@@ -108,14 +86,7 @@ export async function businessPlatformFqdn(): Promise<string> {
  * @returns Fully-qualified domain of the Identity service we should interact with.
  */
 export async function identityFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'accounts.shopify.com'
-  switch (environment) {
-    case 'local':
-      return new DevServer('identity').host()
-    default:
-      return productionFqdn
-  }
+  return getFqdn('accounts.shopify.com', 'identity')
 }
 
 /**
