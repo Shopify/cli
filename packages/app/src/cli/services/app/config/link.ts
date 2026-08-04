@@ -16,7 +16,6 @@ import {
 } from '../../context.js'
 import {Flag, DeveloperPlatformClient, CreateAppOptions} from '../../../utilities/developer-platform-client.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
-import {getCachedCommandInfo} from '../../local-storage.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
@@ -331,9 +330,6 @@ async function loadConfigurationFileName(
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
-
-  const cache = getCachedCommandInfo()
-  if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
 
   const configDirectory = localAppInfo.appDirectory ?? options.directory
   const existingTomls = await getTomls(configDirectory)

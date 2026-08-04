@@ -141,7 +141,6 @@ import {encodeGid, numericIdFromEncodedGid, numericIdFromGid} from '@shopify/cli
 import {uniq} from '@shopify/cli-kit/common/array'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {getCurrentCommandId} from '@shopify/cli-kit/node/global-context'
 import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
@@ -151,8 +150,10 @@ import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {Variables} from 'graphql-request'
 import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/api/webhooks'
+import {randomUUID} from 'crypto'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
+const commandRunId = randomUUID()
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
@@ -713,7 +714,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       cacheOptions: {
         cacheTTL: {minutes: 59},
         // Avoid reusing signed upload URLs across apps or command runs.
-        cacheExtraKey: `${apiKey}-${process.env.COMMAND_RUN_ID ?? getCurrentCommandId()}`,
+        cacheExtraKey: `${apiKey}-${commandRunId}`,
       },
     })
     return {
