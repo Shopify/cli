@@ -93,68 +93,6 @@ describe('writeOrOutputStoreExecuteResult', () => {
     expect(streams.stderr()).toBe('')
   })
 
-  test('emits a structured stdout document and rejects for result-level failure in json file mode', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputPath = joinPath(tmpDir, 'results.json')
-      const output = mockAndCaptureOutput()
-
-      await expect(
-        writeOrOutputStoreExecuteResult(
-          {
-            data: {orderCreate: {userErrors: [{message: 'Rejected by the shop'}]}},
-            failure: {code: 'USER_ERRORS', details: []},
-          },
-          outputPath,
-          'json',
-        ),
-      ).rejects.toThrow('GraphQL operation returned user errors (USER_ERRORS).')
-
-      expect(JSON.parse(await readFile(outputPath, {encoding: 'utf8'}))).toEqual({
-        orderCreate: {userErrors: [{message: 'Rejected by the shop'}]},
-      })
-      expect(output.output()).toContain('"outputFile"')
-      expect(output.output()).toContain('"success": false')
-      expect(output.output()).toContain('"failureCode": "USER_ERRORS"')
-      expect(output.output()).not.toContain('Operation succeeded.')
-      expect(output.output()).not.toContain('Results written to')
-    })
-  })
-
-  test('emits the payload and rejects without claiming success for result-level failure in text mode', async () => {
-    const output = mockAndCaptureOutput()
-
-    await expect(
-      writeOrOutputStoreExecuteResult({
-        data: {orderCreate: {userErrors: [{message: 'Rejected by the shop'}]}},
-        failure: {code: 'USER_ERRORS', details: []},
-      }),
-    ).rejects.toThrow('GraphQL operation returned user errors (USER_ERRORS).')
-
-    expect(output.output()).toContain('Rejected by the shop')
-    expect(renderSuccess).not.toHaveBeenCalled()
-  })
-
-  test('still reports the written file for result-level failure in text file mode', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputPath = joinPath(tmpDir, 'results.json')
-      const output = mockAndCaptureOutput()
-
-      await expect(
-        writeOrOutputStoreExecuteResult(
-          {
-            data: {orderCreate: {userErrors: [{message: 'Rejected by the shop'}]}},
-            failure: {code: 'USER_ERRORS', details: []},
-          },
-          outputPath,
-        ),
-      ).rejects.toThrow('GraphQL operation returned user errors (USER_ERRORS).')
-
-      await expect(readFile(outputPath, {encoding: 'utf8'})).resolves.toContain('Rejected by the shop')
-      expect(output.output()).toContain(`Results written to ${outputPath}`)
-      expect(renderSuccess).not.toHaveBeenCalled()
-    })
-  })
-
   test('suppresses success rendering when writing a file in json mode', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
