@@ -37,17 +37,20 @@ export function getOrganization(): string | undefined {
   return getEnvironmentVariables()[environmentVariables.organization]
 }
 
+function parseEnvNumber(value: string | undefined): number | undefined {
+  if (value && !isNaN(Number(value))) {
+    return Number(value)
+  }
+  return undefined
+}
+
 /**
  * Return the backend port value.
  *
  * @returns The port as a number. Undefined otherwise.
  */
 export function getBackendPort(): number | undefined {
-  const backendPort = getEnvironmentVariables()[systemEnvironmentVariables.backendPort]
-  if (backendPort && !isNaN(Number(backendPort))) {
-    return Number(backendPort)
-  }
-  return undefined
+  return parseEnvNumber(getEnvironmentVariables()[systemEnvironmentVariables.backendPort])
 }
 
 /**
@@ -99,10 +102,5 @@ export function skipNetworkLevelRetry(environment = getEnvironmentVariables()): 
  * @returns The maximum request time in milliseconds.
  */
 export function maxRequestTimeForNetworkCallsMs(environment = getEnvironmentVariables()): number {
-  const maxRequestTime = environment[environmentVariables.maxRequestTimeForNetworkCalls]
-  if (maxRequestTime && !isNaN(Number(maxRequestTime))) {
-    return Number(maxRequestTime)
-  }
-  // 30 seconds is the default
-  return 30 * 1000
+  return parseEnvNumber(environment[environmentVariables.maxRequestTimeForNetworkCalls]) ?? 30 * 1000
 }
