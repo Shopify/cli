@@ -3,6 +3,7 @@ import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
+  exchangeDeviceCodeForAccessToken,
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
@@ -14,6 +15,8 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {getLastSeenUserIdAfterAuth, getLastSeenAuthMethod} from '../session.js'
 import {AbortError} from '../../../public/node/error.js'
+import {outputDebug} from '../../../public/node/output.js'
+import {err, ok} from '../../../public/node/result.js'
 
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
@@ -42,6 +45,10 @@ const identityToken: IdentityToken = {
 vi.mock('../../../public/node/http.js')
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
+vi.mock('../../../public/node/output.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../public/node/output.js')>()),
+  outputDebug: vi.fn(),
+}))
 
 beforeEach(() => {
   vi.mocked(clientId).mockReturnValue('clientId')
@@ -318,22 +325,152 @@ describe.each(tokenExchangeMethods)(
       expect(params.get('subject_token')).toBe(automationToken)
     })
 
-    test(`Executing ${tokenExchangeMethod.name} throws AbortError if an error is caught`, async () => {
+    test(`Executing ${tokenExchangeMethod.name} throws AbortError and logs the caught error if an error is caught`, async () => {
       const expectedErrorMessage = `The custom token provided can't be used for the ${expectedErrorName} API.`
       vi.mocked(shopifyFetch).mockImplementation(async () => {
         throw new Error('BAD ERROR')
       })
 
-      try {
-        await tokenExchangeMethod(automationToken)
-      } catch (error) {
-        if (error instanceof Error) {
-          expect(error).toBeInstanceOf(AbortError)
-          expect(error.message).toBe(expectedErrorMessage)
-        } else {
-          throw error
-        }
+      // When/Then: the user-facing message stays generic, the caught error goes to the debug log.
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(expectedErrorMessage, 'Ensure the token is correct and not expired.'),
+      )
+      expect(outputDebug).toHaveBeenCalledWith(`Token exchange for the ${expectedErrorName} API failed: BAD ERROR`)
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} logs the error and description returned by Identity in verbose output`, async () => {
+      // Given
+      const identityError = {
+        error: 'invalid_request',
+        error_description: "Invalid 'subject_token' value: invalid",
       }
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
+
+      // When/Then: the reason returned by Identity reaches the debug log, never the error message.
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(
+          `The custom token provided can't be used for the ${expectedErrorName} API.`,
+          'Ensure the token is correct and not expired.',
+        ),
+      )
+      expect(outputDebug).toHaveBeenCalledWith(
+        "Token request to Identity failed with status 400: invalid_request - Invalid 'subject_token' value: invalid",
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} logs unknown_error when the response has no error field`, async () => {
+      // Given
+      const malformedError = {error_description: 'Token was revoked'}
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(malformedError), {status: 400}))
+
+      // When/Then
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        new AbortError(
+          `The custom token provided can't be used for the ${expectedErrorName} API.`,
+          'Ensure the token is correct and not expired.',
+        ),
+      )
+      expect(outputDebug).toHaveBeenCalledWith(
+        'Token request to Identity failed with status 400: unknown_error - Token was revoked',
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} truncates a long description in the debug log`, async () => {
+      // Given
+      const identityError = {
+        error: 'invalid_request',
+        error_description: 'x'.repeat(300),
+      }
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
+
+      // When
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError()
+
+      // Then
+      const expectedDescription = 'x'.repeat(200)
+      expect(outputDebug).toHaveBeenCalledWith(
+        `Token request to Identity failed with status 400: invalid_request - ${expectedDescription}`,
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} truncates the message of a caught error in the debug log`, async () => {
+      // Given
+      vi.mocked(shopifyFetch).mockImplementation(async () => {
+        throw new Error('y'.repeat(300))
+      })
+
+      // When
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError()
+
+      // Then
+      const expectedReason = 'y'.repeat(200)
+      expect(outputDebug).toHaveBeenCalledWith(
+        `Token exchange for the ${expectedErrorName} API failed: ${expectedReason}`,
+      )
+    })
+
+    test(`logs unknown error for ${expectedErrorName}`, async () => {
+      // Given
+      vi.mocked(shopifyFetch).mockRejectedValue('non-Error rejection')
+
+      // When/Then
+      const result = tokenExchangeMethod(automationToken)
+      await expect(result).rejects.toBeInstanceOf(AbortError)
+
+      const expectedMessage = [`Token exchange for the ${expectedErrorName} API`, 'failed: unknown error'].join(' ')
+
+      expect(outputDebug).toHaveBeenCalledWith(expectedMessage)
     })
   },
 )
+
+describe('exchange device code for access token', () => {
+  test('returns the identity token when the exchange succeeds', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(data)))
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then: a fresh device login carries no pre-existing alias.
+    expect(result).toEqual(ok({...identityToken, alias: undefined}))
+  })
+
+  test('passes a recognized device error code through to the poll loop', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      new Response(JSON.stringify({error: 'authorization_pending'}), {status: 400}),
+    )
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then
+    expect(result).toEqual(err('authorization_pending'))
+  })
+
+  test('maps an unrecognized error code to unknown_failure', async () => {
+    // Given: Identity can return OAuth codes outside the device set, e.g. invalid_client.
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify({error: 'invalid_client'}), {status: 400}))
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then
+    expect(result).toEqual(err('unknown_failure'))
+  })
+
+  test('maps a response with no error field to unknown_failure', async () => {
+    // Given: tokenRequest normalizes a missing error field to 'unknown_error', which is not
+    // a device error code and must not leak into the poll loop.
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      new Response(JSON.stringify({error_description: 'no code'}), {status: 400}),
+    )
+
+    // When
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    // Then
+    expect(result).toEqual(err('unknown_failure'))
+  })
+})

@@ -223,4 +223,26 @@ describe('pollForDeviceAuthorization', () => {
     // Then
     await expect(got).rejects.toThrow(new AbortError(`Device authorization failed: Token expired. Please try again.`))
   })
+
+  test('when polling, if an unknown failure is received, stop polling and throw error', async () => {
+    // Given
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('unknown_failure'))
+
+    // When
+    const got = pollForDeviceAuthorization('device_code', 0.05)
+
+    // Then
+    await expect(got).rejects.toThrow(new Error('Device authorization failed: unknown_failure'))
+  })
+
+  test('when polling, if an unrecognized error code slips through, stop polling instead of hanging', async () => {
+    const unexpectedCode = 'invalid_client' as never
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err(unexpectedCode))
+
+    // When
+    const got = pollForDeviceAuthorization('device_code', 0.05)
+
+    // Then
+    await expect(got).rejects.toThrow(new Error('Device authorization failed: invalid_client'))
+  })
 })

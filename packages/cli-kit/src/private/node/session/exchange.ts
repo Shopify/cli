@@ -8,6 +8,7 @@ import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
+import {outputDebug} from '../../../public/node/output.js'
 
 import * as jose from 'jose'
 
@@ -92,6 +93,8 @@ async function exchangeAppAutomationTokenForAccessToken(
     return {accessToken, userId}
   } catch (error) {
     const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+    const reason = error instanceof Error ? error.message.slice(0, 200) : 'unknown error'
+    outputDebug(`Token exchange for the ${prettyName} API failed: ${reason}`)
     throw new AbortError(
       `The custom token provided can't be used for the ${prettyName} API.`,
       'Ensure the token is correct and not expired.',
@@ -131,7 +134,15 @@ export async function exchangeAppAutomationTokenForBusinessPlatformAccessToken(
   return exchangeAppAutomationTokenForAccessToken('business-platform', token, tokenExchangeScopes('business-platform'))
 }
 
-type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
+const identityDeviceErrors = [
+  'authorization_pending',
+  'access_denied',
+  'expired_token',
+  'slow_down',
+  'unknown_failure',
+] as const
+
+type IdentityDeviceError = (typeof identityDeviceErrors)[number]
 
 /**
  * Given a deviceCode obtained after starting a device identity flow, request an identity token.
@@ -152,7 +163,8 @@ export async function exchangeDeviceCodeForAccessToken(
 
   const tokenResult = await tokenRequest(params)
   if (tokenResult.isErr()) {
-    return err(tokenResult.error.error as IdentityDeviceError)
+    const deviceError = identityDeviceErrors.find((code) => code === tokenResult.error.error) ?? 'unknown_failure'
+    return err(deviceError)
   }
   const identityToken = buildIdentityToken(tokenResult.value)
   return ok(identityToken)
@@ -196,7 +208,7 @@ interface TokenRequestResult {
   id_token?: string
 }
 
-function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
+function tokenRequestErrorHandler({error, store}: TokenRequestError) {
   const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
     store ? `: ${store}` : '.'
   }`
@@ -222,9 +234,12 @@ function tokenRequestErrorHandler({error, store}: {error: string; store?: string
   return new AbortError(error)
 }
 
-async function tokenRequest(
-  params: Record<string, string>,
-): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
+interface TokenRequestError {
+  error: string
+  store?: string
+}
+
+async function tokenRequest(params: Record<string, string>): Promise<Result<TokenRequestResult, TokenRequestError>> {
   const fqdn = await identityFqdn()
   const url = `https://${fqdn}/oauth/token`
 
@@ -245,7 +260,18 @@ async function tokenRequest(
     const payload = JSON.parse(responseText)
     if (res.ok) return ok(payload)
 
-    return err({error: payload.error, store: params.store})
+    // Normalize malformed OAuth error responses before logging.
+    const oauthError = typeof payload.error === 'string' && payload.error !== '' ? payload.error : 'unknown_error'
+    const rawDescription = typeof payload.error_description === 'string' ? payload.error_description : ''
+    const oauthDescription = rawDescription.slice(0, 200)
+
+    outputDebug(
+      `Token request to Identity failed with status ${res.status}: ${oauthError}${
+        oauthDescription === '' ? '' : ` - ${oauthDescription}`
+      }`,
+    )
+
+    return err({error: oauthError, store: params.store})
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(

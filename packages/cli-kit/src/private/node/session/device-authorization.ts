@@ -136,9 +136,9 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
         case 'expired_token':
           reject(new AbortError(`Device authorization failed: Token expired. Please try again.`))
           return
-        case 'unknown_failure': {
+        case 'unknown_failure':
+        default:
           reject(new Error(`Device authorization failed: ${error}`))
-        }
       }
     }
 
