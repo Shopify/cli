@@ -177,12 +177,7 @@ export function errorMapper(error: unknown): Promise<unknown> {
  * @returns A boolean indicating if the error is a fatal one.
  */
 function isFatal(error: unknown): error is FatalError {
-  try {
-    return Object.prototype.hasOwnProperty.call(error, 'type')
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
-  }
+  return typeof error === 'object' && error !== null && 'type' in error
 }
 
 /**
@@ -192,24 +187,21 @@ function isFatal(error: unknown): error is FatalError {
  * @returns A boolean indicating if the error should be reported as unexpected.
  */
 export function shouldReportErrorAsUnexpected(error: unknown): boolean {
-  if (!isFatal(error)) {
-    // this means its not one of the CLI wrapped errors
-    if (error instanceof Error) {
-      // Raw API errors that slip through unwrapped (e.g. the handleErrors:false path) are expected
-      // environmental conditions, not CLI bugs. Treat them as expected so they don't pollute crash
-      // reporting.
-      if (isExpectedApiError(error)) {
-        return false
-      }
-      const message = error.message
-      return !errorMessageImpliesEnvironmentIssue(message)
+  if (isFatal(error)) {
+    return error.type === FatalErrorType.Bug
+  }
+
+  if (error instanceof Error) {
+    // Raw API errors that slip through unwrapped (e.g. the handleErrors:false path) are expected
+    // environmental conditions, not CLI bugs. Treat them as expected so they don't pollute crash
+    // reporting.
+    if (isExpectedApiError(error)) {
+      return false
     }
-    return true
+    return !errorMessageImpliesEnvironmentIssue(error.message)
   }
-  if (error.type === FatalErrorType.Bug) {
-    return true
-  }
-  return false
+
+  return true
 }
 
 /**
@@ -233,10 +225,7 @@ function isExpectedApiError(error: Error): boolean {
     return false
   }
   const status = error.response?.status
-  if (status === 401 || status === 429) {
-    return true
-  }
-  return hasRateLimitCode(error.response?.errors)
+  return status === 401 || status === 429 || hasRateLimitCode(error.response?.errors)
 }
 
 /**
