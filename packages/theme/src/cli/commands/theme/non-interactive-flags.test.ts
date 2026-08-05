@@ -14,8 +14,9 @@ describe('non-interactive theme command flags', () => {
     {command: Publish, flag: 'force'},
     {command: Publish, flag: 'theme'},
     {command: Rename, flag: 'name'},
-  ])('$command.name documents --$flag as required', ({command, flag}) => {
-    const flags = command.flags as Record<string, {description?: string}>
+  ])('$command.name marks --$flag as required', ({command, flag}) => {
+    const flags = command.flags as Record<string, {description?: string; requiredIfNonInteractive?: boolean}>
+    expect(flags[flag]!.requiredIfNonInteractive).toBe(true)
     expect(flags[flag]!.description).toMatch(/Required if non interactive\.$/)
   })
 

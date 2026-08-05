@@ -8,10 +8,14 @@ describe('non-interactive store command flags', () => {
     {command: StoreCreateDev, flag: 'name'},
     {command: StoreCreateDev, flag: 'organization-id'},
     {command: StoreCreateDev, flag: 'plan'},
-    {command: StoreDelete, flag: 'force'},
-  ])('$command.name documents --$flag as required', ({command, flag}) => {
-    const flags = command.flags as Record<string, {description?: string}>
+  ])('$command.name marks --$flag as required', ({command, flag}) => {
+    const flags = command.flags as Record<string, {description?: string; requiredIfNonInteractive?: boolean}>
+    expect(flags[flag]!.requiredIfNonInteractive).toBe(true)
     expect(flags[flag]!.description).toMatch(/Required if non interactive\.$/)
+  })
+
+  test('store delete documents its custom non-interactive JSON error requirement', () => {
+    expect(StoreDelete.flags.force.description).toMatch(/Required if non interactive\.$/)
   })
 
   test('store list documents its runtime-dependent organization requirement', () => {

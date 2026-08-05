@@ -1958,7 +1958,7 @@ USAGE
 
 FLAGS
   --alias=<value>
-      Alias of the session you want to login to.
+      Alias of an existing session you want to use. Required if non interactive.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
 DESCRIPTION
