@@ -143,16 +143,6 @@ describe('runAdminStoreGraphQLOperation', () => {
     await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toThrow('GraphQL operation failed.')
   })
 
-  test('documents current behavior: read-only responses can be classified by nested userErrors', async () => {
-    vi.mocked(graphqlRequest).mockResolvedValue({shop: {userErrors: [{message: 'Upstream warning'}]}})
-    const request = await prepareStoreExecuteRequest({query: 'query { shop { userErrors { message } } }'})
-
-    await expect(runAdminStoreGraphQLOperation({context, request})).resolves.toEqual({
-      data: {shop: {userErrors: [{message: 'Upstream warning'}]}},
-      failure: {code: 'USER_ERRORS', details: [{message: 'Upstream warning'}]},
-    })
-  })
-
   test('treats top-level GraphQL errors on an HTTP 200 as an execution-level failure', async () => {
     // graphql-request throws ClientError whenever the payload carries `errors` under the
     // default error policy, and cli-kit never overrides that policy. So a 200 response with

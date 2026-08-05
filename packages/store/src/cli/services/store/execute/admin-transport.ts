@@ -101,18 +101,5 @@ export async function runAdminStoreGraphQLOperation(input: {
 }
 
 function storeExecuteResult(response: unknown): StoreExecuteResult {
-  const data = response as JsonValue
-  const userErrors = findUserErrors(data)
-  return userErrors.length > 0 ? {data, failure: {code: 'USER_ERRORS', details: userErrors}} : {data}
-}
-
-function findUserErrors(value: JsonValue): JsonValue[] {
-  if (Array.isArray(value)) return value.flatMap(findUserErrors)
-  if (value === null || typeof value !== 'object') return []
-
-  const errors = 'userErrors' in value && Array.isArray(value.userErrors) ? value.userErrors : []
-  return [
-    ...errors,
-    ...Object.entries(value).flatMap(([key, child]) => (key === 'userErrors' ? [] : findUserErrors(child))),
-  ]
+  return {data: response as JsonValue}
 }
