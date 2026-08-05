@@ -1,5 +1,6 @@
 import {
   BasePaymentsAppExtensionSchema,
+  AuthorizationExpirySchema,
   BuyerLabelSchema,
   ConfirmationSchema,
   DeferredPaymentsSchema,
@@ -159,6 +160,37 @@ describe('DeferredPaymentsSchema', () => {
   test('validates a configuration when optional fields are omitted', async () => {
     // When/Then
     expect(DeferredPaymentsSchema.parse({})).toEqual({})
+  })
+})
+
+describe('AuthorizationExpirySchema', () => {
+  test.each([true, false, undefined])('accepts %s', (enforceAuthorizationExpiry) => {
+    // When
+    const {success} = AuthorizationExpirySchema.safeParse({
+      enforce_authorization_expiry: enforceAuthorizationExpiry,
+    })
+
+    // Then
+    expect(success).toBe(true)
+  })
+
+  test('throws an error if enforce_authorization_expiry is not a boolean', () => {
+    // When/Then
+    expect(() =>
+      AuthorizationExpirySchema.parse({
+        enforce_authorization_expiry: 'true',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.invalid_type,
+          expected: 'boolean',
+          received: 'string',
+          path: ['enforce_authorization_expiry'],
+          message: 'Expected boolean, received string',
+        },
+      ]),
+    )
   })
 })
 

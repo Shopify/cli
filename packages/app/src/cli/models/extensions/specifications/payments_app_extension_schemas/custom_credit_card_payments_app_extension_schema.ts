@@ -1,5 +1,6 @@
 import {
   BasePaymentsAppExtensionSchema,
+  AuthorizationExpirySchema,
   BuyerLabelSchema,
   BasePaymentsAppExtensionDeployConfigType,
   ConfirmationSchema,
@@ -16,7 +17,10 @@ export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
 export const CUSTOM_CREDIT_CARD_TARGET = 'payments.custom-credit-card.render'
 export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
-export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
+export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(
+  AuthorizationExpirySchema,
+)
+  .merge(BuyerLabelSchema)
   .merge(ConfirmationSchema)
   .merge(SupportedBuyerContextsSchema)
   .required({
@@ -59,6 +63,9 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
   confirmation_callback_url?: string
   supports_3ds: boolean
 
+  // AuthorizationExpirySchema
+  enforce_authorization_expiry?: boolean
+
   multiple_capture: boolean
   checkout_hosted_fields?: string[]
   ui_extension_registration_uuid?: string
@@ -87,6 +94,7 @@ export function customCreditCardDeployConfigToCLIConfig(
     capture_session_url: config.start_capture_session_url,
     void_session_url: config.start_void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     merchant_label: config.merchant_label,
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
@@ -113,6 +121,7 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
     start_capture_session_url: config.capture_session_url,
     start_void_session_url: config.void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     merchant_label: config.merchant_label,
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,

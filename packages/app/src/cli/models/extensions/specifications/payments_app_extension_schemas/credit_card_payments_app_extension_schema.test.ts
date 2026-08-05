@@ -26,6 +26,7 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   test_mode_available: true,
   supports_deferred_payments: false,
   multiple_capture: false,
+  enforce_authorization_expiry: true,
   supports_installments: false,
   targeting: [{target: 'payments.credit-card.render'}],
   api_version: '2022-07',
@@ -48,6 +49,14 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
 
     // Then
     expect(success).toBe(true)
+  })
+
+  test('preserves enforce_authorization_expiry', () => {
+    // When
+    const result = CreditCardPaymentsAppExtensionSchema.parse(config)
+
+    // Then
+    expect(result.enforce_authorization_expiry).toBe(true)
   })
 
   test('returns an error if no target is provided', async () => {
@@ -208,6 +217,7 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       confirmation_callback_url: config.confirmation_callback_url,
       merchant_label: config.merchant_label,
       multiple_capture: config.multiple_capture,
+      enforce_authorization_expiry: config.enforce_authorization_expiry,
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
       supported_buyer_contexts: config.supported_buyer_contexts,

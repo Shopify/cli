@@ -27,6 +27,7 @@ const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   supports_3ds: true,
   test_mode_available: true,
   multiple_capture: true,
+  enforce_authorization_expiry: true,
   encryption_certificate_fingerprint: 'fingerprint',
   api_version: '2022-07',
   checkout_payment_method_fields: [],
@@ -48,6 +49,14 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
 
     // Then
     expect(success).toBe(true)
+  })
+
+  test('preserves enforce_authorization_expiry', () => {
+    // When
+    const result = CustomCreditCardPaymentsAppExtensionSchema.parse(config)
+
+    // Then
+    expect(result.enforce_authorization_expiry).toBe(true)
   })
 
   test('returns an error if no target is provided', async () => {
@@ -147,6 +156,7 @@ describe('customCreditCardPaymentsAppExtensionDeployConfig', () => {
       start_capture_session_url: config.capture_session_url,
       start_void_session_url: config.void_session_url,
       confirmation_callback_url: config.confirmation_callback_url,
+      enforce_authorization_expiry: config.enforce_authorization_expiry,
       merchant_label: config.merchant_label,
       supports_3ds: config.supports_3ds,
       supported_countries: config.supported_countries,

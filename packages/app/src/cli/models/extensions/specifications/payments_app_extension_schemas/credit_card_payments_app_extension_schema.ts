@@ -1,6 +1,7 @@
 import {
   BasePaymentsAppExtensionSchema,
   BasePaymentsAppExtensionDeployConfigType,
+  AuthorizationExpirySchema,
   ConfirmationSchema,
   DeferredPaymentsSchema,
   MultipleCaptureSchema,
@@ -16,7 +17,8 @@ export const CREDIT_CARD_TARGET = 'payments.credit-card.render'
 // If updating this limit, also update the limit in the Partners Web Platform (https://github.com/Shopify/partners-web-platform/) - MAX_CHECKOUT_PAYMENT_METHOD_FIELDS
 export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
-export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(DeferredPaymentsSchema)
+export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(AuthorizationExpirySchema)
+  .merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
   .merge(MultipleCaptureSchema)
   .merge(SupportedBuyerContextsSchema)
@@ -65,6 +67,9 @@ export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaym
   // MultipleCaptureSchema
   multiple_capture?: boolean
 
+  // AuthorizationExpirySchema
+  enforce_authorization_expiry?: boolean
+
   // DeferredPaymentsSchema
   supports_deferred_payments: boolean
   supports_installments: boolean
@@ -103,6 +108,7 @@ export function creditCardDeployConfigToCLIConfig(
     void_session_url: config.start_void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
     multiple_capture: config.multiple_capture,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
@@ -130,6 +136,7 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     start_void_session_url: config.void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
     multiple_capture: config.multiple_capture,
+    enforce_authorization_expiry: config.enforce_authorization_expiry,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
