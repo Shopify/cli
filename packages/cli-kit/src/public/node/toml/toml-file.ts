@@ -160,14 +160,11 @@ export class TomlFile {
  * @returns Flattened patch entries.
  */
 function flattenToPatchEntries(obj: {[key: string]: unknown}, prefix: string[] = []): [string[], TomlPatchValue][] {
-  const entries: [string[], TomlPatchValue][] = []
-  for (const [key, value] of Object.entries(obj)) {
+  return Object.entries(obj).flatMap(([key, value]) => {
     const path = [...prefix, key]
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      entries.push(...flattenToPatchEntries(value as {[key: string]: unknown}, path))
-    } else {
-      entries.push([path, value as TomlPatchValue])
+      return flattenToPatchEntries(value as {[key: string]: unknown}, path)
     }
-  }
-  return entries
+    return [[path, value as TomlPatchValue]]
+  })
 }
