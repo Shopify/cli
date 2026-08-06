@@ -4,10 +4,13 @@ import {
   formatSummary,
   handleExit,
   initConfig,
+  outputActiveChecks,
+  outputActiveConfig,
   renderOffensesText,
   sortOffenses,
 } from './check.js'
 import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {
@@ -25,10 +28,14 @@ vi.mock('@shopify/cli-kit/node/fs', async () => ({
   writeFile: vi.fn(),
 }))
 
-vi.mock('@shopify/cli-kit/node/output', async () => ({
-  outputInfo: vi.fn(),
-  outputSuccess: vi.fn(),
-}))
+vi.mock('@shopify/cli-kit/node/output', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/output')
+  return {
+    ...actual,
+    outputInfo: vi.fn(),
+    outputSuccess: vi.fn(),
+  }
+})
 
 vi.mock('@shopify/theme-check-node', async () => {
   const actual: any = await vi.importActual('@shopify/theme-check-node')
@@ -425,5 +432,37 @@ describe('initConfig', () => {
     expect(loadConfig).toHaveBeenCalledWith(undefined, '/path/to/root')
     expect(writeFile).toHaveBeenCalledWith('/path/to/root/.theme-check.yml', expect.any(String))
     expect(outputSuccess).toHaveBeenCalledWith('Created .theme-check.yml at /path/to/root')
+  })
+})
+
+describe('outputActiveConfig', () => {
+  test('reports a missing explicitly configured file as an expected error', async () => {
+    const configPath = './.theme-check.yml'
+    const missingConfigError = Object.assign(new Error(`ENOENT: no such file or directory, open '${configPath}'`), {
+      code: 'ENOENT',
+      path: configPath,
+    })
+    vi.mocked(loadConfig).mockRejectedValue(missingConfigError)
+
+    const result = outputActiveConfig('/my-theme', configPath)
+
+    await expect(result).rejects.toBeInstanceOf(AbortError)
+    await expect(result).rejects.toThrowError(`Theme Check config file not found: ${configPath}`)
+  })
+})
+
+describe('outputActiveChecks', () => {
+  test('reports a missing explicitly configured file as an expected error', async () => {
+    const configPath = './.theme-check.yml'
+    const missingConfigError = Object.assign(new Error(`ENOENT: no such file or directory, open '${configPath}'`), {
+      code: 'ENOENT',
+      path: configPath,
+    })
+    vi.mocked(loadConfig).mockRejectedValue(missingConfigError)
+
+    const result = outputActiveChecks('/my-theme', configPath)
+
+    await expect(result).rejects.toBeInstanceOf(AbortError)
+    await expect(result).rejects.toThrowError(`Theme Check config file not found: ${configPath}`)
   })
 })
