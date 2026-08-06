@@ -75,6 +75,8 @@ interface EnvironmentData {
 const allowedShopifyEnvironmentVariableNames = new Set([
   'SHOPIFY_INVOKED_BY',
   'SHOPIFY_CLI_AGENT',
+  'SHOPIFY_CLI_AGENT_INFO',
+  'SHOPIFY_CLI_AGENT_IDS',
   'SHOPIFY_CLI_AGENT_VERSION',
   'SHOPIFY_CLI_AGENT_RUN_ID',
   'SHOPIFY_CLI_AGENT_SESSION_ID',
