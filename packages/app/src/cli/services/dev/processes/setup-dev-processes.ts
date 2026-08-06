@@ -162,6 +162,7 @@ export async function setupDevProcesses({
       appWatcher,
       appPreviewURL: appPreviewUrl,
       devSessionStatusManager,
+      unsafe: commandOptions.unsafe,
     }),
     await setupPreviewThemeAppExtensionsProcess({
       remoteApp,
