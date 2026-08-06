@@ -12,13 +12,13 @@ import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {
-  Token,
   tokenItemToString,
-  InlineToken,
-  LinkToken,
-  ListToken,
-  TokenItem,
-} from '../../private/node/ui/components/TokenizedText.js'
+  type InlineToken,
+  type LinkToken,
+  type ListToken,
+  type Token,
+  type TokenItem,
+} from '../../private/node/ui/components/token-item.js'
 import {
   DangerousConfirmationPrompt,
   DangerousConfirmationPromptProps,

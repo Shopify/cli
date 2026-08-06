@@ -1,8 +1,9 @@
 import {CustomListItem, List} from '../List.js'
 import {capitalize} from '../../../../../public/common/string.js'
-import {InlineToken, TokenItem, TokenizedText} from '../TokenizedText.js'
+import {TokenizedText} from '../TokenizedText.js'
 import {Box, Text, TextProps} from 'ink'
 import React, {FunctionComponent} from 'react'
+import type {InlineToken, TokenItem} from '../token-item.js'
 
 type Items = (TokenItem<InlineToken> | CustomListItem)[]
 

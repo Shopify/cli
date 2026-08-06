@@ -1,10 +1,11 @@
 import {Banner, BannerType} from './Banner.js'
 import {Link} from './Link.js'
 import {List} from './List.js'
-import {BoldToken, InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {TokenizedText} from './TokenizedText.js'
 import {TabularData, TabularDataProps} from './TabularData.js'
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
+import type {BoldToken, InlineToken, LinkToken, TokenItem} from './token-item.js'
 
 export interface CustomSection {
   title?: string

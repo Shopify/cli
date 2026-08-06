@@ -1,4 +1,5 @@
-import {tokenItemToString, TokenizedText} from './TokenizedText.js'
+import {TokenizedText} from './TokenizedText.js'
+import {tokenItemToString} from './token-item.js'
 import {LinksContext, Link} from '../contexts/LinksContext.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {render} from '../../testing/ui.js'

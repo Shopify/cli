@@ -1,5 +1,5 @@
 import {messageWithPunctuation} from './utilities.js'
-import {tokenItemToString} from './components/TokenizedText.js'
+import {tokenItemToString} from './components/token-item.js'
 import {describe, expect, test} from 'vitest'
 
 describe('messageWithPunctuation', async () => {

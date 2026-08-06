@@ -1,4 +1,5 @@
-import {InlineToken, TokenizedText, tokenItemToString} from './TokenizedText.js'
+import {TokenizedText} from './TokenizedText.js'
+import {tokenItemToString, type InlineToken} from './token-item.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {Box} from 'ink'
 import React, {FunctionComponent} from 'react'
