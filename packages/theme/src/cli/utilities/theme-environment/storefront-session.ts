@@ -10,6 +10,7 @@ import {sleep} from '@shopify/cli-kit/node/system'
 import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
 
 export class ShopifyEssentialError extends AbortError {}
+export class PreviewSessionError extends AbortError {}
 
 export async function isStorefrontPasswordProtected(session: AdminSession): Promise<boolean> {
   return passwordProtected(session)
@@ -127,6 +128,16 @@ async function sessionEssentialCookie(
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
 
+  outputDebug(
+    `Storefront preview session: status=${response.status}, request_id=${
+      response.headers.get('x-request-id') ?? 'unknown'
+    }, attempt=${retries}, forwarded_essential=${Boolean(
+      incomingEssential,
+    )}, returned_essential=${Boolean(shopifyEssential)}, essential_rotated=${Boolean(
+      incomingEssential && shopifyEssential && incomingEssential !== shopifyEssential,
+    )}`,
+  )
+
   /**
    * SFR should always define a _shopify_essential, so an error at this point
    * is likely a Shopify error or firewall issue.
@@ -139,11 +150,27 @@ async function sessionEssentialCookie(
        -Status: ${response.status}\n`,
     )
 
+    const isRedirect = response.status >= 300 && response.status < 400
+
+    if (incomingEssential && isRedirect) {
+      throw recordError(
+        new PreviewSessionError(
+          'Your development session could not be created because the theme preview could not be attached to the storefront session.',
+          'Verify the theme exists by running shopify theme list, then try again. If the problem persists, re-run with --verbose and share the request ID with Shopify Support.',
+        ),
+      )
+    }
+
     if (retries > 3) {
       throw recordError(
-        new ShopifyEssentialError(
-          'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
-        ),
+        incomingEssential
+          ? new PreviewSessionError(
+              'Your development session could not be created because the theme preview could not be attached to the storefront session.',
+              'Verify the theme exists by running shopify theme list, then try again. If the problem persists, re-run with --verbose and share the request ID with Shopify Support.',
+            )
+          : new ShopifyEssentialError(
+              'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+            ),
       )
     }
 
@@ -187,6 +214,12 @@ async function enrichSessionWithStorefrontPassword(
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
   const newShopifyEssential = getCookie(setCookies, '_shopify_essential')
+
+  outputDebug(
+    `Storefront password session: status=${response.status}, request_id=${
+      response.headers.get('x-request-id') ?? 'unknown'
+    }, returned_essential=${Boolean(newShopifyEssential)}, returned_digest=${Boolean(storefrontDigest)}`,
+  )
 
   const result: Record<string, string> = {}
 
