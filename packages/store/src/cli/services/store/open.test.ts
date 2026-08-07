@@ -46,4 +46,42 @@ describe('openStore', () => {
       expect.objectContaining({headline: expect.stringContaining("didn't open automatically")}),
     )
   })
+
+  test('opens the admin URL when admin is requested', async () => {
+    vi.mocked(getStoreInfo).mockResolvedValue({
+      subdomain: 'shop.myshopify.com',
+      adminUrl: 'https://admin.shopify.com/store/shop',
+    })
+
+    await openStore({store: 'shop.myshopify.com', admin: true})
+
+    expect(openURL).toHaveBeenCalledWith('https://admin.shopify.com/store/shop')
+    expect(renderInfo).toHaveBeenCalledWith(
+      expect.objectContaining({headline: expect.stringContaining('the Shopify admin')}),
+    )
+  })
+
+  test('routes through the save URL for a preview store with admin, opening the admin after saving', async () => {
+    vi.mocked(getStoreInfo).mockResolvedValue({
+      subdomain: 'preview.myshopify.com',
+      accessUrl: 'https://preview.myshopify.com/?token=abc',
+      saveUrl: 'https://app.shopify.com/auth/preview-store/123?preview_store_auth_token=xyz',
+    })
+
+    await openStore({store: 'preview.myshopify.com', admin: true})
+
+    expect(openURL).toHaveBeenCalledWith('https://app.shopify.com/auth/preview-store/123?preview_store_auth_token=xyz')
+    expect(renderInfo).toHaveBeenCalledWith(
+      expect.objectContaining({headline: expect.stringContaining('the Shopify admin (saving your store first)')}),
+    )
+  })
+
+  test('throws when admin is requested but no admin or save URL is available', async () => {
+    vi.mocked(getStoreInfo).mockResolvedValue({subdomain: 'shop.myshopify.com'})
+
+    await expect(openStore({store: 'shop.myshopify.com', admin: true})).rejects.toThrow(
+      /Couldn't determine an admin URL/,
+    )
+    expect(openURL).not.toHaveBeenCalled()
+  })
 })
