@@ -1,8 +1,9 @@
 import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {uniq} from '@shopify/cli-kit/common/array'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {
   Severity,
   applyFixToString,
@@ -45,6 +46,31 @@ type SeverityCounts = Partial<{
 }>
 
 export type FailLevel = 'error' | 'suggestion' | 'style' | 'warning' | 'info' | 'crash'
+
+function isMissingThemeCheckConfigFile(error: unknown, configPath: string) {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    error.code === 'ENOENT' &&
+    'path' in error &&
+    typeof error.path === 'string' &&
+    resolvePath(error.path) === resolvePath(configPath)
+  )
+}
+
+export async function withThemeCheckConfigErrorHandling<T>(
+  configPath: string | undefined,
+  operation: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    if (configPath !== undefined && isMissingThemeCheckConfigFile(error, configPath)) {
+      throw new AbortError(`Theme Check config file not found: ${configPath}`)
+    }
+    throw error
+  }
+}
 
 function failLevelToSeverity(failLevel: FailLevel): Severity | undefined {
   switch (failLevel) {
@@ -308,7 +334,9 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
 }
 
 export async function outputActiveConfig(themeRoot: string, configPath?: string, environment?: string) {
-  const {ignore, settings, rootUri} = await loadConfig(configPath, themeRoot)
+  const {ignore, settings, rootUri} = await withThemeCheckConfigErrorHandling(configPath, () =>
+    loadConfig(configPath, themeRoot),
+  )
 
   const config = {
     // loadConfig flattens all configs, it doesn't extend anything
@@ -328,7 +356,9 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string,
 }
 
 export async function outputActiveChecks(root: string, configPath?: string, environment?: string) {
-  const {settings, ignore, checks} = await loadConfig(configPath, root)
+  const {settings, ignore, checks} = await withThemeCheckConfigErrorHandling(configPath, () =>
+    loadConfig(configPath, root),
+  )
   // Depending on how the configs were merged during loadConfig, there may be
   // duplicate patterns to ignore. We can clean them before outputting.
   const ignorePatterns = uniq(ignore ?? [])
