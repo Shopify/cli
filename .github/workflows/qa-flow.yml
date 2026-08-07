@@ -1,0 +1,92 @@
+name: QA flow
+
+# Automated CLI Pre-release QA flow (packages/qa): runs the QA-doc steps that
+# need no human interaction, non-blocking, and publishes a summary that mirrors
+# the doc structure (with the remaining manual checklist for gardeners).
+#
+# - CI runs (PRs / merge queue): tests the CLI built from the current branch.
+# - Manual runs (workflow_dispatch): tests a published version, default nightly.
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      cli-version:
+        type: string
+        required: true
+        default: 'nightly'
+        description: 'npm dist-tag or version of @shopify/cli to QA (or "repo" for the branch build)'
+
+concurrency:
+  group: qa-flow-${{ github.event_name }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  DEBUG: '1'
+  PNPM_VERSION: '10.11.1'
+  QA_NODE_VERSION: '24.1.0'
+
+jobs:
+  qa-flow:
+    name: 'QA flow (${{ matrix.os }})'
+    # Non-blocking: failures show up in the summary, not as a red required check.
+    continue-on-error: true
+    # Secrets are unavailable to forks; run only for internal PRs, the merge
+    # queue and manual dispatches.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # Rollout starts with macOS (the QA doc's default OS);
+        # ubuntu-latest and windows-latest follow once stable.
+        os: ['macos-latest']
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.QA_NODE_VERSION }}
+
+      - name: Build CLI from branch
+        if: github.event_name != 'workflow_dispatch' || inputs.cli-version == 'repo'
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+
+      - name: Install @shopify/cli@${{ inputs.cli-version }}
+        if: github.event_name == 'workflow_dispatch' && inputs.cli-version != 'repo'
+        id: install-cli
+        run: |
+          mkdir -p "$RUNNER_TEMP/qa-cli"
+          npm install --prefix "$RUNNER_TEMP/qa-cli" "@shopify/cli@${{ inputs.cli-version }}" --registry=https://registry.npmjs.org
+          BIN="$RUNNER_TEMP/qa-cli/node_modules/@shopify/cli/bin/run.js"
+          VERSION=$(node -p "require('$RUNNER_TEMP/qa-cli/node_modules/@shopify/cli/package.json').version")
+          echo "bin=$BIN" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Installed @shopify/cli@$VERSION"
+
+      - name: Rebuild node-pty
+        run: pnpm rebuild node-pty
+
+      - name: Run QA flow
+        working-directory: packages/qa
+        env:
+          QA_CLI_BIN: ${{ steps.install-cli.outputs.bin }}
+          QA_EXPECTED_VERSION: ${{ steps.install-cli.outputs.version }}
+          QA_ISOLATE: '1'
+          QA_ORG_ID: ${{ secrets.QA_ORG_ID }}
+          QA_REPORT_DIR: ${{ github.workspace }}/qa-report
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.QA_APP_AUTOMATION_TOKEN }}
+        run: pnpm qa
+
+      - name: Upload QA report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: qa-report-${{ matrix.os }}
+          path: qa-report/
+          retention-days: 30
