@@ -1,5 +1,14 @@
 # @shopify/theme
 
+## 4.7.0
+
+### Patch Changes
+
+- 81c77bf: Report missing Theme Check config files as expected user errors.
+- Updated dependencies [5651055]
+- Updated dependencies [ba02a02]
+  - @shopify/cli-kit@4.7.0
+
 ## 4.6.0
 
 ### Minor Changes

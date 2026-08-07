@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 4.7.0
+
+### Minor Changes
+
+- 5651055: Show and validate all flags required for non-interactive commands before execution.
+
+### Patch Changes
+
+- ba02a02: Speed up CLI startup by keeping the terminal UI runtime out of the boot path
+
 ## 4.6.0
 
 ### Patch Changes

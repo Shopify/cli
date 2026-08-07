@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 4.7.0
+
+### Minor Changes
+
+- c55bb75: Add WebAssembly profiling to `app function run`
+
+### Patch Changes
+
+- ff7745e: Generate concrete GraphQL scalar types for JavaScript and TypeScript Shopify Functions
+- 2f7ce52: Update the Javy and function-runner binaries to fix issue with larger QuickJS bytecode.
+- Updated dependencies [81c77bf]
+- Updated dependencies [5651055]
+- Updated dependencies [ba02a02]
+  - @shopify/theme@4.7.0
+  - @shopify/cli-kit@4.7.0
+  - @shopify/organizations@4.7.0
+  - @shopify/plugin-cloudflare@4.7.0
+
 ## 4.6.0
 
 ### Patch Changes
