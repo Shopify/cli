@@ -74,6 +74,28 @@ describe('DevSessionUI', () => {
     devSessionStatusManager.updateStatus(initialStatus)
   })
 
+  test('renders the branded loading indicator for loading status messages', async () => {
+    devSessionStatusManager.updateStatus({
+      statusMessage: {message: 'Preparing dev preview', type: 'loading'},
+    })
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForContent(renderInstance, 'Preparing dev preview')
+
+    expect(unstyled(renderInstance.lastFrame()!)).toMatch(/S[> ] Preparing dev preview \.\.\./)
+
+    renderInstance.unmount()
+  })
+
   test('renders a stream of concurrent outputs from sub-processes, shortcuts and URLs', async () => {
     // Given
     let backendPromiseResolve: () => void
