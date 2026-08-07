@@ -36,6 +36,11 @@ export default class Dev extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_NO_UPDATE',
       default: false,
     }),
+    unsafe: Flags.boolean({
+      description: 'Skip validations that are unsafe for production, such as the Remote DOM bundle size limit.',
+      env: 'SHOPIFY_FLAG_UNSAFE',
+      default: false,
+    }),
     'subscription-product-url': Flags.string({
       description: 'Resource URL for subscription UI extension. Format: "/products/{productId}"',
       env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
@@ -137,6 +142,7 @@ export default class Dev extends AppLinkedCommand {
       store,
       directory: flags.path,
       update: !flags['no-update'],
+      unsafe: flags.unsafe,
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       commandConfig: this.config,
       subscriptionProductUrl: flags['subscription-product-url'],

@@ -419,6 +419,7 @@ describe('pushUpdatesForDevSession', () => {
       },
       // The unaffected extension is listed in inheritedModuleUids
       inheritedModuleUids: [unaffectedExtension.uid],
+      unsafe: false,
     })
   })
 
@@ -530,6 +531,7 @@ describe('pushUpdatesForDevSession', () => {
       assetsUrl: 'https://gcs.url',
       manifest: expect.any(Object),
       inheritedModuleUids: [],
+      unsafe: false,
     })
   })
 
@@ -549,6 +551,7 @@ describe('pushUpdatesForDevSession', () => {
       appId: 'app123',
       assetsUrl: 'https://gcs.url',
       websocketUrl: 'wss://test.dev/extensions',
+      unsafe: false,
     })
   })
 

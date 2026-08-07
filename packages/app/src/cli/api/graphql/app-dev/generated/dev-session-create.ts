@@ -8,6 +8,7 @@ export type DevSessionCreateMutationVariables = Types.Exact<{
   appId: Types.Scalars['String']['input']
   assetsUrl: Types.Scalars['String']['input']
   websocketUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
+  unsafe?: Types.InputMaybe<Types.Scalars['Boolean']['input']>
 }>
 
 export type DevSessionCreateMutation = {
@@ -46,6 +47,11 @@ export const DevSessionCreate = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'websocketUrl'}},
           type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'unsafe'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'Boolean'}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -68,6 +74,11 @@ export const DevSessionCreate = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'websocketUrl'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'websocketUrl'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'unsafe'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'unsafe'}},
               },
             ],
             selectionSet: {
