@@ -7,9 +7,11 @@ import {
   MouseProvider as InkMouseProvider,
   useOnClick as useInkOnClick,
   useOnMouseEnter as useInkOnMouseEnter,
+  useOnWheel as useInkOnWheel,
   type ClickHandler,
   type ElementRef,
   type MouseEnterHandler,
+  type WheelHandler,
 } from '@ink-tools/ink-mouse'
 
 const CURSOR_POSITION_REQUEST = '\u001B[6n'
@@ -27,6 +29,7 @@ const MouseOriginContext = createContext(0)
 
 interface MouseProviderProps extends React.PropsWithChildren {
   allowTerminalScrolling?: boolean
+  isActive?: boolean
   trackMouseMovement?: boolean
 }
 
@@ -102,9 +105,17 @@ export function removeTerminalInputResponses(input: string): string {
   return removeSgrMouseResponses(sanitizedInput)
 }
 
-export function MouseProvider({children, ...mouseProviderProps}: MouseProviderProps): React.ReactElement {
+export function MouseProvider({
+  children,
+  isActive = true,
+  ...mouseProviderProps
+}: MouseProviderProps): React.ReactElement {
   if (getMouseEnabled()) {
-    return <EnabledMouseProvider {...mouseProviderProps}>{children}</EnabledMouseProvider>
+    return (
+      <EnabledMouseProvider {...mouseProviderProps} isActive={isActive}>
+        {children}
+      </EnabledMouseProvider>
+    )
   }
 
   return (
@@ -117,6 +128,7 @@ export function MouseProvider({children, ...mouseProviderProps}: MouseProviderPr
 function EnabledMouseProvider({
   allowTerminalScrolling = false,
   children,
+  isActive = true,
   trackMouseMovement = true,
 }: MouseProviderProps): React.ReactElement {
   const rootRef = useRef<DOMElement>(null)
@@ -125,7 +137,7 @@ function EnabledMouseProvider({
   const [verticalOffset, setVerticalOffset] = useState(0)
   const [rootHeight, setRootHeight] = useState<number>()
   const scrollReleaseTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
-  const mouseTrackingMode = getMouseTrackingMode(trackMouseMovement)
+  const mouseTrackingMode = isActive ? getMouseTrackingMode(trackMouseMovement) : undefined
 
   useEffect(() => {
     const measureRoot = () => {
@@ -139,7 +151,7 @@ function EnabledMouseProvider({
   }, [])
 
   useEffect(() => {
-    if (!stdin.isTTY || !stdout.isTTY || rootHeight === undefined) return
+    if (!isActive || !stdin.isTTY || !stdout.isTTY || rootHeight === undefined) return
 
     const stopListening = () => {
       clearTimeout(timeout)
@@ -160,7 +172,7 @@ function EnabledMouseProvider({
     stdout.write(CURSOR_POSITION_REQUEST)
 
     return stopListening
-  }, [rootHeight, stdin, stdout])
+  }, [isActive, rootHeight, stdin, stdout])
 
   useEffect(() => {
     if (mouseTrackingMode && stdout.isTTY) stdout.write(mouseTrackingMode)
@@ -196,7 +208,7 @@ function EnabledMouseProvider({
   }, [allowTerminalScrolling, mouseTrackingMode, releaseMouseForTerminalScrolling, stdin])
 
   return (
-    <InkMouseProvider>
+    <InkMouseProvider autoEnable={isActive}>
       <MouseOriginContext.Provider value={verticalOffset}>
         <Box ref={rootRef} flexDirection="column">
           {children}
@@ -214,6 +226,11 @@ export function useOnClick(ref: ElementRef, handler: ClickHandler | null | undef
 export function useOnMouseEnter(ref: ElementRef, handler: MouseEnterHandler | null | undefined): void {
   const offsetRef = useOffsetRef(ref)
   useInkOnMouseEnter(offsetRef, handler)
+}
+
+export function useOnWheel(ref: ElementRef, handler: WheelHandler | null | undefined): void {
+  const offsetRef = useOffsetRef(ref)
+  useInkOnWheel(offsetRef, handler)
 }
 
 function useOffsetRef(ref: ElementRef): ElementRef {

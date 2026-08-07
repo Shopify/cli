@@ -483,7 +483,7 @@ interface RenderTasksOptions {
 /**
  * Runs async tasks and displays their progress to the console.
  * @example
- * Installing dependencies ...
+ * Installing dependencies...
  */
 
 export async function renderTasks<TContext>(
@@ -523,7 +523,7 @@ export interface RenderSingleTaskOptions<T> {
  * @param options.renderOptions - Optional render configuration
  * @returns The result of the task
  * @example
- * Loading app ...
+ * Loading app...
  */
 export async function renderSingleTask<T>({
   title,

@@ -6,9 +6,15 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {render} from '@shopify/cli-kit/node/ui'
+import {ReactElement} from 'react'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('./ui/components/DevSessionUI.js')
+vi.mock('@shopify/cli-kit/node/ui', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
+  return {...actual, render: vi.fn()}
+})
 
 const developerPlatformClient = testDeveloperPlatformClient()
 const devSessionStatusManager = new DevSessionStatusManager()
@@ -78,8 +84,7 @@ describe('ui', () => {
       }
       const abortController = new AbortController()
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({
+      await renderDev({
         processes: [concurrentProcess],
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
@@ -93,21 +98,35 @@ describe('ui', () => {
         abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
+        configPath: '/app/shopify.app.toml',
+        usingLocalhost: true,
+        unavailableGraphiqlPort: 4000,
+        localhostPortUnavailable: 8081,
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 10))
-
-      expect(vi.mocked(DevSessionUI)).toHaveBeenCalledWith(
+      expect(vi.mocked(render)).toHaveBeenCalledWith(
         expect.objectContaining({
-          processes: [concurrentProcess],
-          abortController,
-          devSessionStatusManager,
-          onAbort: expect.any(Function),
+          type: DevSessionUI,
+          props: expect.objectContaining({
+            processes: [concurrentProcess],
+            abortController,
+            devSessionStatusManager,
+            configPath: '/app/shopify.app.toml',
+            usingLocalhost: true,
+            unavailableGraphiqlPort: 4000,
+            localhostPortUnavailable: 8081,
+            onAbort: expect.any(Function),
+          }),
         }),
-        // React 19 no longer passes legacy context as second argument
-        undefined,
+        expect.objectContaining({exitOnCtrlC: false, stdout: expect.anything()}),
       )
       expect(concurrentProcess.action).not.toHaveBeenCalled()
+
+      const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const renderOptions = vi.mocked(render).mock.calls[0]?.[1]
+      renderOptions?.stdout?.write('before\u001B[2J\u001B[3J\u001B[Hfirst\nsecond')
+      expect(stdoutWrite).toHaveBeenCalledWith('before\u001B[H\u001B[2Kfirst\n\u001B[2Ksecond')
+      stdoutWrite.mockRestore()
     })
 
     test('calls devSessionDelete when DevSessionUI aborts', async () => {
@@ -121,8 +140,7 @@ describe('ui', () => {
       }
       const shopFqdn = 'mystore.shopify.io'
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({
+      await renderDev({
         processes: [
           {
             prefix: 'prefix',
@@ -137,9 +155,10 @@ describe('ui', () => {
         devSessionStatusManager,
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 10))
-
-      const onAbort = vi.mocked(DevSessionUI).mock.calls[0]?.[0]?.onAbort
+      const devSessionElement = vi.mocked(render).mock.calls[0]?.[0] as ReactElement<{
+        onAbort: () => Promise<void>
+      }>
+      const onAbort = devSessionElement.props.onAbort
       await onAbort?.()
 
       expect(app.developerPlatformClient.devSessionDelete).toHaveBeenCalledWith({

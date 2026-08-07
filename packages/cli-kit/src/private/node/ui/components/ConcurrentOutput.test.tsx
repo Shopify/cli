@@ -1,10 +1,12 @@
 import {ConcurrentOutput, useConcurrentOutputContext} from './ConcurrentOutput.js'
-import {render, waitForContent} from '../../testing/ui.js'
+import {MouseProvider} from './Mouse.js'
+import {render, sendInputAndWait, waitForContent} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import {unstyled} from '../../../../public/node/output.js'
+import {Box} from 'ink'
 
 import React from 'react'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 import {Writable} from 'stream'
 
@@ -174,6 +176,121 @@ describe('ConcurrentOutput', () => {
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
     expect(logColumns.length).toBe(3)
     expect(logColumns[1]?.trim()).toEqual(extensionName)
+    gate.resolve()
+  })
+
+  test('filters matching history and future output without restarting processes', async () => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const abortSignal = new AbortController().signal
+    const observedPrefixes: string[] = []
+    let writeBackend = (_message: string) => {}
+    let writeFrontend = (_message: string) => {}
+    const backendAction = vi.fn(async (stdout: Writable) => {
+      writeBackend = (message) => stdout.write(message)
+      writeBackend('backend message')
+      await gate.promise
+    })
+    const frontendAction = vi.fn(async (stdout: Writable) => {
+      writeFrontend = (message) =>
+        useConcurrentOutputContext({outputPrefix: 'custom-frontend'}, () => stdout.write(message))
+      writeFrontend('frontend message')
+      outputSync.resolve()
+      await gate.promise
+    })
+    const processes = [
+      {prefix: 'backend', action: backendAction},
+      {prefix: 'frontend', action: frontendAction},
+    ]
+
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={processes}
+        abortSignal={abortSignal}
+        outputFilter={() => true}
+        onOutputPrefix={(prefix) => observedPrefixes.push(prefix)}
+      />,
+    )
+    await outputSync.promise
+    await waitForContent(renderInstance, 'frontend message')
+    writeFrontend('second frontend message')
+    writeBackend('second backend message')
+    await waitForContent(renderInstance, 'second backend message')
+
+    renderInstance.rerender(
+      <ConcurrentOutput
+        processes={processes}
+        abortSignal={abortSignal}
+        outputFilter={(prefix) => prefix === 'backend'}
+        onOutputPrefix={(prefix) => observedPrefixes.push(prefix)}
+      />,
+    )
+    await waitForContent(renderInstance, 'backend message')
+
+    writeFrontend('filtered frontend message')
+    writeBackend('filtered backend message')
+    await waitForContent(renderInstance, 'filtered backend message')
+
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('backend message')
+    expect(output).toContain('filtered backend message')
+    expect(output).not.toContain('frontend message')
+    expect(output).not.toContain('filtered frontend message')
+    expect(observedPrefixes).toEqual([
+      'backend',
+      'custom-frontend',
+      'custom-frontend',
+      'backend',
+      'custom-frontend',
+      'backend',
+    ])
+    expect(backendAction).toHaveBeenCalledOnce()
+    expect(frontendAction).toHaveBeenCalledOnce()
+
+    gate.resolve()
+  })
+
+  test('renders output in a bounded viewport and scrolls with page keys', async () => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable) => {
+        stdout.write(Array.from({length: 10}, (_, index) => `message ${index + 1}`).join('\n'))
+        outputSync.resolve()
+        await gate.promise
+      },
+    }
+
+    const renderInstance = render(
+      <MouseProvider>
+        <Box height={6}>
+          <ConcurrentOutput
+            processes={[process]}
+            abortSignal={new AbortController().signal}
+            showTimestamps={false}
+            scrollable
+          />
+        </Box>
+      </MouseProvider>,
+    )
+    await outputSync.promise
+    await waitForContent(renderInstance, 'message 10')
+
+    let output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('message 1\n')
+    expect(output).toContain('message 10')
+
+    await sendInputAndWait(renderInstance, 10, '\u001B[5~')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('message 3')
+    expect(output).not.toContain('message 10')
+
+    await sendInputAndWait(renderInstance, 10, '\u001B[6~')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('message 3')
+    expect(output).toContain('message 10')
+
     gate.resolve()
   })
 
