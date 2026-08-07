@@ -165,6 +165,25 @@ describe('SelectInput', async () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
+  test('renders helper text and highlights matching terms', () => {
+    const items = [
+      {
+        label: 'Dawn',
+        value: 'dawn',
+        helperText: '#123456789',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} highlightedTerm="123456789" />)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "[36m>[39m  [36mDawn[39m[2m #[1m123456789[22m
+
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+    `)
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
 
   test.skipIf(runningOnWindows)('support groups', async () => {
