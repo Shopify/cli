@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 4.6.1
+
+### Patch Changes
+
+- b7af6fe: Serve UI extension source maps during `app dev`
+  - @shopify/organizations@4.6.1
+  - @shopify/cli-kit@4.6.1
+  - @shopify/theme@4.6.1
+  - @shopify/plugin-cloudflare@4.6.1
+
 ## 4.6.0
 
 ### Patch Changes
