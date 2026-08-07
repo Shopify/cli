@@ -20,3 +20,14 @@ export interface ListStoresResult {
   notice?: string
   truncated?: boolean
 }
+
+/**
+ * The stable JSON document emitted by `store:list --json`. Its exact keys and omission rules are
+ * pinned by tests. It excludes internal execution fields such as `source`.
+ */
+export interface StoreListDocument {
+  stores: StoreListEntry[]
+  organization?: StoreListOrganization
+  notice?: string
+  truncated?: boolean
+}
