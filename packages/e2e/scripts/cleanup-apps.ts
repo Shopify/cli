@@ -18,6 +18,7 @@
  *   E2E_ACCOUNT_EMAIL    — Shopify account email for login
  *   E2E_ACCOUNT_PASSWORD — Shopify account password
  *   E2E_ORG_ID           — Organization ID to scan for apps
+ *   E2E_LOADTEST_HEADER  — Load-test bypass header name
  */
 
 import {config} from 'dotenv'
@@ -30,11 +31,17 @@ import {getLastPageStatus, navigateToDashboard, refreshIfPageError, trackMainFra
 import {deleteAppFromDevDashboard} from '../setup/app.js'
 import {uninstallAppFromStore} from '../setup/store.js'
 import {completeLogin} from '../helpers/browser-login.js'
+import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import type {Page} from '@playwright/test'
 
 // Load .env from packages/e2e/ (not cwd) only if not already configured
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-if (!process.env.E2E_ACCOUNT_EMAIL || !process.env.E2E_ACCOUNT_PASSWORD || !process.env.E2E_ORG_ID) {
+if (
+  !process.env.E2E_ACCOUNT_EMAIL ||
+  !process.env.E2E_ACCOUNT_PASSWORD ||
+  !process.env.E2E_ORG_ID ||
+  !process.env.E2E_LOADTEST_HEADER
+) {
   config({path: path.resolve(__dirname, '../.env')})
 }
 
@@ -131,11 +138,9 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
 
   const browser = await chromium.launch({headless: !opts.headed})
   const context = await browser.newContext({
-    extraHTTPHeaders: {
-      'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-    },
     ...(storageStatePath ? {storageState: storageStatePath} : {}),
   })
+  await addLoadtestHeader(context)
   context.setDefaultTimeout(BROWSER_TIMEOUT.max)
   context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
   const page = await context.newPage()

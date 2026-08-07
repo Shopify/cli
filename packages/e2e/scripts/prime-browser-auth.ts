@@ -18,6 +18,7 @@ import {BROWSER_TIMEOUT, CLI_TIMEOUT} from '../setup/constants.js'
 import {executables} from '../setup/env.js'
 import {isVisibleWithin} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
+import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
 import {execa} from 'execa'
@@ -25,7 +26,12 @@ import type {Page} from '@playwright/test'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-if (!process.env.E2E_ACCOUNT_EMAIL || !process.env.E2E_ACCOUNT_PASSWORD || !process.env.E2E_ORG_ID) {
+if (
+  !process.env.E2E_ACCOUNT_EMAIL ||
+  !process.env.E2E_ACCOUNT_PASSWORD ||
+  !process.env.E2E_ORG_ID ||
+  !process.env.E2E_LOADTEST_HEADER
+) {
   config({path: path.resolve(__dirname, '../.env')})
 }
 
@@ -37,8 +43,6 @@ interface PrimeBrowserAuthOptions {
   /** Organization ID (default: from E2E_ORG_ID env) */
   orgId?: string
 }
-
-const LOADTEST_HEADER = 'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9'
 
 function isAccountsShopifyUrl(rawUrl: string): boolean {
   try {
@@ -111,11 +115,8 @@ export async function primeBrowserAuthStorage(opts: PrimeBrowserAuthOptions = {}
 
   const browser = await chromium.launch({headless: !opts.headed})
   try {
-    const context = await browser.newContext({
-      extraHTTPHeaders: {
-        [LOADTEST_HEADER]: 'true',
-      },
-    })
+    const context = await browser.newContext()
+    await addLoadtestHeader(context)
     context.setDefaultTimeout(BROWSER_TIMEOUT.max)
     context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
     const page = await context.newPage()
