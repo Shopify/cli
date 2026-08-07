@@ -1,4 +1,4 @@
-import {writeFile, mkdir, readFile, inTemporaryDirectory} from './fs.js'
+import {writeFile, mkdir, readFile, inTemporaryDirectory, chmod, fileHasExecutablePermissions} from './fs.js'
 import {renderLiquidTemplate, recursiveLiquidTemplateCopy} from './liquid.js'
 import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
@@ -85,6 +85,73 @@ describe('recursiveLiquidTemplateCopy', () => {
       await expect(readFile(outFile)).resolves.toEqual('# {{variable}}')
       await expect(readFile(outFolderFile)).resolves.toEqual('# {{variable}}')
       await expect(readFile(outProcessedFile)).resolves.toEqual('# test')
+    })
+  })
+
+  test('processes and replaces variables in directory and file names', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const from = joinPath(tmpDir, 'from')
+      const to = joinPath(tmpDir, 'to')
+      await mkdir(from)
+      await mkdir(to)
+
+      const variableDirName = joinPath(from, '{{name}}_dir')
+      await mkdir(variableDirName)
+
+      const variableFileName = joinPath(variableDirName, '{{name}}_file.txt.liquid')
+      await writeFile(variableFileName, 'Hello {{name}}')
+
+      // When
+      await recursiveLiquidTemplateCopy(from, to, {name: 'shopify'})
+
+      // Then
+      const expectedDir = joinPath(to, 'shopify_dir')
+      const expectedFile = joinPath(expectedDir, 'shopify_file.txt')
+
+      await expect(readFile(expectedFile)).resolves.toEqual('Hello shopify')
+    })
+  })
+
+  test('preserves executable permissions on .liquid files', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const from = joinPath(tmpDir, 'from')
+      const to = joinPath(tmpDir, 'to')
+      await mkdir(from)
+      await mkdir(to)
+
+      const scriptPath = joinPath(from, 'script.sh.liquid')
+      await writeFile(scriptPath, '#!/bin/bash\necho "{{message}}"')
+      await chmod(scriptPath, 0o755)
+
+      // When
+      await recursiveLiquidTemplateCopy(from, to, {message: 'hello'})
+
+      // Then
+      const outScriptPath = joinPath(to, 'script.sh')
+      await expect(readFile(outScriptPath)).resolves.toEqual('#!/bin/bash\necho "hello"')
+      await expect(fileHasExecutablePermissions(outScriptPath)).resolves.toBe(true)
+    })
+  })
+
+  test('correctly copies non-liquid files and files with non-liquid names', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const from = joinPath(tmpDir, 'from')
+      const to = joinPath(tmpDir, 'to')
+      await mkdir(from)
+      await mkdir(to)
+
+      const imagePath = joinPath(from, 'logo.png')
+      await writeFile(imagePath, 'binary content or static template')
+
+      // When
+      await recursiveLiquidTemplateCopy(from, to, {})
+
+      // Then
+      const outImagePath = joinPath(to, 'logo.png')
+      await expect(readFile(outImagePath)).resolves.toEqual('binary content or static template')
     })
   })
 })
