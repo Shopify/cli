@@ -151,23 +151,21 @@ const frameworks: Framework[] = [
 export async function resolveFramework(rootDirectory: string): Promise<string> {
   const fwConfigFiles: Record<string, string | undefined> = {}
 
-  const matchedFramework = frameworks.find(
-    (framework) =>
-      (!framework.detectors.some ||
-        framework.detectors.some.reduce(
-          (_previousDetectorsMatch: boolean, detector) =>
-            matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
-          false,
-        )) &&
-      (!framework.detectors.every ||
-        framework.detectors.every.reduce(
-          (previousDetectorsMatch: boolean, detector) =>
-            previousDetectorsMatch
-              ? matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles))
-              : false,
-          true,
-        )),
-  )
+  const matchedFramework = frameworks.find((framework) => {
+    const matchesSome =
+      !framework.detectors.some ||
+      framework.detectors.some.some((detector) =>
+        matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
+      )
+
+    const matchesEvery =
+      !framework.detectors.every ||
+      framework.detectors.every.every((detector) =>
+        matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
+      )
+
+    return matchesSome && matchesEvery
+  })
 
   return matchedFramework ? matchedFramework.name : 'unknown'
 }
@@ -197,3 +195,5 @@ function loadFwConfigFile(
   fwConfigFiles[fwConfigFileName] = rawContent
   return fwConfigFiles
 }
+
+export const _frameworks = frameworks
