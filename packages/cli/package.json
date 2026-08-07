@@ -53,8 +53,15 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.43.0",
+    "@shopify/theme-check-common": "3.27.0",
+    "@shopify/theme-check-docs-updater": "3.27.0",
+    "@shopify/theme-check-node": "3.27.0",
     "esbuild": "0.28.1",
-    "global-agent": "3.0.0"
+    "global-agent": "3.0.0",
+    "graphql": "16.14.2",
+    "html-tags": "^5.1.0",
+    "svg-tag-names": "^3.0.1",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@oclif/core": "4.8.3",
@@ -136,6 +143,9 @@
       },
       "config:autocorrect": {
         "description": "Command autocorrection options. If enabled, Shopify CLI will automatically run a corrected version of your command if a correction is available. Off by default."
+      },
+      "validate": {
+        "description": "Validate code offline against Shopify's schemas and rules."
       },
       "kitchen-sink": {
         "description": "View the available UI kit components.",
