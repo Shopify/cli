@@ -14,12 +14,8 @@ import {
 import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
-import {
-  ensureAuthenticated,
-  setCommandSessionId,
-  setLastSeenAuthMethod,
-  setLastSeenUserIdAfterAuth,
-} from '../../private/node/session.js'
+import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {setCommandSessionId} from '../../private/node/session/command-session.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
@@ -39,6 +35,7 @@ const partnersToken: ApplicationToken = {
 }
 
 vi.mock('../../private/node/session.js')
+vi.mock('../../private/node/session/command-session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
 vi.mock('./environment.js')

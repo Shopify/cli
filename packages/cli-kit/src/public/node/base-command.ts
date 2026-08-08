@@ -1,12 +1,11 @@
-import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {outputContent, outputResult, outputToken} from './output.js'
-import {setCurrentSessionAlias} from './session.js'
-import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
+import {setCurrentSessionAlias} from '../../private/node/session-alias.js'
+import {terminalSupportsPrompting} from '../../private/node/terminal.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Config, Errors} from '@oclif/core'
@@ -61,11 +60,6 @@ abstract class BaseCommand extends Command {
   protected async init(): Promise<unknown> {
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
-    if (!isDevelopment()) {
-      // This function runs just prior to `run`
-      const {registerCleanBugsnagErrorsFromWithinPlugins} = await import('./error-handler.js')
-      await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
-    }
     await removeDuplicatedPlugins(this.config)
     this.showNpmFlagWarning()
     const {showNotificationsIfNeeded} = await import('./notifications-system.js')
