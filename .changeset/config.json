@@ -12,7 +12,8 @@
     "@shopify/cli-kit",
     "@shopify/theme",
     "@shopify/plugin-cloudflare",
-    "@shopify/plugin-did-you-mean"
+    "@shopify/plugin-did-you-mean",
+    "@shopify/dev-platform-auth"
   ]],
   "access": "public",
   "baseBranch": "main",

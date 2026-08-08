@@ -248,6 +248,17 @@
           ]
         }
       },
+      "packages/dev-platform-auth": {
+        "entry": [
+          "**/index.ts!"
+        ],
+        "project": "**/*.ts!",
+        "vite": {
+          "config": [
+            "vite.config.ts"
+          ]
+        }
+      },
       "packages/store": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
