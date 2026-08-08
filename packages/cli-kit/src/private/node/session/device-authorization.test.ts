@@ -68,6 +68,27 @@ describe('requestDeviceAuthorization', () => {
     expect(got).toEqual(dataExpected)
   })
 
+  test('does not include authorization credentials in debug output', async () => {
+    // Given
+    const outputDebug = vi.spyOn(output, 'outputDebug')
+    const outputInfo = vi.spyOn(output, 'outputInfo')
+    const response = new Response(JSON.stringify(data), {status: 200})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    const debugOutput = JSON.stringify(outputDebug.mock.calls)
+    const infoOutput = JSON.stringify(outputInfo.mock.calls)
+    expect(debugOutput).not.toContain(data.device_code)
+    expect(debugOutput).not.toContain(data.verification_uri_complete)
+    expect(infoOutput).toContain(data.user_code)
+    expect(infoOutput).toContain(data.verification_uri_complete)
+  })
+
   test('opens the browser directly in an interactive terminal', async () => {
     // Given
     const outputInfo = vi.spyOn(output, 'outputInfo')
