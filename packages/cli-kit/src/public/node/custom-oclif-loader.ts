@@ -38,22 +38,27 @@ export class ShopifyConfig extends Config {
     argv: string[] = [],
     cachedCommand: Command.Loadable | null = null,
   ): Promise<T> {
-    if (this.lazyCommandLoader) {
-      const cmd = cachedCommand ?? this.findCommand(id)
-      if (cmd) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const commandClass = (await this.lazyCommandLoader(id)) as any
-        if (commandClass) {
-          commandClass.id = id
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
-          await this.runHook('prerun', {argv, Command: commandClass})
-          const result = (await commandClass.run(argv, this)) as T
-          await this.runHook('postrun', {argv, Command: commandClass, result})
-          return result
-        }
-      }
+    if (!this.lazyCommandLoader) {
+      return super.runCommand<T>(id, argv, cachedCommand)
     }
-    return super.runCommand<T>(id, argv, cachedCommand)
+
+    const cmd = cachedCommand ?? this.findCommand(id)
+    if (!cmd) {
+      return super.runCommand<T>(id, argv, cachedCommand)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const commandClass = (await this.lazyCommandLoader(id)) as any
+    if (!commandClass) {
+      return super.runCommand<T>(id, argv, cachedCommand)
+    }
+
+    commandClass.id = id
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
+    await this.runHook('prerun', {argv, Command: commandClass})
+    const result = (await commandClass.run(argv, this)) as T
+    await this.runHook('postrun', {argv, Command: commandClass, result})
+    return result
   }
 }
