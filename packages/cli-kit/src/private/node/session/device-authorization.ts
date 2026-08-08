@@ -152,10 +152,8 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
 }
 
 function convertRequestToParams(queryParams: {client_id: string; scope: string}): string {
-  return Object.entries(queryParams)
-    .map(([key, value]) => value && `${key}=${value}`)
-    .filter((hasValue) => Boolean(hasValue))
-    .join('&')
+  // URLSearchParams applies form encoding so scope values cannot change the request structure.
+  return new URLSearchParams(Object.entries(queryParams).filter(([, value]) => Boolean(value))).toString()
 }
 
 /**
