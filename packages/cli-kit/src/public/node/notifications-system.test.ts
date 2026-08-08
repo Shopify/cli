@@ -442,7 +442,7 @@ describe('fetchNotificationsInBackground', () => {
     expect(exec).not.toHaveBeenCalled()
   })
 
-  test('calls the expected Shopify binary', async () => {
+  test('calls the current Shopify entry point with the canonical Node executable', async () => {
     // Given / When
     fetchNotificationsInBackground('theme:list', ['/path/to/node', '/path/to/shopify', 'theme', 'list'], {
       SHOPIFY_UNIT_TEST: 'false',
@@ -450,7 +450,7 @@ describe('fetchNotificationsInBackground', () => {
 
     // Then
     expect(exec).toHaveBeenCalledWith(
-      '/path/to/node',
+      process.execPath,
       ['/path/to/shopify', 'notifications', 'list', '--ignore-errors'],
       expect.anything(),
     )

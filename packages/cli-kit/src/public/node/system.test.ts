@@ -276,6 +276,25 @@ describe('execCommand', () => {
     expect(execa).toHaveBeenCalledWith('cat', [], expect.objectContaining({stdin: 'inherit'}))
   })
 
+  test('pipes input to a background process while ignoring its output', async () => {
+    // Given
+    vi.mocked(which.sync).mockReturnValueOnce('/system/cat')
+    const unref = vi.fn()
+    const childProcess = Object.assign(Promise.resolve({}), {unref})
+    vi.mocked(execa).mockReturnValueOnce(childProcess as any)
+
+    // When
+    await system.exec('cat', [], {background: true, input: 'payload'})
+
+    // Then
+    expect(execa).toHaveBeenCalledWith(
+      'cat',
+      [],
+      expect.objectContaining({input: 'payload', stdio: ['pipe', 'ignore', 'ignore']}),
+    )
+    expect(unref).toHaveBeenCalledOnce()
+  })
+
   test('raises an error if the command to run is found in the current directory', async () => {
     // Given
     vi.mocked(which.sync).mockReturnValueOnce('/currentDirectory/command')
