@@ -222,6 +222,56 @@ describe('patchEnvFile', () => {
       }).rejects.toThrow(`Multi-line environment variable 'ABC' is not properly enclosed.`)
     })
   })
+
+  test('patches a null environment file', () => {
+    // When
+    const patchedContent = patchEnvFile(null, {FOO: 'BAR'})
+
+    // Then
+    expect(patchedContent).toEqual('FOO=BAR')
+  })
+
+  test('patches a multiline environment variable to a single-line value', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      await writeFile(dotEnvPath, 'FOO="BAR\nBAR\nBAR"\nABC   =XYZ')
+
+      // When
+      const patchedContent = patchEnvFile(await readFile(dotEnvPath), {FOO: 'SINGLE'})
+
+      // Then
+      expect(patchedContent).toEqual('FOO=SINGLE\nABC   =XYZ')
+    })
+  })
+
+  test('keeps existing variables as is but appends them as undefined if their updated value is undefined', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      await writeFile(dotEnvPath, 'FOO=BAR\nABC=XYZ')
+
+      // When
+      const patchedContent = patchEnvFile(await readFile(dotEnvPath), {FOO: undefined})
+
+      // Then
+      expect(patchedContent).toEqual('FOO=BAR\nABC=XYZ\nFOO=undefined')
+    })
+  })
+
+  test('adds new variables even if their patched value is undefined', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      await writeFile(dotEnvPath, 'FOO=BAR')
+
+      // When
+      const patchedContent = patchEnvFile(await readFile(dotEnvPath), {NEW_VAR: undefined})
+
+      // Then
+      expect(patchedContent).toEqual('FOO=BAR\nNEW_VAR=undefined')
+    })
+  })
 })
 
 describe('createDotEnvFileLine', () => {
@@ -254,5 +304,11 @@ describe('createDotEnvFileLine', () => {
     await expect(async () => {
       createDotEnvFileLine('FOO', value)
     }).rejects.toThrow(`The environment file patch has an env value that can't be surrounded by quotes: ${value}`)
+  })
+
+  test('creates an env var line when value is undefined', () => {
+    const line = createDotEnvFileLine('FOO', undefined)
+
+    expect(line).toEqual('FOO=undefined')
   })
 })
