@@ -80,12 +80,11 @@ describe('requestDeviceAuthorization', () => {
     await requestDeviceAuthorization(scopes)
 
     // Then
-    expect(shopifyFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        body: new URLSearchParams({client_id: 'clientId', scope: scopes.join(' ')}).toString(),
-      }),
-    )
+    expect(shopifyFetch).toHaveBeenCalledWith('https://fqdn.com/oauth/device_authorization', {
+      method: 'POST',
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+      body: 'client_id=clientId&scope=scope%26name+scope%3Dvalue+scope%25value',
+    })
   })
 
   test('omits empty authorization scope values', async () => {
@@ -99,10 +98,11 @@ describe('requestDeviceAuthorization', () => {
     await requestDeviceAuthorization([])
 
     // Then
-    expect(shopifyFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({body: new URLSearchParams({client_id: 'clientId'}).toString()}),
-    )
+    expect(shopifyFetch).toHaveBeenCalledWith('https://fqdn.com/oauth/device_authorization', {
+      method: 'POST',
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+      body: 'client_id=clientId',
+    })
   })
 
   test('opens the browser directly in an interactive terminal', async () => {
