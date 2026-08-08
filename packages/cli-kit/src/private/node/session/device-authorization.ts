@@ -63,7 +63,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   }
 
   outputDebug(
-    outputContent`Received device authorization response (HTTP ${String(response.status)}): interval=${String(jsonResult.interval)}, expires_in=${String(jsonResult.expires_in)}`,
+    outputContent`Received device authorization response (HTTP ${String(response.status)}): interval=${String(jsonResult.interval ?? 'not provided')}, expires_in=${String(jsonResult.expires_in ?? 'not provided')}`,
   )
   if (!jsonResult.device_code || !jsonResult.verification_uri_complete) {
     throw new BugError('Failed to start authorization process')

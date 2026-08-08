@@ -83,10 +83,31 @@ describe('requestDeviceAuthorization', () => {
     // Then
     const debugOutput = JSON.stringify(outputDebug.mock.calls)
     const infoOutput = JSON.stringify(outputInfo.mock.calls)
+    expect(debugOutput).toContain('HTTP 200')
+    expect(debugOutput).toContain('interval=5')
+    expect(debugOutput).toContain('expires_in=3600')
     expect(debugOutput).not.toContain(data.device_code)
     expect(debugOutput).not.toContain(data.verification_uri_complete)
     expect(infoOutput).toContain(data.user_code)
     expect(infoOutput).toContain(data.verification_uri_complete)
+  })
+
+  test('uses an explicit marker when the response omits the polling interval', async () => {
+    // Given
+    const outputDebug = vi.spyOn(output, 'outputDebug')
+    outputDebug.mockClear()
+    const response = new Response(JSON.stringify({...data, interval: undefined}), {status: 200})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    const debugOutput = JSON.stringify(outputDebug.mock.calls)
+    expect(debugOutput).toContain('interval=not provided')
+    expect(debugOutput).not.toContain('interval=undefined')
   })
 
   test('opens the browser directly in an interactive terminal', async () => {
