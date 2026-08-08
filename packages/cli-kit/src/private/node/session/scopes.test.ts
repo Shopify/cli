@@ -47,6 +47,36 @@ describe('allDefaultScopes', () => {
 })
 
 describe('apiScopes', () => {
+  test.each([
+    [
+      'storefront-renderer',
+      [
+        'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
+        'https://api.shopify.com/auth/shop.admin.graphql',
+      ],
+    ],
+    ['partners', ['https://api.shopify.com/auth/partners.app.cli.access']],
+    [
+      'business-platform',
+      [
+        'https://api.shopify.com/auth/destinations.readonly',
+        'https://api.shopify.com/auth/organization.store-management',
+        'https://api.shopify.com/auth/organization.on-demand-user-access',
+      ],
+    ],
+    ['app-management', ['https://api.shopify.com/auth/organization.apps.manage']],
+  ] as const)('maps all defaults for %s', (api, expected) => {
+    expect(apiScopes(api)).toEqual(expected)
+  })
+
+  test('deduplicates transformed defaults and custom scopes', () => {
+    expect(apiScopes('admin', ['graphql', 'https://api.shopify.com/auth/shop.admin.graphql'])).toEqual([
+      'https://api.shopify.com/auth/shop.admin.graphql',
+      'https://api.shopify.com/auth/shop.admin.themes',
+      'https://api.shopify.com/auth/partners.collaborator-relationships.readonly',
+    ])
+  })
+
   // WIP
   test('returns all scopes for the given API including custom ones', async () => {
     // Given
