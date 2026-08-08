@@ -63,7 +63,7 @@ describe('requestDeviceAuthorization', () => {
     expect(shopifyFetch).toBeCalledWith('https://fqdn.com/oauth/device_authorization', {
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({client_id: 'clientId', scope: 'scope1 scope2'}).toString(),
+      body: 'client_id=clientId&scope=scope1+scope2',
     })
     expect(got).toEqual(dataExpected)
   })
