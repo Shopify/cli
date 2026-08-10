@@ -14,7 +14,7 @@ import {AbortError} from '../../../public/node/error.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import * as output from '../../../public/node/output.js'
 
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
 vi.mock('../../../public/node/context/fqdn.js')
@@ -221,6 +221,59 @@ describe('requestDeviceAuthorization', () => {
     )
   })
 
+  test('when device_code is missing, throw a BugError', async () => {
+    // Given
+    const response = new Response(JSON.stringify({...data, device_code: undefined}))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When/Then
+    await expect(requestDeviceAuthorization(['scope1'])).rejects.toThrowError('Failed to start authorization process')
+  })
+
+  test('when verification_uri_complete is missing, throw a BugError', async () => {
+    // Given
+    const response = new Response(JSON.stringify({...data, verification_uri_complete: undefined}))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When/Then
+    await expect(requestDeviceAuthorization(['scope1'])).rejects.toThrowError('Failed to start authorization process')
+  })
+
+  test('in CI, abort before opening the browser', async () => {
+    // Given
+    vi.mocked(isCI).mockReturnValue(true)
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(data)))
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When/Then
+    await expect(requestDeviceAuthorization(['scope1'])).rejects.toThrowError(
+      'Authorization is required to continue, but the current environment does not support interactive prompts.',
+    )
+    expect(openURL).not.toHaveBeenCalled()
+  })
+
+  test('when the browser does not open, output the verification link', async () => {
+    // Given
+    vi.mocked(openURL).mockResolvedValue(false)
+    const outputInfo = vi.spyOn(output, 'outputInfo')
+    outputInfo.mockClear()
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(data)))
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope1'])
+
+    // Then
+    const lastInfo = outputInfo.mock.calls.at(-1)?.[0]
+    expect(lastInfo).toHaveProperty('value', expect.stringContaining('Open this link to start the auth process'))
+  })
+
   test('when response.text() fails, throw an error about network/streaming issue', async () => {
     // Given
     const response = new Response('some content')
@@ -248,6 +301,46 @@ describe('pollForDeviceAuthorization', () => {
     userId: '1234-5678',
     alias: '1234-5678',
   }
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('respects the polling interval', async () => {
+    // Given
+    vi.useFakeTimers()
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValue(ok(identityToken))
+
+    // When
+    const polling = pollForDeviceAuthorization('device_code', 5)
+    await vi.advanceTimersByTimeAsync(4999)
+    expect(exchangeDeviceCodeForAccessToken).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+
+    // Then
+    await expect(polling).resolves.toEqual(identityToken)
+    expect(exchangeDeviceCodeForAccessToken).toHaveBeenCalledWith('device_code')
+  })
+
+  test('adds five seconds after a slow_down response', async () => {
+    // Given
+    vi.useFakeTimers()
+    vi.mocked(exchangeDeviceCodeForAccessToken)
+      .mockResolvedValueOnce(err('slow_down'))
+      .mockResolvedValueOnce(ok(identityToken))
+
+    // When
+    const polling = pollForDeviceAuthorization('device_code', 5)
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(exchangeDeviceCodeForAccessToken).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(9999)
+    expect(exchangeDeviceCodeForAccessToken).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+
+    // Then
+    await expect(polling).resolves.toEqual(identityToken)
+    expect(exchangeDeviceCodeForAccessToken).toHaveBeenCalledTimes(2)
+  })
 
   test('poll until a valid token is received', async () => {
     // Given
