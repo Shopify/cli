@@ -1069,6 +1069,25 @@ DESCRIPTION
   - The schema path
   - The WASM path
   - The function runner path
+
+  With `--json`, the command returns `FunctionInfoResult`, described by these TypeScript types:
+
+  ```ts
+  interface FunctionInfoResult {
+    handle?: string
+    name: string
+    apiVersion?: string
+    targeting: Record<string, FunctionTargeting>
+    schemaPath?: string
+    wasmPath: string
+    functionRunnerPath: string
+  }
+
+  interface FunctionTargeting {
+    inputQueryPath?: string
+    export?: string
+  }
+  ```
 ```
 
 ## `shopify app function replay`

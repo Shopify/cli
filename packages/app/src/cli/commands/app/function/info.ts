@@ -1,15 +1,19 @@
 import {chooseFunction, functionFlags, getOrGenerateSchemaPath} from '../../../services/function/common.js'
 import {functionRunnerBinary, downloadBinary} from '../../../services/function/binaries.js'
 import {functionInfo} from '../../../services/function/info.js'
+import {presentFunctionInfoResult} from '../../../services/function/info-result.js'
+import {functionInfoJsonOutputSchema} from '../../../services/function/info-types.js'
 import {localAppContext} from '../../../services/app-context.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {AlertCustomSection, renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionInfo extends AppUnlinkedCommand {
   static summary = 'Print basic information about your function.'
+
+  static get jsonOutputSchema() {
+    return functionInfoJsonOutputSchema
+  }
 
   static descriptionWithMarkdown = `The information returned includes the following:
 
@@ -51,18 +55,11 @@ export default class FunctionInfo extends AppUnlinkedCommand {
     )
 
     const result = functionInfo(ourFunction, {
-      format: flags.json ? 'json' : 'text',
       functionRunnerPath: functionRunner.path,
       schemaPath,
     })
 
-    if (flags.json) {
-      outputResult(result as string)
-    } else {
-      renderInfo({
-        customSections: result as AlertCustomSection[],
-      })
-    }
+    presentFunctionInfoResult(result, flags.json ? 'json' : 'text')
 
     return {app}
   }

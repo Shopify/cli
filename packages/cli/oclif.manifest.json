@@ -1729,8 +1729,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
-      "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
+      "description": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path\n\nWith `--json`, the command returns `FunctionInfoResult`, described by these TypeScript types:\n\n```ts\ninterface FunctionInfoResult {\n  handle?: string\n  name: string\n  apiVersion?: string\n  targeting: Record<string, FunctionTargeting>\n  schemaPath?: string\n  wasmPath: string\n  functionRunnerPath: string\n}\n\ninterface FunctionTargeting {\n  inputQueryPath?: string\n  export?: string\n}\n```",
+      "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path\n\nWith `--json`, the command returns `FunctionInfoResult`, described by these TypeScript types:\n\n```ts\ninterface FunctionInfoResult {\n  handle?: string\n  name: string\n  apiVersion?: string\n  targeting: Record<string, FunctionTargeting>\n  schemaPath?: string\n  wasmPath: string\n  functionRunnerPath: string\n}\n\ninterface FunctionTargeting {\n  inputQueryPath?: string\n  export?: string\n}\n```",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
