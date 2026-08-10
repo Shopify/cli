@@ -63,9 +63,44 @@ describe('requestDeviceAuthorization', () => {
     expect(shopifyFetch).toBeCalledWith('https://fqdn.com/oauth/device_authorization', {
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
-      body: 'client_id=clientId&scope=scope1 scope2',
+      body: 'client_id=clientId&scope=scope1+scope2',
     })
     expect(got).toEqual(dataExpected)
+  })
+
+  test('encodes special characters in authorization scopes', async () => {
+    // Given
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope&=%'])
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({body: 'client_id=clientId&scope=scope%26%3D%25'}),
+    )
+  })
+
+  test('omits empty authorization scope values', async () => {
+    // Given
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization([])
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith('https://fqdn.com/oauth/device_authorization', {
+      method: 'POST',
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+      body: 'client_id=clientId',
+    })
   })
 
   test('opens the browser directly in an interactive terminal', async () => {
