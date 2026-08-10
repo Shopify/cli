@@ -56,7 +56,7 @@ describe('runAdminStoreGraphQLOperation', () => {
   })
 
   test('executes the GraphQL request successfully', async () => {
-    vi.mocked(graphqlRequest).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
+    vi.mocked(graphqlRequest).mockResolvedValue({shop: {name: 'Test shop'}})
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
 
     const result = await runAdminStoreGraphQLOperation({context, request})
@@ -141,6 +141,17 @@ describe('runAdminStoreGraphQLOperation', () => {
     const request = await prepareStoreExecuteRequest({query: 'query { nope }'})
 
     await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toThrow('GraphQL operation failed.')
+  })
+
+  test('treats top-level GraphQL errors on an HTTP 200 as an execution-level failure', async () => {
+    // graphql-request throws ClientError whenever the payload carries `errors` under the
+    // default error policy, and cli-kit never overrides that policy. So a 200 response with
+    // `errors` never reaches this adapter as data; it arrives as a rejection and belongs to
+    // the error boundary rather than to result-level failure classification.
+    vi.mocked(graphqlRequest).mockRejectedValue(makeClientErrorLike(200, 'Field does not exist'))
+    const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
+
+    await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toBeInstanceOf(AbortError)
   })
 
   test('maps a 402 ClientError to a store-unavailable AbortError even when the response also carries `errors`', async () => {

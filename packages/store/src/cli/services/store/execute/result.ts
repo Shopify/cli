@@ -1,38 +1,28 @@
+import {encodeStoreExecuteWriteReceipt, encodeStoreExecuteResult} from './codec.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import type {StoreExecuteResult} from './types.js'
 
 type StoreExecuteOutputFormat = 'text' | 'json'
 
-function serializeStoreExecuteResult(result: unknown): string {
-  return JSON.stringify(result, null, 2)
-}
-
-function renderStoreExecuteSuccess(outputFile?: string): void {
-  if (outputFile) {
-    renderSuccess({
-      headline: 'Operation succeeded.',
-      body: `Results written to ${outputFile}`,
-    })
-    return
-  }
-
-  renderSuccess({headline: 'Operation succeeded.'})
-}
-
 export async function writeOrOutputStoreExecuteResult(
-  result: unknown,
+  result: StoreExecuteResult,
   outputFile?: string,
   format: StoreExecuteOutputFormat = 'text',
 ): Promise<void> {
-  const serializedResult = serializeStoreExecuteResult(result)
+  const payload = encodeStoreExecuteResult(result)
 
   if (outputFile) {
-    await writeFile(outputFile, serializedResult)
-    if (format === 'text') renderStoreExecuteSuccess(outputFile)
-    return
-  }
+    await writeFile(outputFile, payload)
 
-  if (format === 'text') renderStoreExecuteSuccess()
-  outputResult(serializedResult)
+    if (format === 'json') {
+      outputResult(encodeStoreExecuteWriteReceipt({outputFile}))
+    } else {
+      renderSuccess({headline: 'Operation succeeded.', body: `Results written to ${outputFile}`})
+    }
+  } else {
+    if (format === 'text') renderSuccess({headline: 'Operation succeeded.'})
+    outputResult(payload)
+  }
 }

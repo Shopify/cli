@@ -13,6 +13,7 @@ import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {PreparedStoreExecuteRequest} from './request.js'
 import type {AdminStoreGraphQLContext} from './admin-context.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import type {JsonValue, StoreExecuteResult} from './types.js'
 
 export {ABORTED_FETCH_MESSAGE_FRAGMENTS}
 
@@ -65,9 +66,9 @@ export async function fetchPublicApiVersions(input: {
 export async function runAdminStoreGraphQLOperation(input: {
   context: AdminStoreGraphQLContext
   request: PreparedStoreExecuteRequest
-}): Promise<unknown> {
+}): Promise<StoreExecuteResult> {
   try {
-    return await renderSingleTask({
+    const response = await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
         return graphqlRequest({
@@ -81,6 +82,7 @@ export async function runAdminStoreGraphQLOperation(input: {
       },
       renderOptions: {stdout: process.stderr},
     })
+    return storeExecuteResult(response)
   } catch (error) {
     throwIfStoredStoreAuthIsInvalid(error, input.context.session)
 
@@ -96,4 +98,8 @@ export async function runAdminStoreGraphQLOperation(input: {
 
     throw error
   }
+}
+
+function storeExecuteResult(response: unknown): StoreExecuteResult {
+  return {data: response as JsonValue}
 }
