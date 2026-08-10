@@ -3897,6 +3897,32 @@ DESCRIPTION
 
   Run `shopify organization list` to find organization IDs.
 
+  With `--json`, the command returns `StoreListResult`, described by these TypeScript types:
+
+  ```ts
+  interface StoreListResult {
+    stores: StoreListEntry[]
+    organization?: StoreListOrganization
+    notice?: string
+    truncated?: boolean
+  }
+
+  interface StoreListEntry {
+    id?: string
+    store: string
+    createdAt: string
+    organizationId: string
+    organizationName: string
+    name?: string
+    type?: string
+  }
+
+  interface StoreListOrganization {
+    id: string
+    name: string
+  }
+  ```
+
 EXAMPLES
   $ shopify store list
 

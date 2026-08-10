@@ -1,5 +1,6 @@
 import {listStores} from '../../services/store/list.js'
 import {presentStoreListResult} from '../../services/store/list/result.js'
+import {storeListJsonOutputSchema} from '../../services/store/list/types.js'
 import {storeFlags} from '../../flags.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -7,6 +8,10 @@ import {Flags} from '@oclif/core'
 
 export default class StoreList extends StoreCommand {
   static summary = 'List stores in a Shopify organization.'
+
+  static get jsonOutputSchema() {
+    return storeListJsonOutputSchema
+  }
 
   static descriptionWithMarkdown = `Lists stores in a Shopify organization available to the current CLI account.
 

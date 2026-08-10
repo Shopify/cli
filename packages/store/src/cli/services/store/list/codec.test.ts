@@ -1,10 +1,9 @@
-import {encodeStoreListJson, toStoreListDocument} from './codec.js'
+import {encodeStoreListJson} from './codec.js'
 import {describe, expect, test} from 'vitest'
 
 describe('store:list codec', () => {
-  test('preserves the current JSON wire document and omits internal fields', () => {
+  test('preserves the current JSON wire document', () => {
     const result = {
-      source: 'organization' as const,
       stores: [
         {
           id: 'gid://shopify/Shop/1',
@@ -40,10 +39,11 @@ describe('store:list codec', () => {
   "notice": "A notice",
   "truncated": true
 }`)
-    expect(toStoreListDocument(result)).not.toHaveProperty('source')
   })
 
   test('omits optional fields when execution data does not provide them', () => {
-    expect(toStoreListDocument({source: 'organization', stores: []})).toEqual({stores: []})
+    expect(encodeStoreListJson({stores: []})).toBe(`{
+  "stores": []
+}`)
   })
 })
