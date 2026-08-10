@@ -3,7 +3,6 @@ import {GetUIExtensionPayloadOptions} from './payload.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile, glob} from '@shopify/cli-kit/node/fs'
-import {ExtendableError} from '@shopify/cli-kit/node/error'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 
 type Locale = string
@@ -84,6 +83,6 @@ async function compileLocalizationFiles(
   } catch (error: any) {
     const message = `Error parsing ${locale} locale for ${extension.handle} at ${path}: ${error.message}`
     outputWarn(message, options.stderr)
-    throw new ExtendableError(message)
+    throw new Error(message)
   }
 }

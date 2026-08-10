@@ -48,7 +48,7 @@ export const launchGraphiQLServer: DevProcessFunction<GraphiQLServerProcessOptio
       apiSecret: options.apiSecret,
     },
   })
-  abortSignal.addEventListener('abort', async () => {
+  abortSignal.addEventListener('abort', () => {
     httpServer.close()
   })
 }
