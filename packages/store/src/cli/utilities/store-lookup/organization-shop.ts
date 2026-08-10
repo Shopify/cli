@@ -46,7 +46,7 @@ export async function fetchOptionalOrganizationShop(
 
   const edges = response.organization?.accessibleShops?.edges ?? []
   const lowerStore = options.store.toLowerCase()
-  const matched = edges.map((edge) => edge.node).find((node) => extractHost(node.primaryDomain) === lowerStore)
+  const matched = edges.find((edge) => extractHost(edge.node.primaryDomain) === lowerStore)?.node
 
   if (!matched) return undefined
 
