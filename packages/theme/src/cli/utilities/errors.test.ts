@@ -77,7 +77,7 @@ describe('errors', () => {
 
     beforeEach(() => {
       // Use a more reliable mock that throws an error
-      vi.spyOn(process, 'exit').mockImplementation((code?: number): never => {
+      vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null): never => {
         throw new Error(`Process exit with code ${code}`)
       })
     })

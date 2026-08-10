@@ -21,7 +21,7 @@ async function exitIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.v
   const nodeVersion = versions.node
   const nodeMajorVersion = Number(nodeVersion.split('.')[0])
 
-  const currentSupportedNodeVersion = 18
+  const currentSupportedNodeVersion = 22
   if (nodeMajorVersion < currentSupportedNodeVersion) {
     const {renderError} = await import('./ui.js')
     renderError({

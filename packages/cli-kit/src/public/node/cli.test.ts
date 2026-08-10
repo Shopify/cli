@@ -80,14 +80,14 @@ describe('cli', () => {
   test('exits if running an old Node version', async () => {
     const launchCLI = vi.fn()
     const outputMock = mockAndCaptureOutput()
-    const run = runCLI({moduleURL: 'test', development: false}, launchCLI, [], {}, {node: '17.9'} as any)
+    const run = runCLI({moduleURL: 'test', development: false}, launchCLI, [], {}, {node: '20.10'} as any)
     await expect(run).rejects.toThrow()
     expect(outputMock.output()).toMatchInlineSnapshot(`
       "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Upgrade to a supported Node version now.                                    │
       │                                                                              │
-      │  Node 17 has reached end-of-life and poses security risks. When you upgrade  │
+      │  Node 20 has reached end-of-life and poses security risks. When you upgrade  │
       │   to a supported version [1], you'll be able to use Shopify CLI without      │
       │  interruption.                                                               │
       │                                                                              │
