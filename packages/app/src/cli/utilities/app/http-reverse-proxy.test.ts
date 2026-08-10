@@ -1,7 +1,7 @@
 import {getProxyingWebServer} from './http-reverse-proxy.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {describe, test, expect} from 'vitest'
-import fetch from 'node-fetch'
+import {fetch, Agent} from 'undici'
 import WebSocket, {WebSocketServer} from 'ws'
 import http from 'http'
 import https from 'https'
@@ -16,17 +16,19 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     protocol === 'http'
       ? new http.Agent({keepAlive: false})
       : new https.Agent({ca: localhostCert.cert, keepAlive: false})
+  const dispatcher =
+    protocol === 'http' ? new Agent({pipelining: 0}) : new Agent({pipelining: 0, connect: {ca: localhostCert.cert}})
 
   test('routes requests to the correct target based on path', {retry: 2}, async ({setup}) => {
-    const response1 = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {agent})
+    const response1 = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {dispatcher})
     await expect(response1.text()).resolves.toBe('Response from target server 1')
 
-    const response2 = await fetch(`${protocol}://localhost:${setup.proxyPort}/path2/test`, {agent})
+    const response2 = await fetch(`${protocol}://localhost:${setup.proxyPort}/path2/test`, {dispatcher})
     await expect(response2.text()).resolves.toBe('Response from target server 2')
   })
 
   test('routes requests to the default target when no matching path is found', {retry: 2}, async ({setup}) => {
-    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/unknown/path`, {agent})
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/unknown/path`, {dispatcher})
     await expect(response.text()).resolves.toBe('Response from target server 1')
   })
 
@@ -63,7 +65,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
         'Access-Control-Request-Method': 'GET',
         'Access-Control-Request-Headers': 'Authorization',
       },
-      agent,
+      dispatcher,
     })
     expect(response.status).toBe(204)
     expect(response.headers.get('access-control-allow-origin')).toBe('https://extensions.shopifycdn.com')
@@ -75,7 +77,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
   test('responds to CORS preflight OPTIONS with defaults when no request headers', {retry: 2}, async ({setup}) => {
     const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
       method: 'OPTIONS',
-      agent,
+      dispatcher,
     })
     expect(response.status).toBe(204)
     expect(response.headers.get('access-control-allow-origin')).toBe('*')
@@ -89,7 +91,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     await expect
       .poll(async () => {
         try {
-          await fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {agent})
+          await fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {dispatcher})
           return 'open'
           // eslint-disable-next-line no-catch-all/no-catch-all
         } catch {

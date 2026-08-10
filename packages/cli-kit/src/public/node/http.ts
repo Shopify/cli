@@ -4,15 +4,15 @@ import {runWithTimer} from './metadata.js'
 import {maxRequestTimeForNetworkCallsMs, skipNetworkLevelRetry} from './environment.js'
 import {outputContent, outputDebug, outputToken} from './output.js'
 import {sanitizeURL} from '../../private/node/api/urls.js'
-import {httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
+import {sanitizedHeadersOutput} from '../../private/node/api/headers.js'
 import {NetworkRetryBehaviour, simpleRequestWithDebugLog} from '../../private/node/api.js'
 import {DEFAULT_MAX_TIME_MS} from '../../private/node/sleep-with-backoff.js'
 
-import FormData from 'form-data'
-import nodeFetch, {RequestInfo, RequestInit, Response} from 'node-fetch'
+import {fetch as undiciFetch, EnvHttpProxyAgent, FormData, Response} from 'undici'
 import {pipeline} from 'stream/promises'
+import type {Dispatcher, RequestInfo, RequestInit} from 'undici'
 
-export {FetchError, Request, Response} from 'node-fetch'
+export {FormData, Request, Response} from 'undici'
 
 /**
  * Create a new FormData object.
@@ -96,7 +96,30 @@ interface FetchOptions {
   behaviour: RequestBehaviour
   init?: RequestInit
   logRequest: boolean
-  useHttpsAgent: boolean
+}
+
+let proxyDispatcher: Dispatcher | undefined
+let proxyDispatcherComputed = false
+
+/**
+ * Returns a dispatcher that routes requests through the proxy configured with the
+ * SHOPIFY_HTTP_PROXY, SHOPIFY_HTTPS_PROXY and SHOPIFY_NO_PROXY environment variables,
+ * or undefined when no proxy is configured. These are the same variables that
+ * global-agent honors for the http traffic that goes through Node's http module.
+ *
+ * @param env - Process environment variables.
+ * @returns A dispatcher, or undefined when no proxy is configured.
+ */
+function dispatcherFromEnvironment(env: NodeJS.ProcessEnv = process.env): Dispatcher | undefined {
+  if (!proxyDispatcherComputed) {
+    proxyDispatcherComputed = true
+    const httpProxy = env.SHOPIFY_HTTP_PROXY
+    const httpsProxy = env.SHOPIFY_HTTPS_PROXY ?? httpProxy
+    if (httpProxy ?? httpsProxy) {
+      proxyDispatcher = new EnvHttpProxyAgent({httpProxy, httpsProxy, noProxy: env.SHOPIFY_NO_PROXY})
+    }
+  }
+  return proxyDispatcher
 }
 
 /**
@@ -117,7 +140,7 @@ export function abortSignalFromRequestBehaviour(behaviour: RequestBehaviour): Ab
   return signal
 }
 
-async function innerFetch({url, behaviour, init, logRequest, useHttpsAgent}: FetchOptions): Promise<Response> {
+async function innerFetch({url, behaviour, init, logRequest}: FetchOptions): Promise<Response> {
   if (logRequest) {
     outputDebug(outputContent`Sending ${init?.method ?? 'GET'} request to URL ${sanitizeURL(url.toString())}
 With request headers:
@@ -125,10 +148,7 @@ ${sanitizedHeadersOutput((init?.headers ?? {}) as Record<string, string>)}
 `)
   }
 
-  let agent: RequestInit['agent']
-  if (useHttpsAgent) {
-    agent = await httpsAgent()
-  }
+  const dispatcher = init?.dispatcher ?? dispatcherFromEnvironment()
 
   const request = async () => {
     // each time we make the request, we need to potentially reset the abort signal, as the request logic may make
@@ -140,7 +160,7 @@ ${sanitizedHeadersOutput((init?.headers ?? {}) as Record<string, string>)}
       signal = init.signal
     }
 
-    return nodeFetch(url, {...init, agent, signal})
+    return undiciFetch(url, {...init, dispatcher, signal})
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
@@ -153,12 +173,8 @@ ${sanitizedHeadersOutput((init?.headers ?? {}) as Record<string, string>)}
 }
 
 /**
- * An interface that abstracts way node-fetch. When Node has built-in
- * support for "fetch" in the standard library, we can drop the node-fetch
- * dependency from here.
- * Note that we are exposing types from "node-fetch". The reason being is that
- * they are consistent with the Web API so if we drop node-fetch in the future
- * it won't require changes from the callers.
+ * An interface that abstracts away the fetch implementation (undici). The exposed
+ * types are consistent with the Web API.
  *
  * The CLI's fetch function supports special behaviours, like automatic retries. These are disabled by default through
  * this function.
@@ -177,7 +193,6 @@ export async function fetch(
     url,
     init,
     logRequest: false,
-    useHttpsAgent: false,
     // all special behaviours are disabled by default
     behaviour: preferredBehaviour ? requestMode(preferredBehaviour) : requestMode('non-blocking'),
   } as const
@@ -206,7 +221,6 @@ export async function shopifyFetch(
     url,
     init,
     logRequest: true,
-    useHttpsAgent: true,
     // special behaviours enabled by default
     behaviour: preferredBehaviour ? requestMode(preferredBehaviour) : requestMode(),
   }
@@ -243,7 +257,7 @@ export function downloadFile(url: string, to: string): Promise<string> {
     }
 
     try {
-      const res = await nodeFetch(url, {redirect: 'follow'})
+      const res = await undiciFetch(url, {redirect: 'follow', dispatcher: dispatcherFromEnvironment()})
       if (!res.body) {
         throw new Error(`No response body received when downloading ${sanitizedUrl}`)
       }

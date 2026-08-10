@@ -5,7 +5,7 @@ import {
 } from '../../../../cli/api/graphql/bulk-operations/generated/staged-uploads-create.js'
 import {adminRequestDoc} from '../admin.js'
 import {AdminSession} from '../../session.js'
-import {fetch} from '../../http.js'
+import {fetch, formData} from '../../http.js'
 import {AbortError} from '../../error.js'
 import {outputContent} from '../../output.js'
 import {renderSingleTask} from '../../ui.js'
@@ -103,7 +103,7 @@ async function uploadFileToStagedUrl(
   parameters: {name: string; value: string}[],
   filename: string,
 ): Promise<void> {
-  const form = new FormData()
+  const form = formData()
 
   for (const param of parameters) {
     form.append(param.name, param.value)

@@ -2,12 +2,10 @@ import {clientId} from './identity.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import {shopifyFetch} from '../../../public/node/http.js'
+import {shopifyFetch, Response} from '../../../public/node/http.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCI, openURL} from '../../../public/node/system.js'
-
-import {Response} from 'node-fetch'
 
 export interface DeviceAuthorizationResponse {
   deviceCode: string

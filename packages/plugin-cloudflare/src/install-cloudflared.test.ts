@@ -3,7 +3,7 @@ import * as http from '@shopify/cli-kit/node/http'
 import {inTemporaryDirectory, readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
-import {Response} from 'node-fetch'
+import {Response} from 'undici'
 import {writeFileSync} from 'fs'
 // eslint-disable-next-line no-restricted-imports
 import * as childProcess from 'child_process'

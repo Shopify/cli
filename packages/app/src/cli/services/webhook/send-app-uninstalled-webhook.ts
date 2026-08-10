@@ -3,9 +3,20 @@ import {getWebhookSample, SampleWebhook, SendSampleWebhookVariables} from './req
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {DELIVERY_METHOD} from './trigger-flags.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {FetchError} from '@shopify/cli-kit/node/http'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
+
+// fetch wraps connection failures in a TypeError whose cause carries the
+// system error code, possibly inside an AggregateError when several
+// addresses were tried (e.g. IPv4 and IPv6 localhost).
+function isConnectionRefusedError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const cause = (error as {cause?: unknown}).cause
+  if (!cause || typeof cause !== 'object') return false
+  const causeWithCode = cause as {code?: string; errors?: {code?: string}[]}
+  if (causeWithCode.code === 'ECONNREFUSED') return true
+  return Array.isArray(causeWithCode.errors) && causeWithCode.errors.some((err) => err.code === 'ECONNREFUSED')
+}
 
 interface SendUninstallWebhookToAppServerOptions {
   stdout: Writable
@@ -60,7 +71,7 @@ async function triggerWebhook(
 
       return result
     } catch (error) {
-      if (error instanceof FetchError && error.code === 'ECONNREFUSED') {
+      if (isConnectionRefusedError(error)) {
         if (tries < 3) {
           options.stdout.write("App isn't responding yet, retrying in 5 seconds")
           await sleep(5)

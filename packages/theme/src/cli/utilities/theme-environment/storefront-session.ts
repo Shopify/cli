@@ -113,7 +113,7 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
     headers: requestHeaders,
   })
 
-  const setCookies = response.headers.raw()['set-cookie'] ?? []
+  const setCookies = response.headers.getSetCookie()
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
 
   /**
@@ -175,7 +175,7 @@ async function enrichSessionWithStorefrontPassword(
     )
   }
 
-  const setCookies = response.headers.raw()['set-cookie'] ?? []
+  const setCookies = response.headers.getSetCookie()
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
   const newShopifyEssential = getCookie(setCookies, '_shopify_essential')
 

@@ -4,67 +4,48 @@ import {fileExists, inTemporaryDirectory, readFile} from './fs.js'
 import {joinPath} from './path.js'
 import {getAllPublicMetadata} from './metadata.js'
 import {platformAndArch} from './os.js'
-import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
-import {setupServer} from 'msw/node'
-import {delay, http, HttpResponse} from 'msw'
-import FormData from 'form-data'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {FormData, MockAgent, getGlobalDispatcher, setGlobalDispatcher} from 'undici'
+import type {Dispatcher} from 'undici'
 
 const DURATION_UNTIL_ABORT_IS_SEEN = 100
+const NEVER_RESPONDS_DELAY_MS = 10 * 60 * 1000
 
 const mockResponse = {hello: 'world!'}
 
-const handlers = [
-  http.get('https://shopify.example/working', () => {
-    return HttpResponse.json(mockResponse)
-  }),
-  http.get('https://shopify.example/a-slow-endpoint', async () => {
-    await delay(500)
-    return HttpResponse.json(mockResponse)
-  }),
-  http.get('https://shopify.example/a-blocked-endpoint', async () => {
-    await delay('infinite')
-    return HttpResponse.json(mockResponse)
-  }),
-  http.get('https://shopify.example/example.txt', async () => {
-    const stream = new ReadableStream({
-      start(controller) {
-        const encoder = new TextEncoder()
-        controller.enqueue(encoder.encode('Hello '))
-        controller.enqueue(encoder.encode('world'))
-        controller.close()
-      },
-    })
-    return new HttpResponse(stream, {
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    })
-  }),
-  http.get('https://shopify.example/fails-to-download.txt', async () => {
-    return HttpResponse.error()
-  }),
-  http.get('https://shopify.example/redirect-me', () => {
-    return new HttpResponse(null, {
-      status: 302,
-      headers: {
-        Location: 'https://shopify.example/example.txt',
-      },
-    })
-  }),
-  http.get('https://shopify.example/500.txt', () => {
-    return new HttpResponse(null, {
-      status: 500,
-    })
-  }),
-]
+function setUpMockServer(): MockAgent {
+  const agent = new MockAgent({enableCallHistory: true})
+  agent.disableNetConnect()
+  const pool = agent.get('https://shopify.example')
+  pool
+    .intercept({path: /^\/working/})
+    .reply(200, mockResponse)
+    .persist()
+  pool.intercept({path: '/a-slow-endpoint'}).reply(200, mockResponse).delay(500).persist()
+  pool.intercept({path: '/a-blocked-endpoint'}).reply(200, mockResponse).delay(NEVER_RESPONDS_DELAY_MS).persist()
+  pool
+    .intercept({path: /^\/example\.txt/})
+    .reply(200, 'Hello world', {headers: {'Content-Type': 'text/plain'}})
+    .persist()
+  pool.intercept({path: '/fails-to-download.txt'}).replyWithError(new Error('Network error')).persist()
+  pool
+    .intercept({path: '/redirect-me'})
+    .reply(302, '', {headers: {Location: 'https://shopify.example/example.txt'}})
+    .persist()
+  return agent
+}
 
-// set up the server & clean-up
-const server = setupServer(...handlers)
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}))
-afterAll(() => server.close())
-afterEach(() => {
-  server.resetHandlers()
-  server.events.removeAllListeners()
+// set up the mock server & clean-up
+let mockAgent: MockAgent
+let originalDispatcher: Dispatcher
+beforeEach(() => {
+  originalDispatcher = getGlobalDispatcher()
+  mockAgent = setUpMockServer()
+  setGlobalDispatcher(mockAgent)
+})
+afterEach(async () => {
+  setGlobalDispatcher(originalDispatcher)
+  await mockAgent.close()
 })
 
 // set-up fake timers & clean-up
@@ -80,7 +61,7 @@ describe('formData', () => {
   test('make an empty form data object', () => {
     const res = formData()
     expect(res).toBeInstanceOf(FormData)
-    expect(res.getLengthSync()).toBe(0)
+    expect([...res.entries()]).toHaveLength(0)
   })
 })
 
@@ -113,18 +94,13 @@ describe('shopifyFetch', () => {
     })
     await vi.advanceTimersByTimeAsync(DURATION_UNTIL_ABORT_IS_SEEN)
 
-    await expect(failing).rejects.toThrow('The operation was aborted.')
+    await expect(failing).rejects.toThrow(/aborted/)
   })
 
   test('abort signal is seen as a retryable error', async () => {
     // this test is complex with faked timers as we have the abort signal, the delay in response, and the retry logic
     // all competing to run at the same time. so: we use real timers and some adjusted limits -- the test takes 500ms.
     vi.useRealTimers()
-
-    const requests: string[] = []
-    server.events.on('request:start', ({request}) => {
-      requests.push(request.url)
-    })
 
     // the limit is 1100ms, which is enough for two retries plus maximum slack (e.g. running in a slow environment)
     const failingWithRetry = shopifyFetch(`https://shopify.example/a-blocked-endpoint`, undefined, {
@@ -133,7 +109,7 @@ describe('shopifyFetch', () => {
       useAbortSignal: true,
       timeoutMs: DURATION_UNTIL_ABORT_IS_SEEN,
     })
-    await expect(failingWithRetry).rejects.toThrow('The operation was aborted.')
+    await expect(failingWithRetry).rejects.toThrow(/aborted/)
 
     // we have enough time for two requests in our 500ms allowance:
     // - we make a request
@@ -143,6 +119,7 @@ describe('shopifyFetch', () => {
     // - there's 100ms before the abort signal is seen
     // - the next delay would be 600ms
     // - the next delay would take us over our 1100ms allowance, so retries are stopped
+    const requests = (mockAgent.getCallHistory()?.calls() ?? []).map((call) => call.fullUrl)
     expect(requests).toEqual([
       'https://shopify.example/a-blocked-endpoint',
       'https://shopify.example/a-blocked-endpoint',
@@ -157,7 +134,7 @@ describe('shopifyFetch', () => {
     })
     await vi.advanceTimersByTimeAsync(DURATION_UNTIL_ABORT_IS_SEEN)
 
-    await expect(response).rejects.toThrow('The operation was aborted.')
+    await expect(response).rejects.toThrow(/aborted/)
   })
 
   test('provide a hard-coded abort signal', async () => {
@@ -168,7 +145,7 @@ describe('shopifyFetch', () => {
     })
     await vi.advanceTimersByTimeAsync(DURATION_UNTIL_ABORT_IS_SEEN)
 
-    await expect(response).rejects.toThrow('The operation was aborted.')
+    await expect(response).rejects.toThrow(/aborted/)
   })
 
   test('provide an abort signal through request init option', async () => {
@@ -185,7 +162,7 @@ describe('shopifyFetch', () => {
     )
     await vi.advanceTimersByTimeAsync(DURATION_UNTIL_ABORT_IS_SEEN)
 
-    await expect(response).rejects.toThrow('The operation was aborted.')
+    await expect(response).rejects.toThrow(/aborted/)
   })
 })
 
@@ -288,7 +265,7 @@ describe('downloadFile', () => {
       // When
       const result = downloadFile(url, to)
 
-      await expect(result).rejects.toThrow('Network error')
+      await expect(result).rejects.toThrow('fetch failed')
       await expect(fileExists(to)).resolves.toBe(false)
     })
   })

@@ -2,7 +2,6 @@ import {sendUninstallWebhookToAppServer} from './send-app-uninstalled-webhook.js
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-import {FetchError} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
 
 vi.mock('./trigger-local-webhook.js')
@@ -59,8 +58,9 @@ describe('sendUninstallWebhookToAppServer', () => {
   })
 
   test("retries the webhook request if the app hasn't started yet", async () => {
-    const fakeError = new FetchError('Fake error for testing', 'network')
-    fakeError.code = 'ECONNREFUSED'
+    const fakeError = Object.assign(new TypeError('fetch failed'), {
+      cause: Object.assign(new Error('connect ECONNREFUSED'), {code: 'ECONNREFUSED'}),
+    })
     vi.mocked(triggerLocalWebhook).mockRejectedValueOnce(fakeError).mockResolvedValueOnce(true)
     const stdout = {write: vi.fn()} as unknown as Writable
     const developerPlatformClient = testDeveloperPlatformClient()

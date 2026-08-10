@@ -19,7 +19,7 @@ import {outputDebug} from '../../../public/node/output.js'
 import {err, ok} from '../../../public/node/result.js'
 
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
-import {Response} from 'node-fetch'
+import {Response} from 'undici'
 
 const currentDate = new Date(2022, 1, 1, 10)
 const expiredDate = new Date(2022, 1, 1, 11)

@@ -12,7 +12,7 @@ import {joinPath} from './path.js'
 import {readFile} from './fs.js'
 import {isExecutable} from 'is-executable'
 import {describe, expect, test, vi} from 'vitest'
-import {Response} from 'node-fetch'
+import {Response} from 'undici'
 
 vi.mock('./http.js')
 
