@@ -1,5 +1,4 @@
 import {unionArrayStrategy} from '../../private/common/array.js'
-import deepMerge from 'deepmerge'
 import {Dictionary, ObjectIterator, PropertyPath, ValueKeyIteratee} from 'lodash'
 import lodashPickBy from 'lodash/pickBy.js'
 import lodashMapValues from 'lodash/mapValues.js'
@@ -26,7 +25,55 @@ export function deepMergeObjects<T1, T2>(
   rhs: Partial<T2>,
   arrayMergeStrategy: (destinationArray: unknown[], sourceArray: unknown[]) => unknown[] = unionArrayStrategy,
 ): T1 & T2 {
-  return deepMerge(lhs, rhs, {arrayMerge: arrayMergeStrategy})
+  return deepMergeValues(lhs, rhs, arrayMergeStrategy) as T1 & T2
+}
+
+type ArrayMergeStrategy = (destinationArray: unknown[], sourceArray: unknown[]) => unknown[]
+
+function isMergeableValue(value: unknown): value is object {
+  return typeof value === 'object' && value !== null && !(value instanceof RegExp) && !(value instanceof Date)
+}
+
+function cloneIfMergeable(value: unknown, arrayMerge: ArrayMergeStrategy): unknown {
+  return isMergeableValue(value) ? deepMergeValues(Array.isArray(value) ? [] : {}, value, arrayMerge) : value
+}
+
+// Skip keys like __proto__ that exist on the prototype chain but are not own enumerable
+// properties, to prevent prototype pollution through merged input.
+function isPropertySafeToMerge(target: unknown, key: string): boolean {
+  if (!isMergeableValue(target)) return true
+  if (!(key in target)) return true
+  return Object.prototype.hasOwnProperty.call(target, key) && Object.prototype.propertyIsEnumerable.call(target, key)
+}
+
+function deepMergeValues(target: unknown, source: unknown, arrayMerge: ArrayMergeStrategy): unknown {
+  const sourceIsArray = Array.isArray(source)
+  const targetIsArray = Array.isArray(target)
+
+  if (sourceIsArray !== targetIsArray) {
+    return cloneIfMergeable(source, arrayMerge)
+  }
+  if (sourceIsArray && targetIsArray) {
+    return arrayMerge(target, source)
+  }
+
+  const destination: {[key: string]: unknown} = {}
+  if (isMergeableValue(target)) {
+    for (const [key, value] of Object.entries(target)) {
+      destination[key] = cloneIfMergeable(value, arrayMerge)
+    }
+  }
+  if (isMergeableValue(source)) {
+    for (const [key, value] of Object.entries(source)) {
+      if (!isPropertySafeToMerge(target, key)) continue
+      if (isMergeableValue(target) && key in target && isMergeableValue(value)) {
+        destination[key] = deepMergeValues((target as {[key: string]: unknown})[key], value, arrayMerge)
+      } else {
+        destination[key] = cloneIfMergeable(value, arrayMerge)
+      }
+    }
+  }
+  return destination
 }
 
 /**
