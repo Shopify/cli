@@ -7,8 +7,6 @@ import {Errors} from '@oclif/core'
 
 import type {AlertCustomSection} from './ui.js'
 
-export {ExtendableError} from 'ts-error'
-
 export enum FatalErrorType {
   Abort,
   AbortSilent,

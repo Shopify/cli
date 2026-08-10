@@ -63,9 +63,85 @@ describe('requestDeviceAuthorization', () => {
     expect(shopifyFetch).toBeCalledWith('https://fqdn.com/oauth/device_authorization', {
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
-      body: 'client_id=clientId&scope=scope1 scope2',
+      body: 'client_id=clientId&scope=scope1+scope2',
     })
     expect(got).toEqual(dataExpected)
+  })
+
+  test('encodes special characters in authorization scopes', async () => {
+    // Given
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope&=%'])
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({body: 'client_id=clientId&scope=scope%26%3D%25'}),
+    )
+  })
+
+  test('omits empty authorization scope values', async () => {
+    // Given
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization([])
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith('https://fqdn.com/oauth/device_authorization', {
+      method: 'POST',
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+      body: 'client_id=clientId',
+    })
+  })
+
+  test('does not include authorization credentials in debug output', async () => {
+    // Given
+    const outputDebug = vi.spyOn(output, 'outputDebug')
+    const outputInfo = vi.spyOn(output, 'outputInfo')
+    const response = new Response(JSON.stringify(data), {status: 200})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    const debugOutput = JSON.stringify(outputDebug.mock.calls)
+    const infoOutput = JSON.stringify(outputInfo.mock.calls)
+    expect(debugOutput).toContain('HTTP 200')
+    expect(debugOutput).toContain('interval=5')
+    expect(debugOutput).toContain('expires_in=3600')
+    expect(debugOutput).not.toContain(data.device_code)
+    expect(debugOutput).not.toContain(data.verification_uri_complete)
+    expect(infoOutput).toContain(data.user_code)
+    expect(infoOutput).toContain(data.verification_uri_complete)
+  })
+
+  test('uses an explicit marker when the response omits the polling interval', async () => {
+    // Given
+    const outputDebug = vi.spyOn(output, 'outputDebug')
+    outputDebug.mockClear()
+    const response = new Response(JSON.stringify({...data, interval: undefined}), {status: 200})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    const debugOutput = JSON.stringify(outputDebug.mock.calls)
+    expect(debugOutput).toContain('interval=not provided')
   })
 
   test('opens the browser directly in an interactive terminal', async () => {

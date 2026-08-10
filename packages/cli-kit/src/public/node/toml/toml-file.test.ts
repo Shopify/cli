@@ -1,8 +1,17 @@
 import {TomlFile, TomlFileError} from './toml-file.js'
+import {decodeToml} from './codec.js'
 import {shouldReportErrorAsUnexpected} from '../error.js'
 import {writeFile, readFile, inTemporaryDirectory} from '../fs.js'
 import {joinPath} from '../path.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+
+vi.mock('./codec.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./codec.js')>()
+  return {
+    ...actual,
+    decodeToml: vi.fn(actual.decodeToml),
+  }
+})
 
 describe('TomlFile', () => {
   describe('read', () => {
@@ -53,6 +62,19 @@ describe('TomlFile', () => {
 
     test('throws TomlFileError if file does not exist', async () => {
       await expect(TomlFile.read('/nonexistent/path/test.toml')).rejects.toThrow(TomlFileError)
+    })
+
+    test('throws the original error when decoding fails with an error that lacks row/col information', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'test.toml')
+        await writeFile(path, 'name = "app"\n')
+
+        vi.mocked(decodeToml).mockImplementationOnce(() => {
+          throw new Error('Some internal decode error')
+        })
+
+        await expect(TomlFile.read(path)).rejects.toThrow('Some internal decode error')
+      })
     })
   })
 

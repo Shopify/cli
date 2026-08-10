@@ -10,7 +10,7 @@ import {
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
@@ -173,7 +173,11 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
   },
 ]
 
-const outputOptions: OutputContextOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
+const outputOptions: OutputContextOptions = {
+  stdout: process.stdout,
+  stderr: process.stderr,
+  signal: new AbortController().signal,
+}
 
 describe('file-watcher events', () => {
   test('The file watcher is started with the correct paths and options', async () => {

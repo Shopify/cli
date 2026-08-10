@@ -8,7 +8,7 @@ import {pollAppLogs} from '../../app-logs/dev/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import * as appLogsUtils from '../../app-logs/utils.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
@@ -84,7 +84,7 @@ describe('app-logs-polling', () => {
     beforeEach(async () => {
       stdout = {write: vi.fn()}
       stderr = {write: vi.fn()}
-      abortSignal = new AbortSignal()
+      abortSignal = new AbortController().signal
       subscribeToAppLogs = vi.fn()
 
       // Create function extension

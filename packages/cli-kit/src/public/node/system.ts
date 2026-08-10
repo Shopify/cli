@@ -12,7 +12,8 @@ import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
 import {delimiter} from 'pathe'
 
-import {fstatSync} from 'fs'
+import {fstatSync, existsSync, readFileSync} from 'fs'
+import {release} from 'os'
 import {setTimeout} from 'timers/promises'
 import type {Writable, Readable} from 'stream'
 
@@ -353,14 +354,47 @@ export function isCI(): boolean {
   return isTruthy(process.env.CI)
 }
 
+interface WslDetectionOverrides {
+  platform?: NodeJS.Platform
+  kernelRelease?: string
+  procVersion?: string
+  insideContainer?: boolean
+}
+
 /**
  * Check if the current environment is a WSL environment.
  *
+ * @param overrides - Detection inputs, read from the system when not provided. Intended for tests.
  * @returns True if the current environment is a WSL environment.
  */
-export async function isWsl(): Promise<boolean> {
-  const wsl = await import('is-wsl')
-  return wsl.default
+// Mirrors https://github.com/sindresorhus/is-wsl: WSL reports "microsoft" in the kernel
+// release, but containers running inside WSL shouldn't count.
+export async function isWsl(overrides: WslDetectionOverrides = {}): Promise<boolean> {
+  const platform = overrides.platform ?? process.platform
+  if (platform !== 'linux') return false
+  const insideContainer = () => overrides.insideContainer ?? isInsideContainer()
+  if ((overrides.kernelRelease ?? release()).toLowerCase().includes('microsoft')) {
+    return !insideContainer()
+  }
+  try {
+    const procVersion = overrides.procVersion ?? readFileSync('/proc/version', 'utf8')
+    return procVersion.toLowerCase().includes('microsoft') ? !insideContainer() : false
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+// Mirrors the is-inside-container and is-docker packages: Podman creates /run/.containerenv,
+// Docker creates /.dockerenv or mentions "docker" in the process cgroup.
+function isInsideContainer(): boolean {
+  if (existsSync('/run/.containerenv') || existsSync('/.dockerenv')) return true
+  try {
+    return readFileSync('/proc/self/cgroup', 'utf8').includes('docker')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
 /**

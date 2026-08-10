@@ -1,10 +1,12 @@
 import {
   Notification,
+  fetchNotifications,
   fetchNotificationsInBackground,
   filterNotifications,
   showNotificationsIfNeeded,
 } from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
+import {fetch} from './http.js'
 import {sniffForJson} from './path.js'
 import {exec} from './system.js'
 import {cacheRetrieve} from '../../private/node/conf-store.js'
@@ -14,6 +16,7 @@ vi.mock('./ui.js')
 vi.mock('../../private/node/conf-store.js')
 vi.mock('./path.js')
 vi.mock('./system.js')
+vi.mock('./http.js')
 
 const betweenVersins1and2: Notification = {
   id: 'betweenVersins1and2',
@@ -454,5 +457,44 @@ describe('fetchNotificationsInBackground', () => {
       ['/path/to/shopify', 'notifications', 'list', '--ignore-errors'],
       expect.anything(),
     )
+  })
+})
+
+describe('fetchNotifications', () => {
+  test('uses the default URL when SHOPIFY_CLI_NOTIFICATIONS_URL is not secure', async () => {
+    // Given
+    vi.stubEnv('SHOPIFY_CLI_NOTIFICATIONS_URL', 'http://malicious.com/notifications.json')
+    vi.mocked(fetch).mockResolvedValue({
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({notifications: []})),
+    } as any)
+
+    // When
+    await fetchNotifications()
+
+    // Then
+    expect(fetch).toHaveBeenCalledWith(
+      'https://cdn.shopify.com/static/cli/notifications.json',
+      undefined,
+      expect.anything(),
+    )
+    vi.unstubAllEnvs()
+  })
+
+  test('uses the provided URL when SHOPIFY_CLI_NOTIFICATIONS_URL is secure', async () => {
+    // Given
+    const secureUrl = 'https://my-secure-repo.com/notifications.json'
+    vi.stubEnv('SHOPIFY_CLI_NOTIFICATIONS_URL', secureUrl)
+    vi.mocked(fetch).mockResolvedValue({
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({notifications: []})),
+    } as any)
+
+    // When
+    await fetchNotifications()
+
+    // Then
+    expect(fetch).toHaveBeenCalledWith(secureUrl, undefined, expect.anything())
+    vi.unstubAllEnvs()
   })
 })
