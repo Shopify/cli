@@ -5,7 +5,7 @@ import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
@@ -104,7 +104,7 @@ export class AppEventWatcher extends EventEmitter {
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'dev-bundle')
     // Default options, to be overwritten by the start method
-    this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
+    this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortController().signal}
     this.fileWatcher = fileWatcher
   }
 
