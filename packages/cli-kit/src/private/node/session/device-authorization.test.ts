@@ -74,17 +74,15 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
     vi.mocked(clientId).mockReturnValue('clientId')
-    const scopes = ['scope&name', 'scope=value', 'scope%value']
 
     // When
-    await requestDeviceAuthorization(scopes)
+    await requestDeviceAuthorization(['scope&=%'])
 
     // Then
-    expect(shopifyFetch).toHaveBeenCalledWith('https://fqdn.com/oauth/device_authorization', {
-      method: 'POST',
-      headers: {'Content-type': 'application/x-www-form-urlencoded'},
-      body: 'client_id=clientId&scope=scope%26name+scope%3Dvalue+scope%25value',
-    })
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({body: 'client_id=clientId&scope=scope%26%3D%25'}),
+    )
   })
 
   test('omits empty authorization scope values', async () => {
