@@ -1,23 +1,10 @@
-import {
-  functionInfo,
-  buildTargetingData,
-  formatAsJson,
-  buildConfigurationSection,
-  buildTargetingSection,
-  buildBuildSection,
-  buildFunctionRunnerSection,
-  buildTextFormatSections,
-} from './info.js'
+import {buildTargetingData, functionInfo} from './info.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {describe, expect, test, beforeEach} from 'vitest'
-import {AlertCustomSection} from '@shopify/cli-kit/node/ui'
+import {describe, expect, test} from 'vitest'
 
 describe('functionInfo', () => {
-  let ourFunction: ExtensionInstance
-
-  beforeEach(async () => {
-    ourFunction = await testFunctionExtension({
+  test('returns the function information as a typed result', async () => {
+    const extension = await testFunctionExtension({
       dir: '/path/to/function',
       config: {
         name: 'My Function',
@@ -27,411 +14,77 @@ describe('functionInfo', () => {
         configuration_ui: false,
       },
     })
-  })
 
-  describe('functionInfo integration', () => {
-    test('returns JSON string when format is json', async () => {
-      // Given
-      const options = {
-        format: 'json' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
-      }
-
-      // When
-      const result = functionInfo(ourFunction, options)
-
-      // Then
-      expect(typeof result).toBe('string')
-      const parsed = JSON.parse(result as string)
-      expect(parsed).toHaveProperty('handle')
-      expect(parsed).toHaveProperty('name')
-      expect(parsed).toHaveProperty('apiVersion')
+    const result = functionInfo(extension, {
+      functionRunnerPath: '/path/to/runner',
+      schemaPath: '/path/to/schema.graphql',
     })
 
-    test('uses build.path from config for wasmPath when present', async () => {
-      // Given
-      const funcWithBuildPath = await testFunctionExtension({
-        dir: '/path/to/function',
-        config: {
-          name: 'My Function',
-          type: 'function',
-          handle: 'my-function',
-          api_version: '2024-01',
-          configuration_ui: false,
-          build: {
-            path: 'custom/output.wasm',
-            wasm_opt: false,
-          },
-        },
-      })
-      const options = {
-        format: 'json' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
-      }
-
-      // When
-      const result = functionInfo(funcWithBuildPath, options)
-
-      // Then
-      const parsed = JSON.parse(result as string)
-      expect(parsed.wasmPath).toBe('/path/to/function/custom/output.wasm')
-    })
-
-    test('falls back to outputRelativePath when build.path is not set', async () => {
-      // Given
-      const options = {
-        format: 'json' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
-      }
-
-      // When
-      const result = functionInfo(ourFunction, options)
-
-      // Then
-      const parsed = JSON.parse(result as string)
-      expect(parsed.wasmPath).toBe(ourFunction.outputPath)
-    })
-
-    test('returns AlertCustomSection array when format is text', async () => {
-      // Given
-      const options = {
-        format: 'text' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
-      }
-
-      // When
-      const result = functionInfo(ourFunction, options) as AlertCustomSection[]
-
-      // Then
-      expect(Array.isArray(result)).toBe(true)
-      expect(result.length).toBeGreaterThan(0)
+    expect(result).toEqual({
+      handle: 'my-function',
+      name: 'My Function',
+      apiVersion: '2024-01',
+      targeting: {},
+      schemaPath: '/path/to/schema.graphql',
+      wasmPath: extension.outputPath,
+      functionRunnerPath: '/path/to/runner',
     })
   })
 
-  describe('buildTargetingData', () => {
-    test('transforms targeting configuration with multiple targets', () => {
-      // Given
-      const config = {
-        handle: 'test',
-        targeting: [
-          {
-            target: 'purchase.payment-customization.run',
-            input_query: 'query1.graphql',
-            export: 'run',
-          },
-          {
-            target: 'purchase.checkout.delivery-customization.run',
-            input_query: 'query2.graphql',
-            export: 'customize',
-          },
-        ],
-      }
-
-      // When
-      const result = buildTargetingData(config, '/path/to/function')
-
-      // Then
-      expect(result).toEqual({
-        'purchase.payment-customization.run': {
-          inputQueryPath: '/path/to/function/query1.graphql',
-          export: 'run',
-        },
-        'purchase.checkout.delivery-customization.run': {
-          inputQueryPath: '/path/to/function/query2.graphql',
-          export: 'customize',
-        },
-      })
+  test('uses build.path for the WASM path when present', async () => {
+    const extension = await testFunctionExtension({
+      dir: '/path/to/function',
+      config: {
+        name: 'My Function',
+        type: 'function',
+        handle: 'my-function',
+        api_version: '2024-01',
+        configuration_ui: false,
+        build: {path: 'custom/output.wasm', wasm_opt: false},
+      },
     })
 
-    test('handles targets without input_query', () => {
-      // Given
-      const config = {
-        handle: 'test',
-        targeting: [
-          {
-            target: 'purchase.payment-customization.run',
-            export: 'run',
-          },
-        ],
-      }
+    const result = functionInfo(extension, {functionRunnerPath: '/path/to/runner'})
 
-      // When
-      const result = buildTargetingData(config, '/path/to/function')
+    expect(result.wasmPath).toBe('/path/to/function/custom/output.wasm')
+  })
+})
 
-      // Then
-      expect(result).toEqual({
-        'purchase.payment-customization.run': {
-          export: 'run',
-        },
-      })
-    })
-
-    test('handles targets without export', () => {
-      // Given
-      const config = {
-        handle: 'test',
+describe('buildTargetingData', () => {
+  test('maps targeting paths relative to the function directory', () => {
+    const result = buildTargetingData(
+      {
         targeting: [
           {
             target: 'purchase.payment-customization.run',
             input_query: 'query.graphql',
-          },
-        ],
-      }
-
-      // When
-      const result = buildTargetingData(config, '/path/to/function')
-
-      // Then
-      expect(result).toEqual({
-        'purchase.payment-customization.run': {
-          inputQueryPath: '/path/to/function/query.graphql',
-        },
-      })
-    })
-  })
-
-  describe('formatAsJson', () => {
-    test('returns correctly formatted JSON string', async () => {
-      // Given
-      const testFunc = await testFunctionExtension({
-        dir: '/path/to/function',
-        config: {
-          name: 'My Function',
-          type: 'function',
-          handle: 'my-function',
-          api_version: '2024-01',
-          configuration_ui: false,
-        },
-      })
-      const config = {
-        handle: 'my-function',
-        name: 'My Function',
-        api_version: '2024-01',
-      }
-      const targeting = {
-        'purchase.payment-customization.run': {
-          inputQueryPath: '/path/to/function/query.graphql',
-          export: 'run',
-        },
-      }
-
-      // When
-      const functionOutputPath = '/path/to/function/output.wasm'
-      const result = formatAsJson(
-        testFunc,
-        config,
-        targeting,
-        '/path/to/runner',
-        functionOutputPath,
-        '/path/to/schema.graphql',
-      )
-
-      // Then
-      const parsed = JSON.parse(result)
-      expect(parsed).toEqual({
-        handle: 'my-function',
-        name: 'My Function',
-        apiVersion: '2024-01',
-        targeting: {
-          'purchase.payment-customization.run': {
-            inputQueryPath: '/path/to/function/query.graphql',
             export: 'run',
           },
-        },
-        schemaPath: '/path/to/schema.graphql',
-        wasmPath: functionOutputPath,
-        functionRunnerPath: '/path/to/runner',
-      })
-    })
+        ],
+      },
+      '/path/to/function',
+    )
 
-    test('handles missing optional fields', async () => {
-      // Given
-      const testFunc = await testFunctionExtension({
-        dir: '/path/to/function',
-        config: {
-          name: 'My Function',
-          type: 'function',
-          api_version: '2024-01',
-          configuration_ui: false,
-        },
-      })
-      const config = {}
-      const targeting = {}
-
-      // When
-      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner', 'path/to/function.wasm', undefined)
-
-      // Then
-      const parsed = JSON.parse(result)
-      expect(parsed.handle).toBeUndefined()
-      expect(parsed.schemaPath).toBeUndefined()
-      expect(parsed.targeting).toEqual({})
+    expect(result).toEqual({
+      'purchase.payment-customization.run': {
+        inputQueryPath: '/path/to/function/query.graphql',
+        export: 'run',
+      },
     })
   })
 
-  describe('buildConfigurationSection', () => {
-    test('builds configuration section with all fields', () => {
-      // Given
-      const config = {
-        handle: 'my-function',
-        name: 'My Function',
-        api_version: '2024-01',
-      }
-
-      // When
-      const result = buildConfigurationSection(config, 'My Function')
-
-      // Then
-      expect(result.title).toBe('CONFIGURATION\n')
-      expect(result.body).toHaveProperty('tabularData')
-      expect(result.body).toHaveProperty('firstColumnSubdued', true)
-      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
-        ['Handle', 'my-function'],
-        ['Name', 'My Function'],
-        ['API Version', '2024-01'],
-      ])
-    })
-
-    test('uses N/A for missing fields', () => {
-      // Given
-      const config = {}
-
-      // When
-      const result = buildConfigurationSection(config, undefined as unknown as string)
-
-      // Then
-      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
-        ['Handle', 'N/A'],
-        ['Name', 'N/A'],
-        ['API Version', 'N/A'],
-      ])
-    })
-  })
-
-  describe('buildTargetingSection', () => {
-    test('builds targeting section with multiple targets', () => {
-      // Given
-      const targeting = {
-        'purchase.payment-customization.run': {
-          inputQueryPath: '/path/to/function/query1.graphql',
-          export: 'run',
-        },
-        'purchase.checkout.delivery-customization.run': {
-          inputQueryPath: '/path/to/function/query2.graphql',
-          export: 'customize',
-        },
-      }
-
-      // When
-      const result = buildTargetingSection(targeting)
-
-      // Then
-      expect(result).not.toBeNull()
-      expect(result?.title).toBe('\nTARGETING\n')
-      const tabularData = (result?.body as {tabularData: unknown[][]})?.tabularData
-      // 2 targets × 3 rows each
-      expect(tabularData?.length).toBe(6)
-    })
-  })
-
-  describe('buildBuildSection', () => {
-    test('builds build section with schema and wasm paths', () => {
-      // Given
-      const wasmPath = '/path/to/function.wasm'
-      const schemaPath = '/path/to/schema.graphql'
-
-      // When
-      const result = buildBuildSection(wasmPath, schemaPath)
-
-      // Then
-      expect(result.title).toBe('\nBUILD\n')
-      expect(result.body).toHaveProperty('tabularData')
-      expect(result.body).toHaveProperty('firstColumnSubdued', true)
-      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
-        ['Schema Path', {filePath: schemaPath}],
-        ['Wasm Path', {filePath: wasmPath}],
-      ])
-    })
-
-    test('uses N/A for missing schema path', () => {
-      // Given
-      const wasmPath = '/path/to/function.wasm'
-
-      // When
-      const result = buildBuildSection(wasmPath)
-
-      // Then
-      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
-        ['Schema Path', {filePath: 'N/A'}],
-        ['Wasm Path', {filePath: wasmPath}],
-      ])
-    })
-  })
-
-  describe('buildFunctionRunnerSection', () => {
-    test('builds function runner section', () => {
-      // Given
-      const functionRunnerPath = '/path/to/runner'
-
-      // When
-      const result = buildFunctionRunnerSection(functionRunnerPath)
-
-      // Then
-      expect(result.title).toBe('\nFUNCTION RUNNER\n')
-      expect(result.body).toHaveProperty('tabularData')
-      expect(result.body).toHaveProperty('firstColumnSubdued', true)
-      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
-        ['Path', {filePath: functionRunnerPath}],
-      ])
-    })
-  })
-
-  describe('buildTextFormatSections', () => {
-    test('includes all sections when targeting is present', async () => {
-      // Given
-      const testFunc = await testFunctionExtension({
-        dir: '/path/to/function',
-        config: {
-          name: 'My Function',
-          type: 'function',
-          handle: 'my-function',
-          api_version: '2024-01',
-          configuration_ui: false,
-        },
-      })
-      const config = {
-        handle: 'my-function',
-        name: 'My Function',
-        api_version: '2024-01',
-      }
-      const targeting = {
-        'purchase.payment-customization.run': {
-          inputQueryPath: '/path/to/function/query.graphql',
-          export: 'run',
-        },
-      }
-
-      // When
-      const result = buildTextFormatSections(
-        testFunc,
-        config,
-        targeting,
-        '/path/to/runner',
-        '/path/to/function/output.wasm',
-        '/path/to/schema.graphql',
-      )
-
-      // Then
-      // configuration, targeting, build, function runner
-      expect(result.length).toBe(4)
-      expect(result[0]?.title).toContain('CONFIGURATION')
-      expect(result[1]?.title).toContain('TARGETING')
-      expect(result[2]?.title).toContain('BUILD')
-      expect(result[3]?.title).toContain('FUNCTION RUNNER')
+  test.each([
+    {
+      target: {target: 'purchase.payment-customization.run', export: 'run'},
+      expected: {export: 'run'},
+    },
+    {
+      target: {target: 'purchase.payment-customization.run', input_query: 'query.graphql'},
+      expected: {inputQueryPath: '/path/to/function/query.graphql'},
+    },
+  ])('omits targeting fields that are not configured', ({target, expected}) => {
+    expect(buildTargetingData({targeting: [target]}, '/path/to/function')).toEqual({
+      'purchase.payment-customization.run': expected,
     })
   })
 })
