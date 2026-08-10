@@ -121,7 +121,6 @@
     "bottleneck": "2.19.5",
     "chalk": "5.6.2",
     "change-case": "4.1.2",
-    "color-json": "3.0.5",
     "conf": "11.0.2",
     "deepmerge": "4.3.1",
     "dotenv": "16.6.1",

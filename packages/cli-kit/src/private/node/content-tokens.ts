@@ -3,7 +3,6 @@ import {OutputMessage, stringifyMessage} from '../../public/node/output.js'
 import {relativizePath} from '../../public/node/path.js'
 import ansiEscapes from 'ansi-escapes'
 import supportsHyperlinks from 'supports-hyperlinks'
-import cjs from 'color-json'
 import type {Change} from 'diff'
 
 export abstract class ContentToken<T> {
@@ -49,11 +48,36 @@ export class CommandContentToken extends ContentToken<OutputMessage> {
   }
 }
 
+// Token-matching regex taken from the color-json package this implementation replaces:
+// https://www.npmjs.com/package/color-json
+const jsonTokenRegex =
+  /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g
+
+function colorJson(input: unknown): string {
+  const object = typeof input === 'string' ? JSON.parse(input) : input
+  const json = JSON.stringify(object, undefined, 2)
+  const colorized = json.replace(jsonTokenRegex, (match) => {
+    if (match.startsWith('"')) {
+      return match.endsWith(':') ? colors.white(match) : colors.green(match)
+    }
+    if (match === 'true' || match === 'false') {
+      return colors.cyan(match)
+    }
+    if (match === 'null') {
+      return colors.red(match)
+    }
+    return colors.magenta(match)
+  })
+  // The outer yellow colors the structural characters (braces, brackets, commas);
+  // chalk reopens it after each nested token color.
+  return colors.yellow(colorized)
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class JsonContentToken extends ContentToken<any> {
   output(): string {
     try {
-      return cjs(stringifyMessage(this.value) ?? {})
+      return colorJson(stringifyMessage(this.value) ?? {})
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_) {
       return JSON.stringify(stringifyMessage(this.value) ?? {}, null, 2)
