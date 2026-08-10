@@ -15,10 +15,19 @@ import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 
 import {afterEach, expect, describe, vi, test} from 'vitest'
+import * as os from 'os'
+import type {NetworkInterfaceInfo} from 'os'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
 vi.mock('../environment.js')
+vi.mock('os', async (importOriginal) => {
+  const actual = await importOriginal<typeof os>()
+  return {
+    ...actual,
+    networkInterfaces: vi.fn(actual.networkInterfaces),
+  }
+})
 
 describe('isTerminalInteractive', () => {
   const originalIsTTY = process.stdout.isTTY
@@ -207,12 +216,57 @@ describe('analitycsDisabled', () => {
 })
 
 describe('macAddress', () => {
+  function networkInterface(mac: string, internal: boolean): NetworkInterfaceInfo {
+    return {mac, internal} as NetworkInterfaceInfo
+  }
+
   test('returns any mac address value', async () => {
     // When
     const got = await macAddress()
 
     // Then
     expect(got).not.toBeUndefined()
+  })
+
+  test('prefers the mac address of an external interface', async () => {
+    // Given
+    vi.mocked(os.networkInterfaces).mockReturnValue({
+      lo0: [networkInterface('aa:aa:aa:aa:aa:aa', true)],
+      en0: [networkInterface('bb:bb:bb:bb:bb:bb', false)],
+    })
+
+    // When
+    const got = await macAddress()
+
+    // Then
+    expect(got).toBe('bb:bb:bb:bb:bb:bb')
+  })
+
+  test('falls back to an internal interface when no external interface has a mac address', async () => {
+    // Given
+    vi.mocked(os.networkInterfaces).mockReturnValue({
+      lo0: [networkInterface('aa:aa:aa:aa:aa:aa', true)],
+      en0: [networkInterface('00:00:00:00:00:00', false)],
+    })
+
+    // When
+    const got = await macAddress()
+
+    // Then
+    expect(got).toBe('aa:aa:aa:aa:aa:aa')
+  })
+
+  test('returns a random value when no interface has a mac address', async () => {
+    // Given
+    vi.mocked(os.networkInterfaces).mockReturnValue({
+      lo0: [networkInterface('00:00:00:00:00:00', true)],
+    })
+
+    // When
+    const got = await macAddress()
+
+    // Then
+    expect(got).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
   })
 })
 

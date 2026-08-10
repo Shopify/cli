@@ -51,6 +51,11 @@ async function gitCommand(args: string[], directory?: string): Promise<string> {
  * @param initialBranch - The name of the initial branch.
  */
 export async function initializeGitRepository(directory: string, initialBranch = 'main'): Promise<void> {
+  // Guard against command/argument injection attacks if initialBranch starts with '-'
+  if (initialBranch.startsWith('-')) {
+    throw new AbortError(`Invalid initial branch name: ${initialBranch}. Branch names can't start with a hyphen.`)
+  }
+
   outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+

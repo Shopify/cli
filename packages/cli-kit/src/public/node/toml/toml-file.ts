@@ -140,11 +140,11 @@ export class TomlFile {
   private decode(raw: string): JsonMapType {
     try {
       return decodeToml(raw)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      if (err.line !== undefined && err.col !== undefined) {
-        const description = String(err.message).split('\n')[0] ?? 'Invalid TOML'
-        throw new TomlFileError(this.path, `${description} at row ${err.line}, col ${err.col}`)
+    } catch (err) {
+      const tomlError = err as {line?: number; col?: number; message?: string}
+      if (tomlError.line !== undefined && tomlError.col !== undefined) {
+        const description = String(tomlError.message).split('\n')[0] ?? 'Invalid TOML'
+        throw new TomlFileError(this.path, `${description} at row ${tomlError.line}, col ${tomlError.col}`)
       }
       throw err
     }
