@@ -60,6 +60,10 @@ function getBackendIp(projectName: string): string {
   }
 }
 
+// NOTE TO UPDATERS: this vendored file diverges from upstream. The original used the
+// `network-interfaces` package (`ni.fromIp(backendIp, {internal: true, ipVersion: 4})`);
+// we replaced it with this helper to drop that dependency. If you sync a newer version
+// of this file, keep this replacement (or port it) instead of reintroducing the package.
 function assertInternalIpv4Address(ip: string): void {
   const matches = Object.values(os.networkInterfaces())
     .flat()

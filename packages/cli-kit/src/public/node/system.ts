@@ -359,14 +359,27 @@ export function isCI(): boolean {
  *
  * @returns True if the current environment is a WSL environment.
  */
+// Mirrors https://github.com/sindresorhus/is-wsl: WSL reports "microsoft" in the kernel
+// release, but containers running inside WSL shouldn't count.
 export async function isWsl(): Promise<boolean> {
   if (process.platform !== 'linux') return false
-  // WSL reports "microsoft" in the kernel release, but containers running inside WSL shouldn't count.
-  const insideContainer = existsSync('/run/.containerenv') || existsSync('/.dockerenv')
-  if (insideContainer) return false
-  if (release().toLowerCase().includes('microsoft')) return true
+  if (release().toLowerCase().includes('microsoft')) {
+    return !isInsideContainer()
+  }
   try {
-    return readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')
+    return readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft') ? !isInsideContainer() : false
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+// Mirrors the is-inside-container and is-docker packages: Podman creates /run/.containerenv,
+// Docker creates /.dockerenv or mentions "docker" in the process cgroup.
+function isInsideContainer(): boolean {
+  if (existsSync('/run/.containerenv') || existsSync('/.dockerenv')) return true
+  try {
+    return readFileSync('/proc/self/cgroup', 'utf8').includes('docker')
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false

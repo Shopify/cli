@@ -276,7 +276,9 @@ export function ciPlatform(
 }
 
 /**
- * Returns the first mac address found.
+ * Returns the first mac address found, preferring external interfaces. Returns the
+ * all-zeroes address when no interface has a MAC, so callers hashing it as a device
+ * id get a deterministic value instead of an error.
  *
  * @returns Mac address.
  */
@@ -286,8 +288,7 @@ export async function macAddress(): Promise<string> {
     .flat()
     .filter((iface): iface is NonNullable<typeof iface> => Boolean(iface && iface.mac !== emptyMac))
   const bestInterface = interfacesWithMac.find((iface) => !iface.internal) ?? interfacesWithMac[0]
-  if (!bestInterface) throw new Error('No network interface with a MAC address was found')
-  return bestInterface.mac
+  return bestInterface?.mac ?? emptyMac
 }
 
 /**
