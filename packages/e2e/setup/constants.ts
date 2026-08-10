@@ -18,6 +18,8 @@ export const CLI_TIMEOUT = {
   medium: 3 * 60_000,
   /** 5 min — slow commands (create app, scaffold) */
   long: 5 * 60_000,
+  /** 6 min — store commands that poll for provisioning or deletion */
+  store: 6 * 60_000,
 } as const
 
 /** Browser interaction timeouts */
