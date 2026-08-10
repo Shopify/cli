@@ -1,6 +1,6 @@
 import {listBusinessPlatformStores} from './list/bp-source.js'
 import {STORE_LIST_LIMIT} from './list/constants.js'
-import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './list/types.js'
+import {type StoreListEntry, type StoreListOrganization, type StoreListResult} from './list/types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isTTY, renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
@@ -10,20 +10,19 @@ interface ListStoresOptions {
   organizationId?: number
 }
 
-export async function listStores(options: ListStoresOptions = {}): Promise<ListStoresResult> {
+export async function listStores(options: ListStoresOptions = {}): Promise<StoreListResult> {
   const token = await ensureAuthenticatedBusinessPlatform()
   const organizationsResult = await fetchOrganizationsWithAccessInfo(token)
 
   if (!organizationsResult.currentUserResolved) {
     return {
       stores: [],
-      source: 'organization',
       notice: "Couldn't resolve a Shopify account for the current CLI session.",
     }
   }
 
   if (organizationsResult.organizations.length === 0) {
-    return {stores: [], source: 'organization'}
+    return {stores: []}
   }
 
   if (!options.organizationId && organizationsResult.organizations.length > 1 && !isTTY()) {
@@ -43,7 +42,6 @@ export async function listStores(options: ListStoresOptions = {}): Promise<ListS
 
   return {
     stores,
-    source: 'organization',
     organization: storeListOrganization(selectedOrganization),
     ...(truncated ? {truncated: true} : {}),
   }

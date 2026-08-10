@@ -1,5 +1,6 @@
 import {listStores} from '../../services/store/list.js'
-import {writeStoreListResult} from '../../services/store/list/result.js'
+import {presentStoreListResult} from '../../services/store/list/result.js'
+import {storeListJsonOutputSchema} from '../../services/store/list/types.js'
 import {storeFlags} from '../../flags.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -7,6 +8,10 @@ import {Flags} from '@oclif/core'
 
 export default class StoreList extends StoreCommand {
   static summary = 'List stores in a Shopify organization.'
+
+  static get jsonOutputSchema() {
+    return storeListJsonOutputSchema
+  }
 
   static descriptionWithMarkdown = `Lists stores in a Shopify organization available to the current CLI account.
 
@@ -35,6 +40,6 @@ Run \`<%= config.bin %> organization list\` to find organization IDs.`
     const {flags} = await this.parse(StoreList)
     const result = await listStores({organizationId: flags['organization-id']})
 
-    writeStoreListResult(result, flags.json ? 'json' : 'text')
+    presentStoreListResult(result, flags.json ? 'json' : 'text')
   }
 }

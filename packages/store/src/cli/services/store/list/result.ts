@@ -1,41 +1,31 @@
 import {STORE_LIST_LIMIT} from './constants.js'
-import {type ListStoresResult, type StoreListEntry} from './types.js'
+import {encodeStoreListJson} from './codec.js'
+import {type StoreListEntry, type StoreListResult} from './types.js'
 import {extractSubdomain, formatShortDate} from '../display.js'
 import {storeTypeLabel} from '../store-type.js'
 import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 
-export function writeStoreListResult(result: ListStoresResult, format: 'text' | 'json'): void {
+export function presentStoreListResult(result: StoreListResult, format: 'text' | 'json'): void {
   // Human diagnostics always go to stderr so they never corrupt the JSON document on stdout, and so
   // the truncation signal is visible in both formats.
   if (result.notice) outputWarn(result.notice)
   if (result.truncated) outputWarn(truncationWarning(result))
 
   if (format === 'json') {
-    outputResult(
-      JSON.stringify(
-        {
-          stores: result.stores,
-          ...(result.organization ? {organization: result.organization} : {}),
-          ...(result.notice ? {notice: result.notice} : {}),
-          ...(result.truncated ? {truncated: true} : {}),
-        },
-        null,
-        2,
-      ),
-    )
+    outputResult(encodeStoreListJson(result))
     return
   }
 
   renderTextResult(result)
 }
 
-function truncationWarning(result: ListStoresResult): string {
+function truncationWarning(result: StoreListResult): string {
   const organization = result.organization ? ` in ${result.organization.name}` : ' in this organization'
   return `Showing the ${STORE_LIST_LIMIT} most recent stores${organization}. More stores exist.`
 }
 
-function renderTextResult(result: ListStoresResult): void {
+function renderTextResult(result: StoreListResult): void {
   if (result.stores.length === 0) {
     outputInfo(emptyStateMessage(result))
     return
@@ -66,7 +56,7 @@ function renderOrganizationTable(stores: StoreListEntry[]): void {
   })
 }
 
-function emptyStateMessage(result: ListStoresResult): string {
+function emptyStateMessage(result: StoreListResult): string {
   if (result.notice) {
     return [
       'No stores were returned for the current CLI session.',
