@@ -50,7 +50,7 @@ export async function createDevStoreWithCli(
 
 /** Request development store deletion with the CLI and report whether the CLI confirmed it. */
 export async function deleteDevStoreWithCli(options: {
-  cli: CLIProcess
+  cli: Pick<CLIProcess, 'exec'>
   storeFqdn: string
   orgId: string
 }): Promise<boolean> {
@@ -257,64 +257,6 @@ export async function isStoreAppsEmpty(page: Page): Promise<boolean> {
   // Fallback: no "More actions" menu buttons in the app list
   const menuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
   return menuButtons.length === 0
-}
-
-/**
- * Delete a store via the admin /settings/plan/cancel page. Returns true if deleted.
- *
- * Gate: store must have zero apps installed.
- * Caller should verify via `isStoreAppsEmpty` and skip this call if apps remain,
- * otherwise step 4 will exhaust its micro-retry (Delete button never enables) and throw.
- *
- * Single attempt — caller owns the retry loop.
- */
-export async function deleteStore(page: Page, storeSlug: string): Promise<boolean> {
-  // Step 1: Navigate to /settings/plan/cancel (auto-opens the "Review before deleting store" modal).
-  const cancelUrl = `https://admin.shopify.com/store/${storeSlug}/settings/plan/cancel`
-  await page.goto(cancelUrl, {waitUntil: 'domcontentloaded'})
-
-  // Step 2: Race — modal renders (normal) vs. redirect to /access_account (already deleted).
-  // The redirect can fire post-DOMContentLoaded, so a URL check right after goto is too early.
-  const modal = page.locator('.Polaris-Modal-Dialog__Modal:has-text("Review before deleting store")')
-  const checkbox = modal.locator('input[type="checkbox"]')
-  try {
-    await Promise.race([
-      checkbox.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}),
-      page.waitForURL(/access_account/, {timeout: BROWSER_TIMEOUT.max}),
-    ])
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    // Both branches timed out — fall through so outer retry can decide.
-  }
-  if (page.url().includes('access_account')) return true
-
-  // Step 3: Check the confirmation checkbox (enables the Delete button).
-  await checkbox.check()
-
-  // Step 4: Wait for the Delete button to enable, then click.
-  // Micro-retry for flaky checkbox state — different concern from caller's retry loop.
-  const confirmButton = modal.locator('button:has-text("Delete store")')
-  for (let i = 1; i <= 3; i++) {
-    if (await confirmButton.isEnabled().catch(() => false)) break
-    if (i === 3) throw new Error('Confirm button still disabled')
-    await checkbox.check()
-    await page.waitForTimeout(BROWSER_TIMEOUT.short)
-  }
-  await confirmButton.click()
-
-  // Step 5: Wait for the delete POST to finish before reloading.
-  try {
-    await page.waitForLoadState('networkidle', {timeout: BROWSER_TIMEOUT.max})
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    // networkidle can miss on busy pages — fall through to reload anyway.
-  }
-
-  // Step 6: Reload /settings/plan/cancel to confirm deletion.
-  // Success → redirect to /access_account.
-  // Failure → still on /settings/plan/cancel
-  await page.reload({waitUntil: 'domcontentloaded'})
-  return page.url().includes('access_account')
 }
 
 // ---------------------------------------------------------------------------
