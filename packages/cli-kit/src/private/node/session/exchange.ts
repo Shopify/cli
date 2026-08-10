@@ -5,15 +5,15 @@ import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
-import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
+import {AbortError, BugError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
 import {outputDebug} from '../../../public/node/output.js'
 
 import * as jose from 'jose'
 
-export class InvalidGrantError extends ExtendableError {}
-export class InvalidRequestError extends ExtendableError {}
+export class InvalidGrantError extends Error {}
+export class InvalidRequestError extends Error {}
 class InvalidTargetError extends AbortError {}
 
 export interface ExchangeScopes {

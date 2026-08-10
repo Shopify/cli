@@ -7,17 +7,6 @@ import {Errors} from '@oclif/core'
 
 import type {AlertCustomSection} from './ui.js'
 
-/**
- * A base error class whose subclasses report their own class name in the `name` property,
- * so they render correctly when logged or serialized.
- */
-export class ExtendableError extends Error {
-  constructor(message?: string) {
-    super(message)
-    this.name = new.target.name
-  }
-}
-
 export enum FatalErrorType {
   Abort,
   AbortSilent,
