@@ -1,7 +1,7 @@
 import {assertConnectable, getIpFromHosts} from './network/index.js'
 import {assertCompatibleEnvironment} from './env.js'
-import * as ni from 'network-interfaces'
 import fs from 'node:fs'
+import os from 'node:os'
 
 import type {HostOptions} from './types.js'
 
@@ -52,11 +52,24 @@ function assertRunning2024(projectName: string): void {
 function getBackendIp(projectName: string): string {
   try {
     const backendIp = resolveBackendHost(projectName)
-    ni.fromIp(backendIp, {internal: true, ipVersion: 4})
+    assertInternalIpv4Address(backendIp)
 
     return backendIp
   } catch (error) {
     throw new Error(`DevServer for '${projectName}' is not running: \`dev up ${projectName}\` to start it.`)
+  }
+}
+
+// NOTE TO UPDATERS: this IP validation exists only in this vendored copy. Upstream
+// (Shopify/dev_server) resolves a hostname with getBackendHost and never validates IPs.
+// The check was added when vendoring, first with the `network-interfaces` package and
+// later with this dependency-free helper. Keep it if you sync a newer version of the file.
+function assertInternalIpv4Address(ip: string): void {
+  const matches = Object.values(os.networkInterfaces())
+    .flat()
+    .some((iface) => iface?.internal && iface.family === 'IPv4' && iface.address === ip)
+  if (!matches) {
+    throw new Error(`No internal IPv4 network interface has the address '${ip}'`)
   }
 }
 

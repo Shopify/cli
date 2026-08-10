@@ -409,9 +409,6 @@ importers:
       ink:
         specifier: 6.8.0
         version: 6.8.0(@types/react@18.3.12)(react@19.2.4)
-      is-wsl:
-        specifier: 3.1.1
-        version: 3.1.1
       jose:
         specifier: 5.10.0
         version: 5.10.0
@@ -424,18 +421,12 @@ importers:
       lodash:
         specifier: 4.18.1
         version: 4.18.1
-      macaddress:
-        specifier: 0.5.4
-        version: 0.5.4
       minimatch:
         specifier: 9.0.9
         version: 9.0.9
       mrmime:
         specifier: 1.0.1
         version: 1.0.1
-      network-interfaces:
-        specifier: 1.1.0
-        version: 1.1.0
       node-fetch:
         specifier: 3.3.2
         version: 3.3.2
@@ -6310,11 +6301,6 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
-  is-docker@3.0.0:
-    resolution: {integrity: sha512-eljcgEDlEns/7AXFosB5K/2nCM4P7FQPkGc/DWLy5rmFEWvZayGrik1d9/QIY5nJ4f9YsVvBkA6kJpHn9rISdQ==, tarball: https://registry.npmjs.org/is-docker/-/is-docker-3.0.0.tgz}
-    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-    hasBin: true
-
   is-executable@2.0.2:
     resolution: {integrity: sha512-9QQEVoQ1KPkjI914hB1JKVOcvy1NAvmnf8wPzeJ2HeXm/V+/yK8xFeS3pXSkHg3RN9dCNhAKXGn/dgHIOFCUJg==, tarball: https://registry.npmjs.org/is-executable/-/is-executable-2.0.2.tgz}
     engines: {node: '>=14.16'}
@@ -6359,11 +6345,6 @@ packages:
   is-in-ci@2.0.0:
     resolution: {integrity: sha512-cFeerHriAnhrQSbpAxL37W1wcJKUUX07HyLWZCW1URJT/ra3GyUTzBgUnh24TMVfNTV2Hij2HLxkPHFZfOZy5w==, tarball: https://registry.npmjs.org/is-in-ci/-/is-in-ci-2.0.0.tgz}
     engines: {node: '>=20'}
-    hasBin: true
-
-  is-inside-container@1.0.0:
-    resolution: {integrity: sha512-KIYLCCJghfHZxqjYBE7rEy0OBuTd5xCHS7tHVgvCLkx7StIoaxwNW3hCALgEUjFfeRk+MG/Qxmp/vtETEF3tRA==, tarball: https://registry.npmjs.org/is-inside-container/-/is-inside-container-1.0.0.tgz}
-    engines: {node: '>=14.16'}
     hasBin: true
 
   is-interactive@1.0.0:
@@ -6477,10 +6458,6 @@ packages:
   is-wsl@2.2.0:
     resolution: {integrity: sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==, tarball: https://registry.npmjs.org/is-wsl/-/is-wsl-2.2.0.tgz}
     engines: {node: '>=8'}
-
-  is-wsl@3.1.1:
-    resolution: {integrity: sha512-e6rvdUCiQCAuumZslxRJWR/Doq4VpPR82kqclvcS0efgt430SlGIk05vdCN58+VrzgtIcfNODjozVielycD4Sw==, tarball: https://registry.npmjs.org/is-wsl/-/is-wsl-3.1.1.tgz}
-    engines: {node: '>=16'}
 
   isarray@1.0.0:
     resolution: {integrity: sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ==, tarball: https://registry.npmjs.org/isarray/-/isarray-1.0.0.tgz}
@@ -6819,9 +6796,6 @@ packages:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==, tarball: https://registry.npmjs.org/lz-string/-/lz-string-1.5.0.tgz}
     hasBin: true
 
-  macaddress@0.5.4:
-    resolution: {integrity: sha512-i8xVWoUjj2woYU8kbpQby86Kq7uF7xl2brtKREXUBWpfgqx1fKXEeYzDiVMVxA/IufC1d3xxwJRHtFCX+9IspA==, tarball: https://registry.npmjs.org/macaddress/-/macaddress-0.5.4.tgz}
-
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==, tarball: https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz}
 
@@ -7023,9 +6997,6 @@ packages:
   natural-orderby@3.0.2:
     resolution: {integrity: sha512-x7ZdOwBxZCEm9MM7+eQCjkrNLrW3rkBKNHVr78zbtqnMGVNlnDi6C/eUEYgxHNrcbu0ymvjzcwIL/6H1iHri9g==, tarball: https://registry.npmjs.org/natural-orderby/-/natural-orderby-3.0.2.tgz}
     engines: {node: '>=18'}
-
-  network-interfaces@1.1.0:
-    resolution: {integrity: sha512-fBk/Cm/RminFKhyUYKolI5nWI2de1m0pHlikz1mnTDbbe/1d2+ti+x/pWlOYuK8o/9p9vyK912+66h2NXGNUwQ==, tarball: https://registry.npmjs.org/network-interfaces/-/network-interfaces-1.1.0.tgz}
 
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==, tarball: https://registry.npmjs.org/no-case/-/no-case-3.0.4.tgz}
@@ -15579,8 +15550,6 @@ snapshots:
 
   is-docker@2.2.1: {}
 
-  is-docker@3.0.0: {}
-
   is-executable@2.0.2: {}
 
   is-extglob@2.1.1: {}
@@ -15614,10 +15583,6 @@ snapshots:
   is-in-ci@0.1.0: {}
 
   is-in-ci@2.0.0: {}
-
-  is-inside-container@1.0.0:
-    dependencies:
-      is-docker: 3.0.0
 
   is-interactive@1.0.0: {}
 
@@ -15712,10 +15677,6 @@ snapshots:
   is-wsl@2.2.0:
     dependencies:
       is-docker: 2.2.1
-
-  is-wsl@3.1.1:
-    dependencies:
-      is-inside-container: 1.0.0
 
   isarray@1.0.0: {}
 
@@ -16092,8 +16053,6 @@ snapshots:
 
   lz-string@1.5.0: {}
 
-  macaddress@0.5.4: {}
-
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -16300,8 +16259,6 @@ snapshots:
   natural-orderby@2.0.3: {}
 
   natural-orderby@3.0.2: {}
-
-  network-interfaces@1.1.0: {}
 
   no-case@3.0.4:
     dependencies:
