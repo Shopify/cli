@@ -7,6 +7,7 @@ import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
+import {renderJsonOutputSchema, type JsonOutputSchema} from './json-output-schema.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Config, Errors} from '@oclif/core'
@@ -32,6 +33,11 @@ interface EnvironmentFlags {
 
 abstract class BaseCommand extends Command {
   static baseFlags: FlagInput<{}> = {}
+  static descriptionWithMarkdown?: string
+
+  public static get jsonOutputSchema(): JsonOutputSchema | undefined {
+    return undefined
+  }
 
   public static nonTTYFlagRequirements(_flags: FlagOutput): NonTTYFlagRequirement[] {
     return []
@@ -39,8 +45,12 @@ abstract class BaseCommand extends Command {
 
   // Replace markdown links to plain text like: "link label" (url)
   public static descriptionWithoutMarkdown(): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ((this as any).descriptionWithMarkdown ?? '').replace(/(\[)(.*?)(])(\()(.*?)(\))/gm, '"$2" ($5)')
+    const descriptionWithJsonOutputSchema = appendJsonOutputSchema(
+      this.descriptionWithMarkdown ?? '',
+      this.jsonOutputSchema,
+    )
+    this.descriptionWithMarkdown = descriptionWithJsonOutputSchema
+    return descriptionWithJsonOutputSchema.replace(/(\[)(.*?)(])(\()(.*?)(\))/gm, '"$2" ($5)')
   }
 
   public static analyticsNameOverride(): string | undefined {
@@ -386,6 +396,18 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
 
 function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): boolean {
   return Boolean(flags) && Object.prototype.hasOwnProperty.call(flags, flagName)
+}
+
+function appendJsonOutputSchema(description: string, outputSchema: JsonOutputSchema | undefined): string {
+  if (!outputSchema) return description
+
+  const jsonOutputDescription = `With \`--json\`, the command returns \`${outputSchema.name}\`, described by these TypeScript types:
+
+\`\`\`ts
+${renderJsonOutputSchema(outputSchema)}
+\`\`\``
+
+  return description.includes(jsonOutputDescription) ? description : `${description}\n\n${jsonOutputDescription}`
 }
 
 async function removeDuplicatedPlugins(config: Config): Promise<void> {

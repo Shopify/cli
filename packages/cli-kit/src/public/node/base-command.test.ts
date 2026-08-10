@@ -6,6 +6,8 @@ import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {unstyled} from './output.js'
+import {defineJsonOutputSchema} from './json-output-schema.js'
+import {zod} from './schema.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 
@@ -206,6 +208,39 @@ const allEnvironments: Environments = {
     environmentWithPassword,
   },
 }
+
+describe('command descriptions', () => {
+  test('automatically appends a JSON output schema', () => {
+    class CommandWithJsonOutput extends Command {
+      static get jsonOutputSchema() {
+        return defineJsonOutputSchema({
+          name: 'CommandResult',
+          schema: zod.object({value: zod.string()}),
+        })
+      }
+
+      static descriptionWithMarkdown = 'Returns a value.'
+
+      static description = this.descriptionWithoutMarkdown()
+
+      public async run(): Promise<void> {}
+    }
+
+    expect(CommandWithJsonOutput.description).toBe(`Returns a value.
+
+With \`--json\`, the command returns \`CommandResult\`, described by these TypeScript types:
+
+\`\`\`ts
+interface CommandResult {
+  value: string
+}
+\`\`\``)
+    expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe(CommandWithJsonOutput.description)
+
+    CommandWithJsonOutput.descriptionWithoutMarkdown()
+    expect(CommandWithJsonOutput.descriptionWithMarkdown?.match(/interface CommandResult/g)).toHaveLength(1)
+  })
+})
 
 describe('applying environments', async () => {
   const runTestInTmpDir = (testName: string, testFunc: (tmpDir: string) => Promise<void>) => {
