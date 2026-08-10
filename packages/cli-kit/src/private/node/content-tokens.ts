@@ -48,6 +48,8 @@ export class CommandContentToken extends ContentToken<OutputMessage> {
   }
 }
 
+// Token-matching regex taken from the color-json package this implementation replaces:
+// https://www.npmjs.com/package/color-json
 const jsonTokenRegex =
   /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g
 
