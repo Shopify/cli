@@ -346,9 +346,6 @@ importers:
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0
-      '@types/archiver':
-        specifier: 5.3.2
-        version: 5.3.2
       ajv:
         specifier: 8.20.0
         version: 8.20.0
@@ -415,9 +412,6 @@ importers:
       ink:
         specifier: 6.8.0
         version: 6.8.0(@types/react@18.3.12)(react@19.2.4)
-      is-executable:
-        specifier: 2.0.2
-        version: 2.0.2
       is-wsl:
         specifier: 3.1.1
         version: 3.1.1
@@ -445,9 +439,6 @@ importers:
       network-interfaces:
         specifier: 1.1.0
         version: 1.1.0
-      node-abort-controller:
-        specifier: 3.1.1
-        version: 3.1.1
       open:
         specifier: 8.4.2
         version: 8.4.2
@@ -472,9 +463,6 @@ importers:
       supports-hyperlinks:
         specifier: 3.2.0
         version: 3.2.0
-      ts-error:
-        specifier: 1.0.6
-        version: 1.0.6
       undici:
         specifier: 8.10.0
         version: 8.10.0
@@ -485,6 +473,9 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
+      '@types/archiver':
+        specifier: 5.3.2
+        version: 5.3.2
       '@types/diff':
         specifier: ^5.2.3
         version: 5.2.3
@@ -512,6 +503,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.2.7
         version: 3.2.7(vitest@4.1.10)
+      is-executable:
+        specifier: 2.0.2
+        version: 2.0.2
       msw:
         specifier: ^2.15.0
         version: 2.15.0(@types/node@26.1.1)(typescript@5.9.3)
@@ -7046,9 +7040,6 @@ packages:
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==, tarball: https://registry.npmjs.org/no-case/-/no-case-3.0.4.tgz}
 
-  node-abort-controller@3.1.1:
-    resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==, tarball: https://registry.npmjs.org/node-abort-controller/-/node-abort-controller-3.1.1.tgz}
-
   node-addon-api@7.1.1:
     resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==, tarball: https://registry.npmjs.org/node-addon-api/-/node-addon-api-7.1.1.tgz}
 
@@ -8392,9 +8383,6 @@ packages:
     resolution: {integrity: sha512-EDyGAwH1gO0Ausm9gV6T2nUvBgXT5kGoCMJPllOaooZ+4VvJiKBdZE7wK18N1deEowhcUptS+5GXZK8U/fvpwA==, tarball: https://registry.npmjs.org/ts-declaration-location/-/ts-declaration-location-1.0.7.tgz}
     peerDependencies:
       typescript: '>=4.0.0'
-
-  ts-error@1.0.6:
-    resolution: {integrity: sha512-tLJxacIQUM82IR7JO1UUkKlYuUTmoY9HBJAmNWFzheSlDS5SPMcNIepejHJa4BpPQLAcbRhRf3GDJzyj6rbKvA==, tarball: https://registry.npmjs.org/ts-error/-/ts-error-1.0.6.tgz}
 
   ts-log@2.2.7:
     resolution: {integrity: sha512-320x5Ggei84AxzlXp91QkIGSw5wgaLT6GeAH0KsqDmRZdVWW2OiSeVvElVoatk3f7nicwXlElXsoFkARiGE2yg==, tarball: https://registry.npmjs.org/ts-log/-/ts-log-2.2.7.tgz}
@@ -16336,8 +16324,6 @@ snapshots:
       lower-case: 2.0.2
       tslib: 2.8.1
 
-  node-abort-controller@3.1.1: {}
-
   node-addon-api@7.1.1: {}
 
   node-domexception@1.0.0: {}
@@ -17864,8 +17850,6 @@ snapshots:
     dependencies:
       picomatch: 4.0.5
       typescript: 5.9.3
-
-  ts-error@1.0.6: {}
 
   ts-log@2.2.7: {}
 

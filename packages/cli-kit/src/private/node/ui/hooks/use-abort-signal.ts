@@ -4,14 +4,17 @@ import {useEffect, useLayoutEffect, useState} from 'react'
 
 const noop = () => Promise.resolve()
 
+function getAbortError(abortSignal?: AbortSignal) {
+  return abortSignal?.reason?.name === 'AbortError' ? undefined : abortSignal?.reason
+}
+
 export default function useAbortSignal(abortSignal?: AbortSignal, onAbort: (error?: unknown) => Promise<void> = noop) {
   const complete = useComplete()
   const [isAborted, setIsAborted] = useState(false)
 
   useLayoutEffect(() => {
     abortSignal?.addEventListener('abort', () => {
-      const abortWithError = abortSignal.reason.message === 'AbortError' ? undefined : abortSignal.reason
-      onAbort(abortWithError)
+      onAbort(getAbortError(abortSignal))
         .then(() => setIsAborted(true))
         .catch(() => {})
     })
@@ -19,8 +22,7 @@ export default function useAbortSignal(abortSignal?: AbortSignal, onAbort: (erro
 
   useEffect(() => {
     if (isAborted) {
-      const abortWithError = abortSignal?.reason?.message === 'AbortError' ? undefined : abortSignal?.reason
-      complete(abortWithError)
+      complete(getAbortError(abortSignal))
     }
   }, [isAborted])
 

@@ -15,7 +15,7 @@ import {
 import {getUploadURL, writeManifestToBundle} from '../../../bundle.js'
 import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
-import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
 import {readdir} from '@shopify/cli-kit/node/fs'
@@ -142,7 +142,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // When
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortController().signal}, options)
     await flushPromises()
 
     // Then
