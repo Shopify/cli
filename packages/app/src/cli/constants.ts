@@ -8,6 +8,9 @@ export const environmentVariableNames = {
   disableMinificationOnDev: 'SHOPIFY_CLI_DISABLE_MINIFICATION_ON_DEV',
 }
 
+// Matches the default config file (shopify.app.toml) and named configs (shopify.app.<name>.toml)
+export const appConfigurationFileGlob = 'shopify.app*.toml'
+
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   web: 'shopify.web.toml',
