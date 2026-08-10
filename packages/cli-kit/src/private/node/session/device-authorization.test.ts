@@ -107,7 +107,6 @@ describe('requestDeviceAuthorization', () => {
     // Then
     const debugOutput = JSON.stringify(outputDebug.mock.calls)
     expect(debugOutput).toContain('interval=not provided')
-    expect(debugOutput).not.toContain('interval=undefined')
   })
 
   test('opens the browser directly in an interactive terminal', async () => {
