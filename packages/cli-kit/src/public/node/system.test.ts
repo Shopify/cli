@@ -403,3 +403,52 @@ describe('sleep', () => {
     vi.useRealTimers()
   })
 })
+
+describe('isWsl', () => {
+  test('returns false when the platform is not linux', async () => {
+    await expect(system.isWsl({platform: 'darwin'})).resolves.toBe(false)
+    await expect(system.isWsl({platform: 'win32'})).resolves.toBe(false)
+  })
+
+  test('returns true for a microsoft kernel release outside a container', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '5.15.90.1-microsoft-standard-WSL2',
+      insideContainer: false,
+    })
+
+    await expect(got).resolves.toBe(true)
+  })
+
+  test('returns false for a microsoft kernel release inside a container', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '5.15.90.1-microsoft-standard-WSL2',
+      insideContainer: true,
+    })
+
+    await expect(got).resolves.toBe(false)
+  })
+
+  test('detects WSL1 through /proc/version when the kernel release does not mention microsoft', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '4.4.0-19041-generic',
+      procVersion: 'Linux version 4.4.0-19041-Microsoft (Microsoft@Microsoft.com)',
+      insideContainer: false,
+    })
+
+    await expect(got).resolves.toBe(true)
+  })
+
+  test('returns false for a regular linux kernel', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '6.5.0-generic',
+      procVersion: 'Linux version 6.5.0-generic (buildd@lcy02)',
+      insideContainer: false,
+    })
+
+    await expect(got).resolves.toBe(false)
+  })
+})

@@ -354,20 +354,31 @@ export function isCI(): boolean {
   return isTruthy(process.env.CI)
 }
 
+interface WslDetectionOverrides {
+  platform?: NodeJS.Platform
+  kernelRelease?: string
+  procVersion?: string
+  insideContainer?: boolean
+}
+
 /**
  * Check if the current environment is a WSL environment.
  *
+ * @param overrides - Detection inputs, read from the system when not provided. Intended for tests.
  * @returns True if the current environment is a WSL environment.
  */
 // Mirrors https://github.com/sindresorhus/is-wsl: WSL reports "microsoft" in the kernel
 // release, but containers running inside WSL shouldn't count.
-export async function isWsl(): Promise<boolean> {
-  if (process.platform !== 'linux') return false
-  if (release().toLowerCase().includes('microsoft')) {
-    return !isInsideContainer()
+export async function isWsl(overrides: WslDetectionOverrides = {}): Promise<boolean> {
+  const platform = overrides.platform ?? process.platform
+  if (platform !== 'linux') return false
+  const insideContainer = () => overrides.insideContainer ?? isInsideContainer()
+  if ((overrides.kernelRelease ?? release()).toLowerCase().includes('microsoft')) {
+    return !insideContainer()
   }
   try {
-    return readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft') ? !isInsideContainer() : false
+    const procVersion = overrides.procVersion ?? readFileSync('/proc/version', 'utf8')
+    return procVersion.toLowerCase().includes('microsoft') ? !insideContainer() : false
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
