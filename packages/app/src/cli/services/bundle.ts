@@ -65,13 +65,13 @@ export async function uploadToGCS(signedURL: string, filePath: string) {
   let response: Response | undefined
   for (let attempt = 1; attempt <= UPLOAD_MAX_ATTEMPTS; attempt++) {
     // The signed URL only signs the `host` header, so no extra headers are
-    // required; node-fetch derives Content-Length from the buffer body.
+    // required; fetch derives Content-Length from the buffer body.
     // eslint-disable-next-line no-await-in-loop
     response = await fetch(signedURL, {method: 'put', body: buffer}, 'slow-request')
     if (response.ok) return
     const lastAttempt = attempt === UPLOAD_MAX_ATTEMPTS
     const retryable = RETRYABLE_UPLOAD_STATUS_CODES.has(response.status)
-    // node-fetch keeps the socket open until the body is consumed. On the final
+    // fetch keeps the socket open until the body is consumed. On the final
     // attempt we read it below for the error message; otherwise drain it here so
     // the connection can be reused or released before the next attempt.
     if (retryable && !lastAttempt) {

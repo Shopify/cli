@@ -249,6 +249,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.2.7
         version: 3.2.7(vitest@4.1.10)
+      undici:
+        specifier: 8.10.0
+        version: 8.10.0
 
   packages/cli:
     dependencies:
@@ -388,9 +391,6 @@ importers:
       find-up:
         specifier: 6.3.0
         version: 6.3.0
-      form-data:
-        specifier: 4.0.6
-        version: 4.0.6
       fs-extra:
         specifier: 11.1.0
         version: 11.1.0
@@ -439,9 +439,6 @@ importers:
       network-interfaces:
         specifier: 1.1.0
         version: 1.1.0
-      node-fetch:
-        specifier: 3.3.2
-        version: 3.3.2
       open:
         specifier: 8.4.2
         version: 8.4.2
@@ -466,6 +463,9 @@ importers:
       supports-hyperlinks:
         specifier: 3.2.0
         version: 3.2.0
+      undici:
+        specifier: 8.10.0
+        version: 8.10.0
       which:
         specifier: 4.0.0
         version: 4.0.0
@@ -642,6 +642,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.2.7
         version: 3.2.7(vitest@4.1.10)
+      undici:
+        specifier: 8.10.0
+        version: 8.10.0
 
   packages/plugin-did-you-mean:
     dependencies:
@@ -8553,6 +8556,10 @@ packages:
   undici@7.28.0:
     resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==, tarball: https://registry.npmjs.org/undici/-/undici-7.28.0.tgz}
     engines: {node: '>=20.18.1'}
+
+  undici@8.10.0:
+    resolution: {integrity: sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ==, tarball: https://registry.npmjs.org/undici/-/undici-8.10.0.tgz}
+    engines: {node: '>=22.19.0'}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
     resolution: {integrity: sha512-dA8WbNeb2a6oQzAQ55YlT5vQAWGV9WXOsi3SskE3bcCdM0P4SDd+24zS/OCacdRq5BkdsRj9q3Pg6YyQoxIGqg==, tarball: https://registry.npmjs.org/unicode-canonical-property-names-ecmascript/-/unicode-canonical-property-names-ecmascript-2.0.1.tgz}
@@ -18015,6 +18022,8 @@ snapshots:
 
   undici@7.28.0:
     optional: true
+
+  undici@8.10.0: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 

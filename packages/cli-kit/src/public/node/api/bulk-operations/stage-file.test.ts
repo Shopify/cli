@@ -1,8 +1,9 @@
 import {stageFile} from './stage-file.js'
 import {adminRequestDoc} from '../admin.js'
-import {fetch} from '../../http.js'
+import {fetch, formData} from '../../http.js'
 import {renderSingleTask, RenderSingleTaskOptions} from '../../ui.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
+import {FormData} from 'undici'
 
 vi.mock('../admin.js')
 vi.mock('../../session.js')
@@ -37,6 +38,7 @@ describe('stageFile', () => {
   }
 
   beforeEach(() => {
+    vi.mocked(formData).mockImplementation(() => new FormData())
     vi.mocked(renderSingleTask).mockImplementation(async (options: RenderSingleTaskOptions<unknown>) => {
       return options.task(vi.fn())
     })

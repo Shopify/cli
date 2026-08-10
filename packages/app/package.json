@@ -83,7 +83,8 @@
     "@types/react": "^19.0.0",
     "@types/which": "3.0.4",
     "@types/ws": "^8.5.13",
-    "@vitest/coverage-istanbul": "^3.2.7"
+    "@vitest/coverage-istanbul": "^3.2.7",
+    "undici": "8.10.0"
   },
   "engines": {
     "node": ">=22.12.0"

@@ -25,7 +25,6 @@ vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/archiver')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../../../../utilities/app/app-url.js')
-vi.mock('node-fetch')
 vi.mock('../../../bundle.js')
 describe('setupDevSessionProcess', () => {
   test('returns a dev session process with correct configuration', async () => {

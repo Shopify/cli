@@ -4,10 +4,13 @@ import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
 import {recordRetry} from '../../public/node/analytics.js'
 
-import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
 
 import {performance} from 'perf_hooks'
+
+interface Headers {
+  forEach(callbackfn: (value: string, key: string) => void): void
+}
 
 export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform' | 'app-management'
 

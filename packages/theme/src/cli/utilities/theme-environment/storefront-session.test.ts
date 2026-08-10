@@ -393,7 +393,7 @@ describe('Storefront API', () => {
   })
 
   // Tests rely on this function because the 'packages/theme' package cannot
-  // directly access node-fetch and they use: new Response('OK', {status: 200})
+  // directly access undici and they use: new Response('OK', {status: 200})
   function response(mock: {
     status: number
     url?: string
@@ -407,7 +407,7 @@ describe('Storefront API', () => {
       ...mock,
       headers: {
         ...mock.headers,
-        raw: vi.fn().mockReturnValue({'set-cookie': setCookieArray}),
+        getSetCookie: vi.fn().mockReturnValue(setCookieArray),
         get: vi.fn().mockImplementation((key) => mock.headers?.[key]),
       },
     } as any

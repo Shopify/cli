@@ -130,7 +130,6 @@
     "fast-glob": "3.3.3",
     "figures": "5.0.0",
     "find-up": "6.3.0",
-    "form-data": "4.0.6",
     "fs-extra": "11.1.0",
     "gradient-string": "2.0.2",
     "graphql": "16.14.2",
@@ -147,7 +146,6 @@
     "minimatch": "9.0.9",
     "mrmime": "1.0.1",
     "network-interfaces": "1.1.0",
-    "node-fetch": "3.3.2",
     "open": "8.4.2",
     "pathe": "1.1.2",
     "react": "19.2.4",
@@ -156,6 +154,7 @@
     "stacktracey": "2.2.0",
     "strip-ansi": "7.2.0",
     "supports-hyperlinks": "3.2.0",
+    "undici": "8.10.0",
     "which": "4.0.0",
     "zod": "3.25.76"
   },

@@ -52,7 +52,6 @@ describe('Node dependency version sync', () => {
     'graphql-tag',
     'ink',
     'liquidjs',
-    'node-fetch',
     'typescript',
     'vite',
     'vitest',

@@ -119,12 +119,12 @@ describe('admin-rest-api', () => {
     // Given
     const json = () => Promise.resolve({result: true})
     const status = 200
-    const headers = {'some-header': 123}
+    const headers = {'some-header': '123'}
 
     vi.spyOn(http, 'shopifyFetch').mockResolvedValue({
       json,
       status,
-      headers: {raw: () => headers},
+      headers: new Headers(headers),
     } as any)
 
     // When
@@ -133,7 +133,7 @@ describe('admin-rest-api', () => {
     // Then
     expect(result.json).toEqual({result: true})
     expect(result.status).toEqual(200)
-    expect(result.headers).toEqual({'some-header': 123})
+    expect(result.headers).toEqual({'some-header': ['123']})
   })
 
   test('fetch is called with correct parameters', async () => {
@@ -146,7 +146,7 @@ describe('admin-rest-api', () => {
     const spyFetch = vi.spyOn(http, 'shopifyFetch').mockResolvedValue({
       json,
       status,
-      headers: {raw: () => ({})},
+      headers: new Headers(),
     } as any)
 
     // When
@@ -173,7 +173,7 @@ describe('admin-rest-api', () => {
     const spyFetch = vi.spyOn(http, 'shopifyFetch').mockResolvedValue({
       json: () => Promise.resolve({result: true}),
       status,
-      headers: {raw: () => ({})},
+      headers: new Headers(),
     } as any)
 
     // When

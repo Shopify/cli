@@ -15,7 +15,7 @@ import {isCI, openURL} from '../../../public/node/system.js'
 import * as output from '../../../public/node/output.js'
 
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {Response} from 'node-fetch'
+import {Response} from 'undici'
 
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
@@ -151,7 +151,7 @@ describe('requestDeviceAuthorization', () => {
     Object.defineProperty(response, 'status', {value: 200})
     Object.defineProperty(response, 'statusText', {value: 'OK'})
     // Mock text() to throw an error
-    response.text = vi.fn().mockRejectedValue(new Error('Network error'))
+    Object.defineProperty(response, 'text', {value: vi.fn().mockRejectedValue(new Error('Network error'))})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
     vi.mocked(clientId).mockReturnValue('clientId')

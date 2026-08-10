@@ -267,10 +267,15 @@ export async function restRequest<T>(
 
   const json = await response.json().catch(() => ({}))
 
+  const responseHeaders: Record<string, string[]> = {}
+  response.headers.forEach((value, key) => {
+    responseHeaders[key] = key.toLowerCase() === 'set-cookie' ? response.headers.getSetCookie() : [value]
+  })
+
   return {
     json,
     status: response.status,
-    headers: response.headers.raw(),
+    headers: responseHeaders,
   }
 }
 
