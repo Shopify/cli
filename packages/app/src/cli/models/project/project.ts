@@ -1,4 +1,4 @@
-import {configurationFileNames} from '../../constants.js'
+import {appConfigurationFileGlob, configurationFileNames} from '../../constants.js'
 import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, glob, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
@@ -12,7 +12,7 @@ import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
-const APP_CONFIG_GLOB = 'shopify.app*.toml'
+const APP_CONFIG_GLOB = appConfigurationFileGlob
 const APP_CONFIG_REGEX = /^shopify\.app(\.[-\w]+)?\.toml$/
 const EXTENSION_TOML = '*.extension.toml'
 const WEB_TOML = 'shopify.web.toml'
