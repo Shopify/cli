@@ -288,6 +288,7 @@ export function graphiqlTemplate(options: GraphiQLTemplateOptions): string {
             {% endif %}
             defaultTabs: [
               {query: "${graphiqlIntroMessage
+                .replace(/\\/g, '\\\\')
                 .replace(/"/g, '\\"')
                 .replace(/\n/g, '\\n')}".replace(/MAC_COMMAND_KEY/g, macCommandKey)},
               {%for query in defaultQueries%}
