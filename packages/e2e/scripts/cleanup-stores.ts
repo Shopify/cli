@@ -32,12 +32,11 @@ import {executables} from '../setup/env.js'
 import {refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
-import {
-  ListAppDevStores,
-  type ListAppDevStoresQuery,
-} from '../../app/dist/cli/api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {DeleteAppDevelopmentStore} from '../../store/dist/cli/api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
-import {businessPlatformOrganizationsRequestDoc} from '../../cli-kit/dist/public/node/api/business-platform.js'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
+} from '../../cli-kit/dist/public/node/api/business-platform.js'
 import {ensureAuthenticatedBusinessPlatform} from '../../cli-kit/dist/public/node/session.js'
 import {extractHost} from '../../cli-kit/dist/public/common/url.js'
 import {execa} from 'execa'
@@ -457,45 +456,98 @@ async function findStores(page: Page, opts: FindStoresOptions): Promise<StoreInf
   return findStoresOnDashboard(page, opts)
 }
 
+// Local paginated variant of the app package's ListAppDevStores query, which fetches a single
+// page of the server's default size. Selects only the fields toStoreInfo reads.
+const ListAppDevStoresPaginated = `
+  query ListAppDevStoresPaginated($searchTerm: String, $first: Int, $after: String) {
+    organization {
+      accessibleShops(
+        filters: [
+          {field: STORE_TYPE, operator: EQUALS, value: "app_development"}
+          {field: STORE_STATUS, operator: EQUALS, value: "ACTIVE"}
+        ]
+        search: $searchTerm
+        first: $first
+        after: $after
+      ) {
+        edges {
+          node {
+            name
+            shortName
+            primaryDomain
+            url
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+`
+
+interface AppDevStoreNode {
+  name?: string | null
+  shortName?: string | null
+  primaryDomain?: string | null
+  url?: string | null
+}
+
+interface ListAppDevStoresPaginatedResult {
+  organization?: {
+    accessibleShops?: {
+      edges: {node: AppDevStoreNode}[]
+      pageInfo: {hasNextPage: boolean; endCursor?: string | null}
+    } | null
+  } | null
+}
+
+const STORE_DISCOVERY_PAGE_SIZE = 100
+const STORE_DISCOVERY_MAX_PAGES = 50
+
 /** Find app development stores matching a name pattern using Business Platform GraphQL. */
 async function findStoresWithBusinessPlatformApi(namePattern: string, orgId: string): Promise<StoreInfo[]> {
   console.log('[cleanup-stores] Discovering stores via Business Platform API...')
 
   const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
-  const result = await businessPlatformOrganizationsRequestDoc({
-    query: ListAppDevStores,
-    token,
-    organizationId: orgId,
-    variables: {searchTerm: namePattern},
-    unauthorizedHandler: {
-      type: 'token_refresh',
-      handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
-    },
-  })
-
-  const accessibleShops = result.organization?.accessibleShops
-  if (!accessibleShops) return []
-  if (accessibleShops.pageInfo.hasNextPage) {
-    console.warn(
-      `[cleanup-stores] API discovery has more pages for pattern "${namePattern}"; use a narrower pattern if matches are missing.`,
-    )
-  }
-
   const seen = new Set<string>()
   const stores: StoreInfo[] = []
-  for (const edge of accessibleShops.edges) {
-    const store = toStoreInfo(edge.node, namePattern)
-    if (!store || seen.has(store.fqdn)) continue
-    seen.add(store.fqdn)
-    stores.push(store)
+  let after: string | undefined
+
+  for (let pageNumber = 1; pageNumber <= STORE_DISCOVERY_MAX_PAGES; pageNumber++) {
+    const result = await businessPlatformOrganizationsRequest<ListAppDevStoresPaginatedResult>({
+      query: ListAppDevStoresPaginated,
+      token,
+      organizationId: orgId,
+      variables: {searchTerm: namePattern, first: STORE_DISCOVERY_PAGE_SIZE, ...(after ? {after} : {})},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
+      },
+    })
+
+    const accessibleShops = result.organization?.accessibleShops
+    if (!accessibleShops) break
+
+    for (const edge of accessibleShops.edges) {
+      const store = toStoreInfo(edge.node, namePattern)
+      if (!store || seen.has(store.fqdn)) continue
+      seen.add(store.fqdn)
+      stores.push(store)
+    }
+
+    const {hasNextPage, endCursor} = accessibleShops.pageInfo
+    if (!hasNextPage || !endCursor) return stores
+    after = endCursor
+    console.log(`[cleanup-stores]   ...${stores.length} stores after ${pageNumber} page(s)`)
   }
 
+  console.warn(
+    `[cleanup-stores] Stopped discovery after ${STORE_DISCOVERY_MAX_PAGES} pages; more stores may match pattern "${namePattern}".`,
+  )
   return stores
 }
-
-type AppDevStoreNode = NonNullable<
-  NonNullable<NonNullable<ListAppDevStoresQuery['organization']>['accessibleShops']>['edges'][number]['node']
->
 
 function toStoreInfo(node: AppDevStoreNode, namePattern: string): StoreInfo | undefined {
   const fqdn =
