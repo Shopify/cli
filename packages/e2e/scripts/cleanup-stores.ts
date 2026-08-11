@@ -10,7 +10,7 @@
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts              # Full: uninstall apps + delete stores
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --list        # List stores with app counts
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --delete      # Delete only stores with 0 apps installed
- *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --force       # Delete stores without checking installed apps
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --force       # Delete stores via API, without checking installed apps
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --headed      # Show browser window
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern X   # Match stores containing "X" (default: "e2e-w")
  *
@@ -36,6 +36,7 @@ import {
   ListAppDevStores,
   type ListAppDevStoresQuery,
 } from '../../app/dist/cli/api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
+import {DeleteAppDevelopmentStore} from '../../store/dist/cli/api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
 import {businessPlatformOrganizationsRequestDoc} from '../../cli-kit/dist/public/node/api/business-platform.js'
 import {ensureAuthenticatedBusinessPlatform} from '../../cli-kit/dist/public/node/session.js'
 import {extractHost} from '../../cli-kit/dist/public/common/url.js'
@@ -63,12 +64,14 @@ export type CleanupStoresMode = 'full' | 'list' | 'delete' | 'force'
 type CleanupOutcome = 'succeeded' | 'skipped' | 'failed'
 
 const CLEANUP_WORKER_COUNT = 5
+// Force mode is pure API calls (no browser pages), so it can run much wider.
+const FORCE_DELETE_WORKER_COUNT = 20
 
 const MODE_LABELS: Record<CleanupStoresMode, string> = {
   full: 'Uninstall apps + Delete stores',
   list: 'List only',
   delete: 'Delete empty stores only',
-  force: 'Delete stores without checking installed apps',
+  force: 'Delete stores via API, without checking installed apps',
 }
 
 export interface CleanupStoresOptions {
@@ -186,8 +189,13 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
       return
     }
 
-    // Step 3: Process stores in parallel — each worker handles one store at a time (count + uninstall + delete)
-    const outcomes = await cleanupStoresInParallel({dashboardPage: page, mode, stores, orgId})
+    // Step 3: Process stores in parallel — each worker handles one store at a time.
+    // Force mode deletes via the Business Platform API directly (no app check, no CLI process, no
+    // confirmation polling); other modes visit each store's admin in a browser page first.
+    const outcomes =
+      mode === 'force'
+        ? await forceDeleteStoresInParallel({stores, orgId})
+        : await cleanupStoresInParallel({dashboardPage: page, mode, stores, orgId})
     const stats: Record<CleanupOutcome, number> = {succeeded: 0, skipped: 0, failed: 0}
     for (const outcome of outcomes) {
       stats[outcome]++
@@ -264,50 +272,45 @@ async function cleanupStore(opts: {
   console.log(`${tag}: Starting`)
 
   try {
-    // Gate: confirm zero apps before attempting delete. Force mode deletes without checking.
-    let safeToDelete = mode === 'force'
+    const storeSlug = store.fqdn.replace('.myshopify.com', '')
 
-    if (mode === 'force') {
-      console.log(`${tag}: Skipping app check (force mode)`)
+    // Navigate to apps settings page once
+    await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await page.waitForTimeout(BROWSER_TIMEOUT.long)
+    await dismissDevConsole(page)
+
+    // Wait for page to settle: either the empty state or at least one app menu button
+    const emptyState = page.locator('text=Add apps to your store')
+    const firstMenuBtn = page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').first()
+    await Promise.race([
+      emptyState.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
+      firstMenuBtn.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
+    ])
+
+    // Gate: confirm zero apps before attempting delete.
+    let safeToDelete = false
+    if (await isStoreAppsEmpty(page)) {
+      console.log(`${tag}: No apps installed (empty state confirmed)`)
+      safeToDelete = true
     } else {
-      const storeSlug = store.fqdn.replace('.myshopify.com', '')
+      const appMenuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
+      console.log(`${tag}: ${appMenuButtons.length || '?'} app(s) installed`)
 
-      // Navigate to apps settings page once
-      await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
-        waitUntil: 'domcontentloaded',
-      })
-      await page.waitForTimeout(BROWSER_TIMEOUT.long)
-      await dismissDevConsole(page)
-
-      // Wait for page to settle: either the empty state or at least one app menu button
-      const emptyState = page.locator('text=Add apps to your store')
-      const firstMenuBtn = page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').first()
-      await Promise.race([
-        emptyState.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-        firstMenuBtn.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-      ])
-
-      if (await isStoreAppsEmpty(page)) {
-        console.log(`${tag}: No apps installed (empty state confirmed)`)
-        safeToDelete = true
+      if (mode === 'delete') {
+        console.log(`${tag}: Skipped (still has apps)`)
+        outcome = 'skipped'
       } else {
-        const appMenuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
-        console.log(`${tag}: ${appMenuButtons.length || '?'} app(s) installed`)
-
-        if (mode === 'delete') {
-          console.log(`${tag}: Skipped (still has apps)`)
-          outcome = 'skipped'
+        // Full mode: uninstall all apps, then re-gate.
+        console.log(`${tag}: Uninstalling apps...`)
+        await uninstallAllAppsFromStore(page, tag)
+        if (await isStoreAppsEmpty(page)) {
+          console.log(`${tag}: Apps uninstalled (empty state confirmed)`)
+          safeToDelete = true
         } else {
-          // Full mode: uninstall all apps, then re-gate.
-          console.log(`${tag}: Uninstalling apps...`)
-          await uninstallAllAppsFromStore(page, tag)
-          if (await isStoreAppsEmpty(page)) {
-            console.log(`${tag}: Apps uninstalled (empty state confirmed)`)
-            safeToDelete = true
-          } else {
-            console.warn(`${tag}: Apps may still be installed (empty state not confirmed) — skipping delete`)
-            outcome = 'skipped'
-          }
+          console.warn(`${tag}: Apps may still be installed (empty state not confirmed) — skipping delete`)
+          outcome = 'skipped'
         }
       }
     }
@@ -337,6 +340,90 @@ async function cleanupStore(opts: {
 
   const storeElapsed = ((Date.now() - storeStart) / 1000).toFixed(1)
   console.log(`${tag}: ${outcome} (${storeElapsed}s)`)
+  return outcome
+}
+
+/**
+ * Force mode: request deletion for every store through the Business Platform API.
+ *
+ * This skips the per-store admin visit, the app check, the CLI subprocess, and the CLI's
+ * deletion-confirmation polling — deletions are requested and left to complete asynchronously.
+ * Stores that still have apps installed will leave those apps undeletable in the Dev Dashboard
+ * until their install records clear.
+ */
+async function forceDeleteStoresInParallel(opts: {stores: StoreInfo[]; orgId: string}): Promise<CleanupOutcome[]> {
+  const {stores, orgId} = opts
+  const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
+  const outcomes = new Array<CleanupOutcome>(stores.length)
+  const workerCount = Math.min(FORCE_DELETE_WORKER_COUNT, stores.length)
+  let nextStoreIndex = 0
+
+  await Promise.all(
+    Array.from({length: workerCount}, async (_, workerIndex) => {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const storeIndex = nextStoreIndex++
+        if (storeIndex >= stores.length) break
+
+        outcomes[storeIndex] = await forceDeleteStore({
+          store: stores[storeIndex]!,
+          orgId,
+          token,
+          workerNumber: workerIndex + 1,
+          storeNumber: storeIndex + 1,
+          foundCount: stores.length,
+        })
+      }
+    }),
+  )
+
+  return outcomes
+}
+
+async function forceDeleteStore(opts: {
+  store: StoreInfo
+  orgId: string
+  token: string
+  workerNumber: number
+  storeNumber: number
+  foundCount: number
+}): Promise<CleanupOutcome> {
+  const {store, orgId, token, workerNumber, storeNumber, foundCount} = opts
+  const tag = `[cleanup-stores] [worker ${workerNumber}] [${storeNumber}/${foundCount}] ${store.name}`
+  const storeStart = Date.now()
+  let outcome: CleanupOutcome = 'failed'
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const result = await businessPlatformOrganizationsRequestDoc({
+        query: DeleteAppDevelopmentStore,
+        token,
+        organizationId: orgId,
+        variables: {storeFqdn: store.fqdn},
+        unauthorizedHandler: {
+          type: 'token_refresh',
+          handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
+        },
+      })
+
+      const deletion = result.deleteAppDevelopmentStore
+      if (!deletion) throw new Error('Unexpected empty response from deleteAppDevelopmentStore')
+      const userErrors = deletion.userErrors ?? []
+      if (userErrors.length > 0) throw new Error(userErrors.map((error) => error.message).join(', '))
+      if (deletion.success === false) throw new Error('Deletion was not accepted')
+
+      outcome = 'succeeded'
+      break
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (err) {
+      console.log(`${tag}: (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, BROWSER_TIMEOUT.medium))
+    }
+  }
+
+  const storeElapsed = ((Date.now() - storeStart) / 1000).toFixed(1)
+  const summary = outcome === 'succeeded' ? 'Deletion requested' : 'Failed after 3 attempts'
+  console.log(`${tag}: ${summary} (${storeElapsed}s)`)
   return outcome
 }
 
