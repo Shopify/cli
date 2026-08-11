@@ -93,6 +93,7 @@ extensions_summary = "E2E staging app extensions"
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
+          cli,
           browserPage,
           appName,
           appUrl,
@@ -171,6 +172,7 @@ extensions_summary = "E2E staging app extensions"
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
+          cli,
           browserPage,
           appName,
           appUrl,
