@@ -58,11 +58,12 @@ test.describe('TOML config regression', () => {
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('toml-dev')
     let appUrl: string | undefined
+    let appDir: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
-      const appDir = initResult.appDir
+      appDir = initResult.appDir
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
       appUrl = devDashboardAppUrl(appDir, env.orgId)
@@ -84,16 +85,17 @@ test.describe('TOML config regression', () => {
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {
-        fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           cli,
           browserPage,
           appName,
           appUrl,
+          appDir,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
         })
+        fs.rmSync(parentDir, {recursive: true, force: true})
       }
     }
   })
