@@ -1,0 +1,23 @@
+{
+  "comment": "Ordered failure-mode patterns for bin/e2e-failure-report.js. First match wins as the job's primary mode, so job-fatal signatures come first and cleanup noise (which co-occurs with everything) comes last. Add new patterns when the report shows unclassified failures.",
+  "modes": [
+    {"mode": "build-typescript-error", "category": "not-e2e", "pattern": "error TS\\d+:"},
+    {"mode": "commands-snapshot-drift", "category": "not-e2e", "pattern": "SNAPSHOT TEST FAILED"},
+    {"mode": "pnpm-install-failed", "category": "ci-infra", "pattern": "ERR_PNPM"},
+    {"mode": "auth-setup-failed", "category": "auth-browser", "pattern": "globalSetup|global-auth\\.ts"},
+    {"mode": "org-app-cap", "category": "capacity", "pattern": "maximum number of apps allowed"},
+    {"mode": "create-app-no-org", "category": "cli-command", "pattern": "No Organization found"},
+    {"mode": "partners-throttled", "category": "backend", "pattern": "Throttled"},
+    {"mode": "unprocessable-entity", "category": "backend", "pattern": "Unprocessable entity"},
+    {"mode": "deploy-version-error", "category": "cli-command", "pattern": "Version couldn't be created"},
+    {"mode": "uninstall-api-failed", "category": "cleanup", "pattern": "admin API uninstall failed|access token request failed"},
+    {"mode": "store-provision-timeout", "category": "store", "pattern": "page\\.waitForURL"},
+    {"mode": "cli-died-waiting-ready", "category": "cli-process", "pattern": "Process exited \\(code \\d+\\) while waiting for output: \"Ready"},
+    {"mode": "cli-died-waiting-other", "category": "cli-process", "pattern": "Process exited \\(code \\d+\\) while waiting for output"},
+    {"mode": "dev-exit-hang", "category": "cli-hang", "pattern": "waiting for process exit"},
+    {"mode": "cli-output-timeout", "category": "cli-hang", "pattern": "Timed out after \\d+ms waiting for output"},
+    {"mode": "playwright-test-timeout", "category": "cli-hang", "pattern": "Test timeout of \\d+ms exceeded"},
+    {"mode": "dashboard-delete-timeout", "category": "cleanup", "pattern": "scrollIntoViewIfNeeded: Timeout"},
+    {"mode": "browser-context-closed", "category": "cleanup", "pattern": "Target page, context or browser has been closed"}
+  ]
+}

@@ -1,0 +1,57 @@
+name: E2E failure report
+
+# Nightly classification of failed E2E shard jobs into named failure modes.
+# Job logs expire after 90 days; the classified dataset on the
+# e2e-failure-data branch is what survives. See bin/e2e-failure-report.js.
+
+on:
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: 'How many days of runs to scan (backfills are idempotent)'
+        default: '2'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        # The data branch does not exist until the first successful run.
+        continue-on-error: true
+        with:
+          ref: e2e-failure-data
+          path: .e2e-data
+      - name: Classify failed E2E shards
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node bin/e2e-failure-report.js --days ${{ inputs.days_back || 2 }} --data-dir .e2e-data
+      - name: Publish job summary
+        run: cat .e2e-data/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Push data branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd .e2e-data
+          if [ ! -d .git ]; then
+            git init -b e2e-failure-data
+            git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Update E2E failure data" || exit 0
+          git push origin e2e-failure-data
+      - name: Post summary to Slack
+        env:
+          SLACK_WEBHOOK: ${{ secrets.E2E_REPORT_SLACK_WEBHOOK }}
+        if: env.SLACK_WEBHOOK != ''
+        run: |
+          jq -Rs '{text: .}' < .e2e-data/summary.md | curl -s -X POST -H 'Content-Type: application/json' -d @- "$SLACK_WEBHOOK"
