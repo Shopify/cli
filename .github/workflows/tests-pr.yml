@@ -171,7 +171,7 @@ jobs:
         node: [ '22.12.0', '24.1.0', '26.1.0' ]
         shard: [ '' ]
         include:
-          # Add sharding for Windows jobs to reduce wall-clock time
+          # Add sharding for Windows and macOS jobs to reduce wall-clock time
           - os: windows-latest
             node: '22.12.0'
             shard: '1/2'
@@ -188,10 +188,28 @@ jobs:
             node: '26.1.0'
             shard: '1/2'
           - os: windows-latest
+            node: '26.1.0'
+            shard: '2/2'
+          - os: macos-latest
+            node: '22.12.0'
+            shard: '1/2'
+          - os: macos-latest
+            node: '22.12.0'
+            shard: '2/2'
+          - os: macos-latest
+            node: '24.1.0'
+            shard: '1/2'
+          - os: macos-latest
+            node: '24.1.0'
+            shard: '2/2'
+          - os: macos-latest
+            node: '26.1.0'
+            shard: '1/2'
+          - os: macos-latest
             node: '26.1.0'
             shard: '2/2'
         exclude:
-          # Exclude the non-sharded Windows entries (replaced by sharded ones above)
+          # Exclude the non-sharded Windows and macOS entries (replaced by sharded ones above)
           - os: windows-latest
             node: '22.12.0'
             shard: ''
@@ -199,6 +217,15 @@ jobs:
             node: '24.1.0'
             shard: ''
           - os: windows-latest
+            node: '26.1.0'
+            shard: ''
+          - os: macos-latest
+            node: '22.12.0'
+            shard: ''
+          - os: macos-latest
+            node: '24.1.0'
+            shard: ''
+          - os: macos-latest
             node: '26.1.0'
             shard: ''
     steps:
