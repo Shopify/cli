@@ -70,3 +70,31 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Caches saved on PR branches are not restorable from other PRs, so this job
+  # keeps a fresh default-branch Nx cache that the graphql-codegen PR check can
+  # restore. It must run on macOS to match that check's runner (the generated
+  # output is platform-specific).
+  warm-graphql-codegen-cache:
+    name: 'Warm graphql-codegen Nx cache'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-graphql-codegen-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            nx-graphql-codegen-${{ runner.os }}-
+      - name: Get schemas for codegen
+        run: pnpm graphql-codegen:get-graphql-schemas
+      - name: Run graphql-codegen
+        run: pnpm graphql-codegen

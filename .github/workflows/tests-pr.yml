@@ -108,6 +108,17 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      # The key never matches directly (it includes the sha), so every run
+      # restores the newest cache via restore-keys and saves an updated one.
+      # Nx hashes the downloaded schemas and .graphql documents, so stale
+      # entries are recomputed, never replayed.
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-graphql-codegen-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            nx-graphql-codegen-${{ runner.os }}-
       - name: Get schemas for codegen
         run: pnpm graphql-codegen:get-graphql-schemas
       - name: Run graphql-codegen
