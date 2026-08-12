@@ -21,11 +21,12 @@ test.describe('Multi-config dev', () => {
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('multi-cfg')
     let appUrl: string | undefined
+    let appDir: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
-      const appDir = initResult.appDir
+      appDir = initResult.appDir
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       // Inject the fully populated TOML as the default config
@@ -91,16 +92,17 @@ extensions_summary = "E2E staging app extensions"
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {
-        fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           cli,
           browserPage,
           appName,
           appUrl,
+          appDir,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
         })
+        fs.rmSync(parentDir, {recursive: true, force: true})
       }
     }
   })
@@ -112,11 +114,12 @@ extensions_summary = "E2E staging app extensions"
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('mcfg-def')
     let appUrl: string | undefined
+    let appDir: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
-      const appDir = initResult.appDir
+      appDir = initResult.appDir
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
@@ -170,16 +173,17 @@ extensions_summary = "E2E staging app extensions"
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {
-        fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           cli,
           browserPage,
           appName,
           appUrl,
+          appDir,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
         })
+        fs.rmSync(parentDir, {recursive: true, force: true})
       }
     }
   })
