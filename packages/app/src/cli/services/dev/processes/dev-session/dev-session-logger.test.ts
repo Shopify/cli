@@ -2,9 +2,15 @@ import {DevSessionLogger} from './dev-session-logger.js'
 import {UserError} from './dev-session.js'
 import {AppEvent, EventType} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import analyticsAppEventsSpec from '../../../../models/extensions/specifications/analytics_app_events.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
+
+vi.mock('@shopify/cli-kit/node/ui/components', () => ({
+  useConcurrentOutputContext: vi.fn((_, callback: () => void) => callback()),
+}))
 
 describe('DevSessionLogger', () => {
   let output: string[]
@@ -225,6 +231,41 @@ describe('DevSessionLogger', () => {
       await logger.logExtensionUpdateMessages(event)
       expect(output).toMatchInlineSnapshot(`[]`)
       expect(mockExtension.getDevSessionUpdateMessages).not.toHaveBeenCalled()
+    })
+
+    test('prefixes Analytics App Events messages with the extension handle', async () => {
+      // Given
+      const analyticsAppEventsExtension = new ExtensionInstance({
+        configuration: {},
+        configurationPath: '',
+        directory: '',
+        specification: analyticsAppEventsSpec,
+      })
+      const event: AppEvent = {
+        app: {configuration: {}} as any,
+        extensionEvents: [
+          {
+            type: EventType.Created,
+            extension: analyticsAppEventsExtension,
+          },
+        ],
+        path: '',
+        startTime: [0, 0],
+      }
+
+      // When
+      await logger.logExtensionUpdateMessages(event)
+
+      // Then
+      expect(output).toMatchInlineSnapshot(`
+        [
+          "\u001b[90m└ \u001b[39mExtension loaded",
+        ]
+      `)
+      expect(vi.mocked(useConcurrentOutputContext)).toHaveBeenCalledWith(
+        {outputPrefix: 'analytics_app_events', stripAnsi: false},
+        expect.any(Function),
+      )
     })
   })
 

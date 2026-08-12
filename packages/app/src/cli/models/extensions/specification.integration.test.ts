@@ -29,9 +29,13 @@ describe('allLocalSpecs', () => {
   test('loads the specifications successfully', async () => {
     // When
     const got = await loadLocalExtensionsSpecifications()
+    const analyticsAppEventsSpec = got.find((specification) => specification.identifier === 'analytics_app_events')
+    const adminLinkSpec = got.find((specification) => specification.identifier === 'admin_link')
 
     // Then
     expect(got.length).not.toEqual(0)
+    expect(analyticsAppEventsSpec).toBeDefined()
+    expect(adminLinkSpec?.getDevSessionUpdateMessages).toBeUndefined()
   })
 })
 
@@ -94,6 +98,24 @@ describe('createContractBasedModuleSpecification', () => {
 
     // Then
     expect(got.clientSteps).toBeUndefined()
+  })
+
+  test('passes dev session update messages through to the created specification', async () => {
+    // Given
+    const getDevSessionUpdateMessages = async () => ['Extension loaded']
+    const specification = createContractBasedModuleSpecification({
+      identifier: 'test',
+      uidStrategy: 'uuid',
+      experience: 'extension',
+      appModuleFeatures: () => [],
+      getDevSessionUpdateMessages,
+    })
+
+    // When
+    const messages = await specification.getDevSessionUpdateMessages!({})
+
+    // Then
+    expect(messages).toEqual(['Extension loaded'])
   })
 })
 

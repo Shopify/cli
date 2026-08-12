@@ -29,6 +29,7 @@ import editorExtensionCollectionSpecification from './specifications/editor_exte
 import channelSpecificationSpec from './specifications/channel.js'
 import orderAttributionConfigSpec from './specifications/order_attribution_config.js'
 import adminLinkSpec from './specifications/admin_link.js'
+import analyticsAppEventsSpec from './specifications/analytics_app_events.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -82,6 +83,7 @@ function loadSpecifications() {
     channelSpecificationSpec,
     orderAttributionConfigSpec,
     adminLinkSpec,
+    analyticsAppEventsSpec,
   ]
 
   return [...configModuleSpecs, ...moduleSpecs] as ExtensionSpecification[]

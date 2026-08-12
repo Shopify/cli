@@ -1,4 +1,5 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
@@ -105,5 +106,42 @@ describe('fetchExtensionSpecifications', () => {
 
     expect(withoutLocalization?.appModuleFeatures()).toEqual([])
     expect(withLocalization?.appModuleFeatures()).toEqual(['localization'])
+  })
+
+  test('uses the remote App Events contract with the local dev session message', async () => {
+    // Given
+    const analyticsAppEventsRemoteSpec: RemoteSpecification = {
+      name: 'App Events',
+      externalName: 'App Events',
+      identifier: 'analytics_app_events',
+      externalIdentifier: 'analytics_app_events',
+      gated: false,
+      experience: 'extension',
+      managementExperience: 'cli',
+      registrationLimit: 1,
+      uidStrategy: 'single',
+      validationSchema: {
+        jsonSchema:
+          '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"namespace":{"type":"string"},"events":{"type":"array"}},"required":["namespace","events"]}',
+      },
+    }
+    const developerPlatformClient = testDeveloperPlatformClient({
+      specifications: () => Promise.resolve([analyticsAppEventsRemoteSpec]),
+    })
+
+    // When
+    const specifications = await fetchSpecifications({
+      developerPlatformClient,
+      app: testOrganizationApp(),
+    })
+    const analyticsAppEventsSpec = specifications.find(
+      (specification) => specification.identifier === 'analytics_app_events',
+    )!
+
+    // Then
+    expect(analyticsAppEventsSpec.uidStrategy).toBe('single')
+    await expect(analyticsAppEventsSpec.getDevSessionUpdateMessages!({})).resolves.toEqual(['Extension loaded'])
+    expect(analyticsAppEventsSpec.parseConfigurationObject({namespace: 'example-app', events: []}).state).toBe('ok')
+    expect(analyticsAppEventsSpec.parseConfigurationObject({namespace: 'example-app'}).state).toBe('error')
   })
 })

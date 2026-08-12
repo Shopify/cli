@@ -301,6 +301,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     | 'experience'
     | 'transformRemoteToLocal'
     | 'devSessionWatchConfig'
+    | 'getDevSessionUpdateMessages'
   >,
 ) {
   return createExtensionSpecification({
@@ -312,6 +313,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     uidStrategy: spec.uidStrategy,
     transformRemoteToLocal: spec.transformRemoteToLocal,
     devSessionWatchConfig: spec.devSessionWatchConfig,
+    getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
