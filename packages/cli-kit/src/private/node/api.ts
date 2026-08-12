@@ -193,7 +193,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
       }
       const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
 
-      if (errorsIncludeStatus429(err)) {
+      if (errorsIncludeThrottling(err)) {
         let delayMs: number | undefined
 
         try {
@@ -253,7 +253,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   }
 }
 
-function errorsIncludeStatus429(error: ClientError): boolean {
+function errorsIncludeThrottling(error: ClientError): boolean {
   if (error.response.status === 429) {
     return true
   }
@@ -263,7 +263,14 @@ function errorsIncludeStatus429(error: ClientError): boolean {
   if (typeof error.response.errors === 'string') {
     return false
   }
-  return error.response.errors?.some((error) => error.extensions?.code === '429') ?? false
+  // Some Shopify APIs (e.g. App Management) throttle with a 200 response whose
+  // GraphQL error message is "Throttled", with no 429 status or code — match
+  // the message so those are retried too.
+  return (
+    error.response.errors?.some(
+      (graphqlError) => graphqlError.extensions?.code === '429' || /^throttled/i.test(graphqlError.message ?? ''),
+    ) ?? false
+  )
 }
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
