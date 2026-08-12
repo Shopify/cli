@@ -110,6 +110,24 @@ describe('prepareStoreExecuteRequest', () => {
     expect(request.parsedOperation.operationDefinition.operation).toBe('mutation')
   })
 
+  test.each(['null', '[]', '"value"', 'true', '42'])('throws when inline variables are %s', async (variables) => {
+    await expect(
+      prepareStoreExecuteRequest({
+        query: 'query { shop { name } }',
+        variables,
+      }),
+    ).rejects.toThrow('expected a non-null JSON object')
+  })
+
+  test('throws when inline variables are empty', async () => {
+    await expect(
+      prepareStoreExecuteRequest({
+        query: 'query { shop { name } }',
+        variables: '  ',
+      }),
+    ).rejects.toThrow('--variables')
+  })
+
   test('throws when variables contain invalid JSON', async () => {
     await expect(
       prepareStoreExecuteRequest({
@@ -117,6 +135,29 @@ describe('prepareStoreExecuteRequest', () => {
         variables: '{invalid json}',
       }),
     ).rejects.toThrow('Invalid JSON')
+  })
+
+  test.each(['null', '[]', '"value"', 'true', '42'])('throws when file variables are %s', async (variables) => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const variableFile = joinPath(tmpDir, 'variables.json')
+      await writeFile(variableFile, variables)
+
+      await expect(
+        prepareStoreExecuteRequest({
+          query: 'query { shop { name } }',
+          variableFile,
+        }),
+      ).rejects.toThrow('expected a non-null JSON object')
+    })
+  })
+
+  test('accepts empty and populated variable objects', async () => {
+    await expect(
+      prepareStoreExecuteRequest({
+        query: 'query { shop { name } }',
+        variables: '{}',
+      }),
+    ).resolves.toMatchObject({parsedVariables: {}})
   })
 
   test('reads variables from a file', async () => {

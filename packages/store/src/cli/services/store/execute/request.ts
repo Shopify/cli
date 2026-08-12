@@ -47,14 +47,36 @@ async function readQuery(input: {query?: string; queryFile?: string}): Promise<s
   )
 }
 
+function validateVariables(
+  value: unknown,
+  source: ReturnType<typeof outputToken.yellow> | ReturnType<typeof outputToken.path>,
+): {[key: string]: unknown} {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new AbortError(
+      outputContent`Invalid JSON in ${source}: expected a non-null JSON object.`,
+      'Please provide a JSON object for variables.',
+    )
+  }
+
+  return value as {[key: string]: unknown}
+}
+
 async function parseVariables(
   variables?: string,
   variableFile?: string,
 ): Promise<{[key: string]: unknown} | undefined> {
-  if (variables) {
+  if (variables !== undefined) {
+    if (!variables.trim()) {
+      throw new AbortError(
+        outputContent`The ${outputToken.yellow('--variables')} flag value is empty.`,
+        'Please provide a non-null JSON object for variables.',
+      )
+    }
+
     try {
-      return JSON.parse(variables)
+      return validateVariables(JSON.parse(variables), outputToken.yellow('--variables'))
     } catch (error) {
+      if (error instanceof AbortError) throw error
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       throw new AbortError(
         outputContent`Invalid JSON in ${outputToken.yellow('--variables')} flag: ${errorMessage}`,
@@ -72,8 +94,9 @@ async function parseVariables(
 
     const fileContent = await readFile(variableFile, {encoding: 'utf8'})
     try {
-      return JSON.parse(fileContent)
+      return validateVariables(JSON.parse(fileContent), outputToken.path(variableFile))
     } catch (error) {
+      if (error instanceof AbortError) throw error
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       throw new AbortError(
         outputContent`Invalid JSON in variable file ${outputToken.path(variableFile)}: ${errorMessage}`,
