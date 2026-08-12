@@ -50,8 +50,19 @@ jobs:
           git commit -m "Update E2E failure data" || exit 0
           git push origin e2e-failure-data
       - name: Post summary to Slack
+        # Posts to #dev-platform-ops. The bot behind SLACK_GARDENER_BOT_TOKEN
+        # must be invited to the channel for chat.postMessage to succeed.
+        continue-on-error: true
         env:
-          SLACK_WEBHOOK: ${{ secrets.E2E_REPORT_SLACK_WEBHOOK }}
-        if: env.SLACK_WEBHOOK != ''
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_GARDENER_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: C076XB9DHM1
+        if: env.SLACK_BOT_TOKEN != ''
         run: |
-          jq -Rs '{text: .}' < .e2e-data/summary.md | curl -s -X POST -H 'Content-Type: application/json' -d @- "$SLACK_WEBHOOK"
+          jq -Rs --arg channel "$SLACK_CHANNEL_ID" '
+            { channel: $channel,
+              text: "E2E failure report",
+              blocks: [{type: "section", text: {type: "mrkdwn", text: ("```\n" + . + "\n```")}}] }
+          ' < .e2e-data/summary.md | curl -sf -X POST \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H 'Content-type: application/json; charset=utf-8' \
+            -d @- https://slack.com/api/chat.postMessage
