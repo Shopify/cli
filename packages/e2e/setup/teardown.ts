@@ -52,9 +52,10 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
   const clientId = resolveClientId(ctx)
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      if (clientId) {
-        app = await findAppByClientId(sessionEnv, clientId)
-      } else if (ctx.env.orgId) {
+      if (clientId && ctx.env.orgId) {
+        app = await findAppByClientId(sessionEnv, clientId, ctx.env.orgId)
+      }
+      if (!app && ctx.env.orgId) {
         app = await findAppByName(sessionEnv, ctx.appName, ctx.env.orgId)
       }
       appResolved = true
@@ -170,7 +171,10 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
 
 /**
  * The app's client_id: read from the local TOML when the app dir is known,
- * otherwise take the last segment of the Dev Dashboard app URL.
+ * otherwise from the Dev Dashboard app URL. Dashboard URLs come in two
+ * shapes — apps/[clientId] (built by devDashboardAppUrl) and
+ * apps/[numericAppId] (parsed from deploy output) — and only the former is
+ * usable as an API key, so numeric segments resolve via name search instead.
  */
 function resolveClientId(ctx: TeardownCtx): string | undefined {
   if (ctx.appDir) {
@@ -181,5 +185,6 @@ function resolveClientId(ctx: TeardownCtx): string | undefined {
       // TOML may be missing when the test failed before app creation.
     }
   }
-  return ctx.appUrl?.split('/').filter(Boolean).at(-1)
+  const urlSegment = ctx.appUrl?.match(/\/apps\/([^/?#]+)/)?.[1]
+  return urlSegment && !/^\d+$/.test(urlSegment) ? urlSegment : undefined
 }

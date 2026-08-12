@@ -324,6 +324,29 @@ export async function configLink(
 // ---------------------------------------------------------------------------
 
 /**
+ * Load the app's settings page, clicking through the accounts.shopify.com
+ * account picker if the session bounces there — which is common when the
+ * browser context has not visited the Dev Dashboard yet.
+ */
+async function gotoAppSettings(page: Page, appUrl: string): Promise<void> {
+  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+
+  if (!page.url().startsWith('https://accounts.shopify.com')) return
+
+  const email = process.env.E2E_ACCOUNT_EMAIL
+  if (email) {
+    const accountButton = page.locator(`text=${email}`).first()
+    if (await isVisibleWithin(accountButton, BROWSER_TIMEOUT.long)) {
+      await accountButton.click()
+      await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+    }
+  }
+  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+}
+
+/**
  * Delete an app from its dev dashboard settings page. Returns true if deleted.
  *
  * Single attempt — caller owns the retry loop.
@@ -333,8 +356,7 @@ export async function configLink(
  */
 export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Promise<boolean> {
   // Step 1: Navigate to the app's settings page. 404 → already deleted. 5xx → throw for retry.
-  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+  await gotoAppSettings(page, appUrl)
   const gotoStatus = getLastPageStatus(page)
   if (gotoStatus === 404) return true
   if (gotoStatus !== undefined && gotoStatus >= 500) {
@@ -345,6 +367,11 @@ export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Pro
   // Button can be below the fold, and takes ~1-2s to enable after uninstall (one reload covers propagation lag).
   // If it stays disabled after reload, installs remain — fail fast for caller.
   const deleteBtn = page.locator('button:has-text("Delete app")').first()
+  if (!(await isVisibleWithin(deleteBtn, BROWSER_TIMEOUT.long))) {
+    // Include the landed URL: the usual cause is a session bounce that the
+    // account-picker handling above did not cover.
+    throw new Error(`Delete app button not found (page: ${page.url()})`)
+  }
   await deleteBtn.scrollIntoViewIfNeeded({timeout: BROWSER_TIMEOUT.long})
   if (!(await deleteBtn.isEnabled())) {
     await page.reload({waitUntil: 'domcontentloaded'})
