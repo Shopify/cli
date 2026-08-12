@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+import {uninstallAppWithAdminApi} from './admin-api.js'
 import {findAppOnDevDashboard, deleteAppFromDevDashboard} from './app.js'
 import {refreshIfPageError} from './browser.js'
 import {createLogger, e2eSection} from './env.js'
@@ -14,6 +15,8 @@ interface BaseTeardownCtx {
   appName: string
   /** Direct Dev Dashboard app URL. Prefer this when available to avoid slow org-wide pagination. */
   appUrl?: string
+  /** Local app directory. When present, uninstall goes through the Admin API instead of the store admin UI. */
+  appDir?: string
   workerIndex?: number
 }
 
@@ -40,20 +43,30 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
     const storeSlug = ctx.storeFqdn.replace('.myshopify.com', '')
     e2eSection(wCtx, `Teardown: store ${ctx.storeFqdn}`)
 
-    // Phase 1: Uninstall app from store
+    // Phase 1: Uninstall app from store — Admin API when the app dir is known.
+    // No browser fallback: an API failure must surface loudly so it gets fixed
+    // instead of hiding behind the flaky store-admin click-through.
     let uninstalled = false
-    log.log(wCtx, 'uninstalling app from store')
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        uninstalled = await uninstallAppFromStore(page, storeSlug, ctx.appName)
-        if (uninstalled) {
-          log.log(wCtx, 'app uninstalled')
-          break
+    if (ctx.appDir) {
+      log.log(wCtx, 'uninstalling app via admin API')
+      await uninstallAppWithAdminApi({cli: ctx.cli, appDir: ctx.appDir, storeFqdn: ctx.storeFqdn})
+      uninstalled = true
+      log.log(wCtx, 'app uninstalled via admin API')
+    }
+    if (!uninstalled) {
+      log.log(wCtx, 'uninstalling app from store')
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          uninstalled = await uninstallAppFromStore(page, storeSlug, ctx.appName)
+          if (uninstalled) {
+            log.log(wCtx, 'app uninstalled')
+            break
+          }
+          log.log(wCtx, `(${attempt}/3) app uninstall attempt failed, app still visible`)
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (err) {
+          log.log(wCtx, `(${attempt}/3) app uninstall attempt failed: ${err instanceof Error ? err.message : err}`)
         }
-        log.log(wCtx, `(${attempt}/3) app uninstall attempt failed, app still visible`)
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch (err) {
-        log.log(wCtx, `(${attempt}/3) app uninstall attempt failed: ${err instanceof Error ? err.message : err}`)
       }
     }
     if (!uninstalled) {
