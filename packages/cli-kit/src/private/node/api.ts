@@ -193,7 +193,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
       }
       const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
 
-      if (errorsIncludeThrottling(err)) {
+      if (isThrottled(err)) {
         let delayMs: number | undefined
 
         try {
@@ -253,7 +253,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   }
 }
 
-function errorsIncludeThrottling(error: ClientError): boolean {
+function isThrottled(error: ClientError): boolean {
   if (error.response.status === 429) {
     return true
   }
