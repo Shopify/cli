@@ -1,11 +1,13 @@
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
+import {DevEvent, DevFormat, renderDevJson} from './json.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {SyncDiagnosticChannel} from '@shopify/diagnostics'
 
 interface DevProps {
   processes: OutputProcess[]
@@ -13,6 +15,8 @@ interface DevProps {
   graphiqlUrl?: string
   abortController: AbortController
   shopFqdn: string
+  format: DevFormat
+  events: SyncDiagnosticChannel<DevEvent>
   app: {
     id: string
     developerPlatformClient: DeveloperPlatformClient
@@ -32,6 +36,8 @@ export async function renderDev({
   organizationName,
   configPath,
   localURL,
+  format,
+  events,
 }: DevProps & {
   devSessionStatusManager: DevSessionStatusManager
   appURL?: string
@@ -40,6 +46,17 @@ export async function renderDev({
   configPath?: string
   localURL?: string
 }) {
+  if (format === 'json') {
+    return renderDevJson({
+      processes,
+      previewUrl,
+      graphiqlUrl,
+      abortController,
+      devSessionStatusManager,
+      events,
+    })
+  }
+
   if (terminalSupportsPrompting()) {
     return render(
       <DevSessionUI

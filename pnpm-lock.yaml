@@ -176,6 +176,9 @@ importers:
       '@shopify/cli-kit':
         specifier: 4.5.0
         version: link:../cli-kit
+      '@shopify/diagnostics':
+        specifier: 4.5.0
+        version: link:../diagnostics
       '@shopify/organizations':
         specifier: 4.5.0
         version: link:../organizations

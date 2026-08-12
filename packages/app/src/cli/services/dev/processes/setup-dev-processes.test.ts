@@ -32,6 +32,7 @@ import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {createSyncDiagnosticChannel} from '@shopify/diagnostics'
 
 vi.mock('@shopify/cli-kit/node/session.js')
 vi.mock('../fetch.js')
@@ -73,6 +74,8 @@ const appContextResult = {
   organization: testOrganization(),
   store: testOrganizationStore({}),
   specifications: [],
+  format: 'text' as const,
+  events: createSyncDiagnosticChannel(),
 }
 
 describe('setup-dev-processes', () => {

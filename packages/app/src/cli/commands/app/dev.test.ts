@@ -59,6 +59,7 @@ describe('app dev command', () => {
         localhostPort: undefined,
       })
       expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: false, tunnel: {mode: 'auto'}}))
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({format: 'text'}))
     })
   })
 
@@ -67,6 +68,30 @@ describe('app dev command', () => {
       await expect(Dev.run(['--path', tmp, '--install-mkcert'], import.meta.url)).rejects.toThrow()
 
       expect(dev).not.toHaveBeenCalled()
+    })
+  })
+
+  test('uses JSON output when --json is passed', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const app = testAppLinked({directory: tmp})
+      const appContextResult = {
+        app,
+        remoteApp: testOrganizationApp(),
+        organization: testOrganization(),
+        project: testProject(),
+        activeConfig: {} as never,
+        specifications: [],
+        developerPlatformClient: testDeveloperPlatformClient(),
+      } as Awaited<ReturnType<typeof linkedAppContext>>
+      const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
+
+      vi.mocked(linkedAppContext).mockResolvedValue(appContextResult)
+      vi.mocked(storeContext).mockResolvedValue(store)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+
+      await Dev.run(['--path', tmp, '--store', store.shopDomain, '--json'], import.meta.url)
+
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({format: 'json'}))
     })
   })
 })

@@ -1067,6 +1067,15 @@
           "name": "install-mkcert",
           "type": "boolean"
         },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "localhost-port": {
           "description": "Port to use for localhost. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
