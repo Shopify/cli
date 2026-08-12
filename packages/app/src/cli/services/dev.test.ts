@@ -15,6 +15,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {createSyncDiagnosticChannel} from '@shopify/diagnostics'
 
 vi.mock('./dev/fetch.js')
 vi.mock('./dev/processes/setup-dev-processes.js')
@@ -62,6 +63,8 @@ describe('dev', () => {
       commandConfig: {} as any,
       skipDependenciesInstallation: true,
       tunnel: {mode: 'custom', url: 'https://localhost:3456'},
+      format: 'text',
+      events: createSyncDiagnosticChannel(),
     })
 
     expect(publicMetadata).toEqual(

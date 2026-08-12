@@ -5,9 +5,11 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-link
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
+import {DevEvent, devJsonEventSink} from '../../services/dev/json.js'
 import {Flags} from '@oclif/core'
+import {createSyncDiagnosticChannel} from '@shopify/diagnostics'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends AppLinkedCommand {
@@ -20,6 +22,7 @@ export default class Dev extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     store: Flags.string({
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
@@ -149,6 +152,8 @@ export default class Dev extends AppLinkedCommand {
       graphiqlKey: flags['graphiql-key'],
       installMkcert: flags['install-mkcert'] ?? false,
       tunnel: tunnelMode,
+      format: flags.json ? 'json' : 'text',
+      events: createSyncDiagnosticChannel<DevEvent>(...(flags.json ? [devJsonEventSink] : [])),
     }
 
     await dev(devOptions)

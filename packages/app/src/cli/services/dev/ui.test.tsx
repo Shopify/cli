@@ -6,12 +6,14 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {createSyncDiagnosticChannel} from '@shopify/diagnostics'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('./ui/components/DevSessionUI.js')
 
 const developerPlatformClient = testDeveloperPlatformClient()
 const devSessionStatusManager = new DevSessionStatusManager()
+const events = createSyncDiagnosticChannel()
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -35,6 +37,8 @@ describe('ui', () => {
         abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
+        format: 'text',
+        events,
       })
 
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
@@ -61,6 +65,8 @@ describe('ui', () => {
         abortController: new AbortController(),
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
+        format: 'text',
+        events,
       })
 
       const output = write.mock.calls.map(([message]) => message).join('')
@@ -93,6 +99,8 @@ describe('ui', () => {
         abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
+        format: 'text',
+        events,
       })
 
       await new Promise((resolve) => setTimeout(resolve, 10))
@@ -135,6 +143,8 @@ describe('ui', () => {
         abortController: new AbortController(),
         shopFqdn,
         devSessionStatusManager,
+        format: 'text',
+        events,
       })
 
       await new Promise((resolve) => setTimeout(resolve, 10))

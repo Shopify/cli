@@ -653,8 +653,8 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value> | -c <value>]
-    [--install-mkcert --use-localhost] [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>] [--path
-    <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
+    [--install-mkcert --use-localhost] [-j] [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>]
+    [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
     [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
     [--verbose]
 
@@ -662,6 +662,10 @@ FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. Must be an existing development or Shopify Plus sandbox store.

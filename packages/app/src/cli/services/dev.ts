@@ -16,6 +16,7 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
+import {DevEvent, DevFormat} from './dev/json.js'
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -39,6 +40,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {SyncDiagnosticChannel} from '@shopify/diagnostics'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -62,6 +64,8 @@ export interface DevOptions {
   graphiqlPort?: number
   graphiqlKey?: string
   installMkcert?: boolean
+  format: DevFormat
+  events: SyncDiagnosticChannel<DevEvent>
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -357,6 +361,8 @@ async function launchDevProcesses({
     organizationName: config.commandOptions.organization.businessName,
     configPath: config.localApp.configPath,
     localURL: config.network.proxyUrl,
+    format: config.commandOptions.format,
+    events: config.commandOptions.events,
   })
 }
 
