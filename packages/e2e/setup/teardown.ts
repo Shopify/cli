@@ -140,7 +140,16 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
     return
   }
 
-  const appUrl = ctx.appUrl ?? `https://dev.shopify.com/dashboard/${ctx.env.orgId}/apps/${app.key}`
+  // Prefer the numeric-id URL derived from the app's GID — the same form the
+  // dashboard links to and the CLI's appDeepLink builds. Settings pages under
+  // client-key URLs (devDashboardAppUrl) usually render without the Delete
+  // button: the run-level cleanup deletes 11/11 apps with numeric URLs while
+  // key-form teardown deletes went 2/13.
+  const numericAppId = app.id.match(/(\d+)$/)?.[1]
+  const appUrl =
+    numericAppId && ctx.env.orgId
+      ? `https://dev.shopify.com/dashboard/${ctx.env.orgId}/apps/${numericAppId}`
+      : (ctx.appUrl ?? `https://dev.shopify.com/dashboard/${ctx.env.orgId}/apps/${app.key}`)
   log.log(wCtx, 'deleting app')
   let appDeleted = false
   for (let attempt = 1; attempt <= 3; attempt++) {
