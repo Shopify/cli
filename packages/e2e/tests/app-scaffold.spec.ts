@@ -54,8 +54,7 @@ test.describe('App scaffold', () => {
           browserPage,
           appName,
           appUrl,
-          orgId: env.orgId,
-          workerIndex: env.workerIndex,
+          env,
         })
       }
     }
@@ -92,8 +91,7 @@ test.describe('App scaffold', () => {
           browserPage,
           appName,
           appUrl,
-          orgId: env.orgId,
-          workerIndex: env.workerIndex,
+          env,
         })
       }
     }
@@ -150,8 +148,7 @@ test.describe('App scaffold', () => {
           browserPage,
           appName,
           appUrl,
-          orgId: env.orgId,
-          workerIndex: env.workerIndex,
+          env,
         })
       }
     }

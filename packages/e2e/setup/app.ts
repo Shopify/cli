@@ -1,6 +1,6 @@
-/* eslint-disable no-restricted-imports, no-await-in-loop */
+/* eslint-disable no-restricted-imports */
 import {authFixture} from './auth.js'
-import {getLastPageStatus, isVisibleWithin, navigateToDashboard, refreshIfPageError} from './browser.js'
+import {getLastPageStatus, isVisibleWithin} from './browser.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import * as toml from '@iarna/toml'
 import * as path from 'path'
@@ -320,40 +320,8 @@ export async function configLink(
 }
 
 // ---------------------------------------------------------------------------
-// Dev dashboard browser actions — find and delete apps
+// Dev dashboard browser actions — delete apps
 // ---------------------------------------------------------------------------
-
-/** Search dev dashboard for an app by name. Returns the app URL or null. */
-export async function findAppOnDevDashboard(page: Page, appName: string, orgId?: string): Promise<string | null> {
-  const org = orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
-  const email = process.env.E2E_ACCOUNT_EMAIL
-
-  await navigateToDashboard({browserPage: page, email, orgId: org})
-
-  // Scan current page + pagination for the app
-  while (true) {
-    const allLinks = await page.locator('a[href*="/apps/"]').all()
-    for (const link of allLinks) {
-      const text = (await link.textContent()) ?? ''
-      if (text.includes(appName)) {
-        const href = await link.getAttribute('href')
-        if (href) return href.startsWith('http') ? href : `https://dev.shopify.com${href}`
-      }
-    }
-
-    // Check for next page
-    const nextLink = page.locator('a[href*="next_cursor"]').first()
-    if (!(await isVisibleWithin(nextLink, BROWSER_TIMEOUT.medium))) break
-    const nextHref = await nextLink.getAttribute('href')
-    if (!nextHref) break
-    const nextUrl = nextHref.startsWith('http') ? nextHref : `https://dev.shopify.com${nextHref}`
-    await page.goto(nextUrl, {waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-    await refreshIfPageError(page)
-  }
-
-  return null
-}
 
 /**
  * Delete an app from its dev dashboard settings page. Returns true if deleted.
