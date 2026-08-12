@@ -1,9 +1,12 @@
-/* eslint-disable no-restricted-globals, no-await-in-loop, @nx/enforce-module-boundaries -- the
+/* eslint-disable no-restricted-globals, no-await-in-loop, no-restricted-imports -- the
    harness calls the App Management API directly with minimal queries, like admin-api.ts
-   does for the Admin API; cli-kit is only used to reuse the CLI session that
-   global setup created, following the cleanup-stores.ts pattern */
+   does for the Admin API */
 import {loadtestHeaderRecord} from '../helpers/loadtest-header.js'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '../../cli-kit/dist/public/node/session.js'
+import {execa} from 'execa'
+import * as path from 'path'
+import {fileURLToPath} from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const APP_MANAGEMENT_URL = 'https://app.shopify.com/app_management/unstable/graphql.json'
 
@@ -15,34 +18,25 @@ export interface AppManagementApp {
   key: string
 }
 
-const XDG_KEYS = ['XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_STATE_HOME', 'XDG_CACHE_HOME'] as const
-
-let sessionEnvReady = false
-
-/**
- * Point cli-kit's session storage at an authenticated CLI session before its
- * first use in this process. cli-kit resolves its storage directory from
- * process.env at first access and caches it, so this runs once and the dirs
- * must not change afterwards — workers keep one XDG dir set for their lifetime.
- */
-function ensureSessionEnv(sessionEnv: NodeJS.ProcessEnv): void {
-  if (sessionEnvReady) return
-  for (const key of XDG_KEYS) {
-    const value = sessionEnv[key]
-    if (value) process.env[key] = value
-  }
-  sessionEnvReady = true
-}
-
 let cachedToken: string | undefined
 
+/**
+ * Get an App Management API token for the CLI session in `sessionEnv`'s XDG
+ * dirs. Delegates to get-app-management-token.ts in a tsx subprocess: cli-kit
+ * reuses the session cleanly there, while importing its dist into Playwright's
+ * transpiled harness crashes Node's require(esm) path on CI's Node version.
+ */
 async function appManagementToken(sessionEnv: NodeJS.ProcessEnv, forceRefresh = false): Promise<string> {
-  ensureSessionEnv(sessionEnv)
   if (cachedToken && !forceRefresh) return cachedToken
-  const {appManagementToken: token} = await ensureAuthenticatedAppManagementAndBusinessPlatform({
-    noPrompt: true,
-    forceRefresh,
+  const script = path.join(__dirname, 'get-app-management-token.ts')
+  const result = await execa('tsx', [script, ...(forceRefresh ? ['--force-refresh'] : [])], {
+    env: sessionEnv,
+    extendEnv: false,
+    preferLocal: true,
+    localDir: path.resolve(__dirname, '..'),
+    timeout: 60_000,
   })
+  const {token} = JSON.parse(result.stdout) as {token: string}
   // eslint-disable-next-line require-atomic-updates
   cachedToken = token
   return token
