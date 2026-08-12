@@ -260,6 +260,10 @@ jobs:
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
           E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
         run: pnpm exec playwright test --shard ${{ matrix.shard }}
+      - name: Report flaky tests
+        if: ${{ !cancelled() }}
+        working-directory: packages/e2e
+        run: node scripts/report-flaky.js
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
