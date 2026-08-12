@@ -46,11 +46,12 @@ test.describe('Dev hot reload', () => {
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('hot-reload')
     let appUrl: string | undefined
+    let appDir: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
-      const appDir = initResult.appDir
+      appDir = initResult.appDir
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
@@ -88,16 +89,17 @@ test.describe('Dev hot reload', () => {
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {
-        fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           cli,
           browserPage,
           appName,
           appUrl,
+          appDir,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
         })
+        fs.rmSync(parentDir, {recursive: true, force: true})
       }
     }
   })
@@ -109,11 +111,12 @@ test.describe('Dev hot reload', () => {
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('hot-create')
     let appUrl: string | undefined
+    let appDir: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
-      const appDir = initResult.appDir
+      appDir = initResult.appDir
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
@@ -144,16 +147,17 @@ test.describe('Dev hot reload', () => {
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {
-        fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           cli,
           browserPage,
           appName,
           appUrl,
+          appDir,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
         })
+        fs.rmSync(parentDir, {recursive: true, force: true})
       }
     }
   })
@@ -165,11 +169,12 @@ test.describe('Dev hot reload', () => {
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('hot-delete')
     let appUrl: string | undefined
+    let appDir: string | undefined
 
     try {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
-      const appDir = initResult.appDir
+      appDir = initResult.appDir
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
@@ -206,16 +211,17 @@ test.describe('Dev hot reload', () => {
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {
-        fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           cli,
           browserPage,
           appName,
           appUrl,
+          appDir,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
         })
+        fs.rmSync(parentDir, {recursive: true, force: true})
       }
     }
   })

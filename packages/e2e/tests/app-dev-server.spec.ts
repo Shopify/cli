@@ -15,6 +15,7 @@ test.describe('App dev server', () => {
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = e2eAppName('dev')
     let appUrl: string | undefined
+    let appDir: string | undefined
 
     try {
       // Step 1: Create an extension-only app (no scopes needed)
@@ -29,7 +30,7 @@ test.describe('App dev server', () => {
       expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
         0,
       )
-      const appDir = initResult.appDir
+      appDir = initResult.appDir
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
       // Step 2: Start dev server via PTY, targeting the worker's store
@@ -53,16 +54,17 @@ test.describe('App dev server', () => {
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {
-        fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
           cli,
           browserPage,
           appName,
           appUrl,
+          appDir,
           orgId: env.orgId,
           storeFqdn,
           workerIndex: env.workerIndex,
         })
+        fs.rmSync(parentDir, {recursive: true, force: true})
       }
     }
   })
