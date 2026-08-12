@@ -17,20 +17,20 @@ export interface ApplicationToken {
   storeFqdn?: string
 }
 
-export interface Session {
-  identity: IdentityToken
-  applications: Record<string, ApplicationToken>
-}
-
 export type ShopifyApplication = 'admin' | 'partners' | 'storefront-renderer' | 'business-platform' | 'app-management'
 
-export interface IdentityClientConfig {
+export interface AuthClientConfig {
   identityOrigin: string
   clientId: string
-  applicationIds: Record<ShopifyApplication, string>
   fetch?: AuthFetch
   clock?: Clock
   logger?: AuthLogger
+}
+
+export interface IdentityClientConfig extends AuthClientConfig {}
+
+export interface ApplicationAccessConfig extends AuthClientConfig {
+  applicationIds: Record<ShopifyApplication, string>
 }
 
 export interface AuthFetchResponse {
@@ -112,6 +112,9 @@ export interface IdentityClient {
   requestDeviceAuthorization(options: {scopes: string[]; signal?: AuthSignal}): Promise<DeviceAuthorization>
   exchangeDeviceCode(options: {deviceCode: string; signal?: AuthSignal}): Promise<DeviceCodeExchangeResult>
   refreshIdentityToken(options: {token: IdentityToken; signal?: AuthSignal}): Promise<IdentityToken>
+}
+
+export interface ApplicationAccessClient {
   exchangeApplicationToken(request: ApplicationTokenRequest): Promise<ApplicationToken>
 }
 
