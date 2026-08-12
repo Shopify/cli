@@ -74,13 +74,15 @@ function getProxyServerRequestListener(
       // The proxy does not forward OPTIONS reliably, so we respond here
       // using the headers requested by the client.
       if (req.method === 'OPTIONS') {
+        const origin = req.headers.origin
         res.writeHead(204, {
-          'Access-Control-Allow-Origin': req.headers.origin ?? '*',
+          'Access-Control-Allow-Origin': origin ?? '*',
           'Access-Control-Allow-Methods':
             req.headers['access-control-request-method'] ?? 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
           'Access-Control-Allow-Headers':
             req.headers['access-control-request-headers'] ?? 'Content-Type, Authorization',
           'Access-Control-Max-Age': '86400',
+          ...(origin ? {'Access-Control-Allow-Credentials': 'true'} : {}),
         })
         return res.end()
       }
