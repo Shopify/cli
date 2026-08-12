@@ -88,6 +88,11 @@ async function appManagementQuery(
 /**
  * Look up an app by its API key (client_id). Returns undefined when the app
  * does not exist — for teardown that means it was already deleted.
+ *
+ * The variable must be named `apiKey`: the API resolves the request's
+ * organization from specifically-named variables (`organizationId`, `apiKey`,
+ * `appId`) and rejects the request with "Cannot find a valid organization"
+ * otherwise.
  */
 export async function findAppByClientId(
   sessionEnv: NodeJS.ProcessEnv,
@@ -95,9 +100,9 @@ export async function findAppByClientId(
 ): Promise<AppManagementApp | undefined> {
   const data = (await appManagementQuery(
     sessionEnv,
-    'query appByKey($key: String!) { appByKey(key: $key) { id key } }',
+    'query appByKey($apiKey: String!) { appByKey(key: $apiKey) { id key } }',
     {
-      key: clientId,
+      apiKey: clientId,
     },
   )) as {appByKey?: AppManagementApp | null}
   return data.appByKey ?? undefined
