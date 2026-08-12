@@ -1,23 +1,27 @@
 /* eslint-disable no-await-in-loop */
+import {uninstallAppWithAdminApi} from './admin-api.js'
 import {findAppOnDevDashboard, deleteAppFromDevDashboard} from './app.js'
 import {refreshIfPageError} from './browser.js'
 import {createLogger, e2eSection} from './env.js'
 import {BROWSER_TIMEOUT} from './constants.js'
-import {uninstallAppFromStore, deleteStore, isStoreAppsEmpty, dismissDevConsole} from './store.js'
+import {uninstallAppFromStore, deleteDevStoreWithCli, isStoreAppsEmpty, dismissDevConsole} from './store.js'
+import type {CLIProcess} from './cli.js'
 import type {Page} from '@playwright/test'
 
 const log = createLogger('browser')
 
-interface TeardownCtx {
+interface BaseTeardownCtx {
   browserPage: Page
   appName: string
   /** Direct Dev Dashboard app URL. Prefer this when available to avoid slow org-wide pagination. */
   appUrl?: string
-  orgId?: string
+  /** Local app directory. When present, uninstall goes through the Admin API instead of the store admin UI. */
+  appDir?: string
   workerIndex?: number
-  /** If set, uninstalls app from store + deletes store before deleting the app */
-  storeFqdn?: string
 }
+
+type TeardownCtx = BaseTeardownCtx &
+  ({storeFqdn: string; orgId: string; cli: CLIProcess} | {storeFqdn?: undefined; orgId?: string; cli?: CLIProcess})
 
 /**
  * Best-effort per-test teardown. Each phase retries up to 3 times.
@@ -39,20 +43,30 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
     const storeSlug = ctx.storeFqdn.replace('.myshopify.com', '')
     e2eSection(wCtx, `Teardown: store ${ctx.storeFqdn}`)
 
-    // Phase 1: Uninstall app from store
+    // Phase 1: Uninstall app from store — Admin API when the app dir is known.
+    // No browser fallback: an API failure must surface loudly so it gets fixed
+    // instead of hiding behind the flaky store-admin click-through.
     let uninstalled = false
-    log.log(wCtx, 'uninstalling app from store')
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        uninstalled = await uninstallAppFromStore(page, storeSlug, ctx.appName)
-        if (uninstalled) {
-          log.log(wCtx, 'app uninstalled')
-          break
+    if (ctx.appDir) {
+      log.log(wCtx, 'uninstalling app via admin API')
+      await uninstallAppWithAdminApi({cli: ctx.cli, appDir: ctx.appDir, storeFqdn: ctx.storeFqdn})
+      uninstalled = true
+      log.log(wCtx, 'app uninstalled via admin API')
+    }
+    if (!uninstalled) {
+      log.log(wCtx, 'uninstalling app from store')
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          uninstalled = await uninstallAppFromStore(page, storeSlug, ctx.appName)
+          if (uninstalled) {
+            log.log(wCtx, 'app uninstalled')
+            break
+          }
+          log.log(wCtx, `(${attempt}/3) app uninstall attempt failed, app still visible`)
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (err) {
+          log.log(wCtx, `(${attempt}/3) app uninstall attempt failed: ${err instanceof Error ? err.message : err}`)
         }
-        log.log(wCtx, `(${attempt}/3) app uninstall attempt failed, app still visible`)
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch (err) {
-        log.log(wCtx, `(${attempt}/3) app uninstall attempt failed: ${err instanceof Error ? err.message : err}`)
       }
     }
     if (!uninstalled) {
@@ -61,7 +75,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
 
     // Phase 2: Delete store
     log.log(wCtx, 'deleting store')
-    let storeDeleted = false
+    let storeDeletionRequested = false
     let safeToDelete = false
 
     // Gate: confirm the store has zero apps before attempting delete store.
@@ -73,7 +87,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
 
       if (page.url().includes('access_account')) {
         log.log(wCtx, 'store already deleted')
-        storeDeleted = true
+        storeDeletionRequested = true
       } else {
         await dismissDevConsole(page)
         // Reload once in case the page is stale (Phase 1 just uninstalled)
@@ -96,19 +110,21 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
     if (safeToDelete) {
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          if (await deleteStore(page, storeSlug)) {
-            log.log(wCtx, 'store deleted')
-            storeDeleted = true
-            break
-          }
-          log.log(wCtx, `(${attempt}/3) store deletion failed`)
+          const deletionConfirmed = await deleteDevStoreWithCli({
+            cli: ctx.cli,
+            storeFqdn: ctx.storeFqdn,
+            orgId: ctx.orgId,
+          })
+          log.log(wCtx, deletionConfirmed ? 'store deletion confirmed by CLI' : 'store deletion requested with CLI')
+          storeDeletionRequested = true
+          break
           // eslint-disable-next-line no-catch-all/no-catch-all
         } catch (err) {
           log.log(wCtx, `(${attempt}/3) store deletion failed: ${err instanceof Error ? err.message : err}`)
         }
       }
-      if (!storeDeleted) {
-        log.error(wCtx, 'store deletion failed after 3 attempts')
+      if (!storeDeletionRequested) {
+        log.error(wCtx, 'store deletion request failed after 3 attempts')
       }
     }
 

@@ -25,8 +25,9 @@ import * as path from 'path'
 import * as fs from 'fs'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
-import {BROWSER_TIMEOUT} from '../setup/constants.js'
-import {deleteStore, dismissDevConsole, isStoreAppsEmpty} from '../setup/store.js'
+import {BROWSER_TIMEOUT, CLI_TIMEOUT} from '../setup/constants.js'
+import {deleteDevStoreWithCli, dismissDevConsole, isStoreAppsEmpty} from '../setup/store.js'
+import {executables} from '../setup/env.js'
 import {refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
@@ -37,6 +38,8 @@ import {
 import {businessPlatformOrganizationsRequestDoc} from '../../cli-kit/dist/public/node/api/business-platform.js'
 import {ensureAuthenticatedBusinessPlatform} from '../../cli-kit/dist/public/node/session.js'
 import {extractHost} from '../../cli-kit/dist/public/common/url.js'
+import {execa} from 'execa'
+import type {CLIProcess} from '../setup/cli.js'
 import type {Page} from '@playwright/test'
 
 // Load .env from packages/e2e/ (not cwd) only if not already configured
@@ -93,6 +96,22 @@ function existingStorageStatePath(candidate?: string): string | undefined {
   return [candidate, process.env.E2E_BROWSER_STATE_PATH, defaultStorageStatePath()].find(
     (storageStatePath): storageStatePath is string => Boolean(storageStatePath && fs.existsSync(storageStatePath)),
   )
+}
+
+const cleanupCli: Pick<CLIProcess, 'exec'> = {
+  async exec(args, opts = {}) {
+    const result = await execa('node', [executables.cli, ...args], {
+      cwd: opts.cwd,
+      env: {...process.env, ...opts.env},
+      timeout: opts.timeout ?? CLI_TIMEOUT.store,
+      reject: false,
+    })
+    return {
+      stdout: result.stdout ?? '',
+      stderr: result.stderr ?? '',
+      exitCode: result.exitCode ?? 1,
+    }
+  },
 }
 
 export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<void> {
@@ -219,21 +238,19 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
 
         if (safeToDelete) {
           console.log('  Deleting store...')
-          let deleted = false
+          let deletionRequested = false
           for (let attempt = 1; attempt <= 3; attempt++) {
             try {
-              if (await deleteStore(page, storeSlug)) {
-                deleted = true
-                break
-              }
-              console.log(`    (${attempt}/3) deletion failed`)
+              const deletionConfirmed = await deleteDevStoreWithCli({cli: cleanupCli, storeFqdn: store.fqdn, orgId})
+              console.log(deletionConfirmed ? '  Deletion confirmed by CLI' : '  Deletion requested with CLI')
+              deletionRequested = true
+              break
               // eslint-disable-next-line no-catch-all/no-catch-all
             } catch (err) {
               console.log(`    (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
             }
           }
-          if (deleted) {
-            console.log('  Deleted')
+          if (deletionRequested) {
             succeeded++
           } else {
             console.warn('  Failed after 3 attempts')
