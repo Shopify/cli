@@ -154,18 +154,12 @@ export async function resolveFramework(rootDirectory: string): Promise<string> {
   const matchedFramework = frameworks.find(
     (framework) =>
       (!framework.detectors.some ||
-        framework.detectors.some.reduce(
-          (_previousDetectorsMatch: boolean, detector) =>
-            matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
-          false,
+        framework.detectors.some.some((detector) =>
+          matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
         )) &&
       (!framework.detectors.every ||
-        framework.detectors.every.reduce(
-          (previousDetectorsMatch: boolean, detector) =>
-            previousDetectorsMatch
-              ? matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles))
-              : false,
-          true,
+        framework.detectors.every.every((detector) =>
+          matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
         )),
   )
 
