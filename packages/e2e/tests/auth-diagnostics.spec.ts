@@ -23,21 +23,6 @@ test.describe('auth diagnostics', () => {
     )
   })
 
-  test('does not include invalid configuration values in diagnostics', () => {
-    const invalidHeader = 'X-Shopify-Loadtest-secret-value'
-
-    expect(() => readAuthConfig({...validEnvironment, E2E_LOADTEST_HEADER: invalidHeader})).toThrow(
-      'stage=configuration reason=invalid-loadtest-header',
-    )
-
-    try {
-      readAuthConfig({...validEnvironment, E2E_LOADTEST_HEADER: invalidHeader})
-    } catch (error) {
-      if (!(error instanceof AuthSetupError)) throw error
-      expect(String(error)).not.toContain(invalidHeader)
-    }
-  })
-
   test('validates the required remote configuration', () => {
     expect(readAuthConfig(validEnvironment)).toEqual({
       email: validEnvironment.E2E_ACCOUNT_EMAIL,

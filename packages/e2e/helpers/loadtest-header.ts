@@ -3,7 +3,7 @@ import type {BrowserContext} from '@playwright/test'
 const LOADTEST_HEADER_PATTERN = /^X-Shopify-Loadtest-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i
 const LOADTEST_HEADER_DOMAINS = ['shopify.com', 'myshopify.com']
 
-export function isValidLoadtestHeader(header: string): boolean {
+function isValidLoadtestHeader(header: string): boolean {
   return LOADTEST_HEADER_PATTERN.test(header)
 }
 

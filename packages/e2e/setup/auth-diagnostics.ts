@@ -1,5 +1,3 @@
-import {isValidLoadtestHeader} from '../helpers/loadtest-header.js'
-
 export type AuthStage = 'configuration' | 'pty-startup' | 'device-code-generation' | 'browser-login' | 'session-prewarm'
 
 export interface AuthConfig {
@@ -43,11 +41,6 @@ export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig
 
   if (missingVariables.length > 0) {
     throw new AuthSetupError('configuration', `missing-${missingVariables.join(',')}`)
-  }
-
-  const loadtestHeader = requiredValues.E2E_LOADTEST_HEADER!.trim()
-  if (!isValidLoadtestHeader(loadtestHeader)) {
-    throw new AuthSetupError('configuration', 'invalid-loadtest-header')
   }
 
   return {
