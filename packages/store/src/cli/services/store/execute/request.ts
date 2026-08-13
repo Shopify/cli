@@ -53,7 +53,7 @@ function validateVariables(
 ): {[key: string]: unknown} {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     throw new AbortError(
-      outputContent`Invalid JSON in ${source}: expected a non-null JSON object.`,
+      outputContent`Invalid variables in ${source}: expected a non-null JSON object.`,
       'Please provide a JSON object for variables.',
     )
   }

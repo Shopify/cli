@@ -151,7 +151,7 @@ describe('prepareStoreExecuteRequest', () => {
     })
   })
 
-  test('accepts empty and populated variable objects', async () => {
+  test('accepts an empty variable object', async () => {
     await expect(
       prepareStoreExecuteRequest({
         query: 'query { shop { name } }',
