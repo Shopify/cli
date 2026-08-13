@@ -10,7 +10,6 @@ export interface ClientCredentialsConfig {
 }
 
 export interface AuthFetchResponse {
-  ok: boolean
   status: number
   text(): Promise<string>
 }

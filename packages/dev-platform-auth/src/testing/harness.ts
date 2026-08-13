@@ -25,7 +25,6 @@ export function createFixtureFetch(fixture: AuthFixture): AuthFetch {
     const response = fixture.responses[responseIndex++]
     if (!response) throw new Error(`${fixture.name}: fixture has no response`)
     return {
-      ok: response.status >= 200 && response.status < 300,
       status: response.status,
       text: async () => response.body,
     }

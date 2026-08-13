@@ -15,7 +15,7 @@ test('does not expose cancellation on the client-credentials request', () => {
 })
 
 function fetchResponse(status: number, body: string): AuthFetch {
-  return async () => ({ok: status >= 200 && status < 300, status, text: async () => body})
+  return async () => ({status, text: async () => body})
 }
 
 describe('requestClientCredentialsToken', () => {

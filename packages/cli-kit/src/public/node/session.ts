@@ -2,11 +2,7 @@ import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
-import {
-  createClientCredentialsClient,
-  type AuthFetch,
-  type ClientCredentialsError,
-} from '@shopify/dev-platform-auth'
+import {createClientCredentialsClient, type AuthFetch, type ClientCredentialsError} from '@shopify/dev-platform-auth'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {
@@ -348,12 +344,9 @@ export async function ensureAuthenticatedAdminAsApp(
   clientId: string,
   clientSecret: string,
 ): Promise<AdminSession> {
-  let statusText = ''
   const fetch: AuthFetch = async (url, init) => {
     const response = await shopifyFetch(url, {...init}, 'slow-request')
-    statusText = response.statusText ?? ''
     return {
-      ok: response.status >= 200 && response.status < 300,
       status: response.status,
       text: () => response.text(),
     }
@@ -365,14 +358,13 @@ export async function ensureAuthenticatedAdminAsApp(
   })
 
   if ('accessToken' in result) return {token: result.accessToken, storeFqdn}
-  throw mapClientCredentialsError(result, storeFqdn, clientId, statusText)
+  throw mapClientCredentialsError(result, storeFqdn, clientId)
 }
 
 function mapClientCredentialsError(
   error: ClientCredentialsError,
   storeFqdn: string,
   clientId: string,
-  statusText: string,
 ): AbortError | BugError {
   if ('serverCode' in error) {
     if (error.serverCode === 'app_not_installed') {
@@ -382,10 +374,14 @@ function mapClientCredentialsError(
         )}. Try running ${outputToken.genericShellCommand(`shopify app dev`)} to connect your app to the shop.`,
       )
     }
-    return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
+    return new AbortError(clientCredentialsFailureMessage(error.status, storeFqdn, clientId))
   }
-  if (error.kind === 'malformed_response') {
-    return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
+  if (error.kind === 'malformed_response' || error.kind === 'unexpected_status') {
+    return new AbortError(clientCredentialsFailureMessage(error.status, storeFqdn, clientId))
   }
-  return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
+  return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: request failed`)
+}
+
+function clientCredentialsFailureMessage(status: number, storeFqdn: string, clientId: string): string {
+  return `Failed to get access token for app ${clientId} on store ${storeFqdn}: HTTP status ${status}`
 }
