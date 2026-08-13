@@ -289,7 +289,7 @@ export const authFixtures: ReadonlyArray<AuthFixture> = [
     transportCitation:
       'cli-kit packages/cli-kit/src/private/node/session/exchange.ts:262-267; characterization oracle packages/cli-kit/src/private/node/session/exchange.test.ts:412-425,465-471',
     provisionalOutcome:
-      'Open question: cli-kit normalizes missing error to unknown_error and exchange throws AbortError; do not freeze invalid_response.',
+      'Open question: cli-kit normalizes missing error to unknown_error and exchange throws AbortError; use malformed_response only for a body that does not parse.',
     redactedValues: ['fixture-identity-access'],
     privateInputs: ['subject_token'],
   },

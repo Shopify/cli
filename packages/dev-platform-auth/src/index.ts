@@ -125,8 +125,16 @@ export interface ClientCredentialsTokenRequest {
   signal?: AuthSignal
 }
 
+export type ClientCredentialsError =
+  | {kind: 'transport_failed'; cause: unknown}
+  | {kind: 'malformed_response'; status: number; cause?: unknown}
+  | {kind: 'unexpected_status'; status: number}
+  | {serverCode: string; status: number}
+
+export type ClientCredentialsResult = ApplicationToken | ClientCredentialsError
+
 export interface ClientCredentialsClient {
-  requestToken(options: ClientCredentialsTokenRequest): Promise<ApplicationToken>
+  requestToken(options: ClientCredentialsTokenRequest): Promise<ClientCredentialsResult>
 }
 
 export type AuthErrorCode =
@@ -142,6 +150,8 @@ export type AuthErrorCode =
 export interface AuthProtocolErrorOptions {
   status?: number
 }
+
+export {createClientCredentialsClient, requestClientCredentialsToken} from './client-credentials.js'
 
 export class AuthProtocolError extends Error {
   readonly code: AuthErrorCode

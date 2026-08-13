@@ -2,6 +2,11 @@ import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
+import {
+  createClientCredentialsClient,
+  type AuthFetch,
+  type ClientCredentialsError,
+} from '@shopify/dev-platform-auth'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {
@@ -343,47 +348,42 @@ export async function ensureAuthenticatedAdminAsApp(
   clientId: string,
   clientSecret: string,
 ): Promise<AdminSession> {
-  const bodyData = {
-    client_id: clientId,
-    client_secret: clientSecret,
-    grant_type: 'client_credentials',
+  let statusText = ''
+  const fetch: AuthFetch = async (url, init) => {
+    const response = await shopifyFetch(url, {...init}, 'slow-request')
+    statusText = response.statusText ?? ''
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
+      text: () => response.text(),
+    }
   }
-  const tokenResponse = await shopifyFetch(
-    `https://${storeFqdn}/admin/oauth/access_token`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(bodyData),
-    },
-    'slow-request',
-  )
+  const result = await createClientCredentialsClient({identityOrigin: '', clientId, fetch}).requestToken({
+    storeFqdn,
+    clientId,
+    clientSecret,
+  })
 
-  const body = await tokenResponse.text()
+  if ('accessToken' in result) return {token: result.accessToken, storeFqdn}
+  throw mapClientCredentialsError(result, storeFqdn, clientId, statusText)
+}
 
-  if (tokenResponse.status === 400) {
-    if (body.includes('app_not_installed')) {
-      throw new AbortError(
+function mapClientCredentialsError(
+  error: ClientCredentialsError,
+  storeFqdn: string,
+  clientId: string,
+  statusText: string,
+): AbortError | BugError {
+  if ('serverCode' in error) {
+    if (error.serverCode === 'app_not_installed') {
+      return new AbortError(
         outputContent`App is not installed on ${outputToken.green(
           storeFqdn,
         )}. Try running ${outputToken.genericShellCommand(`shopify app dev`)} to connect your app to the shop.`,
       )
     }
-    throw new AbortError(
-      `Failed to get access token for app ${clientId} on store ${storeFqdn}: ${tokenResponse.statusText}`,
-    )
+    return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
   }
-  try {
-    const tokenJson = JSON.parse(body) as {access_token: string}
-    return {token: tokenJson.access_token, storeFqdn}
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new AbortError(
-        `Received invalid response from admin authentication service (HTTP ${tokenResponse.status}).`,
-        'The response could not be parsed as JSON. The service may be temporarily unavailable. Please try again.',
-      )
-    }
-    throw error
-  }
+  if (error.kind === 'malformed_response') return new BugError(`Received invalid response from admin authentication service (HTTP ${error.status}).`)
+  return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
 }
