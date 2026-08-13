@@ -35,9 +35,9 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
 
   try {
     await requireSuccessfulNavigation(() => page.goto(loginUrl), 'browser-login', 'page-load')
-  } catch (_error) {
+  } catch (error) {
     await clearLoginPage(page)
-    throw new AuthSetupError('browser-login', 'page-load')
+    throw error
   }
 
   try {

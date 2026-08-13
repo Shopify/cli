@@ -12,6 +12,10 @@ interface NavigationResponse {
   ok(): boolean
 }
 
+interface UrlWaiter {
+  waitForURL(predicate: (url: URL) => boolean, options: {timeout: number}): Promise<unknown>
+}
+
 export class AuthSetupError extends Error {
   readonly stage: AuthStage
   readonly reason: string
@@ -59,10 +63,6 @@ function isRetryableAuthFailure(stage: AuthStage, reason: string): boolean {
     (stage === 'browser-login' && (reason === 'page-load' || reason === 'cli-confirmation-timeout')) ||
     (stage === 'session-prewarm' && reason.endsWith('-page-load'))
   )
-}
-
-export function validateRemoteE2EEnvironment(env: NodeJS.ProcessEnv = process.env): void {
-  readAuthConfig(env)
 }
 
 export async function retryAuthOperation<T>(
@@ -137,5 +137,19 @@ export function isExpectedAuthDestination(rawUrl: string, hostname: string, path
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
+  }
+}
+
+export async function requireExpectedAuthDestination(
+  page: UrlWaiter,
+  hostname: string,
+  pathnamePrefix: string | undefined,
+  timeout: number,
+  reason: string,
+): Promise<void> {
+  try {
+    await page.waitForURL((url) => isExpectedAuthDestination(url.href, hostname, pathnamePrefix), {timeout})
+  } catch (_error) {
+    throw new AuthSetupError('session-prewarm', reason)
   }
 }

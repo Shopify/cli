@@ -1,7 +1,7 @@
-import {AuthSetupError, validateRemoteE2EEnvironment} from './auth-diagnostics.js'
+import {AuthSetupError, readAuthConfig} from './auth-diagnostics.js'
 
 try {
-  validateRemoteE2EEnvironment()
+  readAuthConfig()
   process.stdout.write('[e2e][auth] configuration valid\n')
 } catch (error) {
   if (!(error instanceof AuthSetupError)) throw error

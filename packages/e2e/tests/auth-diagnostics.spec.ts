@@ -2,10 +2,10 @@ import {
   AuthSetupError,
   isExpectedAuthDestination,
   readAuthConfig,
+  requireExpectedAuthDestination,
   requireSuccessfulNavigation,
   retryAuthOperation,
   runAuthStages,
-  validateRemoteE2EEnvironment,
 } from '../setup/auth-diagnostics.js'
 import {expect, test} from '@playwright/test'
 
@@ -39,7 +39,11 @@ test.describe('auth diagnostics', () => {
   })
 
   test('validates the required remote configuration', () => {
-    expect(() => validateRemoteE2EEnvironment(validEnvironment)).not.toThrow()
+    expect(readAuthConfig(validEnvironment)).toEqual({
+      email: validEnvironment.E2E_ACCOUNT_EMAIL,
+      password: validEnvironment.E2E_ACCOUNT_PASSWORD,
+      orgId: validEnvironment.E2E_ORG_ID,
+    })
   })
 
   test('retries transient authentication failures once', async () => {
@@ -124,5 +128,33 @@ test.describe('auth diagnostics', () => {
         '/dashboard/12345/apps',
       ),
     ).toBe(true)
+  })
+
+  test('waits for delayed navigation to the authenticated destination', async () => {
+    let waitCompleted = false
+    const page = {
+      waitForURL: async (predicate: (url: URL) => boolean, options: {timeout: number}) => {
+        expect(options.timeout).toBe(60_000)
+        await new Promise((resolve) => setTimeout(resolve, 20))
+        expect(predicate(new URL('https://admin.shopify.com/store/test'))).toBe(true)
+        waitCompleted = true
+      },
+    }
+
+    await requireExpectedAuthDestination(page, 'admin.shopify.com', undefined, 60_000, 'admin-unexpected-url')
+
+    expect(waitCompleted).toBe(true)
+  })
+
+  test('reports an unexpected URL after authenticated destination navigation times out', async () => {
+    const page = {
+      waitForURL: async () => {
+        throw new Error('Timeout')
+      },
+    }
+
+    await expect(
+      requireExpectedAuthDestination(page, 'admin.shopify.com', undefined, 60_000, 'admin-unexpected-url'),
+    ).rejects.toThrow('stage=session-prewarm reason=admin-unexpected-url')
   })
 })

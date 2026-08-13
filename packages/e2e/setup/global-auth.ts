@@ -12,6 +12,7 @@ import {
   AuthSetupError,
   isExpectedAuthDestination,
   readAuthConfig,
+  requireExpectedAuthDestination,
   requireSuccessfulNavigation,
   runAuthStages,
   type AuthConfig,
@@ -74,12 +75,14 @@ export async function prepareGlobalAuth() {
       },
       dispose: async ({browser}) => browser.close(),
       onRetry: (failure, nextAttempt) => {
-        globalLog('auth', `retry stage=${failure.stage} reason=${failure.reason} next_attempt=${nextAttempt}`)
+        process.stdout.write(
+          `[e2e][auth] retry stage=${failure.stage} reason=${failure.reason} next_attempt=${nextAttempt}\n`,
+        )
       },
     })
   } catch (error) {
     const failure = error instanceof AuthSetupError ? error : new AuthSetupError('browser-login', 'unexpected-error')
-    globalLog('auth', `failed stage=${failure.stage} reason=${failure.reason}`)
+    process.stderr.write(`[e2e][auth] failed stage=${failure.stage} reason=${failure.reason}\n`)
     throw failure
   }
 
@@ -200,7 +203,7 @@ async function prewarmBrowserSession(page: Page, authConfig: AuthConfig): Promis
       await visitAndHandleAccountPicker(page, destination, authConfig.email)
     } catch (error) {
       if (error instanceof AuthSetupError) {
-        throw new AuthSetupError(error.stage, error.reason)
+        throw error
       }
       throw new AuthSetupError('session-prewarm', `${destination.label}-unexpected-error`)
     }
@@ -238,7 +241,5 @@ async function visitAndHandleAccountPicker(
     }
   }
 
-  if (!isExpectedAuthDestination(page.url(), hostname, pathnamePrefix)) {
-    throw new AuthSetupError('session-prewarm', `${label}-unexpected-url`)
-  }
+  await requireExpectedAuthDestination(page, hostname, pathnamePrefix, BROWSER_TIMEOUT.max, `${label}-unexpected-url`)
 }
