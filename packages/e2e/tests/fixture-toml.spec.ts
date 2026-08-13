@@ -1,11 +1,15 @@
-import {mergeFixtureToml} from './fixture-toml.js'
-import {describe, expect, test} from 'vitest'
+/* eslint-disable no-restricted-imports */
+import {mergeFixtureToml} from '../setup/app.js'
+import {expect, test} from '@playwright/test'
 import * as toml from '@iarna/toml'
 import * as fs from 'fs'
+import * as path from 'path'
+import {fileURLToPath} from 'url'
 
-const VALID_APP_FIXTURE = fs.readFileSync(new URL('../data/valid-app/shopify.app.toml', import.meta.url), 'utf8')
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const VALID_APP_FIXTURE = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
-describe('mergeFixtureToml', () => {
+test.describe('fixture TOML', () => {
   test('merges fixture values without dropping template-owned fields', () => {
     const generatedToml = `
 client_id = "generated-client-id"
@@ -46,7 +50,7 @@ extensions_summary = "Fixture-provided Sidekick summary"
     expect(parsed.build).toEqual({include_config_on_deploy: true})
   })
 
-  test('merges the valid app fixture into generated configuration', () => {
+  test('valid app fixture can merge into generated template TOML', () => {
     const generatedToml = `
 client_id = "generated-client-id"
 name = "Generated app name"
