@@ -51,7 +51,6 @@ export class TomlFile {
 
   readonly path: string
   content: JsonMapType
-  readonly errors: TomlFileError[] = []
 
   constructor(path: string, content: JsonMapType) {
     this.path = path
