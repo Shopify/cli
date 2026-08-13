@@ -1,5 +1,6 @@
 import {isVisibleWithin} from '../setup/browser.js'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
+import {AuthSetupError} from '../setup/auth-diagnostics.js'
 import type {Page} from '@playwright/test'
 
 /**
@@ -25,11 +26,19 @@ async function fillSensitive(page: Page, selector: string, value: string): Promi
  * Completes the Shopify OAuth login flow on a Playwright page.
  */
 export async function completeLogin(page: Page, loginUrl: string, email: string, password: string): Promise<void> {
-  // Disable WebAuthn so passkey/security key system dialogs never appear when headed
-  const cdp = await page.context().newCDPSession(page)
-  await cdp.send('WebAuthn.enable', {enableUI: false})
+  try {
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('WebAuthn.enable', {enableUI: false})
+  } catch (_error) {
+    throw new AuthSetupError('browser-login', 'webauthn-setup')
+  }
 
-  await page.goto(loginUrl)
+  try {
+    await page.goto(loginUrl)
+  } catch (_error) {
+    await clearLoginPage(page)
+    throw new AuthSetupError('browser-login', 'page-load')
+  }
 
   try {
     // Fill in email
@@ -74,10 +83,12 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
       // No confirmation page — expected
     }
   } catch (error) {
-    const pageUrl = page.url()
-    // Clear the page so failure artifacts (screenshots, trace snapshots) do
-    // not capture the login form with credentials still populated.
-    await page.goto('about:blank').catch(() => {})
-    throw new Error(`Login failed at ${pageUrl}\nOriginal error: ${error}`)
+    await clearLoginPage(page)
+    if (error instanceof AuthSetupError) throw error
+    throw new AuthSetupError('browser-login', 'login-form')
   }
+}
+
+async function clearLoginPage(page: Page): Promise<void> {
+  await page.goto('about:blank').catch(() => {})
 }
