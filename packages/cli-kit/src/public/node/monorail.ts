@@ -109,6 +109,7 @@ export interface Schemas {
       cmd_dev_preview_url_opened?: Optional<boolean>
       cmd_dev_graphiql_opened?: Optional<boolean>
       cmd_dev_dev_preview_toggle_used?: Optional<boolean>
+      cmd_dev_store_created?: Optional<boolean>
 
       // Create-app related commands
       cmd_create_app_template?: Optional<string>

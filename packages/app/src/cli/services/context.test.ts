@@ -132,7 +132,7 @@ beforeEach(async () => {
   vi.mocked(getAppIdentifiers).mockReturnValue({})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
-  vi.mocked(selectStore).mockResolvedValue(STORE1)
+  vi.mocked(selectStore).mockResolvedValue({store: STORE1, created: false})
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
   vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
   vi.mocked(getPackageManager).mockResolvedValue('npm')

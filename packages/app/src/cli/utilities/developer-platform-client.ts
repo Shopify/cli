@@ -208,6 +208,7 @@ export interface DeveloperPlatformClient {
   ) => Promise<ExtensionTemplatesResult>
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
+  devStoreCapReached?: (orgId: string) => Promise<boolean>
   storeByDomain: (orgId: string, shopDomain: string, storeTypes: Store[]) => Promise<OrganizationStore | undefined>
   ensureUserAccessToStore: (orgId: string, store: OrganizationStore) => Promise<void>
   appExtensionRegistrations: (
