@@ -310,8 +310,8 @@ export const authFixtures: ReadonlyArray<AuthFixture> = [
   },
 ]
 
-export function isAuthSignal(value: unknown): value is AuthSignal {
+function isAuthSignal(value: unknown): value is AuthSignal {
   return typeof value === 'object' && value !== null && 'aborted' in value && 'addEventListener' in value
 }
 
-export type FixtureResponse = AuthFetchResponse
+type FixtureResponse = AuthFetchResponse

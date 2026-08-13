@@ -1,7 +1,6 @@
-import {describe, expect, test, vi} from 'vitest'
-
 import {ensureAuthenticatedAdminAsApp} from './session.js'
 import {shopifyFetch} from './http.js'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./http.js')
 
