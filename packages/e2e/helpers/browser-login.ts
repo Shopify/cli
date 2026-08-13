@@ -1,6 +1,6 @@
 import {isVisibleWithin} from '../setup/browser.js'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
-import {AuthSetupError} from '../setup/auth-diagnostics.js'
+import {AuthSetupError, requireSuccessfulNavigation} from '../setup/auth-diagnostics.js'
 import type {Page} from '@playwright/test'
 
 /**
@@ -34,7 +34,7 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
   }
 
   try {
-    await page.goto(loginUrl)
+    await requireSuccessfulNavigation(() => page.goto(loginUrl), 'browser-login', 'page-load')
   } catch (_error) {
     await clearLoginPage(page)
     throw new AuthSetupError('browser-login', 'page-load')

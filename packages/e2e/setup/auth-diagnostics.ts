@@ -8,6 +8,10 @@ export interface AuthConfig {
   orgId: string
 }
 
+interface NavigationResponse {
+  ok(): boolean
+}
+
 export class AuthSetupError extends Error {
   readonly stage: AuthStage
   readonly reason: string
@@ -59,9 +63,6 @@ function isRetryableAuthFailure(stage: AuthStage, reason: string): boolean {
 
 export function validateRemoteE2EEnvironment(env: NodeJS.ProcessEnv = process.env): void {
   readAuthConfig(env)
-  if (!env.E2E_STORE_FQDN?.trim()) {
-    throw new AuthSetupError('configuration', 'missing-E2E_STORE_FQDN')
-  }
 }
 
 export async function retryAuthOperation<T>(
@@ -89,4 +90,52 @@ export async function retryAuthOperation<T>(
   }
 
   return runAttempt(1)
+}
+
+export async function runAuthStages<T>({
+  authenticate,
+  prewarm,
+  complete,
+  dispose,
+  onRetry,
+  delayMs,
+}: {
+  authenticate: () => Promise<T>
+  prewarm: (authenticatedSession: T) => Promise<void>
+  complete: (authenticatedSession: T) => Promise<void>
+  dispose: (authenticatedSession: T) => Promise<void>
+  onRetry?: (failure: AuthSetupError, nextAttempt: number) => void
+  delayMs?: number
+}): Promise<void> {
+  const authenticatedSession = await retryAuthOperation(authenticate, {onRetry, delayMs})
+  try {
+    await retryAuthOperation(() => prewarm(authenticatedSession), {onRetry, delayMs})
+    await complete(authenticatedSession)
+  } finally {
+    await dispose(authenticatedSession)
+  }
+}
+
+export async function requireSuccessfulNavigation(
+  navigate: () => Promise<NavigationResponse | null>,
+  stage: AuthStage,
+  reason: string,
+): Promise<void> {
+  try {
+    const response = await navigate()
+    if (!response?.ok()) throw new AuthSetupError(stage, reason)
+  } catch (error) {
+    if (error instanceof AuthSetupError) throw error
+    throw new AuthSetupError(stage, reason)
+  }
+}
+
+export function isExpectedAuthDestination(rawUrl: string, hostname: string, pathnamePrefix?: string): boolean {
+  try {
+    const url = new URL(rawUrl)
+    return url.hostname === hostname && (!pathnamePrefix || url.pathname.startsWith(pathnamePrefix))
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }

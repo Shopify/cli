@@ -8,14 +8,21 @@
 import {isVisibleWithin} from './browser.js'
 import {executables, globalLog} from './env.js'
 import {authStatePaths} from './auth-state.js'
-import {AuthSetupError, readAuthConfig, retryAuthOperation, type AuthConfig} from './auth-diagnostics.js'
+import {
+  AuthSetupError,
+  isExpectedAuthDestination,
+  readAuthConfig,
+  requireSuccessfulNavigation,
+  runAuthStages,
+  type AuthConfig,
+} from './auth-diagnostics.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import {execa} from 'execa'
-import {chromium, type Browser, type Page} from '@playwright/test'
+import {chromium, type Browser, type BrowserContext, type Page} from '@playwright/test'
 import * as fs from 'fs'
 import type {IPty} from 'node-pty'
 
@@ -26,6 +33,12 @@ function isAccountsShopifyUrl(rawUrl: string): boolean {
   } catch {
     return false
   }
+}
+
+interface AuthenticatedBrowserSession {
+  browser: Browser
+  context: BrowserContext
+  page: Page
 }
 
 export async function prepareGlobalAuth() {
@@ -44,17 +57,26 @@ export async function prepareGlobalAuth() {
   }
 
   try {
-    await retryAuthOperation(
-      async () => {
+    await runAuthStages({
+      authenticate: async () => {
         resetAuthDirectories(authDir, xdgEnv)
-        await authenticateOnce({authConfig, processEnv, storageStatePath})
+        return authenticateOnce({authConfig, processEnv})
       },
-      {
-        onRetry: (failure, nextAttempt) => {
-          globalLog('auth', `retry stage=${failure.stage} reason=${failure.reason} next_attempt=${nextAttempt}`)
-        },
+      prewarm: async ({page}) => {
+        await prewarmBrowserSession(page, authConfig)
       },
-    )
+      complete: async ({context}) => {
+        try {
+          await context.storageState({path: storageStatePath})
+        } catch (_error) {
+          throw new AuthSetupError('session-prewarm', 'storage-state-write')
+        }
+      },
+      dispose: async ({browser}) => browser.close(),
+      onRetry: (failure, nextAttempt) => {
+        globalLog('auth', `retry stage=${failure.stage} reason=${failure.reason} next_attempt=${nextAttempt}`)
+      },
+    })
   } catch (error) {
     const failure = error instanceof AuthSetupError ? error : new AuthSetupError('browser-login', 'unexpected-error')
     globalLog('auth', `failed stage=${failure.stage} reason=${failure.reason}`)
@@ -75,12 +97,10 @@ function resetAuthDirectories(authDir: string, xdgEnv: Record<string, string>): 
 async function authenticateOnce({
   authConfig,
   processEnv,
-  storageStatePath,
 }: {
   authConfig: AuthConfig
   processEnv: NodeJS.ProcessEnv
-  storageStatePath: string
-}): Promise<void> {
+}): Promise<AuthenticatedBrowserSession> {
   const {email, password} = authConfig
 
   await execa('node', [executables.cli, 'auth', 'logout'], {
@@ -148,15 +168,10 @@ async function authenticateOnce({
         throw new AuthSetupError('browser-login', 'cli-confirmation-timeout')
       }
 
-      await prewarmBrowserSession(page, authConfig)
-
-      try {
-        await context.storageState({path: storageStatePath})
-      } catch (_error) {
-        throw new AuthSetupError('session-prewarm', 'storage-state-write')
-      }
-    } finally {
+      return {browser, context, page}
+    } catch (error) {
       await browser.close()
+      throw error
     }
   } finally {
     try {
@@ -170,22 +185,19 @@ async function authenticateOnce({
 
 async function prewarmBrowserSession(page: Page, authConfig: AuthConfig): Promise<void> {
   const destinations = [
-    {url: 'https://admin.shopify.com/', label: 'admin'},
-    {url: `https://dev.shopify.com/dashboard/${authConfig.orgId}/apps`, label: 'dev-dashboard'},
+    {url: 'https://admin.shopify.com/', label: 'admin', hostname: 'admin.shopify.com'},
+    {
+      url: `https://dev.shopify.com/dashboard/${authConfig.orgId}/apps`,
+      label: 'dev-dashboard',
+      hostname: 'dev.shopify.com',
+      pathnamePrefix: `/dashboard/${authConfig.orgId}/apps`,
+    },
   ]
 
   for (const destination of destinations) {
     try {
-      // Session cookies must be established in order on the same page.
       // eslint-disable-next-line no-await-in-loop
-      await retryAuthOperation(
-        () => visitAndHandleAccountPicker(page, destination.url, authConfig.email, destination.label),
-        {
-          onRetry: (failure, nextAttempt) => {
-            globalLog('auth', `retry stage=${failure.stage} reason=${failure.reason} next_attempt=${nextAttempt}`)
-          },
-        },
-      )
+      await visitAndHandleAccountPicker(page, destination, authConfig.email)
     } catch (error) {
       if (error instanceof AuthSetupError) {
         throw new AuthSetupError(error.stage, error.reason)
@@ -197,23 +209,36 @@ async function prewarmBrowserSession(page: Page, authConfig: AuthConfig): Promis
   globalLog('auth', 'session prewarm complete')
 }
 
-async function visitAndHandleAccountPicker(page: Page, url: string, email: string, label: string) {
-  try {
-    await page.goto(url, {waitUntil: 'domcontentloaded'})
-  } catch (_error) {
-    throw new AuthSetupError('session-prewarm', `${label}-page-load`)
-  }
+async function visitAndHandleAccountPicker(
+  page: Page,
+  destination: {url: string; label: string; hostname: string; pathnamePrefix?: string},
+  email: string,
+) {
+  const {url, label, hostname, pathnamePrefix} = destination
+  await requireSuccessfulNavigation(
+    () => page.goto(url, {waitUntil: 'domcontentloaded'}),
+    'session-prewarm',
+    `${label}-page-load`,
+  )
 
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   if (isAccountsShopifyUrl(page.url())) {
     const accountButton = page.locator(`text=${email}`).first()
     if (await isVisibleWithin(accountButton, BROWSER_TIMEOUT.long)) {
       try {
-        await accountButton.click()
+        await Promise.all([
+          page.waitForURL((currentUrl) => isExpectedAuthDestination(currentUrl.href, hostname, pathnamePrefix), {
+            timeout: BROWSER_TIMEOUT.max,
+          }),
+          accountButton.click(),
+        ])
       } catch (_error) {
         throw new AuthSetupError('session-prewarm', `${label}-account-picker`)
       }
-      await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     }
+  }
+
+  if (!isExpectedAuthDestination(page.url(), hostname, pathnamePrefix)) {
+    throw new AuthSetupError('session-prewarm', `${label}-unexpected-url`)
   }
 }
