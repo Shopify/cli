@@ -17,6 +17,11 @@ export interface ApplicationToken {
   storeFqdn?: string
 }
 
+export interface ClientCredentialsToken {
+  accessToken: string
+  storeFqdn: string
+}
+
 export type ShopifyApplication = 'admin' | 'partners' | 'storefront-renderer' | 'business-platform' | 'app-management'
 
 export interface AuthClientConfig {
@@ -28,6 +33,10 @@ export interface AuthClientConfig {
 }
 
 export interface IdentityClientConfig extends AuthClientConfig {}
+
+export interface ClientCredentialsConfig {
+  fetch?: AuthFetch
+}
 
 export interface ApplicationAccessConfig extends AuthClientConfig {
   applicationIds: Record<ShopifyApplication, string>
@@ -131,7 +140,7 @@ export type ClientCredentialsError =
   | {kind: 'unexpected_status'; status: number}
   | {serverCode: string; status: number}
 
-export type ClientCredentialsResult = ApplicationToken | ClientCredentialsError
+export type ClientCredentialsResult = ClientCredentialsToken | ClientCredentialsError
 
 export interface ClientCredentialsClient {
   requestToken(options: ClientCredentialsTokenRequest): Promise<ClientCredentialsResult>
