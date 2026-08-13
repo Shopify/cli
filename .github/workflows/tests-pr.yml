@@ -270,14 +270,6 @@ jobs:
           node-version: ${{ env.PLAYWRIGHT_NODE_VERSION }}
       - name: Build
         run: pnpm nx run-many --all --target=build --output-style=stream
-      - name: Validate E2E configuration
-        working-directory: packages/e2e
-        env:
-          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
-          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
-          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
-          E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
-        run: pnpm --filter e2e exec tsx setup/validate-auth-config.ts
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium
         working-directory: packages/e2e
