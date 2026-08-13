@@ -8,6 +8,12 @@ const request: ClientCredentialsTokenRequest = {
   clientSecret: 'client-secret',
 }
 
+const requestWithSignal = request as ClientCredentialsTokenRequest & {signal: unknown}
+
+test('does not expose cancellation on the client-credentials request', () => {
+  expect('signal' in requestWithSignal).toBe(false)
+})
+
 function fetchResponse(status: number, body: string): AuthFetch {
   return async () => ({ok: status >= 200 && status < 300, status, text: async () => body})
 }
@@ -37,13 +43,27 @@ describe('requestClientCredentialsToken', () => {
     })
   })
 
-  test.each([400, 500])('classifies malformed JSON as malformed_response for HTTP %s', async (status) => {
+  test.each([200, 400, 500])('classifies malformed JSON as malformed_response for HTTP %s', async (status) => {
     await expect(
       requestClientCredentialsToken({fetch: fetchResponse(status, 'not-json')}, request),
     ).resolves.toMatchObject({
       kind: 'malformed_response',
       status,
     })
+  })
+
+  test.each([
+    [500, true, 'server_error'],
+    [200, false, 'token'],
+  ] as const)('uses numeric status rather than ok (%s/%s)', async (status, ok, expected) => {
+    const fetch: AuthFetch = async () => ({ok, status, text: async () => '{"access_token":"token"}'})
+    const result = await requestClientCredentialsToken({fetch}, request)
+    if (expected === 'token') {
+      expect(result).toEqual({accessToken: 'token', storeFqdn: request.storeFqdn})
+    } else {
+      expect(result).toEqual({serverCode: 'unknown_error', status})
+      expect(result).not.toHaveProperty('accessToken')
+    }
   })
 
   test('rejects successful JSON without a non-empty access token', async () => {

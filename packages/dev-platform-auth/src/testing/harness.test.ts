@@ -1,8 +1,7 @@
 import {authFixtures} from './fixtures.js'
 import {createFixtureFetch} from './harness.js'
 import {describe, expect, test} from 'vitest'
-import type {AuthSignal} from '../index.js'
-import type {AuthFixture} from './fixtures.js'
+import type {AuthFixture, AuthSignal} from './fixtures.js'
 
 const signal: AuthSignal = {
   aborted: false,

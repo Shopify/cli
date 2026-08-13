@@ -385,9 +385,7 @@ function mapClientCredentialsError(
     return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
   }
   if (error.kind === 'malformed_response') {
-    return error.status >= 200 && error.status < 300
-      ? new BugError(`Received invalid response from admin authentication service (HTTP ${error.status}).`)
-      : new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
+    return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
   }
   return new AbortError(`Failed to get access token for app ${clientId} on store ${storeFqdn}: ${statusText}`)
 }

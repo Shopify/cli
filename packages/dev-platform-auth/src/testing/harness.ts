@@ -1,10 +1,10 @@
-import type {AuthFetch, AuthFetchResponse, AuthSignal} from '../index.js'
-import type {AuthFixture} from './fixtures.js'
+import type {AuthFetch, AuthFetchResponse} from '../index.js'
+import type {AuthFixture, AuthSignal} from './fixtures.js'
 
 /** Creates a transport double from a fixture without requiring a runtime or HTTP library. */
 export function createFixtureFetch(fixture: AuthFixture): AuthFetch {
   let responseIndex = 0
-  return async (url, init): Promise<AuthFetchResponse> => {
+  return async (url, init: Parameters<AuthFetch>[1] & {signal?: AuthSignal}): Promise<AuthFetchResponse> => {
     if (url !== fixture.request.url || init.method !== fixture.request.method) {
       throw new Error(`${fixture.name}: request method or URL did not match the fixture`)
     }

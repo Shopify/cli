@@ -55,7 +55,8 @@ export async function requestClientCredentialsToken(
     return {kind: 'malformed_response', status: response.status, cause: new Error('Auth response is not valid JSON')}
   }
 
-  if (!response.ok) {
+  const isSuccess = response.status >= 200 && response.status < 300
+  if (!isSuccess) {
     const serverCode = readServerCode(parsed)
     return serverCode ? {serverCode, status: response.status} : {kind: 'unexpected_status', status: response.status}
   }

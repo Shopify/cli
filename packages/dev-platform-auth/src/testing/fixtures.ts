@@ -1,4 +1,19 @@
-import type {AuthErrorCode, AuthFetchResponse, AuthSignal} from '../index.js'
+import type {AuthFetchResponse} from '../index.js'
+
+type AuthErrorCode =
+  | 'invalid_grant'
+  | 'invalid_request'
+  | 'invalid_target'
+  | 'access_denied'
+  | 'expired_token'
+  | 'invalid_response'
+  | 'app_not_installed'
+  | 'unknown'
+export interface AuthSignal {
+  readonly aborted: boolean
+  addEventListener(type: 'abort', listener: () => void, options?: {once?: boolean}): void
+  removeEventListener(type: 'abort', listener: () => void): void
+}
 
 export const fixtureOrigin = 'https://identity.example.test'
 export const fakeClientId = 'fixture-client-id'
