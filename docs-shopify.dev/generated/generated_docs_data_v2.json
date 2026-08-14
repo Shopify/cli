@@ -3167,6 +3167,26 @@
       "value": "export interface configautoupgradestatus {\n\n}"
     }
   },
+  "configmouseoff": {
+    "docs-shopify.dev/commands/interfaces/config-mouse-off.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-mouse-off.interface.ts",
+      "name": "configmouseoff",
+      "description": "The following flags are available for the `config mouse off` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configmouseoff {\n\n}"
+    }
+  },
+  "configmouseon": {
+    "docs-shopify.dev/commands/interfaces/config-mouse-on.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/config-mouse-on.interface.ts",
+      "name": "configmouseon",
+      "description": "The following flags are available for the `config mouse on` command:",
+      "isPublicDocs": true,
+      "members": [],
+      "value": "export interface configmouseon {\n\n}"
+    }
+  },
   "docfetch": {
     "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",

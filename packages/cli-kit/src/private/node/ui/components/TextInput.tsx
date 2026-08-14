@@ -1,4 +1,5 @@
 /* eslint-disable no-nested-ternary */
+import {removeTerminalInputResponses} from './Mouse.js'
 import {shouldDisplayColors} from '../../../../public/node/output.js'
 import React, {useLayoutEffect, useState} from 'react'
 import {Text, useInput} from 'ink'
@@ -74,7 +75,16 @@ const TextInput: FunctionComponent<TextInputProps> = ({
 
   useInput(
     (input, key) => {
-      if (key.upArrow || key.downArrow || (key.ctrl && input === 'c') || (key.shift && key.tab) || key.return) {
+      const sanitizedInput = removeTerminalInputResponses(input)
+      if (input.length > 0 && sanitizedInput.length === 0) return
+
+      if (
+        key.upArrow ||
+        key.downArrow ||
+        (key.ctrl && sanitizedInput === 'c') ||
+        (key.shift && key.tab) ||
+        key.return
+      ) {
         return
       } else if (key.tab) {
         if (originalValue.length === 0 && placeholderText) {
@@ -105,9 +115,9 @@ const TextInput: FunctionComponent<TextInputProps> = ({
       } else {
         nextValue =
           originalValue.slice(0, clampedCursorOffset) +
-          input +
+          sanitizedInput +
           originalValue.slice(clampedCursorOffset, originalValue.length)
-        nextCursorOffset += input.length
+        nextCursorOffset += sanitizedInput.length
       }
 
       setCursorOffset(nextCursorOffset)
