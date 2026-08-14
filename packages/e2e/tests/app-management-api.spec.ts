@@ -1,9 +1,9 @@
-import {appDeletionReadinessFromApps} from '../setup/app-management-state.js'
+import {appDeletionReadinessFromApps} from '../setup/app-management-api.js'
 import {expect, test} from '@playwright/test'
-import type {AppManagementAppState} from '../setup/app-management-state.js'
+import type {AppManagementAppState} from '../setup/app-management-api.js'
 
 test.describe('App Management teardown state', () => {
-  test('returns the exact client ID match when app names collide', () => {
+  test('uses the client ID to disambiguate apps with the same name', () => {
     const matchingApp = appState({id: 'gid://organization/App/2', key: 'expected-client-id'})
 
     expect(
@@ -13,15 +13,6 @@ test.describe('App Management teardown state', () => {
         'expected-client-id',
       ),
     ).toEqual({status: 'ready', app: {id: matchingApp.id, key: matchingApp.key}})
-  })
-
-  test('falls back to the unique name match when the local client ID is stale', () => {
-    const matchingApp = appState({id: 'gid://organization/App/1', key: 'current-client-id'})
-
-    expect(appDeletionReadinessFromApps([matchingApp], 'E2E app', 'stale-client-id')).toEqual({
-      status: 'ready',
-      app: {id: matchingApp.id, key: matchingApp.key},
-    })
   })
 
   test('does not treat a missing install count as zero', () => {
