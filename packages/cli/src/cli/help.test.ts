@@ -14,7 +14,55 @@ function renderFlags(flags: Command.Flag.Any[]): [string, string | undefined][] 
   return (rows ?? []).map(([left, right]) => [stripAnsi(left), right === undefined ? undefined : stripAnsi(right)])
 }
 
+function renderDescription(command: Partial<Command.Loadable>, maxWidth = 80): string | undefined {
+  const help = new ShopifyCommandHelp(
+    command as Command.Loadable,
+    {} as Interfaces.Config,
+    {maxWidth} as Interfaces.HelpOptions,
+  )
+  return (help as unknown as {description: () => string | undefined}).description()
+}
+
 describe('ShopifyCommandHelp', () => {
+  test('wraps prose and preserves indentation in fenced code blocks', () => {
+    const description = renderDescription(
+      {
+        summary: 'Return a value.',
+        description: `With \`--json\`, the command returns \`Result\`, described by these TypeScript types:
+
+\`\`\`ts
+interface Result {
+  value: string
+}
+\`\`\``,
+      },
+      50,
+    )
+
+    expect(description).toBe(`Return a value.
+
+With \`--json\`, the command returns \`Result\`,
+described by these TypeScript types:
+
+\`\`\`ts
+interface Result {
+  value: string
+}
+\`\`\``)
+  })
+
+  test('uses the default description formatting without generated JSON types', () => {
+    const command = {summary: 'Return a value.', description: 'A regular command description.'}
+    const defaultHelp = new CommandHelp(
+      command as Command.Loadable,
+      {} as Interfaces.Config,
+      {maxWidth: 80} as Interfaces.HelpOptions,
+    )
+    const defaultDescription = (defaultHelp as unknown as {description: () => string | undefined}).description()
+
+    expect(renderDescription(command)).toBe(defaultDescription)
+  })
+
   test('moves the env metadata to the end of a boolean flag description', () => {
     // Given
     const flags = [

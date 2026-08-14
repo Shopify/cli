@@ -3,6 +3,8 @@ import type {Command} from '@oclif/core'
 
 type HelpSectionBody = Parameters<CommandHelp['section']>[1]
 type HelpList = [string, string | undefined][]
+const jsonOutputDescriptionPrefix = 'With `--json`, the command returns `'
+const indentationPlaceholder = '\uE000'
 
 function isHelpList(body: HelpSectionBody): body is HelpList {
   return Array.isArray(body) && body.every((entry): entry is [string, string | undefined] => Array.isArray(entry))
@@ -46,6 +48,20 @@ export class ShopifyCommandHelp extends CommandHelp {
     return super.section(header, body)
   }
 
+  protected override description(): string | undefined {
+    const command = this.command
+    if (!command.description?.includes(jsonOutputDescriptionPrefix)) return super.description()
+
+    let description = command.description
+    if (this.opts.hideCommandSummaryInDescription) {
+      description = command.description.split(/\r?\n/).at(-1) ?? ''
+    } else if (command.summary) {
+      description = `${command.summary}\n\n${command.description}`
+    }
+
+    return this.wrap(protectJsonOutputIndentation(description)).split(indentationPlaceholder).join(' ')
+  }
+
   protected flags(flags: Command.Flag.Any[]): [string, string | undefined][] | undefined {
     const relocated = flags.map((flag) => {
       if (!flag.env) return flag
@@ -60,6 +76,25 @@ export class ShopifyCommandHelp extends CommandHelp {
 
     return super.flags(relocated)
   }
+}
+
+function protectJsonOutputIndentation(description: string): string {
+  let insideJsonOutputDescription = false
+  let insideCodeBlock = false
+
+  return description
+    .split(/\r?\n/)
+    .map((line) => {
+      if (line.startsWith(jsonOutputDescriptionPrefix)) insideJsonOutputDescription = true
+      if (insideJsonOutputDescription && line.trimStart().startsWith('```')) {
+        insideCodeBlock = !insideCodeBlock
+        return line
+      }
+      return insideCodeBlock
+        ? line.replace(/^ +/, (indentation) => indentationPlaceholder.repeat(indentation.length))
+        : line
+    })
+    .join('\n')
 }
 
 /**
