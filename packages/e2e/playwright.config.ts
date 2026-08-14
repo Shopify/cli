@@ -31,6 +31,8 @@ export default defineConfig({
         'tests/smoke-pty.spec.ts',
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
+        'tests/app-management-state.spec.ts',
+        'tests/teardown.spec.ts',
       ],
     },
     {
@@ -45,6 +47,8 @@ export default defineConfig({
         'tests/smoke-pty.spec.ts',
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
+        'tests/app-management-state.spec.ts',
+        'tests/teardown.spec.ts',
       ],
       dependencies: ['remote-auth'],
     },

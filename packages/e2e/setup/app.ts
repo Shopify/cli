@@ -332,7 +332,7 @@ async function gotoAppSettings(page: Page, appUrl: string): Promise<void> {
   await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
-  if (!page.url().startsWith('https://accounts.shopify.com')) return
+  if (!isAccountsShopifyUrl(page.url())) return
 
   const email = process.env.E2E_ACCOUNT_EMAIL
   if (email) {
@@ -346,13 +346,22 @@ async function gotoAppSettings(page: Page, appUrl: string): Promise<void> {
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 }
 
+function isAccountsShopifyUrl(rawUrl: string): boolean {
+  try {
+    return new URL(rawUrl).hostname === 'accounts.shopify.com'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
 /**
  * Delete an app from its dev dashboard settings page. Returns true if deleted.
  *
  * Single attempt — caller owns the retry loop.
  *
- * Fail-fast on STILL_HAS_INSTALLS: the Delete button stays disabled while
- * installs exist, so we throw to let the caller skip instead of spinning.
+ * Throws STILL_HAS_INSTALLS when the Delete button remains disabled after a
+ * reload so the caller can apply its bounded retry policy.
  */
 export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Promise<boolean> {
   // Step 1: Navigate to the app's settings page. 404 → already deleted. 5xx → throw for retry.
