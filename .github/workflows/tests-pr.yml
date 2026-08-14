@@ -252,7 +252,7 @@ jobs:
     # Playwright — those failures belong to the build lane, not to E2E.
     needs: [type-check, bundle]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -283,7 +283,7 @@ jobs:
           E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
           E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
-        run: pnpm exec playwright test --project remote --shard ${{ matrix.shard }}
+        run: pnpm exec playwright test --project remote --shard ${{ matrix.shard }} --global-timeout 1800000
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

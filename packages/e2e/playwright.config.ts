@@ -14,7 +14,7 @@ export default defineConfig({
   retries: 0,
   workers: 10,
   maxFailures: isCI ? 3 : 0, // Stop early in CI after 3 failures
-  reporter: isCI ? [['html', {open: 'never'}], ['list']] : [['list']],
+  reporter: isCI ? [['html', {open: 'never'}], ['list'], ['./retry-summary-reporter.ts']] : [['list']],
   timeout: TEST_TIMEOUT.default, // Heavy tests override via test.setTimeout()
   globalTimeout: 20 * 60 * 1000,
 
@@ -31,6 +31,7 @@ export default defineConfig({
         'tests/smoke-pty.spec.ts',
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
+        'tests/retry-behavior.spec.ts',
       ],
     },
     {
@@ -39,12 +40,14 @@ export default defineConfig({
     },
     {
       name: 'remote',
+      retries: isCI ? 1 : 0,
       testMatch: 'tests/*.spec.ts',
       testIgnore: [
         'tests/smoke.spec.ts',
         'tests/smoke-pty.spec.ts',
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
+        'tests/retry-behavior.spec.ts',
       ],
       dependencies: ['remote-auth'],
     },

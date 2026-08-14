@@ -140,8 +140,14 @@ export function e2eRunSegment(): string {
   return runId ? `r${BigInt(runId).toString(36)}a${runAttempt}` : 'local'
 }
 
-export function e2eAppName(prefix: string): string {
-  const timestampSegment = Date.now().toString(36)
+export function retryScopedTimestamp(retry: number, now = Date.now()): string {
+  if (!Number.isInteger(retry) || retry < 0) throw new Error('retry must be a non-negative integer')
+
+  return (now + retry).toString(36)
+}
+
+export function e2eAppName(prefix: string, retry = 0): string {
+  const timestampSegment = retryScopedTimestamp(retry)
 
   return `E2E-${E2E_APP_PREFIXES[prefix] ?? prefix}-${e2eRunSegment()}-${timestampSegment}`
 }
