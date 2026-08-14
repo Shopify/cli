@@ -9,6 +9,7 @@ export type DevSessionUpdateMutationVariables = Types.Exact<{
   assetsUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
   manifest?: Types.InputMaybe<Types.Scalars['JSON']['input']>
   inheritedModuleUids: Types.Scalars['String']['input'][] | Types.Scalars['String']['input']
+  unsafe?: Types.InputMaybe<Types.Scalars['Boolean']['input']>
 }>
 
 export type DevSessionUpdateMutation = {
@@ -19,6 +20,7 @@ export type DevSessionUpdateMutation = {
       user?: {id: string; email?: string | null} | null
       app: {id: string; key: string}
     } | null
+    warnings?: {message: string; code: Types.DevSessionWarningCode}[] | null
     userErrors: {message: string; on: JsonMapType; field?: string[] | null; category: string}[]
   } | null
 }
@@ -57,6 +59,11 @@ export const DevSessionUpdate = {
             },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'unsafe'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'Boolean'}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -84,6 +91,11 @@ export const DevSessionUpdate = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'inheritedModuleUids'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'inheritedModuleUids'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'unsafe'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'unsafe'}},
               },
             ],
             selectionSet: {
@@ -121,6 +133,18 @@ export const DevSessionUpdate = {
                           ],
                         },
                       },
+                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: {kind: 'Name', value: 'warnings'},
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'message'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'code'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },
