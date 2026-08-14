@@ -534,6 +534,9 @@ importers:
       '@playwright/test':
         specifier: ^1.61.1
         version: 1.61.1
+      '@shopify/cli-kit':
+        specifier: 4.6.0
+        version: link:../cli-kit
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0

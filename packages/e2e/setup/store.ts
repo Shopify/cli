@@ -3,6 +3,7 @@ import {appTestFixture} from './app.js'
 import {isVisibleWithin} from './browser.js'
 import {BROWSER_TIMEOUT, CLI_TIMEOUT} from './constants.js'
 import {createLogger, e2eRunSegment, e2eSection, requireEnv} from './env.js'
+import {assertPortsAvailable, workerPorts} from './ports.js'
 import type {CLIProcess, ExecResult} from './cli.js'
 import type {Locator, Page} from '@playwright/test'
 
@@ -279,10 +280,12 @@ export const storeTestFixture = appTestFixture.extend<{storeFqdn: string}>({
     requireEnv(env, 'orgId')
     const wi = env.workerIndex
 
-    // Unique ports per worker to avoid EADDRINUSE when running in parallel
-    const portBase = 3457 + wi * 10
-    env.processEnv.SHOPIFY_FLAG_GRAPHIQL_PORT = String(portBase)
-    env.processEnv.SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT = String(portBase + 2)
+    const ports = workerPorts(wi)
+    await assertPortsAvailable(ports, `worker=${wi} phase=claim`)
+    env.ownedPorts.push(...ports)
+    for (const {environmentVariable, port} of ports) {
+      env.processEnv[environmentVariable] = String(port)
+    }
 
     const storeName = generateStoreName(wi)
     const fqdn = await createDevStoreWithCli({cli, workerIndex: wi, storeName, orgId: env.orgId})

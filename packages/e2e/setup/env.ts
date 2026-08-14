@@ -3,6 +3,7 @@ import {test as base} from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 import {fileURLToPath} from 'url'
+import type {OwnedPort} from './ports.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -18,6 +19,8 @@ export interface E2EEnv {
   tempDir: string
   /** Playwright worker index (0-based) for debug logging */
   workerIndex: number
+  /** Ports claimed by the current test and verified during CLI fixture cleanup */
+  ownedPorts: OwnedPort[]
 }
 
 /** Worker context for logging */
@@ -196,6 +199,7 @@ export const envFixture = base.extend<{testSection: void}, {env: E2EEnv}>({
         processEnv,
         tempDir,
         workerIndex: workerInfo.parallelIndex,
+        ownedPorts: [],
       }
 
       await use(env)
