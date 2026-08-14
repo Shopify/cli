@@ -1,5 +1,6 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
+import {hasRateLimitCode} from './analytics/graphql-error-codes.js'
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
 import {recordRetry} from '../../public/node/analytics.js'
@@ -253,24 +254,15 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   }
 }
 
+// Shopify GraphQL APIs signal rate limiting with `extensions.code` set to
+// `THROTTLED` (often on a 200 response) or `429` — the same codes that
+// crash-report suppression and analytics grouping already treat as rate
+// limiting via this shared helper.
 function isThrottled(error: ClientError): boolean {
   if (error.response.status === 429) {
     return true
   }
-
-  // GraphQL returns a 401 with a string error message when auth fails
-  // Therefore error.response.errors can be a string or GraphQLError[]
-  if (typeof error.response.errors === 'string') {
-    return false
-  }
-  // Some Shopify APIs (e.g. App Management) throttle with a 200 response whose
-  // GraphQL error message is "Throttled", with no 429 status or code — match
-  // the message so those are retried too.
-  return (
-    error.response.errors?.some(
-      (graphqlError) => graphqlError.extensions?.code === '429' || /^throttled/i.test(graphqlError.message ?? ''),
-    ) ?? false
-  )
+  return hasRateLimitCode(error.response.errors)
 }
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
