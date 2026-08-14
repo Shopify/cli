@@ -190,15 +190,13 @@ test.describe('App deploy', () => {
           browserPage,
           appName,
           appUrl: primaryAppUrl,
-          orgId: env.orgId,
-          workerIndex: env.workerIndex,
+          env,
         })
         await teardownAll({
           browserPage,
           appName: secondaryAppName,
           appUrl: secondaryAppUrl,
-          orgId: env.orgId,
-          workerIndex: env.workerIndex,
+          env,
         })
       }
     }

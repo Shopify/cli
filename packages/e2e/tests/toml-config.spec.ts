@@ -44,8 +44,7 @@ test.describe('TOML config regression', () => {
           browserPage,
           appName,
           appUrl,
-          orgId: env.orgId,
-          workerIndex: env.workerIndex,
+          env,
         })
       }
     }
@@ -91,9 +90,8 @@ test.describe('TOML config regression', () => {
           appName,
           appUrl,
           appDir,
-          orgId: env.orgId,
+          env,
           storeFqdn,
-          workerIndex: env.workerIndex,
         })
         fs.rmSync(parentDir, {recursive: true, force: true})
       }
