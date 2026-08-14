@@ -17,6 +17,7 @@ import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT, CLI_TIMEOUT} from '../setup/constants.js'
 import {executables} from '../setup/env.js'
 import {isVisibleWithin} from '../setup/browser.js'
+import {observePtyExit, terminateProcessTree} from '../setup/process.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
@@ -160,6 +161,7 @@ async function primeCliAuth(page: Page, email: string, password: string, env: No
     rows: 30,
     env: spawnEnv,
   })
+  const exitObserver = observePtyExit(ptyProcess)
 
   let output = ''
   ptyProcess.onData((data: string) => {
@@ -178,11 +180,13 @@ async function primeCliAuth(page: Page, email: string, password: string, env: No
     await completeLogin(page, urlMatch[0], email, password)
     await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
   } finally {
-    try {
-      ptyProcess.kill()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_error) {
-      // Process may already be dead.
+    if (!exitObserver.hasExited()) {
+      await terminateProcessTree({
+        pid: ptyProcess.pid,
+        command: `node ${executables.cli} auth login`,
+        owner: 'prime-browser-auth',
+        waitForExit: exitObserver.waitForExit,
+      })
     }
   }
 }

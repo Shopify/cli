@@ -84,7 +84,7 @@ test.describe('Dev hot reload', () => {
         console.error(`[hot-reload app-config] Captured PTY output:\n${proc.getOutput()}`)
         throw error
       } finally {
-        proc.kill()
+        await proc.terminate()
       }
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
@@ -142,7 +142,7 @@ test.describe('Dev hot reload', () => {
         console.error(`[hot-reload create] Captured PTY output:\n${proc.getOutput()}`)
         throw error
       } finally {
-        proc.kill()
+        await proc.terminate()
       }
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
@@ -206,7 +206,7 @@ test.describe('Dev hot reload', () => {
         console.error(`[hot-reload delete] Captured PTY output:\n${proc.getOutput()}`)
         throw error
       } finally {
-        proc.kill()
+        await proc.terminate()
       }
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.

@@ -87,7 +87,7 @@ extensions_summary = "E2E staging app extensions"
         console.error(`[multi-config dev] Captured PTY output:\n${proc.getOutput()}`)
         throw error
       } finally {
-        proc.kill()
+        await proc.terminate()
       }
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
@@ -168,7 +168,7 @@ extensions_summary = "E2E staging app extensions"
         console.error(`[multi-config default] Captured PTY output:\n${proc.getOutput()}`)
         throw error
       } finally {
-        proc.kill()
+        await proc.terminate()
       }
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
