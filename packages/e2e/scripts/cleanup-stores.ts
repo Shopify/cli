@@ -12,6 +12,8 @@
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --delete      # Delete only stores with 0 apps installed
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --headed      # Show browser window
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern X   # Match stores containing "X" (default: "e2e-w")
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --older-than-hours 24
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --list --fail-if-found
  *
  * Environment variables (loaded from packages/e2e/.env):
  *   E2E_ACCOUNT_EMAIL    — Shopify account email for login
@@ -28,6 +30,7 @@ import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT, CLI_TIMEOUT} from '../setup/constants.js'
 import {deleteDevStoreWithCli, dismissDevConsole, isStoreAppsEmpty} from '../setup/store.js'
 import {executables} from '../setup/env.js'
+import {matchesOwnedE2EResource} from '../setup/resource-ownership.js'
 import {refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
@@ -76,6 +79,10 @@ export interface CleanupStoresOptions {
   orgId?: string
   /** Playwright browser storage state path (default: E2E_BROWSER_STATE_PATH or global-auth path) */
   storageStatePath?: string
+  /** Match only resources older than this age */
+  olderThanHours?: number
+  /** Fail list mode when matching resources remain */
+  failIfFound?: boolean
 }
 
 function isAccountsShopifyUrl(rawUrl: string): boolean {
@@ -122,10 +129,13 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
   const password = process.env.E2E_ACCOUNT_PASSWORD
   const storageStatePath = existingStorageStatePath(opts.storageStatePath)
 
+  if (opts.failIfFound && mode !== 'list') throw new Error('failIfFound requires list mode')
+
   console.log('')
   console.log(`[cleanup-stores] Mode:    ${MODE_LABELS[mode]}`)
   console.log(`[cleanup-stores] Org:     ${orgId || '(not set)'}`)
   console.log(`[cleanup-stores] Pattern: "${pattern}"`)
+  if (opts.olderThanHours !== undefined) console.log(`[cleanup-stores] Minimum age: ${opts.olderThanHours} hour(s)`)
   console.log('')
 
   if (!storageStatePath && (!email || !password)) {
@@ -161,22 +171,35 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
 
     // Step 2: Find matching stores. Prefer Business Platform API discovery because the Dev Dashboard
     // stores page is virtualized/lazy-loaded and its rendered HTML does not always include myshopify domains.
-    const stores = await findStores(page, {pattern, orgId, email, password})
+    const stores = await findStores(page, {
+      pattern,
+      olderThanHours: opts.olderThanHours,
+      orgId,
+      email,
+      password,
+    })
     console.log(`[cleanup-stores] Found ${stores.length} store(s) matching pattern "${pattern}"`)
     console.log('')
 
     if (stores.length === 0) return
 
     if (mode === 'list') {
-      // List mode: count apps for each store, then print summary
-      for (const store of stores) {
-        store.appCount = await countInstalledApps(page, store.fqdn)
+      if (!opts.failIfFound) {
+        for (const store of stores) {
+          store.appCount = await countInstalledApps(page, store.fqdn)
+        }
       }
       for (let i = 0; i < stores.length; i++) {
         const store = stores[i]!
-        console.log(`  ${i + 1}. ${store.name} (${store.appCount} app${store.appCount !== 1 ? 's' : ''} installed)`)
+        const installDetails = opts.failIfFound
+          ? ''
+          : ` (${store.appCount} app${store.appCount !== 1 ? 's' : ''} installed)`
+        console.log(`  ${i + 1}. ${store.name}${installDetails}`)
       }
       console.log('')
+      if (opts.failIfFound) {
+        throw new Error(`[cleanup-stores] Verification failed: ${stores.length} owned store(s) remain`)
+      }
       return
     }
 
@@ -293,6 +316,7 @@ interface StoreInfo {
 
 interface FindStoresOptions {
   pattern: string
+  olderThanHours?: number
   orgId: string
   email?: string
   password?: string
@@ -300,11 +324,13 @@ interface FindStoresOptions {
 
 async function findStores(page: Page, opts: FindStoresOptions): Promise<StoreInfo[]> {
   try {
-    return await findStoresWithBusinessPlatformApi(opts.pattern, opts.orgId)
+    return await findStoresWithBusinessPlatformApi(opts)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
     console.warn(
-      `[cleanup-stores] API discovery failed, falling back to Dev Dashboard UI: ${err instanceof Error ? err.message : err}`,
+      `[cleanup-stores] API discovery failed, falling back to Dev Dashboard UI: ${
+        err instanceof Error ? err.message : err
+      }`,
     )
   }
 
@@ -312,15 +338,15 @@ async function findStores(page: Page, opts: FindStoresOptions): Promise<StoreInf
 }
 
 /** Find app development stores matching a name pattern using Business Platform GraphQL. */
-async function findStoresWithBusinessPlatformApi(namePattern: string, orgId: string): Promise<StoreInfo[]> {
+async function findStoresWithBusinessPlatformApi(opts: FindStoresOptions): Promise<StoreInfo[]> {
   console.log('[cleanup-stores] Discovering stores via Business Platform API...')
 
   const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
   const result = await businessPlatformOrganizationsRequestDoc({
     query: ListAppDevStores,
     token,
-    organizationId: orgId,
-    variables: {searchTerm: namePattern},
+    organizationId: opts.orgId,
+    variables: {searchTerm: opts.pattern},
     unauthorizedHandler: {
       type: 'token_refresh',
       handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
@@ -330,15 +356,13 @@ async function findStoresWithBusinessPlatformApi(namePattern: string, orgId: str
   const accessibleShops = result.organization?.accessibleShops
   if (!accessibleShops) return []
   if (accessibleShops.pageInfo.hasNextPage) {
-    console.warn(
-      `[cleanup-stores] API discovery has more pages for pattern "${namePattern}"; use a narrower pattern if matches are missing.`,
-    )
+    throw new Error(`API discovery has more pages for pattern "${opts.pattern}"`)
   }
 
   const seen = new Set<string>()
   const stores: StoreInfo[] = []
   for (const edge of accessibleShops.edges) {
-    const store = toStoreInfo(edge.node, namePattern)
+    const store = toStoreInfo(edge.node, opts)
     if (!store || seen.has(store.fqdn)) continue
     seen.add(store.fqdn)
     stores.push(store)
@@ -351,7 +375,7 @@ type AppDevStoreNode = NonNullable<
   NonNullable<NonNullable<ListAppDevStoresQuery['organization']>['accessibleShops']>['edges'][number]['node']
 >
 
-function toStoreInfo(node: AppDevStoreNode, namePattern: string): StoreInfo | undefined {
+function toStoreInfo(node: AppDevStoreNode, filter: FindStoresOptions): StoreInfo | undefined {
   const fqdn =
     normalizeStoreFqdn(node.primaryDomain) ??
     normalizeStoreFqdn(node.url) ??
@@ -359,10 +383,10 @@ function toStoreInfo(node: AppDevStoreNode, namePattern: string): StoreInfo | un
     normalizeStoreFqdn(node.name)
   if (!fqdn) return undefined
 
-  const searchable = [node.name, node.shortName, node.primaryDomain, node.url, fqdn].filter(Boolean).join(' ')
-  if (!searchable.toLowerCase().includes(namePattern.toLowerCase())) return undefined
+  const name = fqdn.replace('.myshopify.com', '')
+  if (!matchesOwnedE2EResource('store', name, filter)) return undefined
 
-  return {name: fqdn.replace('.myshopify.com', ''), fqdn, appCount: 0}
+  return {name, fqdn, appCount: 0}
 }
 
 function normalizeStoreFqdn(rawValue?: string | null): string | undefined {
@@ -445,7 +469,7 @@ async function findStoresOnDashboard(page: Page, opts: FindStoresOptions): Promi
   while (match) {
     const slug = match[1]!
     const fqdn = `${slug}.myshopify.com`
-    if (!seen.has(fqdn) && slug.toLowerCase().includes(namePattern.toLowerCase())) {
+    if (!seen.has(fqdn) && matchesOwnedE2EResource('store', slug, opts)) {
       seen.add(fqdn)
       stores.push({name: slug, fqdn, appCount: 0})
     }
@@ -596,7 +620,22 @@ async function main() {
   if (args.includes('--list')) mode = 'list'
   else if (args.includes('--delete')) mode = 'delete'
 
-  await cleanupStores({mode, pattern, headed})
+  const olderThanHours = positiveNumberOption(args, '--older-than-hours')
+  const failIfFound = args.includes('--fail-if-found')
+
+  await cleanupStores({mode, pattern, headed, olderThanHours, failIfFound})
+}
+
+function positiveNumberOption(args: string[], option: string): number | undefined {
+  const optionIndex = args.indexOf(option)
+  if (optionIndex === -1) return undefined
+
+  const rawValue = args[optionIndex + 1]
+  const value = Number(rawValue)
+  if (!rawValue || rawValue.startsWith('--') || !Number.isFinite(value) || value <= 0) {
+    throw new Error(`${option} requires a number greater than zero`)
+  }
+  return value
 }
 
 const isDirectRun = process.argv[1] === fileURLToPath(import.meta.url)
