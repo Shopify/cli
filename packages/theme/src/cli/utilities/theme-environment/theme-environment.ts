@@ -7,7 +7,6 @@ import {createHostValidationHandler} from './host-validation.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {renderThrownError} from '../errors.js'
-import {promiseWithResolvers} from '../../polyfills/promiseWithResolvers.js'
 
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
@@ -23,7 +22,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
     promise: backgroundJobPromise,
     resolve: resolveBackgroundJob,
     reject: rejectBackgroundJob,
-  } = promiseWithResolvers<void>()
+  } = Promise.withResolvers<void>()
 
   const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx)
   const envSetup = ensureThemeEnvironmentSetup(theme, ctx, rejectBackgroundJob)

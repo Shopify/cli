@@ -92,6 +92,100 @@ describe('retryAwareRequest', () => {
     expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(2, expect.anything(), 500)
   })
 
+  test('retries THROTTLED GraphQL errors that carry no 429 status or code', async () => {
+    // Shopify GraphQL APIs (e.g. App Management) throttle with a 200 response
+    // whose GraphQL error has extensions.code "THROTTLED" — no 429 status, no
+    // retry-after header.
+    const throttledResponse = {
+      status: 200,
+      errors: [
+        {
+          message: 'Throttled',
+          extensions: {code: 'THROTTLED'},
+        } as any,
+      ],
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(throttledResponse, {query: ''})
+      })
+      .mockImplementationOnce(() => {
+        return Promise.resolve({
+          status: 200,
+          data: {hello: 'world!'},
+          headers: new Headers(),
+        })
+      })
+    const mockScheduleDelayFn = vi.fn((fn, delay) => {
+      return fn()
+    })
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: false,
+      },
+      undefined,
+      {
+        defaultDelayMs: 500,
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {hello: 'world!'},
+    })
+
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+    expect(mockScheduleDelayFn).toHaveBeenCalledWith(expect.anything(), 500)
+  })
+
+  test('does not retry errors whose message says Throttled without a rate-limit code', async () => {
+    // The message can echo user-controlled strings (e.g. an app named
+    // "Throttled") — only the server-set extensions.code marks rate limiting.
+    // This test gives a false warning from vitest if fake timers are used. It thinks the exception is uncaught.
+    vi.useRealTimers()
+    const messageOnlyResponse = {
+      status: 200,
+      errors: [
+        {
+          message: 'Throttled app name is invalid',
+        } as any,
+      ],
+      headers: new Headers(),
+    }
+    const mockRequestFn = vi.fn().mockImplementation(() => {
+      throw new ClientError(messageOnlyResponse, {query: ''})
+    })
+    const mockScheduleDelayFn = vi.fn((fn, delay) => {
+      return fn()
+    })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: false,
+      },
+      undefined,
+      {
+        defaultDelayMs: 500,
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+
+    await expect(result).rejects.toThrowError(ClientError)
+
+    expect(mockRequestFn).toHaveBeenCalledTimes(1)
+    expect(mockScheduleDelayFn).not.toHaveBeenCalled()
+  })
+
   test('fails after too many retries', async () => {
     // This test gives a false warning from vitest if fake timers are used. It thinks the exception is uncaught.
     vi.useRealTimers()
