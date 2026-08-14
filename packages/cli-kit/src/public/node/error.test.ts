@@ -114,6 +114,10 @@ describe('shouldReportErrorAsUnexpected helper', () => {
     expect(shouldReportErrorAsUnexpected(error)).toBe(false)
   })
 
+  test.each([502, 503, 504])('returns false for a raw ClientError from the gateway (HTTP %i)', (status) => {
+    expect(shouldReportErrorAsUnexpected(clientError(status))).toBe(false)
+  })
+
   test('returns true for a raw ClientError that is a genuine failure (HTTP 500)', () => {
     expect(shouldReportErrorAsUnexpected(clientError(500))).toBe(true)
   })
