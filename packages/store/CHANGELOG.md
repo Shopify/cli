@@ -1,5 +1,16 @@
 # @shopify/store
 
+## 4.7.0
+
+### Patch Changes
+
+- Updated dependencies [5651055]
+- Updated dependencies [92c7be5]
+- Updated dependencies [ba02a02]
+- Updated dependencies [cd9c440]
+  - @shopify/cli-kit@4.7.0
+  - @shopify/organizations@4.7.0
+
 ## 4.6.0
 
 ### Patch Changes
