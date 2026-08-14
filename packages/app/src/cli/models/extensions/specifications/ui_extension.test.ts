@@ -942,6 +942,53 @@ Please check the configuration in ${uiExtension.configurationPath}`),
       })
     })
 
+    test('includes the bundle_size_exception capability in the deploy config', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+        const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const parsed = specification.parseConfigurationObject({
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+            },
+          ],
+          api_version: '2025-10' as const,
+          name: 'UI Extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            bundle_size_exception: true,
+          },
+          settings: {},
+        })
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+        const uiExtension = new ExtensionInstance({
+          configuration: parsed.data,
+          directory: tmpDir,
+          specification,
+          configurationPath,
+          entryPath: '',
+        })
+
+        // When
+        const deployConfig = await uiExtension.deployConfig({
+          apiKey: 'apiKey',
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(deployConfig?.capabilities).toStrictEqual({
+          bundle_size_exception: true,
+        })
+      })
+    })
+
     test('returns supported_features with runs_offline true when configured', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
