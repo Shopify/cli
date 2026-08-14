@@ -15,6 +15,7 @@ import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
+import {getCommandSessionId} from './session/command-session.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
@@ -24,6 +25,8 @@ import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
+
+export {setCommandSessionId} from './session/command-session.js'
 
 /**
  * Fetches the user's email from the Business Platform API
@@ -118,7 +121,6 @@ type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'cus
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
-let commandSessionId: string | undefined
 
 /**
  * Retrieves a stable user identifier for analytics, or `'unknown'` if none applies.
@@ -180,10 +182,6 @@ export function setLastSeenAuthMethod(method: AuthMethod) {
   authMethod = method
 }
 
-export function setCommandSessionId(sessionId: string | undefined) {
-  commandSessionId = sessionId
-}
-
 export interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
   forceRefresh?: boolean
@@ -215,6 +213,7 @@ export async function ensureAuthenticated(
 
   const sessions = (await sessionStore.fetch()) ?? {}
 
+  const commandSessionId = getCommandSessionId()
   let currentSessionId = forceNewSession ? undefined : (commandSessionId ?? getCurrentSessionId())
   if (!currentSessionId && !commandSessionId) {
     const userIds = Object.keys(sessions[fqdn] ?? {})

@@ -17,6 +17,8 @@ import {release} from 'os'
 import {setTimeout} from 'timers/promises'
 import type {Writable, Readable} from 'stream'
 
+export {terminalSupportsPrompting} from '../../private/node/terminal.js'
+
 /**
  * The maximum size of data that can be read from stdin in bytes.
  * This is to prevent memory exhaustion when reading from stdin.
@@ -331,18 +333,6 @@ export async function sleep(seconds: number): Promise<void> {
  */
 export function terminalSupportsHyperlinks(): boolean {
   return supportsHyperlinks.stdout
-}
-
-/**
- * Check if the standard input and output streams support prompting.
- *
- * @returns True if the standard input and output streams support prompting.
- */
-export function terminalSupportsPrompting(): boolean {
-  if (isTruthy(process.env.CI)) {
-    return false
-  }
-  return Boolean(process.stdin.isTTY && process.stdout.isTTY)
 }
 
 /**

@@ -11,6 +11,7 @@ import {
   cleanSingleStackTracePath,
 } from './error.js'
 import {outputDebug, outputInfo} from './output.js'
+import {isDevelopment} from './context/local.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {resolveErrorGrouping} from '../../private/node/analytics/error-grouping.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
@@ -66,7 +67,7 @@ const reportError = async (error: unknown, config?: Interfaces.Config): Promise<
     // Log an analytics event when there's an error
     await reportAnalyticsEvent({config, errorMessage: error instanceof Error ? error.message : undefined, exitMode})
   }
-  await sendErrorToBugsnag(error, exitMode)
+  await sendErrorToBugsnag(error, exitMode, config)
 }
 
 /**
@@ -77,6 +78,7 @@ const reportError = async (error: unknown, config?: Interfaces.Config): Promise<
 export async function sendErrorToBugsnag(
   error: unknown,
   exitMode: Omit<CommandExitMode, 'ok'>,
+  config?: Interfaces.Config,
 ): Promise<{reported: false; error: unknown; unhandled: unknown} | {error: Error; reported: true; unhandled: boolean}> {
   try {
     if (isLocalEnvironment() || settings.debug) {
@@ -146,6 +148,7 @@ export async function sendErrorToBugsnag(
         // Observe will use the IP when undefined
         userId = undefined
       }
+      if (config && !isDevelopment()) await registerCleanBugsnagErrorsFromWithinPlugins(config)
       await new Promise((resolve, reject) => {
         outputDebug(`Reporting ${unhandled ? 'unhandled' : 'handled'} error to Bugsnag: ${reportableError.message}`)
         const eventHandler = (event: Event) => {
@@ -233,7 +236,14 @@ export function cleanStackFrameFilePath({
  * Register a Bugsnag error listener to clean up stack traces for errors within plugin code.
  *
  */
+let pluginStackCleanupRegistration: Promise<void> | undefined
+
 export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config): Promise<void> {
+  pluginStackCleanupRegistration ??= registerPluginStackCleanup(config)
+  await pluginStackCleanupRegistration
+}
+
+async function registerPluginStackCleanup(config: Interfaces.Config): Promise<void> {
   // Bugsnag have their own plug-ins that use this private field
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
