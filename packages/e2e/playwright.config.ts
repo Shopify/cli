@@ -8,8 +8,7 @@ config()
 const isCI = Boolean(process.env.CI)
 
 export default defineConfig({
-  globalSetup: './setup/global-auth.ts',
-  testDir: './tests',
+  testDir: '.',
   fullyParallel: true,
   forbidOnly: isCI,
   retries: 0,
@@ -24,4 +23,20 @@ export default defineConfig({
     screenshot: isCI ? 'on' : 'off',
     video: 'off',
   },
+  projects: [
+    {
+      name: 'local',
+      testMatch: ['tests/smoke.spec.ts', 'tests/smoke-pty.spec.ts', 'tests/fixture-toml.spec.ts'],
+    },
+    {
+      name: 'remote-auth',
+      testMatch: 'setup/global-auth.setup.ts',
+    },
+    {
+      name: 'remote',
+      testMatch: 'tests/*.spec.ts',
+      testIgnore: ['tests/smoke.spec.ts', 'tests/smoke-pty.spec.ts', 'tests/fixture-toml.spec.ts'],
+      dependencies: ['remote-auth'],
+    },
+  ],
 })

@@ -1,4 +1,5 @@
 import {browserFixture} from './browser.js'
+import {authStatePaths} from './auth-state.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {globalLog, executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
@@ -13,8 +14,8 @@ const log = {log: (_ctx: any, msg: string) => globalLog('auth', msg)}
 /**
  * Worker-scoped fixture that provides an authenticated CLI session.
  *
- * If globalSetup already ran auth (E2E_AUTH_CONFIG_DIR is set), copies the
- * pre-authenticated session files into this worker's isolated XDG dirs.
+ * If the remote project's auth setup completed, copies the pre-authenticated
+ * session files into this worker's isolated XDG dirs.
  * Otherwise falls back to running auth login directly (single-worker mode).
  *
  * Fixture chain: envFixture → cliFixture → browserFixture → authFixture
@@ -30,28 +31,15 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
         return
       }
 
-      const authConfigDir = process.env.E2E_AUTH_CONFIG_DIR
-      const authDataDir = process.env.E2E_AUTH_DATA_DIR
-      const authStateDir = process.env.E2E_AUTH_STATE_DIR
-      const authCacheDir = process.env.E2E_AUTH_CACHE_DIR
+      const {xdgEnv: authXdgEnv} = authStatePaths()
+      const authDirs = Object.values(authXdgEnv)
 
-      if (authConfigDir && authDataDir && authStateDir && authCacheDir) {
-        // Copy pre-authenticated session from global setup
-        log.log(env, 'copying session from global setup')
-
-        if (
-          !fs.existsSync(authConfigDir) ||
-          !fs.existsSync(authDataDir) ||
-          !fs.existsSync(authStateDir) ||
-          !fs.existsSync(authCacheDir)
-        ) {
-          throw new Error('Global auth dirs missing — global setup may not have completed successfully')
-        }
-
-        fs.cpSync(authConfigDir, env.processEnv.XDG_CONFIG_HOME!, {recursive: true})
-        fs.cpSync(authDataDir, env.processEnv.XDG_DATA_HOME!, {recursive: true})
-        fs.cpSync(authStateDir, env.processEnv.XDG_STATE_HOME!, {recursive: true})
-        fs.cpSync(authCacheDir, env.processEnv.XDG_CACHE_HOME!, {recursive: true})
+      if (authDirs.every((directory) => fs.existsSync(directory))) {
+        log.log(env, 'copying session from auth setup')
+        fs.cpSync(authXdgEnv.XDG_CONFIG_HOME, env.processEnv.XDG_CONFIG_HOME!, {recursive: true})
+        fs.cpSync(authXdgEnv.XDG_DATA_HOME, env.processEnv.XDG_DATA_HOME!, {recursive: true})
+        fs.cpSync(authXdgEnv.XDG_STATE_HOME, env.processEnv.XDG_STATE_HOME!, {recursive: true})
+        fs.cpSync(authXdgEnv.XDG_CACHE_HOME, env.processEnv.XDG_CACHE_HOME!, {recursive: true})
 
         await use()
         return
