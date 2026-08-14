@@ -278,11 +278,12 @@ function buildExec(
   }
   const executionCwd = options?.cwd ?? cwd()
   checkCommandSafety(command, {cwd: executionCwd})
+  const backgroundStdio = options?.input === undefined ? 'ignore' : (['pipe', 'ignore', 'ignore'] as const)
   const commandProcess = execa(command, args, {
     env,
     cwd: executionCwd,
     input: options?.input,
-    stdio: options?.background ? 'ignore' : options?.stdio,
+    stdio: options?.background ? backgroundStdio : options?.stdio,
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
@@ -387,7 +388,12 @@ export async function isWsl(overrides: WslDetectionOverrides = {}): Promise<bool
 
 // Mirrors the is-inside-container and is-docker packages: Podman creates /run/.containerenv,
 // Docker creates /.dockerenv or mentions "docker" in the process cgroup.
-function isInsideContainer(): boolean {
+/**
+ * Check if the current process is running inside a container.
+ *
+ * @returns True if the current process is running inside a container.
+ */
+export function isInsideContainer(): boolean {
   if (existsSync('/run/.containerenv') || existsSync('/.dockerenv')) return true
   try {
     return readFileSync('/proc/self/cgroup', 'utf8').includes('docker')
@@ -407,7 +413,7 @@ function isInsideContainer(): boolean {
 export function isStdinPiped(): boolean {
   try {
     const stats = fstatSync(0)
-    return stats.isFIFO() || stats.isFile()
+    return stats.isFIFO() || stats.isFile() || stats.isSocket()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false

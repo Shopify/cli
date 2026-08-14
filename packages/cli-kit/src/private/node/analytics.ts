@@ -41,6 +41,7 @@ export async function startAnalytics({
       startTime: currentTime,
       startCommand,
       startArgs: args,
+      requiresSyncAnalytics: (commandClass as typeof BaseCommand | undefined)?.requiresSyncAnalytics ?? false,
     },
   }))
 

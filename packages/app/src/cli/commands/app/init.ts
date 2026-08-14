@@ -21,6 +21,10 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Init extends AppLinkedCommand {
+  public static get requiresSyncAnalytics(): boolean {
+    return true
+  }
+
   static summary?: string | undefined = 'Create a new app project'
 
   static examples = [
