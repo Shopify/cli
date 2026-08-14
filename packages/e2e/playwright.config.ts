@@ -26,7 +26,12 @@ export default defineConfig({
   projects: [
     {
       name: 'local',
-      testMatch: ['tests/smoke.spec.ts', 'tests/smoke-pty.spec.ts', 'tests/fixture-toml.spec.ts'],
+      testMatch: [
+        'tests/smoke.spec.ts',
+        'tests/smoke-pty.spec.ts',
+        'tests/fixture-toml.spec.ts',
+        'tests/auth-diagnostics.spec.ts',
+      ],
     },
     {
       name: 'remote-auth',
@@ -35,7 +40,12 @@ export default defineConfig({
     {
       name: 'remote',
       testMatch: 'tests/*.spec.ts',
-      testIgnore: ['tests/smoke.spec.ts', 'tests/smoke-pty.spec.ts', 'tests/fixture-toml.spec.ts'],
+      testIgnore: [
+        'tests/smoke.spec.ts',
+        'tests/smoke-pty.spec.ts',
+        'tests/fixture-toml.spec.ts',
+        'tests/auth-diagnostics.spec.ts',
+      ],
       dependencies: ['remote-auth'],
     },
   ],

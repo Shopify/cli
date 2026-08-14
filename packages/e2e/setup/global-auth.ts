@@ -8,14 +8,24 @@
 import {isVisibleWithin} from './browser.js'
 import {executables, globalLog} from './env.js'
 import {authStatePaths} from './auth-state.js'
+import {
+  AuthSetupError,
+  isExpectedAuthDestination,
+  readAuthConfig,
+  requireExpectedAuthDestination,
+  requireSuccessfulNavigation,
+  runAuthStages,
+  type AuthConfig,
+} from './auth-diagnostics.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import {execa} from 'execa'
-import {chromium, type Page} from '@playwright/test'
+import {chromium, type Browser, type BrowserContext, type Page} from '@playwright/test'
 import * as fs from 'fs'
+import type {IPty} from 'node-pty'
 
 function isAccountsShopifyUrl(rawUrl: string): boolean {
   try {
@@ -26,19 +36,16 @@ function isAccountsShopifyUrl(rawUrl: string): boolean {
   }
 }
 
+interface AuthenticatedBrowserSession {
+  browser: Browser
+  context: BrowserContext
+  page: Page
+}
+
 export async function prepareGlobalAuth() {
   const {authDir, storageStatePath, xdgEnv} = authStatePaths()
-  fs.rmSync(authDir, {recursive: true, force: true})
-
-  const email = process.env.E2E_ACCOUNT_EMAIL
-  const password = process.env.E2E_ACCOUNT_PASSWORD
-
-  if (!email || !password) return
-
-  const debug = process.env.DEBUG === '1'
-  globalLog('auth', 'global setup starting')
-
-  fs.mkdirSync(authDir, {recursive: true})
+  const authConfig = readAuthConfig()
+  globalLog('auth', 'starting')
 
   const processEnv: NodeJS.ProcessEnv = {
     ...process.env,
@@ -50,19 +57,60 @@ export async function prepareGlobalAuth() {
     SHOPIFY_FLAG_CLIENT_ID: undefined,
   }
 
-  // Create fresh XDG dirs
-  for (const dir of Object.values(xdgEnv)) {
-    fs.mkdirSync(dir, {recursive: true})
+  try {
+    await runAuthStages({
+      authenticate: async () => {
+        resetAuthDirectories(authDir, xdgEnv)
+        return authenticateOnce({authConfig, processEnv})
+      },
+      prewarm: async ({page}) => {
+        await prewarmBrowserSession(page, authConfig)
+      },
+      complete: async ({context}) => {
+        try {
+          await context.storageState({path: storageStatePath})
+        } catch (_error) {
+          throw new AuthSetupError('session-prewarm', 'storage-state-write')
+        }
+      },
+      dispose: async ({browser}) => browser.close(),
+      onRetry: (failure, nextAttempt) => {
+        process.stdout.write(
+          `[e2e][auth] retry stage=${failure.stage} reason=${failure.reason} next_attempt=${nextAttempt}\n`,
+        )
+      },
+    })
+  } catch (error) {
+    const failure = error instanceof AuthSetupError ? error : new AuthSetupError('browser-login', 'unexpected-error')
+    process.stderr.write(`[e2e][auth] failed stage=${failure.stage} reason=${failure.reason}\n`)
+    throw failure
   }
 
-  // Clear any existing session
+  globalLog('auth', 'complete')
+}
+
+function resetAuthDirectories(authDir: string, xdgEnv: Record<string, string>): void {
+  fs.rmSync(authDir, {recursive: true, force: true})
+  fs.mkdirSync(authDir, {recursive: true})
+  for (const directory of Object.values(xdgEnv)) {
+    fs.mkdirSync(directory, {recursive: true})
+  }
+}
+
+async function authenticateOnce({
+  authConfig,
+  processEnv,
+}: {
+  authConfig: AuthConfig
+  processEnv: NodeJS.ProcessEnv
+}): Promise<AuthenticatedBrowserSession> {
+  const {email, password} = authConfig
+
   await execa('node', [executables.cli, 'auth', 'logout'], {
     env: processEnv,
     reject: false,
   })
 
-  // Spawn auth login via PTY
-  const nodePty = await import('node-pty')
   const spawnEnv: {[key: string]: string} = {}
   for (const [key, value] of Object.entries(processEnv)) {
     if (value !== undefined) spawnEnv[key] = value
@@ -70,30 +118,44 @@ export async function prepareGlobalAuth() {
   spawnEnv.CI = ''
   spawnEnv.CODESPACES = 'true'
 
-  const ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {
-    name: 'xterm-color',
-    cols: 120,
-    rows: 30,
-    env: spawnEnv,
-  })
+  let ptyProcess: IPty
+  try {
+    const nodePty = await import('node-pty')
+    ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {
+      name: 'xterm-color',
+      cols: 120,
+      rows: 30,
+      env: spawnEnv,
+    })
+  } catch (_error) {
+    throw new AuthSetupError('pty-startup', 'spawn-failed')
+  }
 
   let output = ''
   ptyProcess.onData((data: string) => {
     output += data
-    if (debug) process.stdout.write(data)
   })
 
   try {
-    await waitForText(() => output, 'link to start the auth process', CLI_TIMEOUT.short)
+    try {
+      await waitForText(() => output, 'link to start the auth process', CLI_TIMEOUT.short)
+    } catch (_error) {
+      throw new AuthSetupError('device-code-generation', 'timeout')
+    }
 
     const stripped = stripAnsi(output)
     const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
     if (!urlMatch) {
-      throw new Error(`[e2e] global-auth: could not find login URL in output:\n${stripped}`)
+      throw new AuthSetupError('device-code-generation', 'login-url-missing')
     }
 
-    // Complete login in a headless browser
-    const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
+    let browser: Browser
+    try {
+      browser = await chromium.launch({headless: !process.env.E2E_HEADED})
+    } catch (_error) {
+      throw new AuthSetupError('browser-login', 'browser-startup')
+    }
+
     try {
       const context = await browser.newContext()
       await addLoadtestHeader(context)
@@ -103,26 +165,16 @@ export async function prepareGlobalAuth() {
 
       await completeLogin(page, urlMatch[0], email, password)
 
-      await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
-
-      // Visit admin.shopify.com and dev.shopify.com to establish session cookies
-      // (completeLogin only authenticates on accounts.shopify.com)
-      const orgId = (process.env.E2E_ORG_ID ?? '').trim()
-      if (orgId) {
-        await attemptVisitAndHandleAccountPicker(page, 'https://admin.shopify.com/', email, 'admin')
-        await attemptVisitAndHandleAccountPicker(
-          page,
-          `https://dev.shopify.com/dashboard/${orgId}/apps`,
-          email,
-          'dev dashboard',
-        )
-        globalLog('auth', 'browser session prewarm attempted for admin + dev dashboard')
+      try {
+        await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
+      } catch (_error) {
+        throw new AuthSetupError('browser-login', 'cli-confirmation-timeout')
       }
 
-      // Save browser cookies/storage so workers can reuse the session
-      await context.storageState({path: storageStatePath})
-    } finally {
+      return {browser, context, page}
+    } catch (error) {
       await browser.close()
+      throw error
     }
   } finally {
     try {
@@ -132,28 +184,62 @@ export async function prepareGlobalAuth() {
       // Process may already be dead
     }
   }
-
-  globalLog('auth', `global setup done, config at ${xdgEnv.XDG_CONFIG_HOME}`)
 }
 
-async function attemptVisitAndHandleAccountPicker(page: Page, url: string, email: string, label: string) {
-  try {
-    await visitAndHandleAccountPicker(page, url, email)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (err) {
-    globalLog('auth', `browser session prewarm for ${label} failed: ${err instanceof Error ? err.message : err}`)
+async function prewarmBrowserSession(page: Page, authConfig: AuthConfig): Promise<void> {
+  const destinations = [
+    {url: 'https://admin.shopify.com/', label: 'admin', hostname: 'admin.shopify.com'},
+    {
+      url: `https://dev.shopify.com/dashboard/${authConfig.orgId}/apps`,
+      label: 'dev-dashboard',
+      hostname: 'dev.shopify.com',
+      pathnamePrefix: `/dashboard/${authConfig.orgId}/apps`,
+    },
+  ]
+
+  for (const destination of destinations) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await visitAndHandleAccountPicker(page, destination, authConfig.email)
+    } catch (error) {
+      if (error instanceof AuthSetupError) {
+        throw error
+      }
+      throw new AuthSetupError('session-prewarm', `${destination.label}-unexpected-error`)
+    }
   }
+
+  globalLog('auth', 'session prewarm complete')
 }
 
-/** Navigate to a URL and dismiss the account picker if it appears. */
-async function visitAndHandleAccountPicker(page: Page, url: string, email: string) {
-  await page.goto(url, {waitUntil: 'domcontentloaded'})
+async function visitAndHandleAccountPicker(
+  page: Page,
+  destination: {url: string; label: string; hostname: string; pathnamePrefix?: string},
+  email: string,
+) {
+  const {url, label, hostname, pathnamePrefix} = destination
+  await requireSuccessfulNavigation(
+    () => page.goto(url, {waitUntil: 'domcontentloaded'}),
+    'session-prewarm',
+    `${label}-page-load`,
+  )
+
   await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   if (isAccountsShopifyUrl(page.url())) {
     const accountButton = page.locator(`text=${email}`).first()
     if (await isVisibleWithin(accountButton, BROWSER_TIMEOUT.long)) {
-      await accountButton.click()
-      await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+      try {
+        await Promise.all([
+          page.waitForURL((currentUrl) => isExpectedAuthDestination(currentUrl.href, hostname, pathnamePrefix), {
+            timeout: BROWSER_TIMEOUT.max,
+          }),
+          accountButton.click(),
+        ])
+      } catch (_error) {
+        throw new AuthSetupError('session-prewarm', `${label}-account-picker`)
+      }
     }
   }
+
+  await requireExpectedAuthDestination(page, hostname, pathnamePrefix, BROWSER_TIMEOUT.max, `${label}-unexpected-url`)
 }
