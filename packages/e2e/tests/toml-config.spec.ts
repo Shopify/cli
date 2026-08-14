@@ -68,7 +68,9 @@ test.describe('TOML config regression', () => {
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
       appUrl = devDashboardAppUrl(appDir, env.orgId)
 
-      const proc = await cli.spawn(['app', 'dev', '--path', appDir], {env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn}})
+      const proc = await cli.spawn(['app', 'dev', '--path', appDir], {
+        env: {CI: undefined, SHOPIFY_FLAG_STORE: storeFqdn},
+      })
 
       try {
         await proc.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
