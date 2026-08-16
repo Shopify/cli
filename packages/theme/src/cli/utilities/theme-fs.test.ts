@@ -137,7 +137,8 @@ describe('theme-fs', () => {
         // Given
         const root = tmpDir
         await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
-        const watchSpy = vi.spyOn(chokidar, 'watch')
+        const mockWatcher = new EventEmitter()
+        const watchSpy = vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
 
         // When
         const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
@@ -157,7 +158,8 @@ describe('theme-fs', () => {
         // Given
         const root = tmpDir
         await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
-        const watchSpy = vi.spyOn(chokidar, 'watch')
+        const mockWatcher = new EventEmitter()
+        const watchSpy = vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
 
         // When
         const themeFileSystem = mountThemeFileSystem(root)
