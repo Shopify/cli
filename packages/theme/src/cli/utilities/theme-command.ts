@@ -9,6 +9,7 @@ import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-ki
 import {AdminSession, ensureAuthenticatedThemes, setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {
   getCurrentStoredStoreAppSession,
+  isSessionExpired,
   listCurrentStoredStoreAppSessions,
   type StoredStoreAppSession,
 } from '@shopify/cli-kit/node/store-auth-session'
@@ -24,6 +25,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -139,8 +141,13 @@ export default abstract class ThemeCommand extends Command {
     await this.runConcurrent(validationResults.valid)
   }
 
-  protected storeAuthScopes(): string[] {
-    return []
+  /**
+   * Admin API scopes that a stored `store auth` session must include for this
+   * command to reuse it. Commands opt in to reusing store auth sessions by
+   * returning the scopes they require; the default opts the command out.
+   */
+  protected storeAuthScopes(): string[] | undefined {
+    return undefined
   }
 
   /**
@@ -362,6 +369,9 @@ export default abstract class ThemeCommand extends Command {
   }
 
   private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {
+    const requiredScopes = this.storeAuthScopes()
+    if (!requiredScopes) return undefined
+
     const store = typeof flags.store === 'string' ? flags.store : undefined
     const password = flags.password
     if (!store || password) return undefined
@@ -370,10 +380,13 @@ export default abstract class ThemeCommand extends Command {
     const storedSession = getCurrentStoredStoreAppSession(storeFqdn)
     if (!storedSession) return undefined
 
-    return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn)
+    return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
   }
 
   private storeAuthSessionsForTheme(flagsList: FlagValues[]): Map<string, AdminSession> {
+    const requiredScopes = this.storeAuthScopes()
+    if (!requiredScopes) return new Map()
+
     const stores = new Set(
       flagsList
         .filter(({store, password}) => typeof store === 'string' && !password)
@@ -387,7 +400,7 @@ export default abstract class ThemeCommand extends Command {
           const storeFqdn = normalizeStoreFqdn(storedSession.store)
           if (!stores.has(storeFqdn)) return undefined
 
-          const session = this.adminSessionFromStoreAuthSession(storedSession, storeFqdn)
+          const session = this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
           return session ? ([storeFqdn, session] as const) : undefined
         })
         .filter((entry): entry is readonly [string, AdminSession] => entry !== undefined),
@@ -408,10 +421,25 @@ export default abstract class ThemeCommand extends Command {
   private adminSessionFromStoreAuthSession(
     storedSession: StoredStoreAppSession,
     storeFqdn: string,
+    requiredScopes: string[],
   ): AdminSession | undefined {
-    if (!this.hasRequiredStoreAuthScopes(storedSession.scopes)) {
+    if (isSessionExpired(storedSession)) {
+      outputDebug(
+        `Ignoring stored store auth session for ${storeFqdn}: it expired at ${storedSession.expiresAt ?? 'unknown'}.`,
+      )
       return undefined
     }
+
+    if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
+      outputDebug(
+        `Ignoring stored store auth session for ${storeFqdn}: it is missing required scopes (has: ${storedSession.scopes.join(
+          ', ',
+        )}; needs: ${requiredScopes.join(', ')}).`,
+      )
+      return undefined
+    }
+
+    outputDebug(`Using stored store auth session for ${storeFqdn} (scopes: ${storedSession.scopes.join(', ')}).`)
 
     setLastSeenUserId(storedSession.userId)
 
@@ -434,11 +462,9 @@ export default abstract class ThemeCommand extends Command {
     return expandedScopes
   }
 
-  private hasRequiredStoreAuthScopes(scopes: string[]): boolean {
-    if (scopes.length === 0) return true
-
-    const expandedScopes = this.expandImpliedStoreAuthScopes(scopes)
-    return this.storeAuthScopes().every((scope) => expandedScopes.has(scope))
+  private hasRequiredStoreAuthScopes(sessionScopes: string[], requiredScopes: string[]): boolean {
+    const expandedScopes = this.expandImpliedStoreAuthScopes(sessionScopes)
+    return requiredScopes.every((scope) => expandedScopes.has(scope))
   }
 
   /**

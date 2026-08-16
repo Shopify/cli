@@ -14,7 +14,7 @@ import {AppLinkedInterface, CurrentAppConfiguration} from '../../../models/app/a
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
 import {afterEach, beforeEach, describe, expect, test, vi, type MockInstance} from 'vitest'
-import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -63,7 +63,11 @@ const extension1BUpdated = await testUIExtension({
 })
 const posExtensionUpdated = await testAppConfigExtensions(true)
 
-const outputOptions: OutputContextOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
+const outputOptions: OutputContextOptions = {
+  stdout: process.stdout,
+  stderr: process.stderr,
+  signal: new AbortController().signal,
+}
 
 const testAppConfiguration: CurrentAppConfiguration = {
   client_id: 'test-client-id',

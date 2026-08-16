@@ -1,8 +1,8 @@
 import {isTruthy} from './utilities.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
-import macaddress from 'macaddress'
-import {homedir} from 'os'
+import {randomUUID} from 'crypto'
+import {homedir, networkInterfaces} from 'os'
 
 // Dynamic imports to avoid circular dependency: context/local → fs → output → context/local
 // fileExists and exec are only used in specific async functions, not at module init.
@@ -277,12 +277,19 @@ export function ciPlatform(
 }
 
 /**
- * Returns the first mac address found.
+ * Returns the first mac address found, preferring external interfaces. Returns a random
+ * value when no interface has a MAC, so callers hashing it as a device id don't group
+ * unrelated devices together.
  *
  * @returns Mac address.
  */
-export function macAddress(): Promise<string> {
-  return macaddress.one()
+export async function macAddress(): Promise<string> {
+  const emptyMac = '00:00:00:00:00:00'
+  const interfacesWithMac = Object.values(networkInterfaces())
+    .flat()
+    .filter((iface): iface is NonNullable<typeof iface> => Boolean(iface && iface.mac !== emptyMac))
+  const bestInterface = interfacesWithMac.find((iface) => !iface.internal) ?? interfacesWithMac[0]
+  return bestInterface?.mac ?? randomUUID()
 }
 
 /**

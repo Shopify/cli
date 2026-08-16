@@ -2,5 +2,21 @@
   "name": "eslint-plugin-cli",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "tags": ["scope:plugin"]
+  "tags": ["scope:plugin"],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint \"**/*.js\"",
+        "cwd": "packages/eslint-plugin-cli"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint \"**/*.js\" --fix",
+        "cwd": "packages/eslint-plugin-cli"
+      }
+    }
+  }
 }

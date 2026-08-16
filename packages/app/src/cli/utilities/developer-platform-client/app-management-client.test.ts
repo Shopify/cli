@@ -50,7 +50,6 @@ import {
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
-import {setCurrentCommandId} from '@shopify/cli-kit/node/global-context'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
@@ -63,8 +62,6 @@ vi.mock('@shopify/cli-kit/node/api/webhooks')
 
 beforeEach(() => {
   AppManagementClient.resetInstance()
-  setCurrentCommandId('')
-  delete process.env.COMMAND_RUN_ID
 })
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
@@ -1346,7 +1343,6 @@ describe('AppManagementClient', () => {
 
       // Mock the app management request
       vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-      process.env.COMMAND_RUN_ID = 'test-run-id'
 
       const app: MinimalAppIdentifiers = {
         apiKey: 'test-api-key',
@@ -1372,7 +1368,7 @@ describe('AppManagementClient', () => {
         },
         cacheOptions: {
           cacheTTL: {minutes: 59},
-          cacheExtraKey: 'test-api-key-test-run-id',
+          cacheExtraKey: expect.stringMatching(/^test-api-key-[\da-f-]{36}$/),
         },
       })
     })
@@ -1387,7 +1383,6 @@ describe('AppManagementClient', () => {
         },
       }
       vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse).mockResolvedValueOnce(mockResponse)
-      process.env.COMMAND_RUN_ID = 'test-run-id'
 
       const appOne: MinimalAppIdentifiers = {
         apiKey: 'app-one-api-key',
@@ -1411,7 +1406,9 @@ describe('AppManagementClient', () => {
         .mock.calls.map(
           ([options]) => (options as {cacheOptions?: {cacheExtraKey?: string}}).cacheOptions?.cacheExtraKey,
         )
-      expect(calls).toEqual(['app-one-api-key-test-run-id', 'app-two-api-key-test-run-id'])
+      const commandRunId = calls[0]?.replace('app-one-api-key-', '')
+      expect(commandRunId).toMatch(/^[\da-f-]{36}$/)
+      expect(calls).toEqual([`app-one-api-key-${commandRunId}`, `app-two-api-key-${commandRunId}`])
     })
   })
 

@@ -4,6 +4,12 @@ import {dirname} from './path.js'
 import {TokenItem} from './ui.js'
 import Config from 'conf'
 
+function deserializeJson<T>(value: string): T {
+  // Some Windows editors encode UTF-8 files with a byte order mark, which JSON.parse does not accept.
+  const valueWithoutByteOrderMark = value.replace(/^\uFEFF/, '')
+  return JSON.parse(valueWithoutByteOrderMark) as T
+}
+
 /**
  * A wrapper around the `conf` package that provides a strongly-typed interface
  * for accessing the local storage.
@@ -13,7 +19,11 @@ export class LocalStorage<T extends Record<string, any>> {
   private readonly config: Config<T>
 
   constructor(options: {projectName?: string; cwd?: string}) {
-    this.config = new Config<T>(options)
+    this.config = new Config<T>({
+      ...options,
+      clearInvalidConfig: true,
+      deserialize: deserializeJson<T>,
+    })
   }
 
   /**

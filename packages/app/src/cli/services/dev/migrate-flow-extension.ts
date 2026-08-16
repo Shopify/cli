@@ -4,14 +4,14 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MigrationDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function migrateFlowExtensions(options: {
   extensionsToMigrate: LocalRemoteSource[]
   appId: string
   remoteExtensions: RemoteSource[]
-  migrationClient: DeveloperPlatformClient
+  migrationClient: MigrationDeveloperPlatformClient
 }) {
   const {extensionsToMigrate, appId, remoteExtensions, migrationClient} = options
 
@@ -46,7 +46,7 @@ async function migrateFlowExtension(options: {
   apiKey: MigrateFlowExtensionVariables['apiKey']
   registrationId: MigrateFlowExtensionVariables['registrationId']
   registrationUuid: MigrateFlowExtensionVariables['registrationUuid']
-  migrationClient: DeveloperPlatformClient
+  migrationClient: MigrationDeveloperPlatformClient
 }) {
   const {apiKey, registrationId, registrationUuid, migrationClient} = options
 

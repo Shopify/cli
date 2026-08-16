@@ -1,6 +1,7 @@
-import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from '../TokenizedText.js'
+import {TokenizedText} from '../TokenizedText.js'
 import {Box, Text, TextProps} from 'ink'
 import React, {FunctionComponent} from 'react'
+import type {InlineToken, LinkToken, TokenItem, UserInputToken} from '../token-item.js'
 
 export interface InfoMessageProps {
   message: {

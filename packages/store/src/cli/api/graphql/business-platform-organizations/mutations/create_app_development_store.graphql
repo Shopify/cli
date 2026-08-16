@@ -1,9 +1,10 @@
-mutation CreateAppDevelopmentStore($shopName: String!, $priceLookupKey: String!, $prepopulateTestData: Boolean, $developerPreviewHandle: String) {
+mutation CreateAppDevelopmentStore($shopName: String!, $priceLookupKey: String!, $prepopulateTestData: Boolean, $developerPreviewHandle: String, $country: String) {
   createAppDevelopmentStore(
     shopName: $shopName
     priceLookupKey: $priceLookupKey
     prepopulateTestData: $prepopulateTestData
     developerPreviewHandle: $developerPreviewHandle
+    country: $country
   ) {
     shopAdminUrl
     shopDomain

@@ -11,19 +11,19 @@ module.exports = {
     schema: [],
   },
 
-  create: function (context) {
+  create(context) {
     const loadFunctions = ['loadApp', 'loadAppConfiguration', 'inFunctionContext', 'linkedAppContext']
 
     return {
-      CallExpression: function (node) {
+      CallExpression(node) {
         const {callee, arguments: args} = node
 
-        if (callee.type === 'Identifier' && loadFunctions.includes(callee.name) && args.length == 1) {
+        if (callee.type === 'Identifier' && loadFunctions.includes(callee.name) && args.length === 1) {
           if (args[0].type === 'ObjectExpression') {
             const properties = args[0].properties
             if (!properties.some((prop) => prop.key?.name === 'userProvidedConfigName')) {
               context.report({
-                node: node,
+                node,
                 message: `Missing 'userProvidedConfigName' property when calling '${callee.name}' function.`,
               })
             }

@@ -49,8 +49,8 @@ export const BuyerLabelSchema = zod.object({
 })
 
 export const DeferredPaymentsSchema = zod.object({
-  supports_installments: zod.boolean(),
-  supports_deferred_payments: zod.boolean(),
+  supports_installments: zod.boolean().optional(),
+  supports_deferred_payments: zod.boolean().optional(),
 })
 
 export const MultipleCaptureSchema = zod.object({

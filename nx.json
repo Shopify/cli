@@ -4,8 +4,10 @@
       "dependsOn": ["^clean"]
     },
     "build": {
+      "cache": true,
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/dist"]
     },
     "refresh-manifests": {
       "dependsOn": ["build", "refresh-readme"]
@@ -13,44 +15,80 @@
     "refresh-readme": {
       "dependsOn": ["build"]
     },
-    "lint": {},
+    "generate-version": {
+      "cache": true
+    },
+    "graphql-codegen:formatting": {
+      "cache": true
+    },
+    "graphql-codegen:generate:admin": {
+      "cache": true
+    },
+    "graphql-codegen:generate:admin-as-app": {
+      "cache": true
+    },
+    "graphql-codegen:generate:app-dev": {
+      "cache": true
+    },
+    "graphql-codegen:generate:app-management": {
+      "cache": true
+    },
+    "graphql-codegen:generate:bulk-operations": {
+      "cache": true
+    },
+    "graphql-codegen:generate:business-platform-destinations": {
+      "cache": true
+    },
+    "graphql-codegen:generate:business-platform-organizations": {
+      "cache": true
+    },
+    "graphql-codegen:generate:functions": {
+      "cache": true
+    },
+    "graphql-codegen:generate:organizations-destinations": {
+      "cache": true
+    },
+    "graphql-codegen:generate:webhooks": {
+      "cache": true
+    },
+    "graphql-codegen:postfix": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
     "lint:fix": {},
     "type-check": {
-      "dependsOn": ["^build"]
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["default", "^production"]
     },
     "bundle": {
-      "dependsOn": ["build"]
+      "cache": true,
+      "dependsOn": ["build"],
+      "inputs": ["production", "^production", {"dependentTasksOutputFiles": "**/*", "transitive": true}],
+      "outputs": ["{projectRoot}/dist"]
     }
   },
   "extends": "@nx/workspace/presets/npm.json",
-  "npmScope": "@shopify",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nx/workspace/tasks-runners/default",
-      "options": {
-        "cacheableOperations": [
-          "build",
-          "build:code",
-          "build:types",
-          "graphql-codegen:generate:business-platform",
-          "graphql-codegen:generate:partners",
-          "graphql-codegen:generate:webhooks",
-          "graphql-codegen:postfix",
-          "graphql-codegen:formatting",
-          "type-check",
-          "lint"
-        ],
-        "runtimeCacheInputs": [
-          "node bin/cache-inputs.js || node ../../bin/cache-inputs.js || node ../bin/cache-inputs.js"
-        ]
-      }
-    }
-  },
   "defaultBase": "main",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "sharedGlobals": [],
+    "sharedGlobals": [
+      "{workspaceRoot}/.nvmrc",
+      "{workspaceRoot}/configurations/tsconfig.json",
+      "{workspaceRoot}/configurations/vite.config.ts",
+      "{workspaceRoot}/eslint.config.js",
+      "{workspaceRoot}/graphql.config.ts",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/packages/eslint-plugin-cli/**/*",
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/tsconfig.json",
+      {"runtime": "node --version"},
+      {"runtime": "pnpm --version"}
+    ],
     "production": ["default"]
   },
   "tui": {

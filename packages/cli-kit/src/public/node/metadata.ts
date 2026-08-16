@@ -193,6 +193,7 @@ const coreData = createRuntimeMetadataContainer<
       startCommand: string
       startTopic?: string
       startArgs: string[]
+      requiresSyncAnalytics?: boolean
     }
   } & {environmentFlags: string} & PickByPrefix<MonorailEventSensitive, 'store_'>
 >({cmd_all_timing_network_ms: 0, cmd_all_timing_prompts_ms: 0})

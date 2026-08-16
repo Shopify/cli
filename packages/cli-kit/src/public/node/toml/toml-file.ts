@@ -140,11 +140,11 @@ export class TomlFile {
   private decode(raw: string): JsonMapType {
     try {
       return decodeToml(raw)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      if (err.line !== undefined && err.col !== undefined) {
-        const description = String(err.message).split('\n')[0] ?? 'Invalid TOML'
-        throw new TomlFileError(this.path, `${description} at row ${err.line}, col ${err.col}`)
+    } catch (err) {
+      const tomlError = err as {line?: number; col?: number; message?: string}
+      if (tomlError.line !== undefined && tomlError.col !== undefined) {
+        const description = String(tomlError.message).split('\n')[0] ?? 'Invalid TOML'
+        throw new TomlFileError(this.path, `${description} at row ${tomlError.line}, col ${tomlError.col}`)
       }
       throw err
     }
@@ -160,14 +160,11 @@ export class TomlFile {
  * @returns Flattened patch entries.
  */
 function flattenToPatchEntries(obj: {[key: string]: unknown}, prefix: string[] = []): [string[], TomlPatchValue][] {
-  const entries: [string[], TomlPatchValue][] = []
-  for (const [key, value] of Object.entries(obj)) {
+  return Object.entries(obj).flatMap(([key, value]) => {
     const path = [...prefix, key]
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      entries.push(...flattenToPatchEntries(value as {[key: string]: unknown}, path))
-    } else {
-      entries.push([path, value as TomlPatchValue])
+      return flattenToPatchEntries(value as {[key: string]: unknown}, path)
     }
-  }
-  return entries
+    return [[path, value as TomlPatchValue]]
+  })
 }

@@ -18,7 +18,7 @@ module.exports = {
 
   create(context) {
     return {
-      "CallExpression > MemberExpression.callee[object.name = 'process'][property.name = 'cwd']"(node) {
+      "CallExpression > MemberExpression.callee[object.name = 'process'][property.name = 'cwd']": function (node) {
         context.report({
           node: node.parent,
           messageId: 'noProcessCwd',

@@ -3,8 +3,10 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {duplicate} from '../../services/duplicate.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {isCI} from '@shopify/cli-kit/node/system'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Duplicate extends ThemeCommand {
   static summary = 'Duplicates a theme from your theme library.'
@@ -48,11 +50,13 @@ Sample JSON output:
     ...globalFlags,
     ...jsonFlag,
     password: themeFlags.password,
-    theme: Flags.string({
-      char: 't',
-      description: 'Theme ID or name of the remote theme.',
-      env: 'SHOPIFY_FLAG_THEME_ID',
-    }),
+    theme: requiredIfNonInteractive(
+      Flags.string({
+        char: 't',
+        description: 'Theme ID or name of the remote theme.',
+        env: 'SHOPIFY_FLAG_THEME_ID',
+      }),
+    ),
     name: Flags.string({
       char: 'n',
       description: 'Name of the newly duplicated theme.',
@@ -62,9 +66,14 @@ Sample JSON output:
     environment: themeFlags.environment,
     force: Flags.boolean({
       char: 'f',
-      description: 'Force the duplicate operation to run without prompts or confirmations.',
+      description:
+        'Force the duplicate operation to run without prompts or confirmations. Required if non interactive outside CI.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+  }
+
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [{flags: ['force'], when: () => !isCI()}]
   }
 
   async run(): Promise<void> {

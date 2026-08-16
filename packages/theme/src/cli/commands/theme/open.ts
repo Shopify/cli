@@ -5,6 +5,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type OpenFlags = InferredFlags<typeof Open.flags>
 export default class Open extends ThemeCommand {
@@ -24,7 +25,8 @@ export default class Open extends ThemeCommand {
     ...themeFlags,
     development: Flags.boolean({
       char: 'd',
-      description: 'Open your development theme.',
+      description:
+        'Open your development theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     editor: Flags.boolean({
@@ -34,17 +36,23 @@ export default class Open extends ThemeCommand {
     }),
     live: Flags.boolean({
       char: 'l',
-      description: 'Open your live (published) theme.',
+      description:
+        'Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_LIVE',
     }),
     theme: Flags.string({
       char: 't',
-      description: 'Theme ID or name of the remote theme.',
+      description:
+        'Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
   }
 
   static multiEnvironmentsFlags: RequiredFlags = null
+
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [{flags: ['theme', 'development', 'live']}]
+  }
 
   async command(flags: OpenFlags, adminSession: AdminSession) {
     await open(adminSession, flags)

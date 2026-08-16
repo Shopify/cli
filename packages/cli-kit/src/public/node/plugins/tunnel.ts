@@ -1,4 +1,3 @@
-import {ExtendableError} from '../error.js'
 import {OutputMessage} from '../output.js'
 import {FanoutHookFunction, PluginReturnsForHook} from '../plugins.js'
 import {err, Result} from '../result.js'
@@ -17,7 +16,7 @@ export type TunnelStatusType =
   | {status: 'connected'; url: string}
   | {status: 'error'; message: TokenItem | OutputMessage; tryMessage?: TokenItem | OutputMessage | null}
 
-export class TunnelError extends ExtendableError {
+export class TunnelError extends Error {
   type: TunnelErrorType
   constructor(type: TunnelErrorType, message?: string) {
     super(message)

@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 4.6.0
+
+### Minor Changes
+
+- 5187101: Add a `--reconciliation-strategy` option to `theme dev`.
+
+### Patch Changes
+
+- 6c6cc2a: Allow app and theme commands to authenticate with a Shopify account alias without changing the current CLI session.
+- 196cea0: Fix 401/403 on cart AJAX endpoints during `shopify theme dev`
+- 1c23036: Stop theme check from crashing when a theme file becomes unreadable while the checks run
+- ba47dd4: Fix `theme dev` and other theme commands adopting `store auth` sessions with insufficient scopes; only `theme pull` and `theme push` reuse them now.
+- Updated dependencies [6c6cc2a]
+- Updated dependencies [77f8eca]
+- Updated dependencies [700bbe9]
+  - @shopify/cli-kit@4.6.0
+
 ## 4.5.0
 
 ### Patch Changes

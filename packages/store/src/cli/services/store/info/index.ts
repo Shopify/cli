@@ -1,5 +1,3 @@
-import {StoreInfoBusinessPlatformStoreNotFoundError, fetchDestinationsContext} from './destinations.js'
-import {fetchOrganizationShop} from './organization-shop.js'
 import {mapPlanToPublicHandle} from './plan.js'
 import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
@@ -7,6 +5,8 @@ import {throwStoredAuthInvalidError} from '../auth/recovery.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/client.js'
 import {storeTypeHandle} from '../store-type.js'
+import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
+import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
@@ -15,7 +15,8 @@ import {compact} from '@shopify/cli-kit/common/object'
 import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import type {DestinationsContext, OrganizationShopFields, StoreInfoResult, StoreInfoStoreOwner} from './types.js'
+import type {DestinationsContext, OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
+import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 
 interface GetStoreInfoOptions {
@@ -193,7 +194,7 @@ async function safeFetchOrganizationShop(
 }
 
 function isBusinessPlatformFallbackError(error: unknown): boolean {
-  return error instanceof StoreInfoBusinessPlatformStoreNotFoundError || isNoPromptAuthenticationError(error)
+  return error instanceof StoreLookupStoreNotFoundError || isNoPromptAuthenticationError(error)
 }
 
 function isNoPromptAuthenticationError(error: unknown): boolean {

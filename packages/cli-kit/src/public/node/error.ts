@@ -1,14 +1,11 @@
 import {normalizePath} from './path.js'
 import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
-import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
+import {tokenItemToString, type InlineToken, type TokenItem} from '../../private/node/ui/components/token-item.js'
 import {hasRateLimitCode} from '../../private/node/analytics/graphql-error-codes.js'
 
 import {Errors} from '@oclif/core'
-import {ClientError} from 'graphql-request'
 
 import type {AlertCustomSection} from './ui.js'
-
-export {ExtendableError} from 'ts-error'
 
 export enum FatalErrorType {
   Abort,
@@ -76,9 +73,6 @@ export abstract class FatalError extends Error {
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer.
  */
 export class AbortError extends FatalError {
-  nextSteps?: TokenItem<InlineToken>[]
-  customSections?: AlertCustomSection[]
-
   constructor(
     message: TokenItem | OutputMessage,
     tryMessage: TokenItem | OutputMessage | null = null,
@@ -222,21 +216,31 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
  * (HTTP 429, or a `THROTTLED`/`429` GraphQL code on any error in the response) matches the shape
  * detected by `errorsIncludeStatus429` in `private/node/api.ts`.
  *
- * Scoped to the external `ClientError` type only — importing the cli-kit `GraphQLClientError`
+ * Scoped to the external `ClientError` shape only — importing the cli-kit `GraphQLClientError`
  * wrapper here would create an `error.ts → headers.ts → error.ts` import cycle.
+ *
+ * Matched structurally rather than with `instanceof ClientError`, because importing the class
+ * pulls `graphql-request` — and through it `graphql`, `tr46` and `whatwg-url` — into the module
+ * graph of every command, for one type check on an error path. `ClientError` is the only error
+ * reaching here that carries both `response` and `request`; the cli-kit wrapper carries
+ * `statusCode` instead (see `private/node/api/headers.ts`).
  *
  * @param error - Error to be checked.
  * @returns A boolean indicating if the error is a known expected API error.
  */
 function isExpectedApiError(error: Error): boolean {
-  if (!(error instanceof ClientError)) {
+  const candidate = error as Error & {
+    response?: {status?: number; errors?: unknown}
+    request?: unknown
+  }
+  if (typeof candidate.response !== 'object' || candidate.response === null || candidate.request === undefined) {
     return false
   }
-  const status = error.response?.status
+  const status = candidate.response.status
   if (status === 401 || status === 429) {
     return true
   }
-  return hasRateLimitCode(error.response?.errors)
+  return hasRateLimitCode(candidate.response.errors)
 }
 
 /**

@@ -39,12 +39,6 @@ function sleep(ms) {
  */
 const schemas = [
   {
-    owner: 'Shopify',
-    repo: 'partners',
-    pathToFile: 'db/graphql/cli_schema.graphql',
-    localPaths: ['./packages/app/src/cli/api/graphql/partners/cli_schema.graphql'],
-  },
-  {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',

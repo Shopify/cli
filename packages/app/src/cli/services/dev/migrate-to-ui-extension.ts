@@ -4,14 +4,14 @@ import {
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSource} from '../context/identifiers.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MigrationDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function migrateExtensionsToUIExtension(options: {
   extensionsToMigrate: LocalRemoteSource[]
   appId: string
   remoteExtensions: RemoteSource[]
-  migrationClient: DeveloperPlatformClient
+  migrationClient: MigrationDeveloperPlatformClient
 }) {
   const {extensionsToMigrate, appId, remoteExtensions, migrationClient} = options
 
@@ -41,7 +41,7 @@ async function migrateExtensionToUIExtension(options: {
   apiKey: MigrateToUiExtensionVariables['apiKey']
   registrationId: MigrateToUiExtensionVariables['registrationId']
   registrationUuid: MigrateToUiExtensionVariables['registrationUuid']
-  migrationClient: DeveloperPlatformClient
+  migrationClient: MigrationDeveloperPlatformClient
 }) {
   const {apiKey, registrationId, registrationUuid, migrationClient} = options
 

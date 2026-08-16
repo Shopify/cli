@@ -21,6 +21,7 @@ export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSc
   .merge(SupportedBuyerContextsSchema)
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(CUSTOM_ONSITE_TARGET)})).length(1),
+    supports_3ds: zod.boolean().optional(),
     update_payment_session_url: zod.string().url().optional(),
     multiple_capture: zod.boolean().optional(),
     supports_oversell_protection: zod.boolean().optional(),

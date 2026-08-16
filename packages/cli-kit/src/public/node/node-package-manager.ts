@@ -600,19 +600,13 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
  * @returns An array with the arguments.
  */
 function argumentsToAddDependenciesWithNPM(dependency: string, type: DependencyType): string[] {
-  let command = ['install']
-  command = command.concat(dependency)
-  switch (type) {
-    case 'dev':
-      command.push('--save-dev')
-      break
-    case 'peer':
-      command.push('--save-peer')
-      break
-    case 'prod':
-      command.push('--save-prod')
-      break
+  const typeFlags: Record<DependencyType, string> = {
+    dev: '--save-dev',
+    peer: '--save-peer',
+    prod: '--save-prod',
   }
+
+  const command = ['install', dependency, typeFlags[type]]
   // NPM adds ^ to the installed version by default. We want to install exact versions unless specified otherwise.
   if (dependency.match(/@\d/g)) {
     command.push('--save-exact')
@@ -628,25 +622,13 @@ function argumentsToAddDependenciesWithNPM(dependency: string, type: DependencyT
  * @returns An array with the arguments.
  */
 function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType, addAtRoot = false): string[] {
-  let command = ['add']
-
-  if (addAtRoot) {
-    command.push('-W')
+  const typeFlags: Record<DependencyType, string> = {
+    dev: '--dev',
+    peer: '--peer',
+    prod: '--prod',
   }
 
-  command = command.concat(dependencies)
-  switch (type) {
-    case 'dev':
-      command.push('--dev')
-      break
-    case 'peer':
-      command.push('--peer')
-      break
-    case 'prod':
-      command.push('--prod')
-      break
-  }
-  return command
+  return ['add', ...(addAtRoot ? ['-W'] : []), ...dependencies, typeFlags[type]]
 }
 
 /**
@@ -657,26 +639,13 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
  * @returns An array with the arguments.
  */
 function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType, addAtRoot = false): string[] {
-  let command = ['add']
-
-  if (addAtRoot) {
-    command.push('-w')
+  const typeFlags: Record<DependencyType, string> = {
+    dev: '--save-dev',
+    peer: '--save-peer',
+    prod: '--save-prod',
   }
 
-  command = command.concat(dependencies)
-
-  switch (type) {
-    case 'dev':
-      command.push('--save-dev')
-      break
-    case 'peer':
-      command.push('--save-peer')
-      break
-    case 'prod':
-      command.push('--save-prod')
-      break
-  }
-  return command
+  return ['add', ...(addAtRoot ? ['-w'] : []), ...dependencies, typeFlags[type]]
 }
 
 /**
@@ -686,21 +655,13 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
  * @returns An array with the arguments.
  */
 function argumentsToAddDependenciesWithBun(dependencies: string[], type: DependencyType): string[] {
-  let command = ['add']
-
-  command = command.concat(dependencies)
-
-  switch (type) {
-    case 'dev':
-      command.push('--development')
-      break
-    case 'peer':
-      command.push('--optional')
-      break
-    case 'prod':
-      break
+  const typeFlags: Partial<Record<DependencyType, string>> = {
+    dev: '--development',
+    peer: '--optional',
   }
-  return command
+
+  const flag = typeFlags[type]
+  return ['add', ...dependencies, ...(flag ? [flag] : [])]
 }
 
 /**
@@ -722,21 +683,15 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
 
 export async function addResolutionOrOverride(directory: string, dependencies: Record<string, string>): Promise<void> {
   const packageManager = await getPackageManager(directory)
-  const packageJsonPath = joinPath(directory, 'package.json')
-  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  const packageJsonContent = await readAndParsePackageJson(joinPath(directory, 'package.json'))
 
-  if (packageManager === 'yarn') {
-    packageJsonContent.resolutions = packageJsonContent.resolutions
-      ? {...packageJsonContent.resolutions, ...dependencies}
-      : dependencies
-  }
-  if (packageManager === 'npm' || packageManager === 'pnpm' || packageManager === 'bun') {
-    packageJsonContent.overrides = packageJsonContent.overrides
-      ? {...packageJsonContent.overrides, ...dependencies}
-      : dependencies
+  const key: keyof PackageJson = packageManager === 'yarn' ? 'resolutions' : 'overrides'
+  packageJsonContent[key] = {
+    ...(packageJsonContent[key] as Record<string, string>),
+    ...dependencies,
   }
 
-  await writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2))
+  await writePackageJSON(directory, packageJsonContent)
 }
 
 /**

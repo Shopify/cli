@@ -18,6 +18,7 @@
  *   E2E_ACCOUNT_EMAIL    — Shopify account email for login
  *   E2E_ACCOUNT_PASSWORD — Shopify account password
  *   E2E_ORG_ID           — Organization ID to scan for apps
+ *   E2E_LOADTEST_HEADER  — Load-test bypass header name
  */
 
 import {config} from 'dotenv'
@@ -30,11 +31,17 @@ import {getLastPageStatus, navigateToDashboard, refreshIfPageError, trackMainFra
 import {deleteAppFromDevDashboard} from '../setup/app.js'
 import {uninstallAppFromStore} from '../setup/store.js'
 import {completeLogin} from '../helpers/browser-login.js'
+import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import type {Page} from '@playwright/test'
 
 // Load .env from packages/e2e/ (not cwd) only if not already configured
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-if (!process.env.E2E_ACCOUNT_EMAIL || !process.env.E2E_ACCOUNT_PASSWORD || !process.env.E2E_ORG_ID) {
+if (
+  !process.env.E2E_ACCOUNT_EMAIL ||
+  !process.env.E2E_ACCOUNT_PASSWORD ||
+  !process.env.E2E_ORG_ID ||
+  !process.env.E2E_LOADTEST_HEADER
+) {
   config({path: path.resolve(__dirname, '../.env')})
 }
 
@@ -77,7 +84,10 @@ interface CleanupStats {
   failed: number
 }
 
+type CleanupOutcome = 'succeeded' | 'skipped' | 'failed'
+
 const APP_CARD_SELECTOR = 'a[href*="/apps/"]'
+const CLEANUP_WORKER_COUNT = 5
 const EMPTY_APPS_PATTERN =
   /(no apps matched your search|don't have any apps|do not have any apps|haven't created any apps)/i
 const DASHBOARD_ERROR_PATTERN = /(unprocessable entity|request can't be processed|server error|something went wrong)/i
@@ -122,7 +132,9 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
   console.log('')
 
   if (!storageStatePath && (!email || !password)) {
-    throw new Error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required when no browser storage state is available')
+    throw new Error(
+      'E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD are required when no browser storage state is available',
+    )
   }
 
   if (!orgId) {
@@ -131,11 +143,9 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
 
   const browser = await chromium.launch({headless: !opts.headed})
   const context = await browser.newContext({
-    extraHTTPHeaders: {
-      'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-    },
     ...(storageStatePath ? {storageState: storageStatePath} : {}),
   })
+  await addLoadtestHeader(context)
   context.setDefaultTimeout(BROWSER_TIMEOUT.max)
   context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
   const page = await context.newPage()
@@ -225,8 +235,19 @@ async function cleanupAppsPageByPage(opts: {
     if (matches.length > 0) console.log('')
 
     if (mode !== 'list') {
+      const outcomes = await cleanupAppsInParallel({
+        dashboardPage: page,
+        mode,
+        apps: matches,
+        email,
+        orgId,
+        matchOffset,
+        foundCount: stats.found,
+      })
+      for (const outcome of outcomes) {
+        stats[outcome]++
+      }
       for (const app of matches) {
-        await cleanupApp({page, mode, app, email, orgId, stats})
         handledAppUrls.add(app.url)
       }
     }
@@ -249,86 +270,129 @@ async function cleanupAppsPageByPage(opts: {
   }
 }
 
+async function cleanupAppsInParallel(opts: {
+  dashboardPage: Page
+  mode: CleanupMode
+  apps: DashboardApp[]
+  email: string
+  orgId: string
+  matchOffset: number
+  foundCount: number
+}): Promise<CleanupOutcome[]> {
+  const {dashboardPage, mode, apps, email, orgId, matchOffset, foundCount} = opts
+  const outcomes = new Array<CleanupOutcome>(apps.length)
+  const workerCount = Math.min(CLEANUP_WORKER_COUNT, apps.length)
+  let nextAppIndex = 0
+
+  await Promise.all(
+    Array.from({length: workerCount}, async (_, workerIndex) => {
+      const workerPage = await dashboardPage.context().newPage()
+      trackMainFrameStatus(workerPage)
+
+      try {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const appIndex = nextAppIndex++
+          if (appIndex >= apps.length) break
+
+          outcomes[appIndex] = await cleanupApp({
+            page: workerPage,
+            mode,
+            app: apps[appIndex]!,
+            email,
+            orgId,
+            workerNumber: workerIndex + 1,
+            appNumber: matchOffset + appIndex + 1,
+            foundCount,
+          })
+        }
+      } finally {
+        await workerPage.close()
+      }
+    }),
+  )
+
+  return outcomes
+}
+
 async function cleanupApp(opts: {
   page: Page
   mode: CleanupMode
   app: DashboardApp
   email: string
   orgId: string
-  stats: CleanupStats
-}): Promise<void> {
-  const {page, mode, app, email, orgId, stats} = opts
-  const tag = `[cleanup-apps] [${stats.succeeded + stats.skipped + stats.failed + 1}/${stats.found}]`
+  workerNumber: number
+  appNumber: number
+  foundCount: number
+}): Promise<CleanupOutcome> {
+  const {page, mode, app, email, orgId, workerNumber, appNumber, foundCount} = opts
+  const tag = `[cleanup-apps] [worker ${workerNumber}] [${appNumber}/${foundCount}] ${app.name}`
   const appStart = Date.now()
-  let uninstalled = false
+  let completed = false
   let wasSkipped = false
 
-  console.log(`${tag} ${app.name}`)
+  console.log(`${tag}: Starting`)
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       if (attempt > 1) {
-        console.log(`  (${attempt}/3) retrying...`)
+        console.log(`${tag}: (${attempt}/3) retrying...`)
         await navigateToDashboard({browserPage: page, email, orgId, searchTerm: app.name})
       }
 
       if (mode === 'full' || mode === 'uninstall') {
         if (app.installs === 0) {
           if (mode === 'uninstall') {
-            console.log('  Not installed (skipped)')
+            console.log(`${tag}: Not installed (skipped)`)
             wasSkipped = true
-            stats.skipped++
             break
           }
-          console.log('  Not installed')
+          console.log(`${tag}: Not installed`)
         } else {
-          console.log('  Uninstalling...')
+          console.log(`${tag}: Uninstalling...`)
           const allUninstalled = await uninstallApp(page, app.url, app.name)
           if (!allUninstalled) {
             throw new Error('Uninstall incomplete — some stores may remain')
           }
-          console.log('  Uninstalled')
+          console.log(`${tag}: Uninstalled`)
         }
       }
 
       if (mode === 'full' || mode === 'delete') {
         if (mode === 'delete' && app.installs > 0) {
-          console.log('  Delete skipped (still installed)')
+          console.log(`${tag}: Delete skipped (still installed)`)
           wasSkipped = true
-          stats.skipped++
           break
         }
-        console.log('  Deleting...')
+        console.log(`${tag}: Deleting...`)
         const deleted = await deleteAppFromDevDashboard(page, app.url)
         if (!deleted) throw new Error('App deletion could not be verified')
-        console.log('  Deleted')
+        console.log(`${tag}: Deleted`)
       }
 
-      uninstalled = true
+      completed = true
       break
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       // Fail fast if the app still has installs — retries won't help
       if (msg === 'STILL_HAS_INSTALLS') {
-        console.log('  Delete skipped (still has installs — dashboard count may be stale)')
+        console.log(`${tag}: Delete skipped (still has installs — dashboard count may be stale)`)
         wasSkipped = true
-        stats.skipped++
         break
       }
       if (attempt < 3) {
-        console.warn(`  (${attempt}/3) failed: ${msg}`)
+        console.warn(`${tag}: (${attempt}/3) failed: ${msg}`)
         await page.waitForTimeout(BROWSER_TIMEOUT.medium)
       } else {
-        console.warn(`  Failed: ${msg}`)
+        console.warn(`${tag}: Failed: ${msg}`)
       }
     }
   }
 
-  if (uninstalled) stats.succeeded++
-  else if (!wasSkipped) stats.failed++
   const appElapsed = ((Date.now() - appStart) / 1000).toFixed(1)
-  console.log(`  (${appElapsed}s)`)
-  console.log('')
+  const outcome: CleanupOutcome = completed ? 'succeeded' : wasSkipped ? 'skipped' : 'failed'
+  console.log(`${tag}: ${outcome} (${appElapsed}s)`)
+  return outcome
 }
 
 async function recoverFromAppsPageError(page: Page): Promise<void> {

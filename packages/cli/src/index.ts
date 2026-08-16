@@ -1,6 +1,7 @@
 import VersionCommand from './cli/commands/version.js'
 import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
+import SendAnalytics from './cli/commands/send-analytics.js'
 import Logout from './cli/commands/auth/logout.js'
 import Login from './cli/commands/auth/login.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
@@ -38,7 +39,7 @@ export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
 export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunnel'
 export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
 export {hooks as PluginHook} from '@oclif/plugin-plugins'
-export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
+export {AppSensitiveMetadataHook, AppPublicMetadataHook} from '@shopify/app'
 export {push, pull, fetchStoreThemes} from '@shopify/theme'
 
 export const HydrogenInitHook: unknown = HydrogenHooks.init
@@ -149,6 +150,7 @@ export const COMMANDS: any = {
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,
+  'send-analytics': SendAnalytics,
   help: HelpCommand,
   'auth:logout': Logout,
   'auth:login': Login,

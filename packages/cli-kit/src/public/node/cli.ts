@@ -21,7 +21,7 @@ async function exitIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.v
   const nodeVersion = versions.node
   const nodeMajorVersion = Number(nodeVersion.split('.')[0])
 
-  const currentSupportedNodeVersion = 18
+  const currentSupportedNodeVersion = 22
   if (nodeMajorVersion < currentSupportedNodeVersion) {
     const {renderError} = await import('./ui.js')
     renderError({
@@ -138,7 +138,7 @@ export const globalFlags = {
   }),
   verbose: Flags.boolean({
     hidden: false,
-    description: 'Increase the verbosity of the output.',
+    description: 'Increase the verbosity of the output. May include sensitive data.',
     env: 'SHOPIFY_FLAG_VERBOSE',
   }),
 }
@@ -171,6 +171,25 @@ export const authAliasFlag = {
 export const portFlag = (options: {description?: string; env?: string; hidden?: boolean} = {}) => {
   const description = [options.description, 'Must be between 1 and 65535.'].filter(Boolean).join(' ')
   return Flags.integer({min: 1, max: 65535, ...options, description})
+}
+
+/**
+ * Marks a flag as required when the CLI cannot prompt for a value.
+ *
+ * The flag remains optional in interactive terminals. In non-interactive environments,
+ * `BaseCommand` validates the flag automatically and the requirement is shown in `--help`.
+ * Use `BaseCommand.nonTTYFlagRequirements` for conditional or alternative requirements.
+ *
+ * @param flag - An oclif flag definition.
+ * @returns A new flag definition annotated for non-interactive validation and help output.
+ */
+export function requiredIfNonInteractive<TFlag extends {description?: string}>(flag: TFlag): TFlag {
+  const existingDescription = flag.description?.trimEnd()
+  const punctuatedDescription =
+    existingDescription && !existingDescription.endsWith('.') ? `${existingDescription}.` : existingDescription
+  const description = [punctuatedDescription, 'Required if non interactive.'].filter(Boolean).join(' ')
+
+  return {...flag, description, requiredIfNonInteractive: true}
 }
 
 /**

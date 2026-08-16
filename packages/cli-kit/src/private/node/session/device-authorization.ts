@@ -62,7 +62,9 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     throw new BugError(errorMessage)
   }
 
-  outputDebug(outputContent`Received device authorization code: ${outputToken.json(jsonResult)}`)
+  outputDebug(
+    outputContent`Received device authorization response (HTTP ${String(response.status)}): interval=${String(jsonResult.interval ?? 'not provided')}, expires_in=${String(jsonResult.expires_in ?? 'not provided')}`,
+  )
   if (!jsonResult.device_code || !jsonResult.verification_uri_complete) {
     throw new BugError('Failed to start authorization process')
   }
@@ -136,9 +138,9 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
         case 'expired_token':
           reject(new AbortError(`Device authorization failed: Token expired. Please try again.`))
           return
-        case 'unknown_failure': {
+        case 'unknown_failure':
+        default:
           reject(new Error(`Device authorization failed: ${error}`))
-        }
       }
     }
 
@@ -152,10 +154,7 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
 }
 
 function convertRequestToParams(queryParams: {client_id: string; scope: string}): string {
-  return Object.entries(queryParams)
-    .map(([key, value]) => value && `${key}=${value}`)
-    .filter((hasValue) => Boolean(hasValue))
-    .join('&')
+  return new URLSearchParams(Object.entries(queryParams).filter(([, value]) => Boolean(value))).toString()
 }
 
 /**

@@ -1,3 +1,4 @@
+import {emitClaudeCodePluginHint} from '../../../private/node/plugin-hints.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -14,6 +15,10 @@ export const hook: Hook.Prerun = async (options) => {
     pluginAlias: options.Command.plugin?.alias,
   })
   const args = options.argv
+
+  // Emit on every resolved command invocation; --help, --version, and parse errors exit before prerun.
+  // Claude Code owns deduplication and covers first-party and plugin commands.
+  emitClaudeCodePluginHint()
 
   // Load heavy modules in parallel
   const [{outputDebug}, analyticsMod, notificationsMod] = await Promise.all([

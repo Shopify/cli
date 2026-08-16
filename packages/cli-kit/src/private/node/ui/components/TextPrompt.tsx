@@ -1,4 +1,4 @@
-import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {TokenizedText} from './TokenizedText.js'
 import {TextInput} from './TextInput.js'
 import {handleCtrlC, useComplete} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
@@ -10,6 +10,7 @@ import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
 
 import {Box, useInput, Text} from 'ink'
 import figures from 'figures'
+import type {InlineToken, TokenItem} from './token-item.js'
 
 export interface TextPromptProps {
   message: TokenItem

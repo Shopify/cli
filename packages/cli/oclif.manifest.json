@@ -77,7 +77,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -180,7 +180,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -327,7 +327,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -445,7 +445,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -480,7 +480,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID of your app.",
+          "description": "The Client ID of your app. Required if non interactive.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -565,7 +565,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -651,7 +651,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -731,7 +731,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -827,7 +827,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -855,7 +855,7 @@
       "flags": {
         "allow-deletes": {
           "allowNo": false,
-          "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
+          "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates. In non-interactive environments, provide this flag, --allow-updates, or --no-release.",
           "env": "SHOPIFY_FLAG_ALLOW_DELETES",
           "hidden": false,
           "name": "allow-deletes",
@@ -863,7 +863,7 @@
         },
         "allow-updates": {
           "allowNo": false,
-          "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
+          "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments. In non-interactive environments, provide this flag, --allow-deletes, or --no-release.",
           "env": "SHOPIFY_FLAG_ALLOW_UPDATES",
           "hidden": false,
           "name": "allow-updates",
@@ -925,7 +925,7 @@
         },
         "no-release": {
           "allowNo": false,
-          "description": "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
+          "description": "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required. In non-interactive environments, provide this flag, --allow-updates, or --allow-deletes.",
           "env": "SHOPIFY_FLAG_NO_RELEASE",
           "exclusive": [
             "allow-updates",
@@ -966,7 +966,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1190,7 +1190,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1286,7 +1286,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1381,7 +1381,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1467,7 +1467,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1611,7 +1611,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1706,7 +1706,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1802,7 +1802,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1869,7 +1869,7 @@
         },
         "log": {
           "char": "l",
-          "description": "Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.",
+          "description": "Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name. Required if non interactive.",
           "env": "SHOPIFY_FLAG_LOG",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -1907,7 +1907,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2018,6 +2018,13 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "profile": {
+          "allowNo": false,
+          "description": "Generate a WebAssembly performance profile for the function run. The profile can be viewed in Speedscope.",
+          "env": "SHOPIFY_FLAG_PROFILE",
+          "name": "profile",
+          "type": "boolean"
+        },
         "reset": {
           "allowNo": false,
           "description": "Reset all your settings.",
@@ -2031,7 +2038,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2126,7 +2133,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2213,7 +2220,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2280,7 +2287,7 @@
           "type": "option"
         },
         "flavor": {
-          "description": "Choose a starting template for your extension, where applicable",
+          "description": "Choose a starting template for your extension, where applicable. Required if non interactive when the selected extension template supports multiple flavors.",
           "env": "SHOPIFY_FLAG_FLAVOR",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -2298,7 +2305,7 @@
         },
         "name": {
           "char": "n",
-          "description": "name of your Extension",
+          "description": "name of your Extension. Required if non interactive.",
           "env": "SHOPIFY_FLAG_NAME",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -2336,7 +2343,7 @@
         },
         "template": {
           "char": "t",
-          "description": "Extension template",
+          "description": "Extension template. Required if non interactive.",
           "env": "SHOPIFY_FLAG_EXTENSION_TEMPLATE",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -2346,7 +2353,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2462,7 +2469,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2572,7 +2579,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2657,7 +2664,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2751,7 +2758,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -2782,6 +2789,10 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --name my-app --organization-id 123 --template reactRouter --flavor typescript",
+        "<%= config.bin %> <%= command.id %> --client-id 123 --template none"
+      ],
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -2792,7 +2803,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
+          "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. In non-interactive environments, provide this flag or both --name and --organization-id.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -2804,7 +2815,7 @@
           "type": "option"
         },
         "flavor": {
-          "description": "Which flavor of the given template to use.",
+          "description": "Which flavor of the given template to use. Required in non-interactive environments when the selected template offers multiple flavors.",
           "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -2821,7 +2832,7 @@
         },
         "name": {
           "char": "n",
-          "description": "The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.",
+          "description": "The name for the new app. When provided, skips the app selection prompt and creates a new app with this name. Required in non-interactive environments unless --client-id is provided.",
           "env": "SHOPIFY_FLAG_NAME",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -2838,7 +2849,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>",
+          "description": "The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>. Required in non-interactive environments unless --client-id is provided.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "exclusive": [
             "client-id"
@@ -2875,7 +2886,7 @@
           "type": "option"
         },
         "template": {
-          "description": "The app template. Accepts one of the following:\n       - <reactRouter|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
+          "description": "The app template. Accepts one of the following:\n       - <reactRouter|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]. Required if non interactive.",
           "env": "SHOPIFY_FLAG_TEMPLATE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -2884,7 +2895,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -3008,7 +3019,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -3094,7 +3105,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -3122,7 +3133,7 @@
       "flags": {
         "allow-deletes": {
           "allowNo": false,
-          "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
+          "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates. Required in non-interactive environments unless --allow-updates is provided.",
           "env": "SHOPIFY_FLAG_ALLOW_DELETES",
           "hidden": false,
           "name": "allow-deletes",
@@ -3130,7 +3141,7 @@
         },
         "allow-updates": {
           "allowNo": false,
-          "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
+          "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments. Required in non-interactive environments unless --allow-deletes is provided.",
           "env": "SHOPIFY_FLAG_ALLOW_UPDATES",
           "hidden": false,
           "name": "allow-updates",
@@ -3196,7 +3207,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -3302,7 +3313,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -3329,7 +3340,7 @@
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "flags": {
         "address": {
-          "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
+          "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:. Required if non interactive.",
           "env": "SHOPIFY_FLAG_ADDRESS",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -3339,7 +3350,7 @@
           "type": "option"
         },
         "api-version": {
-          "description": "The API Version of the webhook topic.",
+          "description": "The API Version of the webhook topic. Required if non interactive.",
           "env": "SHOPIFY_FLAG_API_VERSION",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -3433,7 +3444,7 @@
           "type": "boolean"
         },
         "topic": {
-          "description": "The requested webhook topic.",
+          "description": "The requested webhook topic. Required if non interactive.",
           "env": "SHOPIFY_FLAG_TOPIC",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -3462,7 +3473,7 @@
       "enableJsonFlag": false,
       "flags": {
         "alias": {
-          "description": "Alias of the session you want to login to.",
+          "description": "Alias of an existing session you want to use. Required if non interactive.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -3830,7 +3841,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -3887,7 +3898,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -3949,7 +3960,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4058,7 +4069,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4478,7 +4489,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Forces a deployment to proceed if there are uncommitted changes in its Git repository.",
+          "description": "Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation prompts for non-preview environments.",
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
           "required": false,
@@ -4858,6 +4869,16 @@
       "description": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
       "enableJsonFlag": false,
       "flags": {
+        "dry-run": {
+          "allowNo": false,
+          "description": "Preview environment variable changes without pushing them.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_DRY_RUN",
+          "exclusive": [
+            "force"
+          ],
+          "name": "dry-run",
+          "type": "boolean"
+        },
         "env": {
           "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
           "exclusive": [
@@ -4876,6 +4897,14 @@
           "name": "env-file",
           "required": false,
           "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Push environment variable changes without confirmation.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -5178,6 +5207,16 @@
       "descriptionWithMarkdown": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.",
       "enableJsonFlag": false,
       "flags": {
+        "create-storefront": {
+          "allowNo": false,
+          "description": "Create a new Hydrogen storefront.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT",
+          "exclusive": [
+            "storefront"
+          ],
+          "name": "create-storefront",
+          "type": "boolean"
+        },
         "force": {
           "allowNo": false,
           "char": "f",
@@ -5185,6 +5224,17 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
+        },
+        "name": {
+          "description": "The name to use when creating a new Hydrogen storefront.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_NAME",
+          "exclusive": [
+            "storefront"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
         },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -5194,9 +5244,22 @@
           "name": "path",
           "type": "option"
         },
+        "shop": {
+          "char": "s",
+          "description": "Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).",
+          "env": "SHOPIFY_SHOP",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "shop",
+          "type": "option"
+        },
         "storefront": {
           "description": "The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")",
           "env": "SHOPIFY_HYDROGEN_STOREFRONT",
+          "exclusive": [
+            "create-storefront",
+            "name"
+          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "storefront",
@@ -5869,7 +5932,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6234,7 +6297,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6250,6 +6313,24 @@
       "pluginType": "core",
       "strict": true,
       "usage": "search [query]"
+    },
+    "send-analytics": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "send-analytics",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
     },
     "store:auth": {
       "aliases": [
@@ -6302,7 +6383,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6352,7 +6433,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6410,7 +6491,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6520,7 +6601,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6593,7 +6674,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6620,6 +6701,15 @@
       "descriptionWithMarkdown": "Creates a new app development store in your organization.",
       "enableJsonFlag": false,
       "flags": {
+        "country": {
+          "description": "Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.",
+          "env": "SHOPIFY_FLAG_STORE_COUNTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "country",
+          "required": false,
+          "type": "option"
+        },
         "feature-preview": {
           "description": "The handle of a feature preview to enable on the new development store.",
           "env": "SHOPIFY_FLAG_STORE_FEATURE_PREVIEW",
@@ -6638,7 +6728,7 @@
           "type": "boolean"
         },
         "name": {
-          "description": "Name for the new development store.",
+          "description": "Name for the new development store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_NAME",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6654,7 +6744,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6662,7 +6752,7 @@
           "type": "option"
         },
         "plan": {
-          "description": "The Shopify plan to use for the new development store.",
+          "description": "The Shopify plan to use for the new development store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_PLAN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6677,7 +6767,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6717,7 +6807,7 @@
       ],
       "flags": {
         "country": {
-          "description": "Two-letter country code for the store, such as US, CA, or GB.",
+          "description": "Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.",
           "env": "SHOPIFY_FLAG_STORE_COUNTRY",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6753,7 +6843,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6769,6 +6859,84 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Create a preview Shopify store."
+    },
+    "store:delete": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Deletes a development store from your organization.",
+      "descriptionWithMarkdown": "Deletes a development store from your organization.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --json",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --force"
+      ],
+      "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Skip confirmation. Required if non interactive.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "organization-id": {
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
+          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "organization-id",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "store:delete",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Delete a development store."
     },
     "store:execute": {
       "aliases": [
@@ -6870,7 +7038,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -6953,7 +7121,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7020,7 +7188,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7043,8 +7211,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
-      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`.\nIn non-interactive environments, `--organization-id` is required.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
+      "description": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
+      "descriptionWithMarkdown": "Lists stores in a Shopify organization available to the current CLI account.\n\nWhen more than one organization is available, the command prompts you to pick one unless you provide `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.\n\nRun `<%= config.bin %> organization list` to find organization IDs.",
       "examples": [
         "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --organization-id 1234567",
@@ -7069,7 +7237,7 @@
           "type": "boolean"
         },
         "organization-id": {
-          "description": "The numeric organization ID. Auto-selects if you belong to a single organization.",
+          "description": "The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive when more than one organization is available.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7078,7 +7246,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7127,7 +7295,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7204,7 +7372,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7344,7 +7512,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7453,7 +7621,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7496,7 +7664,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Delete your development theme.",
+          "description": "Delete your development theme. Use --show-all, --development, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -7513,7 +7681,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Skip confirmation.",
+          "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
@@ -7546,7 +7714,7 @@
         "show-all": {
           "allowNo": false,
           "char": "a",
-          "description": "Include others development themes in theme list.",
+          "description": "Include other development themes in the theme list. Use --show-all, --development, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_SHOW_ALL",
           "name": "show-all",
           "type": "boolean"
@@ -7562,7 +7730,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --show-all, --development, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7571,7 +7739,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7587,7 +7755,8 @@
         "password",
         [
           "development",
-          "theme"
+          "theme",
+          "show-all"
         ]
       ],
       "pluginAlias": "@shopify/cli",
@@ -7823,7 +7992,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -7871,7 +8040,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Force the duplicate operation to run without prompts or confirmations.",
+          "description": "Force the duplicate operation to run without prompts or confirmations. Required if non interactive outside CI.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
@@ -7921,7 +8090,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Required if non interactive.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7930,7 +8099,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8039,7 +8208,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8119,7 +8288,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8166,7 +8335,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8284,7 +8453,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8376,7 +8545,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8415,7 +8584,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Open your development theme.",
+          "description": "Open your development theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -8440,7 +8609,7 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Open your live (published) theme.",
+          "description": "Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
@@ -8481,7 +8650,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -8490,7 +8659,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8545,7 +8714,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8667,7 +8836,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8783,7 +8952,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8835,7 +9004,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Skip confirmation.",
+          "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
           "type": "boolean"
@@ -8876,7 +9045,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Required if non interactive.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -8885,7 +9054,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -8928,7 +9097,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Pull theme files from your remote development theme.",
+          "description": "Pull theme files from your remote development theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -8963,7 +9132,7 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Pull theme files from your remote live theme.",
+          "description": "Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
@@ -9021,7 +9190,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9030,7 +9199,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -9070,7 +9239,7 @@
         "allow-live": {
           "allowNo": false,
           "char": "a",
-          "description": "Allow push to a live theme.",
+          "description": "Allow push to a live theme. Required in non-interactive environments when targeting the live theme.",
           "env": "SHOPIFY_FLAG_ALLOW_LIVE",
           "name": "allow-live",
           "type": "boolean"
@@ -9086,7 +9255,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Push theme files from your remote development theme.",
+          "description": "Push theme files from your remote development theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -9153,7 +9322,7 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Push theme files from your remote live theme.",
+          "description": "Push theme files from your remote live theme. Use --development, --live, --theme, or --unpublished in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
@@ -9226,7 +9395,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9236,14 +9405,14 @@
         "unpublished": {
           "allowNo": false,
           "char": "u",
-          "description": "Create a new unpublished theme and push to it.",
+          "description": "Create a new unpublished theme and push to it. Use --development, --live, --theme, or --unpublished in non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme name.",
           "env": "SHOPIFY_FLAG_UNPUBLISHED",
           "name": "unpublished",
           "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -9295,7 +9464,7 @@
         "development": {
           "allowNo": false,
           "char": "d",
-          "description": "Rename your development theme.",
+          "description": "Rename your development theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_DEVELOPMENT",
           "name": "development",
           "type": "boolean"
@@ -9312,14 +9481,14 @@
         "live": {
           "allowNo": false,
           "char": "l",
-          "description": "Rename your remote live theme.",
+          "description": "Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
           "type": "boolean"
         },
         "name": {
           "char": "n",
-          "description": "The new name for the theme.",
+          "description": "The new name for the theme. Required if non interactive.",
           "env": "SHOPIFY_FLAG_NEW_NAME",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9363,7 +9532,7 @@
         },
         "theme": {
           "char": "t",
-          "description": "Theme ID or name of the remote theme.",
+          "description": "Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.",
           "env": "SHOPIFY_FLAG_THEME_ID",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -9372,7 +9541,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -9479,7 +9648,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the output.",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -9540,5 +9709,5 @@
       "strict": true
     }
   },
-  "version": "4.5.0"
+  "version": "4.6.0"
 }

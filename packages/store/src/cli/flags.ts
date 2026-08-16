@@ -1,24 +1,35 @@
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {normalizeBulkOperationId} from '@shopify/cli-kit/node/api/bulk-operations'
 import {resolvePath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
 
-function countryFlag(env: string) {
-  return Flags.string({
-    description: 'Two-letter country code for the store, such as US, CA, or GB.',
-    env,
-    required: false,
-    parse: async (value) => value.trim().toUpperCase(),
-  })
-}
+// Error message shown when a `--country` flag value is not a two-letter code.
+const invalidCountryCodeMessage = 'Country must be a two-letter country code, for example: US.'
 
-export function isCountryCode(value: string): boolean {
+// Matches a two-letter (ISO 3166-1 alpha-2 shaped) country code after normalization.
+function isCountryCode(value: string): boolean {
   return /^[A-Z]{2}$/.test(value)
 }
 
-export const previewStoreFlags = {
-  country: countryFlag('SHOPIFY_FLAG_STORE_COUNTRY'),
-}
+/**
+ * Reusable `--country` flag shared by every store-creation command. The value
+ * is normalized to an uppercase, trimmed string and validated during parsing,
+ * so invalid codes are rejected with the same error before a command's `run`
+ * body executes.
+ */
+export const countryFlag = Flags.string({
+  description: 'Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.',
+  env: 'SHOPIFY_FLAG_STORE_COUNTRY',
+  required: false,
+  parse: async (value) => {
+    const normalized = value.trim().toUpperCase()
+    if (!isCountryCode(normalized)) {
+      throw new AbortError(invalidCountryCodeMessage)
+    }
+    return normalized
+  },
+})
 
 export const storeFlags = {
   store: Flags.string({

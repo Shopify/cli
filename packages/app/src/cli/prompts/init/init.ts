@@ -141,3 +141,7 @@ export default init
 export function isPredefinedTemplate(template: string): template is PredefinedTemplate {
   return allTemplates.includes(template as PredefinedTemplate)
 }
+
+export function templateRequiresFlavor(template: string | undefined): boolean {
+  return template !== undefined && isPredefinedTemplate(template) && templates[template].branches !== undefined
+}

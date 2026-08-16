@@ -3,15 +3,18 @@ import link from '../../../services/app/config/link.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/app/config/link.js')
 vi.mock('../../../services/app-context.js')
+vi.mock('@shopify/cli-kit/node/system')
 
 describe('app config link command', () => {
   beforeEach(() => {
     vi.mocked(link).mockReset()
     vi.mocked(linkedAppContext).mockReset()
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   })
 
   test('accepts --client-id with --file-name to link a specific app to a specific config file', async () => {

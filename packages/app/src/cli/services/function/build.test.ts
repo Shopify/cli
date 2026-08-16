@@ -24,7 +24,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {packageManagerBinaryCommandForDirectory} from '@shopify/cli-kit/node/node-package-manager'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, readFile, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -92,24 +92,24 @@ beforeEach(async () => {
   stderr = {write: vi.fn()}
   stdout = {write: vi.fn()}
   signal = vi.fn()
-  vi.mocked(packageManagerBinaryCommandForDirectory).mockResolvedValue({
-    command: 'npm',
-    args: ['exec', '--', 'graphql-code-generator', '--config', 'package.json'],
-  })
+  vi.mocked(packageManagerBinaryCommandForDirectory).mockImplementation(
+    async (_directory, binary, ...binaryArguments) => ({
+      command: 'npm',
+      args: ['exec', '--', binary, ...binaryArguments],
+    }),
+  )
 })
 
 describe('buildGraphqlTypes', () => {
-  test('generate types', {timeout: 20000}, async () => {
+  test('uses the default config path when package.json is missing', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
 
       // When
-      const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+      await buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
       // Then
-      await expect(got).resolves.toBeUndefined()
-      expect(packageManagerBinaryCommandForDirectory).toHaveBeenCalledTimes(1)
       expect(packageManagerBinaryCommandForDirectory).toHaveBeenCalledWith(
         ourFunction.directory,
         'graphql-code-generator',
@@ -124,13 +124,20 @@ describe('buildGraphqlTypes', () => {
     })
   })
 
-  test('generate types executes the command returned by the shared helper', {timeout: 20000}, async () => {
+  test('generate types', {timeout: 20000}, async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
-      vi.mocked(packageManagerBinaryCommandForDirectory).mockResolvedValue({
-        command: 'pnpm',
-        args: ['exec', 'graphql-code-generator', '--config', 'package.json'],
+      const codegen = {
+        schema: 'schema.graphql',
+        documents: 'src/*.graphql',
+        generates: {'generated/api.ts': {plugins: ['typescript', 'typescript-operations']}},
+        config: {omitOperationSuffix: true},
+      }
+      await writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({codegen}))
+      let generatedCodegenConfig: unknown
+      vi.mocked(exec).mockImplementation(async (_command, args) => {
+        generatedCodegenConfig = JSON.parse(await readFile(args.at(-1)!))
       })
 
       // When
@@ -138,7 +145,125 @@ describe('buildGraphqlTypes', () => {
 
       // Then
       await expect(got).resolves.toBeUndefined()
-      expect(exec).toHaveBeenCalledWith('pnpm', ['exec', 'graphql-code-generator', '--config', 'package.json'], {
+      expect(packageManagerBinaryCommandForDirectory).toHaveBeenCalledTimes(1)
+      const codegenConfigPath = vi.mocked(packageManagerBinaryCommandForDirectory).mock.calls[0]![3]!
+      expect(packageManagerBinaryCommandForDirectory).toHaveBeenCalledWith(
+        ourFunction.directory,
+        'graphql-code-generator',
+        '--config',
+        codegenConfigPath,
+      )
+      expect(exec).toHaveBeenCalledWith(
+        'npm',
+        ['exec', '--', 'graphql-code-generator', '--config', codegenConfigPath],
+        {
+          cwd: ourFunction.directory,
+          stderr,
+          signal,
+        },
+      )
+      expect(generatedCodegenConfig).toEqual({
+        ...codegen,
+        config: {
+          defaultScalarType: 'unknown',
+          omitOperationSuffix: true,
+          scalars: {
+            Date: 'string',
+            DateTime: 'string',
+            DateTimeWithoutTimezone: 'string',
+            Decimal: 'string',
+            Handle: 'string',
+            ID: 'string',
+            JSON: 'unknown',
+            TimeWithoutTimezone: 'string',
+            URL: 'string',
+            Void: 'null',
+          },
+        },
+      })
+    })
+  })
+
+  test('preserves user-defined scalar mappings and fallback type', {timeout: 20000}, async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
+      await writeFile(
+        joinPath(tmpDir, 'package.json'),
+        JSON.stringify({
+          codegen: {
+            schema: 'schema.graphql',
+            config: {defaultScalarType: 'any', scalars: {Decimal: 'number', JSON: 'JsonValue'}},
+          },
+        }),
+      )
+      let generatedCodegenConfig: {config: {scalars: Record<string, string>}} | undefined
+      vi.mocked(exec).mockImplementation(async (_command, args) => {
+        generatedCodegenConfig = JSON.parse(await readFile(args.at(-1)!))
+      })
+
+      // When
+      await buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      expect(generatedCodegenConfig?.config).toMatchObject({
+        defaultScalarType: 'any',
+        scalars: {
+          Date: 'string',
+          DateTime: 'string',
+          DateTimeWithoutTimezone: 'string',
+          Decimal: 'number',
+          Handle: 'string',
+          ID: 'string',
+          JSON: 'JsonValue',
+          TimeWithoutTimezone: 'string',
+          URL: 'string',
+          Void: 'null',
+        },
+      })
+    })
+  })
+
+  test.each([
+    {name: 'config', config: null},
+    {name: 'scalar mapping', config: {scalars: null}},
+  ])('handles a null $name', async ({config}) => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
+      await writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({codegen: {schema: 'schema.graphql', config}}))
+      let generatedCodegenConfig: {config: {defaultScalarType: string; scalars: Record<string, string>}} | undefined
+      vi.mocked(exec).mockImplementation(async (_command, args) => {
+        generatedCodegenConfig = JSON.parse(await readFile(args.at(-1)!))
+      })
+
+      // When
+      await buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      expect(generatedCodegenConfig?.config).toMatchObject({
+        defaultScalarType: 'unknown',
+        scalars: {Decimal: 'string'},
+      })
+    })
+  })
+
+  test('generate types executes the command returned by the shared helper', {timeout: 20000}, async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
+      await writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({codegen: {schema: 'schema.graphql'}}))
+      vi.mocked(packageManagerBinaryCommandForDirectory).mockResolvedValue({
+        command: 'pnpm',
+        args: ['exec', 'graphql-code-generator'],
+      })
+
+      // When
+      const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      await expect(got).resolves.toBeUndefined()
+      expect(exec).toHaveBeenCalledWith('pnpm', ['exec', 'graphql-code-generator'], {
         cwd: ourFunction.directory,
         stderr,
         signal,

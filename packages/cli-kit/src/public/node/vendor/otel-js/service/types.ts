@@ -1,12 +1,11 @@
 import type {
   Counter,
   Histogram,
-  MeterProvider,
   MetricAttributes,
   MetricOptions,
   UpDownCounter,
 } from '@opentelemetry/api'
-import type {ViewOptions} from '@opentelemetry/sdk-metrics'
+import type {MeterProvider, ViewOptions} from '@opentelemetry/sdk-metrics'
 
 export type CustomMetricLabels<
   TLabels extends Record<TKeys, MetricAttributes>,

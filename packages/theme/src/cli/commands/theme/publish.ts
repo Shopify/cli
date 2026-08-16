@@ -2,7 +2,7 @@ import {publish} from '../../services/publish.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {OutputFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
@@ -24,16 +24,20 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
   static flags = {
     ...globalFlags,
     ...themeFlags,
-    force: Flags.boolean({
-      char: 'f',
-      description: 'Skip confirmation.',
-      env: 'SHOPIFY_FLAG_FORCE',
-    }),
-    theme: Flags.string({
-      char: 't',
-      description: 'Theme ID or name of the remote theme.',
-      env: 'SHOPIFY_FLAG_THEME_ID',
-    }),
+    force: requiredIfNonInteractive(
+      Flags.boolean({
+        char: 'f',
+        description: 'Skip confirmation.',
+        env: 'SHOPIFY_FLAG_FORCE',
+      }),
+    ),
+    theme: requiredIfNonInteractive(
+      Flags.string({
+        char: 't',
+        description: 'Theme ID or name of the remote theme.',
+        env: 'SHOPIFY_FLAG_THEME_ID',
+      }),
+    ),
   }
 
   static multiEnvironmentsFlags = ['store', 'password', 'theme']

@@ -17,6 +17,13 @@ export type ArgOutput = OutputArgs<any>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FlagOutput = OutputFlags<any>
 
+export interface NonTTYFlagRequirement {
+  /** At least one of these flags must be present when the requirement applies. */
+  flags: string[]
+  /** Determines whether the requirement applies to the parsed flags. */
+  when?: (flags: FlagOutput) => boolean
+}
+
 interface EnvironmentFlags {
   'auth-alias'?: string
   environment?: string[]
@@ -25,6 +32,14 @@ interface EnvironmentFlags {
 
 abstract class BaseCommand extends Command {
   static baseFlags: FlagInput<{}> = {}
+
+  public static get requiresSyncAnalytics(): boolean {
+    return false
+  }
+
+  public static nonTTYFlagRequirements(_flags: FlagOutput): NonTTYFlagRequirement[] {
+    return []
+  }
 
   // Replace markdown links to plain text like: "link label" (url)
   public static descriptionWithoutMarkdown(): string | undefined {
@@ -108,6 +123,7 @@ abstract class BaseCommand extends Command {
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await setCurrentSessionAlias(result.flags['auth-alias'])
     await addFromParsedFlags(result.flags)
+    this.failMissingNonTTYFlagRequirements(result.flags, this.applicableNonTTYFlagRequirements(result.flags))
     return {...result, ...{argv: result.argv as string[]}}
   }
 
@@ -117,20 +133,51 @@ abstract class BaseCommand extends Command {
   }
 
   protected failMissingNonTTYFlags(flags: FlagOutput, requiredFlags: string[]): void {
+    this.failMissingNonTTYFlagRequirements(
+      flags,
+      requiredFlags.map((flag) => ({flags: [flag]})),
+    )
+  }
+
+  private failMissingNonTTYFlagRequirements(flags: FlagOutput, requirements: NonTTYFlagRequirement[]): void {
     if (terminalSupportsPrompting()) return
 
-    requiredFlags.forEach((name: string) => {
-      if (!(name in flags)) {
-        throw new AbortError(
-          outputContent`Flag not specified:
+    const missingRequirements = requirements.filter((requirement) =>
+      requirement.flags.every((flag) => flags[flag] === undefined || flags[flag] === false),
+    )
+    if (missingRequirements.length === 0) return
 
-${outputToken.cyan(name)}
+    const heading = missingRequirements.length === 1 ? 'Flag not specified' : 'Flags not specified'
+    const formattedRequirements = missingRequirements
+      .map((requirement) => requirement.flags.map((flag) => `--${flag}`).join(' or '))
+      .join('\n')
+    const explanation = missingRequirements.length === 1 ? 'This flag is required' : 'These flags are required'
 
-This flag is required in non-interactive terminal environments, such as a CI environment, or when piping input from another process.`,
-          'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
-        )
-      }
-    })
+    throw new AbortError(
+      outputContent`${heading}:
+
+${outputToken.cyan(formattedRequirements)}
+
+${explanation} in non-interactive terminal environments, such as a CI environment, or when piping input from another process.`,
+      'To resolve this, specify the options in the command, or run the command in an interactive environment such as your local terminal.',
+    )
+  }
+
+  private applicableNonTTYFlagRequirements(flags: FlagOutput): NonTTYFlagRequirement[] {
+    const command = this.constructor as unknown as {
+      flags?: FlagInput
+      baseFlags?: FlagInput
+      nonTTYFlagRequirements?: (flags: FlagOutput) => NonTTYFlagRequirement[]
+    }
+    const allFlags = {...command.baseFlags, ...command.flags}
+    const requirementsFromFlags = Object.entries(allFlags)
+      .filter(([, flag]) => Boolean((flag as {requiredIfNonInteractive?: boolean}).requiredIfNonInteractive))
+      .map(([name]) => ({flags: [name]}))
+    const commandRequirements = (command.nonTTYFlagRequirements?.(flags) ?? []).filter(
+      (requirement) => requirement.when?.(flags) ?? true,
+    )
+
+    return [...requirementsFromFlags, ...commandRequirements]
   }
 
   private async resultWithEnvironment<

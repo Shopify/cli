@@ -17,6 +17,10 @@ import type {ErrorOverlayMode, LiveReload, ReconciliationStrategy} from '../../u
 type DevFlags = InferredFlags<typeof Dev.flags>
 
 export default class Dev extends ThemeCommand {
+  public static get requiresSyncAnalytics(): boolean {
+    return true
+  }
+
   static summary =
     'Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.'
 

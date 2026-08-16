@@ -3,14 +3,14 @@ import {writeStoreListResult} from '../../services/store/list/result.js'
 import {storeFlags} from '../../flags.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {Flags} from '@oclif/core'
 
 export default class StoreList extends StoreCommand {
   static summary = 'List stores in a Shopify organization.'
 
   static descriptionWithMarkdown = `Lists stores in a Shopify organization available to the current CLI account.
 
-When more than one organization is available, the command prompts you to pick one unless you provide \`--organization-id\`.
-In non-interactive environments, \`--organization-id\` is required.
+When more than one organization is available, the command prompts you to pick one unless you provide \`--organization-id\`. In that case, \`--organization-id\` is required in non-interactive environments.
 
 Run \`<%= config.bin %> organization list\` to find organization IDs.`
 
@@ -25,7 +25,10 @@ Run \`<%= config.bin %> organization list\` to find organization IDs.`
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    'organization-id': storeFlags['organization-id'],
+    'organization-id': Flags.integer({
+      description: `${storeFlags['organization-id'].description} Required if non interactive when more than one organization is available.`,
+      env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
+    }),
   }
 
   public async run(): Promise<void> {

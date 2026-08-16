@@ -366,6 +366,67 @@ describe('getExtensionAssetMiddleware()', () => {
     })
   })
 
+  test('serves a registered source map from the extension directory, not the bundle', async () => {
+    // Source maps never reach the bundle — `keepBuiltSourcemapsLocally` moves them into the
+    // extension directory so they stay out of deploy bundles. The bundle dir is left without
+    // a map here on purpose, so this also pins that the bundle is not the source.
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const extension = await testUIExtension({directory: tmpDir})
+
+      const sourceMapContent = '{"version":3,"sources":["src/index.tsx"]}'
+      const localBuildDir = joinPath(tmpDir, 'dist')
+      await mkdir(localBuildDir)
+      await writeFile(joinPath(localBuildDir, `${extension.outputFileName}.map`), sourceMapContent)
+
+      const resolvers = new Map<string, Map<string, string>>()
+      resolvers.set(
+        extension.devUUID,
+        new Map([[`target1/${extension.outputFileName}.map`, `dist/${extension.outputFileName}.map`]]),
+      )
+      const options = getOptions({devOptions: {extensions: [extension]}, assetResolvers: resolvers})
+
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: `target1/${extension.outputFileName}.map`,
+        },
+      })
+
+      const result = await getExtensionAssetMiddleware(options)(event)
+
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json')
+      expect(String(result)).toBe(sourceMapContent)
+    })
+  })
+
+  test('returns 404 for a source map that the payload did not register', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+      const extension = await testUIExtension({directory: tmpDir})
+
+      const options = getOptions({devOptions: {extensions: [extension]}})
+
+      // Readable on disk, but unreachable because no resolver entry points at it.
+      const localBuildDir = joinPath(tmpDir, 'dist')
+      await mkdir(localBuildDir)
+      await writeFile(joinPath(localBuildDir, 'secrets.js.map'), 'unregistered')
+
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: 'dist/secrets.js.map',
+        },
+      })
+
+      await getExtensionAssetMiddleware(options)(event)
+
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
+        statusCode: 404,
+        statusMessage: 'Not Found',
+      })
+    })
+  })
+
   test('serves a ../tools.json source after include_assets flattens it into the output directory', async () => {
     // End-to-end verification of the motivating scenario: a TOML config declares
     // `tools = "../tools.json"` (a path outside the extension directory).

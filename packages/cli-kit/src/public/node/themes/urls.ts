@@ -11,20 +11,21 @@ export function themePreviewUrl(theme: Theme, session: AdminSession) {
 }
 
 export function themeEditorUrl(theme: Theme, session: AdminSession) {
-  const store = session.storeFqdn
-  return `https://${store}/admin/themes/${theme.id}/editor`
+  return adminUrl(session.storeFqdn, `/themes/${theme.id}/editor`)
 }
 
 export function codeEditorUrl(theme: Theme, session: AdminSession) {
-  const store = session.storeFqdn
-  return `https://${store}/admin/themes/${theme.id}`
+  return adminUrl(session.storeFqdn, `/themes/${theme.id}`)
 }
 
 export function storeAdminUrl(session: AdminSession) {
-  const store = session.storeFqdn
-  return `https://${store}/admin`
+  return adminUrl(session.storeFqdn)
 }
 
 export function storePasswordPage(store: AdminSession['storeFqdn']) {
-  return `https://${store}/admin/online_store/preferences`
+  return adminUrl(store, '/online_store/preferences')
+}
+
+function adminUrl(store: string, path = ''): string {
+  return `https://${store}/admin${path}`
 }

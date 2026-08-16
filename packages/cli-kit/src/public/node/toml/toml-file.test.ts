@@ -1,8 +1,17 @@
 import {TomlFile, TomlFileError} from './toml-file.js'
+import {decodeToml} from './codec.js'
 import {shouldReportErrorAsUnexpected} from '../error.js'
 import {writeFile, readFile, inTemporaryDirectory} from '../fs.js'
 import {joinPath} from '../path.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+
+vi.mock('./codec.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./codec.js')>()
+  return {
+    ...actual,
+    decodeToml: vi.fn(actual.decodeToml),
+  }
+})
 
 describe('TomlFile', () => {
   describe('read', () => {
@@ -54,6 +63,19 @@ describe('TomlFile', () => {
     test('throws TomlFileError if file does not exist', async () => {
       await expect(TomlFile.read('/nonexistent/path/test.toml')).rejects.toThrow(TomlFileError)
     })
+
+    test('throws the original error when decoding fails with an error that lacks row/col information', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'test.toml')
+        await writeFile(path, 'name = "app"\n')
+
+        vi.mocked(decodeToml).mockImplementationOnce(() => {
+          throw new Error('Some internal decode error')
+        })
+
+        await expect(TomlFile.read(path)).rejects.toThrow('Some internal decode error')
+      })
+    })
   })
 
   describe('patch', () => {
@@ -80,6 +102,39 @@ describe('TomlFile', () => {
         await file.patch({build: {dev_store_url: 'new.myshopify.com'}})
 
         expect(file.content).toStrictEqual({build: {dev_store_url: 'new.myshopify.com'}})
+      })
+    })
+
+    test('sets deeply nested values', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'test.toml')
+        await writeFile(path, '[access.admin]\ndirect_api_mode = "online"\n')
+
+        const file = await TomlFile.read(path)
+        await file.patch({access: {admin: {direct_api_mode: 'offline'}}})
+
+        expect(file.content).toStrictEqual({access: {admin: {direct_api_mode: 'offline'}}})
+      })
+    })
+
+    test('sets multiple nested branches at once', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'test.toml')
+        await writeFile(
+          path,
+          ['[access.admin]', 'direct_api_mode = "online"', '', '[webhooks]', 'api_version = "2023-07"', ''].join('\n'),
+        )
+
+        const file = await TomlFile.read(path)
+        await file.patch({
+          access: {admin: {direct_api_mode: 'offline'}},
+          webhooks: {api_version: '2024-01'},
+        })
+
+        expect(file.content).toStrictEqual({
+          access: {admin: {direct_api_mode: 'offline'}},
+          webhooks: {api_version: '2024-01'},
+        })
       })
     })
 
@@ -135,6 +190,20 @@ describe('TomlFile', () => {
 
         const content = file.content as {auth: {redirect_urls: string[]}}
         expect(content.auth.redirect_urls).toStrictEqual(['https://new.com', 'https://other.com'])
+      })
+    })
+
+    test('removes a nested value when it is set to undefined', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'test.toml')
+        await writeFile(path, '[build]\ndev_store_url = "store.myshopify.com"\ninclude_config_on_deploy = true\n')
+
+        const file = await TomlFile.read(path)
+        await file.patch({build: {include_config_on_deploy: undefined}})
+
+        const build = file.content.build as {[key: string]: unknown}
+        expect(build.dev_store_url).toBe('store.myshopify.com')
+        expect(build.include_config_on_deploy).toBeUndefined()
       })
     })
   })

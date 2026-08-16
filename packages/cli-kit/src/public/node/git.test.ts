@@ -184,6 +184,15 @@ describe('initializeRepository()', () => {
     expect(mockedExeca).toHaveBeenCalledWith('git', ['init'], {cwd: directory})
     expect(mockedExeca).toHaveBeenCalledWith('git', ['checkout', '-b', 'my-branch'], {cwd: directory})
   })
+
+  test('throws an error if the initial branch starts with a hyphen', async () => {
+    const directory = '/tmp/git-repo'
+
+    await expect(git.initializeGitRepository(directory, '-invalid-branch')).rejects.toThrowError(
+      /Invalid initial branch name: -invalid-branch. Branch names can't start with a hyphen./,
+    )
+    expect(mockedExeca).not.toHaveBeenCalled()
+  })
 })
 
 describe('createGitIgnore()', () => {

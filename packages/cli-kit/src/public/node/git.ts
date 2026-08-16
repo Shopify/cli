@@ -51,6 +51,11 @@ async function gitCommand(args: string[], directory?: string): Promise<string> {
  * @param initialBranch - The name of the initial branch.
  */
 export async function initializeGitRepository(directory: string, initialBranch = 'main'): Promise<void> {
+  // Guard against command/argument injection attacks if initialBranch starts with '-'
+  if (initialBranch.startsWith('-')) {
+    throw new AbortError(`Invalid initial branch name: ${initialBranch}. Branch names can't start with a hyphen.`)
+  }
+
   outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
@@ -89,11 +94,9 @@ export function createGitIgnore(directory: string, template: GitIgnoreTemplate):
   outputDebug(outputContent`Creating .gitignore at ${outputToken.path(directory)}...`)
   const filePath = `${directory}/.gitignore`
 
-  let fileContent = ''
-  for (const [section, lines] of Object.entries(template)) {
-    fileContent += `# ${section}\n`
-    fileContent += `${lines.join('\n')}\n\n`
-  }
+  const fileContent = Object.entries(template)
+    .map(([section, lines]) => `# ${section}\n${lines.join('\n')}\n\n`)
+    .join('')
 
   appendFileSync(filePath, fileContent)
 }

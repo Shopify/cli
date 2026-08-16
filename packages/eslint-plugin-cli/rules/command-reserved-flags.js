@@ -1,4 +1,6 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
+const {findFlagOptions} = require('./flag-options')
+
 module.exports = {
   meta: {
     type: 'problem',
@@ -28,19 +30,17 @@ module.exports = {
             if (!flagName) {
               return
             }
-            if (!reservedFlags.hasOwnProperty(flagName)) {
+            if (!Object.hasOwn(reservedFlags, flagName)) {
               return
             }
-            const arguments = flag.value?.arguments ?? []
-            const argument = arguments[0]
-            if (!argument) {
-              return
-            }
-            const envProperty = argument.properties.find((property) => property.key.name === 'env')?.value?.value
+            const options = findFlagOptions(flag.value)
+            if (!options) return
+
+            const envProperty = options.properties.find((property) => property.key?.name === 'env')?.value?.value
             if (envProperty) {
               if (envProperty !== reservedFlags[flagName]) {
                 context.report(
-                  argument,
+                  options,
                   `${flagName} is a reserved flags and its environment variable must be ${reservedFlags[flagName]}`,
                 )
               }

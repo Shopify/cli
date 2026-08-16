@@ -1,6 +1,6 @@
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MigrationDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -91,7 +91,7 @@ export async function migrateAppModules(options: {
   appId: string
   type: string
   remoteExtensions: RemoteSource[]
-  migrationClient: DeveloperPlatformClient
+  migrationClient: MigrationDeveloperPlatformClient
 }) {
   const {extensionsToMigrate, appId, type, remoteExtensions, migrationClient} = options
 
@@ -123,7 +123,7 @@ async function migrateAppModule(options: {
   registrationId: MigrateAppModuleVariables['registrationId']
   registrationUuid: MigrateAppModuleVariables['registrationUuid']
   type: MigrateAppModuleVariables['type']
-  migrationClient: DeveloperPlatformClient
+  migrationClient: MigrationDeveloperPlatformClient
 }) {
   const {apiKey, registrationId, registrationUuid, type, migrationClient} = options
 

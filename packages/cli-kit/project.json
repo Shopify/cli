@@ -16,12 +16,6 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{workspaceRoot}/dist"
-      ],
-      "inputs": [
-        "{projectRoot}/src/**/*"
-      ],
       "dependsOn": [
         "generate-version"
       ],
@@ -36,7 +30,9 @@
         "{projectRoot}/src/public/common/version.ts"
       ],
       "inputs": [
-        "{projectRoot}/package.json"
+        "{projectRoot}/package.json",
+        "{workspaceRoot}/bin/update-cli-kit-version.js",
+        "sharedGlobals"
       ],
       "options": {
         "command": "node bin/update-cli-kit-version.js"
@@ -104,7 +100,8 @@
       "inputs": [
         {
           "dependentTasksOutputFiles": "**/*.ts"
-        }
+        },
+        "sharedGlobals"
       ],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts",
@@ -122,7 +119,8 @@
       "executor": "nx:run-commands",
       "inputs": [
         "{workspaceRoot}/graphql.config.ts",
-        "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"
+        "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql",
+        "sharedGlobals"
       ],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
@@ -138,7 +136,8 @@
       "executor": "nx:run-commands",
       "inputs": [
         "{workspaceRoot}/graphql.config.ts",
-        "{projectRoot}/src/cli/api/graphql/bulk-operations/**/*.graphql"
+        "{projectRoot}/src/cli/api/graphql/bulk-operations/**/*.graphql",
+        "sharedGlobals"
       ],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/bulk-operations/generated/**/*.ts"
@@ -159,7 +158,8 @@
       "inputs": [
         {
           "dependentTasksOutputFiles": "**/*.ts"
-        }
+        },
+        "sharedGlobals"
       ],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts",

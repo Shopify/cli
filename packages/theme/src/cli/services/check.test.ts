@@ -4,10 +4,13 @@ import {
   formatSummary,
   handleExit,
   initConfig,
+  outputActiveChecks,
+  outputActiveConfig,
   renderOffensesText,
   sortOffenses,
 } from './check.js'
-import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {
@@ -18,18 +21,21 @@ import {
   type Offense,
   type Theme,
 } from '@shopify/theme-check-node'
-import {Mock, beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi, type Mock} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => ({
   fileExists: vi.fn(),
   writeFile: vi.fn(),
-  readFileSync: vi.fn(),
 }))
 
-vi.mock('@shopify/cli-kit/node/output', async () => ({
-  outputInfo: vi.fn(),
-  outputSuccess: vi.fn(),
-}))
+vi.mock('@shopify/cli-kit/node/output', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/output')
+  return {
+    ...actual,
+    outputInfo: vi.fn(),
+    outputSuccess: vi.fn(),
+  }
+})
 
 vi.mock('@shopify/theme-check-node', async () => {
   const actual: any = await vi.importActual('@shopify/theme-check-node')
@@ -44,10 +50,7 @@ vi.mock('@shopify/cli-kit/node/ui', async () => ({
 }))
 
 describe('formatOffenses', () => {
-  beforeEach(() => {
-    const readFileMock = readFileSync as Mock
-    readFileMock.mockReturnValue({toString: () => 'Line1\nLine2\nLine3'})
-  })
+  const themeSources = new Map([['file:///path/to/file', 'Line1\nLine2\nLine3']])
 
   test('should format offenses correctly', () => {
     const offenses: Offense[] = [
@@ -62,7 +65,7 @@ describe('formatOffenses', () => {
       },
     ]
 
-    const result = formatOffenses(offenses)
+    const result = formatOffenses(offenses, themeSources)
 
     /**
      * Line numbers are 0-indexed to remain backwards compatible with the ruby theme-check output
@@ -99,7 +102,7 @@ describe('formatOffenses', () => {
       },
     ]
 
-    const result = formatOffenses(offenses)
+    const result = formatOffenses(offenses, themeSources)
 
     expect(result).toEqual([
       {error: '\n[error]:'},
@@ -111,6 +114,29 @@ describe('formatOffenses', () => {
       {bold: 'LiquidHTMLSyntaxError'},
       {subdued: '\nAttempting to close HtmlElement'},
       '\n\n3  Line3',
+      '',
+    ])
+  })
+
+  test('should omit the code snippet when the file contents are unavailable', () => {
+    const offenses: Offense[] = [
+      {
+        type: SourceCodeType.LiquidHtml,
+        check: 'LiquidHTMLSyntaxError',
+        message: 'Attempting to close HtmlElement',
+        uri: 'file:///path/to/file-removed-during-the-run',
+        severity: Severity.ERROR,
+        start: {index: 0, line: 1, character: 0},
+        end: {index: 10, line: 1, character: 10},
+      },
+    ]
+
+    const result = formatOffenses(offenses, themeSources)
+
+    expect(result).toEqual([
+      {error: '\n[error]:'},
+      {bold: 'LiquidHTMLSyntaxError'},
+      {subdued: '\nAttempting to close HtmlElement'},
       '',
     ])
   })
@@ -225,12 +251,16 @@ describe('formatSummary', () => {
 })
 
 describe('renderOffensesText', () => {
-  beforeEach(() => {
-    const readFileMock = readFileSync as Mock
-    readFileMock.mockReturnValue('Line1\nLine2\nLine3')
-  })
-
   test('should call renderInfo for offenses', () => {
+    // The AST is never read when rendering offenses, only the source is
+    const theme: Theme = [
+      {
+        uri: 'file:///path/to/file',
+        type: SourceCodeType.LiquidHtml,
+        source: 'Line1\nLine2\nLine3',
+        ast: new Error('unparsed'),
+      },
+    ]
     const offensesByFile = {
       '/path/to/file': [
         {
@@ -246,7 +276,7 @@ describe('renderOffensesText', () => {
     }
     const themeRootPath = '/path/to'
 
-    renderOffensesText(offensesByFile, themeRootPath)
+    renderOffensesText(offensesByFile, themeRootPath, theme)
 
     expect(renderInfo).toHaveBeenCalledTimes(1)
   })
@@ -402,5 +432,37 @@ describe('initConfig', () => {
     expect(loadConfig).toHaveBeenCalledWith(undefined, '/path/to/root')
     expect(writeFile).toHaveBeenCalledWith('/path/to/root/.theme-check.yml', expect.any(String))
     expect(outputSuccess).toHaveBeenCalledWith('Created .theme-check.yml at /path/to/root')
+  })
+})
+
+describe('outputActiveConfig', () => {
+  test('reports a missing explicitly configured file as an expected error', async () => {
+    const configPath = './.theme-check.yml'
+    const missingConfigError = Object.assign(new Error(`ENOENT: no such file or directory, open '${configPath}'`), {
+      code: 'ENOENT',
+      path: configPath,
+    })
+    vi.mocked(loadConfig).mockRejectedValue(missingConfigError)
+
+    const result = outputActiveConfig('/my-theme', configPath)
+
+    await expect(result).rejects.toBeInstanceOf(AbortError)
+    await expect(result).rejects.toThrowError(`Theme Check config file not found: ${configPath}`)
+  })
+})
+
+describe('outputActiveChecks', () => {
+  test('reports a missing explicitly configured file as an expected error', async () => {
+    const configPath = './.theme-check.yml'
+    const missingConfigError = Object.assign(new Error(`ENOENT: no such file or directory, open '${configPath}'`), {
+      code: 'ENOENT',
+      path: configPath,
+    })
+    vi.mocked(loadConfig).mockRejectedValue(missingConfigError)
+
+    const result = outputActiveChecks('/my-theme', configPath)
+
+    await expect(result).rejects.toBeInstanceOf(AbortError)
+    await expect(result).rejects.toThrowError(`Theme Check config file not found: ${configPath}`)
   })
 })

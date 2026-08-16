@@ -13,7 +13,7 @@ module.exports = {
     },
   },
 
-  create: function (context) {
+  create(context) {
     return {
       CallExpression(node) {
         const callee = node.callee

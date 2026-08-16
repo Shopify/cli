@@ -276,6 +276,28 @@ describe('execCommand', () => {
     expect(execa).toHaveBeenCalledWith('cat', [], expect.objectContaining({stdin: 'inherit'}))
   })
 
+  test.skipIf(process.platform === 'win32')(
+    'pipes input to a background process while ignoring its output',
+    async () => {
+      // Given
+      vi.mocked(which.sync).mockReturnValueOnce('/system/cat')
+      const unref = vi.fn()
+      const childProcess = Object.assign(Promise.resolve({}), {unref})
+      vi.mocked(execa).mockReturnValueOnce(childProcess as any)
+
+      // When
+      await system.exec('cat', [], {background: true, input: 'payload'})
+
+      // Then
+      expect(execa).toHaveBeenCalledWith(
+        'cat',
+        [],
+        expect.objectContaining({input: 'payload', stdio: ['pipe', 'ignore', 'ignore']}),
+      )
+      expect(unref).toHaveBeenCalledOnce()
+    },
+  )
+
   test('raises an error if the command to run is found in the current directory', async () => {
     // Given
     vi.mocked(which.sync).mockReturnValueOnce('/currentDirectory/command')
@@ -308,7 +330,11 @@ describe('execCommand', () => {
 describe('isStdinPiped', () => {
   test('returns true when stdin is a FIFO (pipe)', () => {
     // Given
-    vi.mocked(fs.fstatSync).mockReturnValue({isFIFO: () => true, isFile: () => false} as fs.Stats)
+    vi.mocked(fs.fstatSync).mockReturnValue({
+      isFIFO: () => true,
+      isFile: () => false,
+      isSocket: () => false,
+    } as fs.Stats)
 
     // When
     const got = system.isStdinPiped()
@@ -319,7 +345,26 @@ describe('isStdinPiped', () => {
 
   test('returns true when stdin is a file redirect', () => {
     // Given
-    vi.mocked(fs.fstatSync).mockReturnValue({isFIFO: () => false, isFile: () => true} as fs.Stats)
+    vi.mocked(fs.fstatSync).mockReturnValue({
+      isFIFO: () => false,
+      isFile: () => true,
+      isSocket: () => false,
+    } as fs.Stats)
+
+    // When
+    const got = system.isStdinPiped()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns true when stdin is a child-process pipe represented as a socket', () => {
+    // Given
+    vi.mocked(fs.fstatSync).mockReturnValue({
+      isFIFO: () => false,
+      isFile: () => false,
+      isSocket: () => true,
+    } as fs.Stats)
 
     // When
     const got = system.isStdinPiped()
@@ -330,7 +375,11 @@ describe('isStdinPiped', () => {
 
   test('returns false when stdin is a TTY (interactive)', () => {
     // Given
-    vi.mocked(fs.fstatSync).mockReturnValue({isFIFO: () => false, isFile: () => false} as fs.Stats)
+    vi.mocked(fs.fstatSync).mockReturnValue({
+      isFIFO: () => false,
+      isFile: () => false,
+      isSocket: () => false,
+    } as fs.Stats)
 
     // When
     const got = system.isStdinPiped()
@@ -401,5 +450,54 @@ describe('sleep', () => {
     await vi.advanceTimersByTimeAsync(1000)
     await expect(sleepPromise).resolves.toBeUndefined()
     vi.useRealTimers()
+  })
+})
+
+describe('isWsl', () => {
+  test('returns false when the platform is not linux', async () => {
+    await expect(system.isWsl({platform: 'darwin'})).resolves.toBe(false)
+    await expect(system.isWsl({platform: 'win32'})).resolves.toBe(false)
+  })
+
+  test('returns true for a microsoft kernel release outside a container', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '5.15.90.1-microsoft-standard-WSL2',
+      insideContainer: false,
+    })
+
+    await expect(got).resolves.toBe(true)
+  })
+
+  test('returns false for a microsoft kernel release inside a container', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '5.15.90.1-microsoft-standard-WSL2',
+      insideContainer: true,
+    })
+
+    await expect(got).resolves.toBe(false)
+  })
+
+  test('detects WSL1 through /proc/version when the kernel release does not mention microsoft', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '4.4.0-19041-generic',
+      procVersion: 'Linux version 4.4.0-19041-Microsoft (Microsoft@Microsoft.com)',
+      insideContainer: false,
+    })
+
+    await expect(got).resolves.toBe(true)
+  })
+
+  test('returns false for a regular linux kernel', async () => {
+    const got = system.isWsl({
+      platform: 'linux',
+      kernelRelease: '6.5.0-generic',
+      procVersion: 'Linux version 6.5.0-generic (buildd@lcy02)',
+      insideContainer: false,
+    })
+
+    await expect(got).resolves.toBe(false)
   })
 })

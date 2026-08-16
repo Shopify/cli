@@ -8,7 +8,7 @@ import {
 import {Organization} from '@shopify/organizations'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSingleTask, renderSuccess, type InlineToken} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -22,6 +22,7 @@ interface CreateDevStoreOptions {
   organization: Organization
   featurePreview?: string
   withDemoData?: boolean
+  country?: string
   json: boolean
 }
 
@@ -32,11 +33,11 @@ type StoreCreationStatus = NonNullable<
 function friendlyStatus(status: StoreCreationStatus): string {
   switch (status) {
     case 'CALLING_CORE':
-      return 'Initiating store creation...'
+      return 'Initiating store creation'
     case 'AWAITING_CORE_STORE_READY':
-      return 'Waiting for store to be ready...'
+      return 'Waiting for store to be ready'
     case 'FINALIZING':
-      return 'Finalizing store setup...'
+      return 'Finalizing store setup'
     case 'COMPLETE':
       return 'Store creation complete!'
     case 'FAILED':
@@ -64,6 +65,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
       priceLookupKey: DEV_STORE_PLANS[plan],
       prepopulateTestData: options.withDemoData ?? false,
       developerPreviewHandle: options.featurePreview,
+      country: options.country,
     },
     unauthorizedHandler,
   })
@@ -84,7 +86,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
   }
 
   await renderSingleTask({
-    title: outputContent`Waiting for store to be ready...`,
+    title: outputContent`Waiting for store to be ready`,
     task: async (updateStatus) => {
       const startTime = Date.now()
       while (true) {
@@ -132,6 +134,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
             adminUrl: shopAdminUrl,
             plan,
             ...(options.featurePreview ? {featurePreview: options.featurePreview} : {}),
+            ...(options.country ? {country: options.country} : {}),
             demoData: options.withDemoData ?? false,
           },
           organization: {
@@ -144,15 +147,25 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
       ),
     )
   } else {
+    const rows: InlineToken[][] = []
+    pushRow(rows, 'Domain', shopDomain)
+    // Admin always renders, falling back to 'N/A' when the URL is missing, so the
+    // summary never silently drops this commonly expected field.
+    rows.push(['Admin', shopAdminUrl ? {link: {label: shopAdminUrl, url: shopAdminUrl}} : 'N/A'])
+    pushRow(rows, 'Plan', plan)
+    pushRow(rows, 'Feature preview', options.featurePreview)
+    pushRow(rows, 'Country', options.country)
+    pushRow(rows, 'Demo data', options.withDemoData ? 'enabled' : 'disabled')
+
     renderSuccess({
       headline: `Development store "${name}" created successfully.`,
-      body: [
-        `Domain: ${shopDomain}`,
-        `Admin: ${shopAdminUrl ?? 'N/A'}`,
-        `Plan: ${plan}`,
-        ...(options.featurePreview ? [`Feature preview: ${options.featurePreview}`] : []),
-        `Demo data: ${options.withDemoData ? 'enabled' : 'disabled'}`,
-      ],
+      customSections: [{body: {tabularData: rows, firstColumnSubdued: true}}],
     })
+  }
+}
+
+function pushRow(rows: InlineToken[][], label: string, value: InlineToken | undefined): void {
+  if (value !== undefined && value !== null && value !== '') {
+    rows.push([label, value])
   }
 }

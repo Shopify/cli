@@ -5,6 +5,7 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Release extends AppLinkedCommand {
   static summary = 'Release an app version.'
@@ -21,13 +22,13 @@ export default class Release extends AppLinkedCommand {
     'allow-updates': Flags.boolean({
       hidden: false,
       description:
-        'Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.',
+        'Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments. Required in non-interactive environments unless --allow-deletes is provided.',
       env: 'SHOPIFY_FLAG_ALLOW_UPDATES',
     }),
     'allow-deletes': Flags.boolean({
       hidden: false,
       description:
-        'Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.',
+        'Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates. Required in non-interactive environments unless --allow-updates is provided.',
       env: 'SHOPIFY_FLAG_ALLOW_DELETES',
     }),
     version: Flags.string({
@@ -36,6 +37,10 @@ export default class Release extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_VERSION',
       required: true,
     }),
+  }
+
+  static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
+    return [{flags: ['allow-updates', 'allow-deletes']}]
   }
 
   async run(): Promise<AppLinkedCommandOutput> {
@@ -51,13 +56,6 @@ export default class Release extends AppLinkedCommand {
     // `force` (skip confirmation prompt) is implied when both --allow-updates
     // and --allow-deletes are set.
     const force = Boolean(allowUpdates && allowDeletes)
-
-    // We require --allow-updates or --allow-deletes for non-TTY.
-    const requiredNonTTYFlags: string[] = []
-    if (!allowUpdates && !allowDeletes) {
-      requiredNonTTYFlags.push('allow-updates')
-    }
-    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
     const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,

@@ -1,8 +1,9 @@
-import {clearCache, runCLI, runCreateCLI, portFlag} from './cli.js'
+import {clearCache, runCLI, runCreateCLI, portFlag, requiredIfNonInteractive} from './cli.js'
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as confStore from '../../private/node/conf-store.js'
 import {describe, expect, test, vi} from 'vitest'
+import {Flags} from '@oclif/core'
 
 vi.mock('./node-package-manager.js')
 
@@ -79,14 +80,14 @@ describe('cli', () => {
   test('exits if running an old Node version', async () => {
     const launchCLI = vi.fn()
     const outputMock = mockAndCaptureOutput()
-    const run = runCLI({moduleURL: 'test', development: false}, launchCLI, [], {}, {node: '17.9'} as any)
+    const run = runCLI({moduleURL: 'test', development: false}, launchCLI, [], {}, {node: '20.10'} as any)
     await expect(run).rejects.toThrow()
     expect(outputMock.output()).toMatchInlineSnapshot(`
       "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Upgrade to a supported Node version now.                                    │
       │                                                                              │
-      │  Node 17 has reached end-of-life and poses security risks. When you upgrade  │
+      │  Node 20 has reached end-of-life and poses security risks. When you upgrade  │
       │   to a supported version [1], you'll be able to use Shopify CLI without      │
       │  interruption.                                                               │
       │                                                                              │
@@ -147,4 +148,22 @@ describe('portFlag', () => {
       await expect(flag.parse(input, {} as any, flag as any)).rejects.toThrowError(/Expected an integer/)
     },
   )
+})
+
+describe('requiredIfNonInteractive', () => {
+  test.each([
+    ['The app template', 'The app template. Required if non interactive.'],
+    ['The app template.', 'The app template. Required if non interactive.'],
+  ])('annotates a copy without duplicating punctuation in %s', (description, expectedDescription) => {
+    const flag = Flags.string({description})
+
+    const got = requiredIfNonInteractive(flag)
+
+    expect(got).toMatchObject({
+      description: expectedDescription,
+      requiredIfNonInteractive: true,
+    })
+    expect(flag.description).toBe(description)
+    expect(flag).not.toHaveProperty('requiredIfNonInteractive')
+  })
 })

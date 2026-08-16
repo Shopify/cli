@@ -53,8 +53,8 @@ export function graphQLErrorCodes(errors: unknown): string[] {
 /**
  * Whether a single code is a rate-limit signal (`THROTTLED` or `429`).
  *
- * Mirrors the established shape detected by `errorsIncludeStatus429` in `private/node/api.ts`,
- * where `extensions.code === '429'` signals rate limiting even at HTTP 200.
+ * Shared with the retry path (`isThrottled` in `private/node/api.ts`), where these codes signal
+ * rate limiting even at HTTP 200.
  */
 export function isRateLimitCode(code: string | undefined): boolean {
   return code !== undefined && RATE_LIMIT_CODES.has(code)

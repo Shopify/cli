@@ -1,6 +1,7 @@
 import {createPreviewStoreCommand} from './index.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../../auth/config.js'
 import {describe, expect, test, vi} from 'vitest'
+import type {PreviewStoreClientOptions} from './client.js'
 
 describe('preview store create service', () => {
   test('persists the created preview store in the store-auth cache', async () => {
@@ -84,7 +85,7 @@ describe('preview store create service', () => {
   })
 
   test('passes client options to the create request', async () => {
-    const client = {} as any
+    const client: PreviewStoreClientOptions = {}
     const createPreviewStore = vi.fn(async () => ({
       shop: {id: '123', name: 'Lavender Candles', domain: 'x12y45z.myshopify.com'},
       adminApiToken: 'shpat_token',

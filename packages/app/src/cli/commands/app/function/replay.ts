@@ -3,10 +3,14 @@ import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class FunctionReplay extends AppLinkedCommand {
+  public static get requiresSyncAnalytics(): boolean {
+    return true
+  }
+
   static summary = 'Replays a function run from an app log.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
@@ -18,12 +22,14 @@ export default class FunctionReplay extends AppLinkedCommand {
     ...appFlags,
     ...functionFlags,
     ...jsonFlag,
-    log: Flags.string({
-      char: 'l',
-      description:
-        'Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.',
-      env: 'SHOPIFY_FLAG_LOG',
-    }),
+    log: requiredIfNonInteractive(
+      Flags.string({
+        char: 'l',
+        description:
+          'Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.',
+        env: 'SHOPIFY_FLAG_LOG',
+      }),
+    ),
     watch: Flags.boolean({
       char: 'w',
       hidden: false,

@@ -1,0 +1,10 @@
+mutation DeleteAppDevelopmentStore($storeFqdn: String!) {
+  deleteAppDevelopmentStore(storeFqdn: $storeFqdn) {
+    success
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

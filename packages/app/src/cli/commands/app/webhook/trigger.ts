@@ -5,6 +5,7 @@ import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
+import {requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class WebhookTrigger extends AppLinkedCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
@@ -36,18 +37,22 @@ export default class WebhookTrigger extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_HELP',
       description: `This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.`,
     }),
-    topic: Flags.string({
-      required: false,
-      hidden: false,
-      env: 'SHOPIFY_FLAG_TOPIC',
-      description: 'The requested webhook topic.',
-    }),
-    'api-version': Flags.string({
-      required: false,
-      hidden: false,
-      env: 'SHOPIFY_FLAG_API_VERSION',
-      description: 'The API Version of the webhook topic.',
-    }),
+    topic: requiredIfNonInteractive(
+      Flags.string({
+        required: false,
+        hidden: false,
+        env: 'SHOPIFY_FLAG_TOPIC',
+        description: 'The requested webhook topic.',
+      }),
+    ),
+    'api-version': requiredIfNonInteractive(
+      Flags.string({
+        required: false,
+        hidden: false,
+        env: 'SHOPIFY_FLAG_API_VERSION',
+        description: 'The API Version of the webhook topic.',
+      }),
+    ),
     'delivery-method': Flags.string({
       required: false,
       hidden: false,
@@ -61,16 +66,18 @@ export default class WebhookTrigger extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_CLIENT_SECRET',
       description: `Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.`,
     }),
-    address: Flags.string({
-      required: false,
-      hidden: false,
-      env: 'SHOPIFY_FLAG_ADDRESS',
-      description: `The URL where the webhook payload should be sent.
+    address: requiredIfNonInteractive(
+      Flags.string({
+        required: false,
+        hidden: false,
+        env: 'SHOPIFY_FLAG_ADDRESS',
+        description: `The URL where the webhook payload should be sent.
                     You will need a different address type for each delivery-method:
                     ${deliveryMethodInstructionsAsString(DELIVERY_METHOD.HTTP)}
                     ${deliveryMethodInstructionsAsString(DELIVERY_METHOD.PUBSUB)}
                     ${deliveryMethodInstructionsAsString(DELIVERY_METHOD.EVENTBRIDGE)}`,
-    }),
+      }),
+    ),
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {

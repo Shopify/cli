@@ -34,6 +34,7 @@ import {
   ClientName,
   CreateAppOptions,
   DeveloperPlatformClient,
+  MigrationDeveloperPlatformClient,
   DevSessionCreateOptions,
   DevSessionDeleteOptions,
   DevSessionUpdateOptions,
@@ -51,7 +52,6 @@ import {
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {CurrentAccountInfoQuery} from '../../api/graphql/partners/generated/current-account-info.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -59,14 +59,16 @@ import {
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
-import {AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
-import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {
+  AppLogsSubscribeMutation,
+  AppLogsSubscribeMutationVariables,
+} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Project} from '../project/project.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
@@ -1279,13 +1281,6 @@ const updateURLsResponse: UpdateURLsSchema = {
   },
 }
 
-const currentAccountInfoResponse: CurrentAccountInfoQuery = {
-  currentAccountInfo: {
-    __typename: 'UserAccount',
-    email: 'user@example.com',
-  },
-}
-
 const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
   migrateToUiExtension: {
     migratedToUiExtension: true,
@@ -1293,15 +1288,19 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
   },
 }
 
-const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
+const appLogsSubscribeResponse: AppLogsSubscribeMutation = {
   appLogsSubscribe: {
     success: true,
     jwtToken: 'jwttoken',
   },
 }
 
-export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
-  const clientStub: DeveloperPlatformClient = {
+type TestDeveloperPlatformClient = DeveloperPlatformClient & MigrationDeveloperPlatformClient
+
+export function testDeveloperPlatformClient(
+  stubs: Partial<TestDeveloperPlatformClient> = {},
+): TestDeveloperPlatformClient {
+  const clientStub: TestDeveloperPlatformClient = {
     clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
     organizationSource: OrganizationSource.BusinessPlatform,
@@ -1337,7 +1336,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
     migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
-    currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
     targetSchemaDefinition: (_input: SchemaDefinitionByTargetQueryVariables & {apiKey?: string}, _orgId: string) =>
       Promise.resolve('schema'),
     apiSchemaDefinition: (_input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string}, _orgId: string) =>
@@ -1374,15 +1372,18 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       ),
     ...stubs,
   }
-  const retVal: Partial<DeveloperPlatformClient> = clientStub
+  const retVal: Partial<TestDeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[
-        key as keyof Omit<DeveloperPlatformClient, 'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat'>
+        key as keyof Omit<
+          TestDeveloperPlatformClient,
+          'clientName' | 'webUiName' | 'organizationSource' | 'bundleFormat'
+        >
       ] = vi.fn().mockImplementation(value)
     }
   }
-  return retVal as DeveloperPlatformClient
+  return retVal as TestDeveloperPlatformClient
 }
 
 export const testPartnersServiceSession: Session = {

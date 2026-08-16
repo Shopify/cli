@@ -21,6 +21,7 @@ export const OffsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(OFFSITE_TARGET)})).length(1),
     supports_oversell_protection: zod.boolean().optional(),
+    supports_3ds: zod.boolean().optional(),
   })
   .refine((schema) => !schema.supports_oversell_protection || schema.confirmation_callback_url, {
     message: 'Property required when supports_oversell_protection is true',

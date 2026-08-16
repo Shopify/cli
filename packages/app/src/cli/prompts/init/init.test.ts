@@ -1,4 +1,4 @@
-import init, {InitOptions, visibleTemplates} from './init.js'
+import init, {InitOptions, templateRequiresFlavor, visibleTemplates} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
@@ -45,6 +45,16 @@ describe('init', () => {
     test('exposes only the templates that are still actively offered', () => {
       expect(visibleTemplates).toEqual(['reactRouter', 'none'])
     })
+  })
+
+  test.each<{template: string | undefined; expected: boolean}>([
+    {template: 'reactRouter', expected: true},
+    {template: 'remix', expected: true},
+    {template: 'none', expected: false},
+    {template: 'https://github.com/Shopify/custom-template', expected: false},
+    {template: undefined, expected: false},
+  ])('reports whether template $template requires a flavor', ({template, expected}) => {
+    expect(templateRequiresFlavor(template)).toBe(expected)
   })
 
   test('it renders branches for templates that have them', async () => {

@@ -1,5 +1,7 @@
 import {cliFixture} from './cli.js'
+import {authStatePaths} from './auth-state.js'
 import {BROWSER_TIMEOUT} from './constants.js'
+import {addLoadtestHeader} from '../helpers/loadtest-header.js'
 import {chromium, type Locator, type Page} from '@playwright/test'
 import * as fs from 'fs'
 
@@ -56,14 +58,14 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
-      const storageStatePath = process.env.E2E_BROWSER_STATE_PATH
-      const hasValidStorageState = storageStatePath && fs.existsSync(storageStatePath)
+      const storageStatePath = authStatePaths().storageStatePath
+      const hasValidStorageState = Boolean(
+        process.env.E2E_ACCOUNT_EMAIL && process.env.E2E_ACCOUNT_PASSWORD && fs.existsSync(storageStatePath),
+      )
       const context = await browser.newContext({
-        extraHTTPHeaders: {
-          'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-        },
         ...(hasValidStorageState ? {storageState: storageStatePath} : {}),
       })
+      await addLoadtestHeader(context)
       context.setDefaultTimeout(BROWSER_TIMEOUT.max)
       context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
       const page = await context.newPage()

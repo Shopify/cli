@@ -33,6 +33,11 @@ export default class FunctionRun extends AppUnlinkedCommand {
       description: 'Name of the WebAssembly export to invoke.',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),
+    profile: Flags.boolean({
+      description:
+        'Generate a WebAssembly performance profile for the function run. The profile can be viewed in Speedscope.',
+      env: 'SHOPIFY_FLAG_PROFILE',
+    }),
   }
 
   public async run(): Promise<AppUnlinkedCommandOutput> {
@@ -93,6 +98,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
       stdin: 'inherit',
       schemaPath,
       queryPath,
+      profile: flags.profile,
     })
 
     return {app}

@@ -151,7 +151,7 @@ FLAGS
       [env: SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -209,7 +209,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -280,7 +280,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -349,7 +349,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -384,7 +384,7 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app.
+      The Client ID of your app. Required if non interactive.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --file-name=<value>
@@ -408,7 +408,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -456,7 +456,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -501,7 +501,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -550,7 +550,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -577,12 +577,13 @@ FLAGS
 
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
-      recommended flag is --allow-updates.
+      recommended flag is --allow-updates. In non-interactive environments, provide this flag, --allow-updates, or
+      --no-release.
       [env: SHOPIFY_FLAG_ALLOW_DELETES]
 
   --allow-updates
       Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for
-      CI/CD environments.
+      CI/CD environments. In non-interactive environments, provide this flag, --allow-deletes, or --no-release.
       [env: SHOPIFY_FLAG_ALLOW_UPDATES]
 
   --auth-alias=<value>
@@ -609,7 +610,7 @@ FLAGS
 
   --no-release
       Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation
-      is not required.
+      is not required. In non-interactive environments, provide this flag, --allow-updates, or --allow-deletes.
       [env: SHOPIFY_FLAG_NO_RELEASE]
 
   --path=<value>
@@ -625,7 +626,7 @@ FLAGS
       [env: SHOPIFY_FLAG_SOURCE_CONTROL_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -738,7 +739,7 @@ FLAGS
       [env: SHOPIFY_FLAG_USE_LOCALHOST]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -787,7 +788,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -837,7 +838,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -884,7 +885,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -954,7 +955,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -1005,7 +1006,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1053,7 +1054,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1090,7 +1091,7 @@ FLAGS
 
   -l, --log=<value>
       Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of
-      `shopify app dev` and is the suffix of the log file name.
+      `shopify app dev` and is the suffix of the log file name. Required if non interactive.
       [env: SHOPIFY_FLAG_LOG]
 
   -w, --[no-]watch
@@ -1118,7 +1119,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1136,7 +1137,7 @@ Run a function locally for testing.
 ```
 USAGE
   $ shopify app function run [--auth-alias <value>] [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--no-color] [--path <value>] [--profile] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1171,12 +1172,16 @@ FLAGS
       The path to your function directory.
       [env: SHOPIFY_FLAG_PATH]
 
+  --profile
+      Generate a WebAssembly performance profile for the function run. The profile can be viewed in Speedscope.
+      [env: SHOPIFY_FLAG_PROFILE]
+
   --reset
       Reset all your settings.
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1226,7 +1231,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STDOUT]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1274,7 +1279,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1300,11 +1305,11 @@ FLAGS
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
   -n, --name=<value>
-      name of your Extension
+      name of your Extension. Required if non interactive.
       [env: SHOPIFY_FLAG_NAME]
 
   -t, --template=<value>
-      Extension template
+      Extension template. Required if non interactive.
       [env: SHOPIFY_FLAG_EXTENSION_TEMPLATE]
 
   --auth-alias=<value>
@@ -1316,7 +1321,8 @@ FLAGS
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --flavor=<option>
-      Choose a starting template for your extension, where applicable
+      Choose a starting template for your extension, where applicable. Required if non interactive when the selected
+      extension template supports multiple flavors.
       [env: SHOPIFY_FLAG_FLAVOR]
       <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
 
@@ -1333,7 +1339,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1396,7 +1402,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -1459,7 +1465,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1504,7 +1510,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1550,7 +1556,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --web-env
@@ -1586,6 +1592,7 @@ FLAGS
 
   -n, --name=<value>
       The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.
+      Required in non-interactive environments unless --client-id is provided.
       [env: SHOPIFY_FLAG_NAME]
 
   -p, --path=<value>
@@ -1596,12 +1603,13 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag
-      avoids the app selection prompt.
+      The Client ID of your app. Use this to automatically link your new project to an existing app. In non-interactive
+      environments, provide this flag or both --name and --organization-id.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --flavor=<value>
-      Which flavor of the given template to use.
+      Which flavor of the given template to use. Required in non-interactive environments when the selected template
+      offers multiple flavors.
       [env: SHOPIFY_FLAG_TEMPLATE_FLAVOR]
 
   --no-color
@@ -1610,18 +1618,25 @@ FLAGS
 
   --organization-id=<value>
       The organization ID. Your organization ID can be found in your Dev Dashboard URL:
-      https://dev.shopify.com/dashboard/<organization-id>
+      https://dev.shopify.com/dashboard/<organization-id>. Required in non-interactive environments unless --client-id is
+      provided.
       [env: SHOPIFY_FLAG_ORGANIZATION_ID]
 
   --template=<value>
       The app template. Accepts one of the following:
       - <reactRouter|none>
-      - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]
+      - Any GitHub repo with optional branch and subpath, e.g.,
+      https://github.com/Shopify/<repository>/[subpath]#[branch]. Required if non interactive.
       [env: SHOPIFY_FLAG_TEMPLATE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
+
+EXAMPLES
+  $ shopify app init --name my-app --organization-id 123 --template reactRouter --flavor typescript
+
+  $ shopify app init --client-id 123 --template none
 ```
 
 ## `shopify app logs`
@@ -1676,7 +1691,7 @@ FLAGS
       <options: success|failure>
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1727,7 +1742,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1752,12 +1767,12 @@ FLAGS
 
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
-      recommended flag is --allow-updates.
+      recommended flag is --allow-updates. Required in non-interactive environments unless --allow-updates is provided.
       [env: SHOPIFY_FLAG_ALLOW_DELETES]
 
   --allow-updates
       Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for
-      CI/CD environments.
+      CI/CD environments. Required in non-interactive environments unless --allow-deletes is provided.
       [env: SHOPIFY_FLAG_ALLOW_UPDATES]
 
   --auth-alias=<value>
@@ -1781,7 +1796,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -1833,7 +1848,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -1863,11 +1878,12 @@ FLAGS
       · For remote HTTP testing, use a URL that starts with https://
       · For local HTTP testing, use http://localhost:{port}/{url-path}
       · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}
-      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:
+      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:. Required if non
+      interactive.
       [env: SHOPIFY_FLAG_ADDRESS]
 
   --api-version=<value>
-      The API Version of the webhook topic.
+      The API Version of the webhook topic. Required if non interactive.
       [env: SHOPIFY_FLAG_API_VERSION]
 
   --auth-alias=<value>
@@ -1902,7 +1918,7 @@ FLAGS
       [env: SHOPIFY_FLAG_RESET]
 
   --topic=<value>
-      The requested webhook topic.
+      The requested webhook topic. Required if non interactive.
       [env: SHOPIFY_FLAG_TOPIC]
 
 DESCRIPTION
@@ -1942,7 +1958,7 @@ USAGE
 
 FLAGS
   --alias=<value>
-      Alias of the session you want to login to.
+      Alias of an existing session you want to use. Required if non interactive.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
 DESCRIPTION
@@ -2136,7 +2152,7 @@ FLAGS
       [env: SHOPIFY_FLAG_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -2181,7 +2197,7 @@ FLAGS
       [env: SHOPIFY_FLAG_QUERY]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -2380,7 +2396,8 @@ USAGE
 
 FLAGS
   -f, --force
-      Forces a deployment to proceed if there are uncommitted changes in its Git repository.
+      Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation
+      prompts for non-preview environments.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
 
   -s, --shop=<value>
@@ -2596,9 +2613,17 @@ Push environment variables from the local .env file to your linked Hydrogen stor
 
 ```
 USAGE
-  $ shopify hydrogen env push [--env <value> | ] [--env-file <value>] [--path <value>]
+  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--path <value>]
 
 FLAGS
+  -f, --force
+      Push environment variable changes without confirmation.
+      [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  --dry-run
+      Preview environment variable changes without pushing them.
+      [env: SHOPIFY_HYDROGEN_FLAG_DRY_RUN]
+
   --env=<value>
       Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
 
@@ -2751,12 +2776,26 @@ Link a local project to one of your shop's Hydrogen storefronts.
 
 ```
 USAGE
-  $ shopify hydrogen link [-f] [--path <value>] [--storefront <value>]
+  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--name <value> | ] [--path <value>]
+    [-s <value>]
 
 FLAGS
   -f, --force
       Overwrites the destination directory and files if they already exist.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE]
+
+  -s, --shop=<value>
+      Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
+      https://janes-apparel.myshopify.com).
+      [env: SHOPIFY_SHOP]
+
+  --create-storefront
+      Create a new Hydrogen storefront.
+      [env: SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT]
+
+  --name=<value>
+      The name to use when creating a new Hydrogen storefront.
+      [env: SHOPIFY_HYDROGEN_FLAG_NAME]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -3064,7 +3103,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3356,7 +3395,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3399,7 +3438,7 @@ FLAGS
       [env: SHOPIFY_FLAG_SCOPES]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3434,7 +3473,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3473,7 +3512,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3532,7 +3571,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -3591,7 +3630,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3625,7 +3664,7 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   --country=<value>
-      Two-letter country code for the store, such as US, CA, or GB.
+      Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.
       [env: SHOPIFY_FLAG_STORE_COUNTRY]
 
   --name=<value>
@@ -3637,7 +3676,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3700,7 +3739,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VARIABLE_FILE]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -3757,7 +3796,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PORT]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
   --version=<value>
@@ -3803,7 +3842,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3840,11 +3879,12 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --organization-id=<value>
-      The numeric organization ID. Auto-selects if you belong to a single organization.
+      The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive when
+      more than one organization is available.
       [env: SHOPIFY_FLAG_ORGANIZATION_ID]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3853,8 +3893,7 @@ DESCRIPTION
   Lists stores in a Shopify organization available to the current CLI account.
 
   When more than one organization is available, the command prompts you to pick one unless you provide
-  `--organization-id`.
-  In non-interactive environments, `--organization-id` is required.
+  `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.
 
   Run `shopify organization list` to find organization IDs.
 
@@ -3884,7 +3923,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -3961,7 +4000,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PRINT]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4016,7 +4055,7 @@ FLAGS
       [env: SHOPIFY_FLAG_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4039,11 +4078,12 @@ USAGE
 
 FLAGS
   -a, --show-all
-      Include others development themes in theme list.
+      Include other development themes in the theme list. Use --show-all, --development, or --theme in non-interactive
+      environments.
       [env: SHOPIFY_FLAG_SHOW_ALL]
 
   -d, --development
-      Delete your development theme.
+      Delete your development theme. Use --show-all, --development, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -4051,7 +4091,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -f, --force
-      Skip confirmation.
+      Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
 
   -s, --store=<value>
@@ -4060,7 +4100,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>...
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --show-all, --development, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4080,7 +4120,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4210,7 +4250,7 @@ FLAGS
       [env: SHOPIFY_FLAG_THEME_EDITOR_SYNC]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4263,7 +4303,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -f, --force
-      Force the duplicate operation to run without prompts or confirmations.
+      Force the duplicate operation to run without prompts or confirmations. Required if non interactive outside CI.
       [env: SHOPIFY_FLAG_FORCE]
 
   -j, --json
@@ -4280,7 +4320,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Required if non interactive.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4296,7 +4336,7 @@ FLAGS
       [env: SHOPIFY_CLI_THEME_TOKEN]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4385,7 +4425,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4427,7 +4467,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4462,7 +4502,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_COLOR]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4524,7 +4564,7 @@ FLAGS
       <options: live|unpublished|development>
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4567,7 +4607,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4593,7 +4633,7 @@ FLAGS
       [env: SHOPIFY_FLAG_EDITOR]
 
   -d, --development
-      Open your development theme.
+      Open your development theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -4601,7 +4641,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -l, --live
-      Open your live (published) theme.
+      Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -s, --store=<value>
@@ -4610,7 +4650,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4630,7 +4670,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4669,7 +4709,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4744,7 +4784,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PREVIEW_ID]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4808,7 +4848,7 @@ FLAGS
       [env: SHOPIFY_FLAG_URL]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4835,7 +4875,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -f, --force
-      Skip confirmation.
+      Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
 
   -s, --store=<value>
@@ -4844,7 +4884,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Required if non interactive.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -4864,7 +4904,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4893,7 +4933,8 @@ USAGE
 
 FLAGS
   -d, --development
-      Pull theme files from your remote development theme.
+      Pull theme files from your remote development theme. Use --development, --live, or --theme in non-interactive
+      environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -4901,7 +4942,7 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -l, --live
-      Pull theme files from your remote live theme.
+      Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -n, --nodelete
@@ -4919,7 +4960,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   -x, --ignore=<value>...
@@ -4944,7 +4985,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -4966,7 +5007,7 @@ USAGE
 
 FLAGS
   -a, --allow-live
-      Allow push to a live theme.
+      Allow push to a live theme. Required in non-interactive environments when targeting the live theme.
       [env: SHOPIFY_FLAG_ALLOW_LIVE]
 
   -c, --development-context=<value>
@@ -4975,7 +5016,8 @@ FLAGS
       [env: SHOPIFY_FLAG_DEVELOPMENT_CONTEXT]
 
   -d, --development
-      Push theme files from your remote development theme.
+      Push theme files from your remote development theme. Use --development, --live, --theme, or --unpublished in
+      non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -4987,7 +5029,8 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
-      Push theme files from your remote live theme.
+      Push theme files from your remote live theme. Use --development, --live, --theme, or --unpublished in
+      non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -n, --nodelete
@@ -5008,11 +5051,14 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, --theme, or --unpublished in non-interactive
+      environments. When using --unpublished without --development, use --theme to provide the new theme name.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   -u, --unpublished
-      Create a new unpublished theme and push to it.
+      Create a new unpublished theme and push to it. Use --development, --live, --theme, or --unpublished in
+      non-interactive environments. When using --unpublished without --development, use --theme to provide the new theme
+      name.
       [env: SHOPIFY_FLAG_UNPUBLISHED]
 
   -x, --ignore=<value>...
@@ -5045,7 +5091,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STRICT_PUSH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -5096,7 +5142,7 @@ USAGE
 
 FLAGS
   -d, --development
-      Rename your development theme.
+      Rename your development theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_DEVELOPMENT]
 
   -e, --environment=<value>...
@@ -5104,11 +5150,11 @@ FLAGS
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
   -l, --live
-      Rename your remote live theme.
+      Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_LIVE]
 
   -n, --name=<value>
-      The new name for the theme.
+      The new name for the theme. Required if non interactive.
       [env: SHOPIFY_FLAG_NEW_NAME]
 
   -s, --store=<value>
@@ -5117,7 +5163,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -5137,7 +5183,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
@@ -5189,7 +5235,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --verbose
-      Increase the verbosity of the output.
+      Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION

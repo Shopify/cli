@@ -2,13 +2,16 @@ import Login from './login.js'
 import {describe, expect, vi, test} from 'vitest'
 import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit/node/session-prompt')
+vi.mock('@shopify/cli-kit/node/system')
 
 describe('Login command', () => {
   test('runs login without alias flag', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
 
     // When
@@ -22,6 +25,7 @@ describe('Login command', () => {
   test('runs login with alias flag', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
 
     // When
@@ -38,7 +42,8 @@ describe('Login command', () => {
 
     // Then
     expect(flags.alias).toBeDefined()
-    expect(flags.alias.description).toBe('Alias of the session you want to login to.')
+    expect(flags.alias).toMatchObject({requiredIfNonInteractive: true})
+    expect(flags.alias.description).toBe('Alias of an existing session you want to use. Required if non interactive.')
     expect(flags.alias.env).toBe('SHOPIFY_FLAG_AUTH_ALIAS')
   })
 })

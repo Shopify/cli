@@ -1,6 +1,5 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
-import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {Paginateable} from '../utilities/developer-platform-client.js'
 import {APP_NAME_MAX_LENGTH} from '../models/app/validation/common.js'
 import {ApplicationURLs} from '../services/dev/urls.js'
@@ -21,8 +20,6 @@ export async function selectAppPrompt(
   },
 ): Promise<MinimalAppIdentifiers | undefined> {
   const tomls = await getTomls(options?.directory)
-
-  if (tomls) setCachedCommandTomlMap(tomls)
 
   const toAnswer = (app: MinimalOrganizationApp) => {
     if (tomls[app?.apiKey]) {
