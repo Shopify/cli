@@ -37,6 +37,59 @@ describe('deepStrict', () => {
     // Then
     expect(result.success).toBeTruthy()
   })
+
+  test('validates non-optional object schemas as strict', async () => {
+    // Given
+    const schema = z.object({
+      name: z.string(),
+    })
+    const validContent = {name: 'app'}
+    const invalidContent = {name: 'app', extra: 'field'}
+
+    // When
+    const strictSchema = deepStrict(schema)
+
+    // Then
+    expect(strictSchema.safeParse(validContent).success).toBe(true)
+    expect(strictSchema.safeParse(invalidContent).success).toBe(false)
+  })
+
+  test('validates deeply nested object structures as strict', async () => {
+    // Given
+    const schema = z.object({
+      level1: z.object({
+        level2: z.object({
+          key: z.string(),
+        }),
+      }),
+    })
+    const invalidContent = {
+      level1: {
+        level2: {
+          key: 'value',
+          unwanted: true,
+        },
+      },
+    }
+
+    // When
+    const strictSchema = deepStrict(schema)
+
+    // Then
+    expect(strictSchema.safeParse(invalidContent).success).toBe(false)
+  })
+
+  test('returns non-object schemas unchanged', async () => {
+    // Given
+    const stringSchema = z.string()
+
+    // When
+    const resultSchema = deepStrict(stringSchema)
+
+    // Then
+    expect(resultSchema.safeParse('hello').success).toBe(true)
+    expect(resultSchema.safeParse(123).success).toBe(false)
+  })
 })
 
 describe('errorsToString', () => {
