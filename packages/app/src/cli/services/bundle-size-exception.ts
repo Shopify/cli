@@ -13,6 +13,7 @@ import {
   renderInfo,
   renderSuccess,
   renderTextPrompt,
+  renderWarning,
 } from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 
@@ -115,6 +116,59 @@ export async function requestBundleSizeException(options: RequestBundleSizeExcep
       ['You can keep reducing your bundle size in the meantime.'],
     ],
   })
+}
+
+interface BundleSizeExceptionStatusOptions {
+  appContextResult: LoadedAppContextOutput
+}
+
+/**
+ * Shows the state of the app's bundle size exception request.
+ *
+ * Only reads the status and effective limit from the platform; it doesn't build or
+ * measure anything, so it's fast enough to poll while a request is under review.
+ */
+export async function bundleSizeExceptionStatus(options: BundleSizeExceptionStatusOptions): Promise<void> {
+  const {remoteApp, developerPlatformClient} = options.appContextResult
+
+  const state = await developerPlatformClient.uiExtensionBundleSizeException(remoteApp)
+  const limit = `${state.effectiveLimitKb} KB (compressed)`
+
+  switch (state.status) {
+    case 'GRANTED':
+      renderSuccess({
+        headline: 'Bundle size exception granted.',
+        body: [`Remote-DOM UI extension bundles up to ${limit} will pass deploy validation.`],
+      })
+      break
+    case 'PENDING':
+      renderInfo({
+        headline: 'Bundle size exception request pending review.',
+        body: [
+          `The current limit is ${limit}. Shopify is reviewing your request; once approved,`,
+          {command: 'shopify app deploy'},
+          'will succeed with no further changes.',
+        ],
+      })
+      break
+    case 'DENIED':
+      renderWarning({
+        headline: 'Bundle size exception request denied.',
+        body: [
+          `A previous request for this app was denied or revoked, and the current limit is ${limit}.`,
+          'Contact Shopify support to appeal.',
+        ],
+      })
+      break
+    case 'NONE':
+      renderInfo({
+        headline: 'No bundle size exception.',
+        body: [`Remote-DOM UI extension bundles are limited to ${limit}.`],
+        nextSteps: [
+          ['Run', {command: 'shopify app bundle-size-exception request'}, "if your bundle can't fit the limit."],
+        ],
+      })
+  }
 }
 
 function measuredSection(measured: MeasuredExtension[], effectiveLimitKb: number) {

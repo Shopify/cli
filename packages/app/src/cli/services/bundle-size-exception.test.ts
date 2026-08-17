@@ -1,4 +1,4 @@
-import {requestBundleSizeException} from './bundle-size-exception.js'
+import {bundleSizeExceptionStatus, requestBundleSizeException} from './bundle-size-exception.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {getBundleSize} from './build/bundle-size.js'
 import {testAppLinked, testDeveloperPlatformClient, testUIExtension} from '../models/app/app.test-data.js'
@@ -9,6 +9,7 @@ import {
   renderInfo,
   renderSuccess,
   renderTextPrompt,
+  renderWarning,
 } from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
@@ -178,5 +179,59 @@ describe('requestBundleSizeException', () => {
     const options = {appContextResult: appContextResult([extension], client)}
 
     await expect(requestBundleSizeException(options)).rejects.toThrow(/already pending review/)
+  })
+})
+
+describe('bundleSizeExceptionStatus', () => {
+  function statusClient(status: 'NONE' | 'PENDING' | 'GRANTED' | 'DENIED', effectiveLimitKb: number) {
+    return testDeveloperPlatformClient({
+      uiExtensionBundleSizeException: vi.fn().mockResolvedValue({status, effectiveLimitKb}),
+    })
+  }
+
+  test('renders success with the raised limit when granted', async () => {
+    const options = {appContextResult: appContextResult([], statusClient('GRANTED', 128))}
+
+    await bundleSizeExceptionStatus(options)
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headline: 'Bundle size exception granted.',
+        body: [expect.stringContaining('128 KB (compressed)')],
+      }),
+    )
+  })
+
+  test('renders pending review info with the current limit', async () => {
+    const options = {appContextResult: appContextResult([], statusClient('PENDING', 64))}
+
+    await bundleSizeExceptionStatus(options)
+
+    expect(renderInfo).toHaveBeenCalledWith(
+      expect.objectContaining({headline: 'Bundle size exception request pending review.'}),
+    )
+  })
+
+  test('renders a warning with the appeal path when denied', async () => {
+    const options = {appContextResult: appContextResult([], statusClient('DENIED', 64))}
+
+    await bundleSizeExceptionStatus(options)
+
+    expect(renderWarning).toHaveBeenCalledWith(
+      expect.objectContaining({headline: 'Bundle size exception request denied.'}),
+    )
+  })
+
+  test('renders the default limit and the request command when there is no exception activity', async () => {
+    const options = {appContextResult: appContextResult([], statusClient('NONE', 64))}
+
+    await bundleSizeExceptionStatus(options)
+
+    expect(renderInfo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headline: 'No bundle size exception.',
+        body: [expect.stringContaining('64 KB (compressed)')],
+      }),
+    )
   })
 })
