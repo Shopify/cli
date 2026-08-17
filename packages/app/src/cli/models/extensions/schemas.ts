@@ -40,6 +40,7 @@ export const ExtensionsArraySchema = zod.object({
 
 const TargetCapabilitiesSchema = zod.object({
   allow_direct_linking: zod.boolean().optional(),
+  intercepts: zod.any().optional(),
 })
 
 const ShouldRenderSchema = zod.object({
