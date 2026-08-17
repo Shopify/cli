@@ -78,6 +78,33 @@ export type SourceExtension =
   /** ZIP file extension. */
   | 'ZIP';
 
+/** The review status of an app's bundle size exception for Remote-DOM UI extensions. */
+export type UiExtensionBundleSizeExceptionStatus =
+  /** The most recent exception request was denied or a granted exception was revoked. */
+  | 'DENIED'
+  /** An exception has been granted. */
+  | 'GRANTED'
+  /** No exception has been requested for this app. */
+  | 'NONE'
+  /** An exception request is awaiting review by Shopify. */
+  | 'PENDING';
+
+/** Machine-collected size context for one Remote-DOM UI extension, used to review a bundle size exception request. */
+export type UiExtensionSizeContextInput = {
+  /** The API version of the extension. */
+  apiVersion: Scalars['String']['input'];
+  /** The compressed (deflate) bundle size in KB, measured with the same algorithm the platform enforces. */
+  compressedKb: Scalars['Int']['input'];
+  /** The handle of the extension. */
+  handle: Scalars['String']['input'];
+  /** The uncompressed bundle size in KB. */
+  rawKb: Scalars['Int']['input'];
+  /** The extension targets declared by the extension. */
+  targets?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The module uid of the extension. */
+  uid: Scalars['String']['input'];
+};
+
 /** The input fields for app version metadata. */
 export type VersionMetadataInput = {
   /** Message associated with this app version. */

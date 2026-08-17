@@ -1,6 +1,7 @@
 import Build from './commands/app/build.js'
 import BulkCancel from './commands/app/bulk/cancel.js'
 import BulkStatus from './commands/app/bulk/status.js'
+import BundleSizeExceptionRequest from './commands/app/bundle-size-exception/request.js'
 import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
 import ConfigPull from './commands/app/config/pull.js'
@@ -45,6 +46,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:build': Build,
   'app:bulk:cancel': BulkCancel,
   'app:bulk:status': BulkStatus,
+  'app:bundle-size-exception:request': BundleSizeExceptionRequest,
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:dev:clean': DevClean,

@@ -1,0 +1,15 @@
+mutation BundleSizeExceptionRequest($appId: ID!, $reason: String!, $extensions: [UiExtensionSizeContextInput!]!) {
+  appUiExtensionBundleSizeExceptionRequest(appId: $appId, reason: $reason, extensions: $extensions) {
+    exception {
+      status
+      effectiveLimitKb
+    }
+    userErrors {
+      field
+      message
+      category
+      code
+      on
+    }
+  }
+}
