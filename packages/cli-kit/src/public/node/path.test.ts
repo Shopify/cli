@@ -101,6 +101,17 @@ describe('sniffForPath', () => {
     // Then
     expect(path).toStrictEqual('/path/to/project')
   })
+
+  test('returns the entire path if it contains =', () => {
+    // Given
+    const argv = ['node', 'script.js', '--path=/path/to/project=name']
+
+    // When
+    const path = sniffForPath(argv)
+
+    // Then
+    expect(path).toStrictEqual('/path/to/project=name')
+  })
 })
 
 describe('isSubpath', () => {
