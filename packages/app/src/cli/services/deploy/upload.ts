@@ -143,6 +143,35 @@ export async function uploadExtensionsBundle(
 
 const VALIDATION_ERRORS_TITLE = '\nValidation errors'
 const GENERIC_ERRORS_TITLE = '\n'
+const BUNDLE_SIZE_EXCEPTION_TITLE = '\nBundle size exception'
+
+interface BundleSizeLimitErrorDetail {
+  type: 'bundle_size_limit'
+  limit_kb?: number
+}
+
+function bundleSizeLimitDetail(
+  error: AppDeploySchema['appDeploy']['userErrors'][number],
+): BundleSizeLimitErrorDetail | undefined {
+  const on = error.on as unknown
+  if (!Array.isArray(on)) return undefined
+  return on.find(
+    (entry): entry is BundleSizeLimitErrorDetail =>
+      typeof entry === 'object' && entry !== null && (entry as {type?: unknown}).type === 'bundle_size_limit',
+  )
+}
+
+function bundleSizeExceptionSection(detail: BundleSizeLimitErrorDetail): ListToken {
+  const limitText = detail.limit_kb ? `${detail.limit_kb} KB (compressed)` : 'the current limit'
+  return {
+    list: {
+      title: BUNDLE_SIZE_EXCEPTION_TITLE,
+      items: [
+        `This extension's bundle exceeds ${limitText}. If you can't reduce it, run \`shopify app bundle-size-exception request\` to ask Shopify for a bundle size exception.`,
+      ],
+    },
+  }
+}
 
 export function deploymentErrorsToCustomSections(
   errors: AppDeploySchema['appDeploy']['userErrors'],
@@ -322,10 +351,10 @@ function appManagementErrorsSection(
     const errorMessage = `${field}: ${error.message}`
 
     // Find or create section for this extension
-    const existingSection = sections.find((section) => section.title === extensionName)
+    let section = sections.find((existingSection) => existingSection.title === extensionName)
 
-    if (existingSection) {
-      const sectionBody = existingSection.body as ListToken[]
+    if (section) {
+      const sectionBody = section.body as ListToken[]
       const errorsList = sectionBody.find((listToken) => listToken.list.title === VALIDATION_ERRORS_TITLE)
 
       if (errorsList) {
@@ -334,7 +363,7 @@ function appManagementErrorsSection(
         }
       }
     } else {
-      sections.push({
+      section = {
         title: extensionName,
         body: [
           {
@@ -344,7 +373,18 @@ function appManagementErrorsSection(
             },
           },
         ],
-      })
+      }
+      sections.push(section)
+    }
+
+    // When the failure is a bundle size limit error, point at the exception request flow.
+    const sizeLimitDetail = bundleSizeLimitDetail(error)
+    if (sizeLimitDetail) {
+      const sectionBody = section.body as ListToken[]
+      const alreadyPresent = sectionBody.some((listToken) => listToken.list.title === BUNDLE_SIZE_EXCEPTION_TITLE)
+      if (!alreadyPresent) {
+        sectionBody.push(bundleSizeExceptionSection(sizeLimitDetail))
+      }
     }
 
     return sections
