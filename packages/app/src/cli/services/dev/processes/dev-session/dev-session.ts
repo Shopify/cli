@@ -228,12 +228,12 @@ export class DevSession {
   private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent) {
     if (result.status === 'updated') {
       await this.logger.success(`✅ Updated dev preview on ${this.options.storeFqdn}`)
-      await this.logger.logExtensionUpdateMessages(event)
+      await this.logger.logExtensionUpdateMessages(event, result.status)
       await this.setUpdatedStatusMessage()
     } else if (result.status === 'created') {
       this.statusManager.updateStatus({isReady: true})
       await this.logger.success(`✅ Ready, watching for changes in your app `)
-      await this.logger.logExtensionUpdateMessages(event)
+      await this.logger.logExtensionUpdateMessages(event, result.status)
       this.statusManager.setMessage('READY')
     } else if (result.status === 'aborted') {
       await this.logger.debug('❌ Dev preview update aborted (new change detected or error during update)')

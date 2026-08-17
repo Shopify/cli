@@ -172,7 +172,7 @@ describe('DevSessionLogger', () => {
 
   describe('logExtensionUpdateMessages', () => {
     test('does nothing when no event is provided', async () => {
-      await logger.logExtensionUpdateMessages()
+      await logger.logExtensionUpdateMessages(undefined, 'updated')
       expect(output).toMatchInlineSnapshot(`[]`)
     })
 
@@ -198,7 +198,7 @@ describe('DevSessionLogger', () => {
         startTime: [0, 0],
       }
 
-      await logger.logExtensionUpdateMessages(event)
+      await logger.logExtensionUpdateMessages(event, 'updated')
       expect(output).toMatchInlineSnapshot(`
         [
           "[90m└ [39mThis has been updated.",
@@ -228,7 +228,7 @@ describe('DevSessionLogger', () => {
         startTime: [0, 0],
       }
 
-      await logger.logExtensionUpdateMessages(event)
+      await logger.logExtensionUpdateMessages(event, 'updated')
       expect(output).toMatchInlineSnapshot(`[]`)
       expect(mockExtension.getDevSessionUpdateMessages).not.toHaveBeenCalled()
     })
@@ -245,7 +245,8 @@ describe('DevSessionLogger', () => {
         app: {configuration: {}} as any,
         extensionEvents: [
           {
-            type: EventType.Created,
+            // The watcher reports initial extensions as updated; the dev session result identifies this as creation.
+            type: EventType.Updated,
             extension: analyticsAppEventsExtension,
           },
         ],
@@ -254,7 +255,7 @@ describe('DevSessionLogger', () => {
       }
 
       // When
-      await logger.logExtensionUpdateMessages(event)
+      await logger.logExtensionUpdateMessages(event, 'created')
 
       // Then
       expect(output).toMatchInlineSnapshot(`
@@ -266,6 +267,33 @@ describe('DevSessionLogger', () => {
         {outputPrefix: 'analytics_app_events', stripAnsi: false},
         expect.any(Function),
       )
+    })
+
+    test('does not repeat Analytics App Events messages after an update', async () => {
+      // Given
+      const analyticsAppEventsExtension = new ExtensionInstance({
+        configuration: {},
+        configurationPath: '',
+        directory: '',
+        specification: analyticsAppEventsSpec,
+      })
+      const event: AppEvent = {
+        app: {configuration: {}} as any,
+        extensionEvents: [
+          {
+            type: EventType.Updated,
+            extension: analyticsAppEventsExtension,
+          },
+        ],
+        path: '',
+        startTime: [0, 0],
+      }
+
+      // When
+      await logger.logExtensionUpdateMessages(event, 'updated')
+
+      // Then
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
   })
 

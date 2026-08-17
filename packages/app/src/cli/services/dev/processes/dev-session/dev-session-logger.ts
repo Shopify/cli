@@ -70,17 +70,17 @@ export class DevSessionLogger {
   }
 
   /**
-   * Display update messages from extensions after a dev session update.
+   * Display messages from extensions after a dev session completes.
    * This function collects and displays update messages from all extensions.
    */
-  async logExtensionUpdateMessages(event?: AppEvent) {
+  async logExtensionUpdateMessages(event: AppEvent | undefined, devSessionStatus: 'created' | 'updated') {
     if (!event) return
     const extensionEvents = event.extensionEvents ?? []
     const messageArrays = await Promise.all(
       extensionEvents.map(async (eve) => {
         // Don't log messages for deleted extensions
         if (eve.type === EventType.Deleted) return []
-        const messages = await eve.extension.getDevSessionUpdateMessages()
+        const messages = await eve.extension.getDevSessionUpdateMessages(devSessionStatus)
         return messages?.map((message) => ({message, prefix: eve.extension.handle})) ?? []
       }),
     )

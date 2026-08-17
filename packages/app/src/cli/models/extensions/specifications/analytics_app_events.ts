@@ -6,7 +6,8 @@ const analyticsAppEventsSpec = createContractBasedModuleSpecification({
   uidStrategy: 'single',
   experience: 'extension',
   appModuleFeatures: () => [],
-  getDevSessionUpdateMessages: async () => ['Extension loaded'],
+  getDevSessionUpdateMessages: async (_config, devSessionStatus = 'created') =>
+    devSessionStatus === 'created' ? ['Extension loaded'] : [],
 })
 
 export default analyticsAppEventsSpec

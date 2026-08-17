@@ -91,7 +91,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>, outputPath: string) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
+  getDevSessionUpdateMessages?: (config: TConfiguration, devSessionStatus?: 'created' | 'updated') => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
@@ -271,7 +271,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
-  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
+  getDevSessionUpdateMessages?: (config: TConfiguration, devSessionStatus?: 'created' | 'updated') => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
