@@ -24,7 +24,7 @@ export async function writeManifestToBundle(appManifest: AppManifest, bundlePath
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 }
 
-export const BUNDLE_EXCLUSION_PATTERNS = ['!**/*.js.map', '!**/*.metafile.json']
+export const BUNDLE_EXCLUSION_PATTERNS = ['!**/*.js.map']
 
 export async function compressBundle(inputDirectory: string, outputPath: string, customMatchFilePattern?: string[]) {
   const matchFilePattern = customMatchFilePattern ?? ['**/*', ...BUNDLE_EXCLUSION_PATTERNS]
