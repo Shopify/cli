@@ -21,6 +21,14 @@ import {CLI_KIT_VERSION} from '../common/version.js'
 
 export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
 
+const CLI_INSTALL_COMMANDS: Partial<Record<string, string>> = {
+  homebrew: 'brew upgrade shopify-cli',
+  yarn: 'yarn global add @shopify/cli@latest',
+  pnpm: 'pnpm add -g @shopify/cli@latest',
+  npm: 'npm install -g @shopify/cli@latest',
+  bun: 'bun install -g @shopify/cli@latest',
+}
+
 /**
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
@@ -29,16 +37,7 @@ export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
  */
 export function cliInstallCommand(): string | undefined {
   const packageManager = inferPackageManagerForGlobalCLI()
-  if (!packageManager || packageManager === 'unknown') return undefined
-
-  if (packageManager === 'homebrew') {
-    return 'brew upgrade shopify-cli'
-  } else if (packageManager === 'yarn') {
-    return `${packageManager} global add @shopify/cli@latest`
-  } else {
-    const verb = packageManager === 'pnpm' ? 'add' : 'install'
-    return `${packageManager} ${verb} -g @shopify/cli@latest`
-  }
+  return CLI_INSTALL_COMMANDS[packageManager]
 }
 
 /**
