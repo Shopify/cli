@@ -1,5 +1,5 @@
 import {fileExistsSync, isDirectorySync} from './fs.js'
-import {dirname, joinPath} from './path.js'
+import {dirname, extname, joinPath} from './path.js'
 import {uniq} from '../common/array.js'
 import {openSync, readSync, closeSync} from 'fs'
 
@@ -69,7 +69,7 @@ export function extractImportPaths(filePath: string): string[] {
   if (cached) return cached
 
   const content = readFileContent(filePath)
-  const ext = filePath.substring(filePath.lastIndexOf('.'))
+  const ext = extname(filePath)
 
   let result: string[]
   switch (ext) {
@@ -231,12 +231,7 @@ function resolveJSImport(importPath: string, fromFile: string): string | null {
       joinPath(resolvedPath, 'index.jsx'),
     ]
 
-    for (const indexPath of indexPaths) {
-      if (cachedFileExists(indexPath) && !cachedIsDir(indexPath)) {
-        return indexPath
-      }
-    }
-    return null
+    return indexPaths.find((indexPath) => cachedFileExists(indexPath) && !cachedIsDir(indexPath)) ?? null
   }
 
   const possiblePaths = [
@@ -247,24 +242,12 @@ function resolveJSImport(importPath: string, fromFile: string): string | null {
     `${resolvedPath}.jsx`,
   ]
 
-  for (const path of possiblePaths) {
-    if (cachedFileExists(path) && !cachedIsDir(path)) {
-      return path
-    }
-  }
-
-  return null
+  return possiblePaths.find((path) => cachedFileExists(path) && !cachedIsDir(path)) ?? null
 }
 
 function resolveRustModule(modName: string, fromFile: string): string | null {
   const basePath = dirname(fromFile)
   const possiblePaths = [joinPath(basePath, `${modName}.rs`), joinPath(basePath, modName, 'mod.rs')]
 
-  for (const path of possiblePaths) {
-    if (cachedFileExists(path)) {
-      return path
-    }
-  }
-
-  return null
+  return possiblePaths.find((path) => cachedFileExists(path)) ?? null
 }
