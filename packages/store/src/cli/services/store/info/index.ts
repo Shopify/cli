@@ -160,9 +160,8 @@ async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promi
       ...(previewStore.claimUrl ? {saveUrl: previewStore.claimUrl} : {}),
     }
   } catch (error) {
-    // The CLI has no local signal for when a preview store gets claimed via the browser; a
-    // 401/404 here is the first indication. Remove the stale preview session so the `store auth`
-    // command in the recovery error is not blocked by the preview-store guard.
+    // The CLI does not receive a claim event. A 401/404 is the first signal that the preview
+    // credential is invalid. Clear the session so the `store auth` command can run.
     if (error instanceof PreviewStoreRequestError && (error.status === 401 || error.status === 404)) {
       clearStoredStoreAppSession(previewSession.store, previewSession.userId)
       throwStoredAuthInvalidError(previewSession)
