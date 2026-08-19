@@ -40,7 +40,7 @@
     "extends": ["../../.eslintrc.cjs"]
   },
   "devDependencies": {
-    "@types/node": "18.19.130",
+    "@types/node": "22.20.1",
     "@vitest/coverage-istanbul": "^3.2.7",
     "esbuild": "0.28.1"
   },
