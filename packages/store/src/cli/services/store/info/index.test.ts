@@ -197,7 +197,7 @@ describe('getStoreInfo', () => {
   })
 
   test.each([401, 404])(
-    'prompts re-auth without clearing the stale preview session when the preview store lookup returns %s',
+    'clears the stale preview session and prompts re-auth when the preview store lookup returns %s',
     async (status) => {
       vi.mocked(getCurrentStoredStoreAppSession).mockReturnValueOnce({
         store: SHOP,
@@ -231,7 +231,7 @@ describe('getStoreInfo', () => {
           ],
         ],
       })
-      expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+      expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, 'placeholder-uuid')
     },
   )
 
@@ -564,7 +564,7 @@ The CLI is currently unable to prompt for reauthentication.`)
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, '42')
   })
 
-  test('flags a likely claim (not a generic invalid-auth error) for a lingering preview session that 401s against Admin', async () => {
+  test('clears a likely claimed preview session that 401s against Admin', async () => {
     mockStoreAuthFallback()
     vi.mocked(loadStoredStoreSession).mockResolvedValue({
       ...STORED_SESSION,
@@ -584,7 +584,7 @@ The CLI is currently unable to prompt for reauthentication.`)
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(SHOP, 'placeholder-uuid')
   })
 
   test('also treats Admin 404 as a stored-auth-no-longer-valid signal', async () => {

@@ -110,7 +110,7 @@ describe('runAdminStoreGraphQLOperation', () => {
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
 
-  test('flags a likely claim and does not re-list scopes when a lingering preview session 401s', async () => {
+  test('clears a likely claimed preview session and does not re-list scopes when it 401s', async () => {
     vi.mocked(graphqlRequest).mockRejectedValue({response: {status: 401}})
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
     const previewContext = {
@@ -133,7 +133,7 @@ describe('runAdminStoreGraphQLOperation', () => {
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, 'preview:placeholder-uuid')
   })
 
   test('throws a GraphQL operation error when errors are returned', async () => {
@@ -273,7 +273,7 @@ describe('fetchPublicApiVersions', () => {
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
 
-  test('flags a likely claim and does not re-list scopes when a lingering preview session 401s', async () => {
+  test('clears a likely claimed preview session and does not re-list scopes when it 401s', async () => {
     vi.mocked(graphqlRequest).mockRejectedValue(makeClientErrorLike(401, 'Unauthorized'))
     const previewSession = {
       ...session,
@@ -292,7 +292,7 @@ describe('fetchPublicApiVersions', () => {
         ],
       ],
     })
-    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, 'preview:placeholder-uuid')
   })
 
   test('maps 402 Unavailable Shop to an AbortError without clearing stored auth', async () => {

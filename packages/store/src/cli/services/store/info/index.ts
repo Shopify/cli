@@ -7,7 +7,7 @@ import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/clien
 import {storeTypeHandle} from '../store-type.js'
 import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
 import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
-import {getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -161,10 +161,10 @@ async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promi
     }
   } catch (error) {
     // The CLI has no local signal for when a preview store gets claimed via the browser; a
-    // 401/404 here is the first indication. The stored session is left uncleared on purpose: it
-    // isn't needed for `store auth` to take over, and keeping it means every `store info` run
-    // keeps producing this same actionable message instead of falling through to a full login.
+    // 401/404 here is the first indication. Remove the stale preview session so the `store auth`
+    // command in the recovery error is not blocked by the preview-store guard.
     if (error instanceof PreviewStoreRequestError && (error.status === 401 || error.status === 404)) {
+      clearStoredStoreAppSession(previewSession.store, previewSession.userId)
       throwStoredAuthInvalidError(previewSession)
     }
 
