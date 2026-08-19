@@ -1,6 +1,11 @@
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {DevSessionWatchConfig, ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {
+  DevSessionUpdateContext,
+  DevSessionWatchConfig,
+  ExtensionFeature,
+  ExtensionSpecification,
+} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {ExtensionUuidsByLocalIdentifier} from '../app/identifiers.js'
@@ -38,6 +43,8 @@ const DEFAULT_WATCH_IGNORE = [
   '**/generated/**',
   '**/.gitignore',
 ]
+
+export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Configuration accepted'
 
 /**
  * Class that represents an instance of a local extension
@@ -141,6 +148,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get outputRelativePath() {
     return this.specification.getOutputRelativePath?.(this) ?? ''
+  }
+
+  get hasNoLocalDevOutput(): boolean {
+    return this.features.length === 0 && !this.hasDeploySteps && this.outputRelativePath === ''
   }
 
   constructor(options: {
@@ -394,9 +405,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
-    if (!this.specification.getDevSessionUpdateMessages) return undefined
-    return this.specification.getDevSessionUpdateMessages(this.configuration)
+  async getDevSessionUpdateMessages(context: DevSessionUpdateContext): Promise<string[] | undefined> {
+    if (this.specification.getDevSessionUpdateMessages) {
+      return this.specification.getDevSessionUpdateMessages(this.configuration, context)
+    }
+
+    if (context.status !== 'created') return undefined
+    if (this.isAppConfigExtension) return undefined
+    if (!this.hasNoLocalDevOutput) return undefined
+
+    return [DEFAULT_DEV_SESSION_UPDATE_MESSAGE]
   }
 
   /**

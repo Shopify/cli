@@ -1,6 +1,7 @@
-import {UserError} from './dev-session.js'
+import {DevSessionResult, UserError} from './dev-session.js'
 import {AppEvent, EventType} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {DevSessionUpdateContext} from '../../../../models/extensions/specification.js'
 import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
@@ -73,14 +74,17 @@ export class DevSessionLogger {
    * Display update messages from extensions after a dev session update.
    * This function collects and displays update messages from all extensions.
    */
-  async logExtensionUpdateMessages(event?: AppEvent) {
+  async logExtensionUpdateMessages(event: AppEvent | undefined, result: DevSessionResult) {
     if (!event) return
+    // Errored sessions are reported through `logUserErrors`, which already speaks per extension.
+    if (result.status === 'remote-error' || result.status === 'unknown-error') return
+    const context: DevSessionUpdateContext = {status: result.status}
     const extensionEvents = event.extensionEvents ?? []
     const messageArrays = await Promise.all(
       extensionEvents.map(async (eve) => {
         // Don't log messages for deleted extensions
         if (eve.type === EventType.Deleted) return []
-        const messages = await eve.extension.getDevSessionUpdateMessages()
+        const messages = await eve.extension.getDevSessionUpdateMessages(context)
         return messages?.map((message) => ({message, prefix: eve.extension.handle})) ?? []
       }),
     )
