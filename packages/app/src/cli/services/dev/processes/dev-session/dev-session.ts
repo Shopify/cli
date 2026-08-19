@@ -11,6 +11,7 @@ import {
 } from '../../../bundle.js'
 import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
 import {AppManifest} from '../../../../models/app/app.js'
+import {DevSessionUpdateStatus} from '../../../../models/extensions/specification.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
@@ -35,8 +36,8 @@ interface DevSessionState {
   userEmail?: string | null
 }
 
-type DevSessionResult =
-  | {status: 'updated' | 'created' | 'aborted'}
+export type DevSessionResult =
+  | {status: DevSessionUpdateStatus}
   | {status: 'remote-error'; error: UserError[]}
   | {status: 'unknown-error'; error: Error}
 
@@ -228,15 +229,13 @@ export class DevSession {
   private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent) {
     if (result.status === 'updated') {
       await this.logger.success(`✅ Updated dev preview on ${this.options.storeFqdn}`)
-      await this.logger.logExtensionUpdateMessages(event)
+      await this.logger.logExtensionUpdateMessages(event, result)
       await this.setUpdatedStatusMessage()
     } else if (result.status === 'created') {
       this.statusManager.updateStatus({isReady: true})
       await this.logger.success(`✅ Ready, watching for changes in your app `)
-      await this.logger.logExtensionUpdateMessages(event)
+      await this.logger.logExtensionUpdateMessages(event, result)
       this.statusManager.setMessage('READY')
-    } else if (result.status === 'aborted') {
-      await this.logger.debug('❌ Dev preview update aborted (new change detected or error during update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
       if (result.error instanceof Error && (result.error as Error & {cause?: string}).cause === 'validation-error') {

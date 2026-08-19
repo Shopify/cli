@@ -88,7 +88,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['Access scopes auto-granted: read_products, write_products'])
@@ -106,7 +106,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['Access scopes auto-granted: write_orders, read_inventory'])
@@ -121,7 +121,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['App has been installed'])
@@ -140,7 +140,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['Using legacy install flow - access scopes are not auto-granted'])
@@ -159,7 +159,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['Using legacy install flow - access scopes are not auto-granted'])
@@ -178,7 +178,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['Access scopes auto-granted: read_products, write_products'])
@@ -194,7 +194,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['Using legacy install flow - access scopes are not auto-granted'])
@@ -212,7 +212,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['App has been installed'])
@@ -230,7 +230,7 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual(['App has been installed'])

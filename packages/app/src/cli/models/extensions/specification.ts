@@ -61,6 +61,16 @@ interface ExtensionDeployConfigContext {
   appConfiguration: AppConfiguration
 }
 
+/** Whether a dev session update is the first successful one for this `dev` run, or a later update. */
+export type DevSessionUpdateStatus = 'created' | 'updated'
+
+/**
+ * Context provided to `getDevSessionUpdateMessages` describing the dev session that triggered it.
+ */
+export interface DevSessionUpdateContext {
+  status: DevSessionUpdateStatus
+}
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -91,7 +101,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>, outputPath: string) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
+  getDevSessionUpdateMessages?: (config: TConfiguration, context: DevSessionUpdateContext) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
@@ -271,7 +281,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
-  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
+  getDevSessionUpdateMessages?: (config: TConfiguration, context: DevSessionUpdateContext) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])

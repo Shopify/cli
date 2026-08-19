@@ -1,6 +1,11 @@
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {DevSessionWatchConfig, ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {
+  DevSessionUpdateContext,
+  DevSessionWatchConfig,
+  ExtensionFeature,
+  ExtensionSpecification,
+} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {ExtensionUuidsByLocalIdentifier} from '../app/identifiers.js'
@@ -38,6 +43,13 @@ const DEFAULT_WATCH_IGNORE = [
   '**/generated/**',
   '**/.gitignore',
 ]
+
+/**
+ * Message shown once per `dev` run for modules that produce no local dev output, so that
+ * `dev` acknowledges them instead of staying silent. See
+ * `ExtensionInstance.getDevSessionUpdateMessages`.
+ */
+export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Configuration accepted'
 
 /**
  * Class that represents an instance of a local extension
@@ -141,6 +153,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get outputRelativePath() {
     return this.specification.getOutputRelativePath?.(this) ?? ''
+  }
+
+  /**
+   * Whether nothing is built or bundled locally for this module: it contributes no features,
+   * has no deploy steps and produces no build output. Evaluated lazily because
+   * `mergeLocalAndRemoteSpec` rewrites specification fields after the spec factory has run.
+   */
+  get hasNoLocalDevOutput(): boolean {
+    return this.features.length === 0 && !this.hasDeploySteps && this.outputRelativePath === ''
   }
 
   constructor(options: {
@@ -394,9 +415,23 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
-    if (!this.specification.getDevSessionUpdateMessages) return undefined
-    return this.specification.getDevSessionUpdateMessages(this.configuration)
+  async getDevSessionUpdateMessages(context: DevSessionUpdateContext): Promise<string[] | undefined> {
+    if (this.specification.getDevSessionUpdateMessages) {
+      return this.specification.getDevSessionUpdateMessages(this.configuration, context)
+    }
+
+    // Only acknowledge the module once, on the first successful dev session; later updates stay quiet.
+    if (context.status !== 'created') return undefined
+
+    // App config modules are already summarised together as `App config updated`, so a per-module
+    // line would just be noise.
+    if (this.isAppConfigExtension) return undefined
+
+    // Anything with local dev output is already visible through its build output or preview URL.
+    // Modules with none of that are never mentioned by `dev` otherwise, so acknowledge them here.
+    if (!this.hasNoLocalDevOutput) return undefined
+
+    return [DEFAULT_DEV_SESSION_UPDATE_MESSAGE]
   }
 
   /**
