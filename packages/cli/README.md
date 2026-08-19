@@ -42,6 +42,7 @@
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
 * [`shopify doc fetch`](#shopify-doc-fetch)
 * [`shopify doc search`](#shopify-doc-search)
+* [`shopify feedback`](#shopify-feedback)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -2210,6 +2211,59 @@ EXAMPLES
       shopify doc search --query "subscribe to webhooks"
       # narrow the search to a specific API and version
       shopify doc search --query "create a product" --api-name admin --api-version latest
+```
+
+## `shopify feedback`
+
+Send feedback about Shopify CLI.
+
+```
+USAGE
+  $ shopify feedback -m <value> [--category
+    wrong_guidance|missing_capability|confusing_docs|tool_failure|slow|other] [-j] [--no-color] [--sentiment
+    frustrated|blocked|confused|praise] [--verbose]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  -m, --message=<value>
+      (required) The feedback message. Pass - to read the message from stdin. Messages longer than 2000 characters are
+      truncated.
+      [env: SHOPIFY_FLAG_MESSAGE]
+
+  --category=<option>
+      What the feedback is about.
+      [env: SHOPIFY_FLAG_CATEGORY]
+      <options: wrong_guidance|missing_capability|confusing_docs|tool_failure|slow|other>
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --sentiment=<option>
+      How the experience felt.
+      [env: SHOPIFY_FLAG_SENTIMENT]
+      <options: frustrated|blocked|confused|praise>
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Send feedback about Shopify CLI.
+
+  Sends feedback about Shopify CLI to the team that builds it. The feedback travels on the usage analytics the CLI
+  already reports, so it makes no separate network request and respects the analytics opt-out. It never prompts, so both
+  humans and AI agents can run it.
+
+EXAMPLES
+  $ shopify feedback --message "The deploy command told me to use a flag that does not exist"
+
+  $ shopify feedback --message "dev keeps disconnecting from my store" --sentiment frustrated --category tool_failure
+
+  echo "Docs and CLI disagree about theme push" | shopify feedback --message -
 ```
 
 ## `shopify help [command] [flags]`

@@ -1,5 +1,6 @@
 import VersionCommand from './cli/commands/version.js'
 import Search from './cli/commands/search.js'
+import Feedback from './cli/commands/feedback.js'
 import Upgrade from './cli/commands/upgrade.js'
 import SendAnalytics from './cli/commands/send-analytics.js'
 import Logout from './cli/commands/auth/logout.js'
@@ -148,6 +149,7 @@ export const COMMANDS: any = {
   ...HydrogenCommands,
   ...StoreCommands,
   search: Search,
+  feedback: Feedback,
   upgrade: Upgrade,
   version: VersionCommand,
   'send-analytics': SendAnalytics,
