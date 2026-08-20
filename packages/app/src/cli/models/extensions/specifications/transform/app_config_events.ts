@@ -42,11 +42,20 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
 /**
  * Transforms the events config from remote to local format.
  * Strips the server-managed 'identifier' field from subscriptions.
+ *
+ * The server stores events modules in two shapes: a legacy aggregate module
+ * whose subscription is a list, and one module per subscription whose
+ * subscription is a single object. Both are normalized to a list here so that
+ * multiple single-subscription modules deep-merge back into the TOML
+ * subscription array.
  */
 export function transformToEventsConfig(content: object) {
-  const eventsConfig = getPathValue(content, 'events') as {api_version: string; subscription: object[]}
+  const eventsConfig = getPathValue(content, 'events') as {
+    api_version: string
+    subscription: object[] | object
+  }
   const apiVersion = getPathValue(eventsConfig, 'api_version')
-  const subscription = getPathValue(eventsConfig, 'subscription') as {identifier: string}[]
+  const subscription = normalizeSubscriptions(getPathValue(eventsConfig, 'subscription'))
 
   // Server always includes identifier - strip it for local TOML
   const cleanedSubscriptions = subscription?.map((sub) => {
@@ -58,4 +67,10 @@ export function transformToEventsConfig(content: object) {
     (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}
 
   return {events}
+}
+
+function normalizeSubscriptions(subscription: unknown): {identifier?: string}[] | undefined {
+  if (subscription === undefined) return undefined
+  if (Array.isArray(subscription)) return subscription as {identifier?: string}[]
+  return [subscription as {identifier?: string}]
 }

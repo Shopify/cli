@@ -1,4 +1,5 @@
 import {transformToEventsConfig, transformFromEventsConfig} from './app_config_events.js'
+import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {describe, expect, test} from 'vitest'
 
 describe('transformFromEventsConfig', () => {
@@ -189,6 +190,81 @@ describe('transformToEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: undefined,
+      },
+    })
+  })
+
+  test('wraps a single-subscription object into a one-element subscription list and strips identifier', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'Product',
+          actions: ['update'],
+          uri: 'https://example.com/webhook',
+          handle: 'product-updates',
+          identifier: 'id-1',
+        },
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'Product',
+            actions: ['update'],
+            uri: 'https://example.com/webhook',
+            handle: 'product-updates',
+          },
+        ],
+      },
+    })
+  })
+
+  test('multiple single-subscription modules deep-merge into one subscription list', () => {
+    const moduleConfigs = [
+      {
+        events: {
+          api_version: '2024-01',
+          subscription: {
+            topic: 'Product',
+            actions: ['update'],
+            uri: 'https://example.com/a',
+            handle: 'a',
+            identifier: 'id-a',
+          },
+        },
+      },
+      {
+        events: {
+          api_version: '2024-01',
+          subscription: {
+            topic: 'Order',
+            actions: ['create'],
+            uri: 'https://example.com/b',
+            handle: 'b',
+            identifier: 'id-b',
+          },
+        },
+      },
+    ]
+
+    const merged = moduleConfigs.reduce(
+      (accumulator, moduleConfig) => deepMergeObjects(accumulator, transformToEventsConfig(moduleConfig)),
+      {},
+    )
+
+    expect(merged).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'Product', actions: ['update'], uri: 'https://example.com/a', handle: 'a'},
+          {topic: 'Order', actions: ['create'], uri: 'https://example.com/b', handle: 'b'},
+        ],
       },
     })
   })
