@@ -26,6 +26,7 @@ const CapabilitiesSchema = zod.object({
   api_access: zod.boolean().optional(),
   collect_buyer_consent: CollectBuyerConsentCapabilitySchema.optional(),
   iframe: IframeCapabilitySchema.optional(),
+  bundle_size_exception: zod.boolean().optional(),
 })
 
 const SupportedFeaturesSchema = zod.object({
