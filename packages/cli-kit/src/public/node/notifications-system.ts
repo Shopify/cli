@@ -25,7 +25,7 @@ const COMMANDS_TO_SKIP = [
 ]
 
 // Hostnames whose traffic never leaves the machine, so it can't be intercepted or tampered with.
-const LOOPBACK_HOSTNAMES = ['127.0.0.1', 'localhost', '[::1]']
+const LOOPBACK_HOSTNAMES = ['127.0.0.1', 'localhost', '::1', '[::1]']
 
 function url(): string {
   const envUrl = process.env.SHOPIFY_CLI_NOTIFICATIONS_URL
