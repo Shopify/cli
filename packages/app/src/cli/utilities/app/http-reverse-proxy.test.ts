@@ -70,6 +70,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     expect(response.headers.get('access-control-allow-methods')).toBe('GET')
     expect(response.headers.get('access-control-allow-headers')).toBe('Authorization')
     expect(response.headers.get('access-control-max-age')).toBe('86400')
+    expect(response.headers.get('access-control-allow-credentials')).toBe('true')
   })
 
   test('responds to CORS preflight OPTIONS with defaults when no request headers', {retry: 2}, async ({setup}) => {
@@ -81,6 +82,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*')
     expect(response.headers.get('access-control-allow-methods')).toBe('GET, POST, PUT, DELETE, PATCH, OPTIONS')
     expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type, Authorization')
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull()
   })
 
   test('closes the server when aborted', async ({setup}) => {
