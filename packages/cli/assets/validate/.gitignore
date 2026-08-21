@@ -1,0 +1,7 @@
+# The vendored component type packages under components/types/ ship their
+# `.d.ts.gz` declarations inside `dist/` subdirectories. The repo-wide `dist`
+# ignore rule would exclude them, which would leave `shopify validate
+# components` missing reference data on a clean checkout. Re-include the whole
+# bundled reference-data tree here (this scope contains no build output).
+!**/dist/
+!**/dist/**

@@ -22,6 +22,9 @@ const external = [
   'lightningcss',
   // These two are binary dependencies from Hydrogen that can't be bundled
   '@ast-grep/napi',
+  // typescript is a large compiler lazily imported only by `shopify validate components`;
+  // keep it external so it is resolved from node_modules at runtime, not inlined.
+  'typescript',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -130,6 +133,13 @@ esBuild({
         {
           from: ['./assets/*'],
           to: ['./dist/assets'],
+        },
+        {
+          // The single-level `./assets/*` rule above does not recurse into the
+          // nested `validate/{graphql,functions,components}` trees, so copy them
+          // explicitly for the bundled-dist data-loader walk.
+          from: ['./assets/validate/**/*'],
+          to: ['./dist/assets/validate'],
         },
         {
           from: ['../cli-kit/assets/**/*'],
