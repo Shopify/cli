@@ -24,17 +24,22 @@ const COMMANDS_TO_SKIP = [
   'send-analytics',
 ]
 
+// Hostnames whose traffic never leaves the machine, so it can't be intercepted or tampered with.
+const LOOPBACK_HOSTNAMES = ['127.0.0.1', 'localhost', '::1', '[::1]']
+
 function url(): string {
   const envUrl = process.env.SHOPIFY_CLI_NOTIFICATIONS_URL
   if (envUrl) {
     try {
       const parsedUrl = new globalThis.URL(envUrl)
-      // We only allow https for notifications to prevent loading malicious content from insecure sources.
-      if (parsedUrl.protocol === 'https:') {
+      // We only allow https for notifications to prevent loading malicious content from insecure
+      // sources. Plain http is allowed for loopback hosts so that notifications can be tested
+      // against a local server, where there is no network for an attacker to sit on.
+      if (isAllowedNotificationsUrl(parsedUrl)) {
         return envUrl
       }
       outputDebug(
-        `The notifications URL provided via SHOPIFY_CLI_NOTIFICATIONS_URL (${envUrl}) is not secure (https). Falling back to default.`,
+        `The notifications URL provided via SHOPIFY_CLI_NOTIFICATIONS_URL (${envUrl}) must use https, or http with a loopback host. Falling back to default.`,
       )
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
@@ -44,6 +49,18 @@ function url(): string {
     }
   }
   return URL
+}
+
+/**
+ * Checks whether a notifications URL is safe to load from.
+ *
+ * @param parsedUrl - The parsed notifications URL.
+ * @returns - A boolean indicating whether the URL may be used.
+ */
+function isAllowedNotificationsUrl(parsedUrl: globalThis.URL): boolean {
+  if (parsedUrl.protocol === 'https:') return true
+  // `hostname` is the parsed authority, so lookalikes such as `127.0.0.1.example.com` don't match.
+  return parsedUrl.protocol === 'http:' && LOOPBACK_HOSTNAMES.includes(parsedUrl.hostname)
 }
 
 const NotificationSchema = zod.object({

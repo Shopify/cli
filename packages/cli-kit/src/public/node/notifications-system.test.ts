@@ -461,9 +461,17 @@ describe('fetchNotificationsInBackground', () => {
 })
 
 describe('fetchNotifications', () => {
-  test('uses the default URL when SHOPIFY_CLI_NOTIFICATIONS_URL is not secure', async () => {
+  const defaultUrl = 'https://cdn.shopify.com/static/cli/notifications.json'
+
+  test.each([
+    'https://my-secure-repo.com/notifications.json',
+    // Loopback hosts are allowed over plain http so notifications can be tested locally.
+    'http://127.0.0.1:8082/notifications.json',
+    'http://localhost:8082/notifications.json',
+    'http://[::1]:8082/notifications.json',
+  ])('uses the provided URL when SHOPIFY_CLI_NOTIFICATIONS_URL is %s', async (allowedUrl) => {
     // Given
-    vi.stubEnv('SHOPIFY_CLI_NOTIFICATIONS_URL', 'http://malicious.com/notifications.json')
+    vi.stubEnv('SHOPIFY_CLI_NOTIFICATIONS_URL', allowedUrl)
     vi.mocked(fetch).mockResolvedValue({
       status: 200,
       text: () => Promise.resolve(JSON.stringify({notifications: []})),
@@ -473,18 +481,21 @@ describe('fetchNotifications', () => {
     await fetchNotifications()
 
     // Then
-    expect(fetch).toHaveBeenCalledWith(
-      'https://cdn.shopify.com/static/cli/notifications.json',
-      undefined,
-      expect.anything(),
-    )
+    expect(fetch).toHaveBeenCalledWith(allowedUrl, undefined, expect.anything())
     vi.unstubAllEnvs()
   })
 
-  test('uses the provided URL when SHOPIFY_CLI_NOTIFICATIONS_URL is secure', async () => {
+  test.each([
+    'http://malicious.com/notifications.json',
+    // Lookalike hosts must not be mistaken for loopback ones.
+    'http://127.0.0.1.malicious.com/notifications.json',
+    'http://localhost.malicious.com/notifications.json',
+    'http://malicious.com/#@127.0.0.1/notifications.json',
+    'ftp://127.0.0.1/notifications.json',
+    'not-a-url',
+  ])('uses the default URL when SHOPIFY_CLI_NOTIFICATIONS_URL is %s', async (rejectedUrl) => {
     // Given
-    const secureUrl = 'https://my-secure-repo.com/notifications.json'
-    vi.stubEnv('SHOPIFY_CLI_NOTIFICATIONS_URL', secureUrl)
+    vi.stubEnv('SHOPIFY_CLI_NOTIFICATIONS_URL', rejectedUrl)
     vi.mocked(fetch).mockResolvedValue({
       status: 200,
       text: () => Promise.resolve(JSON.stringify({notifications: []})),
@@ -494,7 +505,7 @@ describe('fetchNotifications', () => {
     await fetchNotifications()
 
     // Then
-    expect(fetch).toHaveBeenCalledWith(secureUrl, undefined, expect.anything())
+    expect(fetch).toHaveBeenCalledWith(defaultUrl, undefined, expect.anything())
     vi.unstubAllEnvs()
   })
 })
