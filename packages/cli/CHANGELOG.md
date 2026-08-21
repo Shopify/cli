@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 4.6.2
+
+### Patch Changes
+
+- 74fc352: Update cli-hydrogen to 13.0.4
+
 ## 4.6.1
 
 ## 4.6.0
