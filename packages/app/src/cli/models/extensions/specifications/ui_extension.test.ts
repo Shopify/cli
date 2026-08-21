@@ -241,15 +241,23 @@ describe('ui_extension', async () => {
       ])
     })
 
-    test('targeting object accepts allow_direct_linking for target capabilities', async () => {
+    test('targeting object accepts typed and arbitrary JSON target capabilities', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const intercepts = [
+        {
+          event: 'paymentvalidations',
+          blocking: true,
+          applies_to: ['cash'],
+          future_options: {enabled: true, values: ['one', 2, null]},
+        },
+      ]
       const configuration = {
         targeting: [
           {
             target: 'EXTENSION::POINT::A',
             module: './src/ExtensionPointA.js',
-            capabilities: {allow_direct_linking: true},
+            capabilities: {allow_direct_linking: true, intercepts},
           },
         ],
         api_version: '2023-01' as const,
@@ -292,7 +300,7 @@ describe('ui_extension', async () => {
           metafields: [],
           urls: {},
           default_placement_reference: undefined,
-          capabilities: {allow_direct_linking: true},
+          capabilities: {allow_direct_linking: true, intercepts},
           preloads: {},
           build_manifest: {
             assets: {
