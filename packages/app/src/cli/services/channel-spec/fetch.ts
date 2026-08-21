@@ -50,7 +50,12 @@ export async function fetchChannelSpecExport({
   })
 
   if (response.status === 404) {
-    return {success: false, reason: 'no_exportable_frozen_record'}
+    // A 404 is not part of the export contract (failures are 422 with a reason code). It means the
+    // export endpoint isn't available (not deployed yet), or the app/organization couldn't be found.
+    throw new AbortError(
+      'The channel spec export endpoint is not available for this app.',
+      'Confirm the app and organization are correct, and that the channel spec export backend is available.',
+    )
   }
 
   let payload: {[key: string]: unknown}
@@ -75,6 +80,21 @@ export async function fetchChannelSpecExport({
     handle,
     filename,
     toml,
-    warnings: Array.isArray(warnings) ? (warnings as ChannelSpecExportWarning[]) : [],
+    warnings: parseWarnings(warnings),
   }
+}
+
+function parseWarnings(warnings: unknown): ChannelSpecExportWarning[] {
+  if (!Array.isArray(warnings)) return []
+  return warnings.flatMap((warning) => {
+    if (
+      warning &&
+      typeof warning === 'object' &&
+      typeof (warning as {code?: unknown}).code === 'string' &&
+      typeof (warning as {message?: unknown}).message === 'string'
+    ) {
+      return [warning as ChannelSpecExportWarning]
+    }
+    return []
+  })
 }
