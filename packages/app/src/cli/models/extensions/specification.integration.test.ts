@@ -5,7 +5,8 @@ import {
   createConfigExtensionSpecification,
   createExtensionSpecification,
 } from './specification.js'
-import {BaseSchema} from './schemas.js'
+import {BaseConfigType, BaseSchema} from './schemas.js'
+import {placeholderAppConfiguration} from '../app/app.test-data.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
 import {AppSchema} from '../app/app.js'
 import {describe, test, expect, beforeAll} from 'vitest'
@@ -94,6 +95,93 @@ describe('createContractBasedModuleSpecification', () => {
 
     // Then
     expect(got.clientSteps).toBeUndefined()
+  })
+
+  describe('app relative URLs', () => {
+    interface LifecycleCallbackConfig extends BaseConfigType {
+      url: string
+    }
+
+    const lifecycleCallbackSpec = () =>
+      createContractBasedModuleSpecification<LifecycleCallbackConfig>({
+        identifier: 'flow_trigger_lifecycle_callback',
+        uidStrategy: 'uuid',
+        experience: 'extension',
+        appModuleFeatures: () => [],
+      })
+
+    test('resolves a relative url against the application URL when deploying', async () => {
+      // Given
+      const spec = lifecycleCallbackSpec()
+
+      // When
+      const got = await spec.deployConfig!(
+        {type: 'flow_trigger_lifecycle_callback', name: 'Auction lifecycle', url: '/api/flow/lifecycle'},
+        './my-extension',
+        'api-key',
+        undefined,
+        {
+          appConfiguration: {...placeholderAppConfiguration, application_url: 'https://my-app.example.com'},
+        },
+      )
+
+      // Then
+      expect(got).toEqual({name: 'Auction lifecycle', url: 'https://my-app.example.com/api/flow/lifecycle'})
+    })
+
+    test('leaves an absolute url untouched when deploying', async () => {
+      // Given
+      const spec = lifecycleCallbackSpec()
+
+      // When
+      const got = await spec.deployConfig!(
+        {
+          type: 'flow_trigger_lifecycle_callback',
+          name: 'Auction lifecycle',
+          url: 'https://my-prod-host.example.com/api/flow/lifecycle',
+        },
+        './my-extension',
+        'api-key',
+        undefined,
+        {
+          appConfiguration: {...placeholderAppConfiguration, application_url: 'https://my-app.example.com'},
+        },
+      )
+
+      // Then
+      expect(got).toEqual({
+        name: 'Auction lifecycle',
+        url: 'https://my-prod-host.example.com/api/flow/lifecycle',
+      })
+    })
+
+    test('resolves a relative url against the dev tunnel URL', () => {
+      // Given
+      const spec = lifecycleCallbackSpec()
+      const config = {type: 'flow_trigger_lifecycle_callback', name: 'Auction lifecycle', url: '/api/flow/lifecycle'}
+
+      // When
+      spec.patchWithAppDevURLs!(config, {applicationUrl: 'https://my-tunnel.example.com', redirectUrlWhitelist: []})
+
+      // Then
+      expect(config.url).toBe('https://my-tunnel.example.com/api/flow/lifecycle')
+    })
+
+    test('leaves a contract module without relative URL fields untouched', async () => {
+      // Given
+      const spec = createContractBasedModuleSpecification<LifecycleCallbackConfig>({
+        identifier: 'test',
+        uidStrategy: 'uuid',
+        experience: 'extension',
+        appModuleFeatures: () => [],
+      })
+
+      // When
+      const got = await spec.deployConfig!({type: 'test', url: '/api/something'}, './my-extension', 'api-key')
+
+      // Then
+      expect(got).toEqual({url: '/api/something'})
+    })
   })
 })
 
