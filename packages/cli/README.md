@@ -4,6 +4,7 @@
 * [`shopify app bulk cancel`](#shopify-app-bulk-cancel)
 * [`shopify app bulk execute`](#shopify-app-bulk-execute)
 * [`shopify app bulk status`](#shopify-app-bulk-status)
+* [`shopify app channel-spec generate`](#shopify-app-channel-spec-generate)
 * [`shopify app config link`](#shopify-app-config-link)
 * [`shopify app config pull`](#shopify-app-config-pull)
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
@@ -363,6 +364,62 @@ DESCRIPTION
   (https://shopify.dev/docs/api/usage/bulk-operations/imports).
 
   Use "`bulk execute`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.
+```
+
+## `shopify app channel-spec generate`
+
+Generate a channel spec TOML file from the Shopify-authored default.
+
+```
+USAGE
+  $ shopify app channel-spec generate [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--overwrite]
+    [--path <value>] [--reset | ] [--stdout] [--verbose]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --overwrite
+      Overwrite the existing channel spec file if one already exists.
+      [env: SHOPIFY_FLAG_OVERWRITE]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --stdout
+      Print the generated TOML to stdout instead of writing it to a file.
+      [env: SHOPIFY_FLAG_STDOUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Generate a channel spec TOML file from the Shopify-authored default.
+
+  Generates a deployable `channel_config` extension spec from the Shopify-authored default channel specification for
+  your app.
+
+  The generated TOML file contains only public `channel_config` fields. Review it, commit it to your app, then deploy it
+  with `shopify app deploy`. This command never deploys the spec itself.
 ```
 
 ## `shopify app config link`

@@ -462,6 +462,106 @@
       "strict": true,
       "summary": "Check the status of bulk operations."
     },
+    "app:channel-spec:generate": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Generates a deployable `channel_config` extension spec from the Shopify-authored default channel specification for your app.\n\n  The generated TOML file contains only public `channel_config` fields. Review it, commit it to your app, then deploy it with `shopify app deploy`. This command never deploys the spec itself.",
+      "descriptionWithMarkdown": "Generates a deployable `channel_config` extension spec from the Shopify-authored default channel specification for your app.\n\n  The generated TOML file contains only public `channel_config` fields. Review it, commit it to your app, then deploy it with `shopify app deploy`. This command never deploys the spec itself.",
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "overwrite": {
+          "allowNo": false,
+          "description": "Overwrite the existing channel spec file if one already exists.",
+          "env": "SHOPIFY_FLAG_OVERWRITE",
+          "name": "overwrite",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "stdout": {
+          "allowNo": false,
+          "description": "Print the generated TOML to stdout instead of writing it to a file.",
+          "env": "SHOPIFY_FLAG_STDOUT",
+          "name": "stdout",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:channel-spec:generate",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Generate a channel spec TOML file from the Shopify-authored default."
+    },
     "app:config:link": {
       "aliases": [
       ],
