@@ -529,7 +529,7 @@ async function validateUIExtensionPointConfig(
   return ok({})
 }
 
-function isRemoteDomExtension(
+export function isRemoteDomExtension(
   config: ExtensionInstance['configuration'],
 ): config is ExtensionInstance<{api_version: string}>['configuration'] {
   const apiVersion = config.api_version

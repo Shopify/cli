@@ -1,0 +1,9 @@
+query BundleSizeExceptionStatus($appId: ID!) {
+  app(id: $appId) {
+    id
+    uiExtensionBundleSizeException {
+      status
+      effectiveLimitKb
+    }
+  }
+}

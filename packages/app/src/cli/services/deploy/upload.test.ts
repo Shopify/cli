@@ -831,4 +831,108 @@ describe('deploymentErrorsToCustomSections', () => {
       },
     ])
   })
+
+  test('adds a bundle size exception call-to-action for structured bundle_size_limit errors', () => {
+    // Given
+    const errors = [
+      {
+        field: ['base'],
+        message: 'Your script size is 87 KB which exceeds the 64 KB limit',
+        category: 'invalid',
+        on: [
+          {
+            type: 'app_module',
+            user_identifier: 'checkout-ui-uid',
+          },
+          {
+            type: 'bundle_size_limit',
+            code: 'bundle_size_limit_exceeded',
+            limit_kb: 64,
+            actual_kb: 87,
+          },
+        ],
+        details: [],
+      },
+    ]
+
+    const appModules = [
+      {
+        uid: 'checkout-ui-uid',
+        handle: 'checkout-ui',
+        config: '{}',
+        context: '',
+        specificationIdentifier: 'ui_extension',
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(
+      errors as any as AppDeploySchema['appDeploy']['userErrors'],
+      {},
+      appModules,
+    )
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        title: 'checkout-ui',
+        body: [
+          {
+            list: {
+              title: '\nValidation errors',
+              items: ['base: Your script size is 87 KB which exceeds the 64 KB limit'],
+            },
+          },
+          {
+            list: {
+              title: '\nBundle size exception',
+              items: [
+                "This extension's bundle exceeds 64 KB (compressed). If you can't reduce it, run `shopify app bundle-size-exception request` to ask Shopify for a bundle size exception.",
+              ],
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  test('does not add a bundle size exception call-to-action for unrelated errors', () => {
+    // Given
+    const errors = [
+      {
+        field: ['name'],
+        message: 'is too long',
+        category: 'invalid',
+        on: [
+          {
+            type: 'app_module',
+            user_identifier: 'checkout-ui-uid',
+          },
+        ],
+        details: [],
+      },
+    ]
+
+    const appModules = [
+      {
+        uid: 'checkout-ui-uid',
+        handle: 'checkout-ui',
+        config: '{}',
+        context: '',
+        specificationIdentifier: 'ui_extension',
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(
+      errors as any as AppDeploySchema['appDeploy']['userErrors'],
+      {},
+      appModules,
+    )
+
+    // Then
+    const section = customSections[0]!
+    const titles = (section.body as {list: {title: string}}[]).map((token) => token.list.title)
+    expect(titles).not.toContain('\nBundle size exception')
+  })
 })

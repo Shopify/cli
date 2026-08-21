@@ -40,6 +40,8 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {BundleSizeExceptionRequestMutation} from '../api/graphql/app-management/generated/bundle-size-exception-request.js'
+import {UiExtensionSizeContextInput} from '../api/graphql/app-management/generated/types.js'
 import {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
@@ -172,6 +174,21 @@ export interface UserError {
   on?: JsonMapType
 }
 
+export type UiExtensionBundleSizeExceptionStatusValue = 'NONE' | 'PENDING' | 'GRANTED' | 'DENIED'
+
+export interface UiExtensionBundleSizeExceptionState {
+  status: UiExtensionBundleSizeExceptionStatusValue
+  effectiveLimitKb: number
+}
+
+export interface UiExtensionBundleSizeExceptionRequestOptions {
+  reason: string
+  extensions: UiExtensionSizeContextInput[]
+}
+
+export type UiExtensionBundleSizeExceptionRequestResult =
+  BundleSizeExceptionRequestMutation['appUiExtensionBundleSizeExceptionRequest']
+
 interface ErrorDetail {
   extension_id?: number | string
   extension_title?: string
@@ -247,6 +264,11 @@ export interface DeveloperPlatformClient {
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (org: Organization) => Promise<TokenItem>
+  uiExtensionBundleSizeException: (app: MinimalAppIdentifiers) => Promise<UiExtensionBundleSizeExceptionState>
+  uiExtensionBundleSizeExceptionRequest: (
+    app: MinimalAppIdentifiers,
+    options: UiExtensionBundleSizeExceptionRequestOptions,
+  ) => Promise<UiExtensionBundleSizeExceptionRequestResult>
 }
 
 /**

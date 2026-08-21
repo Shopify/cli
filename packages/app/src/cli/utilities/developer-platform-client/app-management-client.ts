@@ -29,6 +29,9 @@ import {
   DevSessionCreateOptions,
   DevSessionDeleteOptions,
   UserError,
+  UiExtensionBundleSizeExceptionState,
+  UiExtensionBundleSizeExceptionRequestOptions,
+  UiExtensionBundleSizeExceptionRequestResult,
 } from '../developer-platform-client.js'
 import {
   MinimalAppIdentifiers,
@@ -114,6 +117,8 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {BundleSizeExceptionStatus} from '../../api/graphql/app-management/generated/bundle-size-exception-status.js'
+import {BundleSizeExceptionRequest} from '../../api/graphql/app-management/generated/bundle-size-exception-request.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {fetchOrganizations} from '@shopify/organizations'
@@ -1027,6 +1032,29 @@ export class AppManagementClient implements DeveloperPlatformClient {
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.`,
       {link: {url, label: 'Create a store in Dev Dashboard'}},
     ]
+  }
+
+  async uiExtensionBundleSizeException(app: MinimalAppIdentifiers): Promise<UiExtensionBundleSizeExceptionState> {
+    const result = await this.appManagementRequest({
+      query: BundleSizeExceptionStatus,
+      variables: {appId: app.id},
+    })
+    return result.app.uiExtensionBundleSizeException
+  }
+
+  async uiExtensionBundleSizeExceptionRequest(
+    app: MinimalAppIdentifiers,
+    options: UiExtensionBundleSizeExceptionRequestOptions,
+  ): Promise<UiExtensionBundleSizeExceptionRequestResult> {
+    const result = await this.appManagementRequest({
+      query: BundleSizeExceptionRequest,
+      variables: {
+        appId: app.id,
+        reason: options.reason,
+        extensions: options.extensions,
+      },
+    })
+    return result.appUiExtensionBundleSizeExceptionRequest
   }
 
   private async activeAppVersionRawResult(apiKey: string): Promise<ActiveAppReleaseQuery> {

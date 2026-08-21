@@ -39,6 +39,7 @@ import {
   DevSessionDeleteOptions,
   DevSessionUpdateOptions,
   Store,
+  UiExtensionBundleSizeExceptionRequestOptions,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
@@ -1370,6 +1371,16 @@ export function testDeveloperPlatformClient(
       Promise.resolve(
         `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard. Create a store in Partner Dashboard https://partners.shopify.com/1234/stores`,
       ),
+    uiExtensionBundleSizeException: (_app: MinimalAppIdentifiers) =>
+      Promise.resolve({status: 'NONE' as const, effectiveLimitKb: 64}),
+    uiExtensionBundleSizeExceptionRequest: (
+      _app: MinimalAppIdentifiers,
+      _options: UiExtensionBundleSizeExceptionRequestOptions,
+    ) =>
+      Promise.resolve({
+        exception: {status: 'PENDING' as const, effectiveLimitKb: 64},
+        userErrors: [],
+      }),
     ...stubs,
   }
   const retVal: Partial<TestDeveloperPlatformClient> = clientStub

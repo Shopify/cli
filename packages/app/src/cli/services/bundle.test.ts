@@ -140,7 +140,7 @@ describe('compressBundle', () => {
     })
   })
 
-  test('excludes .metafile.json files from the zip', async () => {
+  test('keeps .metafile.json files in the zip and excludes sourcemaps', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const inputDir = joinPath(tmpDir, 'input')
@@ -153,6 +153,8 @@ describe('compressBundle', () => {
       await compressBundle(inputDir, outputZip)
 
       // Then
+      expect(BUNDLE_EXCLUSION_PATTERNS).not.toContain('!**/*.metafile.json')
+      expect(BUNDLE_EXCLUSION_PATTERNS).toContain('!**/*.js.map')
       expect(zip).toHaveBeenCalledWith(
         expect.objectContaining({
           matchFilePattern: ['**/*', ...BUNDLE_EXCLUSION_PATTERNS],
