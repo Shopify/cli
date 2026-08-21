@@ -334,6 +334,9 @@ importers:
       '@opentelemetry/sdk-metrics':
         specifier: 1.30.1
         version: 1.30.1(@opentelemetry/api@1.9.1)
+      '@shopify/dev-platform-auth':
+        specifier: workspace:*
+        version: link:../dev-platform-auth
       '@shopify/polaris':
         specifier: 12.27.0
         version: 12.27.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -525,6 +528,18 @@ importers:
       esbuild-plugin-copy:
         specifier: ^2.1.1
         version: 2.1.1(esbuild@0.28.1)
+
+  packages/dev-platform-auth:
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.1
+        version: 22.20.1
+      '@vitest/coverage-istanbul':
+        specifier: ^3.2.7
+        version: 3.2.7(vitest@4.1.10)
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
 
   packages/e2e:
     devDependencies:
@@ -3720,6 +3735,7 @@ packages:
   '@shopify/polaris@12.27.0':
     resolution: {integrity: sha512-Y8yus6iEjcfW2ZtEJtlqxbWeDJqTX3S/MOLH4GWRvU5gFYJQhlaHaETs0+OimbhEpO95mXbY8qB+KnIJaVBHwA==, tarball: https://registry.npmjs.org/@shopify/polaris/-/polaris-12.27.0.tgz}
     engines: {node: ^16.17.0 || >=18.12.0}
+    deprecated: 'Polaris React is deprecated and no longer maintained. For building Shopify admin experiences, use Polaris web components: https://shopify.dev/docs/api/polaris — archived docs for this package: https://shopify.github.io/polaris-react-archive/'
     peerDependencies:
       react: ^18.0.0
       react-dom: ^18.0.0
