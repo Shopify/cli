@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 4.7.1
+
+### Patch Changes
+
+- @shopify/organizations@4.7.1
+- @shopify/cli-kit@4.7.1
+- @shopify/theme@4.7.1
+- @shopify/plugin-cloudflare@4.7.1
+
 ## 4.7.0
 
 ### Minor Changes
