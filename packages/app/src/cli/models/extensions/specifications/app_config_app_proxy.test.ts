@@ -100,7 +100,7 @@ describe('app_config_app_proxy', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual([
@@ -114,7 +114,7 @@ describe('app_config_app_proxy', () => {
       const config: AppProxyConfigType = {}
 
       // When
-      const result = await spec.getDevSessionUpdateMessages!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config, {status: 'created'})
 
       // Then
       expect(result).toEqual([])

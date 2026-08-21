@@ -1,5 +1,13 @@
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
+import {DEFAULT_DEV_SESSION_UPDATE_MESSAGE, ExtensionInstance} from './extension-instance.js'
+import {
+  ExtensionSpecification,
+  createConfigExtensionSpecification,
+  createContractBasedModuleSpecification,
+  createExtensionSpecification,
+} from './specification.js'
+import {loadLocalExtensionsSpecifications} from './load-specifications.js'
+import {BaseConfigType, BaseSchema, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {
   testApp,
@@ -15,6 +23,7 @@ import {
   placeholderAppConfiguration,
 } from '../app/app.test-data.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
+import {ClientSteps} from '../../services/build/client-steps.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -711,6 +720,204 @@ describe('SHOPIFY_CLI_DISABLE_IMPORT_SCANNING', () => {
         delete process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING
         vi.mocked(extractImportPathsRecursively).mockReset()
       }
+    })
+  })
+})
+
+describe('getDevSessionUpdateMessages', () => {
+  const deployStep: ClientSteps = [
+    {lifecycle: 'deploy', steps: [{id: 'build-theme', name: 'Build Theme', type: 'build_theme'}]},
+  ]
+
+  function instanceFor(specification: ExtensionSpecification): ExtensionInstance {
+    return new ExtensionInstance({
+      configuration: {name: 'test extension', type: specification.identifier} as BaseConfigType,
+      configurationPath: '',
+      directory: '/tmp/test-extension',
+      specification,
+    })
+  }
+
+  function specWithNoLocalDevOutput(identifier = 'no_local_dev_output') {
+    return createExtensionSpecification({identifier, schema: BaseSchema, appModuleFeatures: () => []})
+  }
+
+  test('returns the default message for a module with no local dev output on the first dev session', async () => {
+    const extensionInstance = instanceFor(specWithNoLocalDevOutput())
+
+    const got = await extensionInstance.getDevSessionUpdateMessages({status: 'created'})
+
+    expect(got).toEqual([DEFAULT_DEV_SESSION_UPDATE_MESSAGE])
+  })
+
+  test('returns nothing for a module with no local dev output on subsequent updates', async () => {
+    const extensionInstance = instanceFor(specWithNoLocalDevOutput())
+
+    const got = await extensionInstance.getDevSessionUpdateMessages({status: 'updated'})
+
+    expect(got).toBeUndefined()
+  })
+
+  test('returns nothing when the module contributes features', async () => {
+    const extensionInstance = instanceFor(
+      createExtensionSpecification({
+        identifier: 'has_features',
+        schema: BaseSchema,
+        appModuleFeatures: () => ['localization'],
+      }),
+    )
+
+    expect(extensionInstance.hasNoLocalDevOutput).toBe(false)
+    await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toBeUndefined()
+  })
+
+  test('returns nothing when the module has deploy steps', async () => {
+    const extensionInstance = instanceFor(
+      createExtensionSpecification({
+        identifier: 'has_deploy_steps',
+        schema: BaseSchema,
+        appModuleFeatures: () => [],
+        clientSteps: deployStep,
+      }),
+    )
+
+    expect(extensionInstance.hasNoLocalDevOutput).toBe(false)
+    await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toBeUndefined()
+  })
+
+  test('returns nothing when the module produces build output', async () => {
+    const extensionInstance = instanceFor(
+      createExtensionSpecification({
+        identifier: 'has_build_output',
+        schema: BaseSchema,
+        appModuleFeatures: () => [],
+        getOutputRelativePath: () => 'dist/main.js',
+      }),
+    )
+
+    expect(extensionInstance.hasNoLocalDevOutput).toBe(false)
+    await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toBeUndefined()
+  })
+
+  test('returns nothing for app config modules, which are summarised together instead', async () => {
+    const extensionInstance = instanceFor(
+      createConfigExtensionSpecification({
+        identifier: 'app_config_without_messages',
+        schema: BaseSchema,
+        transformConfig: {},
+      }),
+    )
+
+    expect(extensionInstance.isAppConfigExtension).toBe(true)
+    expect(extensionInstance.hasNoLocalDevOutput).toBe(true)
+    await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toBeUndefined()
+  })
+
+  test('evaluates the app config exclusion lazily, so a remotely-rewritten experience is respected', async () => {
+    // `mergeLocalAndRemoteSpec` rewrites `experience` after the spec factory has run.
+    const specification = specWithNoLocalDevOutput()
+    const extensionInstance = instanceFor({...specification, experience: 'configuration'})
+
+    await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toBeUndefined()
+  })
+
+  describe('per-spec override', () => {
+    const override = async () => ['Custom message']
+
+    test('wins over the default through createExtensionSpecification', async () => {
+      const extensionInstance = instanceFor(
+        createExtensionSpecification({
+          identifier: 'override_via_extension_spec',
+          schema: BaseSchema,
+          appModuleFeatures: () => [],
+          getDevSessionUpdateMessages: override,
+        }),
+      )
+
+      await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toEqual([
+        'Custom message',
+      ])
+    })
+
+    test('wins over the default through createConfigExtensionSpecification', async () => {
+      // Guards against `{...defaults, ...spec}` in `createExtensionSpecification` clobbering the
+      // hook: this factory always passes the key, so a default living in `defaults` would be lost.
+      const extensionInstance = instanceFor(
+        createConfigExtensionSpecification({
+          identifier: 'override_via_config_spec',
+          schema: BaseSchema,
+          transformConfig: {},
+          getDevSessionUpdateMessages: override,
+        }),
+      )
+
+      await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toEqual([
+        'Custom message',
+      ])
+    })
+
+    test('wins over the default when spread onto a contract based module specification', async () => {
+      // `createContractBasedModuleSpecification` takes no hook, so the only way to override it is
+      // by spreading — which is exactly how `createRemoteOnlySpecification` and
+      // `mergeLocalAndRemoteSpec` build their specs.
+      const specification = createContractBasedModuleSpecification({
+        identifier: 'override_via_contract_based_spec',
+        experience: 'extension',
+        uidStrategy: 'single',
+        appModuleFeatures: () => [],
+      })
+      const extensionInstance = instanceFor({...specification, getDevSessionUpdateMessages: override})
+
+      await expect(extensionInstance.getDevSessionUpdateMessages({status: 'created'})).resolves.toEqual([
+        'Custom message',
+      ])
+    })
+
+    test('is used even on subsequent updates, where the default stays quiet', async () => {
+      const extensionInstance = instanceFor(
+        createExtensionSpecification({
+          identifier: 'override_on_update',
+          schema: BaseSchema,
+          appModuleFeatures: () => [],
+          getDevSessionUpdateMessages: override,
+        }),
+      )
+
+      await expect(extensionInstance.getDevSessionUpdateMessages({status: 'updated'})).resolves.toEqual([
+        'Custom message',
+      ])
+    })
+
+    test('receives the dev session context', async () => {
+      const getDevSessionUpdateMessages = vi.fn().mockResolvedValue([])
+      const extensionInstance = instanceFor(
+        createExtensionSpecification({
+          identifier: 'override_receiving_context',
+          schema: BaseSchema,
+          appModuleFeatures: () => [],
+          getDevSessionUpdateMessages,
+        }),
+      )
+
+      await extensionInstance.getDevSessionUpdateMessages({status: 'created'})
+
+      expect(getDevSessionUpdateMessages).toHaveBeenCalledWith(extensionInstance.configuration, {status: 'created'})
+    })
+  })
+
+  describe('local specifications matching the default', () => {
+    test('only modules with no local dev output receive the default message', async () => {
+      const specifications = await loadLocalExtensionsSpecifications()
+
+      const matching = specifications
+        .filter((specification) => {
+          const extensionInstance = instanceFor(specification)
+          return !extensionInstance.isAppConfigExtension && extensionInstance.hasNoLocalDevOutput
+        })
+        .map((specification) => specification.identifier)
+        .sort()
+
+      expect(matching).toEqual(['editor_extension_collection', 'flow_action', 'flow_trigger', 'payments_extension'])
     })
   })
 })
