@@ -85,6 +85,11 @@ export default {
     functions: projectFactory('functions', 'functions_cli_schema.graphql', 'app'),
     adminAsApp: projectFactory('admin', 'admin_schema.graphql'),
     organizationsDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql', 'organizations'),
+    organizationsBusinessPlatformOrganizations: projectFactory(
+      'business-platform-organizations',
+      'organizations_schema.graphql',
+      'organizations',
+    ),
     storeBusinessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql', 'store'),
     storeBusinessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql', 'store'),
   },

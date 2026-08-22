@@ -98,7 +98,7 @@ describe('storeContext', () => {
       const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
 
       vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
-      vi.mocked(selectStore).mockResolvedValue(mockStore)
+      vi.mocked(selectStore).mockResolvedValue({store: mockStore, created: false})
 
       const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
       const result = await storeContext({
@@ -121,7 +121,7 @@ describe('storeContext', () => {
       const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
       await prepareAppFolder(mockApp, dir)
       vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
-      vi.mocked(selectStore).mockResolvedValue(mockStore)
+      vi.mocked(selectStore).mockResolvedValue({store: mockStore, created: false})
 
       const result = await storeContext({
         appContextResult,
@@ -154,6 +154,22 @@ describe('storeContext', () => {
     await expect(storeContext({appContextResult: updatedAppContextResult, forceReselectStore: false})).rejects.toThrow(
       'No stores available',
     )
+  })
+
+  test('records when the selected store was created inline', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      const appWithoutCachedStore = testAppLinked()
+      await prepareAppFolder(appWithoutCachedStore, dir)
+      vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: [mockStore], hasMorePages: false})
+      vi.mocked(selectStore).mockResolvedValue({store: mockStore, created: true})
+
+      await storeContext({
+        appContextResult: {...appContextResult, app: appWithoutCachedStore},
+        forceReselectStore: false,
+      })
+
+      expect(metadata.getAllPublicMetadata()).toEqual(expect.objectContaining({cmd_dev_store_created: true}))
+    })
   })
 
   test('calls logMetadata', async () => {

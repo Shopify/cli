@@ -89,3 +89,12 @@ export type Store =
   | 'DEVELOPMENT'
   | 'DEVELOPMENT_SUPERSET'
   | 'PRODUCTION';
+
+export type StoreCreationStatus =
+  | 'AWAITING_CORE_STORE_READY'
+  | 'CALLING_CORE'
+  | 'COMPLETE'
+  | 'FAILED'
+  | 'FINALIZING'
+  | 'TIMED_OUT'
+  | 'USER_ERROR';

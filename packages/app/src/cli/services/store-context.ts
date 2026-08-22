@@ -37,6 +37,7 @@ export async function storeContext({
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
+  let storeCreated = false
 
   const devStoreUrlFromAppConfig = app.configuration.build?.dev_store_url
   const devStoreUrlFromHiddenConfig = app.hiddenConfig.dev_store_url
@@ -60,11 +61,13 @@ export async function storeContext({
   } else {
     // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
     const allStores = await developerPlatformClient.devStoresForOrg(organization.id)
-    selectedStore = await selectStore(allStores, organization, developerPlatformClient)
+    const selection = await selectStore(allStores, organization, developerPlatformClient)
+    selectedStore = selection.store
+    storeCreated = selection.created
   }
 
   selectedStore.shopDomain = normalizeStoreFqdn(selectedStore.shopDomain)
-  await logMetadata(selectedStore, forceReselectStore)
+  await logMetadata(selectedStore, forceReselectStore, storeCreated)
 
   // Save the selected store in the hidden config file
   if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {
@@ -77,11 +80,12 @@ export async function storeContext({
   return selectedStore
 }
 
-async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean) {
+async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean, storeCreated: boolean) {
   await metadata.addPublicMetadata(() => ({
     cmd_app_reset_used: resetUsed,
     store_fqdn_hash: hashString(selectedStore.shopDomain),
     store_domain: selectedStore.shopDomain,
+    cmd_dev_store_created: storeCreated,
   }))
 
   await metadata.addSensitiveMetadata(() => ({
