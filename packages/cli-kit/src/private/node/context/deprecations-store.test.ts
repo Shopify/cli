@@ -18,8 +18,8 @@ describe('deprecations-store', () => {
   })
 
   test('setNextDeprecationDate sets earliest future deprecation date', () => {
-    const futureDate1 = new Date(Date.now() + 100000)
-    const futureDate2 = new Date(Date.now() + 200000)
+    const futureDate1 = new Date(Date.now() + 500000)
+    const futureDate2 = new Date(Date.now() + 600000)
 
     setNextDeprecationDate([futureDate2, futureDate1])
 
@@ -27,20 +27,20 @@ describe('deprecations-store', () => {
   })
 
   test('setNextDeprecationDate updates store if a newer date is earlier than existing nextDeprecationDate', () => {
-    const initialFutureDate = new Date(Date.now() + 100000)
+    const initialFutureDate = new Date(Date.now() + 400000)
     setNextDeprecationDate([initialFutureDate])
 
-    const earlierFutureDate = new Date(Date.now() + 50000)
+    const earlierFutureDate = new Date(Date.now() + 300000)
     setNextDeprecationDate([earlierFutureDate])
 
     expect(getNextDeprecationDate()).toEqual(earlierFutureDate)
   })
 
   test('setNextDeprecationDate keeps existing date if new future dates are later', () => {
-    const initialFutureDate = new Date(Date.now() + 50000)
+    const initialFutureDate = new Date(Date.now() + 100000)
     setNextDeprecationDate([initialFutureDate])
 
-    const laterFutureDate = new Date(Date.now() + 300000)
+    const laterFutureDate = new Date(Date.now() + 200000)
     setNextDeprecationDate([laterFutureDate])
 
     expect(getNextDeprecationDate()).toEqual(initialFutureDate)
