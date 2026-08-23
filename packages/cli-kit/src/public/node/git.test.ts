@@ -538,3 +538,34 @@ describe('removeGitRemote()', () => {
     expect(mockedExeca).not.toHaveBeenCalledWith('git', ['remote', 'remove', remoteName], {cwd: directory})
   })
 })
+
+describe('checkIfIgnoredInGitRepository()', () => {
+  test('returns empty array without calling git if files array is empty', async () => {
+    const directory = '/test/directory'
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, [])
+
+    expect(result).toEqual([])
+    expect(mockedExeca).not.toHaveBeenCalled()
+  })
+
+  test('passes -- before file paths to prevent option injection', async () => {
+    const directory = '/test/directory'
+    mockGitCommand('file1.txt\n')
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, ['file1.txt', '-v'])
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['check-ignore', '--', 'file1.txt', '-v'], {cwd: directory})
+    expect(result).toEqual(['file1.txt'])
+  })
+
+  test('returns empty array when git check-ignore exits with code 1', async () => {
+    const directory = '/test/directory'
+    const error = Object.assign(new Error('no files ignored'), {exitCode: 1})
+    mockedExeca.mockRejectedValue(error)
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, ['file1.txt'])
+
+    expect(result).toEqual([])
+  })
+})
