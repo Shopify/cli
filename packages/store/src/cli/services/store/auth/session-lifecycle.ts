@@ -1,6 +1,9 @@
 import {maskToken} from './config.js'
-import {throwStoredStoreAuthError, throwReauthenticateStoreAuthError} from './recovery.js'
 import {refreshStoreAccessToken} from './token-client.js'
+import {
+  throwMissingStoredStoreAuthError,
+  throwReauthenticateStoreAuthError,
+} from '@shopify/cli-kit/node/store-auth-recovery'
 import {
   clearStoredStoreAppSession,
   getCurrentStoredStoreAppSession,
@@ -49,7 +52,7 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
   let session = getCurrentStoredStoreAppSession(store)
 
   if (!session) {
-    throwStoredStoreAuthError(store)
+    throwMissingStoredStoreAuthError(store)
   }
 
   outputDebug(

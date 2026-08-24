@@ -4,8 +4,10 @@ import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
+  clearStoredStoreAppSession,
   getCurrentStoredStoreAppSession,
   listCurrentStoredStoreAppSessions,
+  type StoredStoreAppSession,
 } from '@shopify/cli-kit/node/store-auth-session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
@@ -13,6 +15,7 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 import type {Writable} from 'stream'
@@ -22,6 +25,7 @@ vi.mock('@shopify/cli-kit/node/store-auth-session', async (importOriginal) => {
   const original = await importOriginal<typeof import('@shopify/cli-kit/node/store-auth-session')>()
   return {
     ...original,
+    clearStoredStoreAppSession: vi.fn(),
     getCurrentStoredStoreAppSession: vi.fn(),
     listCurrentStoredStoreAppSessions: vi.fn(),
   }
@@ -83,6 +87,54 @@ class TestScopedThemeCommand extends TestThemeCommand {
   protected storeAuthScopes(): string[] {
     return ['read_themes']
   }
+}
+
+class TestFailingThemeCommand extends TestScopedThemeCommand {
+  failure: Error = new Error('Not configured')
+
+  async command(
+    flags: any,
+    session: AdminSession,
+    multiEnvironment = false,
+    args?: any,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ): Promise<void> {
+    await super.command(flags, session, multiEnvironment, args, context)
+    throw this.failure
+  }
+}
+
+function adminApiClientError(status: number, message = 'GraphQL Error'): Error {
+  const error = new Error(message) as Error & {response: {status: number; errors: {message: string}[]}}
+  error.response = {status, errors: [{message}]}
+  return error
+}
+
+function graphQLClientError(statusCode: number, message = 'GraphQL Error'): Error {
+  const error = new Error(message) as Error & {statusCode: number}
+  error.statusCode = statusCode
+  return error
+}
+
+function storedStoreAuthSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
+  return {
+    store: 'test-store.myshopify.com',
+    clientId: 'store-auth-client-id',
+    userId: '42',
+    accessToken: 'shpat_stored_token',
+    scopes: ['read_themes'],
+    acquiredAt: '2026-06-08T11:00:00.000Z',
+    ...overrides,
+  }
+}
+
+function storedPreviewStoreAuthSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
+  return storedStoreAuthSession({
+    userId: 'preview:123',
+    kind: 'preview',
+    preview: {shopId: '123', name: 'Lavender Candles', createdAt: '2026-06-08T11:00:00.000Z'},
+    ...overrides,
+  })
 }
 
 class TestThemeCommandWithForce extends TestThemeCommand {
@@ -958,11 +1010,33 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(renderError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: ['Environment command-error failed: \n\nMocking a command error'],
-        }),
+      expect(renderError).toHaveBeenCalledWith({
+        body: ['Environment command-error failed: \n\nMocking a command error'],
+      })
+    })
+
+    test('keeps a fatal error try message separate from the main message', async () => {
+      vi.mocked(loadEnvironment).mockResolvedValue({store: 'store.myshopify.com'})
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestFailingThemeCommand(
+        ['--environment', 'broken', '--environment', 'development'],
+        CommandConfig,
       )
+      command.failure = new AbortError('Theme could not be pushed.', ['Check the', {command: 'theme list'}, 'output.'])
+
+      await command.run()
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Environment broken failed:',
+        body: ['Theme could not be pushed.', '\n\nCheck the', {command: 'theme list'}, 'output.'],
+      })
     })
 
     test('commands should display an error if the --path flag is used', async () => {
@@ -1187,6 +1261,135 @@ describe('ThemeCommand', () => {
 
       // Then
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('stored preview store auth recovery', () => {
+    async function runFailingCommand(argv: string[], failure: Error): Promise<Error> {
+      await CommandConfig.load()
+      const command = new TestFailingThemeCommand(argv, CommandConfig)
+      command.failure = failure
+
+      return command.run().then(
+        () => {
+          throw new Error('Expected the command to fail')
+        },
+        (error: Error) => error,
+      )
+    }
+
+    test('clears a stored preview session and reports a likely claim on HTTP 401', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedPreviewStoreAuthSession())
+
+      const error = await runFailingCommand([], adminApiClientError(401))
+
+      expect(error).toMatchObject({
+        message:
+          'The preview store test-store.myshopify.com has likely been claimed, so its stored authentication is no longer valid.',
+        nextSteps: [
+          [
+            'Run',
+            {command: 'shopify store auth --store test-store.myshopify.com --scopes <comma-separated-scopes>'},
+            'to re-authenticate',
+          ],
+        ],
+      })
+      expect(clearStoredStoreAppSession).toHaveBeenCalledWith('test-store.myshopify.com', 'preview:123')
+    })
+
+    test('clears a stored preview session when a GraphQL client error has statusCode 401', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedPreviewStoreAuthSession())
+
+      const error = await runFailingCommand([], graphQLClientError(401))
+
+      expect(error).toMatchObject({
+        message:
+          'The preview store test-store.myshopify.com has likely been claimed, so its stored authentication is no longer valid.',
+      })
+      expect(clearStoredStoreAppSession).toHaveBeenCalledWith('test-store.myshopify.com', 'preview:123')
+    })
+
+    test('leaves a stored standard session untouched on HTTP 401', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(
+        storedStoreAuthSession({
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          refreshToken: 'refresh-token-that-would-still-work',
+        }),
+      )
+      const failure = adminApiClientError(401, '[API] Invalid API key or access token')
+
+      const error = await runFailingCommand([], failure)
+
+      expect(error).toBe(failure)
+      expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    })
+
+    test.each([404, 500])('leaves a stored preview session untouched on HTTP %i', async (status) => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedPreviewStoreAuthSession())
+      const failure = adminApiClientError(status, 'Theme not found')
+
+      const error = await runFailingCommand([], failure)
+
+      expect(error).toBe(failure)
+      expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    })
+
+    test('does not classify a 401 from an explicitly supplied password', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedPreviewStoreAuthSession())
+      const failure = adminApiClientError(401, '[API] Invalid API key or access token')
+
+      const error = await runFailingCommand(['--password', 'shpat_custom_app_password'], failure)
+
+      expect(error).toBe(failure)
+      expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+      expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    })
+
+    test('keeps recovery next steps when one environment fails and runs the others', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'claimed.myshopify.com'})
+        .mockResolvedValueOnce({store: 'healthy.myshopify.com'})
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+      vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([
+        storedPreviewStoreAuthSession({store: 'claimed.myshopify.com'}),
+        storedPreviewStoreAuthSession({store: 'healthy.myshopify.com'}),
+      ])
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestFailingThemeCommand(
+        ['--environment', 'claimed', '--environment', 'healthy'],
+        CommandConfig,
+      )
+      command.failure = adminApiClientError(401)
+      const originalCommand = command.command.bind(command)
+      command.command = async (flags, session, multiEnvironment, args, context) => {
+        if (flags.store !== 'claimed.myshopify.com') {
+          command.commandCalls.push({flags, session, multiEnvironment: multiEnvironment ?? false, args, context})
+          return
+        }
+        await originalCommand(flags, session, multiEnvironment, args, context)
+      }
+
+      await command.run()
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Environment claimed failed:',
+        body: 'The preview store claimed.myshopify.com has likely been claimed, so its stored authentication is no longer valid.',
+        nextSteps: [
+          [
+            'Run',
+            {command: 'shopify store auth --store claimed.myshopify.com --scopes <comma-separated-scopes>'},
+            'to re-authenticate',
+          ],
+        ],
+      })
+      expect(command.commandCalls.map(({flags}) => flags.store)).toContain('healthy.myshopify.com')
     })
   })
 })

@@ -1,9 +1,10 @@
 import {
   classifyAdminApiError,
   isGraphQLClientErrorLike,
-  throwIfStoredStoreAuthIsInvalid,
   ABORTED_FETCH_MESSAGE_FRAGMENTS,
+  INVALID_STORED_AUTH_STATUSES,
 } from '../admin-errors.js'
+import {throwIfStoredStoreAuthIsInvalid} from '@shopify/cli-kit/node/store-auth-recovery'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -53,7 +54,7 @@ export async function fetchPublicApiVersions(input: {
     })
     return response.publicApiVersions
   } catch (error) {
-    throwIfStoredStoreAuthIsInvalid(error, input.session)
+    throwIfStoredStoreAuthIsInvalid(error, input.session, {invalidStatuses: INVALID_STORED_AUTH_STATUSES})
 
     const classified = classifyAdminApiError(error, input.adminSession.storeFqdn)
     if (classified) throw classified
@@ -82,7 +83,7 @@ export async function runAdminStoreGraphQLOperation(input: {
       renderOptions: {stdout: process.stderr},
     })
   } catch (error) {
-    throwIfStoredStoreAuthIsInvalid(error, input.context.session)
+    throwIfStoredStoreAuthIsInvalid(error, input.context.session, {invalidStatuses: INVALID_STORED_AUTH_STATUSES})
 
     // Status-specific classification (e.g. 402 store-unavailable) must run before the
     // generic GraphQL-errors branch, otherwise a 402 response that also carries

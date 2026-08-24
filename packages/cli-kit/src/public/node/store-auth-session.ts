@@ -65,7 +65,8 @@ interface StoredStoreAppSessionBucket {
   sessionsByUserId: {[userId: string]: StoredStoreAppSession}
 }
 
-interface StoreAuthSessionSchema {
+/** Store auth sessions, keyed by the store auth storage key. */
+export interface StoreAuthSessionSchema {
   [key: string]: StoredStoreAppSessionBucket
 }
 
