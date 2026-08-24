@@ -106,4 +106,33 @@ describe('fetchExtensionSpecifications', () => {
     expect(withoutLocalization?.appModuleFeatures()).toEqual([])
     expect(withLocalization?.appModuleFeatures()).toEqual(['localization'])
   })
+
+  test('configuration-experience specs do not require their section to be present in the app config', async () => {
+    // Given - a configuration-style spec whose remote contract has a root-level required property
+    const got = await fetchSpecifications({
+      developerPlatformClient: testDeveloperPlatformClient(),
+      app: testOrganizationApp(),
+    })
+    const configStyleSpec = got.find((spec) => spec.identifier === 'remote_only_extension_schema_config_style')
+
+    // When - parsing an app config that doesn't include the spec's section
+    const resultWithoutSection = configStyleSpec?.parseConfigurationObject({name: 'my app'})
+
+    // Then - the root-level required property is not enforced
+    expect(resultWithoutSection).toEqual({
+      state: 'ok',
+      data: {name: 'my app'},
+      errors: undefined,
+    })
+
+    // When - parsing an app config where the section has the wrong type
+    const resultWithInvalidSection = configStyleSpec?.parseConfigurationObject({name: 'my app', pattern: 123})
+
+    // Then - the rest of the contract is still enforced
+    expect(resultWithInvalidSection?.state).toBe('error')
+    expect(resultWithInvalidSection?.errors).toContainEqual({
+      path: ['pattern'],
+      message: 'Expected string, received number',
+    })
+  })
 })

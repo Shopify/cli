@@ -41,6 +41,12 @@ export async function unifiedConfigurationParserFactory(
   }
   const contract = await normaliseJsonSchema(contractJsonSchema)
   contract.properties = {...JsonSchemaBaseProperties, ...contract.properties}
+  // Configuration-experience specs validate the entire app config; an absent section means "no module for this
+  // spec" (decided by the loader), so a root-level `required` from the contract must not force the section into
+  // existence. Nested `required` properties still apply once the section is present.
+  if (merged.experience === 'configuration') {
+    delete contract.required
+  }
   const extensionIdentifier = merged.identifier
 
   const parseConfigurationObject = (config: object): ParseConfigurationResult<BaseConfigType> => {
