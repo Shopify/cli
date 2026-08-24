@@ -1,4 +1,5 @@
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {fetchOptionalOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {DeleteAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
 import {
@@ -95,6 +96,9 @@ async function fetchShopifyShopId(options: {
   token: string
 }): Promise<string | undefined> {
   const shop = await fetchOptionalOrganizationShop(options)
+  if (shop) {
+    await recordStoreFqdnMetadata(options.store, true, shop.shopifyShopId)
+  }
   return shop?.shopifyShopId
 }
 

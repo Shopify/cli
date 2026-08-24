@@ -1,8 +1,10 @@
 import {deleteDevStore} from '../../services/store/delete/dev.js'
 import {storeFlags} from '../../flags.js'
 import {resolveOrganizationForStore} from '../../utilities/store-lookup/organization.js'
+import {recordStoreFqdnMetadata} from '../../services/store/attribution.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {isTTY, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
@@ -10,6 +12,10 @@ import {Flags} from '@oclif/core'
 
 export default class StoreDelete extends Command {
   static hidden = true
+
+  public static get requiresSyncAnalytics(): boolean {
+    return true
+  }
 
   static summary = 'Delete a development store.'
 
@@ -38,6 +44,7 @@ export default class StoreDelete extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreDelete)
+    await recordStoreFqdnMetadata(flags.store, false)
 
     try {
       // Deleting a store is irreversible: in non-interactive runs (CI, agents, piped
@@ -67,6 +74,7 @@ export default class StoreDelete extends Command {
       // Only expected failures (AbortError) are rendered as JSON. Unexpected errors rethrow to the
       // global error handler so they keep their stack traces and get reported as CLI bugs.
       if (flags.json && error instanceof AbortError) {
+        await reportAnalyticsEvent({config: this.config, errorMessage: error.message, exitMode: 'expected_error'})
         outputResult(
           JSON.stringify(
             {

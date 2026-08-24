@@ -2,6 +2,7 @@ import StoreCreateDev from './dev.js'
 import {createDevStore} from '../../../services/store/create/dev.js'
 import {storeNamePrompt, storePlanPrompt} from '../../../prompts/store.js'
 import {selectOrg} from '@shopify/organizations'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -10,6 +11,9 @@ import {describe, expect, test, vi, beforeEach} from 'vitest'
 vi.mock('../../../services/store/create/dev.js')
 vi.mock('../../../prompts/store.js')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/analytics', () => ({
+  reportAnalyticsEvent: vi.fn(),
+}))
 
 vi.mock('@shopify/organizations', () => ({
   selectOrg: vi.fn(),
@@ -31,6 +35,10 @@ beforeEach(() => {
 })
 
 describe('store create dev command', () => {
+  test('requires synchronous analytics', () => {
+    expect(StoreCreateDev.requiresSyncAnalytics).toBe(true)
+  })
+
   test('resolves the organization and passes parsed flags through to the service', async () => {
     await StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345'])
 
@@ -190,21 +198,77 @@ describe('store create dev command', () => {
     const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('process.exit')
     }) as never)
+    const mockCommandCatch = vi.spyOn(StoreCreateDev.prototype, 'catch').mockImplementation(async (error) => {
+      throw error
+    })
 
     await expect(
       StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--json']),
     ).rejects.toThrow('process.exit')
 
-    const call = vi.mocked(outputResult).mock.calls[0]![0] as string
-    const parsed = JSON.parse(call)
-    expect(parsed).toEqual({
-      error: true,
-      message: 'Something went wrong',
-      nextSteps: [],
-      exitCode: 1,
-    })
+    expect(outputResult).toHaveBeenCalledTimes(1)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          error: true,
+          message: 'Something went wrong',
+          nextSteps: [],
+          exitCode: 1,
+        },
+        null,
+        2,
+      ),
+    )
+    expect(mockExit).toHaveBeenCalledTimes(1)
     expect(mockExit).toHaveBeenCalledWith(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith({
+      config: expect.anything(),
+      errorMessage: 'Something went wrong',
+      exitMode: 'expected_error',
+    })
 
+    mockCommandCatch.mockRestore()
+    mockExit.mockRestore()
+  })
+
+  test('outputs structured JSON error when --json is active and organization selection throws AbortError', async () => {
+    vi.mocked(selectOrg).mockRejectedValueOnce(new AbortError('Could not select organization'))
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+      throw new Error('process.exit')
+    }) as never)
+    const mockCommandCatch = vi.spyOn(StoreCreateDev.prototype, 'catch').mockImplementation(async (error) => {
+      throw error
+    })
+
+    await expect(
+      StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--json']),
+    ).rejects.toThrow('process.exit')
+
+    expect(outputResult).toHaveBeenCalledTimes(1)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          error: true,
+          message: 'Could not select organization',
+          nextSteps: [],
+          exitCode: 1,
+        },
+        null,
+        2,
+      ),
+    )
+    expect(createDevStore).not.toHaveBeenCalled()
+    expect(mockExit).toHaveBeenCalledTimes(1)
+    expect(mockExit).toHaveBeenCalledWith(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith({
+      config: expect.anything(),
+      errorMessage: 'Could not select organization',
+      exitMode: 'expected_error',
+    })
+
+    mockCommandCatch.mockRestore()
     mockExit.mockRestore()
   })
 

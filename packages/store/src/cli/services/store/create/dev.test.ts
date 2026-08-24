@@ -1,4 +1,5 @@
 import {createDevStore} from './dev.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
@@ -31,6 +32,8 @@ vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
 vi.mock('@shopify/cli-kit/node/system', () => ({
   sleep: vi.fn(),
 }))
+
+vi.mock('../attribution.js')
 
 const defaultOrg = {id: '123', businessName: 'Test Org'}
 const defaultMutationResult = {
@@ -253,6 +256,32 @@ describe('createDevStore', () => {
     expect(renderSuccess).not.toHaveBeenCalled()
   })
 
+  test('records the created store domain before a later polling failure', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({
+        organization: {id: '123', storeCreation: {status: 'FAILED'}},
+      })
+
+    await expect(
+      createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', json: false}),
+    ).rejects.toThrow('Store creation failed with status: FAILED')
+
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('test-store.myshopify.com', true)
+  })
+
+  test('does not record store attribution for mutation failures before a domain is returned', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
+      createAppDevelopmentStore: null,
+    })
+
+    await expect(
+      createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', json: false}),
+    ).rejects.toThrow('unexpected empty response')
+
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
+  })
+
   test('throws AbortError when mutation returns null createAppDevelopmentStore', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
       createAppDevelopmentStore: null,
@@ -275,6 +304,7 @@ describe('createDevStore', () => {
     await expect(
       createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', json: false}),
     ).rejects.toThrow('Name is taken')
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
   })
 
   test('throws AbortError when mutation returns no shopDomain', async () => {
@@ -289,6 +319,7 @@ describe('createDevStore', () => {
     await expect(
       createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', json: false}),
     ).rejects.toThrow('no shop domain was returned')
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
   })
 
   test('throws AbortError when polling returns FAILED status', async () => {

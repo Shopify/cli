@@ -5,12 +5,17 @@ import {countryFlag, storeFlags} from '../../../flags.js'
 import {selectOrg} from '@shopify/organizations'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 
 export default class StoreCreateDev extends Command {
   static hidden = true
+
+  public static get requiresSyncAnalytics(): boolean {
+    return true
+  }
 
   static summary = 'Create a new development store.'
 
@@ -50,11 +55,11 @@ export default class StoreCreateDev extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreCreateDev)
 
-    const organization = await selectOrg(flags['organization-id']?.toString())
-    const name = flags.name ?? (await storeNamePrompt())
-    const plan = (flags.plan as DevStorePlan | undefined) ?? (await storePlanPrompt())
-
     try {
+      const organization = await selectOrg(flags['organization-id']?.toString())
+      const name = flags.name ?? (await storeNamePrompt())
+      const plan = (flags.plan as DevStorePlan | undefined) ?? (await storePlanPrompt())
+
       await createDevStore({
         name,
         organization,
@@ -66,6 +71,7 @@ export default class StoreCreateDev extends Command {
       })
     } catch (error) {
       if (flags.json && error instanceof AbortError) {
+        await reportAnalyticsEvent({config: this.config, errorMessage: error.message, exitMode: 'expected_error'})
         outputResult(
           JSON.stringify(
             {
