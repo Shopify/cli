@@ -320,7 +320,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
       patchAppRelativeUrls(spec.identifier, config, urls.applicationUrl)
     },
     deployConfig: async (config, directory, _apiKey, _moduleId, context) => {
-      const applicationUrl = context?.appConfiguration.application_url
+      const applicationUrl = context?.appConfiguration?.application_url
       const appUrl = typeof applicationUrl === 'string' ? applicationUrl : undefined
 
       // configWithoutFirstClassFields returns a fresh object, so patching it in place cannot affect the caller.
