@@ -8,6 +8,7 @@ import {
 } from '@shopify/cli-kit/node/json-schema'
 import {isEmpty} from '@shopify/cli-kit/common/object'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 /**
  * The base properties that are added to all JSON Schema contracts.
@@ -36,27 +37,49 @@ export async function unifiedConfigurationParserFactory(
   handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'strip',
 ) {
   const contractJsonSchema = validationSchema?.jsonSchema
-  if (contractJsonSchema === undefined || isEmpty(JSON.parse(contractJsonSchema))) {
+  if (contractJsonSchema === undefined) {
     return merged.parseConfigurationObject
   }
-  const contract = await normaliseJsonSchema(contractJsonSchema)
+
+  let contract
+  try {
+    if (isEmpty(JSON.parse(contractJsonSchema))) {
+      return merged.parseConfigurationObject
+    }
+    contract = await normaliseJsonSchema(contractJsonSchema)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    warnRemoteContractValidationSkipped(merged.identifier)
+    return merged.parseConfigurationObject
+  }
+
   contract.properties = {...JsonSchemaBaseProperties, ...contract.properties}
   const extensionIdentifier = merged.identifier
+  let remoteContractValidationEnabled = true
 
   const parseConfigurationObject = (config: object): ParseConfigurationResult<BaseConfigType> => {
     // First we parse with zod. This may also change the format of the data.
     const zodParse = merged.parseConfigurationObject(config)
+    if (!remoteContractValidationEnabled) return zodParse
 
     // Then, even if this failed, we try to validate against the contract.
     const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined
     const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
 
-    const jsonSchemaParse = jsonSchemaValidate(
-      subjectForAjv,
-      contract,
-      handleInvalidAdditionalProperties,
-      extensionIdentifier,
-    )
+    let jsonSchemaParse: ReturnType<typeof jsonSchemaValidate>
+    try {
+      jsonSchemaParse = jsonSchemaValidate(
+        subjectForAjv,
+        contract,
+        handleInvalidAdditionalProperties,
+        extensionIdentifier,
+      )
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      remoteContractValidationEnabled = false
+      warnRemoteContractValidationSkipped(extensionIdentifier)
+      return zodParse
+    }
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
     let errors = zodParse.errors ?? []
@@ -87,4 +110,10 @@ export async function unifiedConfigurationParserFactory(
     }
   }
   return parseConfigurationObject
+}
+
+export function warnRemoteContractValidationSkipped(identifier: string) {
+  outputWarn(
+    `Remote contract validation for "${identifier}" is skipped because its schema is invalid. Server-side validation remains the authority.`,
+  )
 }

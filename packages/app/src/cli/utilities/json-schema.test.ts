@@ -1,6 +1,7 @@
 import {unifiedConfigurationParserFactory} from './json-schema.js'
-import {describe, test, expect} from 'vitest'
+import {afterEach, describe, test, expect} from 'vitest'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 describe('unifiedConfigurationParserFactory', () => {
   const mockParseConfigurationObject = (config: any) => {
@@ -17,6 +18,10 @@ describe('unifiedConfigurationParserFactory', () => {
       errors: undefined,
     }
   }
+
+  afterEach(() => {
+    mockAndCaptureOutput().clear()
+  })
 
   test('falls back to zod parser when no JSON schema is provided', async () => {
     // Given
@@ -58,6 +63,81 @@ describe('unifiedConfigurationParserFactory', () => {
       data: {type: 'product_subscription'},
       errors: undefined,
     })
+  })
+
+  test('falls back to zod parser when JSON schema has an invalid reference', async () => {
+    // Given
+    const merged = {
+      identifier: randomUUID(),
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema: '{"type":"object","properties":{"name":{"$ref":"#/definitions/missing"}}}',
+      },
+    }
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
+    const result = parser({type: 'product_subscription'})
+
+    // Then
+    expect(result).toEqual({
+      state: 'ok',
+      data: {type: 'product_subscription'},
+      errors: undefined,
+    })
+    expect(outputMock.warn()).toContain(`Remote contract validation for "${merged.identifier}" is skipped`)
+    expect(outputMock.warn()).toContain('Server-side validation remains the authority.')
+  })
+
+  test('falls back to zod parser when JSON schema is invalid', async () => {
+    // Given
+    const merged = {
+      identifier: randomUUID(),
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema: '{',
+      },
+    }
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
+    const result = parser({type: 'product_subscription'})
+
+    // Then
+    expect(result).toEqual({
+      state: 'ok',
+      data: {type: 'product_subscription'},
+      errors: undefined,
+    })
+    expect(outputMock.warn()).toContain(`Remote contract validation for "${merged.identifier}" is skipped`)
+    expect(outputMock.warn()).toContain('Server-side validation remains the authority.')
+  })
+
+  test('falls back to zod parser when JSON schema fails AJV compilation', async () => {
+    // Given
+    const merged = {
+      identifier: randomUUID(),
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema: '{"type":"object","properties":{"name":{"type":"not-a-real-type"}}}',
+      },
+    }
+    const outputMock = mockAndCaptureOutput()
+    const config = {type: 'product_subscription', localOnly: 'preserved'}
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
+    const firstResult = parser(config)
+    const secondResult = parser(config)
+
+    // Then
+    expect(firstResult).toEqual({state: 'ok', data: config, errors: undefined})
+    expect(secondResult).toEqual({state: 'ok', data: config, errors: undefined})
+    expect(outputMock.warn()).toBe(
+      `Remote contract validation for "${merged.identifier}" is skipped because its schema is invalid. Server-side validation remains the authority.`,
+    )
   })
 
   test('validates with both zod and JSON schema when both succeed', async () => {
