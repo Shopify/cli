@@ -7,7 +7,7 @@ import {
 } from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
-import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
+import {unifiedConfigurationParserFactory, warnRemoteContractValidationSkipped} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
@@ -137,8 +137,16 @@ function mergeLocalAndRemoteSpec(
 async function createRemoteOnlySpecification(
   remoteSpec: RemoteSpecification,
   validationSchema: {jsonSchema: string},
-): Promise<RemoteAwareExtensionSpecification> {
-  const normalisedSchema = await normaliseJsonSchema(validationSchema.jsonSchema)
+): Promise<RemoteAwareExtensionSpecification | undefined> {
+  let normalisedSchema
+  try {
+    normalisedSchema = await normaliseJsonSchema(validationSchema.jsonSchema)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    warnRemoteContractValidationSkipped(remoteSpec.identifier)
+    return undefined
+  }
+
   const hasLocalization = normalisedSchema.properties?.localization !== undefined
   const localSpec = createContractBasedModuleSpecification({
     identifier: remoteSpec.identifier,

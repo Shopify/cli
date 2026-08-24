@@ -1,8 +1,66 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {describe, expect, test} from 'vitest'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {afterEach, describe, expect, test} from 'vitest'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 describe('fetchExtensionSpecifications', () => {
+  afterEach(() => {
+    mockAndCaptureOutput().clear()
+  })
+
+  test('skips a remote-only specification with an invalid contract schema', async () => {
+    // Given
+    const invalidRemoteSpecification: RemoteSpecification = {
+      name: 'Invalid remote extension',
+      externalName: 'Invalid Remote Extension',
+      identifier: 'invalid_remote_extension',
+      externalIdentifier: 'invalid_remote_extension',
+      gated: false,
+      experience: 'extension',
+      managementExperience: 'cli',
+      registrationLimit: 1,
+      uidStrategy: 'uuid',
+      validationSchema: {
+        jsonSchema: '{"type":"object","properties":{"name":{"$ref":"#/definitions/missing"}}}',
+      },
+    }
+    const validRemoteSpecification: RemoteSpecification = {
+      name: 'Valid remote extension',
+      externalName: 'Valid Remote Extension',
+      identifier: 'valid_remote_extension',
+      externalIdentifier: 'valid_remote_extension',
+      gated: false,
+      experience: 'extension',
+      managementExperience: 'cli',
+      registrationLimit: 1,
+      uidStrategy: 'uuid',
+      validationSchema: {
+        jsonSchema: '{"type":"object","properties":{"name":{"type":"string"}}}',
+      },
+    }
+    const outputMock = mockAndCaptureOutput()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      specifications: () => Promise.resolve([invalidRemoteSpecification, validRemoteSpecification]),
+    })
+
+    // When
+    const specifications = await fetchSpecifications({
+      developerPlatformClient,
+      app: testOrganizationApp(),
+    })
+
+    // Then
+    expect(specifications).not.toContainEqual(
+      expect.objectContaining({identifier: invalidRemoteSpecification.identifier}),
+    )
+    expect(specifications).toContainEqual(expect.objectContaining({identifier: validRemoteSpecification.identifier}))
+    expect(outputMock.warn()).toContain(
+      `Remote contract validation for "${invalidRemoteSpecification.identifier}" is skipped`,
+    )
+    expect(outputMock.warn()).toContain('Server-side validation remains the authority.')
+  })
+
   test('returns the filtered and mapped results including theme', async () => {
     // Given/When
     const got = await fetchSpecifications({
