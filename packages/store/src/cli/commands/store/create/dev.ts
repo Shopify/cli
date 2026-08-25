@@ -55,11 +55,11 @@ export default class StoreCreateDev extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreCreateDev)
 
-    try {
-      const organization = await selectOrg(flags['organization-id']?.toString())
-      const name = flags.name ?? (await storeNamePrompt())
-      const plan = (flags.plan as DevStorePlan | undefined) ?? (await storePlanPrompt())
+    const organization = await selectOrg(flags['organization-id']?.toString())
+    const name = flags.name ?? (await storeNamePrompt())
+    const plan = (flags.plan as DevStorePlan | undefined) ?? (await storePlanPrompt())
 
+    try {
       await createDevStore({
         name,
         organization,

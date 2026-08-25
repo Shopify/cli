@@ -6,7 +6,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {isTTY, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/delete/dev.js')
 vi.mock('../../services/store/attribution.js')

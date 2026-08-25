@@ -6,7 +6,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/store/create/dev.js')
 vi.mock('../../../prompts/store.js')
@@ -232,44 +232,18 @@ describe('store create dev command', () => {
     mockExit.mockRestore()
   })
 
-  test('outputs structured JSON error when --json is active and organization selection throws AbortError', async () => {
+  test('leaves organization selection errors to global handling when --json is active', async () => {
     vi.mocked(selectOrg).mockRejectedValueOnce(new AbortError('Could not select organization'))
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
-      throw new Error('process.exit')
-    }) as never)
-    const mockCommandCatch = vi.spyOn(StoreCreateDev.prototype, 'catch').mockImplementation(async (error) => {
+    vi.spyOn(StoreCreateDev.prototype, 'catch').mockImplementation(async (error) => {
       throw error
     })
 
     await expect(
       StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--json']),
-    ).rejects.toThrow('process.exit')
+    ).rejects.toThrow('Could not select organization')
 
-    expect(outputResult).toHaveBeenCalledTimes(1)
-    expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify(
-        {
-          error: true,
-          message: 'Could not select organization',
-          nextSteps: [],
-          exitCode: 1,
-        },
-        null,
-        2,
-      ),
-    )
-    expect(createDevStore).not.toHaveBeenCalled()
-    expect(mockExit).toHaveBeenCalledTimes(1)
-    expect(mockExit).toHaveBeenCalledWith(1)
-    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
-    expect(reportAnalyticsEvent).toHaveBeenCalledWith({
-      config: expect.anything(),
-      errorMessage: 'Could not select organization',
-      exitMode: 'expected_error',
-    })
-
-    mockCommandCatch.mockRestore()
-    mockExit.mockRestore()
+    expect(outputResult).not.toHaveBeenCalled()
+    expect(reportAnalyticsEvent).not.toHaveBeenCalled()
   })
 
   test('does not output JSON for non-AbortError even when --json is active', async () => {
