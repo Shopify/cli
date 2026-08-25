@@ -1,6 +1,7 @@
 import nxPlugin from '@nx/eslint-plugin'
 import cliPlugin from '@shopify/eslint-plugin-cli'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
+import nodeSecurity from 'eslint-plugin-node-security'
 
 // Spread the CLI plugin's base config which includes all necessary plugins
 const config = [
@@ -30,6 +31,25 @@ const config = [
         test: 'readonly',
       },
     },
+  },
+
+  // The three templates that build HTML around assets fetched from a public
+  // CDN. Without an `integrity` attribute, whatever the CDN returns is what the
+  // page runs — `graphiql.min.js` is three megabytes of executed script — and a
+  // hash pinned against a floating version range breaks silently the day the
+  // range resolves further.
+  //
+  // Scoped to those files, which are clean under the rule after this PR and
+  // were not before, so it turns CI red only on a new one. Pinned to 4.13.1,
+  // published nine days ago, so it clears the `cooldown: default-days: 7` in
+  // .github/dependabot.yml rather than asking for an exception.
+  {
+    files: [
+      'packages/cli-kit/src/public/node/graphiql/templates/*.tsx',
+      'packages/theme/src/cli/utilities/theme-environment/hot-reload/error-page.ts',
+    ],
+    plugins: {'node-security': nodeSecurity},
+    rules: {'node-security/require-dependency-integrity': 'error'},
   },
 
   // NX module boundaries
