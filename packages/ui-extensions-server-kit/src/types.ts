@@ -93,6 +93,7 @@ export interface ExtensionPoint {
   name: string
   description?: string
   assets?: Record<string, Asset>
+  capabilities?: Record<string, unknown>
 }
 
 type ExtensionPoints = string[] | ExtensionPoint[] | null
