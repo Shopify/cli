@@ -134,7 +134,7 @@ export default class Dev extends AppLinkedCommand {
       appContextResult,
       storeFqdn: flags.store,
       forceReselectStore: flags.reset,
-      storeCreationMode: 'when-empty',
+      storeCreationMode: 'selection-option',
     })
 
     const devOptions: DevOptions = {

@@ -70,6 +70,7 @@ interface SelectStorePromptOptions {
   hasMorePages?: boolean
   showDomainOnPrompt: boolean
   onCreateStoreWhenEmpty?: () => Promise<OrganizationStore | undefined>
+  onCreateStore?: () => Promise<OrganizationStore | undefined>
 }
 
 interface ExtraAutoCompletePropsForStoreSelect {
@@ -82,9 +83,10 @@ export async function selectStorePrompt({
   onSearchForStoresByName,
   showDomainOnPrompt = true,
   onCreateStoreWhenEmpty,
+  onCreateStore,
 }: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return onCreateStoreWhenEmpty?.()
-  if (stores.length === 1) {
+  if (stores.length === 1 && !onCreateStore) {
     outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
   }
@@ -99,6 +101,11 @@ export async function selectStorePrompt({
 
   let currentStores = stores
   const storesById = new Map(stores.map((store) => [store.shopId, store]))
+  const createStoreChoice = '__create_new_dev_store__'
+  const choices = () => [
+    ...currentStores.map(storeToChoice),
+    ...(onCreateStore ? [{label: 'Create a new dev store', value: createStoreChoice}] : []),
+  ]
 
   const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
   if (onSearchForStoresByName) {
@@ -110,7 +117,7 @@ export async function selectStorePrompt({
       }
 
       return {
-        data: currentStores.map(storeToChoice),
+        data: choices(),
         meta: {
           hasNextPage: result.hasMorePages,
         },
@@ -120,10 +127,11 @@ export async function selectStorePrompt({
 
   const id = await renderAutocompletePrompt({
     message: 'Which store would you like to use to view your project?',
-    choices: currentStores.map(storeToChoice),
+    choices: choices(),
     hasMorePages,
     ...extraAutocompletePromptProps,
   })
+  if (id === createStoreChoice) return onCreateStore?.()
   return storesById.get(id)
 }
 
