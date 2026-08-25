@@ -58,7 +58,31 @@ describe('app dev command', () => {
         tunnelUrl: undefined,
         localhostPort: undefined,
       })
-      expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: false, tunnel: {mode: 'auto'}}))
+      expect(dev).toHaveBeenCalledWith(
+        expect.objectContaining({installMkcert: false, unsafe: false, tunnel: {mode: 'auto'}}),
+      )
+    })
+  })
+
+  test('passes --unsafe to dev', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const app = testAppLinked({directory: tmp})
+      vi.mocked(linkedAppContext).mockResolvedValue({
+        app,
+        remoteApp: testOrganizationApp(),
+        organization: testOrganization(),
+        project: testProject(),
+        activeConfig: {} as never,
+        specifications: [],
+        developerPlatformClient: testDeveloperPlatformClient(),
+      } as Awaited<ReturnType<typeof linkedAppContext>>)
+      const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
+      vi.mocked(storeContext).mockResolvedValue(store)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+
+      await Dev.run(['--path', tmp, '--store', store.shopDomain, '--unsafe'], import.meta.url)
+
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({unsafe: true}))
     })
   })
 

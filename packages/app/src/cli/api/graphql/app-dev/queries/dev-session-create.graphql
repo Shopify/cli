@@ -1,5 +1,5 @@
-mutation DevSessionCreate($appId: String!, $assetsUrl: String!, $websocketUrl: String) {
-  devSessionCreate(appId: $appId, assetsUrl: $assetsUrl, websocketUrl: $websocketUrl) {
+mutation DevSessionCreate($appId: String!, $assetsUrl: String!, $websocketUrl: String, $unsafe: Boolean) {
+  devSessionCreate(appId: $appId, assetsUrl: $assetsUrl, websocketUrl: $websocketUrl, unsafe: $unsafe) {
     devSession {
       websocketUrl
       updatedAt
