@@ -47,9 +47,16 @@ export async function selectStore(
       throw new AbortError('No development store was specified.', createDevStoreTryMessage(org.id))
     }
     onCreateStoreWhenEmpty = createStoreInline
-  } else if (storeCreationEnabled && storeCreationMode === 'selection-option' && isTTY()) {
+  } else if (storeCreationEnabled && storeCreationMode === 'selection-option') {
+    if (isTTY() === false && (storesSearch.stores.length > 1 || storesSearch.hasMorePages)) {
+      throw new AbortError(
+        'No development store was specified.',
+        'Run `app dev --store <store-domain>` to select a development store.',
+      )
+    }
+
     // A capped organization keeps normal store selection without the create choice.
-    if (!(await devStoreCapReached(org.id, developerPlatformClient))) {
+    if (isTTY() && !(await devStoreCapReached(org.id, developerPlatformClient))) {
       onCreateStore = createStoreInline
     }
   }

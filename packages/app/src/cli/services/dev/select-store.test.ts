@@ -302,7 +302,46 @@ describe('selectStore', async () => {
       ),
     ).rejects.toMatchObject({
       message: 'No development store was specified.',
-      tryMessage: 'Create a development store in Dev Dashboard, then run `app dev` again.',
+      tryMessage:
+        'Create a development store with `shopify store create dev --organization-id 1 --name <store-name> --plan <plan>`, then run `shopify app dev --store <store-domain>`.',
+    })
+    expect(selectStorePrompt).not.toHaveBeenCalled()
+    expect(devStoreCapReached).toHaveBeenCalled()
+    expect(createDevStore).not.toHaveBeenCalled()
+  })
+
+  test('fails before the prompt in a non-interactive environment when selection-option requires choosing between stores', async () => {
+    vi.mocked(isTTY).mockReturnValue(false)
+
+    await expect(
+      selectStore(
+        {stores: [STORE1, STORE2], hasMorePages: false},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
+        'selection-option',
+      ),
+    ).rejects.toMatchObject({
+      message: 'No development store was specified.',
+      tryMessage: 'Run `app dev --store <store-domain>` to select a development store.',
+    })
+    expect(selectStorePrompt).not.toHaveBeenCalled()
+    expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(createDevStore).not.toHaveBeenCalled()
+  })
+
+  test('fails before the prompt in a non-interactive environment when selection-option has more stores to load', async () => {
+    vi.mocked(isTTY).mockReturnValue(false)
+
+    await expect(
+      selectStore(
+        {stores: [STORE1], hasMorePages: true},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
+        'selection-option',
+      ),
+    ).rejects.toMatchObject({
+      message: 'No development store was specified.',
+      tryMessage: 'Run `app dev --store <store-domain>` to select a development store.',
     })
     expect(selectStorePrompt).not.toHaveBeenCalled()
     expect(devStoreCapReached).not.toHaveBeenCalled()
@@ -345,6 +384,7 @@ describe('selectStore', async () => {
     await expect(
       selectStore({stores: [STORE2], hasMorePages: false}, ORG1, developerPlatformClient, 'selection-option'),
     ).resolves.toEqual(STORE1)
+    expect(devStoreCapReached).toHaveBeenCalledTimes(2)
     expect(createDevStore).toHaveBeenCalledWith({
       name: 'created-store',
       plan: 'grow',

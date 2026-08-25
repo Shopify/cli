@@ -238,6 +238,26 @@ describe('selectStore', () => {
     expect(onCreateStore).toHaveBeenCalledOnce()
   })
 
+  test('returns a searched store without creating when the create choice is offered', async () => {
+    const onCreateStore = vi.fn().mockResolvedValue(STORE2)
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      const searchResults = await search!('new')
+      expect(searchResults.data).toContainEqual({label: 'store3', value: '3'})
+      expect(searchResults.data).toContainEqual({label: 'Create a new dev store', value: '__create_new_dev_store__'})
+      return '3'
+    })
+
+    const got = await selectStorePrompt({
+      stores: [STORE1],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStore,
+      onSearchForStoresByName: (_term: string) => Promise.resolve({stores: [STORE3], hasMorePages: false}),
+    })
+
+    expect(got).toEqual(STORE3)
+    expect(onCreateStore).not.toHaveBeenCalled()
+  })
+
   test('returns store if user selects one', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1, STORE2]
