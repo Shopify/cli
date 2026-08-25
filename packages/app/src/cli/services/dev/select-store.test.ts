@@ -60,8 +60,28 @@ describe('selectStore', async () => {
     vi.mocked(isTTY).mockReturnValue(true)
   })
 
-  test('fails before prompting in a non-interactive environment when store creation is enabled', async () => {
+  test('fails before the prompt in a non-interactive environment when the enabled app-management organization has no stores', async () => {
     vi.mocked(isTTY).mockReturnValue(false)
+
+    await expect(
+      selectStore(
+        {stores: [], hasMorePages: false},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
+        'when-empty',
+      ),
+    ).rejects.toMatchObject({
+      message: 'No development store was specified.',
+      tryMessage: 'Run `app dev --store <store-domain>` to select a development store.',
+    })
+    expect(selectStorePrompt).not.toHaveBeenCalled()
+    expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(createDevStore).not.toHaveBeenCalled()
+  })
+
+  test('auto-selects the only app-management store in a non-interactive environment when store creation is enabled', async () => {
+    vi.mocked(isTTY).mockReturnValue(false)
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     await expect(
       selectStore(
@@ -70,8 +90,26 @@ describe('selectStore', async () => {
         testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
         'when-empty',
       ),
-    ).rejects.toThrow('No development store was specified.')
-    expect(selectStorePrompt).not.toHaveBeenCalled()
+    ).resolves.toEqual(STORE1)
+    expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(createDevStore).not.toHaveBeenCalled()
+    expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStoreWhenEmpty')
+  })
+
+  test('auto-selects the only Partners store in a non-interactive environment when store creation is enabled', async () => {
+    vi.mocked(isTTY).mockReturnValue(false)
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
+
+    await expect(
+      selectStore(
+        {stores: [STORE1], hasMorePages: false},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.Partners}),
+        'when-empty',
+      ),
+    ).resolves.toEqual(STORE1)
+    expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStoreWhenEmpty')
   })
 
   test('keeps prompting in a non-interactive environment when store creation is disabled', async () => {
@@ -326,7 +364,8 @@ describe('selectStore', async () => {
     expect(createDevStore).not.toHaveBeenCalled()
   })
 
-  test('keeps the Partners dashboard fallback when store creation is enabled', async () => {
+  test('keeps the Partners dashboard fallback in a non-interactive environment when store creation is enabled', async () => {
+    vi.mocked(isTTY).mockReturnValue(false)
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
     const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.Partners})

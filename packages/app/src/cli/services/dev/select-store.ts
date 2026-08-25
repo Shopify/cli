@@ -18,13 +18,6 @@ export async function selectStore(
   developerPlatformClient: DeveloperPlatformClient,
   storeCreationMode: StoreCreationMode = 'disabled',
 ): Promise<OrganizationStore> {
-  if (storeCreationMode === 'when-empty' && isTTY() === false) {
-    throw new AbortError(
-      'No development store was specified.',
-      'Run `app dev --store <store-domain>` to select a development store.',
-    )
-  }
-
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
   const onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
   const storeCreationEnabled =
@@ -32,6 +25,13 @@ export async function selectStore(
 
   let onCreateStoreWhenEmpty: (() => Promise<OrganizationStore>) | undefined
   if (storeCreationEnabled && storesSearch.stores.length === 0) {
+    // Inline store creation needs an interactive terminal.
+    if (isTTY() === false) {
+      throw new AbortError(
+        'No development store was specified.',
+        'Run `app dev --store <store-domain>` to select a development store.',
+      )
+    }
     if (await devStoreCapReached(org.id, developerPlatformClient)) {
       throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage)
     }
