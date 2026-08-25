@@ -28,7 +28,7 @@ export function composeThemeGid(id: number): string {
 
 export function parseGid(gid: string): number {
   const match = GID_REGEXP.exec(gid)?.[1]
-  if (!match) {
+  if (match === undefined) {
     throw new Error(`Invalid GID: ${gid}`)
   }
 
