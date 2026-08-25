@@ -30,8 +30,6 @@ export type Scalars = {
   BusinessUserID: { input: any; output: any; }
   /** The ID for a BusinessUsersImport. */
   BusinessUsersImportID: { input: any; output: any; }
-  /** The ID for a CollaboratorRelationship. */
-  CollaboratorRelationshipID: { input: any; output: any; }
   /** A signed decimal number, which supports arbitrary precision and is serialized as a string. */
   Decimal: { input: any; output: any; }
   /** The ID for a DocumentAttachment. */
@@ -51,11 +49,6 @@ export type Scalars = {
   JSON: { input: JsonMapType | string; output: JsonMapType; }
   /** The ID for a LegalEntity. */
   LegalEntityID: { input: any; output: any; }
-  /**
-   * An ISO 8601 date and time serialized with microsecond precision, so a value read
-   * from a field can be supplied back as an argument and still compare equal to the stored row.
-   */
-  MicrosecondDateTime: { input: any; output: any; }
   /** The ID for a OrganizationDomain. */
   OrganizationDomainID: { input: any; output: any; }
   /** The ID for a Organization. */
@@ -78,8 +71,6 @@ export type Scalars = {
   RoleID: { input: any; output: any; }
   /** The ID for a Shop. */
   ShopID: { input: any; output: any; }
-  /** The ID for a ShopTransferRequest. */
-  ShopTransferRequestID: { input: any; output: any; }
   /** The ID for a ShopifyShop. */
   ShopifyShopID: { input: any; output: any; }
   /** The ID for a StoreAdditionRequest. */
@@ -91,10 +82,11 @@ export type Scalars = {
   URL: { input: string; output: string; }
 };
 
-export type Store =
-  | 'APP_DEVELOPMENT'
-  | 'CLIENT_TRANSFER'
-  | 'COLLABORATOR'
-  | 'DEVELOPMENT'
-  | 'DEVELOPMENT_SUPERSET'
-  | 'PRODUCTION';
+export type StoreCreationStatus =
+  | 'AWAITING_CORE_STORE_READY'
+  | 'CALLING_CORE'
+  | 'COMPLETE'
+  | 'FAILED'
+  | 'FINALIZING'
+  | 'TIMED_OUT'
+  | 'USER_ERROR';

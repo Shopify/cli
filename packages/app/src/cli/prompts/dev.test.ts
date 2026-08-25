@@ -143,6 +143,36 @@ describe('selectStore', () => {
     expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
   })
 
+  test('offers creating a store when a creation handler is provided', async () => {
+    const stores: OrganizationStore[] = [STORE1]
+    const createdStore = {...STORE2, shopId: 'created'}
+    const onCreateStore = vi.fn().mockResolvedValue(createdStore)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('__create_new_dev_store__')
+
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: defaultShowDomainOnPrompt, onCreateStore})
+
+    expect(got).toEqual(createdStore)
+    expect(onCreateStore).toHaveBeenCalledOnce()
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which store would you like to use to view your project?',
+      choices: [
+        {label: 'store1', value: '1'},
+        {label: 'Create a new dev store', value: '__create_new_dev_store__'},
+      ],
+      hasMorePages: false,
+    })
+  })
+
+  test('creates directly when the list is empty and a creation handler is provided', async () => {
+    const onCreateStore = vi.fn().mockResolvedValue(STORE1)
+
+    const got = await selectStorePrompt({stores: [], showDomainOnPrompt: defaultShowDomainOnPrompt, onCreateStore})
+
+    expect(got).toEqual(STORE1)
+    expect(onCreateStore).toHaveBeenCalledOnce()
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
+  })
+
   test('returns store if user selects one', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1, STORE2]
@@ -187,6 +217,25 @@ describe('selectStore', () => {
     // We are not enabling backend search because we are not passing a search function
     const lastCall = vi.mocked(renderAutocompletePrompt).mock.calls[0]!
     expect(lastCall[0]).not.toHaveProperty('search')
+  })
+
+  test('keeps the create choice when the store list is searched', async () => {
+    const onCreateStore = vi.fn().mockResolvedValue(STORE3)
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      const searchResults = await search!('new')
+      expect(searchResults.data).toContainEqual({label: 'Create a new dev store', value: '__create_new_dev_store__'})
+      return '__create_new_dev_store__'
+    })
+
+    const got = await selectStorePrompt({
+      stores: [STORE1],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStore,
+      onSearchForStoresByName: (_term: string) => Promise.resolve({stores: [STORE3], hasMorePages: false}),
+    })
+
+    expect(got).toEqual(STORE3)
+    expect(onCreateStore).toHaveBeenCalledOnce()
   })
 
   test('returns correct store if user selects one after searching', async () => {

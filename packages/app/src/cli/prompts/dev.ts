@@ -4,12 +4,25 @@ import {Paginateable} from '../utilities/developer-platform-client.js'
 import {APP_NAME_MAX_LENGTH} from '../models/app/validation/common.js'
 import {ApplicationURLs} from '../services/dev/urls.js'
 import {
+  devStoreNamePrompt as sharedDevStoreNamePrompt,
+  devStorePlanPrompt as sharedDevStorePlanPrompt,
+} from '@shopify/organizations'
+import {
   RenderAutocompleteOptions,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
+import type {DevStorePlan} from '@shopify/organizations'
+
+export function devStoreNamePrompt(): Promise<string> {
+  return sharedDevStoreNamePrompt()
+}
+
+export function devStorePlanPrompt(): Promise<DevStorePlan> {
+  return sharedDevStorePlanPrompt()
+}
 
 export async function selectAppPrompt(
   onSearchForAppsByName: (term: string) => Promise<{apps: MinimalOrganizationApp[]; hasMorePages: boolean}>,
@@ -56,6 +69,7 @@ interface SelectStorePromptOptions {
   stores: OrganizationStore[]
   hasMorePages?: boolean
   showDomainOnPrompt: boolean
+  onCreateStore?: () => Promise<OrganizationStore | undefined>
 }
 
 interface ExtraAutoCompletePropsForStoreSelect {
@@ -67,9 +81,10 @@ export async function selectStorePrompt({
   hasMorePages = false,
   onSearchForStoresByName,
   showDomainOnPrompt = true,
+  onCreateStore,
 }: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
-  if (stores.length === 0) return undefined
-  if (stores.length === 1) {
+  if (stores.length === 0) return onCreateStore?.()
+  if (stores.length === 1 && !onCreateStore) {
     outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
   }
@@ -83,6 +98,11 @@ export async function selectStorePrompt({
   }
 
   let currentStores = stores
+  const createStoreChoice = '__create_new_dev_store__'
+  const choices = () => [
+    ...currentStores.map(storeToChoice),
+    ...(onCreateStore ? [{label: 'Create a new dev store', value: createStoreChoice}] : []),
+  ]
 
   const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
   if (onSearchForStoresByName) {
@@ -91,7 +111,7 @@ export async function selectStorePrompt({
       currentStores = result.stores
 
       return {
-        data: currentStores.map(storeToChoice),
+        data: choices(),
         meta: {
           hasNextPage: result.hasMorePages,
         },
@@ -101,10 +121,11 @@ export async function selectStorePrompt({
 
   const id = await renderAutocompletePrompt({
     message: 'Which store would you like to use to view your project?',
-    choices: currentStores.map(storeToChoice),
+    choices: choices(),
     hasMorePages,
     ...extraAutocompletePromptProps,
   })
+  if (id === createStoreChoice) return onCreateStore?.()
   return currentStores.find((store) => store.shopId === id)
 }
 
