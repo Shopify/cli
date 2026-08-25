@@ -3,7 +3,7 @@ import type {MigrationAction} from '../../../models/subscription-migrations.js'
 
 const IDEMPOTENCY_NAMESPACE = 'shopify-subscription-migration:v1'
 
-export interface DeriveBatchIdempotencyKeyOptions {
+interface DeriveBatchIdempotencyKeyOptions {
   appIdentifier: string
   action: MigrationAction
   rootKey: string

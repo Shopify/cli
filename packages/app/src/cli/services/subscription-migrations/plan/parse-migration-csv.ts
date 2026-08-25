@@ -23,9 +23,7 @@ interface ParsedRecord {
   info: {lines: number}
 }
 
-export type ParseMigrationCsvResult =
-  | {ok: true; rows: RawMigrationRow[]}
-  | {ok: false; errors: MigrationValidationError[]}
+type ParseMigrationCsvResult = {ok: true; rows: RawMigrationRow[]} | {ok: false; errors: MigrationValidationError[]}
 
 export function parseMigrationCsv(content: string, action: MigrationAction): ParseMigrationCsvResult {
   if (content.trim() === '') {
