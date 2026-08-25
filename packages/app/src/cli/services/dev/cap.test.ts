@@ -1,6 +1,6 @@
 import {devStoreCapReached} from './cap.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {ClientName} from '../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
 
 describe('devStoreCapReached', () => {
@@ -12,6 +12,15 @@ describe('devStoreCapReached', () => {
 
     await expect(devStoreCapReached('1', client)).resolves.toBe(true)
     expect(client.devStoreCapReached).toHaveBeenCalledWith('1')
+  })
+
+  test('keeps the client receiver when the cap query uses this', async () => {
+    const client = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+    client.devStoreCapReached = async function (this: DeveloperPlatformClient) {
+      return this.clientName === ClientName.AppManagement
+    }
+
+    await expect(devStoreCapReached('1', client)).resolves.toBe(true)
   })
 
   test('fails open when the cap request fails', async () => {

@@ -4,13 +4,12 @@ export async function devStoreCapReached(
   organizationId: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<boolean> {
-  const capChecker = developerPlatformClient.devStoreCapReached
-  if (developerPlatformClient.clientName !== ClientName.AppManagement || !capChecker) {
+  if (developerPlatformClient.clientName !== ClientName.AppManagement || !developerPlatformClient.devStoreCapReached) {
     return false
   }
 
   try {
-    return await capChecker(organizationId)
+    return await developerPlatformClient.devStoreCapReached(organizationId)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
