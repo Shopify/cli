@@ -3235,6 +3235,459 @@
       "summary": "Release an app version.",
       "usage": "app release --version <version>"
     },
+    "app:subscription-migrations:cancel": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Cancels app subscription migration operations.\n\nCanceling stops additional unprocessed shops, but does not undo shops that have already been scheduled or migrated. Use `unschedule` for reversible schedules.\n\nRepeat `--id` to cancel every operation GID returned by a multi-batch submission. Use `--json` to output the resulting operation states and per-shop results as structured JSON.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.",
+      "descriptionWithMarkdown": "Cancels app subscription migration operations.\n\nCanceling stops additional unprocessed shops, but does not undo shops that have already been scheduled or migrated. Use `unschedule` for reversible schedules.\n\nRepeat `--id` to cancel every operation GID returned by a multi-batch submission. Use `--json` to output the resulting operation states and per-shop results as structured JSON.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --id <operation-id>",
+        "<%= config.bin %> <%= command.id %> --path ../my-app --config staging --id <operation-id-1> --id <operation-id-2>",
+        "<%= config.bin %> <%= command.id %> --client-id <client-id> --id <operation-id> --json"
+      ],
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "id": {
+          "description": "The app subscription migration operation ID. Can be specified multiple times.",
+          "env": "SHOPIFY_FLAG_ID",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "id",
+          "required": true,
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:subscription-migrations:cancel",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Cancels app subscription migration operations."
+    },
+    "app:subscription-migrations:schedule": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.\n\nWhen `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input -` is also supported as an explicit stdin path.\n\n- Required CSV columns: `shop_id`, `target_plan_handle`, and `price_behavior`.\n- Optional CSV column: `notification`.\n- Example header: `shop_id,target_plan_handle,price_behavior,notification`.\n- Example row: `123456789,pro,HONOR_BILLING_PRICE,WHEN_REQUIRED`.\n\n`price_behavior` must be `HONOR_BILLING_PRICE` or `PLAN_PRICE`. `notification` can be `NONE`, `OPT_OUT`, or `WHEN_REQUIRED` and defaults to `WHEN_REQUIRED` when omitted or blank.\n\nValidation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same submission.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.\n\nUse `--force` to skip confirmation and immediately submit every valid row. With `--watch`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.",
+      "descriptionWithMarkdown": "Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.\n\nWhen `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input -` is also supported as an explicit stdin path.\n\n- Required CSV columns: `shop_id`, `target_plan_handle`, and `price_behavior`.\n- Optional CSV column: `notification`.\n- Example header: `shop_id,target_plan_handle,price_behavior,notification`.\n- Example row: `123456789,pro,HONOR_BILLING_PRICE,WHEN_REQUIRED`.\n\n`price_behavior` must be `HONOR_BILLING_PRICE` or `PLAN_PRICE`. `notification` can be `NONE`, `OPT_OUT`, or `WHEN_REQUIRED` and defaults to `WHEN_REQUIRED` when omitted or blank.\n\nValidation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same submission.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.\n\nUse `--force` to skip confirmation and immediately submit every valid row. With `--watch`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --input migrations.csv --force",
+        "cat migrations.csv | <%= config.bin %> <%= command.id %> --force",
+        "<%= config.bin %> <%= command.id %> --input migrations.csv --path ../my-app --config staging --force --json",
+        "<%= config.bin %> <%= command.id %> --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force",
+        "<%= config.bin %> <%= command.id %> --input - --force --watch"
+      ],
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Skip confirmation. Required if non interactive.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "idempotency-key": {
+          "description": "Reuse an existing root idempotency key for the same action and input.",
+          "env": "SHOPIFY_FLAG_IDEMPOTENCY_KEY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "idempotency-key",
+          "type": "option"
+        },
+        "input": {
+          "char": "i",
+          "description": "Path to the migration CSV. If omitted, standard input is used.",
+          "env": "SHOPIFY_FLAG_INPUT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "input",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "description": "Display the current operation state while polling, then output the final outcome when every operation reaches a terminal status.",
+          "env": "SHOPIFY_FLAG_WATCH",
+          "name": "watch",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:subscription-migrations:schedule",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing."
+    },
+    "app:subscription-migrations:status": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Checks app subscription migration operation status.\n\nRepeat `--id` for every operation GID returned by a multi-batch submission. With `--watch`, the command displays the current state while polling and outputs the final state after all requested operations reach a terminal status.\n\n`RUNNING` means an operation is still processing. `COMPLETED` means processing finished, but you must inspect the per-shop results to confirm each outcome. `FAILED` means the operation failed, and `CANCELED` means cancellation stopped further processing.\n\nUse `--json` to output every operation and its per-shop results as structured JSON.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.",
+      "descriptionWithMarkdown": "Checks app subscription migration operation status.\n\nRepeat `--id` for every operation GID returned by a multi-batch submission. With `--watch`, the command displays the current state while polling and outputs the final state after all requested operations reach a terminal status.\n\n`RUNNING` means an operation is still processing. `COMPLETED` means processing finished, but you must inspect the per-shop results to confirm each outcome. `FAILED` means the operation failed, and `CANCELED` means cancellation stopped further processing.\n\nUse `--json` to output every operation and its per-shop results as structured JSON.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --id <operation-id>",
+        "<%= config.bin %> <%= command.id %> --path ../my-app --config staging --id <operation-id-1> --id <operation-id-2> --watch",
+        "<%= config.bin %> <%= command.id %> --client-id <client-id> --id <operation-id> --json"
+      ],
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "id": {
+          "description": "The app subscription migration operation ID. Can be specified multiple times.",
+          "env": "SHOPIFY_FLAG_ID",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "id",
+          "required": true,
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "description": "Display the current operation state while polling, then output the final state when every operation reaches a terminal status.",
+          "env": "SHOPIFY_FLAG_WATCH",
+          "name": "watch",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:subscription-migrations:status",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Checks the status of app subscription migration operations."
+    },
+    "app:subscription-migrations:unschedule": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Reverses scheduled app subscription migrations that have not migrated yet.\n\nWhen `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input -` is also supported as an explicit stdin path.\n\n- Required CSV header: `shop_id`.\n- Example row: `123456789`.\n\nThe CSV can contain only the `shop_id` header, or it can reuse the complete CSV supplied to `schedule`; schedule-only columns are ignored.\n\nUnscheduling is not a rollback after a subscription has migrated. The command validates the entire CSV before sending any mutation. Use `--force` to skip confirmation and immediately submit every valid row.\n\nOperations are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same submission. With `--watch`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.",
+      "descriptionWithMarkdown": "Reverses scheduled app subscription migrations that have not migrated yet.\n\nWhen `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input -` is also supported as an explicit stdin path.\n\n- Required CSV header: `shop_id`.\n- Example row: `123456789`.\n\nThe CSV can contain only the `shop_id` header, or it can reuse the complete CSV supplied to `schedule`; schedule-only columns are ignored.\n\nUnscheduling is not a rollback after a subscription has migrated. The command validates the entire CSV before sending any mutation. Use `--force` to skip confirmation and immediately submit every valid row.\n\nOperations are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same submission. With `--watch`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.\n\nBy default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --input migrations.csv --force",
+        "cat migrations.csv | <%= config.bin %> <%= command.id %> --force",
+        "<%= config.bin %> <%= command.id %> --input migrations.csv --path ../my-app --config staging --force --json",
+        "<%= config.bin %> <%= command.id %> --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force",
+        "<%= config.bin %> <%= command.id %> --input - --force --watch"
+      ],
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Skip confirmation. Required if non interactive.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "idempotency-key": {
+          "description": "Reuse an existing root idempotency key for the same action and input.",
+          "env": "SHOPIFY_FLAG_IDEMPOTENCY_KEY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "idempotency-key",
+          "type": "option"
+        },
+        "input": {
+          "char": "i",
+          "description": "Path to the migration CSV. If omitted, standard input is used.",
+          "env": "SHOPIFY_FLAG_INPUT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "input",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "description": "Display the current operation state while polling, then output the final outcome when every operation reaches a terminal status.",
+          "env": "SHOPIFY_FLAG_WATCH",
+          "name": "watch",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:subscription-migrations:unschedule",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Reverses app subscription migrations that are still scheduled."
+    },
     "app:versions:list": {
       "aliases": [
       ],

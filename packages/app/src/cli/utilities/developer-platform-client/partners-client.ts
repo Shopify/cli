@@ -22,10 +22,8 @@ import {ensureAuthenticatedPartners, Session} from '@shopify/cli-kit/node/sessio
 import {RequestModeInput} from '@shopify/cli-kit/node/http'
 
 /**
- * The Partners-backed client now exists solely to run the legacy extension migrations
- * (see {@link MigrationDeveloperPlatformClient}). Every other developer platform operation is
- * served by the App Management client, so only the migration mutations and the session/request
- * infrastructure they depend on remain here.
+ * The Partners-backed client serves migration workflows, including legacy extension migrations
+ * (see {@link MigrationDeveloperPlatformClient}) and subscription migration operations.
  */
 export class PartnersClient implements MigrationDeveloperPlatformClient {
   private static instance: PartnersClient | undefined

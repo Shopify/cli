@@ -29,6 +29,10 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
+* [`shopify app subscription-migrations cancel`](#shopify-app-subscription-migrations-cancel)
+* [`shopify app subscription-migrations schedule`](#shopify-app-subscription-migrations-schedule)
+* [`shopify app subscription-migrations status`](#shopify-app-subscription-migrations-status)
+* [`shopify app subscription-migrations unschedule`](#shopify-app-subscription-migrations-unschedule)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth login`](#shopify-auth-login)
@@ -1807,6 +1811,333 @@ DESCRIPTION
   Release an app version.
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
+```
+
+## `shopify app subscription-migrations cancel`
+
+Cancels app subscription migration operations.
+
+```
+USAGE
+  $ shopify app subscription-migrations cancel --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
+    [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --id=<value>...
+      (required) The app subscription migration operation ID. Can be specified multiple times.
+      [env: SHOPIFY_FLAG_ID]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Cancels app subscription migration operations.
+
+  Cancels app subscription migration operations.
+
+  Canceling stops additional unprocessed shops, but does not undo shops that have already been scheduled or migrated.
+  Use `unschedule` for reversible schedules.
+
+  Repeat `--id` to cancel every operation GID returned by a multi-batch submission. Use `--json` to output the resulting
+  operation states and per-shop results as structured JSON.
+
+  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
+  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
+  selects the app and does not change Partners authentication.
+
+EXAMPLES
+  $ shopify app subscription-migrations cancel --id <operation-id>
+
+  $ shopify app subscription-migrations cancel --path ../my-app --config staging --id <operation-id-1> --id <operation-id-2>
+
+  $ shopify app subscription-migrations cancel --client-id <client-id> --id <operation-id> --json
+```
+
+## `shopify app subscription-migrations schedule`
+
+Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.
+
+```
+USAGE
+  $ shopify app subscription-migrations schedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [--idempotency-key
+    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose] [--watch]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -f, --force
+      Skip confirmation. Required if non interactive.
+      [env: SHOPIFY_FLAG_FORCE]
+
+  -i, --input=<value>
+      Path to the migration CSV. If omitted, standard input is used.
+      [env: SHOPIFY_FLAG_INPUT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --idempotency-key=<value>
+      Reuse an existing root idempotency key for the same action and input.
+      [env: SHOPIFY_FLAG_IDEMPOTENCY_KEY]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --watch
+      Display the current operation state while polling, then output the final outcome when every operation reaches a
+      terminal status.
+      [env: SHOPIFY_FLAG_WATCH]
+
+DESCRIPTION
+  Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.
+
+  Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.
+
+  When `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input
+  -` is also supported as an explicit stdin path.
+
+  - Required CSV columns: `shop_id`, `target_plan_handle`, and `price_behavior`.
+  - Optional CSV column: `notification`.
+  - Example header: `shop_id,target_plan_handle,price_behavior,notification`.
+  - Example row: `123456789,pro,HONOR_BILLING_PRICE,WHEN_REQUIRED`.
+
+  `price_behavior` must be `HONOR_BILLING_PRICE` or `PLAN_PRICE`. `notification` can be `NONE`, `OPT_OUT`, or
+  `WHEN_REQUIRED` and defaults to `WHEN_REQUIRED` when omitted or blank.
+
+  Validation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in
+  batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the
+  same root idempotency key with the same client ID, action, and input replays the same submission.
+
+  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
+  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
+  selects the app and does not change Partners authentication.
+
+  Use `--force` to skip confirmation and immediately submit every valid row. With `--watch`, human-readable output shows
+  accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json
+  --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.
+
+EXAMPLES
+  $ shopify app subscription-migrations schedule --input migrations.csv --force
+
+  cat migrations.csv | shopify app subscription-migrations schedule --force
+
+  $ shopify app subscription-migrations schedule --input migrations.csv --path ../my-app --config staging --force --json
+
+  $ shopify app subscription-migrations schedule --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force
+
+  $ shopify app subscription-migrations schedule --input - --force --watch
+```
+
+## `shopify app subscription-migrations status`
+
+Checks the status of app subscription migration operations.
+
+```
+USAGE
+  $ shopify app subscription-migrations status --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
+    [--no-color] [--path <value>] [--verbose] [--watch]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --id=<value>...
+      (required) The app subscription migration operation ID. Can be specified multiple times.
+      [env: SHOPIFY_FLAG_ID]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --watch
+      Display the current operation state while polling, then output the final state when every operation reaches a
+      terminal status.
+      [env: SHOPIFY_FLAG_WATCH]
+
+DESCRIPTION
+  Checks the status of app subscription migration operations.
+
+  Checks app subscription migration operation status.
+
+  Repeat `--id` for every operation GID returned by a multi-batch submission. With `--watch`, the command displays the
+  current state while polling and outputs the final state after all requested operations reach a terminal status.
+
+  `RUNNING` means an operation is still processing. `COMPLETED` means processing finished, but you must inspect the
+  per-shop results to confirm each outcome. `FAILED` means the operation failed, and `CANCELED` means cancellation
+  stopped further processing.
+
+  Use `--json` to output every operation and its per-shop results as structured JSON.
+
+  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
+  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
+  selects the app and does not change Partners authentication.
+
+EXAMPLES
+  $ shopify app subscription-migrations status --id <operation-id>
+
+  $ shopify app subscription-migrations status --path ../my-app --config staging --id <operation-id-1> --id <operation-id-2> --watch
+
+  $ shopify app subscription-migrations status --client-id <client-id> --id <operation-id> --json
+```
+
+## `shopify app subscription-migrations unschedule`
+
+Reverses app subscription migrations that are still scheduled.
+
+```
+USAGE
+  $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [--idempotency-key
+    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose] [--watch]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -f, --force
+      Skip confirmation. Required if non interactive.
+      [env: SHOPIFY_FLAG_FORCE]
+
+  -i, --input=<value>
+      Path to the migration CSV. If omitted, standard input is used.
+      [env: SHOPIFY_FLAG_INPUT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --idempotency-key=<value>
+      Reuse an existing root idempotency key for the same action and input.
+      [env: SHOPIFY_FLAG_IDEMPOTENCY_KEY]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --watch
+      Display the current operation state while polling, then output the final outcome when every operation reaches a
+      terminal status.
+      [env: SHOPIFY_FLAG_WATCH]
+
+DESCRIPTION
+  Reverses app subscription migrations that are still scheduled.
+
+  Reverses scheduled app subscription migrations that have not migrated yet.
+
+  When `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input
+  -` is also supported as an explicit stdin path.
+
+  - Required CSV header: `shop_id`.
+  - Example row: `123456789`.
+
+  The CSV can contain only the `shop_id` header, or it can reuse the complete CSV supplied to `schedule`; schedule-only
+  columns are ignored.
+
+  Unscheduling is not a rollback after a subscription has migrated. The command validates the entire CSV before sending
+  any mutation. Use `--force` to skip confirmation and immediately submit every valid row.
+
+  Operations are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by
+  the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same
+  submission. With `--watch`, human-readable output shows accepted identifiers before polling begins, then displays
+  operation progress and the final outcome. With `--json --watch`, the command outputs one structured JSON document
+  after every operation reaches a terminal status.
+
+  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
+  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
+  selects the app and does not change Partners authentication.
+
+EXAMPLES
+  $ shopify app subscription-migrations unschedule --input migrations.csv --force
+
+  cat migrations.csv | shopify app subscription-migrations unschedule --force
+
+  $ shopify app subscription-migrations unschedule --input migrations.csv --path ../my-app --config staging --force --json
+
+  $ shopify app subscription-migrations unschedule --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force
+
+  $ shopify app subscription-migrations unschedule --input - --force --watch
 ```
 
 ## `shopify app versions list`
