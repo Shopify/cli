@@ -8,15 +8,7 @@ import {isTTY, renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/no
 import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {createDevStore} from '@shopify/organizations'
 
-/**
- * Select a store from the list or create one when the client supports inline creation.
- * If there are no stores, app-management users can create one inline; Partners users use the dashboard link.
- * If no store is finally selected, exit the process.
- * @param stores - List of available stores
- * @param org - Current organization
- * @param developerPlatformClient - The client to access the platform API
- * @returns The selected store
- */
+/** Selects or creates an eligible development store. */
 export async function selectStore(
   storesSearch: Paginateable<{stores: OrganizationStore[]}>,
   org: Organization,
@@ -81,13 +73,6 @@ export async function selectStore(
   return store
 }
 
-/**
- * Retrieves a newly created store by domain, retrying because the API can lag after creation.
- * @param org - Current organization
- * @param shopDomain - Domain returned by the creation mutation
- * @param developerPlatformClient - The client to access the platform API
- * @returns The created store
- */
 async function waitForCreatedStoreByDomain(
   org: Organization,
   shopDomain: string,
@@ -130,11 +115,7 @@ async function waitForCreatedStoreByDomain(
   return store
 }
 
-/**
- * Retrieves the list of stores from an organization, retrying a few times if the list is empty.
- * That is because after creating the dev store through the Partners dashboard, it can take
- * some seconds for the API to return it.
- */
+/** Store list updates can lag after dashboard creation. */
 async function waitForCreatedStore(
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,

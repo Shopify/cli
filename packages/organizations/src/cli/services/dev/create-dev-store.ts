@@ -12,7 +12,6 @@ import {sleep} from '@shopify/cli-kit/node/system'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {renderSingleTask, renderSuccess, type InlineToken} from '@shopify/cli-kit/node/ui'
 
-/** User-facing plan handles mapped to Business Platform price lookup keys. */
 const DEV_STORE_PLANS = {
   basic: 'BASIC_APP_DEVELOPMENT',
   grow: 'PROFESSIONAL_APP_DEVELOPMENT',
