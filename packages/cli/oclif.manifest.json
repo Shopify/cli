@@ -6697,8 +6697,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Creates a new app development store in your organization.",
-      "descriptionWithMarkdown": "Creates a new app development store in your organization.",
+      "description": "Creates a new development store in your organization.",
+      "descriptionWithMarkdown": "Creates a new development store in your organization.",
       "enableJsonFlag": false,
       "flags": {
         "country": {

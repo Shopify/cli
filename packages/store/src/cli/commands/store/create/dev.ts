@@ -14,7 +14,7 @@ export default class StoreCreateDev extends Command {
 
   static summary = 'Create a new development store.'
 
-  static descriptionWithMarkdown = 'Creates a new app development store in your organization.'
+  static descriptionWithMarkdown = 'Creates a new development store in your organization.'
 
   static description = this.descriptionWithoutMarkdown()
 
