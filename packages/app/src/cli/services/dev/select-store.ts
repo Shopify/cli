@@ -8,13 +8,17 @@ import {isTTY, renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/no
 import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {createDevStore} from '@shopify/organizations'
 
-/** Selects or creates an eligible development store. */
+/** Store creation from store selection is an explicit command opt-in. */
+export type StoreCreationMode = 'disabled' | 'when-empty'
+
+/** Selects an eligible development store, or creates one when creation is enabled and the organization has none. */
 export async function selectStore(
   storesSearch: Paginateable<{stores: OrganizationStore[]}>,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
+  storeCreationMode: StoreCreationMode = 'disabled',
 ): Promise<OrganizationStore> {
-  if (isTTY() === false) {
+  if (storeCreationMode === 'when-empty' && isTTY() === false) {
     throw new AbortError(
       'No development store was specified.',
       'Run `app dev --store <store-domain>` to select a development store.',
@@ -23,23 +27,23 @@ export async function selectStore(
 
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
   const onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
-  const canCreateStore = developerPlatformClient.clientName === ClientName.AppManagement
-  const creationCapReached = canCreateStore && (await devStoreCapReached(org.id, developerPlatformClient))
-  if (creationCapReached && storesSearch.stores.length === 0) {
-    throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage)
-  }
+  const storeCreationEnabled =
+    storeCreationMode === 'when-empty' && developerPlatformClient.clientName === ClientName.AppManagement
 
-  const onCreateStore =
-    canCreateStore && !creationCapReached
-      ? async () => {
-          const name = await devStoreNamePrompt()
-          const plan = await devStorePlanPrompt()
-          const domain = await createDevStore({name, plan, organization: org, json: false, summary: false})
-          const createdStore = await waitForCreatedStoreByDomain(org, domain, developerPlatformClient)
-          renderSuccess({headline: `Development store "${createdStore.shopName}" created successfully.`})
-          return createdStore
-        }
-      : undefined
+  let onCreateStoreWhenEmpty: (() => Promise<OrganizationStore>) | undefined
+  if (storeCreationEnabled && storesSearch.stores.length === 0) {
+    if (await devStoreCapReached(org.id, developerPlatformClient)) {
+      throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage)
+    }
+    onCreateStoreWhenEmpty = async () => {
+      const name = await devStoreNamePrompt()
+      const plan = await devStorePlanPrompt()
+      const domain = await createDevStore({name, plan, organization: org, json: false, summary: false})
+      const createdStore = await waitForCreatedStoreByDomain(org, domain, developerPlatformClient)
+      renderSuccess({headline: `Development store "${createdStore.shopName}" created successfully.`})
+      return createdStore
+    }
+  }
 
   // If no stores, guide the developer through creating one.
   // Then, with a store selected, make sure it's transfer-disabled.
@@ -47,10 +51,10 @@ export async function selectStore(
     onSearchForStoresByName,
     ...storesSearch,
     showDomainOnPrompt,
-    ...(onCreateStore ? {onCreateStore} : {}),
+    ...(onCreateStoreWhenEmpty ? {onCreateStoreWhenEmpty} : {}),
   })
   if (!store) {
-    if (canCreateStore) {
+    if (storeCreationEnabled) {
       throw new CancelExecution()
     }
 
@@ -65,7 +69,7 @@ export async function selectStore(
     }
 
     const stores = await waitForCreatedStore(org.id, developerPlatformClient)
-    store = await selectStore({stores, hasMorePages: false}, org, developerPlatformClient)
+    store = await selectStore({stores, hasMorePages: false}, org, developerPlatformClient, storeCreationMode)
   }
 
   ensureTransferDisabledStore(store)

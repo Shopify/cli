@@ -69,7 +69,7 @@ interface SelectStorePromptOptions {
   stores: OrganizationStore[]
   hasMorePages?: boolean
   showDomainOnPrompt: boolean
-  onCreateStore?: () => Promise<OrganizationStore | undefined>
+  onCreateStoreWhenEmpty?: () => Promise<OrganizationStore | undefined>
 }
 
 interface ExtraAutoCompletePropsForStoreSelect {
@@ -81,10 +81,10 @@ export async function selectStorePrompt({
   hasMorePages = false,
   onSearchForStoresByName,
   showDomainOnPrompt = true,
-  onCreateStore,
+  onCreateStoreWhenEmpty,
 }: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
-  if (stores.length === 0) return onCreateStore?.()
-  if (stores.length === 1 && !onCreateStore) {
+  if (stores.length === 0) return onCreateStoreWhenEmpty?.()
+  if (stores.length === 1) {
     outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
   }
@@ -98,11 +98,6 @@ export async function selectStorePrompt({
   }
 
   let currentStores = stores
-  const createStoreChoice = '__create_new_dev_store__'
-  const choices = () => [
-    ...currentStores.map(storeToChoice),
-    ...(onCreateStore ? [{label: 'Create a new dev store', value: createStoreChoice}] : []),
-  ]
 
   const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
   if (onSearchForStoresByName) {
@@ -111,7 +106,7 @@ export async function selectStorePrompt({
       currentStores = result.stores
 
       return {
-        data: choices(),
+        data: currentStores.map(storeToChoice),
         meta: {
           hasNextPage: result.hasMorePages,
         },
@@ -121,11 +116,10 @@ export async function selectStorePrompt({
 
   const id = await renderAutocompletePrompt({
     message: 'Which store would you like to use to view your project?',
-    choices: choices(),
+    choices: currentStores.map(storeToChoice),
     hasMorePages,
     ...extraAutocompletePromptProps,
   })
-  if (id === createStoreChoice) return onCreateStore?.()
   return currentStores.find((store) => store.shopId === id)
 }
 

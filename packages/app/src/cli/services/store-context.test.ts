@@ -111,8 +111,33 @@ describe('storeContext', () => {
         {stores: allStores, hasMorePages: false},
         mockOrganization,
         mockDeveloperPlatformClient,
+        'disabled',
       )
       expect(result).toEqual(mockStore)
+    })
+  })
+
+  test('forwards the store creation mode to selectStore', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      const appWithoutCachedStore = testAppLinked()
+      await prepareAppFolder(appWithoutCachedStore, dir)
+
+      vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: [], hasMorePages: false})
+      vi.mocked(selectStore).mockResolvedValue(mockStore)
+
+      const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
+      await storeContext({
+        appContextResult: updatedAppContextResult,
+        forceReselectStore: false,
+        storeCreationMode: 'when-empty',
+      })
+
+      expect(selectStore).toHaveBeenCalledWith(
+        {stores: [], hasMorePages: false},
+        mockOrganization,
+        mockDeveloperPlatformClient,
+        'when-empty',
+      )
     })
   })
 
@@ -133,6 +158,7 @@ describe('storeContext', () => {
         {stores: allStores, hasMorePages: false},
         mockOrganization,
         mockDeveloperPlatformClient,
+        'disabled',
       )
       expect(result).toEqual(mockStore)
     })
