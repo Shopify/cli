@@ -11,6 +11,7 @@
  * Commands from external plugins (cli-hydrogen, oclif plugins) fall back to
  * importing the full package.
  */
+import {addNoInputFlag} from './no-input.js'
 import {dirname, joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {existsSync, readFileSync} from 'fs'
 import {fileURLToPath, pathToFileURL} from 'url'
@@ -132,13 +133,13 @@ async function loadCommandFromPackage(id: string, packageName: string): Promise<
   if (packageName === '@oclif/plugin-commands') {
     const {commands} = await import('@oclif/plugin-commands')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (commands as any)[id]
+    return addNoInputFlag((commands as any)[id])
   }
 
   if (packageName === '@oclif/plugin-plugins') {
     const {commands} = await import('@oclif/plugin-plugins')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (commands as any)[id]
+    return addNoInputFlag((commands as any)[id])
   }
 
   if (packageName === '@shopify/plugin-did-you-mean') {

@@ -9,6 +9,7 @@ import {mockAndCaptureOutput} from './testing/output.js'
 import {unstyled} from './output.js'
 import {defineJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
+import {isInputDisabled, setInputDisabled} from './global-context.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 import {Ajv} from 'ajv'
@@ -27,6 +28,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  setInputDisabled(false)
   Object.defineProperty(process.stdin, 'isTTY', {value: originalStdinIsTTY, configurable: true, writable: true})
   Object.defineProperty(process.stdout, 'isTTY', {value: originalStdoutIsTTY, configurable: true, writable: true})
   mockAndCaptureOutput().clear()
@@ -34,6 +36,7 @@ afterEach(() => {
 
 let testResult: Record<string, unknown> = {}
 let testError: Error | undefined
+let inputDisabledDuringRun = false
 
 class MockCommand extends Command {
   /* eslint-disable @shopify/cli/command-flags-with-env */
@@ -174,6 +177,20 @@ class MockCommandWithAlreadyRenderedEvent extends Command {
       {type: 'progress', operation: 'upload', status: 'updated', message: 'Displayed by task UI'},
       {alreadyRendered: true},
     )
+  }
+}
+
+class MockCommandWithOnlyBaseFlags extends Command {
+  static flags = {}
+
+  async run(): Promise<void> {
+    const {flags} = await this.parse(MockCommandWithOnlyBaseFlags)
+    testResult = flags
+    inputDisabledDuringRun = isInputDisabled()
+  }
+
+  async catch(error: Error): Promise<void> {
+    testError = error
   }
 }
 
@@ -345,6 +362,7 @@ describe('applying environments', async () => {
     test(testName, async () => {
       testResult = {}
       testError = undefined
+      inputDisabledDuringRun = false
 
       await inTemporaryDirectory(async (tmpDir) => {
         await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML(allEnvironments as any))
@@ -602,6 +620,34 @@ describe('applying environments', async () => {
     },
   )
 
+  runTestInTmpDir('provides --no-input to commands through the base flags', async () => {
+    // When
+    await MockCommandWithOnlyBaseFlags.run(['--no-input'])
+
+    // Then
+    expect(testError).toBeUndefined()
+    expect(testResult['no-input']).toBe(true)
+    expect(inputDisabledDuringRun).toBe(true)
+    expect(isInputDisabled()).toBe(false)
+  })
+
+  runTestInTmpDir('treats --no-input as non-interactive in a TTY', async (tmpDir: string) => {
+    // When
+    expect(MockCommandWithRequiredFlagInNonTTY.baseFlags).toHaveProperty('no-input')
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir, '--no-input'])
+
+    // Then
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
+  })
+
+  runTestInTmpDir('supports disabling input through the environment', async (tmpDir: string) => {
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
+
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
+
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
+  })
+
   runTestInTmpDir('does not throw in TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
     // Given — simulate interactive terminal
     Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
@@ -623,6 +669,14 @@ describe('applying environments', async () => {
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
 
     // Then
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
+  })
+
+  runTestInTmpDir('treats piped stdin as non-interactive', async (tmpDir: string) => {
+    Object.defineProperty(process.stdin, 'isTTY', {value: false, configurable: true, writable: true})
+
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
+
     expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
   })
 

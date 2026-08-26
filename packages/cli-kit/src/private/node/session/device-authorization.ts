@@ -3,6 +3,7 @@ import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
+import {isInputDisabled} from '../../../public/node/global-context.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCI, openURL} from '../../../public/node/system.js'
@@ -71,7 +72,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
 
   outputInfo('\nTo run this command, log in to Shopify.')
 
-  if (isCI()) {
+  if (isInputDisabled() || isCI()) {
     throw new AbortError(
       'Authorization is required to continue, but the current environment does not support interactive prompts.',
       'To resolve this, specify credentials in your environment, or run the command in an interactive environment such as your local terminal.',
