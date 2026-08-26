@@ -1,5 +1,4 @@
 import * as system from './system.js'
-import {setInputDisabled} from './global-context.js'
 import {execa} from 'execa'
 import open from 'open'
 import {describe, expect, test, vi} from 'vitest'
@@ -20,17 +19,17 @@ vi.mock('fs', async (importOriginal) => {
 })
 
 test('terminalSupportsPrompting returns false when input is disabled', () => {
-  setInputDisabled(true)
+  vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
   try {
     expect(system.terminalSupportsPrompting()).toBe(false)
   } finally {
-    setInputDisabled(false)
+    vi.unstubAllEnvs()
   }
 })
 
 test('openURL does not launch a browser when input is disabled', async () => {
-  setInputDisabled(true)
+  vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
   try {
     await expect(system.openURL('https://shopify.dev')).rejects.toThrow(
@@ -38,7 +37,7 @@ test('openURL does not launch a browser when input is disabled', async () => {
     )
     expect(open).not.toHaveBeenCalled()
   } finally {
-    setInputDisabled(false)
+    vi.unstubAllEnvs()
   }
 })
 
@@ -445,7 +444,7 @@ describe('readStdinString', () => {
     vi.mocked(fs.fstatSync).mockReturnValue({isFIFO: () => true, isFile: () => false} as fs.Stats)
     const mockStdin = Readable.from(['  hello world  '])
     vi.spyOn(process, 'stdin', 'get').mockReturnValue(mockStdin as unknown as typeof process.stdin)
-    setInputDisabled(true)
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
     try {
       // When
@@ -454,7 +453,7 @@ describe('readStdinString', () => {
       // Then
       expect(got).toBe('hello world')
     } finally {
-      setInputDisabled(false)
+      vi.unstubAllEnvs()
     }
   })
 
