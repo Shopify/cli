@@ -241,16 +241,12 @@ describe('ui_extension', async () => {
       ])
     })
 
-    test('targeting object accepts typed and arbitrary JSON target capabilities', async () => {
+    test('targeting object accepts intercepts target capabilities', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const intercepts = [
-        {
-          event: 'paymentvalidations',
-          blocking: true,
-          applies_to: ['cash'],
-          future_options: {enabled: true, values: ['one', 2, null]},
-        },
+        {event: 'cartvalidations', blocking: true},
+        {event: 'paymentvalidations', blocking: true, applies_to: ['cash']},
       ]
       const configuration = {
         targeting: [

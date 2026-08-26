@@ -38,9 +38,15 @@ export const ExtensionsArraySchema = zod.object({
   extensions: zod.array(zod.any()).optional(),
 })
 
+const TargetInterceptSchema = zod.object({
+  event: zod.string(),
+  blocking: zod.boolean(),
+  applies_to: zod.array(zod.string()).optional(),
+})
+
 const TargetCapabilitiesSchema = zod.object({
   allow_direct_linking: zod.boolean().optional(),
-  intercepts: zod.any().optional(),
+  intercepts: zod.array(TargetInterceptSchema).optional(),
 })
 
 const ShouldRenderSchema = zod.object({

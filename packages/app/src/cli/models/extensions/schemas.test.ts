@@ -1,4 +1,4 @@
-import {BaseSchema, MAX_UID_LENGTH} from './schemas.js'
+import {BaseSchema, MAX_UID_LENGTH, NewExtensionPointsSchema} from './schemas.js'
 import {describe, expect, test} from 'vitest'
 
 const validUIDTestCases = [
@@ -53,5 +53,23 @@ describe('UIDSchema', () => {
         expect(result.error.issues[0]?.message).toBe(expectedError)
       }
     })
+  })
+})
+
+describe('NewExtensionPointsSchema', () => {
+  test.each([
+    ['event', {event: 1, blocking: true}],
+    ['blocking', {event: 'cartvalidations', blocking: 'true'}],
+    ['applies_to', {event: 'paymentvalidations', blocking: true, applies_to: [1]}],
+  ])('rejects an intercept with an invalid %s value', (_field, intercept) => {
+    const result = NewExtensionPointsSchema.safeParse([
+      {
+        target: 'pos.app.ready.data',
+        module: './src/app.ts',
+        capabilities: {intercepts: [intercept]},
+      },
+    ])
+
+    expect(result.success).toBe(false)
   })
 })
