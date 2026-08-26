@@ -23,18 +23,22 @@ export interface MigrationSubmission {
   operations: SubmittedMigrationOperation[]
 }
 
-export class MigrationSubmissionError extends Error {
-  readonly submission: MigrationSubmission
-  readonly batchIndex: number
-  readonly userErrors: MigrationUserError[]
+export type MigrationSubmissionResult =
+  | {status: 'success'; submission: MigrationSubmission}
+  | {
+      status: 'failed'
+      submission: MigrationSubmission
+      failedBatchIndex: number
+      userErrors: MigrationUserError[]
+    }
 
-  constructor(submission: MigrationSubmission, batchIndex: number, userErrors: MigrationUserError[]) {
-    const details = userErrors.map(({message}) => message).join('; ') || 'Migration operation was not returned'
-    super(`Failed to submit migration batch ${batchIndex}: ${details}`)
-    this.name = 'MigrationSubmissionError'
-    this.submission = submission
+export class MigrationSubmissionProtocolError extends Error {
+  readonly batchIndex: number
+
+  constructor(batchIndex: number) {
+    super(`Migration submission batch ${batchIndex} returned neither an operation nor user errors`)
+    this.name = 'MigrationSubmissionProtocolError'
     this.batchIndex = batchIndex
-    this.userErrors = userErrors
   }
 }
 
@@ -50,7 +54,7 @@ export async function submitMigrationPlan({
   plan,
   rootIdempotencyKey = generateRootIdempotencyKey(),
   createOperation = createMigrationOperation,
-}: SubmitMigrationPlanOptions): Promise<MigrationSubmission> {
+}: SubmitMigrationPlanOptions): Promise<MigrationSubmissionResult> {
   const submission: MigrationSubmission = {
     clientId,
     action: plan.action,
@@ -84,12 +88,19 @@ export async function submitMigrationPlan({
       })
     }
 
-    if (!payload.operation || payload.userErrors.length > 0) {
-      throw new MigrationSubmissionError(submission, batch.index, payload.userErrors)
+    if (payload.userErrors.length > 0) {
+      return {
+        status: 'failed',
+        submission,
+        failedBatchIndex: batch.index,
+        userErrors: payload.userErrors,
+      }
     }
+
+    if (!payload.operation) throw new MigrationSubmissionProtocolError(batch.index)
   }
 
-  return submission
+  return {status: 'success', submission}
 }
 
 function toMigrationApiInput(row: PlannedMigrationRow): MigrationApiInput {

@@ -12,8 +12,12 @@ import {runSubmissionCommand} from '../../../services/subscription-migrations/ru
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
 import {jsonFlag} from '@shopify/cli-kit/node/cli'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {outputResult} from '@shopify/cli-kit/node/output'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 vi.mock('../../../services/subscription-migrations/cancel-operations.js')
 vi.mock('../../../services/subscription-migrations/command-output.js')
@@ -21,11 +25,25 @@ vi.mock('../../../services/subscription-migrations/get-operations.js')
 vi.mock('../../../services/subscription-migrations/resolve-client-id.js')
 vi.mock('../../../services/subscription-migrations/run-submission-command.js')
 vi.mock('../../../services/subscription-migrations/watch-operations.js')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
+  return {...actual, outputResult: vi.fn()}
+})
+vi.mock('@shopify/cli-kit/node/ui')
+
+const originalExitCode = process.exitCode
 
 beforeEach(() => {
+  process.exitCode = undefined
   vi.mocked(resolveSubscriptionMigrationClientId).mockImplementation(
     async ({clientId}) => clientId ?? 'active-client-id',
   )
+  vi.mocked(runSubmissionCommand).mockResolvedValue(successfulSubmissionResult)
+  vi.mocked(cancelMigrationOperations).mockResolvedValue(successfulCancellationResult)
+})
+
+afterEach(() => {
+  process.exitCode = originalExitCode
 })
 
 const completedOperation: MigrationOperation = {
@@ -33,6 +51,35 @@ const completedOperation: MigrationOperation = {
   status: 'COMPLETED',
   total: 1,
   results: {edges: [{node: {shopId: 'gid://shopify/Shop/1', code: 'SCHEDULED'}}]},
+}
+
+const successfulSubmissionResult: MigrationSubmissionResult = {
+  status: 'success',
+  submission: {
+    clientId: 'active-client-id',
+    action: 'schedule',
+    rootIdempotencyKey: 'root-key',
+    inputDigest: 'input-digest',
+    total: 1,
+    operations: [
+      {
+        batchIndex: 0,
+        batchPayloadDigest: 'batch-digest',
+        idempotencyKey: 'batch-key',
+        operation: completedOperation,
+      },
+    ],
+  },
+}
+
+const successfulCancellationResult: MigrationCancellationResult = {
+  outcomes: [
+    {
+      status: 'success',
+      operationId: completedOperation.id,
+      operation: completedOperation,
+    },
+  ],
 }
 
 describe('subscription migration submission commands', () => {
@@ -60,8 +107,12 @@ describe('subscription migration submission commands', () => {
       clientId: 'schedule-client-id',
       rootIdempotencyKey: 'root-key',
       skipConfirmation: true,
-      json: true,
       watch: true,
+    })
+    expect(outputResult).toHaveBeenCalledOnce()
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
+      schemaVersion: 1,
+      ...successfulSubmissionResult.submission,
     })
   })
 
@@ -92,7 +143,6 @@ describe('subscription migration submission commands', () => {
       clientId: 'unschedule-client-id',
       rootIdempotencyKey: undefined,
       skipConfirmation: true,
-      json: false,
       watch: false,
     })
   })
@@ -106,6 +156,57 @@ describe('subscription migration submission commands', () => {
     expect(runSubmissionCommand).toHaveBeenCalledWith(
       expect.objectContaining({action, input: '-', clientId: 'client-id'}),
     )
+  })
+
+  test('passes an accepted-submission presenter only for watched human output', async () => {
+    await Schedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force', '--watch'])
+
+    expect(runSubmissionCommand).toHaveBeenCalledWith(
+      expect.objectContaining({onSubmissionAccepted: expect.any(Function)}),
+    )
+    const callback = vi.mocked(runSubmissionCommand).mock.calls[0]?.[0].onSubmissionAccepted
+    callback?.(successfulSubmissionResult.submission)
+    expect(renderSuccess).toHaveBeenCalledOnce()
+  })
+
+  test('renders an expected JSON submission failure once and sets exit 1 without throwing', async () => {
+    const failedResult: MigrationSubmissionResult = {
+      status: 'failed',
+      submission: successfulSubmissionResult.submission,
+      failedBatchIndex: 1,
+      userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+    }
+    vi.mocked(runSubmissionCommand).mockResolvedValue(failedResult)
+
+    await expect(
+      Schedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force', '--json']),
+    ).resolves.toBeUndefined()
+
+    expect(process.exitCode).toBe(1)
+    expect(outputResult).toHaveBeenCalledOnce()
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
+      schemaVersion: 1,
+      ...failedResult.submission,
+      failure: {batchIndex: 1, userErrors: failedResult.userErrors},
+    })
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
+  test('renders one expected human submission warning and sets exit 1 without throwing', async () => {
+    vi.mocked(runSubmissionCommand).mockResolvedValue({
+      status: 'failed',
+      submission: successfulSubmissionResult.submission,
+      failedBatchIndex: 1,
+      userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+    })
+
+    await expect(
+      Unschedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force']),
+    ).resolves.toBeUndefined()
+
+    expect(process.exitCode).toBe(1)
+    expect(renderWarning).toHaveBeenCalledOnce()
+    expect(outputResult).not.toHaveBeenCalled()
   })
 
   test.each([Schedule, Unschedule])(
@@ -169,18 +270,32 @@ describe('subscription migration operation commands', () => {
     expect(watchMigrationOperations).not.toHaveBeenCalled()
   })
 
-  test('cancel cancels every repeated ID and outputs the operations', async () => {
-    vi.mocked(cancelMigrationOperations).mockResolvedValue([completedOperation])
+  test('cancel presents every repeated ID in exactly one JSON document', async () => {
+    const secondOperation = {...completedOperation, id: 'gid://shopify/AppSubscriptionMigrationOperation/2'}
+    const result: MigrationCancellationResult = {
+      outcomes: [
+        successfulCancellationResult.outcomes[0]!,
+        {
+          status: 'failed',
+          operationId: secondOperation.id,
+          operation: secondOperation,
+          userErrors: [{message: 'Already completed', field: ['id']}],
+        },
+      ],
+    }
+    vi.mocked(cancelMigrationOperations).mockResolvedValue(result)
 
-    await Cancel.run([
-      '--client-id',
-      'cancel-client-id',
-      '--id',
-      'gid://shopify/AppSubscriptionMigrationOperation/1',
-      '--id',
-      'gid://shopify/AppSubscriptionMigrationOperation/2',
-      '--json',
-    ])
+    await expect(
+      Cancel.run([
+        '--client-id',
+        'cancel-client-id',
+        '--id',
+        'gid://shopify/AppSubscriptionMigrationOperation/1',
+        '--id',
+        'gid://shopify/AppSubscriptionMigrationOperation/2',
+        '--json',
+      ]),
+    ).resolves.toBeUndefined()
 
     expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
       clientId: 'cancel-client-id',
@@ -194,12 +309,15 @@ describe('subscription migration operation commands', () => {
         'gid://shopify/AppSubscriptionMigrationOperation/2',
       ],
     })
-    expect(outputOperations).toHaveBeenCalledWith([completedOperation], true)
+    expect(outputResult).toHaveBeenCalledOnce()
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
+      schemaVersion: 1,
+      outcomes: result.outcomes,
+    })
+    expect(process.exitCode).toBe(1)
   })
 
   test('cancel resolves the Client ID from the active configuration', async () => {
-    vi.mocked(cancelMigrationOperations).mockResolvedValue([completedOperation])
-
     await Cancel.run(['--id', 'operation-id'])
 
     expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({

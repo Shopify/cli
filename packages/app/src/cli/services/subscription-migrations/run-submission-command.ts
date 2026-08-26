@@ -1,6 +1,5 @@
-import {outputOperations, outputSubmission} from './command-output.js'
 import {planMigrationInput} from './plan/plan-migration-input.js'
-import {MigrationSubmissionError, submitMigrationPlan, type MigrationSubmission} from './submit-migration-plan.js'
+import {submitMigrationPlan, type MigrationSubmission, type MigrationSubmissionResult} from './submit-migration-plan.js'
 import {watchMigrationOperations} from './watch-operations.js'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
@@ -16,11 +15,11 @@ interface RunSubmissionCommandOptions {
   clientId: string
   rootIdempotencyKey?: string
   skipConfirmation: boolean
-  json: boolean
   watch: boolean
+  onSubmissionAccepted?: (submission: MigrationSubmission) => void
 }
 
-export async function runSubmissionCommand(options: RunSubmissionCommandOptions): Promise<void> {
+export async function runSubmissionCommand(options: RunSubmissionCommandOptions): Promise<MigrationSubmissionResult> {
   const result = await planMigrationInput(options.action, options.input)
   if (!result.ok) throw new AbortError(formatValidationErrors(result.errors))
 
@@ -31,36 +30,23 @@ export async function runSubmissionCommand(options: RunSubmissionCommandOptions)
     if (!confirmed) throw new AbortSilentError()
   }
 
-  let submission: MigrationSubmission
-  try {
-    submission = await submitMigrationPlan({
-      clientId: options.clientId,
-      plan: result.plan,
-      ...(options.rootIdempotencyKey === undefined ? {} : {rootIdempotencyKey: options.rootIdempotencyKey}),
-    })
-  } catch (error) {
-    if (error instanceof MigrationSubmissionError) {
-      outputSubmission(error.submission, {json: options.json, partial: true})
-    }
-    throw error
-  }
-
-  if (!options.watch) {
-    outputSubmission(submission, {json: options.json})
-    return
-  }
-
-  if (!options.json) outputSubmission(submission, {json: false})
-
-  const terminalOperations = await watchMigrationOperations({
+  const submissionResult = await submitMigrationPlan({
     clientId: options.clientId,
-    operationIds: submission.operations.map(({operation}) => operation.id),
+    plan: result.plan,
+    ...(options.rootIdempotencyKey === undefined ? {} : {rootIdempotencyKey: options.rootIdempotencyKey}),
   })
 
-  if (options.json) {
-    outputSubmission(updateSubmissionOperations(submission, terminalOperations), {json: true})
-  } else {
-    outputOperations(terminalOperations, false)
+  if (submissionResult.status === 'failed' || !options.watch) return submissionResult
+
+  options.onSubmissionAccepted?.(submissionResult.submission)
+  const terminalOperations = await watchMigrationOperations({
+    clientId: options.clientId,
+    operationIds: submissionResult.submission.operations.map(({operation}) => operation.id),
+  })
+
+  return {
+    status: 'success',
+    submission: updateSubmissionOperations(submissionResult.submission, terminalOperations),
   }
 }
 

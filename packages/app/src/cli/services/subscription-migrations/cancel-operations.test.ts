@@ -1,5 +1,4 @@
-import {cancelMigrationOperations} from './cancel-operations.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {MigrationCancellationProtocolError, cancelMigrationOperations} from './cancel-operations.js'
 import {describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
 import type {MigrationOperationPayload} from './partners-api.js'
@@ -13,49 +12,84 @@ function payload(id: string): MigrationOperationPayload {
 }
 
 describe('cancelMigrationOperations', () => {
-  test('cancels every ID and returns operations in input order', async () => {
-    const cancelOperation = vi.fn(({operationId}: {operationId: string}) => Promise.resolve(payload(operationId)))
+  test('returns mixed success and failure outcomes in input order', async () => {
+    const cancelOperation = vi.fn(({operationId}: {operationId: string}) => {
+      if (operationId === 'failed') {
+        return Promise.resolve({
+          operation: operation(operationId),
+          userErrors: [{message: 'Already completed', field: ['id']}],
+        })
+      }
+      return Promise.resolve(payload(operationId))
+    })
 
-    const operations = await cancelMigrationOperations({
+    const result = await cancelMigrationOperations({
       clientId: 'client-id',
-      operationIds: ['two', 'one'],
+      operationIds: ['two', 'failed', 'one'],
       cancelOperation,
     })
 
     expect(cancelOperation).toHaveBeenNthCalledWith(1, {clientId: 'client-id', operationId: 'two'})
-    expect(cancelOperation).toHaveBeenNthCalledWith(2, {clientId: 'client-id', operationId: 'one'})
-    expect(operations.map(({id}) => id)).toEqual(['two', 'one'])
+    expect(cancelOperation).toHaveBeenNthCalledWith(2, {clientId: 'client-id', operationId: 'failed'})
+    expect(cancelOperation).toHaveBeenNthCalledWith(3, {clientId: 'client-id', operationId: 'one'})
+    expect(result).toEqual({
+      outcomes: [
+        {status: 'success', operationId: 'two', operation: operation('two')},
+        {
+          status: 'failed',
+          operationId: 'failed',
+          operation: operation('failed'),
+          userErrors: [{message: 'Already completed', field: ['id']}],
+        },
+        {status: 'success', operationId: 'one', operation: operation('one')},
+      ],
+    })
   })
 
-  test('throws an AbortError containing all user error messages', async () => {
+  test('returns every user error when cancellation has no operation', async () => {
     const cancelOperation = vi.fn().mockResolvedValue({
-      operation: operation('one'),
+      operation: null,
       userErrors: [
         {message: 'Already completed', field: ['id']},
         {message: 'Cancellation denied', field: null},
       ],
     })
 
-    const promise = cancelMigrationOperations({clientId: 'client-id', operationIds: ['one'], cancelOperation})
+    const result = await cancelMigrationOperations({clientId: 'client-id', operationIds: ['one'], cancelOperation})
 
-    await expect(promise).rejects.toBeInstanceOf(AbortError)
-    await expect(promise).rejects.toThrow('Already completed\nCancellation denied')
+    expect(result).toEqual({
+      outcomes: [
+        {
+          status: 'failed',
+          operationId: 'one',
+          operation: null,
+          userErrors: [
+            {message: 'Already completed', field: ['id']},
+            {message: 'Cancellation denied', field: null},
+          ],
+        },
+      ],
+    })
   })
 
-  test('throws an exact AbortError for a missing operation while still calling every ID', async () => {
-    const cancelOperation = vi
-      .fn()
-      .mockResolvedValueOnce({operation: null, userErrors: []})
-      .mockResolvedValueOnce(payload('two'))
+  test('throws a protocol error for an unexplained empty payload', async () => {
+    const cancelOperation = vi.fn().mockResolvedValue({operation: null, userErrors: []})
 
-    const promise = cancelMigrationOperations({
-      clientId: 'client-id',
-      operationIds: ['missing', 'two'],
-      cancelOperation,
-    })
+    const promise = cancelMigrationOperations({clientId: 'client-id', operationIds: ['missing'], cancelOperation})
 
-    await expect(promise).rejects.toBeInstanceOf(AbortError)
-    await expect(promise).rejects.toThrow('Operation not found: missing')
-    expect(cancelOperation).toHaveBeenCalledTimes(2)
+    await expect(promise).rejects.toBeInstanceOf(MigrationCancellationProtocolError)
+    await expect(promise).rejects.toMatchObject({operationId: 'missing'})
+    await expect(promise).rejects.toThrow(
+      'Migration cancellation for missing returned neither an operation nor user errors',
+    )
+  })
+
+  test('preserves transport errors', async () => {
+    const transportError = new Error('Network unavailable')
+    const cancelOperation = vi.fn().mockRejectedValue(transportError)
+
+    const promise = cancelMigrationOperations({clientId: 'client-id', operationIds: ['one'], cancelOperation})
+
+    await expect(promise).rejects.toBe(transportError)
   })
 })

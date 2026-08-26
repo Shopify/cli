@@ -1,6 +1,28 @@
-import {cancelMigrationOperation} from './partners-api.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {cancelMigrationOperation, type MigrationUserError} from './partners-api.js'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
+
+export type MigrationCancellationOutcome =
+  | {status: 'success'; operationId: string; operation: MigrationOperation}
+  | {
+      status: 'failed'
+      operationId: string
+      operation: MigrationOperation | null
+      userErrors: MigrationUserError[]
+    }
+
+export interface MigrationCancellationResult {
+  outcomes: MigrationCancellationOutcome[]
+}
+
+export class MigrationCancellationProtocolError extends Error {
+  readonly operationId: string
+
+  constructor(operationId: string) {
+    super(`Migration cancellation for ${operationId} returned neither an operation nor user errors`)
+    this.name = 'MigrationCancellationProtocolError'
+    this.operationId = operationId
+  }
+}
 
 interface CancelMigrationOperationsOptions {
   clientId: string
@@ -12,15 +34,21 @@ export async function cancelMigrationOperations({
   clientId,
   operationIds,
   cancelOperation = cancelMigrationOperation,
-}: CancelMigrationOperationsOptions): Promise<MigrationOperation[]> {
-  return Promise.all(
-    operationIds.map(async (operationId) => {
+}: CancelMigrationOperationsOptions): Promise<MigrationCancellationResult> {
+  const outcomes = await Promise.all(
+    operationIds.map(async (operationId): Promise<MigrationCancellationOutcome> => {
       const payload = await cancelOperation({clientId, operationId})
       if (payload.userErrors.length > 0) {
-        throw new AbortError(payload.userErrors.map(({message}) => message).join('\n'))
+        return {
+          status: 'failed',
+          operationId,
+          operation: payload.operation,
+          userErrors: payload.userErrors,
+        }
       }
-      if (!payload.operation) throw new AbortError(`Operation not found: ${operationId}`)
-      return payload.operation
+      if (!payload.operation) throw new MigrationCancellationProtocolError(operationId)
+      return {status: 'success', operationId, operation: payload.operation}
     }),
   )
+  return {outcomes}
 }

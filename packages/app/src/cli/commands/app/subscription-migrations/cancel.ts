@@ -1,6 +1,6 @@
 import {operationFlags} from './flags.js'
+import {presentMigrationCancellationResult} from './result-presenter.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
-import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {resolveSubscriptionMigrationClientId} from '../../../services/subscription-migrations/resolve-client-id.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
@@ -32,10 +32,11 @@ By default, the command uses the Client ID from the active app configuration. Us
       directory: flags.path,
       configName: flags.config,
     })
-    const operations = await cancelMigrationOperations({
+    const result = await cancelMigrationOperations({
       clientId,
       operationIds: flags.id,
     })
-    outputOperations(operations, flags.json)
+    const exitCode = presentMigrationCancellationResult(result, {json: flags.json})
+    if (exitCode !== 0) process.exitCode = exitCode
   }
 }

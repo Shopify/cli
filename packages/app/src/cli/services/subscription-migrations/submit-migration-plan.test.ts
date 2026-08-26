@@ -1,6 +1,6 @@
 import {createMigrationPlan} from './plan/create-migration-plan.js'
 import {deriveBatchIdempotencyKey} from './plan/idempotency.js'
-import {MigrationSubmissionError, submitMigrationPlan} from './submit-migration-plan.js'
+import {MigrationSubmissionProtocolError, submitMigrationPlan} from './submit-migration-plan.js'
 import {describe, expect, test, vi} from 'vitest'
 import type {MigrationOperationPayload} from './partners-api.js'
 import type {MigrationAction} from '../../models/subscription-migrations.js'
@@ -48,20 +48,21 @@ describe('submitMigrationPlan', () => {
 
     expect(createOperation).toHaveBeenCalledTimes(1)
     resolveFirst?.(payload(1, 250))
-    const submission = await submissionPromise
+    const result = await submissionPromise
 
     expect(createOperation).toHaveBeenCalledTimes(2)
-    expect(submission.operations.map(({batchIndex, operation}) => [batchIndex, operation.id])).toEqual([
+    expect(result.status).toBe('success')
+    expect(result.submission.operations.map(({batchIndex, operation}) => [batchIndex, operation.id])).toEqual([
       [0, 'gid://shopify/AppSubscriptionMigrationOperation/1'],
       [1, 'gid://shopify/AppSubscriptionMigrationOperation/2'],
     ])
   })
 
-  test('uses the root override and records submission and batch metadata', async () => {
+  test('returns successful submission and batch metadata', async () => {
     const migrationPlan = plan('schedule')
     const createOperation = vi.fn().mockResolvedValue(payload(1))
 
-    const submission = await submitMigrationPlan({
+    const result = await submitMigrationPlan({
       clientId: 'client-id',
       plan: migrationPlan,
       rootIdempotencyKey: 'root-key',
@@ -75,29 +76,32 @@ describe('submitMigrationPlan', () => {
       rootKey: 'root-key',
       canonicalBatchPayload: batch.canonicalPayload,
     })
-    expect(submission).toEqual({
-      clientId: 'client-id',
-      action: 'schedule',
-      rootIdempotencyKey: 'root-key',
-      inputDigest: migrationPlan.inputDigest,
-      total: 1,
-      operations: [
-        {
-          batchIndex: 0,
-          batchPayloadDigest: batch.payloadDigest,
-          idempotencyKey: expectedBatchKey,
-          operation: payload(1).operation,
-        },
-      ],
+    expect(result).toEqual({
+      status: 'success',
+      submission: {
+        clientId: 'client-id',
+        action: 'schedule',
+        rootIdempotencyKey: 'root-key',
+        inputDigest: migrationPlan.inputDigest,
+        total: 1,
+        operations: [
+          {
+            batchIndex: 0,
+            batchPayloadDigest: batch.payloadDigest,
+            idempotencyKey: expectedBatchKey,
+            operation: payload(1).operation,
+          },
+        ],
+      },
     })
   })
 
   test('generates a root idempotency key when none is provided', async () => {
     const createOperation = vi.fn().mockResolvedValue(payload(1))
 
-    const submission = await submitMigrationPlan({clientId: 'client-id', plan: plan('schedule'), createOperation})
+    const result = await submitMigrationPlan({clientId: 'client-id', plan: plan('schedule'), createOperation})
 
-    expect(submission.rootIdempotencyKey).toMatch(
+    expect(result.submission.rootIdempotencyKey).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     )
   })
@@ -147,21 +151,21 @@ describe('submitMigrationPlan', () => {
     )
   })
 
-  test('throws with accepted operations when a later batch has user errors', async () => {
+  test('returns failure with every accepted operation when a later batch has user errors', async () => {
     const acceptedWithErrors = payload(2)
     acceptedWithErrors.userErrors = [{message: 'Rejected remaining shops', field: ['input']}]
     const createOperation = vi.fn().mockResolvedValueOnce(payload(1, 250)).mockResolvedValueOnce(acceptedWithErrors)
 
-    const promise = submitMigrationPlan({
+    const result = await submitMigrationPlan({
       clientId: 'client-id',
       plan: plan('schedule', 251),
       rootIdempotencyKey: 'root-key',
       createOperation,
     })
 
-    await expect(promise).rejects.toMatchObject({
-      name: 'MigrationSubmissionError',
-      batchIndex: 1,
+    expect(result).toMatchObject({
+      status: 'failed',
+      failedBatchIndex: 1,
       userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
       submission: {
         rootIdempotencyKey: 'root-key',
@@ -173,24 +177,39 @@ describe('submitMigrationPlan', () => {
     })
   })
 
-  test('throws with the accepted partial submission when a payload has no operation', async () => {
-    const createOperation = vi
-      .fn()
-      .mockResolvedValueOnce(payload(1, 250))
-      .mockResolvedValueOnce({operation: null, userErrors: []})
+  test('returns failure without an operation when user errors explain the rejection', async () => {
+    const createOperation = vi.fn().mockResolvedValue({
+      operation: null,
+      userErrors: [{message: 'Invalid migration', field: ['migrations']}],
+    })
 
-    const promise = submitMigrationPlan({
+    const result = await submitMigrationPlan({
       clientId: 'client-id',
-      plan: plan('schedule', 251),
+      plan: plan('schedule'),
       rootIdempotencyKey: 'root-key',
       createOperation,
     })
 
-    await expect(promise).rejects.toBeInstanceOf(MigrationSubmissionError)
-    await expect(promise).rejects.toMatchObject({
-      batchIndex: 1,
-      userErrors: [],
-      submission: {operations: [{operation: {id: 'gid://shopify/AppSubscriptionMigrationOperation/1'}}]},
+    expect(result).toMatchObject({
+      status: 'failed',
+      failedBatchIndex: 0,
+      userErrors: [{message: 'Invalid migration', field: ['migrations']}],
+      submission: {rootIdempotencyKey: 'root-key', operations: []},
     })
+  })
+
+  test('throws a protocol error with batch context for an unexplained empty payload', async () => {
+    const createOperation = vi.fn().mockResolvedValue({operation: null, userErrors: []})
+
+    const promise = submitMigrationPlan({
+      clientId: 'client-id',
+      plan: plan('schedule'),
+      rootIdempotencyKey: 'root-key',
+      createOperation,
+    })
+
+    await expect(promise).rejects.toBeInstanceOf(MigrationSubmissionProtocolError)
+    await expect(promise).rejects.toMatchObject({batchIndex: 0})
+    await expect(promise).rejects.toThrow('Migration submission batch 0 returned neither an operation nor user errors')
   })
 })

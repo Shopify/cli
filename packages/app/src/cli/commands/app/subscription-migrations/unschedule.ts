@@ -1,4 +1,5 @@
 import {submissionFlags} from './flags.js'
+import {presentAcceptedMigrationSubmission, presentMigrationSubmissionResult} from './result-presenter.js'
 import {resolveSubscriptionMigrationClientId} from '../../../services/subscription-migrations/resolve-client-id.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
@@ -42,14 +43,16 @@ By default, the command uses the Client ID from the active app configuration. Us
       configName: flags.config,
     })
 
-    await runSubmissionCommand({
+    const result = await runSubmissionCommand({
       action: 'unschedule',
       input: flags.input ?? '-',
       clientId,
       rootIdempotencyKey: flags['idempotency-key'],
       skipConfirmation: flags.force,
-      json: flags.json,
       watch: flags.watch,
+      ...(flags.watch && !flags.json ? {onSubmissionAccepted: presentAcceptedMigrationSubmission} : {}),
     })
+    const exitCode = presentMigrationSubmissionResult(result, {json: flags.json, watch: flags.watch})
+    if (exitCode !== 0) process.exitCode = exitCode
   }
 }

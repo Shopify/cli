@@ -1,20 +1,18 @@
-import {outputOperations, outputSubmission} from './command-output.js'
 import {planMigrationInput} from './plan/plan-migration-input.js'
 import {runSubmissionCommand} from './run-submission-command.js'
-import {MigrationSubmissionError, submitMigrationPlan} from './submit-migration-plan.js'
+import {submitMigrationPlan} from './submit-migration-plan.js'
 import {watchMigrationOperations} from './watch-operations.js'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
-import type {MigrationSubmission} from './submit-migration-plan.js'
+import type {MigrationSubmission, MigrationSubmissionResult} from './submit-migration-plan.js'
 
 vi.mock('./plan/plan-migration-input.js')
 vi.mock('./submit-migration-plan.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./submit-migration-plan.js')>()
   return {...actual, submitMigrationPlan: vi.fn()}
 })
-vi.mock('./command-output.js')
 vi.mock('./watch-operations.js')
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -62,12 +60,15 @@ function submission(): MigrationSubmission {
   }
 }
 
+function successfulResult(): MigrationSubmissionResult {
+  return {status: 'success', submission: submission()}
+}
+
 const baseOptions = {
   action: 'schedule' as const,
   input: 'migrations.csv',
   clientId: 'client-id',
   skipConfirmation: true,
-  json: true,
   watch: false,
 }
 
@@ -75,8 +76,6 @@ describe('runSubmissionCommand', () => {
   beforeEach(() => {
     vi.mocked(planMigrationInput).mockReset()
     vi.mocked(submitMigrationPlan).mockReset()
-    vi.mocked(outputSubmission).mockReset()
-    vi.mocked(outputOperations).mockReset()
     vi.mocked(watchMigrationOperations).mockReset()
     vi.mocked(renderConfirmationPrompt).mockReset()
   })
@@ -111,12 +110,15 @@ describe('runSubmissionCommand', () => {
     expect(submitMigrationPlan).not.toHaveBeenCalled()
   })
 
-  test('skips the prompt and outputs an unwatched submission', async () => {
-    const submitted = submission()
+  test('returns an unwatched successful result without presenting or watching', async () => {
+    const result = successfulResult()
+    const onSubmissionAccepted = vi.fn()
     vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
-    vi.mocked(submitMigrationPlan).mockResolvedValue(submitted)
+    vi.mocked(submitMigrationPlan).mockResolvedValue(result)
 
-    await runSubmissionCommand({...baseOptions, rootIdempotencyKey: 'root-key'})
+    await expect(
+      runSubmissionCommand({...baseOptions, rootIdempotencyKey: 'root-key', onSubmissionAccepted}),
+    ).resolves.toBe(result)
 
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     expect(submitMigrationPlan).toHaveBeenCalledWith({
@@ -125,72 +127,78 @@ describe('runSubmissionCommand', () => {
       rootIdempotencyKey: 'root-key',
     })
     expect(watchMigrationOperations).not.toHaveBeenCalled()
-    expect(outputSubmission).toHaveBeenCalledWith(submitted, {json: true})
-    expect(outputSubmission).toHaveBeenCalledOnce()
-    expect(outputOperations).not.toHaveBeenCalled()
+    expect(onSubmissionAccepted).not.toHaveBeenCalled()
   })
 
-  test('outputs accepted partial submission evidence as a warning before rethrowing', async () => {
-    const partialSubmission = submission()
-    const error = new MigrationSubmissionError(partialSubmission, 2, [{message: 'Rejected', field: ['input']}])
+  test('returns a failed result immediately without presenting or watching', async () => {
+    const submitted = submission()
+    const result: MigrationSubmissionResult = {
+      status: 'failed',
+      submission: submitted,
+      failedBatchIndex: 2,
+      userErrors: [{message: 'Rejected', field: ['input']}],
+    }
+    const onSubmissionAccepted = vi.fn()
     vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
-    vi.mocked(submitMigrationPlan).mockRejectedValue(error)
+    vi.mocked(submitMigrationPlan).mockResolvedValue(result)
 
-    const promise = runSubmissionCommand({...baseOptions, json: false})
+    await expect(runSubmissionCommand({...baseOptions, watch: true, onSubmissionAccepted})).resolves.toBe(result)
 
-    await expect(promise).rejects.toBe(error)
-    expect(outputSubmission).toHaveBeenCalledWith(partialSubmission, {json: false, partial: true})
-    expect(partialSubmission.rootIdempotencyKey).toBe('root-key')
-    expect(partialSubmission.operations.map(({operation}) => operation.id)).toEqual(['one', 'two'])
+    expect(onSubmissionAccepted).not.toHaveBeenCalled()
     expect(watchMigrationOperations).not.toHaveBeenCalled()
-    expect(outputOperations).not.toHaveBeenCalled()
   })
 
   test.each(['schedule', 'unschedule'] as const)(
-    'outputs accepted %s submission evidence before watching and outputs terminal operations once',
+    'reports an accepted %s submission before watching and returns merged terminal operations',
     async (action) => {
       const submitted = {...submission(), action}
+      const acceptedResult: MigrationSubmissionResult = {status: 'success', submission: submitted}
       const terminalOperations = [operation('one', 'FAILED'), operation('two', 'COMPLETED')]
+      const onSubmissionAccepted = vi.fn()
       vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan: {...plan, action}})
-      vi.mocked(submitMigrationPlan).mockResolvedValue(submitted)
+      vi.mocked(submitMigrationPlan).mockResolvedValue(acceptedResult)
       vi.mocked(watchMigrationOperations).mockResolvedValue(terminalOperations)
 
-      await runSubmissionCommand({...baseOptions, action, json: false, watch: true})
+      const result = await runSubmissionCommand({...baseOptions, action, watch: true, onSubmissionAccepted})
 
+      expect(onSubmissionAccepted).toHaveBeenCalledWith(submitted)
+      expect(onSubmissionAccepted).toHaveBeenCalledBefore(vi.mocked(watchMigrationOperations))
       expect(watchMigrationOperations).toHaveBeenCalledWith({
         clientId: 'client-id',
         operationIds: ['one', 'two'],
       })
-      expect(outputSubmission).toHaveBeenCalledWith(submitted, {json: false})
-      expect(outputSubmission).toHaveBeenCalledOnce()
-      expect(outputSubmission).toHaveBeenCalledBefore(vi.mocked(watchMigrationOperations))
-      expect(outputOperations).toHaveBeenCalledWith(terminalOperations, false)
-      expect(outputOperations).toHaveBeenCalledOnce()
+      expect(result).toEqual({
+        status: 'success',
+        submission: {
+          ...submitted,
+          operations: [
+            {...submitted.operations[0], operation: terminalOperations[0]},
+            {...submitted.operations[1], operation: terminalOperations[1]},
+          ],
+        },
+      })
     },
   )
 
-  test('outputs one final JSON submission with terminal operations merged by ID', async () => {
-    const submitted = submission()
+  test('merges watched terminal operations by ID rather than response order', async () => {
+    const acceptedResult = successfulResult()
     const completedTwo = operation('two', 'COMPLETED')
     const failedOne = operation('one', 'FAILED')
     vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
-    vi.mocked(submitMigrationPlan).mockResolvedValue(submitted)
+    vi.mocked(submitMigrationPlan).mockResolvedValue(acceptedResult)
     vi.mocked(watchMigrationOperations).mockResolvedValue([completedTwo, failedOne])
 
-    await runSubmissionCommand({...baseOptions, watch: true})
+    const result = await runSubmissionCommand({...baseOptions, watch: true})
 
-    expect(watchMigrationOperations).toHaveBeenCalledWith({clientId: 'client-id', operationIds: ['one', 'two']})
-    expect(outputSubmission).toHaveBeenCalledWith(
-      {
-        ...submitted,
+    expect(result).toEqual({
+      status: 'success',
+      submission: {
+        ...acceptedResult.submission,
         operations: [
-          {...submitted.operations[0], operation: failedOne},
-          {...submitted.operations[1], operation: completedTwo},
+          {...acceptedResult.submission.operations[0], operation: failedOne},
+          {...acceptedResult.submission.operations[1], operation: completedTwo},
         ],
       },
-      {json: true},
-    )
-    expect(outputSubmission).toHaveBeenCalledOnce()
-    expect(outputOperations).not.toHaveBeenCalled()
+    })
   })
 })
