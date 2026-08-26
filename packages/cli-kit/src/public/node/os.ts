@@ -64,7 +64,7 @@ export function platformAndArch(
   arch: PlatformArch
 } {
   const archString = ARCH_MAP[arch] ?? (arch as PlatformArch)
-  const platformString = (platform.match(/^win.+/) ? 'windows' : platform) as PlatformStrings
+  const platformString = (platform.startsWith('win') ? 'windows' : platform) as PlatformStrings
   return {platform: platformString, arch: archString}
 }
 
