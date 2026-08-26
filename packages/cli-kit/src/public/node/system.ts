@@ -7,6 +7,7 @@ import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from './output.js'
 import {isCloudEnvironment} from './context/local.js'
+import {isInputDisabled} from './global-context.js'
 import {execa, ExecaChildProcess} from 'execa'
 import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
@@ -54,6 +55,12 @@ interface BuildExecOptions {
  * @returns A promise that resolves true if the URL was opened successfully, false otherwise.
  */
 export async function openURL(url: string): Promise<boolean> {
+  if (isInputDisabled()) {
+    throw new AbortError(
+      'Opening a browser is unavailable when user input is disabled.',
+      'Remove `--no-input` and run the command in an interactive terminal.',
+    )
+  }
   if (isCloudEnvironment()) return false
 
   const externalOpen = await import('open')
@@ -340,7 +347,7 @@ export function terminalSupportsHyperlinks(): boolean {
  * @returns True if the standard input and output streams support prompting.
  */
 export function terminalSupportsPrompting(): boolean {
-  if (isTruthy(process.env.CI)) {
+  if (isInputDisabled() || isTruthy(process.env.CI)) {
     return false
   }
   return Boolean(process.stdin.isTTY && process.stdout.isTTY)

@@ -1,4 +1,5 @@
 import {isTruthy} from './context/utilities.js'
+import {setInputDisabled} from './global-context.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
 import {environmentVariables} from '../../private/node/constants.js'
 import {Flags} from '@oclif/core'
@@ -86,13 +87,18 @@ export async function runCLI(
   env: NodeJS.ProcessEnv = process.env,
   versions: NodeJS.ProcessVersions = process.versions,
 ): Promise<void> {
-  setupEnvironmentVariables(options, argv, env)
-  if (options.runInCreateMode) {
-    await addInitToArgvWhenRunningCreateCLI(options, argv)
+  setInputDisabled(argv.includes('--no-input') || isTruthy(env.SHOPIFY_FLAG_NO_INPUT))
+  try {
+    setupEnvironmentVariables(options, argv, env)
+    if (options.runInCreateMode) {
+      await addInitToArgvWhenRunningCreateCLI(options, argv)
+    }
+    forceNoColor(argv, env)
+    await exitIfOldNodeVersion(versions)
+    return await launchCLI({moduleURL: options.moduleURL, lazyCommandLoader: options.lazyCommandLoader})
+  } finally {
+    setInputDisabled(false)
   }
-  forceNoColor(argv, env)
-  await exitIfOldNodeVersion(versions)
-  return launchCLI({moduleURL: options.moduleURL, lazyCommandLoader: options.lazyCommandLoader})
 }
 
 async function addInitToArgvWhenRunningCreateCLI(

@@ -8,11 +8,12 @@ import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {describe, expect, test, vi, beforeEach, afterEach, type MockInstance} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {getAvailableTCPPort, checkPortAvailability} from '@shopify/cli-kit/node/tcp'
 import {Config} from '@oclif/core'
+import readline from 'readline'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/colors', () => ({
@@ -24,6 +25,7 @@ vi.mock('@shopify/cli-kit/node/colors', () => ({
 }))
 vi.mock('@shopify/cli-kit/node/system', () => ({
   openURL: vi.fn(),
+  terminalSupportsPrompting: vi.fn(),
 }))
 vi.mock('@shopify/cli-kit/node/analytics', () => ({
   reportAnalyticsEvent: vi.fn(),
@@ -69,6 +71,10 @@ const crawlerSignatureHeaders = {
   'Signature-Input': 'signature-input-value',
   'Signature-Agent': 'signature-agent-value',
 }
+
+beforeEach(() => {
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+})
 
 describe('renderLinks', () => {
   test('renders "dev" command links', async () => {
@@ -405,6 +411,33 @@ describe('dev() Ctrl-C analytics', () => {
         }),
       }),
     )
+  })
+
+  test('does not configure stdin when input is unavailable', async () => {
+    const emitKeypressEventsSpy = vi.spyOn(readline, 'emitKeypressEvents')
+    const stdinOnSpy = vi.spyOn(process.stdin, 'on')
+    const originalSetRawModeDescriptor = Object.getOwnPropertyDescriptor(process.stdin, 'setRawMode')
+    const setRawMode = vi.fn()
+    Object.defineProperty(process.stdin, 'setRawMode', {configurable: true, value: setRawMode})
+
+    try {
+      const devPromise = dev(baseOptions)
+
+      await new Promise((resolve) => setImmediate(resolve))
+
+      resolveBackgroundJob()
+      await devPromise
+
+      expect(emitKeypressEventsSpy).not.toHaveBeenCalled()
+      expect(stdinOnSpy).not.toHaveBeenCalledWith('keypress', expect.any(Function))
+      expect(setRawMode).not.toHaveBeenCalled()
+    } finally {
+      if (originalSetRawModeDescriptor) {
+        Object.defineProperty(process.stdin, 'setRawMode', originalSetRawModeDescriptor)
+      } else {
+        Reflect.deleteProperty(process.stdin, 'setRawMode')
+      }
+    }
   })
 })
 

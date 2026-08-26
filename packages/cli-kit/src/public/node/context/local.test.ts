@@ -13,6 +13,7 @@ import {
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
+import {setInputDisabled} from '../global-context.js'
 
 import {afterEach, expect, describe, vi, test} from 'vitest'
 import * as os from 'os'
@@ -34,6 +35,7 @@ describe('isTerminalInteractive', () => {
   const originalEnv = {...process.env}
 
   afterEach(() => {
+    setInputDisabled(false)
     process.stdout.isTTY = originalIsTTY
     process.env.TERM = originalEnv.TERM
     if (originalEnv.CI === undefined) {
@@ -75,6 +77,15 @@ describe('isTerminalInteractive', () => {
     process.stdout.isTTY = true
     process.env.CI = ''
     process.env.TERM = 'xterm-256color'
+    expect(isTerminalInteractive()).toBe(false)
+  })
+
+  test('returns false when user input is disabled', () => {
+    process.stdout.isTTY = true
+    delete process.env.CI
+    process.env.TERM = 'xterm-256color'
+    setInputDisabled(true)
+
     expect(isTerminalInteractive()).toBe(false)
   })
 })
