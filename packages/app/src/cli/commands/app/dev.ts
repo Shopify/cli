@@ -151,7 +151,8 @@ export default class Dev extends AppLinkedCommand {
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
-      installMkcert: flags['install-mkcert'] ?? false,
+      // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
+      installMkcert: flags['install-mkcert'],
       tunnel: tunnelMode,
     }
 
