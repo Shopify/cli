@@ -13,8 +13,6 @@ import {
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
-import {setInputDisabled} from '../global-context.js'
-
 import {afterEach, expect, describe, vi, test} from 'vitest'
 import * as os from 'os'
 import type {NetworkInterfaceInfo} from 'os'
@@ -35,7 +33,7 @@ describe('isTerminalInteractive', () => {
   const originalEnv = {...process.env}
 
   afterEach(() => {
-    setInputDisabled(false)
+    vi.unstubAllEnvs()
     process.stdout.isTTY = originalIsTTY
     process.env.TERM = originalEnv.TERM
     if (originalEnv.CI === undefined) {
@@ -84,7 +82,7 @@ describe('isTerminalInteractive', () => {
     process.stdout.isTTY = true
     delete process.env.CI
     process.env.TERM = 'xterm-256color'
-    setInputDisabled(true)
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
     expect(isTerminalInteractive()).toBe(false)
   })

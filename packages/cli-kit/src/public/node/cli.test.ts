@@ -1,7 +1,6 @@
 import {clearCache, runCLI, runCreateCLI, portFlag, requiredIfNonInteractive} from './cli.js'
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {isInputDisabled} from './global-context.js'
 import * as confStore from '../../private/node/conf-store.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
@@ -13,16 +12,6 @@ describe('cli', () => {
     const launchCLI = vi.fn()
     await runCLI({moduleURL: 'test', development: false}, launchCLI)
     expect(launchCLI).toHaveBeenCalledWith({moduleURL: 'test'})
-  })
-
-  test('disables input while the CLI runs with --no-input and resets it afterwards', async () => {
-    const launchCLI = vi.fn(async () => {
-      expect(isInputDisabled()).toBe(true)
-    })
-
-    await runCLI({moduleURL: 'test', development: false}, launchCLI, ['--no-input'])
-
-    expect(isInputDisabled()).toBe(false)
   })
 
   test('triggers no colour mode based on --no-color flag', async () => {

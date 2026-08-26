@@ -2,7 +2,7 @@ import {evaluate, SessionItem} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {isInputDisabled} from '@shopify/cli-kit/node/global-context'
+import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 
 import {createInterface, Interface} from 'readline'

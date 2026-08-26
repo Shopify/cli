@@ -4,7 +4,7 @@ import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {Task, renderConfirmationPrompt, renderError, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {isInputDisabled} from '@shopify/cli-kit/node/global-context'
+import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 import {Writable} from 'stream'
 
 export function themeComponent(theme: Theme) {
