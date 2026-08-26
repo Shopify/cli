@@ -3,7 +3,7 @@ import {authAliasFlag, globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 export default class OrganizationList extends BaseCommand {
-  static baseFlags = {...BaseCommand.baseFlags, ...authAliasFlag}
+  static baseFlags = authAliasFlag
 
   static summary = 'List Shopify organizations you have access to.'
 

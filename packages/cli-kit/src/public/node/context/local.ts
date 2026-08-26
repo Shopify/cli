@@ -1,5 +1,5 @@
 import {isTruthy} from './utilities.js'
-import {isInputDisabled} from '../global-context.js'
+import {isInputDisabled} from '../no-input.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {randomUUID} from 'crypto'

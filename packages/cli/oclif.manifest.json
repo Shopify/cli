@@ -3633,13 +3633,6 @@
           "required": false,
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
@@ -3696,13 +3689,6 @@
           "multiple": false,
           "name": "alias",
           "type": "option"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -3722,13 +3708,6 @@
       "description": "Logs you out of the Shopify account or Partner account and store.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3747,13 +3726,6 @@
       "description": "Clear the CLI cache, used to store some API responses and handle notifications status",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -3821,13 +3793,6 @@
           "name": "json",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "no-truncate": {
           "allowNo": false,
           "description": "Do not truncate output.",
@@ -3880,13 +3845,6 @@
       "descriptionWithMarkdown": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3908,13 +3866,6 @@
       "descriptionWithMarkdown": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3936,13 +3887,6 @@
       "descriptionWithMarkdown": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3963,13 +3907,6 @@
       "descriptionWithMarkdown": "Disable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3990,13 +3927,6 @@
       "descriptionWithMarkdown": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4017,13 +3947,6 @@
       "descriptionWithMarkdown": "Check whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4048,13 +3971,6 @@
           "description": "Output as CSV",
           "env": "SHOPIFY_FLAG_OUTPUT_CSV",
           "name": "csv",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
           "type": "boolean"
         }
       },
@@ -4299,13 +4215,6 @@
       "description": "Generate CLI commands documentation",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -4325,13 +4234,6 @@
       "description": "Run CLI doctor-release tests",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -4442,13 +4344,6 @@
           "env": "SHOPIFY_FLAG_CLI_NESTED_COMMANDS",
           "name": "nested-commands",
           "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -4524,13 +4419,6 @@
           "name": "lockfile-check",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -4581,13 +4469,6 @@
       "descriptionWithMarkdown": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -4632,13 +4513,6 @@
           "name": "force-sfapi-version",
           "type": "option"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -4680,13 +4554,6 @@
           "name": "dev-origin",
           "required": true,
           "type": "option"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
         },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -4744,13 +4611,6 @@
           "multiple": false,
           "name": "entry",
           "type": "option"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
         },
         "output": {
           "default": "startup.cpuprofile",
@@ -4930,13 +4790,6 @@
           "required": false,
           "type": "option"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "no-verify": {
           "allowNo": false,
           "description": "Skip the routability verification step after deployment.",
@@ -5115,13 +4968,6 @@
           "name": "inspector-port",
           "type": "option"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5167,13 +5013,6 @@
       "descriptionWithMarkdown": "Lists all environments available on the linked Hydrogen storefront.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5241,13 +5080,6 @@
           "name": "force",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5312,13 +5144,6 @@
           "name": "force",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5346,13 +5171,6 @@
       "description": "Shortcut for `hydrogen generate`. See `hydrogen generate --help` for more information.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -5417,13 +5235,6 @@
           "name": "locale-param",
           "type": "option"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5481,13 +5292,6 @@
           "multiple": false,
           "name": "locale-param",
           "type": "option"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
         },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -5567,13 +5371,6 @@
           "description": "Use mock.shop as the data source for the storefront.",
           "env": "SHOPIFY_HYDROGEN_FLAG_MOCK_DATA",
           "name": "mock-shop",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
           "type": "boolean"
         },
         "package-manager": {
@@ -5677,13 +5474,6 @@
           "name": "name",
           "type": "option"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5733,13 +5523,6 @@
       "descriptionWithMarkdown": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5768,13 +5551,6 @@
       "descriptionWithMarkdown": "Logs in to the specified shop and saves the shop domain to the project.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5812,13 +5588,6 @@
       "descriptionWithMarkdown": "Log out from the current shop.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5931,13 +5700,6 @@
           "name": "inspector-port",
           "type": "option"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6013,13 +5775,6 @@
           "name": "markets",
           "type": "option"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6080,13 +5835,6 @@
           "name": "install-deps",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6124,13 +5872,6 @@
       "descriptionWithMarkdown": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6158,13 +5899,6 @@
       "description": "EXPERIMENTAL: Upgrades the project to use Vite.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6193,13 +5927,6 @@
       "descriptionWithMarkdown": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -6220,13 +5947,6 @@
       "descriptionWithMarkdown": "Unlinks your local development environment from a remote Hydrogen storefront.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6261,13 +5981,6 @@
           "description": "Ignore warnings and force the upgrade to the target version",
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
           "type": "boolean"
         },
         "path": {
@@ -6305,13 +6018,6 @@
       "description": "View all the available UI kit components",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6332,13 +6038,6 @@
       "description": "View the UI kit components that process async tasks",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6358,13 +6057,6 @@
       "description": "View the UI kit components prompts",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6384,13 +6076,6 @@
       "description": "View the UI kit components that display static output",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6410,13 +6095,6 @@
       "description": "Generate a notifications.json file for the the CLI, appending a new notification to the current file.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6442,13 +6120,6 @@
           "env": "SHOPIFY_FLAG_IGNORE_ERRORS",
           "hidden": false,
           "name": "ignore-errors",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
           "type": "boolean"
         }
       },
@@ -6547,13 +6218,6 @@
           "helpGroup": "GLOBAL",
           "name": "json",
           "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -6596,13 +6260,6 @@
           "description": "Format output as json.",
           "helpGroup": "GLOBAL",
           "name": "json",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
           "type": "boolean"
         },
         "verbose": {
@@ -6678,13 +6335,6 @@
           "name": "json",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "silent": {
           "allowNo": false,
           "char": "s",
@@ -6747,13 +6397,6 @@
           "name": "install",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "verbose": {
           "allowNo": false,
           "char": "v",
@@ -6783,13 +6426,6 @@
           "allowNo": false,
           "name": "hard",
           "summary": "Delete node_modules and package manager related files in addition to uninstalling plugins.",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
           "type": "boolean"
         },
         "reinstall": {
@@ -6834,13 +6470,6 @@
           "name": "help",
           "type": "boolean"
         },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
         "verbose": {
           "allowNo": false,
           "char": "v",
@@ -6871,13 +6500,6 @@
           "char": "h",
           "description": "Show CLI help.",
           "name": "help",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
           "type": "boolean"
         },
         "verbose": {
@@ -6951,13 +6573,6 @@
       },
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -10547,13 +10162,6 @@
       "descriptionWithMarkdown": "Upgrades Shopify CLI using your package manager.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -10573,13 +10181,6 @@
       "description": "Shopify CLI version currently installed.",
       "enableJsonFlag": false,
       "flags": {
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [

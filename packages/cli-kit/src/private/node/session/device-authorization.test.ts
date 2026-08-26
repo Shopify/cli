@@ -13,8 +13,6 @@ import {err, ok} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import * as output from '../../../public/node/output.js'
-import {setInputDisabled} from '../../../public/node/global-context.js'
-
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
@@ -26,13 +24,13 @@ vi.mock('./exchange.js')
 vi.mock('../../../public/node/system.js')
 
 beforeEach(() => {
-  setInputDisabled(false)
+  vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '')
   vi.mocked(isTTY).mockReturnValue(true)
   vi.mocked(isCI).mockReturnValue(false)
   vi.mocked(openURL).mockResolvedValue(true)
 })
 
-afterEach(() => setInputDisabled(false))
+afterEach(() => vi.unstubAllEnvs())
 
 describe('requestDeviceAuthorization', () => {
   const data: any = {
@@ -169,7 +167,7 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
     vi.mocked(clientId).mockReturnValue('clientId')
-    setInputDisabled(true)
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrow(
       'Authorization is required to continue, but the current environment does not support interactive prompts.',

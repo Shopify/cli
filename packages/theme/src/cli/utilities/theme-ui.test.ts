@@ -4,11 +4,14 @@ import {renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli
 import {test, describe, expect, vi, afterEach, beforeEach} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE, LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {setInputDisabled} from '@shopify/cli-kit/node/global-context'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-afterEach(() => setInputDisabled(false))
+beforeEach(() => vi.stubEnv('CI', ''))
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 describe('themeComponent', () => {
   test('returns the ui for a theme', async () => {
@@ -71,7 +74,7 @@ describe('ensureDirectoryConfirmed', () => {
   })
 
   test('requires --force when input is explicitly disabled', async () => {
-    setInputDisabled(true)
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
     await expect(ensureDirectoryConfirmed(false)).rejects.toThrow(
       'This command must run from a theme directory when user input is unavailable.',
@@ -137,7 +140,7 @@ describe('ensureLiveThemeConfirmed', () => {
   })
 
   test('requires --allow-live when input is disabled', async () => {
-    setInputDisabled(true)
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
     const confirmation = ensureLiveThemeConfirmed(liveTheme, 'start development mode', false)
 

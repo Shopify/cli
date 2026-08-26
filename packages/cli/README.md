@@ -1985,8 +1985,8 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 ```
 USAGE
   $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--auth-alias <value>] [--client-id <value> |
-    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--no-input]
-    [--path <value>] [--reset | ] [--topic <value>]
+    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>]
+    [--reset | ] [--topic <value>]
 
 FLAGS
   -c, --config=<value>
@@ -2029,10 +2029,6 @@ FLAGS
       This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using
       flags.
       [env: SHOPIFY_FLAG_HELP]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -2079,16 +2075,12 @@ Logs you in to your Shopify account.
 
 ```
 USAGE
-  $ shopify auth login [--alias <value>] [--no-input]
+  $ shopify auth login [--alias <value>]
 
 FLAGS
   --alias=<value>
       Alias of an existing session you want to use. Required if non interactive.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 DESCRIPTION
   Logs you in to your Shopify account.
@@ -2100,12 +2092,7 @@ Logs you out of the Shopify account or Partner account and store.
 
 ```
 USAGE
-  $ shopify auth logout [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify auth logout
 
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
@@ -2118,7 +2105,7 @@ List all shopify commands.
 ```
 USAGE
   $ shopify commands [-c id|plugin|summary|type... | --tree] [--deprecated] [-x | ] [--hidden] [--json]
-    [--no-input] [--no-truncate | ] [--sort id|plugin|summary|type | ]
+    [--no-truncate | ] [--sort id|plugin|summary|type | ]
 
 FLAGS
   -c, --columns=<option>...
@@ -2133,10 +2120,6 @@ FLAGS
 
   --hidden
       Show hidden commands.
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --no-truncate
       Do not truncate output.
@@ -2162,12 +2145,7 @@ Disable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect off [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify config autocorrect off
 
 DESCRIPTION
   Disable autocorrect. Off by default.
@@ -2186,12 +2164,7 @@ Enable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect on [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify config autocorrect on
 
 DESCRIPTION
   Enable autocorrect. Off by default.
@@ -2210,12 +2183,7 @@ Check whether autocorrect is enabled or disabled. On by default.
 
 ```
 USAGE
-  $ shopify config autocorrect status [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify config autocorrect status
 
 DESCRIPTION
   Check whether autocorrect is enabled or disabled. On by default.
@@ -2234,12 +2202,7 @@ Disable automatic upgrades for Shopify CLI.
 
 ```
 USAGE
-  $ shopify config autoupgrade off [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify config autoupgrade off
 
 DESCRIPTION
   Disable automatic upgrades for Shopify CLI.
@@ -2257,12 +2220,7 @@ Enable automatic upgrades for Shopify CLI.
 
 ```
 USAGE
-  $ shopify config autoupgrade on [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify config autoupgrade on
 
 DESCRIPTION
   Enable automatic upgrades for Shopify CLI.
@@ -2281,12 +2239,7 @@ Check whether auto-upgrade is enabled, disabled, or not yet configured.
 
 ```
 USAGE
-  $ shopify config autoupgrade status [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify config autoupgrade status
 
 DESCRIPTION
   Check whether auto-upgrade is enabled, disabled, or not yet configured.
@@ -2405,10 +2358,6 @@ FLAGS
       Include all nested commands in the output.
       [env: SHOPIFY_FLAG_CLI_NESTED_COMMANDS]
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
 DESCRIPTION
   Display help for Shopify CLI
 ```
@@ -2420,8 +2369,7 @@ Builds a Hydrogen storefront for production.
 ```
 USAGE
   $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
-    [--entry <value>] [--force-client-sourcemap] [--lockfile-check] [--no-input] [--path <value>] [--sourcemap]
-    [--watch]
+    [--entry <value>] [--force-client-sourcemap] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
 
 FLAGS
   --[no-]bundle-stats
@@ -2451,10 +2399,6 @@ FLAGS
       `--no-lockfile-check`.
       [env: SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK]
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2477,16 +2421,12 @@ Returns diagnostic information about a Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen check RESOURCE [--no-input] [--path <value>]
+  $ shopify hydrogen check RESOURCE [--path <value>]
 
 ARGUMENTS
   RESOURCE  (routes) The resource to check. Currently only 'routes' is supported.
 
 FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2501,15 +2441,11 @@ Generate types for the Storefront API queries found in your project.
 
 ```
 USAGE
-  $ shopify hydrogen codegen [--codegen-config-path <value>] [--no-input] [--path <value>] [--watch]
+  $ shopify hydrogen codegen [--codegen-config-path <value>] [--path <value>] [--watch]
 
 FLAGS
   --codegen-config-path=<value>
       Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -2528,16 +2464,12 @@ Push project configuration to admin
 
 ```
 USAGE
-  $ shopify hydrogen customer-account-push --dev-origin <value> [--no-input] [--path <value>] [--relative-logout-uri <value>]
+  $ shopify hydrogen customer-account-push --dev-origin <value> [--path <value>] [--relative-logout-uri <value>]
     [--relative-redirect-uri <value>] [--storefront-id <value>]
 
 FLAGS
   --dev-origin=<value>
       (required) The development domain of your application.
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -2563,16 +2495,12 @@ Builds and profiles the server startup time the app.
 
 ```
 USAGE
-  $ shopify hydrogen debug cpu [--entry <value>] [--no-input] [--output <value>] [--path <value>]
+  $ shopify hydrogen debug cpu [--entry <value>] [--output <value>] [--path <value>]
 
 FLAGS
   --entry=<value>
       Entry file for the worker. Defaults to `./server`.
       [env: SHOPIFY_HYDROGEN_FLAG_ENTRY]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output=<value>
       [default: startup.cpuprofile] Specify a path to generate the profile file. Defaults to "startup.cpuprofile".
@@ -2594,7 +2522,7 @@ USAGE
   $ shopify hydrogen deploy [--assets-dir <value>] [--auth-bypass-token-duration <value> --auth-bypass-token]
     [--build-command <value>] [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f]
     [--force-client-sourcemap] [--json-output] [--lockfile-check] [--metadata-description <value>] [--metadata-user
-    <value>] [--no-input] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>] [--worker-dir <value>]
+    <value>] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>] [--worker-dir <value>]
 
 FLAGS
   -f, --force
@@ -2665,10 +2593,6 @@ FLAGS
       User that initiated the deployment. Will be saved and displayed in the Shopify admin
       [env: SHOPIFY_HYDROGEN_FLAG_METADATA_USER]
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --no-verify
       Skip the routability verification step after deployment.
 
@@ -2696,8 +2620,8 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 USAGE
   $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--customer-account-push] [--debug]
     [--disable-deps-optimizer] [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> |
-    --env-branch <value>] [--env-file <value>] [--host] [--inspector-port <value>] [--no-input] [--path <value>] [--port
-    <value>] [--verbose]
+    --env-branch <value>] [--env-file <value>] [--host] [--inspector-port <value>] [--path <value>] [--port <value>]
+    [--verbose]
 
 FLAGS
   --codegen
@@ -2748,10 +2672,6 @@ FLAGS
       The port where the inspector is available. Defaults to 9229.
       [env: SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT]
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2774,13 +2694,9 @@ List the environments on your linked Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen env list [--no-input] [--path <value>]
+  $ shopify hydrogen env list [--path <value>]
 
 FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2795,8 +2711,7 @@ Populate your .env with variables from your Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--no-input] [--path
-    <value>]
+  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--path <value>]
 
 FLAGS
   -f, --force
@@ -2814,10 +2729,6 @@ FLAGS
       [default: .env] Path to an environment file to override existing environment variables. Defaults to the '.env'
       located in your project path `--path`.
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2832,7 +2743,7 @@ Push environment variables from the local .env file to your linked Hydrogen stor
 
 ```
 USAGE
-  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--no-input] [--path <value>]
+  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--path <value>]
 
 FLAGS
   -f, --force
@@ -2850,10 +2761,6 @@ FLAGS
       [default: .env] Path to an environment file to override existing environment variables. Defaults to the '.env'
       located in your project path `--path`.
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2868,7 +2775,7 @@ Generates a standard Shopify route.
 
 ```
 USAGE
-  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [--locale-param <value>] [--no-input] [--path <value>]
+  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [--locale-param <value>] [--path <value>]
     [--typescript]
 
 ARGUMENTS
@@ -2888,10 +2795,6 @@ FLAGS
       The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER]
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2910,8 +2813,7 @@ Generates all supported standard shopify routes.
 
 ```
 USAGE
-  $ shopify hydrogen generate routes [--adapter <value>] [-f] [--locale-param <value>] [--no-input] [--path <value>]
-    [--typescript]
+  $ shopify hydrogen generate routes [--adapter <value>] [-f] [--locale-param <value>] [--path <value>] [--typescript]
 
 FLAGS
   -f, --force
@@ -2925,10 +2827,6 @@ FLAGS
   --locale-param=<value>
       The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -2949,7 +2847,7 @@ Creates a new Hydrogen storefront.
 ```
 USAGE
   $ shopify hydrogen init [-f] [--git] [--install-deps] [--language <value>] [--markets <value>] [--mock-shop]
-    [--no-input] [--path <value>] [--quickstart] [--shortcut] [--styling <value>] [--template <value>]
+    [--path <value>] [--quickstart] [--shortcut] [--styling <value>] [--template <value>]
 
 FLAGS
   -f, --force
@@ -2976,10 +2874,6 @@ FLAGS
   --mock-shop
       Use mock.shop as the data source for the storefront.
       [env: SHOPIFY_HYDROGEN_FLAG_MOCK_DATA]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the new Hydrogen storefront.
@@ -3012,8 +2906,8 @@ Link a local project to one of your shop's Hydrogen storefronts.
 
 ```
 USAGE
-  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--name <value> | ] [--no-input]
-    [--path <value>] [-s <value>]
+  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--name <value> | ] [--path <value>]
+    [-s <value>]
 
 FLAGS
   -f, --force
@@ -3033,10 +2927,6 @@ FLAGS
       The name to use when creating a new Hydrogen storefront.
       [env: SHOPIFY_HYDROGEN_FLAG_NAME]
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3055,13 +2945,9 @@ Returns a list of Hydrogen storefronts available on a given shop.
 
 ```
 USAGE
-  $ shopify hydrogen list [--no-input] [--path <value>]
+  $ shopify hydrogen list [--path <value>]
 
 FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3076,17 +2962,13 @@ Login to your Shopify account.
 
 ```
 USAGE
-  $ shopify hydrogen login [--no-input] [--path <value>] [-s <value>]
+  $ shopify hydrogen login [--path <value>] [-s <value>]
 
 FLAGS
   -s, --shop=<value>
       Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
       https://janes-apparel.myshopify.com).
       [env: SHOPIFY_SHOP]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -3102,13 +2984,9 @@ Logout of your local session.
 
 ```
 USAGE
-  $ shopify hydrogen logout [--no-input] [--path <value>]
+  $ shopify hydrogen logout [--path <value>]
 
 FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3124,8 +3002,8 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 USAGE
   $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
-    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--no-input] [--path <value>]
-    [--port <value>] [--verbose] [--watch ]
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--path <value>] [--port <value>]
+    [--verbose] [--watch ]
 
 FLAGS
   --build
@@ -3160,10 +3038,6 @@ FLAGS
       The port where the inspector is available. Defaults to 9229.
       [env: SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT]
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3189,7 +3063,7 @@ Scaffold routes and core functionality.
 
 ```
 USAGE
-  $ shopify hydrogen setup [-f] [--install-deps] [--markets <value>] [--no-input] [--path <value>] [--shortcut]
+  $ shopify hydrogen setup [-f] [--install-deps] [--markets <value>] [--path <value>] [--shortcut]
 
 FLAGS
   -f, --force
@@ -3204,10 +3078,6 @@ FLAGS
       Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`.
       Example: `--markets subfolders`.
       [env: SHOPIFY_HYDROGEN_FLAG_I18N]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -3227,7 +3097,7 @@ Setup CSS strategies for your project.
 
 ```
 USAGE
-  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--no-input] [--path <value>]
+  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--path <value>]
 
 ARGUMENTS
   [STRATEGY]  (tailwind|vanilla-extract|css-modules|postcss) The CSS strategy to setup. One of
@@ -3241,10 +3111,6 @@ FLAGS
   --[no-]install-deps
       Auto installs dependencies using the active package manager.
       [env: SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -3260,17 +3126,13 @@ Setup support for multiple markets in your project.
 
 ```
 USAGE
-  $ shopify hydrogen setup markets [STRATEGY] [--no-input] [--path <value>]
+  $ shopify hydrogen setup markets [STRATEGY] [--path <value>]
 
 ARGUMENTS
   [STRATEGY]  (subfolders|domains|subdomains) The URL structure strategy to setup multiple markets. One of
               subfolders,domains,subdomains
 
 FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3285,13 +3147,9 @@ EXPERIMENTAL: Upgrades the project to use Vite.
 
 ```
 USAGE
-  $ shopify hydrogen setup vite [--no-input] [--path <value>]
+  $ shopify hydrogen setup vite [--path <value>]
 
 FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3306,12 +3164,7 @@ Creates a global `h2` shortcut for the Hydrogen CLI
 
 ```
 USAGE
-  $ shopify hydrogen shortcut [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify hydrogen shortcut
 
 DESCRIPTION
   Creates a global `h2` shortcut for the Hydrogen CLI
@@ -3323,13 +3176,9 @@ Unlink a local project from a Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen unlink [--no-input] [--path <value>]
+  $ shopify hydrogen unlink [--path <value>]
 
 FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3344,7 +3193,7 @@ Upgrade Remix and Hydrogen npm dependencies.
 
 ```
 USAGE
-  $ shopify hydrogen upgrade [-f] [--no-input] [--path <value>] [-v <value>]
+  $ shopify hydrogen upgrade [-f] [--path <value>] [-v <value>]
 
 FLAGS
   -f, --force
@@ -3353,10 +3202,6 @@ FLAGS
 
   -v, --version=<value>
       A target hydrogen version to update to
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -3407,7 +3252,7 @@ Installs a plugin into shopify.
 
 ```
 USAGE
-  $ shopify plugins add PLUGIN... [-f] [-h] [--json] [--no-input] [-s | -v]
+  $ shopify plugins add PLUGIN... [-f] [-h] [--json] [-s | -v]
 
 ARGUMENTS
   PLUGIN...  Plugin to install.
@@ -3424,10 +3269,6 @@ FLAGS
 
   -v, --verbose
       Show verbose npm output.
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 GLOBAL FLAGS
   --json
@@ -3467,10 +3308,6 @@ FLAGS
 
   -v, --verbose
 
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
 GLOBAL FLAGS
   --json
       Format output as json.
@@ -3488,7 +3325,7 @@ Installs a plugin into shopify.
 
 ```
 USAGE
-  $ shopify plugins install PLUGIN... [-f] [-h] [--json] [--no-input] [-s | -v]
+  $ shopify plugins install PLUGIN... [-f] [-h] [--json] [-s | -v]
 
 ARGUMENTS
   PLUGIN...  Plugin to install.
@@ -3505,10 +3342,6 @@ FLAGS
 
   -v, --verbose
       Show verbose npm output.
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 GLOBAL FLAGS
   --json
@@ -3537,7 +3370,7 @@ Links a plugin into the CLI for development.
 
 ```
 USAGE
-  $ shopify plugins link PATH [-h] [--install] [--no-input] [-v]
+  $ shopify plugins link PATH [-h] [--install] [-v]
 
 ARGUMENTS
   PATH  [default: .] path to plugin
@@ -3550,10 +3383,6 @@ FLAGS
 
   --[no-]install
       Install dependencies after linking the plugin.
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 DESCRIPTION
   Links a plugin into the CLI for development.
@@ -3574,7 +3403,7 @@ Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins remove [PLUGIN...] [-h] [--no-input] [-v]
+  $ shopify plugins remove [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
   [PLUGIN...]  plugin to uninstall
@@ -3584,10 +3413,6 @@ FLAGS
       Show CLI help.
 
   -v, --verbose
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 DESCRIPTION
   Removes a plugin from the CLI.
@@ -3606,15 +3431,11 @@ Remove all user-installed and linked plugins.
 
 ```
 USAGE
-  $ shopify plugins reset [--hard] [--no-input] [--reinstall]
+  $ shopify plugins reset [--hard] [--reinstall]
 
 FLAGS
   --hard
       Delete node_modules and package manager related files in addition to uninstalling plugins.
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --reinstall
       Reinstall all plugins after uninstalling.
@@ -3626,7 +3447,7 @@ Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins uninstall [PLUGIN...] [-h] [--no-input] [-v]
+  $ shopify plugins uninstall [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
   [PLUGIN...]  plugin to uninstall
@@ -3636,10 +3457,6 @@ FLAGS
       Show CLI help.
 
   -v, --verbose
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 DESCRIPTION
   Removes a plugin from the CLI.
@@ -3658,7 +3475,7 @@ Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins unlink [PLUGIN...] [-h] [--no-input] [-v]
+  $ shopify plugins unlink [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
   [PLUGIN...]  plugin to uninstall
@@ -3668,10 +3485,6 @@ FLAGS
       Show CLI help.
 
   -v, --verbose
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 DESCRIPTION
   Removes a plugin from the CLI.
@@ -3690,17 +3503,13 @@ Update installed plugins.
 
 ```
 USAGE
-  $ shopify plugins update [-h] [--no-input] [-v]
+  $ shopify plugins update [-h] [-v]
 
 FLAGS
   -h, --help
       Show CLI help.
 
   -v, --verbose
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
 
 DESCRIPTION
   Update installed plugins.
@@ -5704,12 +5513,7 @@ Upgrades Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify upgrade
 
 DESCRIPTION
   Upgrades Shopify CLI.
@@ -5723,12 +5527,7 @@ Shopify CLI version currently installed.
 
 ```
 USAGE
-  $ shopify version [--no-input]
-
-FLAGS
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
+  $ shopify version
 
 DESCRIPTION
   Shopify CLI version currently installed.
