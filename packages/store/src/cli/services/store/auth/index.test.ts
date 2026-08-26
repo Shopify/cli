@@ -3,7 +3,6 @@ import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
-import {setInputDisabled} from '@shopify/cli-kit/node/global-context'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/store-auth-session')
@@ -17,7 +16,7 @@ describe('store auth service', () => {
     const openURL = vi.fn()
     const waitForStoreAuthCode = vi.fn()
     const presenter = {openingBrowser: vi.fn(), manualAuthUrl: vi.fn(), success: vi.fn()}
-    setInputDisabled(true)
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
     try {
       await expect(
@@ -36,7 +35,7 @@ describe('store auth service', () => {
       expect(waitForStoreAuthCode).not.toHaveBeenCalled()
       expect(presenter.openingBrowser).not.toHaveBeenCalled()
     } finally {
-      setInputDisabled(false)
+      vi.unstubAllEnvs()
     }
   })
 

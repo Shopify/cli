@@ -3,4 +3,4 @@
 '@shopify/cli': minor
 ---
 
-Add a global `--no-input` flag to disable interactive prompts and browser authentication.
+Add `--no-input` to commands with global flags to disable interactive prompts and browser authentication.

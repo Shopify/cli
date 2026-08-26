@@ -4,7 +4,6 @@ import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {setInputDisabled} from '@shopify/cli-kit/node/global-context'
 
 import {Interface} from 'readline'
 
@@ -15,10 +14,10 @@ vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
 vi.mock('./evaluator.js')
 vi.mock('./presenter.js')
 
-afterEach(() => setInputDisabled(false))
+afterEach(() => vi.unstubAllEnvs())
 
 test('replLoop rejects --no-input instead of waiting for stdin', async () => {
-  setInputDisabled(true)
+  vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
   await expect(replLoop({} as DevServerSession, '123', '/')).rejects.toThrow(
     "The theme console requires user input and can't run with `--no-input`.",

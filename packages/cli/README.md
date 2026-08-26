@@ -126,7 +126,7 @@ Build the app, including extensions.
 ```
 USAGE
   $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--skip-dependencies-installation] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [--skip-dependencies-installation] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -148,6 +148,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -184,7 +188,7 @@ Cancel a bulk operation.
 ```
 USAGE
   $ shopify app bulk cancel --id <value> [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -215,6 +219,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -240,8 +248,8 @@ Execute bulk operations.
 ```
 USAGE
   $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
-    [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
+    [--no-input] [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s
+    <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
@@ -275,6 +283,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output-file=<value>
       The file path where results should be written if --watch is specified. If not specified, results will be written to
@@ -331,7 +343,7 @@ Check the status of bulk operations.
 ```
 USAGE
   $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -362,6 +374,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -395,7 +411,7 @@ Fetch your app configuration from the Developer Dashboard.
 ```
 USAGE
   $ shopify app config link [--auth-alias <value>] [--client-id <value> | -c <value>] [--force [--file-name <value> |
-    ]] [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose]
+    ]] [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -426,6 +442,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -455,7 +475,7 @@ Refresh an already-linked app configuration without prompts.
 ```
 USAGE
   $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -477,6 +497,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -527,6 +551,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -553,7 +581,7 @@ Validate your app configuration and extensions.
 ```
 USAGE
   $ shopify app config validate [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -579,6 +607,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -606,8 +638,8 @@ Deploy your Shopify app.
 ```
 USAGE
   $ shopify app deploy [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--message
-    <value>] [--no-build] [--no-color] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ]
-    [--source-control-url <value>] [--verbose] [--version <value>]
+    <value>] [--no-build] [--no-color] [--no-input] [--no-release | --allow-updates | --allow-deletes] [--path <value>]
+    [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
@@ -650,6 +682,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --no-release
       Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation
@@ -697,10 +733,10 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value> | -c <value>]
-    [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-update] [--notify
-    <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
-    [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
-    [--unsafe-validation] [--verbose]
+    [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-input]
+    [--no-update] [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>]
+    [--store-password <value>] [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>]
+    [--tunnel-url <value> | ] [--unsafe-validation] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -742,6 +778,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --no-update
       Uses the app URL from the toml file instead an autogenerated URL for dev.
@@ -807,7 +847,7 @@ Cleans up the dev preview from the selected store.
 ```
 USAGE
   $ shopify app dev clean [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [-s <value>] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -833,6 +873,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -861,7 +905,7 @@ Pull app and extensions environment variables.
 ```
 USAGE
   $ shopify app env pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--env-file <value>]
-    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -887,6 +931,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -916,7 +964,7 @@ Display app and extensions environment variables.
 ```
 USAGE
   $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -938,6 +986,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -964,7 +1016,7 @@ Execute GraphQL queries and mutations.
 ```
 USAGE
   $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
+    [--no-input] [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
     [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
 
 FLAGS
@@ -1000,6 +1052,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output-file=<value>
       The file name where results should be written, instead of STDOUT.
@@ -1045,7 +1101,7 @@ Compile a function to wasm.
 ```
 USAGE
   $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1067,6 +1123,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your function directory.
@@ -1093,7 +1153,7 @@ Print basic information about your function.
 ```
 USAGE
   $ shopify app function info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1119,6 +1179,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your function directory.
@@ -1153,7 +1217,7 @@ Replays a function run from an app log.
 ```
 USAGE
   $ shopify app function replay [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema] [-l
-    <value>] [--no-color] [--path <value>] [--reset | ] [--verbose] [-w]
+    <value>] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose] [-w]
 
 FLAGS
   -c, --config=<value>
@@ -1189,6 +1253,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your function directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -1216,7 +1284,7 @@ Run a function locally for testing.
 ```
 USAGE
   $ shopify app function run [--auth-alias <value>] [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j]
-    [--json-schema] [--no-color] [--path <value>] [--profile] [--reset | ] [--verbose]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--profile] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1251,6 +1319,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your function directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -1282,7 +1354,7 @@ Fetch the latest GraphQL schema for a function.
 ```
 USAGE
   $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--stdout] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [--stdout] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1304,6 +1376,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your function directory.
@@ -1338,7 +1414,7 @@ Generate GraphQL types for a function.
 ```
 USAGE
   $ shopify app function typegen [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1360,6 +1436,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your function directory.
@@ -1387,8 +1467,8 @@ Generate a new app Extension.
 ```
 USAGE
   $ shopify app generate extension [--auth-alias <value>] [--client-id <value> | -c <value>] [--flavor
-    vanilla-js|react|typescript|typescript-react|wasm|rust] [--json-schema] [-n <value>] [--no-color] [--path <value>]
-    [--reset | ] [-t <value>] [--verbose]
+    vanilla-js|react|typescript|typescript-react|wasm|rust] [--json-schema] [-n <value>] [--no-color] [--no-input]
+    [--path <value>] [--reset | ] [-t <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1425,6 +1505,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -1456,7 +1540,8 @@ Open a local GraphiQL UI for your app and store.
 ```
 USAGE
   $ shopify app graphiql [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--port <value>] [--reset | ] [-s <value>] [-v <value>] [--verbose] [--version <value>]
+    [--no-input] [--path <value>] [--port <value>] [--reset | ] [-s <value>] [-v <value>] [--verbose] [--version
+    <value>]
 
 FLAGS
   -c, --config=<value>
@@ -1487,6 +1572,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -1528,7 +1617,7 @@ Import metafield and metaobject definitions.
 ```
 USAGE
   $ shopify app import custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing]
-    [--json-schema] [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1559,6 +1648,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -1585,7 +1678,7 @@ Import dashboard-managed extensions into your app.
 ```
 USAGE
   $ shopify app import dashboard-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+    [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1607,6 +1700,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -1631,7 +1728,7 @@ Print basic information about your app and extensions.
 ```
 USAGE
   $ shopify app info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [--verbose] [--web-env]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose] [--web-env]
 
 FLAGS
   -c, --config=<value>
@@ -1657,6 +1754,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -2575,8 +2676,8 @@ Create a new app project
 ```
 USAGE
   $ shopify app init [--auth-alias <value>] [--flavor <value>] [--json-schema] [-n <value>] [--no-color]
-    [--organization-id <value> | [--client-id <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>]
-    [--verbose]
+    [--no-input] [--organization-id <value> | [--client-id <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template
+    <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>
@@ -2613,6 +2714,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --organization-id=<value>
       The organization ID. Your organization ID can be found in your Dev Dashboard URL:
       https://dev.shopify.com/dashboard/<organization-id>. Required in non-interactive environments unless --client-id is
@@ -2643,8 +2748,8 @@ Stream detailed logs for your Shopify app.
 ```
 USAGE
   $ shopify app logs [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [--source <value>...] [--status success|failure] [-s <value>...]
-    [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--source <value>...] [--status success|failure] [-s
+    <value>...] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -2674,6 +2779,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -2716,7 +2825,7 @@ Print out a list of sources that may be used with the logs command.
 ```
 USAGE
   $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -2742,6 +2851,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -2894,6 +3007,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -2923,7 +3040,7 @@ Cancels app subscription migration operations.
 ```
 USAGE
   $ shopify app subscription-migrations cancel --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
-    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -2953,6 +3070,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -2996,7 +3117,7 @@ Lists app subscriptions eligible for migration.
 ```
 USAGE
   $ shopify app subscription-migrations list [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [--status UNSCHEDULED|SCHEDULED|MIGRATED] [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--status UNSCHEDULED|SCHEDULED|MIGRATED] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -3022,6 +3143,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -3076,7 +3201,7 @@ Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing
 ```
 USAGE
   $ shopify app subscription-migrations schedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [-i <value>] [-j]
-    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -3110,6 +3235,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -3175,7 +3304,7 @@ Checks the status of app subscription migration operations.
 ```
 USAGE
   $ shopify app subscription-migrations status --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
-    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -3205,6 +3334,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -3256,7 +3389,7 @@ Reverses app subscription migrations that are still scheduled.
 ```
 USAGE
   $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [-i <value>] [-j]
-    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -3290,6 +3423,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -3353,7 +3490,7 @@ List deployed versions of your app.
 ```
 USAGE
   $ shopify app versions list [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -3379,6 +3516,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path to your app directory.
@@ -3772,7 +3913,8 @@ Download a complete document from shopify.dev. Every page on shopify.dev has a M
 ```
 USAGE
   $ shopify doc fetch --url <value> [--json-schema] [--language
-    javascript|typescript|python|ruby|php|rust|curl|liquid|graphql|html] [--no-color] [--output <value>] [--verbose]
+    javascript|typescript|python|ruby|php|rust|curl|liquid|graphql|html] [--no-color] [--no-input] [--output <value>]
+    [--verbose]
 
 FLAGS
   --json-schema
@@ -3789,6 +3931,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output=<value>
       Write the document to this file path instead of printing it to stdout.
@@ -3829,7 +3975,7 @@ Query the shopify.dev vector store and print the most relevant documentation chu
 ```
 USAGE
   $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [--json-schema] [--no-color]
-    [--verbose]
+    [--no-input] [--verbose]
 
 FLAGS
   --api-name=<value>
@@ -3848,6 +3994,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --query=<value>
       (required) The search query.
@@ -5184,7 +5334,7 @@ List Shopify organizations you have access to.
 
 ```
 USAGE
-  $ shopify organization list [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify organization list [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -5202,6 +5352,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -5568,6 +5722,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
@@ -5614,7 +5772,7 @@ Authenticate an app against a store for store commands.
 
 ```
 USAGE
-  $ shopify store auth --scopes <value> -s <value> [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify store auth --scopes <value> -s <value> [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -5632,6 +5790,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --scopes=<value>
       (required) Comma-separated Admin API scopes to request for the app.
@@ -5736,7 +5898,7 @@ List stores authenticated directly with store auth.
 
 ```
 USAGE
-  $ shopify store auth list [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify store auth list [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -5750,6 +5912,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -5871,7 +6037,7 @@ Cancel a bulk operation on a store.
 
 ```
 USAGE
-  $ shopify store bulk cancel --id <value> -s <value> [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify store bulk cancel --id <value> -s <value> [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -5893,6 +6059,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -6061,9 +6231,9 @@ Execute bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--output-file <value>
-    --watch] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version
-    <value>]
+  $ shopify store bulk execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--no-input]
+    [--output-file <value> --watch] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>...]
+    [--verbose] [--version <value>]
 
 FLAGS
   -j, --json
@@ -6093,6 +6263,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output-file=<value>
       The file path where results should be written if --watch is specified. If not specified, results will be written to
@@ -6309,7 +6483,7 @@ Check the status of bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk status -s <value> [--id <value>] [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify store bulk status -s <value> [--id <value>] [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -6332,6 +6506,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -6546,7 +6724,7 @@ Create a new dev store.
 ```
 USAGE
   $ shopify store create dev [--country <value>] [--demo-data] [--feature-preview <value>] [-j] [--json-schema]
-    [--name <value>] [--no-color] [--organization-id <value>] [--plan basic|grow|advanced|plus] [--verbose]
+    [--name <value>] [--no-color] [--no-input] [--organization-id <value>] [--plan basic|grow|advanced|plus] [--verbose]
 
 FLAGS
   -j, --json
@@ -6576,6 +6754,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --organization-id=<value>
       The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive.
@@ -6731,7 +6913,8 @@ Create a preview Shopify store.
 
 ```
 USAGE
-  $ shopify store create preview [--country <value>] [-j] [--json-schema] [--name <value>] [--no-color] [--verbose]
+  $ shopify store create preview [--country <value>] [-j] [--json-schema] [--name <value>] [--no-color] [--no-input]
+    [--verbose]
 
 FLAGS
   -j, --json
@@ -6753,6 +6936,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -6854,7 +7041,8 @@ Delete a dev store.
 
 ```
 USAGE
-  $ shopify store delete -s <value> [-f] [-j] [--json-schema] [--no-color] [--organization-id <value>] [--verbose]
+  $ shopify store delete -s <value> [-f] [-j] [--json-schema] [--no-color] [--no-input] [--organization-id
+    <value>] [--verbose]
 
 FLAGS
   -f, --force
@@ -6876,6 +7064,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --organization-id=<value>
       The numeric organization ID. Auto-selects if you belong to a single organization.
@@ -7006,8 +7198,9 @@ Execute GraphQL queries and mutations on a store.
 
 ```
 USAGE
-  $ shopify store execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--output-file <value>]
-    [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+  $ shopify store execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--no-input]
+    [--output-file <value>] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose]
+    [--version <value>]
 
 FLAGS
   -j, --json
@@ -7037,6 +7230,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output-file=<value>
       The file name where results should be written, instead of STDOUT.
@@ -7103,8 +7300,8 @@ Open a local GraphiQL UI for a store.
 
 ```
 USAGE
-  $ shopify store graphiql -s <value> [--allow-mutations] [--json-schema] [--no-color] [--port <value>] [-v <value>]
-    [--verbose] [--version <value>]
+  $ shopify store graphiql -s <value> [--allow-mutations] [--json-schema] [--no-color] [--no-input] [--port <value>]
+    [-v <value>] [--verbose] [--version <value>]
 
 FLAGS
   -s, --store=<value>
@@ -7126,6 +7323,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --port=<value>
       Local port for the GraphiQL server. Must be between 1 and 65535.
@@ -7162,7 +7363,7 @@ Surface metadata about a Shopify store.
 
 ```
 USAGE
-  $ shopify store info -s <value> [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify store info -s <value> [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -7180,6 +7381,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -7285,7 +7490,7 @@ List stores in a Shopify organization.
 
 ```
 USAGE
-  $ shopify store list [-j] [--json-schema] [--no-color] [--organization-id <value>] [--type
+  $ shopify store list [-j] [--json-schema] [--no-color] [--no-input] [--organization-id <value>] [--type
     dev|production|client-transfer|collaborator] [--verbose]
 
 FLAGS
@@ -7300,6 +7505,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --organization-id=<value>
       The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive when
@@ -7441,7 +7650,7 @@ Open your Shopify store in the default web browser.
 
 ```
 USAGE
-  $ shopify store open -s <value> [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify store open -s <value> [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -7459,6 +7668,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -7509,8 +7722,8 @@ Validate the theme.
 ```
 USAGE
   $ shopify theme check [--auth-alias <value>] [-a] [-C <value>] [-e <value>...] [--fail-level
-    crash|error|suggestion|style|warning|info] [--init] [--json-schema] [--list] [--no-color] [-o text|json] [--path
-    <value>] [--print] [--verbose] [-v]
+    crash|error|suggestion|style|warning|info] [--init] [--json-schema] [--list] [--no-color] [--no-input] [-o
+    text|json] [--path <value>] [--print] [--verbose] [-v]
 
 FLAGS
   -C, --config=<value>
@@ -7561,6 +7774,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path where you want to run the command. Defaults to the current working directory.
@@ -7613,6 +7830,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -7648,8 +7869,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [--json-schema] [--no-color] [--password
-    <value>] [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
+  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [--json-schema] [--no-color]
+    [--no-input] [--password <value>] [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
 
 FLAGS
   -a, --show-all
@@ -7690,6 +7911,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -7722,7 +7947,7 @@ Uploads the current theme as a development theme to the connected store, then pr
 USAGE
   $ shopify theme dev [-a] [--auth-alias <value>] [-e <value>...] [--error-overlay silent|default] [--host
     <value>] [-x <value>...] [--json-schema] [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color]
-    [-n] [--notify <value>] [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>]
+    [--no-input] [-n] [--notify <value>] [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>]
     [--reconciliation-strategy keep-local|keep-remote|abort --theme-editor-sync] [--standard-events-inspector] [-s
     <value>] [--store-password <value>] [-t <value>] [--verbose]
 
@@ -7792,6 +8017,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --notify=<value>
       The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a
@@ -7918,6 +8147,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -7970,8 +8203,8 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [--no-color] [--password
-    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme info [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [--no-color]
+    [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development
@@ -8006,6 +8239,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
@@ -8057,6 +8294,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path where you want to run the command. Defaults to the current working directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -8085,7 +8326,7 @@ Start a Language Server Protocol server.
 
 ```
 USAGE
-  $ shopify theme language-server [--auth-alias <value>] [--json-schema] [--no-color] [--verbose]
+  $ shopify theme language-server [--auth-alias <value>] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   --auth-alias=<value>
@@ -8099,6 +8340,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -8117,8 +8362,8 @@ Lists the themes in your store, along with their IDs and statuses.
 ```
 USAGE
   $ shopify theme list [--auth-alias <value>] [-e <value>...] [--id <value>] [-j] [--json-schema] [--name
-    <value>] [--no-color] [--password <value>] [--path <value>] [--role live|unpublished|development] [-s <value>]
-    [--verbose]
+    <value>] [--no-color] [--no-input] [--password <value>] [--path <value>] [--role live|unpublished|development] [-s
+    <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -8154,6 +8399,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -8181,8 +8430,8 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--json-schema] [--no-color] [--password <value>]
-    [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--json-schema] [--no-color] [--no-input]
+    [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -8205,6 +8454,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
@@ -8233,7 +8486,7 @@ Opens the preview of your remote theme.
 ```
 USAGE
   $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [--json-schema] [-l] [--no-color]
-    [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+    [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -E, --editor
@@ -8273,6 +8526,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -8305,7 +8562,8 @@ Package your theme into a .zip file, ready to upload to the Online Store.
 
 ```
 USAGE
-  $ shopify theme package [--auth-alias <value>] [--json-schema] [--no-color] [--path <value>] [--verbose]
+  $ shopify theme package [--auth-alias <value>] [--json-schema] [--no-color] [--no-input] [--path <value>]
+    [--verbose]
 
 FLAGS
   --auth-alias=<value>
@@ -8319,6 +8577,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --path=<value>
       The path where you want to run the command. Defaults to the current working directory.
@@ -8351,8 +8613,8 @@ Applies JSON overrides to a theme and returns a preview URL.
 ```
 USAGE
   $ shopify theme preview --overrides <value> -t <value> [--auth-alias <value>] [-e <value>...] [--json]
-    [--json-schema] [--no-color] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>]
-    [--verbose]
+    [--json-schema] [--no-color] [--no-input] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s
+    <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -8383,6 +8645,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --open
       Automatically launch the theme preview in your default web browser.
@@ -8456,6 +8722,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -8491,8 +8761,8 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [--json-schema] [--no-color] [--password
-    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [--json-schema] [--no-color] [--no-input]
+    [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -8523,6 +8793,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
@@ -8558,7 +8832,8 @@ Download your remote theme files locally.
 ```
 USAGE
   $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [--json-schema] [-l]
-    [--no-color] [-n] [-o <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+    [--no-color] [--no-input] [-n] [-o <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -d, --development
@@ -8608,6 +8883,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
@@ -8715,6 +8994,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -8775,7 +9058,7 @@ Renames an existing theme.
 ```
 USAGE
   $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [--json-schema] [-l] [-n <value>]
-    [--no-color] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development
@@ -8815,6 +9098,10 @@ FLAGS
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
 
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
       [env: SHOPIFY_CLI_THEME_TOKEN]
@@ -8843,7 +9130,7 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 ```
 USAGE
   $ shopify theme share [--auth-alias <value>] [-e <value>...] [--json-schema] [--listing <value>] [--no-color]
-    [--password <value>] [--path <value>] [-s <value>] [--verbose]
+    [--no-input] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -8870,6 +9157,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --password=<value>
       Password generated from the Theme Access app or an Admin API token.
@@ -8918,7 +9209,7 @@ Shopify CLI version currently installed.
 
 ```
 USAGE
-  $ shopify version [-j] [--json-schema] [--no-color] [--verbose]
+  $ shopify version [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
   -j, --json
@@ -8932,6 +9223,10 @@ FLAGS
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.

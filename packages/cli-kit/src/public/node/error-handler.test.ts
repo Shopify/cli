@@ -43,7 +43,8 @@ vi.mock('./context/local.js')
 vi.mock('../../public/node/crypto.js')
 vi.mock('../../private/node/context/service.js')
 vi.mock('../../private/node/session.js')
-vi.mock('@oclif/core', () => ({
+vi.mock('@oclif/core', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@oclif/core')>()),
   settings: {
     debug: false,
   },
