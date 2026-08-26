@@ -1,11 +1,14 @@
 import {themeComponent, themesComponent, ensureDirectoryConfirmed, ensureLiveThemeConfirmed} from './theme-ui.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
-import {test, describe, expect, vi, beforeEach} from 'vitest'
+import {test, describe, expect, vi, afterEach, beforeEach} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE, LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {setInputDisabled} from '@shopify/cli-kit/node/global-context'
 
 vi.mock('@shopify/cli-kit/node/ui')
+
+afterEach(() => setInputDisabled(false))
 
 describe('themeComponent', () => {
   test('returns the ui for a theme', async () => {
@@ -33,7 +36,11 @@ describe('themesComponent', () => {
 
 describe('ensureDirectoryConfirmed', () => {
   test('should prompt for confirmation when force flag is false', async () => {
-    vi.stubGlobal('process', {...process, stdout: {...process.stdout, isTTY: true}})
+    vi.stubGlobal('process', {
+      ...process,
+      stdin: {...process.stdin, isTTY: true},
+      stdout: {...process.stdout, isTTY: true},
+    })
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     const confirmed = await ensureDirectoryConfirmed(false)
@@ -47,15 +54,29 @@ describe('ensureDirectoryConfirmed', () => {
     expect(confirmed).toBe(true)
   })
 
-  test('should not prompt for confirmation when called in a non-interactive environment', async () => {
-    vi.stubGlobal('process', {...process, stdout: {...process.stdout, isTTY: false}})
+  test('preserves existing behavior when called in a non-interactive environment', async () => {
+    vi.stubGlobal('process', {
+      ...process,
+      stdin: {...process.stdin, isTTY: false},
+      stdout: {...process.stdout, isTTY: true},
+    })
 
     const confirmed = await ensureDirectoryConfirmed(false)
 
     expect(renderWarning).toHaveBeenCalledWith({
       body: "It doesn't seem like you're running this command in a theme directory.",
     })
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     expect(confirmed).toBe(true)
+  })
+
+  test('requires --force when input is explicitly disabled', async () => {
+    setInputDisabled(true)
+
+    await expect(ensureDirectoryConfirmed(false)).rejects.toThrow(
+      'This command must run from a theme directory when user input is unavailable.',
+    )
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
   })
 
   describe('during a multi environment command run', () => {
@@ -76,7 +97,11 @@ describe('ensureLiveThemeConfirmed', () => {
   const liveTheme = buildTheme({id: 123, name: 'My Theme', role: LIVE_THEME_ROLE})!
 
   beforeEach(() => {
-    vi.stubGlobal('process', {...process, stdout: {...process.stdout, isTTY: true}})
+    vi.stubGlobal('process', {
+      ...process,
+      stdin: {...process.stdin, isTTY: true},
+      stdout: {...process.stdout, isTTY: true},
+    })
   })
 
   test('prompts for confirmation if acting on a live theme', async () => {
@@ -108,6 +133,30 @@ describe('ensureLiveThemeConfirmed', () => {
     await ensureLiveThemeConfirmed(liveTheme, 'start development mode', true)
 
     // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+  })
+
+  test('requires --allow-live when input is disabled', async () => {
+    setInputDisabled(true)
+
+    const confirmation = ensureLiveThemeConfirmed(liveTheme, 'start development mode', false)
+
+    await expect(confirmation).rejects.toThrow(
+      "Can't start development mode on the live theme when user input is unavailable.",
+    )
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+  })
+
+  test('preserves existing behavior for a live theme in a non-interactive environment', async () => {
+    vi.stubGlobal('process', {
+      ...process,
+      stdin: {...process.stdin, isTTY: false},
+      stdout: {...process.stdout, isTTY: true},
+    })
+
+    const result = await ensureLiveThemeConfirmed(liveTheme, 'start development mode', false)
+
+    expect(result).toBe(true)
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
   })
 })

@@ -2,6 +2,9 @@ import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {Task, renderConfirmationPrompt, renderError, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {isInputDisabled} from '@shopify/cli-kit/node/global-context'
 import {Writable} from 'stream'
 
 export function themeComponent(theme: Theme) {
@@ -39,9 +42,14 @@ export async function ensureDirectoryConfirmed(
 
   renderWarning({body: message})
 
-  if (!process.stdout.isTTY) {
-    return true
+  if (isInputDisabled()) {
+    throw new AbortError(
+      'This command must run from a theme directory when user input is unavailable.',
+      'Run the command from a theme directory, or use `--force` to continue.',
+    )
   }
+
+  if (!terminalSupportsPrompting()) return true
 
   const confirm = await renderConfirmationPrompt({
     message: 'Do you want to proceed?',
@@ -53,9 +61,18 @@ export async function ensureDirectoryConfirmed(
 }
 
 export async function ensureLiveThemeConfirmed(theme: Theme, action: string, allowLive: boolean) {
-  if (theme.role !== LIVE_THEME_ROLE || !process.stdout.isTTY || allowLive) {
+  if (theme.role !== LIVE_THEME_ROLE || allowLive) {
     return true
   }
+
+  if (isInputDisabled()) {
+    throw new AbortError(
+      `Can't ${action} on the live theme when user input is unavailable.`,
+      'Use `--allow-live` to confirm that you want to continue.',
+    )
+  }
+
+  if (!terminalSupportsPrompting()) return true
 
   const message =
     `You're about to ${action} on your live theme "${theme.name}". ` +

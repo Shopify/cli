@@ -13,8 +13,9 @@ import {err, ok} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import * as output from '../../../public/node/output.js'
+import {setInputDisabled} from '../../../public/node/global-context.js'
 
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
 vi.mock('../../../public/node/context/fqdn.js')
@@ -25,10 +26,13 @@ vi.mock('./exchange.js')
 vi.mock('../../../public/node/system.js')
 
 beforeEach(() => {
+  setInputDisabled(false)
   vi.mocked(isTTY).mockReturnValue(true)
   vi.mocked(isCI).mockReturnValue(false)
   vi.mocked(openURL).mockResolvedValue(true)
 })
+
+afterEach(() => setInputDisabled(false))
 
 describe('requestDeviceAuthorization', () => {
   const data: any = {
@@ -158,6 +162,19 @@ describe('requestDeviceAuthorization', () => {
     // Then
     expect(openURL).toHaveBeenCalledWith(data.verification_uri_complete)
     expect(outputInfo).not.toHaveBeenCalledWith('👉 Press any key to open the login page on your browser')
+  })
+
+  test('does not open the browser when input is disabled', async () => {
+    const response = new Response(JSON.stringify(data))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+    setInputDisabled(true)
+
+    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrow(
+      'Authorization is required to continue, but the current environment does not support interactive prompts.',
+    )
+    expect(openURL).not.toHaveBeenCalled()
   })
 
   test('when the response is not valid JSON, throw an error with context', async () => {

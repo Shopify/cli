@@ -1,15 +1,29 @@
-import {DELIMITER_WARNING as DELIMITER_WARNING_MESSAGE, handleInput} from './repl.js'
+import {DELIMITER_WARNING as DELIMITER_WARNING_MESSAGE, handleInput, replLoop} from './repl.js'
 import {evaluate} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {setInputDisabled} from '@shopify/cli-kit/node/global-context'
 
 import {Interface} from 'readline'
 
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
+  outputInfo: vi.fn(),
+}))
 vi.mock('./evaluator.js')
 vi.mock('./presenter.js')
+
+afterEach(() => setInputDisabled(false))
+
+test('replLoop rejects --no-input instead of waiting for stdin', async () => {
+  setInputDisabled(true)
+
+  await expect(replLoop({} as DevServerSession, '123', '/')).rejects.toThrow(
+    "The theme console requires user input and can't run with `--no-input`.",
+  )
+})
 
 describe('handleInput', () => {
   const themeSesssion: DevServerSession = {

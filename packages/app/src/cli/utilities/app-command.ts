@@ -8,7 +8,7 @@ interface AppCommandOutput {
 }
 
 export default abstract class AppCommand extends BaseCommand {
-  static baseFlags = authAliasFlag
+  static baseFlags = {...BaseCommand.baseFlags, ...authAliasFlag}
 
   environmentsFilename(): string {
     return configurationFileNames.appEnvironments

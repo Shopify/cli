@@ -64,6 +64,13 @@
           "name": "no-color",
           "type": "boolean"
         },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
         "organization-id": {
           "description": "The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>. Required in non-interactive environments unless --client-id is provided.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",

@@ -1,5 +1,6 @@
 export interface GlobalContext {
   currentCommandId: string
+  inputDisabled: boolean
 }
 
 let _globalContext: GlobalContext | undefined
@@ -10,7 +11,7 @@ let _globalContext: GlobalContext | undefined
  * @returns Global context.
  */
 function getGlobalContext(): GlobalContext {
-  _globalContext ??= {currentCommandId: ''}
+  _globalContext ??= {currentCommandId: '', inputDisabled: false}
   return _globalContext
 }
 
@@ -30,4 +31,22 @@ export function getCurrentCommandId(): string {
  */
 export function setCurrentCommandId(commandId: string): void {
   getGlobalContext().currentCommandId = commandId
+}
+
+/**
+ * Returns whether the current command explicitly disabled user input.
+ *
+ * @returns True when `--no-input` is active.
+ */
+export function isInputDisabled(): boolean {
+  return getGlobalContext().inputDisabled
+}
+
+/**
+ * Controls whether the current command may request user input.
+ *
+ * @param disabled - Whether user input is disabled.
+ */
+export function setInputDisabled(disabled: boolean): void {
+  getGlobalContext().inputDisabled = disabled
 }

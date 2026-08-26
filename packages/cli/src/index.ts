@@ -21,6 +21,7 @@ import ClearCache from './cli/commands/cache/clear.js'
 import AutoupgradeOff from './cli/commands/config/autoupgrade/off.js'
 import AutoupgradeOn from './cli/commands/config/autoupgrade/on.js'
 import AutoupgradeStatus from './cli/commands/config/autoupgrade/status.js'
+import {addNoInputFlag} from './no-input.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import StoreCommands from '@shopify/store'
 import ThemeCommands from '@shopify/theme'
@@ -122,6 +123,7 @@ storeCommands.forEach((command) => {
 
 const pluginCommandsCommands = Object.keys(PluginCommandsCommands) as (keyof typeof PluginCommandsCommands)[]
 pluginCommandsCommands.forEach((command) => {
+  addNoInputFlag(PluginCommandsCommands[command])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(PluginCommandsCommands[command] as any).customPluginName = '@oclif/plugin-commands'
 })
@@ -134,6 +136,7 @@ didYouMeanCommands.forEach((command) => {
 
 const pluginPluginsCommands = Object.keys(PluginPluginsCommands) as (keyof typeof PluginPluginsCommands)[]
 pluginPluginsCommands.forEach((command) => {
+  addNoInputFlag(PluginPluginsCommands[command])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(PluginPluginsCommands[command] as any).customPluginName = '@oclif/plugin-plugins'
 })
