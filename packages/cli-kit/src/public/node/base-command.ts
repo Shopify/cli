@@ -7,8 +7,9 @@ import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
-import {setCurrentCommandId} from './global-context.js'
+import {setCurrentCommandId, setInputDisabled} from './global-context.js'
 import {type JsonOutputSchema} from './json-output-schema.js'
+import {noInputFlag} from './no-input.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Config, Errors, Flags} from '@oclif/core'
@@ -34,6 +35,7 @@ interface EnvironmentFlags {
 
 abstract class BaseCommand extends Command {
   static baseFlags: FlagInput<{}> = {
+    ...noInputFlag,
     'json-schema': Flags.boolean({
       description: "Print the command's JSON schemas.",
       env: 'SHOPIFY_FLAG_JSON_SCHEMA',
@@ -82,6 +84,14 @@ abstract class BaseCommand extends Command {
 
   protected async _run<T>(): Promise<T> {
     return runWithCommandEventsForCommand(this.argv, () => super._run<T>())
+  }
+
+  protected async finally(error: Error | undefined): Promise<void> {
+    try {
+      await super.finally(error)
+    } finally {
+      setInputDisabled(false)
+    }
   }
 
   protected async init(): Promise<unknown> {
@@ -134,7 +144,7 @@ abstract class BaseCommand extends Command {
   }
 
   protected async parse<
-    TFlags extends FlagOutput & {path?: string; verbose?: boolean; 'auth-alias'?: string},
+    TFlags extends FlagOutput & {path?: string; verbose?: boolean; 'auth-alias'?: string; 'no-input'?: boolean},
     TGlobalFlags extends FlagOutput,
     TArgs extends ArgOutput,
   >(
@@ -142,6 +152,7 @@ abstract class BaseCommand extends Command {
     argv?: string[],
   ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs> & {argv: string[]}> {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    setInputDisabled(result.flags['no-input'] === true)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await setCurrentSessionAlias(result.flags['auth-alias'])
     await addFromParsedFlags(result.flags)
@@ -365,14 +376,19 @@ export function noDefaultsOptions<TFlags extends FlagOutput, TGlobalFlags extend
   if (!options?.flags) return options
   return {
     ...options,
-    flags: Object.fromEntries(
-      Object.entries(options.flags).map(([label, settings]) => {
-        const copiedSettings = {...(settings as {default?: unknown})}
-        delete copiedSettings.default
-        return [label, copiedSettings]
-      }),
-    ) as FlagInput<TFlags>,
+    flags: flagsWithoutDefaults(options.flags),
+    baseFlags: options.baseFlags ? flagsWithoutDefaults(options.baseFlags) : undefined,
   }
+}
+
+function flagsWithoutDefaults<TFlags extends FlagOutput>(flags: FlagInput<TFlags>): FlagInput<TFlags> {
+  return Object.fromEntries(
+    Object.entries(flags).map(([label, settings]) => {
+      const copiedSettings = {...(settings as {default?: unknown})}
+      delete copiedSettings.default
+      return [label, copiedSettings]
+    }),
+  ) as FlagInput<TFlags>
 }
 
 /**

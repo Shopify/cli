@@ -18,7 +18,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {debounce} from '@shopify/cli-kit/common/function'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
@@ -159,17 +159,19 @@ export async function dev(options: DevOptions) {
     ctx,
   )
 
-  readline.emitKeypressEvents(process.stdin)
-
-  const keypressHandler = createKeypressHandler(urls, ctx, resolveBackgroundJob)
-  process.stdin.on('keypress', keypressHandler)
+  const acceptsInput = terminalSupportsPrompting()
+  if (acceptsInput) {
+    readline.emitKeypressEvents(process.stdin)
+    const keypressHandler = createKeypressHandler(urls, ctx, resolveBackgroundJob)
+    process.stdin.on('keypress', keypressHandler)
+  }
 
   await Promise.all([
     backgroundJobPromise,
     renderDevSetupProgress()
       .then(serverStart)
       .then(() => {
-        if (process.stdin.isTTY) {
+        if (acceptsInput) {
           process.stdin.setRawMode(true)
         }
         renderLinks(urls)
