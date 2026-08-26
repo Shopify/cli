@@ -2,10 +2,19 @@ import {getBundleSize, formatBundleSize} from './bundle-size.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {deflate} from 'node:zlib'
+import {brotliCompress, constants as zlibConstants} from 'node:zlib'
 import {promisify} from 'node:util'
 
-const deflateAsync = promisify(deflate)
+const brotliCompressAsync = promisify(brotliCompress)
+
+async function brotliSize(content: string) {
+  const compressed = await brotliCompressAsync(Buffer.from(content), {
+    params: {
+      [zlibConstants.BROTLI_PARAM_QUALITY]: 11,
+    },
+  })
+  return compressed.byteLength
+}
 
 describe('getBundleSize', () => {
   test('returns raw and compressed sizes', async () => {
@@ -20,12 +29,12 @@ describe('getBundleSize', () => {
 
       // Then
       expect(result.rawBytes).toBe(10000)
-      expect(result.compressedBytes).toBe((await deflateAsync(Buffer.from(content))).byteLength)
+      expect(result.compressedBytes).toBe(await brotliSize(content))
       expect(result.compressedBytes).toBeLessThan(result.rawBytes)
     })
   })
 
-  test('compressed size uses deflate to match the backend (Ruby Zlib::Deflate.deflate)', async () => {
+  test('compressed size uses Brotli to match the backend size gate (Ruby Brotli.deflate)', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = JSON.stringify({key: 'value', nested: {array: [1, 2, 3]}})
@@ -36,8 +45,7 @@ describe('getBundleSize', () => {
       const result = await getBundleSize(filePath)
 
       // Then
-      const expectedCompressed = (await deflateAsync(Buffer.from(content))).byteLength
-      expect(result.compressedBytes).toBe(expectedCompressed)
+      expect(result.compressedBytes).toBe(await brotliSize(content))
     })
   })
 })
@@ -49,7 +57,7 @@ describe('formatBundleSize', () => {
       const content = 'x'.repeat(50000)
       const filePath = joinPath(tmpDir, 'bundle.js')
       await writeFile(filePath, content)
-      const compressedSize = (await deflateAsync(Buffer.from(content))).byteLength
+      const compressedSize = await brotliSize(content)
 
       // When
       const result = await formatBundleSize(filePath)
@@ -67,7 +75,7 @@ describe('formatBundleSize', () => {
       const content = 'a'.repeat(2 * 1024 * 1024)
       const filePath = joinPath(tmpDir, 'bundle.js')
       await writeFile(filePath, content)
-      const compressedSize = (await deflateAsync(Buffer.from(content))).byteLength
+      const compressedSize = await brotliSize(content)
 
       // When
       const result = await formatBundleSize(filePath)

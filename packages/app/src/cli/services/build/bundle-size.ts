@@ -1,18 +1,22 @@
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {deflate} from 'node:zlib'
+import {brotliCompress, constants as zlibConstants} from 'node:zlib'
 import {promisify} from 'node:util'
 
-const deflateAsync = promisify(deflate)
+const brotliCompressAsync = promisify(brotliCompress)
 
 /**
- * Computes the raw and compressed (deflate) size of a file.
- * Uses the same compression algorithm as the Shopify backend (Zlib::Deflate.deflate).
+ * Computes the raw and compressed (Brotli) size of a file.
+ * Uses the same compression algorithm as the Shopify backend (Ruby Brotli.deflate).
  */
 export async function getBundleSize(filePath: string) {
   const content = await readFile(filePath)
   const rawBytes = Buffer.byteLength(content)
-  const compressed = await deflateAsync(Buffer.from(content))
+  const compressed = await brotliCompressAsync(Buffer.from(content), {
+    params: {
+      [zlibConstants.BROTLI_PARAM_QUALITY]: 11,
+    },
+  })
   const compressedBytes = compressed.byteLength
 
   return {path: filePath, rawBytes, compressedBytes}
