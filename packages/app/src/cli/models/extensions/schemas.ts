@@ -1,5 +1,4 @@
 import {zod} from '@shopify/cli-kit/node/schema'
-import type {ExtensionPointCapabilities, ExtensionPointIntercept} from '@shopify/ui-extensions-server-kit'
 
 export const MAX_EXTENSION_HANDLE_LENGTH = 50
 export const MAX_UID_LENGTH = 250
@@ -43,12 +42,12 @@ const TargetInterceptSchema = zod.object({
   event: zod.string(),
   blocking: zod.boolean(),
   applies_to: zod.array(zod.string()).optional(),
-}) satisfies zod.ZodType<ExtensionPointIntercept>
+})
 
 const TargetCapabilitiesSchema = zod.object({
   allow_direct_linking: zod.boolean().optional(),
   intercepts: zod.array(TargetInterceptSchema).optional(),
-}) satisfies zod.ZodType<ExtensionPointCapabilities>
+})
 
 const ShouldRenderSchema = zod.object({
   module: zod.string(),

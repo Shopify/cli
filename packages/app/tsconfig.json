@@ -8,10 +8,5 @@
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
-  "references": [
-    {"path": "../cli-kit"},
-    {"path": "../organizations"},
-    {"path": "../theme"},
-    {"path": "../ui-extensions-server-kit"}
-  ]
+  "references": [{"path": "../cli-kit"}, {"path": "../organizations"}, {"path": "../theme"}]
 }
