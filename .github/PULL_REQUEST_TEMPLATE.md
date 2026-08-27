@@ -21,10 +21,11 @@ Fixes #0000 <!-- link to issue if one exists -->
   Before / after screenshots appreciated for UI changes.
 -->
 
-### How to test your changes?
+### How to manually test your changes?
 
 <!--
   Please, provide steps for the reviewer to test your changes locally.
+  Do not include here commands to run tests or other checks, automated CI will run them.
   You can post a comment with `/snapit` to generate a snapshot of the changes to be tested.
 -->
 
