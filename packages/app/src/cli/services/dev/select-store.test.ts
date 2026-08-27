@@ -286,6 +286,31 @@ describe('selectStore', async () => {
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'Development store "store1" created successfully.'})
   })
 
+  test('reports how to select a created store after provisioning retries are exhausted', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+    vi.mocked(devStoreCapReached).mockResolvedValue(false)
+    vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
+    vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
+    vi.mocked(fetchStore).mockRejectedValue(new StoreNotFoundError('Store is still being provisioned'))
+    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task({}, task)
+      }
+      return {}
+    })
+    vi.mocked(selectStorePrompt).mockImplementation(async ({onCreateStoreWhenEmpty}) => onCreateStoreWhenEmpty!())
+
+    await expect(
+      selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
+    ).rejects.toMatchObject({
+      message: 'The newly created development store (created-store.myshopify.com) is not available yet.',
+      tryMessage: 'Run `shopify app dev --store <store-domain>` to select it when it is ready.',
+    })
+    expect(fetchStore).toHaveBeenCalledTimes(10)
+  })
+
   test('stops provisioning retries when fetching the created store fails for a reason other than a missing store', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
     vi.mocked(devStoreCapReached).mockResolvedValue(false)

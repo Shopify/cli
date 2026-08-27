@@ -113,7 +113,7 @@ async function waitForCreatedStoreByDomain(
   if (!store) {
     throw new AbortError(
       `The newly created development store (${shopDomain}) is not available yet.`,
-      'Run `app dev --store <store-domain>` to select it when it is ready.',
+      'Run `shopify app dev --store <store-domain>` to select it when it is ready.',
     )
   }
 
