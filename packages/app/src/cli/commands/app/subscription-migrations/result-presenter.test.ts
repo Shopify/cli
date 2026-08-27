@@ -62,13 +62,13 @@ describe('migration submission result presenter', () => {
     expect(renderWarning).not.toHaveBeenCalled()
   })
 
-  test('outputs exactly one failed JSON document without invoking a fatal renderer', () => {
+  test('outputs exactly one operation failure JSON document without invoking a fatal renderer', () => {
     const value = submission()
+    value.operations[0]!.operation = operation('operation-one', 'FAILED')
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: value,
-      failedBatchIndex: 1,
-      userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      failure: {type: 'operations', operationIds: ['operation-one']},
     }
 
     const exitCode = presentMigrationSubmissionResult(result, {json: true, watch: true})
@@ -78,10 +78,7 @@ describe('migration submission result presenter', () => {
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
       schemaVersion: 1,
       ...value,
-      failure: {
-        batchIndex: 1,
-        userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
-      },
+      failure: {type: 'operations', operationIds: ['operation-one']},
     })
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
@@ -123,6 +120,37 @@ describe('migration submission result presenter', () => {
     expect(JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])).toContain('Root idempotency key: root-key')
   })
 
+  test('renders one warning containing failed IDs and terminal operation evidence', () => {
+    const value = submission()
+    value.operations.push({
+      batchIndex: 1,
+      batchPayloadDigest: 'batch-digest-two',
+      idempotencyKey: 'batch-key-two',
+      operation: operation('operation-two', 'COMPLETED'),
+    })
+    value.operations[0]!.operation = operation('operation-one', 'FAILED')
+    const result: MigrationSubmissionResult = {
+      status: 'failed',
+      submission: value,
+      failure: {type: 'operations', operationIds: ['operation-one']},
+    }
+
+    const exitCode = presentMigrationSubmissionResult(result, {json: false, watch: true})
+
+    expect(exitCode).toBe(1)
+    expect(renderWarning).toHaveBeenCalledOnce()
+    const rendered = JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])
+    expect(rendered).toContain('Root idempotency key: root-key')
+    expect(rendered).toContain('Failed operation IDs')
+    expect(rendered).toContain('operation-one')
+    expect(rendered).toContain('FAILED')
+    expect(rendered).toContain('operation-two')
+    expect(rendered).toContain('COMPLETED')
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(renderInfo).not.toHaveBeenCalled()
+    expect(outputResult).not.toHaveBeenCalled()
+  })
+
   test('renders one warning containing accepted IDs and every submission error', () => {
     const value = submission()
     value.operations.push({
@@ -134,11 +162,14 @@ describe('migration submission result presenter', () => {
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: value,
-      failedBatchIndex: 2,
-      userErrors: [
-        {message: 'Rejected remaining shops', field: ['input']},
-        {message: 'Invalid plan', field: null},
-      ],
+      failure: {
+        type: 'submission',
+        batchIndex: 2,
+        userErrors: [
+          {message: 'Rejected remaining shops', field: ['input']},
+          {message: 'Invalid plan', field: null},
+        ],
+      },
     }
 
     const exitCode = presentMigrationSubmissionResult(result, {json: false, watch: false})

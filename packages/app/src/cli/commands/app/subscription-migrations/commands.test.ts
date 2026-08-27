@@ -169,17 +169,22 @@ describe('subscription migration submission commands', () => {
     expect(renderSuccess).toHaveBeenCalledOnce()
   })
 
-  test('renders an expected JSON submission failure once and sets exit 1 without throwing', async () => {
+  test('renders an expected JSON operation failure once and sets exit 1 without throwing', async () => {
     const failedResult: MigrationSubmissionResult = {
       status: 'failed',
-      submission: successfulSubmissionResult.submission,
-      failedBatchIndex: 1,
-      userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      submission: {
+        ...successfulSubmissionResult.submission,
+        operations: successfulSubmissionResult.submission.operations.map((submittedOperation) => ({
+          ...submittedOperation,
+          operation: {...submittedOperation.operation, status: 'FAILED'},
+        })),
+      },
+      failure: {type: 'operations', operationIds: [completedOperation.id]},
     }
     vi.mocked(runSubmissionCommand).mockResolvedValue(failedResult)
 
     await expect(
-      Schedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force', '--json']),
+      Schedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force', '--json', '--watch']),
     ).resolves.toBeUndefined()
 
     expect(process.exitCode).toBe(1)
@@ -187,7 +192,7 @@ describe('subscription migration submission commands', () => {
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
       schemaVersion: 1,
       ...failedResult.submission,
-      failure: {batchIndex: 1, userErrors: failedResult.userErrors},
+      failure: failedResult.failure,
     })
     expect(renderWarning).not.toHaveBeenCalled()
   })
@@ -196,8 +201,11 @@ describe('subscription migration submission commands', () => {
     vi.mocked(runSubmissionCommand).mockResolvedValue({
       status: 'failed',
       submission: successfulSubmissionResult.submission,
-      failedBatchIndex: 1,
-      userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      failure: {
+        type: 'submission',
+        batchIndex: 1,
+        userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      },
     })
 
     await expect(

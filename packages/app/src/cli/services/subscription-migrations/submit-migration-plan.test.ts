@@ -165,8 +165,11 @@ describe('submitMigrationPlan', () => {
 
     expect(result).toMatchObject({
       status: 'failed',
-      failedBatchIndex: 1,
-      userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      failure: {
+        type: 'submission',
+        batchIndex: 1,
+        userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      },
       submission: {
         rootIdempotencyKey: 'root-key',
         operations: [
@@ -192,8 +195,11 @@ describe('submitMigrationPlan', () => {
 
     expect(result).toMatchObject({
       status: 'failed',
-      failedBatchIndex: 0,
-      userErrors: [{message: 'Invalid migration', field: ['migrations']}],
+      failure: {
+        type: 'submission',
+        batchIndex: 0,
+        userErrors: [{message: 'Invalid migration', field: ['migrations']}],
+      },
       submission: {rootIdempotencyKey: 'root-key', operations: []},
     })
   })

@@ -8,7 +8,7 @@ export function encodeMigrationSubmissionResult(result: MigrationSubmissionResul
       : {
           schemaVersion: 1,
           ...result.submission,
-          failure: {batchIndex: result.failedBatchIndex, userErrors: result.userErrors},
+          failure: result.failure,
         }
   return JSON.stringify(document, null, 2)
 }

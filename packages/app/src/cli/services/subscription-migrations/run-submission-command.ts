@@ -44,10 +44,14 @@ export async function runSubmissionCommand(options: RunSubmissionCommandOptions)
     operationIds: submissionResult.submission.operations.map(({operation}) => operation.id),
   })
 
-  return {
-    status: 'success',
-    submission: updateSubmissionOperations(submissionResult.submission, terminalOperations),
-  }
+  const submission = updateSubmissionOperations(submissionResult.submission, terminalOperations)
+  const failedOperationIds = submission.operations
+    .filter(({operation}) => operation.status === 'FAILED')
+    .map(({operation}) => operation.id)
+
+  return failedOperationIds.length === 0
+    ? {status: 'success', submission}
+    : {status: 'failed', submission, failure: {type: 'operations', operationIds: failedOperationIds}}
 }
 
 function updateSubmissionOperations(

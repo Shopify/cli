@@ -135,8 +135,11 @@ describe('runSubmissionCommand', () => {
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: submitted,
-      failedBatchIndex: 2,
-      userErrors: [{message: 'Rejected', field: ['input']}],
+      failure: {
+        type: 'submission',
+        batchIndex: 2,
+        userErrors: [{message: 'Rejected', field: ['input']}],
+      },
     }
     const onSubmissionAccepted = vi.fn()
     vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
@@ -153,7 +156,7 @@ describe('runSubmissionCommand', () => {
     async (action) => {
       const submitted = {...submission(), action}
       const acceptedResult: MigrationSubmissionResult = {status: 'success', submission: submitted}
-      const terminalOperations = [operation('one', 'FAILED'), operation('two', 'COMPLETED')]
+      const terminalOperations = [operation('one', 'COMPLETED'), operation('two', 'COMPLETED')]
       const onSubmissionAccepted = vi.fn()
       vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan: {...plan, action}})
       vi.mocked(submitMigrationPlan).mockResolvedValue(acceptedResult)
@@ -180,22 +183,66 @@ describe('runSubmissionCommand', () => {
     },
   )
 
-  test('merges watched terminal operations by ID rather than response order', async () => {
+  test('returns a typed operation failure with mixed terminal statuses', async () => {
     const acceptedResult = successfulResult()
-    const completedTwo = operation('two', 'COMPLETED')
     const failedOne = operation('one', 'FAILED')
+    const completedTwo = operation('two', 'COMPLETED')
     vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
     vi.mocked(submitMigrationPlan).mockResolvedValue(acceptedResult)
-    vi.mocked(watchMigrationOperations).mockResolvedValue([completedTwo, failedOne])
+    vi.mocked(watchMigrationOperations).mockResolvedValue([failedOne, completedTwo])
 
     const result = await runSubmissionCommand({...baseOptions, watch: true})
 
     expect(result).toEqual({
-      status: 'success',
+      status: 'failed',
       submission: {
         ...acceptedResult.submission,
         operations: [
           {...acceptedResult.submission.operations[0], operation: failedOne},
+          {...acceptedResult.submission.operations[1], operation: completedTwo},
+        ],
+      },
+      failure: {type: 'operations', operationIds: ['one']},
+    })
+  })
+
+  test('reports multiple failed operations in submission input order', async () => {
+    const acceptedResult = successfulResult()
+    const failedOne = operation('one', 'FAILED')
+    const failedTwo = operation('two', 'FAILED')
+    vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
+    vi.mocked(submitMigrationPlan).mockResolvedValue(acceptedResult)
+    vi.mocked(watchMigrationOperations).mockResolvedValue([failedTwo, failedOne])
+
+    const result = await runSubmissionCommand({...baseOptions, watch: true})
+
+    expect(result).toEqual({
+      status: 'failed',
+      submission: {
+        ...acceptedResult.submission,
+        operations: [
+          {...acceptedResult.submission.operations[0], operation: failedOne},
+          {...acceptedResult.submission.operations[1], operation: failedTwo},
+        ],
+      },
+      failure: {type: 'operations', operationIds: ['one', 'two']},
+    })
+  })
+
+  test('does not treat a canceled terminal operation as failed', async () => {
+    const acceptedResult = successfulResult()
+    const canceledOne = operation('one', 'CANCELED')
+    const completedTwo = operation('two', 'COMPLETED')
+    vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
+    vi.mocked(submitMigrationPlan).mockResolvedValue(acceptedResult)
+    vi.mocked(watchMigrationOperations).mockResolvedValue([canceledOne, completedTwo])
+
+    await expect(runSubmissionCommand({...baseOptions, watch: true})).resolves.toEqual({
+      status: 'success',
+      submission: {
+        ...acceptedResult.submission,
+        operations: [
+          {...acceptedResult.submission.operations[0], operation: canceledOne},
           {...acceptedResult.submission.operations[1], operation: completedTwo},
         ],
       },

@@ -82,15 +82,30 @@ function renderSubmissionSuccess(submission: MigrationSubmission): void {
 }
 
 function renderSubmissionFailure(result: Extract<MigrationSubmissionResult, {status: 'failed'}>): void {
+  if (result.failure.type === 'operations') {
+    renderWarning({
+      headline: 'Some subscription migration operations failed.',
+      body: [
+        `Root idempotency key: ${result.submission.rootIdempotencyKey}`,
+        'Failed operation IDs:',
+        ...result.failure.operationIds,
+        'Terminal operation outcomes:',
+        ...result.submission.operations.map(({operation}) => formatMigrationOperationStatus(operation)),
+        'Save the root idempotency key and every operation ID. You will need them to inspect or retry this submission.',
+      ],
+    })
+    return
+  }
+
   const operationIds = result.submission.operations.map(({operation}) => operation.id)
   renderWarning({
     headline: 'Some subscription migration operations were accepted before submission failed.',
     body: [
       `Root idempotency key: ${result.submission.rootIdempotencyKey}`,
       ...(operationIds.length === 0 ? ['Accepted operation IDs: None.'] : ['Accepted operation IDs:', ...operationIds]),
-      `Batch index: ${result.failedBatchIndex}`,
+      `Batch index: ${result.failure.batchIndex}`,
       'Errors:',
-      ...result.userErrors.map(({message}) => message),
+      ...result.failure.userErrors.map(({message}) => message),
       'Save the root idempotency key and every accepted operation ID. You will need them to check or cancel accepted operations.',
     ],
   })

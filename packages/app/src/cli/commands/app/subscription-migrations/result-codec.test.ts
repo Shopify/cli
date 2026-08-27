@@ -45,8 +45,11 @@ describe('subscription migration result codecs', () => {
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: value,
-      failedBatchIndex: 1,
-      userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      failure: {
+        type: 'submission',
+        batchIndex: 1,
+        userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+      },
     }
 
     const document = encodeMigrationSubmissionResult(result)
@@ -55,10 +58,40 @@ describe('subscription migration result codecs', () => {
       schemaVersion: 1,
       ...value,
       failure: {
+        type: 'submission',
         batchIndex: 1,
         userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
       },
     })
+  })
+
+  test('encodes terminal operation failure evidence in one JSON document', () => {
+    const value = submission()
+    value.operations[0]!.operation = {...value.operations[0]!.operation, status: 'FAILED'}
+    const result: MigrationSubmissionResult = {
+      status: 'failed',
+      submission: value,
+      failure: {type: 'operations', operationIds: ['operation-one']},
+    }
+
+    const document = encodeMigrationSubmissionResult(result)
+
+    expect(JSON.parse(document)).toEqual({
+      schemaVersion: 1,
+      ...value,
+      failure: {type: 'operations', operationIds: ['operation-one']},
+    })
+    expect(document).toBe(
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          ...value,
+          failure: {type: 'operations', operationIds: ['operation-one']},
+        },
+        null,
+        2,
+      ),
+    )
   })
 
   test('encodes every cancellation outcome in one JSON document', () => {

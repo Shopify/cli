@@ -23,14 +23,13 @@ export interface MigrationSubmission {
   operations: SubmittedMigrationOperation[]
 }
 
+export type MigrationSubmissionFailure =
+  | {type: 'submission'; batchIndex: number; userErrors: MigrationUserError[]}
+  | {type: 'operations'; operationIds: string[]}
+
 export type MigrationSubmissionResult =
   | {status: 'success'; submission: MigrationSubmission}
-  | {
-      status: 'failed'
-      submission: MigrationSubmission
-      failedBatchIndex: number
-      userErrors: MigrationUserError[]
-    }
+  | {status: 'failed'; submission: MigrationSubmission; failure: MigrationSubmissionFailure}
 
 export class MigrationSubmissionProtocolError extends Error {
   readonly batchIndex: number
@@ -92,8 +91,7 @@ export async function submitMigrationPlan({
       return {
         status: 'failed',
         submission,
-        failedBatchIndex: batch.index,
-        userErrors: payload.userErrors,
+        failure: {type: 'submission', batchIndex: batch.index, userErrors: payload.userErrors},
       }
     }
 
