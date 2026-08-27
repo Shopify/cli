@@ -1820,7 +1820,7 @@ Cancels app subscription migration operations.
 ```
 USAGE
   $ shopify app subscription-migrations cancel --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
-    [--no-color] [--path <value>] [--verbose]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1851,6 +1851,10 @@ FLAGS
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
 
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
@@ -1866,9 +1870,9 @@ DESCRIPTION
   Repeat `--id` to cancel every operation GID returned by a multi-batch submission. Use `--json` to output the resulting
   operation states and per-shop results as structured JSON.
 
-  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
-  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
-  selects the app and does not change Partners authentication.
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
 
 EXAMPLES
   $ shopify app subscription-migrations cancel --id <operation-id>
@@ -1885,7 +1889,7 @@ Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing
 ```
 USAGE
   $ shopify app subscription-migrations schedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [--idempotency-key
-    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose] [--watch]
+    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -1923,6 +1927,10 @@ FLAGS
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -1953,9 +1961,9 @@ DESCRIPTION
   batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the
   same root idempotency key with the same client ID, action, and input replays the same submission.
 
-  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
-  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
-  selects the app and does not change Partners authentication.
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
 
   Use `--force` to skip confirmation and immediately submit every valid row. With `--watch`, human-readable output shows
   accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json
@@ -1980,7 +1988,7 @@ Checks the status of app subscription migration operations.
 ```
 USAGE
   $ shopify app subscription-migrations status --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
-    [--no-color] [--path <value>] [--verbose] [--watch]
+    [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -2011,6 +2019,10 @@ FLAGS
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
 
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
@@ -2034,9 +2046,9 @@ DESCRIPTION
 
   Use `--json` to output every operation and its per-shop results as structured JSON.
 
-  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
-  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
-  selects the app and does not change Partners authentication.
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
 
 EXAMPLES
   $ shopify app subscription-migrations status --id <operation-id>
@@ -2053,7 +2065,7 @@ Reverses app subscription migrations that are still scheduled.
 ```
 USAGE
   $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [--idempotency-key
-    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose] [--watch]
+    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -2091,6 +2103,10 @@ FLAGS
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -2124,9 +2140,9 @@ DESCRIPTION
   operation progress and the final outcome. With `--json --watch`, the command outputs one structured JSON document
   after every operation reaches a terminal status.
 
-  By default, the command uses the Client ID from the active app configuration. Use `--path` to select an app directory
-  or `--config` to select a configuration. Pass `--client-id` to explicitly override the active configuration; this only
-  selects the app and does not change Partners authentication.
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
 
 EXAMPLES
   $ shopify app subscription-migrations unschedule --input migrations.csv --force

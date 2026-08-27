@@ -1,10 +1,10 @@
 import {submissionFlags} from './flags.js'
 import {presentAcceptedMigrationSubmission, presentMigrationSubmissionResult} from './result-presenter.js'
-import {resolveSubscriptionMigrationClientId} from '../../../services/subscription-migrations/resolve-client-id.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
-import BaseCommand from '@shopify/cli-kit/node/base-command'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 
-export default class Schedule extends BaseCommand {
+export default class Schedule extends AppLinkedCommand {
   static summary = 'Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.'
 
   static descriptionWithMarkdown = `Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.
@@ -20,7 +20,7 @@ When \`--input\` is omitted, the command reads CSV data from stdin. Use \`--inpu
 
 Validation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same submission.
 
-By default, the command uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.
+Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to select a different app within the project. Use \`--reset\` to relink the app.
 
 Use \`--force\` to skip confirmation and immediately submit every valid row. With \`--watch\`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With \`--json --watch\`, the command outputs one structured JSON document after every operation reaches a terminal status.`
 
@@ -36,19 +36,20 @@ Use \`--force\` to skip confirmation and immediately submit every valid row. Wit
 
   static flags = {...submissionFlags}
 
-  async run(): Promise<void> {
+  async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Schedule)
 
-    const clientId = await resolveSubscriptionMigrationClientId({
-      clientId: flags['client-id'],
+    const {app, remoteApp} = await linkedAppContext({
       directory: flags.path,
-      configName: flags.config,
+      clientId: flags['client-id'],
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
     })
 
     const result = await runSubmissionCommand({
       action: 'schedule',
       input: flags.input ?? '-',
-      clientId,
+      clientId: remoteApp.apiKey,
       rootIdempotencyKey: flags['idempotency-key'],
       skipConfirmation: flags.force,
       watch: flags.watch,
@@ -56,5 +57,6 @@ Use \`--force\` to skip confirmation and immediately submit every valid row. Wit
     })
     const exitCode = presentMigrationSubmissionResult(result, {json: flags.json, watch: flags.watch})
     if (exitCode !== 0) process.exitCode = exitCode
+    return {app}
   }
 }

@@ -1,14 +1,11 @@
 import {appFlags} from '../../../flags.js'
 import {Flags} from '@oclif/core'
-import {authAliasFlag, globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 const sharedFlags = {
   ...globalFlags,
+  ...appFlags,
   ...jsonFlag,
-  ...authAliasFlag,
-  path: appFlags.path,
-  config: appFlags.config,
-  'client-id': appFlags['client-id'],
 }
 
 const watchFlag = {

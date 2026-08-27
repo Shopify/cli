@@ -1,11 +1,11 @@
 import {statusFlags} from './flags.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
-import {resolveSubscriptionMigrationClientId} from '../../../services/subscription-migrations/resolve-client-id.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
-import BaseCommand from '@shopify/cli-kit/node/base-command'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 
-export default class Status extends BaseCommand {
+export default class Status extends AppLinkedCommand {
   static summary = 'Checks the status of app subscription migration operations.'
 
   static descriptionWithMarkdown = `Checks app subscription migration operation status.
@@ -16,7 +16,7 @@ Repeat \`--id\` for every operation GID returned by a multi-batch submission. Wi
 
 Use \`--json\` to output every operation and its per-shop results as structured JSON.
 
-By default, the command uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to explicitly override the active configuration; this only selects the app and does not change Partners authentication.`
+Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to select a different app within the project. Use \`--reset\` to relink the app.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -28,16 +28,18 @@ By default, the command uses the Client ID from the active app configuration. Us
 
   static flags = {...statusFlags}
 
-  async run(): Promise<void> {
+  async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Status)
-    const clientId = await resolveSubscriptionMigrationClientId({
-      clientId: flags['client-id'],
+    const {app, remoteApp} = await linkedAppContext({
       directory: flags.path,
-      configName: flags.config,
+      clientId: flags['client-id'],
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
     })
     const operations = flags.watch
-      ? await watchMigrationOperations({clientId, operationIds: flags.id})
-      : await getMigrationOperations({clientId, operationIds: flags.id})
+      ? await watchMigrationOperations({clientId: remoteApp.apiKey, operationIds: flags.id})
+      : await getMigrationOperations({clientId: remoteApp.apiKey, operationIds: flags.id})
     outputOperations(operations, flags.json)
+    return {app}
   }
 }

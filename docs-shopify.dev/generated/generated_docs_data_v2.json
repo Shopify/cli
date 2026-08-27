@@ -2863,6 +2863,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-cancel.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--reset",
+          "value": "''",
+          "description": "Reset all your settings.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_RESET"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-cancel.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--verbose",
           "value": "''",
           "description": "Increase the verbosity of the output. May include sensitive data.",
@@ -2888,7 +2897,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appsubscriptionmigrationscancel {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The app subscription migration operation ID. Can be specified multiple times.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appsubscriptionmigrationscancel {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The app subscription migration operation ID. Can be specified multiple times.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appsubscriptionmigrationsschedule": {
@@ -2946,6 +2955,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-schedule.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--reset",
+          "value": "''",
+          "description": "Reset all your settings.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_RESET"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-schedule.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--verbose",
           "value": "''",
           "description": "Increase the verbosity of the output. May include sensitive data.",
@@ -2998,7 +3016,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appsubscriptionmigrationsschedule {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Skip confirmation. Required if non interactive.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Reuse an existing root idempotency key for the same action and input.\n   * @environment SHOPIFY_FLAG_IDEMPOTENCY_KEY\n   */\n  '--idempotency-key <value>'?: string\n\n  /**\n   * Path to the migration CSV. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Display the current operation state while polling, then output the final outcome when every operation reaches a terminal status.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
+      "value": "export interface appsubscriptionmigrationsschedule {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Skip confirmation. Required if non interactive.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Reuse an existing root idempotency key for the same action and input.\n   * @environment SHOPIFY_FLAG_IDEMPOTENCY_KEY\n   */\n  '--idempotency-key <value>'?: string\n\n  /**\n   * Path to the migration CSV. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Display the current operation state while polling, then output the final outcome when every operation reaches a terminal status.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
     }
   },
   "appsubscriptionmigrationsstatus": {
@@ -3055,6 +3073,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-status.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--reset",
+          "value": "''",
+          "description": "Reset all your settings.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_RESET"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-status.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--verbose",
           "value": "''",
           "description": "Increase the verbosity of the output. May include sensitive data.",
@@ -3089,7 +3116,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appsubscriptionmigrationsstatus {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The app subscription migration operation ID. Can be specified multiple times.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Display the current operation state while polling, then output the final state when every operation reaches a terminal status.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
+      "value": "export interface appsubscriptionmigrationsstatus {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The app subscription migration operation ID. Can be specified multiple times.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Display the current operation state while polling, then output the final state when every operation reaches a terminal status.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
     }
   },
   "appsubscriptionmigrationsunschedule": {
@@ -3147,6 +3174,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-unschedule.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--reset",
+          "value": "''",
+          "description": "Reset all your settings.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_RESET"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-unschedule.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--verbose",
           "value": "''",
           "description": "Increase the verbosity of the output. May include sensitive data.",
@@ -3199,7 +3235,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appsubscriptionmigrationsunschedule {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Skip confirmation. Required if non interactive.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Reuse an existing root idempotency key for the same action and input.\n   * @environment SHOPIFY_FLAG_IDEMPOTENCY_KEY\n   */\n  '--idempotency-key <value>'?: string\n\n  /**\n   * Path to the migration CSV. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Display the current operation state while polling, then output the final outcome when every operation reaches a terminal status.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
+      "value": "export interface appsubscriptionmigrationsunschedule {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Skip confirmation. Required if non interactive.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Reuse an existing root idempotency key for the same action and input.\n   * @environment SHOPIFY_FLAG_IDEMPOTENCY_KEY\n   */\n  '--idempotency-key <value>'?: string\n\n  /**\n   * Path to the migration CSV. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Display the current operation state while polling, then output the final outcome when every operation reaches a terminal status.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
     }
   },
   "appversionslist": {

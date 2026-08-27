@@ -4,14 +4,15 @@ import Status from './status.js'
 import Unschedule from './unschedule.js'
 import {appFlags} from '../../../flags.js'
 import {commands} from '../../../index.js'
+import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
-import {resolveSubscriptionMigrationClientId} from '../../../services/subscription-migrations/resolve-client-id.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
+import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import {jsonFlag} from '@shopify/cli-kit/node/cli'
-import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -19,10 +20,10 @@ import type {MigrationOperation} from '../../../models/subscription-migrations.j
 import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
+vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/subscription-migrations/cancel-operations.js')
 vi.mock('../../../services/subscription-migrations/command-output.js')
 vi.mock('../../../services/subscription-migrations/get-operations.js')
-vi.mock('../../../services/subscription-migrations/resolve-client-id.js')
 vi.mock('../../../services/subscription-migrations/run-submission-command.js')
 vi.mock('../../../services/subscription-migrations/watch-operations.js')
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
@@ -33,11 +34,12 @@ vi.mock('@shopify/cli-kit/node/ui')
 
 const originalExitCode = process.exitCode
 
+const app = testAppLinked()
+const remoteApp = testOrganizationApp({apiKey: 'remote-client-id'})
+
 beforeEach(() => {
   process.exitCode = undefined
-  vi.mocked(resolveSubscriptionMigrationClientId).mockImplementation(
-    async ({clientId}) => clientId ?? 'active-client-id',
-  )
+  vi.mocked(linkedAppContext).mockResolvedValue({app, remoteApp} as Awaited<ReturnType<typeof linkedAppContext>>)
   vi.mocked(runSubmissionCommand).mockResolvedValue(successfulSubmissionResult)
   vi.mocked(cancelMigrationOperations).mockResolvedValue(successfulCancellationResult)
 })
@@ -84,7 +86,7 @@ const successfulCancellationResult: MigrationCancellationResult = {
 
 describe('subscription migration submission commands', () => {
   test('schedule delegates every submission option with an explicit root idempotency key', async () => {
-    await Schedule.run([
+    const result = await Schedule.run([
       '--input',
       'migrations.csv',
       '--client-id',
@@ -96,15 +98,16 @@ describe('subscription migration submission commands', () => {
       '--watch',
     ])
 
-    expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
-      clientId: 'schedule-client-id',
+    expect(linkedAppContext).toHaveBeenCalledWith({
       directory: expect.any(String),
-      configName: undefined,
+      clientId: 'schedule-client-id',
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
     expect(runSubmissionCommand).toHaveBeenCalledWith({
       action: 'schedule',
       input: 'migrations.csv',
-      clientId: 'schedule-client-id',
+      clientId: 'remote-client-id',
       rootIdempotencyKey: 'root-key',
       skipConfirmation: true,
       watch: true,
@@ -114,37 +117,41 @@ describe('subscription migration submission commands', () => {
       schemaVersion: 1,
       ...successfulSubmissionResult.submission,
     })
+    expect(result).toEqual({app})
   })
 
   test('schedule resolves the active configuration Client ID selected by path and config', async () => {
     await Schedule.run(['--input', 'migrations.csv', '--path', '/selected/app', '--config', 'staging', '--force'])
 
-    expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
-      clientId: undefined,
+    expect(linkedAppContext).toHaveBeenCalledWith({
       directory: '/selected/app',
-      configName: 'staging',
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: 'staging',
     })
     expect(runSubmissionCommand).toHaveBeenCalledWith(
-      expect.objectContaining({action: 'schedule', clientId: 'active-client-id'}),
+      expect.objectContaining({action: 'schedule', clientId: 'remote-client-id'}),
     )
   })
 
   test('unschedule delegates without an omitted root idempotency key', async () => {
-    await Unschedule.run(['--input', '-', '--client-id', 'unschedule-client-id', '--force'])
+    const result = await Unschedule.run(['--input', '-', '--client-id', 'unschedule-client-id', '--force'])
 
-    expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
-      clientId: 'unschedule-client-id',
+    expect(linkedAppContext).toHaveBeenCalledWith({
       directory: expect.any(String),
-      configName: undefined,
+      clientId: 'unschedule-client-id',
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
     expect(runSubmissionCommand).toHaveBeenCalledWith({
       action: 'unschedule',
       input: '-',
-      clientId: 'unschedule-client-id',
+      clientId: 'remote-client-id',
       rootIdempotencyKey: undefined,
       skipConfirmation: true,
       watch: false,
     })
+    expect(result).toEqual({app})
   })
 
   test.each([
@@ -154,7 +161,7 @@ describe('subscription migration submission commands', () => {
     await Command.run(['--client-id', 'client-id', '--force'])
 
     expect(runSubmissionCommand).toHaveBeenCalledWith(
-      expect.objectContaining({action, input: '-', clientId: 'client-id'}),
+      expect.objectContaining({action, input: '-', clientId: 'remote-client-id'}),
     )
   })
 
@@ -185,7 +192,7 @@ describe('subscription migration submission commands', () => {
 
     await expect(
       Schedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force', '--json', '--watch']),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({app})
 
     expect(process.exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
@@ -208,9 +215,9 @@ describe('subscription migration submission commands', () => {
       },
     })
 
-    await expect(
-      Unschedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force']),
-    ).resolves.toBeUndefined()
+    await expect(Unschedule.run(['--input', 'migrations.csv', '--client-id', 'client-id', '--force'])).resolves.toEqual(
+      {app},
+    )
 
     expect(process.exitCode).toBe(1)
     expect(renderWarning).toHaveBeenCalledOnce()
@@ -233,7 +240,7 @@ describe('subscription migration operation commands', () => {
   test('status watches every repeated ID and outputs final JSON once', async () => {
     vi.mocked(watchMigrationOperations).mockResolvedValue([completedOperation])
 
-    await Status.run([
+    const result = await Status.run([
       '--client-id',
       'status-client-id',
       '--id',
@@ -242,15 +249,17 @@ describe('subscription migration operation commands', () => {
       'gid://shopify/AppSubscriptionMigrationOperation/2',
       '--watch',
       '--json',
+      '--reset',
     ])
 
-    expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
-      clientId: 'status-client-id',
+    expect(linkedAppContext).toHaveBeenCalledWith({
       directory: expect.any(String),
-      configName: undefined,
+      clientId: 'status-client-id',
+      forceRelink: true,
+      userProvidedConfigName: undefined,
     })
     expect(watchMigrationOperations).toHaveBeenCalledWith({
-      clientId: 'status-client-id',
+      clientId: 'remote-client-id',
       operationIds: [
         'gid://shopify/AppSubscriptionMigrationOperation/1',
         'gid://shopify/AppSubscriptionMigrationOperation/2',
@@ -259,6 +268,7 @@ describe('subscription migration operation commands', () => {
     expect(getMigrationOperations).not.toHaveBeenCalled()
     expect(outputOperations).toHaveBeenCalledOnce()
     expect(outputOperations).toHaveBeenCalledWith([completedOperation], true)
+    expect(result).toEqual({app})
   })
 
   test('status resolves the Client ID from the active configuration', async () => {
@@ -266,13 +276,14 @@ describe('subscription migration operation commands', () => {
 
     await Status.run(['--id', 'operation-id'])
 
-    expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
-      clientId: undefined,
+    expect(linkedAppContext).toHaveBeenCalledWith({
       directory: expect.any(String),
-      configName: undefined,
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
     expect(getMigrationOperations).toHaveBeenCalledWith({
-      clientId: 'active-client-id',
+      clientId: 'remote-client-id',
       operationIds: ['operation-id'],
     })
     expect(watchMigrationOperations).not.toHaveBeenCalled()
@@ -303,15 +314,16 @@ describe('subscription migration operation commands', () => {
         'gid://shopify/AppSubscriptionMigrationOperation/2',
         '--json',
       ]),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({app})
 
-    expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
-      clientId: 'cancel-client-id',
+    expect(linkedAppContext).toHaveBeenCalledWith({
       directory: expect.any(String),
-      configName: undefined,
+      clientId: 'cancel-client-id',
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
     expect(cancelMigrationOperations).toHaveBeenCalledWith({
-      clientId: 'cancel-client-id',
+      clientId: 'remote-client-id',
       operationIds: [
         'gid://shopify/AppSubscriptionMigrationOperation/1',
         'gid://shopify/AppSubscriptionMigrationOperation/2',
@@ -328,13 +340,14 @@ describe('subscription migration operation commands', () => {
   test('cancel resolves the Client ID from the active configuration', async () => {
     await Cancel.run(['--id', 'operation-id'])
 
-    expect(resolveSubscriptionMigrationClientId).toHaveBeenCalledWith({
-      clientId: undefined,
+    expect(linkedAppContext).toHaveBeenCalledWith({
       directory: expect.any(String),
-      configName: undefined,
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: undefined,
     })
     expect(cancelMigrationOperations).toHaveBeenCalledWith({
-      clientId: 'active-client-id',
+      clientId: 'remote-client-id',
       operationIds: ['operation-id'],
     })
   })
@@ -405,10 +418,11 @@ describe('subscription migration command metadata', () => {
     })
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])('$name uses canonical app context flags', (Command) => {
+  test.each([Schedule, Unschedule, Status, Cancel])('$name uses all canonical app context flags', (Command) => {
     expect(Command.flags.path).toBe(appFlags.path)
     expect(Command.flags.config).toBe(appFlags.config)
     expect(Command.flags['client-id']).toBe(appFlags['client-id'])
+    expect(Command.flags.reset).toBe(appFlags.reset)
     expect(Command.flags['client-id']?.required).not.toBe(true)
     expect(Command.flags['client-id']?.exclusive).toEqual(['config'])
   })
@@ -417,14 +431,16 @@ describe('subscription migration command metadata', () => {
     expect(Command.flags.json).toBe(jsonFlag.json)
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])('$name has no legacy or reset migration flags', (Command) => {
+  test.each([Schedule, Unschedule, Status, Cancel])('$name has no legacy migration flags', (Command) => {
     expect(Object.keys(Command.flags)).not.toEqual(
-      expect.arrayContaining(['reset', 'yes', 'operation', 'operation-id', 'run', 'run-id']),
+      expect.arrayContaining(['yes', 'operation', 'operation-id', 'run', 'run-id']),
     )
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])('$name extends BaseCommand directly', (Command) => {
-    expect(Object.getPrototypeOf(Command)).toBe(BaseCommand)
+  test.each([Schedule, Unschedule, Status, Cancel])('$name extends AppLinkedCommand', (Command) => {
+    expect(Object.getPrototypeOf(Command)).toBe(AppLinkedCommand)
+    expect(Command.baseFlags).toBe(AppLinkedCommand.baseFlags)
+    expect(Command.flags['auth-alias' as keyof typeof Command.flags]).toBeUndefined()
   })
 
   test('registers the four command IDs with their exact classes', () => {
@@ -459,10 +475,12 @@ describe('subscription migration command metadata', () => {
       expect(Command.examples.length).toBeGreaterThan(1)
       expect(Command.examples[0]).not.toContain('--client-id')
       expect(Command.examples.some((example) => example.includes('--client-id <client-id>'))).toBe(true)
+      expect(Command.descriptionWithMarkdown).toContain('app project')
       expect(Command.descriptionWithMarkdown).toContain('active app configuration')
       expect(Command.descriptionWithMarkdown).toContain('--path')
       expect(Command.descriptionWithMarkdown).toContain('--config')
       expect(Command.descriptionWithMarkdown).toContain('--client-id')
+      expect(Command.descriptionWithMarkdown).toContain('--reset')
     },
   )
 
