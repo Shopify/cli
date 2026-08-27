@@ -1,5 +1,5 @@
 import {devStoreCapReached} from './cap.js'
-import {fetchStore} from './fetch.js'
+import {fetchStore, StoreNotFoundError} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {devStoreNamePrompt, devStorePlanPrompt, reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
@@ -29,13 +29,17 @@ export async function selectStore(
     if (isTTY() === false) {
       throw new AbortError(
         'No development store was specified.',
-        'Run `app dev --store <store-domain>` to select a development store.',
+        'Create a development store in Dev Dashboard, then run `app dev` again.',
       )
     }
     if (await devStoreCapReached(org.id, developerPlatformClient)) {
       throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage)
     }
     onCreateStoreWhenEmpty = async () => {
+      if (await devStoreCapReached(org.id, developerPlatformClient)) {
+        throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage)
+      }
+
       const name = await devStoreNamePrompt()
       const plan = await devStorePlanPrompt()
       const domain = await createDevStore({name, plan, organization: org, json: false, summary: false})
@@ -54,7 +58,7 @@ export async function selectStore(
     ...(onCreateStoreWhenEmpty ? {onCreateStoreWhenEmpty} : {}),
   })
   if (!store) {
-    if (storeCreationEnabled) {
+    if (onCreateStoreWhenEmpty) {
       throw new CancelExecution()
     }
 
@@ -98,7 +102,7 @@ async function waitForCreatedStoreByDomain(
               return
             }
           } catch (error) {
-            if (!(error instanceof AbortError)) throw error
+            if (!(error instanceof StoreNotFoundError)) throw error
           }
 
           // eslint-disable-next-line no-await-in-loop
@@ -150,7 +154,7 @@ async function waitForCreatedStore(
 }
 
 const devStoreCapReachedMessage = 'Your organization has reached its development store limit.'
-const devStoreCapReachedTryMessage = 'Run `app dev --store <store-domain>` to select an existing development store.'
+const devStoreCapReachedTryMessage = 'Manage your development store limit in Dev Dashboard, then run `app dev` again.'
 
 /**
  * Check if the store exists in the current organization and it is a valid store

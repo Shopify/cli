@@ -1,6 +1,6 @@
 import {selectStore} from './select-store.js'
 import {devStoreCapReached} from './cap.js'
-import {fetchStore} from './fetch.js'
+import {fetchStore, StoreNotFoundError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {devStoreNamePrompt, devStorePlanPrompt, reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
@@ -13,7 +13,10 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../prompts/dev')
 vi.mock('./cap')
-vi.mock('./fetch')
+vi.mock('./fetch', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./fetch.js')>()),
+  fetchStore: vi.fn(),
+}))
 vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -72,10 +75,12 @@ describe('selectStore', async () => {
       ),
     ).rejects.toMatchObject({
       message: 'No development store was specified.',
-      tryMessage: 'Run `app dev --store <store-domain>` to select a development store.',
+      tryMessage: 'Create a development store in Dev Dashboard, then run `app dev` again.',
     })
     expect(selectStorePrompt).not.toHaveBeenCalled()
     expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(devStoreNamePrompt).not.toHaveBeenCalled()
+    expect(devStorePlanPrompt).not.toHaveBeenCalled()
     expect(createDevStore).not.toHaveBeenCalled()
   })
 
@@ -171,9 +176,15 @@ describe('selectStore', async () => {
 
     await expect(
       selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
-    ).rejects.toThrow('reached its development store limit')
+    ).rejects.toMatchObject({
+      message: 'Your organization has reached its development store limit.',
+      tryMessage: 'Manage your development store limit in Dev Dashboard, then run `app dev` again.',
+    })
     expect(developerPlatformClient.getCreateDevStoreLink).not.toHaveBeenCalled()
     expect(selectStorePrompt).not.toHaveBeenCalled()
+    expect(devStoreNamePrompt).not.toHaveBeenCalled()
+    expect(devStorePlanPrompt).not.toHaveBeenCalled()
+    expect(createDevStore).not.toHaveBeenCalled()
   })
 
   test('offers creation when the enabled app-management organization has no stores and is not capped', async () => {
@@ -210,14 +221,17 @@ describe('selectStore', async () => {
     expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStoreWhenEmpty')
   })
 
-  test('cancels normally when the enabled app-management organization has stores and the prompt is cancelled', async () => {
+  test('keeps the dashboard fallback when the app-management store prompt is cancelled', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(undefined)
+    vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     await expect(
-      selectStore({stores: [STORE1], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
+      selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
     ).rejects.toBeInstanceOf(CancelExecution)
-    expect(developerPlatformClient.getCreateDevStoreLink).not.toHaveBeenCalled()
+    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1)
+    expect(sleep).toHaveBeenCalledWith(5)
+    expect(reloadStoreListPrompt).toHaveBeenCalledWith(ORG1)
     expect(devStoreCapReached).not.toHaveBeenCalled()
   })
 
@@ -228,7 +242,7 @@ describe('selectStore', async () => {
     vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
     vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
     vi.mocked(fetchStore)
-      .mockRejectedValueOnce(new AbortError('Store is still being provisioned'))
+      .mockRejectedValueOnce(new StoreNotFoundError('Store is still being provisioned'))
       .mockResolvedValueOnce(STORE1)
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
@@ -250,7 +264,49 @@ describe('selectStore', async () => {
       summary: false,
     })
     expect(fetchStore).toHaveBeenCalledTimes(2)
+    expect(sleep).toHaveBeenCalledWith(3)
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'Development store "store1" created successfully.'})
+  })
+
+  test('stops provisioning retries when fetching the created store fails for a reason other than a missing store', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+    vi.mocked(devStoreCapReached).mockResolvedValue(false)
+    vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
+    vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
+    vi.mocked(fetchStore).mockRejectedValueOnce(new AbortError('Fetching failed'))
+    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task({}, task)
+      }
+      return {}
+    })
+    vi.mocked(selectStorePrompt).mockImplementation(async ({onCreateStoreWhenEmpty}) => onCreateStoreWhenEmpty!())
+
+    await expect(
+      selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
+    ).rejects.toThrow('Fetching failed')
+    expect(fetchStore).toHaveBeenCalledTimes(1)
+    expect(sleep).not.toHaveBeenCalledWith(3)
+  })
+
+  test('checks the store cap again before creating a development store', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+    vi.mocked(devStoreCapReached).mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+    vi.mocked(selectStorePrompt).mockImplementation(async ({onCreateStoreWhenEmpty}) => onCreateStoreWhenEmpty!())
+
+    await expect(
+      selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
+    ).rejects.toMatchObject({
+      message: 'Your organization has reached its development store limit.',
+      tryMessage: 'Manage your development store limit in Dev Dashboard, then run `app dev` again.',
+    })
+    expect(devStoreCapReached).toHaveBeenCalledTimes(2)
+    expect(devStoreNamePrompt).not.toHaveBeenCalled()
+    expect(devStorePlanPrompt).not.toHaveBeenCalled()
+    expect(createDevStore).not.toHaveBeenCalled()
+    expect(fetchStore).not.toHaveBeenCalled()
   })
 
   test('throws if selected store is not transfer-disabled', async () => {

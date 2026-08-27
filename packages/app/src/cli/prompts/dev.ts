@@ -98,12 +98,16 @@ export async function selectStorePrompt({
   }
 
   let currentStores = stores
+  const storesById = new Map(stores.map((store) => [store.shopId, store]))
 
   const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
   if (onSearchForStoresByName) {
     extraAutocompletePromptProps.search = async (term) => {
       const result = await onSearchForStoresByName(term)
       currentStores = result.stores
+      if (currentStores.length > 0) {
+        currentStores.forEach((store) => storesById.set(store.shopId, store))
+      }
 
       return {
         data: currentStores.map(storeToChoice),
@@ -120,7 +124,7 @@ export async function selectStorePrompt({
     hasMorePages,
     ...extraAutocompletePromptProps,
   })
-  return currentStores.find((store) => store.shopId === id)
+  return storesById.get(id)
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {

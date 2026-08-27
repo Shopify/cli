@@ -246,6 +246,25 @@ describe('selectStore', () => {
       search: expect.any(Function),
     })
   })
+
+  test('returns an initial store after a search when clearing input restores the initial choices', async () => {
+    const stores: OrganizationStore[] = [STORE1, STORE2]
+    const onSearchForStoresByName = vi.fn().mockResolvedValue({stores: [STORE3], hasMorePages: false})
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      await search!('store3')
+      return STORE1.shopId
+    })
+
+    const got = await selectStorePrompt({
+      stores,
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onSearchForStoresByName,
+    })
+
+    expect(got).toEqual(STORE1)
+    expect(onSearchForStoresByName).toHaveBeenCalledWith('store3')
+    expect(onSearchForStoresByName).toHaveBeenCalledOnce()
+  })
 })
 
 describe('appName', () => {

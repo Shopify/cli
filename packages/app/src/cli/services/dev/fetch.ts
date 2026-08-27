@@ -8,6 +8,8 @@ import {AccountInfo, isServiceAccount, isUserAccount} from '@shopify/cli-kit/nod
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
+export class StoreNotFoundError extends AbortError {}
+
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
     let accountIdentifier = 'unknown'
@@ -115,7 +117,7 @@ export async function fetchStore(
     const storeTypeMessage = isDevStoresOnly
       ? 'Ensure you have provided the correct store domain, that the store is a dev store, and that you have access to the store.'
       : 'Ensure you have provided the correct store domain and that you have access to the store.'
-    throw new AbortError(
+    throw new StoreNotFoundError(
       `Could not find store for domain ${storeFqdn} in organization ${org.businessName}.`,
       storeTypeMessage,
     )
