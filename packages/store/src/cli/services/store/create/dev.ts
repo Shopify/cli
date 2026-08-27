@@ -1,4 +1,5 @@
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {DEV_STORE_PLANS, DevStorePlan} from '../constants.js'
 import {CreateAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/create_app_development_store.js'
 import {
@@ -84,6 +85,8 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<vo
   if (!shopDomain) {
     throw new AbortError('Store creation succeeded but no shop domain was returned.')
   }
+
+  await recordStoreFqdnMetadata(shopDomain, true)
 
   await renderSingleTask({
     title: outputContent`Waiting for store to be ready`,

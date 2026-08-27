@@ -1,4 +1,5 @@
 import {deleteDevStore, toOrganizationsShopifyShopId} from './dev.js'
+import {recordStoreFqdnMetadata} from '../attribution.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {renderSingleTask, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -31,6 +32,8 @@ vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
 vi.mock('@shopify/cli-kit/node/system', () => ({
   sleep: vi.fn(),
 }))
+
+vi.mock('../attribution.js')
 
 const defaultOrg = {id: '123', businessName: 'Test Org'}
 const defaultOptions = {store: 'test-store.myshopify.com', organization: defaultOrg, json: false}
@@ -109,6 +112,28 @@ describe('deleteDevStore', () => {
       }),
     )
     expect(renderWarning).not.toHaveBeenCalled()
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('test-store.myshopify.com', true, '72193245184')
+  })
+
+  test('records matching-store attribution again when a second lookup supplies the ID', async () => {
+    mockBusinessPlatformRequests({
+      lookupResults: [shopLookupResult(), defaultShopLookupResult],
+    })
+
+    await deleteDevStore(defaultOptions)
+
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, 'test-store.myshopify.com', true, undefined)
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, 'test-store.myshopify.com', true, '72193245184')
+  })
+
+  test('does not record validated attribution when the shop lookup has no match', async () => {
+    const noShopMatch = {organization: {accessibleShops: {edges: []}}}
+    mockBusinessPlatformRequests({lookupResults: [noShopMatch, noShopMatch]})
+
+    await deleteDevStore(defaultOptions)
+
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
+    expect(renderWarning).toHaveBeenCalled()
   })
 
   test('outputs JSON when --json flag is set', async () => {
@@ -249,16 +274,22 @@ describe('deleteDevStore', () => {
   })
 })
 
-function mockBusinessPlatformRequests(options: {mutationResult?: unknown; pollShops?: PollShop[]} = {}) {
+function mockBusinessPlatformRequests(
+  options: {mutationResult?: unknown; pollShops?: PollShop[]; lookupResults?: unknown[]} = {},
+) {
   const mutationResult = options.mutationResult ?? defaultMutationResult
   const pollShops = options.pollShops ?? [pollShop({planName: 'cancelled'})]
+  const lookupResults = options.lookupResults ?? [defaultShopLookupResult]
+  let lookupIndex = 0
   let pollIndex = 0
 
   vi.mocked(businessPlatformOrganizationsRequestDoc).mockImplementation(async (request) => {
     const variables = request.variables as Record<string, unknown>
 
     if ('search' in variables) {
-      return defaultShopLookupResult as never
+      const lookupResult = lookupResults[Math.min(lookupIndex, lookupResults.length - 1)]
+      lookupIndex++
+      return lookupResult as never
     }
 
     if ('storeFqdn' in variables) {
@@ -273,6 +304,23 @@ function mockBusinessPlatformRequests(options: {mutationResult?: unknown; pollSh
 
     throw new Error(`Unexpected request variables: ${JSON.stringify(variables)}`)
   })
+}
+
+function shopLookupResult(shopifyShopId?: string) {
+  return {
+    organization: {
+      accessibleShops: {
+        edges: [
+          {
+            node: {
+              ...defaultShopLookupResult.organization.accessibleShops.edges[0]!.node,
+              shopifyShopId,
+            },
+          },
+        ],
+      },
+    },
+  }
 }
 
 function pollShop(overrides: NonNullable<PollShop> = {}): NonNullable<PollShop> {

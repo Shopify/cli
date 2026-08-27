@@ -1,13 +1,19 @@
 import StoreDelete from './delete.js'
 import {deleteDevStore} from '../../services/store/delete/dev.js'
 import {resolveOrganizationForStore} from '../../utilities/store-lookup/organization.js'
+import {recordStoreFqdnMetadata} from '../../services/store/attribution.js'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {isTTY, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/delete/dev.js')
+vi.mock('../../services/store/attribution.js')
 vi.mock('../../utilities/store-lookup/organization.js')
+vi.mock('@shopify/cli-kit/node/analytics', () => ({
+  reportAnalyticsEvent: vi.fn(),
+}))
 
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   const actual: Record<string, unknown> = await importOriginal()
@@ -35,6 +41,10 @@ beforeEach(() => {
 })
 
 describe('store delete command', () => {
+  test('requires synchronous analytics', () => {
+    expect(StoreDelete.requiresSyncAnalytics).toBe(true)
+  })
+
   test('resolves the organization and passes parsed flags through to the service', async () => {
     await StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345'])
 
@@ -91,6 +101,7 @@ describe('store delete command', () => {
 
     await expect(StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345'])).rejects.toThrow()
     expect(deleteDevStore).not.toHaveBeenCalled()
+    expect(reportAnalyticsEvent).not.toHaveBeenCalled()
   })
 
   test('skips the confirmation prompt when --force is passed', async () => {
@@ -123,22 +134,39 @@ describe('store delete command', () => {
     const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('process.exit')
     }) as never)
+    const mockCommandCatch = vi.spyOn(StoreDelete.prototype, 'catch').mockImplementation(async (error) => {
+      throw error
+    })
 
     await expect(
       StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345', '--json']),
     ).rejects.toThrow('process.exit')
 
-    const call = vi.mocked(outputResult).mock.calls[0]![0] as string
-    const parsed = JSON.parse(call)
-    expect(parsed).toEqual({
-      error: true,
-      message: 'Deleting the development store my-store.myshopify.com requires confirmation.',
-      nextSteps: ['Use the `--force` flag to skip confirmation when running non-interactively.'],
-      exitCode: 1,
-    })
+    expect(outputResult).toHaveBeenCalledTimes(1)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          error: true,
+          message: 'Deleting the development store my-store.myshopify.com requires confirmation.',
+          nextSteps: ['Use the `--force` flag to skip confirmation when running non-interactively.'],
+          exitCode: 1,
+        },
+        null,
+        2,
+      ),
+    )
     expect(deleteDevStore).not.toHaveBeenCalled()
+    expect(mockExit).toHaveBeenCalledTimes(1)
     expect(mockExit).toHaveBeenCalledWith(1)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('my-store.myshopify.com', false)
+    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith({
+      config: expect.anything(),
+      errorMessage: 'Deleting the development store my-store.myshopify.com requires confirmation.',
+      exitMode: 'expected_error',
+    })
 
+    mockCommandCatch.mockRestore()
     mockExit.mockRestore()
   })
 
@@ -147,21 +175,38 @@ describe('store delete command', () => {
     const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('process.exit')
     }) as never)
+    const mockCommandCatch = vi.spyOn(StoreDelete.prototype, 'catch').mockImplementation(async (error) => {
+      throw error
+    })
 
     await expect(
       StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345', '--json']),
     ).rejects.toThrow('process.exit')
 
-    const call = vi.mocked(outputResult).mock.calls[0]![0] as string
-    const parsed = JSON.parse(call)
-    expect(parsed).toEqual({
-      error: true,
-      message: 'Something went wrong',
-      nextSteps: [],
-      exitCode: 1,
-    })
+    expect(outputResult).toHaveBeenCalledTimes(1)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          error: true,
+          message: 'Something went wrong',
+          nextSteps: [],
+          exitCode: 1,
+        },
+        null,
+        2,
+      ),
+    )
+    expect(mockExit).toHaveBeenCalledTimes(1)
     expect(mockExit).toHaveBeenCalledWith(1)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('my-store.myshopify.com', false)
+    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith({
+      config: expect.anything(),
+      errorMessage: 'Something went wrong',
+      exitMode: 'expected_error',
+    })
 
+    mockCommandCatch.mockRestore()
     mockExit.mockRestore()
   })
 
@@ -170,20 +215,37 @@ describe('store delete command', () => {
     const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('process.exit')
     }) as never)
+    const mockCommandCatch = vi.spyOn(StoreDelete.prototype, 'catch').mockImplementation(async (error) => {
+      throw error
+    })
 
     await expect(StoreDelete.run(['--store', 'my-store.myshopify.com', '--json'])).rejects.toThrow('process.exit')
 
-    const call = vi.mocked(outputResult).mock.calls[0]![0] as string
-    const parsed = JSON.parse(call)
-    expect(parsed).toEqual({
-      error: true,
-      message: 'Could not resolve organization',
-      nextSteps: [],
-      exitCode: 1,
-    })
+    expect(outputResult).toHaveBeenCalledTimes(1)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          error: true,
+          message: 'Could not resolve organization',
+          nextSteps: [],
+          exitCode: 1,
+        },
+        null,
+        2,
+      ),
+    )
     expect(deleteDevStore).not.toHaveBeenCalled()
+    expect(mockExit).toHaveBeenCalledTimes(1)
     expect(mockExit).toHaveBeenCalledWith(1)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('my-store.myshopify.com', false)
+    expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
+    expect(reportAnalyticsEvent).toHaveBeenCalledWith({
+      config: expect.anything(),
+      errorMessage: 'Could not resolve organization',
+      exitMode: 'expected_error',
+    })
 
+    mockCommandCatch.mockRestore()
     mockExit.mockRestore()
   })
 
