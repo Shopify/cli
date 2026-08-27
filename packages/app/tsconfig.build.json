@@ -3,6 +3,7 @@
     "exclude": ["**/*.test.ts"],
     "references": [
       {"path": "../cli-kit"},
-      {"path": "../theme"}
+      {"path": "../theme"},
+      {"path": "../ui-extensions-server-kit"}
     ]
 }

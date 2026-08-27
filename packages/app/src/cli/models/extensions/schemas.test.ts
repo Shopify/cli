@@ -58,18 +58,26 @@ describe('UIDSchema', () => {
 
 describe('NewExtensionPointsSchema', () => {
   test.each([
-    ['event', {event: 1, blocking: true}],
-    ['blocking', {event: 'cartvalidations', blocking: 'true'}],
-    ['applies_to', {event: 'paymentvalidations', blocking: true, applies_to: [1]}],
-  ])('rejects an intercept with an invalid %s value', (_field, intercept) => {
+    [
+      'valid intercepts',
+      [
+        {event: 'cartvalidations', blocking: true},
+        {event: 'paymentvalidations', blocking: true, applies_to: ['cash']},
+      ],
+      true,
+    ],
+    ['an invalid event', [{event: 1, blocking: true}], false],
+    ['an invalid blocking value', [{event: 'cartvalidations', blocking: 'true'}], false],
+    ['an invalid applies_to value', [{event: 'paymentvalidations', blocking: true, applies_to: [1]}], false],
+  ])('validates %s', (_description, intercepts, isValid) => {
     const result = NewExtensionPointsSchema.safeParse([
       {
         target: 'pos.app.ready.data',
         module: './src/app.ts',
-        capabilities: {intercepts: [intercept]},
+        capabilities: {intercepts},
       },
     ])
 
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(isValid)
   })
 })
