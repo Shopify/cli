@@ -25,19 +25,16 @@ export async function selectStore(
 
   let onCreateStoreWhenEmpty: (() => Promise<OrganizationStore>) | undefined
   if (storeCreationEnabled && storesSearch.stores.length === 0) {
+    if (await devStoreCapReached(org.id, developerPlatformClient)) {
+      throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage(org.id))
+    }
     // Inline store creation needs an interactive terminal.
     if (isTTY() === false) {
-      throw new AbortError(
-        'No development store was specified.',
-        'Run `app dev` in an interactive terminal to create a development store.',
-      )
-    }
-    if (await devStoreCapReached(org.id, developerPlatformClient)) {
-      throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage)
+      throw new AbortError('No development store was specified.', createDevStoreTryMessage(org.id))
     }
     onCreateStoreWhenEmpty = async () => {
       if (await devStoreCapReached(org.id, developerPlatformClient)) {
-        throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage)
+        throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage(org.id))
       }
 
       const name = await devStoreNamePrompt()
@@ -154,7 +151,18 @@ async function waitForCreatedStore(
 }
 
 const devStoreCapReachedMessage = 'Your organization has reached its development store limit.'
-const devStoreCapReachedTryMessage = 'Manage your development store limit in Dev Dashboard, then run `app dev` again.'
+
+function devStoreCreationCommand(orgId: string): string {
+  return `shopify store create dev --organization-id ${orgId} --name <store-name> --plan <plan>`
+}
+
+function createDevStoreTryMessage(orgId: string): string {
+  return `Create a development store with \`${devStoreCreationCommand(orgId)}\`, then run \`shopify app dev --store <store-domain>\`.`
+}
+
+function devStoreCapReachedTryMessage(orgId: string): string {
+  return `Make a development store slot available in Dev Dashboard. Then create a development store with \`${devStoreCreationCommand(orgId)}\`, then run \`shopify app dev --store <store-domain>\`.`
+}
 
 /**
  * Check if the store exists in the current organization and it is a valid store

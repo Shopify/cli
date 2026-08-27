@@ -65,20 +65,37 @@ describe('selectStore', async () => {
 
   test('fails before the prompt in a non-interactive environment when the enabled app-management organization has no stores', async () => {
     vi.mocked(isTTY).mockReturnValue(false)
+    vi.mocked(devStoreCapReached).mockResolvedValue(false)
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
 
     await expect(
-      selectStore(
-        {stores: [], hasMorePages: false},
-        ORG1,
-        testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
-        'when-empty',
-      ),
+      selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
     ).rejects.toMatchObject({
       message: 'No development store was specified.',
-      tryMessage: 'Run `app dev` in an interactive terminal to create a development store.',
+      tryMessage:
+        'Create a development store with `shopify store create dev --organization-id 1 --name <store-name> --plan <plan>`, then run `shopify app dev --store <store-domain>`.',
     })
     expect(selectStorePrompt).not.toHaveBeenCalled()
-    expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(devStoreCapReached).toHaveBeenCalledWith(ORG1.id, developerPlatformClient)
+    expect(devStoreNamePrompt).not.toHaveBeenCalled()
+    expect(devStorePlanPrompt).not.toHaveBeenCalled()
+    expect(createDevStore).not.toHaveBeenCalled()
+  })
+
+  test('gives cap guidance before the prompt in a non-interactive environment', async () => {
+    vi.mocked(isTTY).mockReturnValue(false)
+    vi.mocked(devStoreCapReached).mockResolvedValue(true)
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+
+    await expect(
+      selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
+    ).rejects.toMatchObject({
+      message: 'Your organization has reached its development store limit.',
+      tryMessage:
+        'Make a development store slot available in Dev Dashboard. Then create a development store with `shopify store create dev --organization-id 1 --name <store-name> --plan <plan>`, then run `shopify app dev --store <store-domain>`.',
+    })
+    expect(devStoreCapReached).toHaveBeenCalledWith(ORG1.id, developerPlatformClient)
+    expect(selectStorePrompt).not.toHaveBeenCalled()
     expect(devStoreNamePrompt).not.toHaveBeenCalled()
     expect(devStorePlanPrompt).not.toHaveBeenCalled()
     expect(createDevStore).not.toHaveBeenCalled()
@@ -178,7 +195,8 @@ describe('selectStore', async () => {
       selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
     ).rejects.toMatchObject({
       message: 'Your organization has reached its development store limit.',
-      tryMessage: 'Manage your development store limit in Dev Dashboard, then run `app dev` again.',
+      tryMessage:
+        'Make a development store slot available in Dev Dashboard. Then create a development store with `shopify store create dev --organization-id 1 --name <store-name> --plan <plan>`, then run `shopify app dev --store <store-domain>`.',
     })
     expect(developerPlatformClient.getCreateDevStoreLink).not.toHaveBeenCalled()
     expect(selectStorePrompt).not.toHaveBeenCalled()
@@ -300,7 +318,8 @@ describe('selectStore', async () => {
       selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
     ).rejects.toMatchObject({
       message: 'Your organization has reached its development store limit.',
-      tryMessage: 'Manage your development store limit in Dev Dashboard, then run `app dev` again.',
+      tryMessage:
+        'Make a development store slot available in Dev Dashboard. Then create a development store with `shopify store create dev --organization-id 1 --name <store-name> --plan <plan>`, then run `shopify app dev --store <store-domain>`.',
     })
     expect(devStoreCapReached).toHaveBeenCalledTimes(2)
     expect(devStoreNamePrompt).not.toHaveBeenCalled()
