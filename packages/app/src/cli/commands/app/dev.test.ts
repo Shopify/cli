@@ -33,22 +33,27 @@ describe('app dev command', () => {
     vi.mocked(addPublicMetadata).mockReset()
   })
 
+  function mockAppAndStore(directory: string) {
+    const appContextResult = {
+      app: testAppLinked({directory}),
+      remoteApp: testOrganizationApp(),
+      organization: testOrganization(),
+      project: testProject(),
+      activeConfig: {} as never,
+      specifications: [],
+      developerPlatformClient: testDeveloperPlatformClient(),
+    } as Awaited<ReturnType<typeof linkedAppContext>>
+    const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
+
+    vi.mocked(linkedAppContext).mockResolvedValue(appContextResult)
+    vi.mocked(storeContext).mockResolvedValue(store)
+
+    return {store}
+  }
+
   test('does not require --use-localhost when --install-mkcert is not passed', async () => {
     await inTemporaryDirectory(async (tmp) => {
-      const app = testAppLinked({directory: tmp})
-      const appContextResult = {
-        app,
-        remoteApp: testOrganizationApp(),
-        organization: testOrganization(),
-        project: testProject(),
-        activeConfig: {} as never,
-        specifications: [],
-        developerPlatformClient: testDeveloperPlatformClient(),
-      } as Awaited<ReturnType<typeof linkedAppContext>>
-      const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
-
-      vi.mocked(linkedAppContext).mockResolvedValue(appContextResult)
-      vi.mocked(storeContext).mockResolvedValue(store)
+      const {store} = mockAppAndStore(tmp)
       vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
 
       await Dev.run(['--path', tmp, '--store', store.shopDomain], import.meta.url)
@@ -58,7 +63,34 @@ describe('app dev command', () => {
         tunnelUrl: undefined,
         localhostPort: undefined,
       })
-      expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: false, tunnel: {mode: 'auto'}}))
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: undefined, tunnel: {mode: 'auto'}}))
+    })
+  })
+
+  // `generateCertificate()` only shows the "generate it now?" prompt when `installMkcert` is nullish, so an
+  // omitted --install-mkcert must stay undefined rather than being collapsed into an explicit `false`.
+  test('leaves installMkcert undefined with --use-localhost so the certificate prompt is reached', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'use-localhost', requestedPort: 3458, actualPort: 3458})
+
+      await Dev.run(['--path', tmp, '--store', store.shopDomain, '--use-localhost'], import.meta.url)
+
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: undefined}))
+    })
+  })
+
+  test('sets installMkcert to true when --install-mkcert is passed', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'use-localhost', requestedPort: 3458, actualPort: 3458})
+
+      await Dev.run(
+        ['--path', tmp, '--store', store.shopDomain, '--use-localhost', '--install-mkcert'],
+        import.meta.url,
+      )
+
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: true}))
     })
   })
 
