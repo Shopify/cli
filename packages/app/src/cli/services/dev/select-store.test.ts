@@ -251,13 +251,13 @@ describe('selectStore', async () => {
     expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).toHaveProperty('onCreateStore')
   })
 
-  test('hides creation but keeps store selection when the selection-option app-management organization is capped', async () => {
+  test('hides creation but keeps paginated store selection when the selection-option organization is capped', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
     vi.mocked(devStoreCapReached).mockResolvedValue(true)
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     await expect(
-      selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient, 'selection-option'),
+      selectStore({stores: [STORE1], hasMorePages: true}, ORG1, developerPlatformClient, 'selection-option'),
     ).resolves.toEqual(STORE1)
     expect(devStoreCapReached).toHaveBeenCalledWith(ORG1.id, developerPlatformClient)
     expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStore')
@@ -271,7 +271,7 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     await expect(
-      selectStore({stores: [STORE1], hasMorePages: false}, ORG1, developerPlatformClient, 'selection-option'),
+      selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient, 'selection-option'),
     ).rejects.toBeInstanceOf(CancelExecution)
     expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1)
     expect(sleep).toHaveBeenCalledWith(5)

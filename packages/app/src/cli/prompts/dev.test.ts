@@ -143,6 +143,24 @@ describe('selectStore', () => {
     expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
   })
 
+  test('prompts when only one store is loaded but more pages are available', async () => {
+    const stores: OrganizationStore[] = [STORE1]
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(STORE1.shopId)
+
+    const got = await selectStorePrompt({
+      stores,
+      hasMorePages: true,
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+    })
+
+    expect(got).toEqual(STORE1)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which store would you like to use to view your project?',
+      choices: [{label: 'store1', value: '1'}],
+      hasMorePages: true,
+    })
+  })
+
   test('creates directly when the list is empty and a zero-store creation handler is provided', async () => {
     const onCreateStoreWhenEmpty = vi.fn().mockResolvedValue(STORE1)
 

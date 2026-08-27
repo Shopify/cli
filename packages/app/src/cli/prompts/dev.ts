@@ -86,7 +86,7 @@ export async function selectStorePrompt({
   onCreateStore,
 }: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return onCreateStoreWhenEmpty?.()
-  if (stores.length === 1 && !onCreateStore) {
+  if (stores.length === 1 && !hasMorePages && !onCreateStore) {
     outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
   }
