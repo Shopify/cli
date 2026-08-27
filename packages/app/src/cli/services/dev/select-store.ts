@@ -29,7 +29,7 @@ export async function selectStore(
     if (isTTY() === false) {
       throw new AbortError(
         'No development store was specified.',
-        'Create a development store in Dev Dashboard, then run `app dev` again.',
+        'Run `app dev` in an interactive terminal to create a development store.',
       )
     }
     if (await devStoreCapReached(org.id, developerPlatformClient)) {

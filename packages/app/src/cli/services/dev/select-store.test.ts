@@ -75,7 +75,7 @@ describe('selectStore', async () => {
       ),
     ).rejects.toMatchObject({
       message: 'No development store was specified.',
-      tryMessage: 'Create a development store in Dev Dashboard, then run `app dev` again.',
+      tryMessage: 'Run `app dev` in an interactive terminal to create a development store.',
     })
     expect(selectStorePrompt).not.toHaveBeenCalled()
     expect(devStoreCapReached).not.toHaveBeenCalled()
