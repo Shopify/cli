@@ -1,11 +1,13 @@
 import {
   partnersFqdn,
   appManagementFqdn,
+  developerDashboardFqdn,
   identityFqdn,
   normalizeStoreFqdn,
   businessPlatformFqdn,
   appDevFqdn,
   adminFqdn,
+  storeAdminUrl,
 } from './fqdn.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {expect, describe, test, vi} from 'vitest'
@@ -171,6 +173,68 @@ describe('adminFqdn', () => {
 
     // Then
     expect(got).toEqual('admin.shopify.com')
+  })
+})
+
+describe('developerDashboardFqdn', () => {
+  test('returns the local fqdn when the environment is local', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+
+    // When
+    const got = await developerDashboardFqdn()
+
+    // Then
+    expect(got).toEqual('dev.myshopify.io')
+  })
+
+  test('returns the production fqdn when the environment is production', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
+
+    // When
+    const got = await developerDashboardFqdn()
+
+    // Then
+    expect(got).toEqual('dev.shopify.com')
+  })
+})
+
+describe('storeAdminUrl', () => {
+  test('transforms store fqdn ending in .my.shop.dev when environment is local', () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+    const storeFqdn = 'my-store.my.shop.dev'
+
+    // When
+    const got = storeAdminUrl(storeFqdn)
+
+    // Then
+    expect(got).toEqual('admin.shop.dev/store/my-store')
+  })
+
+  test('returns unchanged store fqdn when environment is local but domain does not end in .my.shop.dev', () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+    const storeFqdn = 'my-store.myshopify.com'
+
+    // When
+    const got = storeAdminUrl(storeFqdn)
+
+    // Then
+    expect(got).toEqual('my-store.myshopify.com')
+  })
+
+  test('returns unchanged store fqdn when environment is production', () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
+    const storeFqdn = 'my-store.my.shop.dev'
+
+    // When
+    const got = storeAdminUrl(storeFqdn)
+
+    // Then
+    expect(got).toEqual('my-store.my.shop.dev')
   })
 })
 
