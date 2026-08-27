@@ -322,7 +322,7 @@ describe('selectStore', async () => {
       ),
     ).rejects.toMatchObject({
       message: 'No development store was specified.',
-      tryMessage: 'Run `app dev --store <store-domain>` to select a development store.',
+      tryMessage: 'Run `shopify app dev --store <store-domain>` to select a development store.',
     })
     expect(selectStorePrompt).not.toHaveBeenCalled()
     expect(devStoreCapReached).not.toHaveBeenCalled()
@@ -341,7 +341,7 @@ describe('selectStore', async () => {
       ),
     ).rejects.toMatchObject({
       message: 'No development store was specified.',
-      tryMessage: 'Run `app dev --store <store-domain>` to select a development store.',
+      tryMessage: 'Run `shopify app dev --store <store-domain>` to select a development store.',
     })
     expect(selectStorePrompt).not.toHaveBeenCalled()
     expect(devStoreCapReached).not.toHaveBeenCalled()

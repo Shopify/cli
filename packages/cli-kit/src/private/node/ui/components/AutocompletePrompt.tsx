@@ -55,7 +55,7 @@ function AutocompletePrompt<T>({
   const complete = useComplete()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
-  const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
+  const canSearch = initialHasMorePages || choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const {promptState, setPromptState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
     initialAnswer: undefined,

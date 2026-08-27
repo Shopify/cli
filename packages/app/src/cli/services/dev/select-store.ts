@@ -51,7 +51,7 @@ export async function selectStore(
     if (isTTY() === false && (storesSearch.stores.length > 1 || storesSearch.hasMorePages)) {
       throw new AbortError(
         'No development store was specified.',
-        'Run `app dev --store <store-domain>` to select a development store.',
+        'Run `shopify app dev --store <store-domain>` to select a development store.',
       )
     }
 
