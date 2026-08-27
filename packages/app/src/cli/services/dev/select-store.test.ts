@@ -306,7 +306,7 @@ describe('selectStore', async () => {
       selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
     ).rejects.toMatchObject({
       message: 'The newly created development store (created-store.myshopify.com) is not available yet.',
-      tryMessage: 'Run `shopify app dev --store <store-domain>` to select it when it is ready.',
+      tryMessage: 'Run `shopify app dev --store created-store.myshopify.com` to select it when it is ready.',
     })
     expect(fetchStore).toHaveBeenCalledTimes(10)
   })
