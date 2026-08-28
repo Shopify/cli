@@ -46,10 +46,13 @@
 │  │  ├─ off
 │  │  ├─ on
 │  │  └─ status
-│  └─ autoupgrade
+│  ├─ autoupgrade
+│  │  ├─ off
+│  │  ├─ on
+│  │  └─ status
+│  └─ mouse
 │     ├─ off
-│     ├─ on
-│     └─ status
+│     └─ on
 ├─ doc
 │  ├─ fetch
 │  └─ search

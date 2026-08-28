@@ -40,6 +40,8 @@
 * [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
 * [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
+* [`shopify config mouse off`](#shopify-config-mouse-off)
+* [`shopify config mouse on`](#shopify-config-mouse-on)
 * [`shopify doc fetch`](#shopify-doc-fetch)
 * [`shopify doc search`](#shopify-doc-search)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
@@ -2128,6 +2130,43 @@ DESCRIPTION
   When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
 
   Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
+```
+
+## `shopify config mouse off`
+
+Disable mouse interactions in Shopify CLI.
+
+```
+USAGE
+  $ shopify config mouse off
+
+DESCRIPTION
+  Disable mouse interactions in Shopify CLI.
+
+  Disable mouse interactions in Shopify CLI.
+
+  When mouse interactions are disabled, standard terminal text selection and scrolling are restored.
+
+  To enable clickable prompt options and app dev tabs, run `shopify config mouse on`.
+```
+
+## `shopify config mouse on`
+
+Enable mouse interactions in Shopify CLI.
+
+```
+USAGE
+  $ shopify config mouse on
+
+DESCRIPTION
+  Enable mouse interactions in Shopify CLI.
+
+  Enable mouse interactions in Shopify CLI.
+
+  Mouse interactions are enabled by default and allow you to click prompt options and app dev tabs. To select text while
+  they are enabled, hold Option in iTerm2 or Shift in most other terminals while dragging.
+
+  To restore standard terminal text selection and scrolling, run `shopify config mouse off`.
 ```
 
 ## `shopify doc fetch`
