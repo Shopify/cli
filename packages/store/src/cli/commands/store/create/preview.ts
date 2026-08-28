@@ -12,7 +12,7 @@ export default class StoreCreatePreview extends StoreCommand {
 
   static descriptionWithMarkdown = `Creates a new Shopify store, with no need for an existing account.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --name "Lavender Candles"',

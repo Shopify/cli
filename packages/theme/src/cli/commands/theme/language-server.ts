@@ -7,7 +7,7 @@ export default class LanguageServer extends ThemeCommand {
 
   static descriptionWithMarkdown = `Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

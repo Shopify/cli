@@ -13,7 +13,7 @@ export default class AutoupgradeOff extends Command {
   To enable auto-upgrade, run \`shopify config autoupgrade on\`.
 `
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   async run(): Promise<void> {
     setAutoUpgradeEnabled(false)

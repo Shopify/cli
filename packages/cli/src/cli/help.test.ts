@@ -14,7 +14,55 @@ function renderFlags(flags: Command.Flag.Any[]): [string, string | undefined][] 
   return (rows ?? []).map(([left, right]) => [stripAnsi(left), right === undefined ? undefined : stripAnsi(right)])
 }
 
+function renderDescription(command: Partial<Command.Loadable>, maxWidth = 80): string | undefined {
+  const help = new ShopifyCommandHelp(
+    command as Command.Loadable,
+    {} as Interfaces.Config,
+    {maxWidth} as Interfaces.HelpOptions,
+  )
+  return (help as unknown as {description: () => string | undefined}).description()
+}
+
 describe('ShopifyCommandHelp', () => {
+  test('wraps prose without changing fenced code', () => {
+    const description = renderDescription(
+      {
+        summary: 'Return a value.',
+        description: `The result is represented by the following TypeScript type:
+
+\`\`\`ts
+interface Result {
+  value: string
+}
+\`\`\``,
+      },
+      50,
+    )
+
+    expect(description).toBe(`Return a value.
+
+The result is represented by the following
+TypeScript type:
+
+\`\`\`ts
+interface Result {
+  value: string
+}
+\`\`\``)
+  })
+
+  test('uses the default description formatting when there are no code blocks', () => {
+    const command = {summary: 'Return a value.', description: 'A regular command description.'}
+    const defaultHelp = new CommandHelp(
+      command as Command.Loadable,
+      {} as Interfaces.Config,
+      {maxWidth: 80} as Interfaces.HelpOptions,
+    )
+    const defaultDescription = (defaultHelp as unknown as {description: () => string | undefined}).description()
+
+    expect(renderDescription(command)).toBe(defaultDescription)
+  })
+
   test('moves the env metadata to the end of a boolean flag description', () => {
     // Given
     const flags = [

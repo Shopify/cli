@@ -13,7 +13,7 @@ export default class AppGraphiQL extends AppLinkedCommand {
 
 The app must be installed on the store.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com',

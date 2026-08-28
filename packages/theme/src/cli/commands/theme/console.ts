@@ -18,7 +18,7 @@ export default class Console extends ThemeCommand {
 
   You can also provide context to the console using a URL, as some Liquid objects are context-specific`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

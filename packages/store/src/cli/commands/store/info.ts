@@ -13,7 +13,7 @@ Some details may be omitted when they are not available for the store.
 
 Use \`--json\` for machine-readable output.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com',

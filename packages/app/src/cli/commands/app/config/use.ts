@@ -15,7 +15,7 @@ export default class ConfigUse extends AppUnlinkedCommand {
 
   static descriptionWithMarkdown = `Sets default configuration when you run app-related CLI commands. If you omit the \`config-name\` parameter, then you'll be prompted to choose from the configuration files in your project.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static usage = `app config use [config] [flags]`
 

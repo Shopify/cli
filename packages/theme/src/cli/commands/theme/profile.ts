@@ -19,7 +19,7 @@ export default class Profile extends ThemeCommand {
 
   This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
