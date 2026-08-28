@@ -6,10 +6,9 @@
  * Commands are loaded lazily by oclif from the manifest + index.ts only when needed.
  */
 import {loadCommand} from './command-registry.js'
+import {renderUncaughtError} from './uncaught-error-handler.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import {runCLI} from '@shopify/cli-kit/node/cli'
-
-import fs from 'fs'
 
 // Setup global support for environment variable based proxy configuration.
 createGlobalProxyAgent({
@@ -26,18 +25,7 @@ createGlobalProxyAgent({
 // makes sure that there are no lingering tunnel processes.
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on('uncaughtException', async (err) => {
-  try {
-    const {FatalError} = await import('@shopify/cli-kit/node/error')
-    if (err instanceof FatalError) {
-      const {renderFatalError} = await import('@shopify/cli-kit/node/ui')
-      renderFatalError(err)
-    } else {
-      fs.writeSync(process.stderr.fd, `${err.stack ?? err.message ?? err}\n`)
-    }
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    fs.writeSync(process.stderr.fd, `${err.stack ?? err.message ?? err}\n`)
-  }
+  await renderUncaughtError(err)
   process.exit(1)
 })
 const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']
