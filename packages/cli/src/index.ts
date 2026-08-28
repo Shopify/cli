@@ -6,6 +6,7 @@ import Logout from './cli/commands/auth/logout.js'
 import Login from './cli/commands/auth/login.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
+import KitchenSinkJsonOutput from './cli/commands/kitchen-sink/json-output.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import KitchenSink from './cli/commands/kitchen-sink/index.js'
@@ -151,6 +152,7 @@ export const COMMANDS: any = {
   'debug:command-flags': CommandFlags,
   'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,
+  'kitchen-sink:json-output': KitchenSinkJsonOutput,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
   'doctor-release': Doctor,

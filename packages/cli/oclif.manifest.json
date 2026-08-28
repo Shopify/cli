@@ -6343,6 +6343,49 @@
       "pluginType": "core",
       "strict": true
     },
+    "kitchen-sink:json-output": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Exercise command JSON output infrastructure.\n\nOutput from `--json` conforms to the `KitchenSinkJsonOutputResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ninterface KitchenSinkJsonOutputResult {\n  items: SampleItem[]\n}\n\ninterface SampleItem {\n  id: number\n  name: string\n}\n```",
+      "descriptionWithMarkdown": "Exercise command JSON output infrastructure.",
+      "enableJsonFlag": false,
+      "flags": {
+        "fail": {
+          "allowNo": false,
+          "description": "Fail with a sample error.",
+          "env": "SHOPIFY_FLAG_FAIL",
+          "name": "fail",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON output schema.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "kitchen-sink:json-output",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "kitchen-sink:prompts": {
       "aliases": [
       ],
