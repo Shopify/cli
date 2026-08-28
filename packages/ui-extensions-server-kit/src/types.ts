@@ -83,6 +83,17 @@ interface Metafield {
   key: string
 }
 
+export interface ExtensionPointIntercept {
+  event: string
+  blocking: boolean
+  applies_to?: string[]
+}
+
+export interface ExtensionPointCapabilities {
+  allow_direct_linking?: boolean
+  intercepts?: ExtensionPointIntercept[]
+}
+
 export interface ExtensionPoint {
   target: string
   surface: Surface
@@ -93,6 +104,7 @@ export interface ExtensionPoint {
   name: string
   description?: string
   assets?: Record<string, Asset>
+  capabilities?: ExtensionPointCapabilities
 }
 
 type ExtensionPoints = string[] | ExtensionPoint[] | null
