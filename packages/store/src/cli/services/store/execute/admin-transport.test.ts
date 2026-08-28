@@ -9,7 +9,8 @@ import {clearStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-sessi
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError, handler} from '@shopify/cli-kit/node/error'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/store-auth-session')
@@ -137,10 +138,36 @@ describe('runAdminStoreGraphQLOperation', () => {
   })
 
   test('throws a GraphQL operation error when errors are returned', async () => {
-    vi.mocked(graphqlRequest).mockRejectedValue({response: {errors: [{message: 'Field does not exist'}]}})
+    const errors = [{message: 'Field does not exist', extensions: {code: 'UNDEFINED_FIELD'}, path: ['nope']}]
+    vi.mocked(graphqlRequest).mockRejectedValue({response: {errors}})
     const request = await prepareStoreExecuteRequest({query: 'query { nope }'})
 
-    await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toThrow('GraphQL operation failed.')
+    const error: unknown = await runAdminStoreGraphQLOperation({context, request}).catch((error: unknown) => error)
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).toMatchObject({
+      message: 'GraphQL operation failed.',
+      tryMessage: JSON.stringify({errors}, null, 2),
+      details: {errors},
+    })
+
+    const output = mockAndCaptureOutput()
+    output.clear()
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    try {
+      await handler(error)
+
+      expect(JSON.parse(output.info())).toStrictEqual({
+        error: {
+          type: 'abort',
+          message: 'GraphQL operation failed.',
+          tryMessage: JSON.stringify({errors}, null, 2),
+          details: {errors},
+        },
+      })
+    } finally {
+      vi.unstubAllEnvs()
+      output.clear()
+    }
   })
 
   test('maps a 402 ClientError to a store-unavailable AbortError even when the response also carries `errors`', async () => {
