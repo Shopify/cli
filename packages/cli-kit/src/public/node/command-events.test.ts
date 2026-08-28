@@ -1,5 +1,6 @@
 import {
   commandEventOutputMode,
+  commandEventOutputSchema,
   emitCommandEvent,
   renderCommandEvent,
   renderCommandEventAsJson,
@@ -94,6 +95,30 @@ describe('command event context', () => {
     })
 
     expect(commandEventOutputMode()).toBeUndefined()
+  })
+})
+
+describe('commandEventOutputSchema', () => {
+  test('renders the event schemas as TypeScript', () => {
+    expect(commandEventOutputSchema.typescript).toBe(`type CommandEvent = CommandDiagnosticEvent | CommandProgressEvent
+
+interface CommandDiagnosticEvent {
+  type: "diagnostic"
+  timestamp: string
+  level: "debug" | "info" | "warning" | "error"
+  message: string
+  code?: string
+}
+
+interface CommandProgressEvent {
+  type: "progress"
+  timestamp: string
+  status: "started" | "updated" | "completed"
+  operation: string
+  message?: string
+  current?: number
+  total?: number
+}`)
   })
 })
 
