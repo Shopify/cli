@@ -115,6 +115,7 @@ describe('selectStore', async () => {
     ).resolves.toEqual(STORE1)
     expect(devStoreCapReached).not.toHaveBeenCalled()
     expect(createDevStore).not.toHaveBeenCalled()
+    expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStoreWhenEmpty')
     expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStore')
   })
 
@@ -131,6 +132,7 @@ describe('selectStore', async () => {
       ),
     ).resolves.toEqual(STORE1)
     expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStoreWhenEmpty')
     expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStore')
   })
 
@@ -225,6 +227,7 @@ describe('selectStore', async () => {
       selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient, 'when-empty'),
     ).resolves.toEqual(STORE1)
     expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStoreWhenEmpty')
     expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStore')
   })
 
@@ -236,6 +239,7 @@ describe('selectStore', async () => {
       STORE1,
     )
     expect(devStoreCapReached).not.toHaveBeenCalled()
+    expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStoreWhenEmpty')
     expect(vi.mocked(selectStorePrompt).mock.calls[0]?.[0]).not.toHaveProperty('onCreateStore')
   })
 
