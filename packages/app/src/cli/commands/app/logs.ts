@@ -20,7 +20,7 @@ export default class Logs extends AppLinkedCommand {
   \`\`\`
   `
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

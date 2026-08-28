@@ -10,7 +10,7 @@ export default class EnvShow extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Displays environment variables that can be used to deploy apps and app extensions.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

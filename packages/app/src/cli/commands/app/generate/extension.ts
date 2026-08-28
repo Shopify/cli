@@ -15,7 +15,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
   Each new app extension is created in a folder under \`extensions/\`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.
   `
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
