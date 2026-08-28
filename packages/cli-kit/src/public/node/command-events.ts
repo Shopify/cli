@@ -1,6 +1,10 @@
 import {outputDebug, outputInfo, outputWarn} from './output.js'
 import {jsonOutputEnabled} from './environment.js'
+import {defineJsonOutputSchema} from './json-output-schema.js'
 import {
+  commandDiagnosticEventSchema,
+  commandEventSchema,
+  commandProgressEventSchema,
   type CommandEvent,
   type CommandEventChannelOptions,
   type CommandEventEmissionOptions,
@@ -76,6 +80,15 @@ export function emitCommandEvent(event: CommandEventInput, options?: CommandEven
 export function commandEventOutputMode(): CommandEventOutputMode | undefined {
   return currentCommandEventOutputMode()
 }
+
+export const commandEventOutputSchema = defineJsonOutputSchema({
+  name: 'CommandEvent',
+  schema: commandEventSchema,
+  definitions: {
+    CommandDiagnosticEvent: commandDiagnosticEventSchema,
+    CommandProgressEvent: commandProgressEventSchema,
+  },
+})
 
 /**
  * Renders a command side event to stderr using the existing CLI output behavior.

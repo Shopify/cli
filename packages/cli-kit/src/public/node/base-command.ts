@@ -1,7 +1,8 @@
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {runWithCommandEventsForCommand} from './command-events.js'
+import {commandEventOutputSchema, runWithCommandEventsForCommand} from './command-events.js'
+import {jsonErrorOutputSchema} from './error/schema.js'
 import {outputContent, outputResult, outputToken} from './output.js'
 import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
@@ -10,7 +11,7 @@ import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
-import {Command, Config, Errors} from '@oclif/core'
+import {Command, Config, Errors, Flags} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
 import type {JsonOutputSchema} from './json-output-schema.js'
 
@@ -33,7 +34,13 @@ interface EnvironmentFlags {
 }
 
 abstract class BaseCommand extends Command {
-  static baseFlags: FlagInput<{}> = {}
+  static baseFlags: FlagInput<{}> = {
+    'json-schema': Flags.boolean({
+      description: "Print the command's JSON schemas.",
+      env: 'SHOPIFY_FLAG_JSON_SCHEMA',
+    }),
+  }
+
   static descriptionWithMarkdown?: string
 
   public static get jsonOutputSchema(): JsonOutputSchema | undefined {
@@ -76,6 +83,7 @@ abstract class BaseCommand extends Command {
   }
 
   protected async init(): Promise<unknown> {
+    this.exitWithJsonSchemaWhenRequested()
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
     if (!isDevelopment()) {
@@ -122,6 +130,21 @@ abstract class BaseCommand extends Command {
       `)
       process.exit(0)
     }
+  }
+
+  protected exitWithJsonSchemaWhenRequested(): void {
+    if (!this.argv.includes('--json-schema') && !isTruthy(process.env.SHOPIFY_FLAG_JSON_SCHEMA)) return
+
+    const command = this.constructor as typeof BaseCommand
+    const outputSchema = command.jsonOutputSchema
+    if (!outputSchema) {
+      throw new AbortError('This command does not define a JSON output schema.')
+    }
+
+    outputResult(
+      [outputSchema.typescript, jsonErrorOutputSchema.typescript, commandEventOutputSchema.typescript].join('\n\n'),
+    )
+    process.exit(0)
   }
 
   protected async parse<
@@ -408,7 +431,9 @@ function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): bo
 function appendJsonOutputSchema(description: string, outputSchema: JsonOutputSchema | undefined): string {
   if (!outputSchema) return description
 
-  const jsonOutputDescription = `With \`--json\`, the command returns \`${outputSchema.name}\`:
+  const jsonOutputDescription = `Output from \`--json\` conforms to the \`${outputSchema.name}\` schema.
+
+Use \`--json-schema\` to print the schema directly:
 
 \`\`\`ts
 ${outputSchema.typescript}
