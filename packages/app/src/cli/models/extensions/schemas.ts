@@ -40,7 +40,7 @@ export const ExtensionsArraySchema = zod.object({
 
 const TargetInterceptSchema = zod.object({
   event: zod.string(),
-  blocking: zod.boolean(),
+  blocking: zod.boolean().default(false),
   applies_to: zod.array(zod.string()).optional(),
 })
 

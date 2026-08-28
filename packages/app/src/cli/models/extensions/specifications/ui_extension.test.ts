@@ -245,7 +245,7 @@ describe('ui_extension', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const intercepts = [
-        {event: 'cartvalidations', blocking: true},
+        {event: 'cartvalidations'},
         {event: 'paymentvalidations', blocking: true, applies_to: ['cash']},
       ]
       const configuration = {
@@ -296,7 +296,13 @@ describe('ui_extension', async () => {
           metafields: [],
           urls: {},
           default_placement_reference: undefined,
-          capabilities: {allow_direct_linking: true, intercepts},
+          capabilities: {
+            allow_direct_linking: true,
+            intercepts: [
+              {event: 'cartvalidations', blocking: false},
+              {event: 'paymentvalidations', blocking: true, applies_to: ['cash']},
+            ],
+          },
           preloads: {},
           build_manifest: {
             assets: {
