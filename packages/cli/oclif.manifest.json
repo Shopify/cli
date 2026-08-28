@@ -1303,6 +1303,98 @@
       "strict": true,
       "summary": "Cleans up the dev preview from the selected store."
     },
+    "app:doctor:scan": {
+      "aliases": [],
+      "args": {
+        "directory": {
+          "description": "The app directory to check. Defaults to the current directory.",
+          "name": "directory"
+        }
+      },
+      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In CI and other non-interactive environments, skill setup instructions aren't offered unless you pass `--yes`. JSON output never prompts or prints those instructions. Shopify CLI only shows instructions; it doesn't install or configure the skill.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "json": {
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "findings": {
+          "description": "Validate agent findings from a JSON file and compile them into the trace.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_FINDINGS",
+          "name": "findings",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "blocking": {
+          "description": "The minimum finding severity that causes a non-zero exit code.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_BLOCKING",
+          "name": "blocking",
+          "default": "none",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "none"
+          ],
+          "type": "option"
+        },
+        "yes": {
+          "description": "Show optional App Doctor skill setup instructions without prompting.",
+          "env": "SHOPIFY_FLAG_YES",
+          "exclusive": [
+            "skip-skill"
+          ],
+          "name": "yes",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "skip-skill": {
+          "description": "Don't offer App Doctor skill setup instructions.",
+          "env": "SHOPIFY_FLAG_SKIP_SKILL",
+          "exclusive": [
+            "yes"
+          ],
+          "name": "skip-skill",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "app:doctor:scan",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Check an app for Shopify-specific security issues.",
+      "enableJsonFlag": false,
+      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In CI and other non-interactive environments, skill setup instructions aren't offered unless you pass `--yes`. JSON output never prompts or prints those instructions. Shopify CLI only shows instructions; it doesn't install or configure the skill.",
+      "customPluginName": "@shopify/app"
+    },
     "app:env:pull": {
       "aliases": [
       ],
