@@ -138,6 +138,22 @@ The `FatalError` pattern will not work well in an architecture where app develop
 
 However, until then, we get a lot of leverage in the CLI from `FatalError`, so it can continue to exist as a high leverage counter-example to some of our general principles.
 
+## Fatal errors in JSON output
+
+When `--json` or `-j` is active, a fatal error writes one document to stdout:
+
+```json
+{"error":{"type":"abort","message":"Couldn't find an app","tryMessage":"Run shopify app config link","nextSteps":["Check that you're in the app directory"]}}
+```
+
+`type` is one of `abort`, `bug`, or `external`. `type` and `message` are always included. The regular error output's optional `tryMessage`, `nextSteps`, and `customSections` content is included as unstyled strings. Link URLs remain visible. Bug errors include `stack`; external errors include `command` and `args`. Other error properties are excluded.
+
+Absent optional fields are omitted. `nextSteps` is an array of strings. Each custom section has an optional `title` and a `body` containing either a string or a string matrix for tabular content.
+
+The process exit code remains the source of truth for success or failure. An `AbortSilentError` remains silent. Recoverable diagnostics and progress are written to stderr so stdout contains only the command result or fatal error document.
+
+This contract applies to execution-level failures. A failure represented by a command's result type belongs in that command's JSON result schema instead.
+
 ## Report a result from a function
 There are scenarios where a function needs to inform the caller about the success or failure of the operation. For that, `@shopify/cli-kit` provides a result utility:
 
