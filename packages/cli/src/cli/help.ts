@@ -46,6 +46,19 @@ export class ShopifyCommandHelp extends CommandHelp {
     return super.section(header, body)
   }
 
+  protected override description(): string | undefined {
+    const command = this.command
+    let description: string | undefined
+
+    if (this.opts.hideCommandSummaryInDescription) {
+      description = command.description?.split(/\r?\n/).at(-1) ?? ''
+    } else if (command.description) {
+      description = command.summary ? `${command.summary}\n\n${command.description}` : command.description
+    }
+
+    return description ? wrapDescription(description, (prose) => this.wrap(prose)) : undefined
+  }
+
   protected flags(flags: Command.Flag.Any[]): [string, string | undefined][] | undefined {
     const relocated = flags.map((flag) => {
       if (!flag.env) return flag
@@ -60,6 +73,33 @@ export class ShopifyCommandHelp extends CommandHelp {
 
     return super.flags(relocated)
   }
+}
+
+function wrapDescription(description: string, wrapProse: (prose: string) => string): string {
+  const output: string[] = []
+  let prose: string[] = []
+  let insideCodeBlock = false
+
+  const flushProse = () => {
+    if (prose.length === 0) return
+    output.push(wrapProse(prose.join('\n')))
+    prose = []
+  }
+
+  for (const line of description.split(/\r?\n/)) {
+    if (line.trimStart().startsWith('```')) {
+      flushProse()
+      output.push(line)
+      insideCodeBlock = !insideCodeBlock
+    } else if (insideCodeBlock) {
+      output.push(line)
+    } else {
+      prose.push(line)
+    }
+  }
+  flushProse()
+
+  return output.join('\n')
 }
 
 /**

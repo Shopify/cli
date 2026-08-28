@@ -13,7 +13,7 @@ export default class Build extends AppUnlinkedCommand {
 
   If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the \`build\` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

@@ -13,7 +13,7 @@ Run \`shopify store auth\` first to create stored auth for the store.
 
 Mutations are disabled by default. Re-run with \`--allow-mutations\` if you intend to modify store data.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com',

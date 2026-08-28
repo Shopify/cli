@@ -13,7 +13,7 @@ export default class StoreStripeAuth extends StoreCommand {
 
   static descriptionWithMarkdown = `Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup or stdin.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --signup <signup-jwt>',

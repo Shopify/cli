@@ -9,7 +9,7 @@ export default class VersionsList extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

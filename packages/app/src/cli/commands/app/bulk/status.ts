@@ -16,7 +16,7 @@ export default class BulkStatus extends AppLinkedCommand {
 
   Use [\`bulk execute\`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

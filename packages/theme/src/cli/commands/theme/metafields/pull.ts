@@ -14,7 +14,7 @@ export default class MetafieldsPull extends ThemeCommand {
 
 If the metafields file already exists, it will be overwritten.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

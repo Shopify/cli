@@ -9,7 +9,7 @@ export default class OrganizationList extends BaseCommand {
 
   static descriptionWithMarkdown = `Lists the Shopify organizations that you have access to, along with their organization IDs.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

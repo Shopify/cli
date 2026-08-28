@@ -13,7 +13,7 @@ export default class AutocorrectOff extends Command {
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 `
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   async run(): Promise<void> {
     setAutocorrect(false)
