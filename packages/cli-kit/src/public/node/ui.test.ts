@@ -10,6 +10,7 @@ import {
 } from './ui.js'
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
+import {runWithCommandEvents} from './command-events.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {TokenizedString} from './output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -424,6 +425,48 @@ describe('keypress', async () => {
 })
 
 describe('renderSingleTask', async () => {
+  test('emits progress when the task starts, updates, and completes', async () => {
+    const sink = vi.fn()
+
+    await runWithCommandEvents({sink}, () =>
+      renderSingleTask({
+        title: new TokenizedString('Creating store'),
+        task: async (updateStatus) => {
+          updateStatus(new TokenizedString('Saving session'))
+          return 'store'
+        },
+      }),
+    )
+
+    expect(sink).toHaveBeenCalledTimes(3)
+    expect(sink.mock.calls).toEqual([
+      [expect.objectContaining({type: 'progress', message: 'Creating store'}), {alreadyRendered: true}],
+      [expect.objectContaining({type: 'progress', message: 'Saving session'}), {alreadyRendered: true}],
+      [
+        expect.objectContaining({type: 'progress', message: 'Saving session', current: 1, total: 1}),
+        {alreadyRendered: true},
+      ],
+    ])
+  })
+
+  test('uses progress events instead of task UI for JSON output', async () => {
+    const sink = vi.fn()
+    const write = vi.fn((_chunk, _encoding, callback: () => void) => callback())
+    const stdout = new Writable({write})
+
+    const result = await runWithCommandEvents({sink, outputMode: 'json'}, () =>
+      renderSingleTask({
+        title: new TokenizedString('Creating store'),
+        task: async () => 'store',
+        renderOptions: {stdout: stdout as unknown as NodeJS.WriteStream},
+      }),
+    )
+
+    expect(result).toBe('store')
+    expect(write).not.toHaveBeenCalled()
+    expect(sink).toHaveBeenCalledTimes(2)
+  })
+
   test('returns promise result when task resolves successfully', async () => {
     // Given
     const expectedResult = {id: 123, name: 'test-result'}

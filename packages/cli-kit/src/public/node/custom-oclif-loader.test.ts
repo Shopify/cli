@@ -1,4 +1,6 @@
 import {ShopifyConfig} from './custom-oclif-loader.js'
+import {outputInfo} from './output.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {Config} from '@oclif/core'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -77,6 +79,29 @@ describe('ShopifyConfig', () => {
       Command: mockCommandClass,
       result: 'command-ran',
     })
+  })
+
+  test('keeps command hooks in the JSON event context', async () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+    const config = new ShopifyConfig({root: import.meta.url})
+    const mockCommand = {id: 'test-command', plugin: {}} as any
+    config.findCommand = vi.fn().mockReturnValue(mockCommand)
+    config.setLazyCommandLoader(vi.fn().mockResolvedValue({run: vi.fn()}))
+    config.runHook = vi.fn().mockImplementation(async (hookName) => {
+      if (hookName === 'postrun') outputInfo('Completed command test-command')
+      return {successes: [], failures: []}
+    })
+
+    await config.runCommand('test-command', ['--json'])
+
+    expect(JSON.parse(output.info())).toEqual({
+      type: 'diagnostic',
+      timestamp: expect.any(String),
+      level: 'info',
+      message: 'Completed command test-command',
+    })
+    output.clear()
   })
 
   test('loads and runs command with fallback plugin when command plugin is not set', async () => {

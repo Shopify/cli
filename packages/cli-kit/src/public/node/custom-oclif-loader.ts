@@ -1,3 +1,4 @@
+import {runWithCommandEventsForCommand} from './command-events.js'
 import {Command, Config} from '@oclif/core'
 
 /**
@@ -38,27 +39,29 @@ export class ShopifyConfig extends Config {
     argv: string[] = [],
     cachedCommand: Command.Loadable | null = null,
   ): Promise<T> {
-    if (!this.lazyCommandLoader) {
-      return super.runCommand<T>(id, argv, cachedCommand)
-    }
+    return runWithCommandEventsForCommand(argv, async () => {
+      if (!this.lazyCommandLoader) {
+        return super.runCommand<T>(id, argv, cachedCommand)
+      }
 
-    const cmd = cachedCommand ?? this.findCommand(id)
-    if (!cmd) {
-      return super.runCommand<T>(id, argv, cachedCommand)
-    }
+      const cmd = cachedCommand ?? this.findCommand(id)
+      if (!cmd) {
+        return super.runCommand<T>(id, argv, cachedCommand)
+      }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commandClass = (await this.lazyCommandLoader(id)) as any
-    if (!commandClass) {
-      return super.runCommand<T>(id, argv, cachedCommand)
-    }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const commandClass = (await this.lazyCommandLoader(id)) as any
+      if (!commandClass) {
+        return super.runCommand<T>(id, argv, cachedCommand)
+      }
 
-    commandClass.id = id
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
-    await this.runHook('prerun', {argv, Command: commandClass})
-    const result = (await commandClass.run(argv, this)) as T
-    await this.runHook('postrun', {argv, Command: commandClass, result})
-    return result
+      commandClass.id = id
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
+      await this.runHook('prerun', {argv, Command: commandClass})
+      const result = (await commandClass.run(argv, this)) as T
+      await this.runHook('postrun', {argv, Command: commandClass, result})
+      return result
+    })
   }
 }
