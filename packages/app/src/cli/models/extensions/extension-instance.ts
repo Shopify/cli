@@ -522,7 +522,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
+  private singleEventSubscriptionHandle(): string | undefined {
+    if (this.specification.identifier !== 'events') return undefined
+    const subscription = getPathValue(this.configuration, 'events.subscription')
+    if (!subscription || Array.isArray(subscription)) return undefined
+    return getPathValue(subscription, 'handle')
+  }
+
   private buildHandle() {
+    const eventSubscriptionHandle = this.singleEventSubscriptionHandle()
+    if (eventSubscriptionHandle) return eventSubscriptionHandle
+
     switch (this.specification.uidStrategy) {
       case 'single':
         return this.specification.identifier
@@ -541,6 +551,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   private buildUIDFromStrategy() {
+    const eventSubscriptionHandle = this.singleEventSubscriptionHandle()
+    if (eventSubscriptionHandle) return eventSubscriptionHandle
+
     switch (this.specification.uidStrategy) {
       case 'single':
         return this.specification.identifier
