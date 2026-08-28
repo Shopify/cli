@@ -7306,7 +7306,7 @@
       ],
       "args": {
       },
-      "description": "Exercise command JSON output infrastructure.\n\nOutput from `--json` conforms to the `KitchenSinkJsonOutputResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ninterface KitchenSinkJsonOutputResult {\n  items: SampleItem[]\n}\n\ninterface SampleItem {\n  id: number\n  name: string\n}\n```",
+      "description": "Exercise command JSON output infrastructure.\n\nOutput from `--json` conforms to the `KitchenSinkJsonOutputResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"items\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/SampleItem\"\n      }\n    }\n  },\n  \"required\": [\n    \"items\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"KitchenSinkJsonOutputResult\",\n  \"definitions\": {\n    \"SampleItem\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"number\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Exercise command JSON output infrastructure.",
       "enableJsonFlag": false,
       "flags": {
@@ -7328,7 +7328,7 @@
         },
         "json-schema": {
           "allowNo": false,
-          "description": "Print the command's JSON output schema.",
+          "description": "Print the command's JSON schemas.",
           "env": "SHOPIFY_FLAG_JSON_SCHEMA",
           "name": "json-schema",
           "type": "boolean"

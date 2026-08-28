@@ -2,13 +2,14 @@ import {createKitchenSinkJsonOutput, kitchenSinkJsonOutputSchema} from '../../se
 import Command from '@shopify/cli-kit/node/base-command'
 import {jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
+import {sleep} from '@shopify/cli-kit/node/system'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 
 export default class KitchenSinkJsonOutput extends Command {
   static descriptionWithMarkdown = 'Exercise command JSON output infrastructure.'
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
   static hidden = true
 
   static flags = {
@@ -26,9 +27,13 @@ export default class KitchenSinkJsonOutput extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(KitchenSinkJsonOutput)
+    outputInfo('Starting command.')
     const result = await renderSingleTask({
       title: outputContent`Preparing the sample result`,
-      task: async () => createKitchenSinkJsonOutput(),
+      task: async () => {
+        await sleep(1)
+        return createKitchenSinkJsonOutput()
+      },
     })
 
     if (flags.fail) {
