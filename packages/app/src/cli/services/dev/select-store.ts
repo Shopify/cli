@@ -9,9 +9,9 @@ import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {createDevStore} from '@shopify/organizations'
 
 /** Store creation from store selection is an explicit command opt-in. */
-export type StoreCreationMode = 'disabled' | 'when-empty'
+export type StoreCreationMode = 'disabled' | 'when-empty' | 'selection-option'
 
-/** Selects an eligible development store, or creates one when creation is enabled and the organization has none. */
+/** Selects an eligible development store, or creates one when store creation is enabled. */
 export async function selectStore(
   storesSearch: Paginateable<{stores: OrganizationStore[]}>,
   org: Organization,
@@ -21,9 +21,23 @@ export async function selectStore(
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
   const onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
   const storeCreationEnabled =
-    storeCreationMode === 'when-empty' && developerPlatformClient.clientName === ClientName.AppManagement
+    storeCreationMode !== 'disabled' && developerPlatformClient.clientName === ClientName.AppManagement
+
+  const createStoreInline = async () => {
+    if (await devStoreCapReached(org.id, developerPlatformClient)) {
+      throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage(org.id))
+    }
+
+    const name = await devStoreNamePrompt()
+    const plan = await devStorePlanPrompt()
+    const domain = await createDevStore({name, plan, organization: org, json: false, summary: false})
+    const createdStore = await waitForCreatedStoreByDomain(org, domain, developerPlatformClient)
+    renderSuccess({headline: `Development store "${createdStore.shopName}" created successfully.`})
+    return createdStore
+  }
 
   let onCreateStoreWhenEmpty: (() => Promise<OrganizationStore>) | undefined
+  let onCreateStore: (() => Promise<OrganizationStore>) | undefined
   if (storeCreationEnabled && storesSearch.stores.length === 0) {
     if (await devStoreCapReached(org.id, developerPlatformClient)) {
       throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage(org.id))
@@ -32,17 +46,18 @@ export async function selectStore(
     if (isTTY() === false) {
       throw new AbortError('No development store was specified.', createDevStoreTryMessage(org.id))
     }
-    onCreateStoreWhenEmpty = async () => {
-      if (await devStoreCapReached(org.id, developerPlatformClient)) {
-        throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage(org.id))
-      }
+    onCreateStoreWhenEmpty = createStoreInline
+  } else if (storeCreationEnabled && storeCreationMode === 'selection-option') {
+    if (isTTY() === false && (storesSearch.stores.length > 1 || storesSearch.hasMorePages)) {
+      throw new AbortError(
+        'No development store was specified.',
+        'Run `shopify app dev --store <store-domain>` to select a development store.',
+      )
+    }
 
-      const name = await devStoreNamePrompt()
-      const plan = await devStorePlanPrompt()
-      const domain = await createDevStore({name, plan, organization: org, json: false, summary: false})
-      const createdStore = await waitForCreatedStoreByDomain(org, domain, developerPlatformClient)
-      renderSuccess({headline: `Development store "${createdStore.shopName}" created successfully.`})
-      return createdStore
+    // A capped organization keeps normal store selection without the create choice.
+    if (isTTY() && !(await devStoreCapReached(org.id, developerPlatformClient))) {
+      onCreateStore = createStoreInline
     }
   }
 
@@ -53,6 +68,7 @@ export async function selectStore(
     ...storesSearch,
     showDomainOnPrompt,
     ...(onCreateStoreWhenEmpty ? {onCreateStoreWhenEmpty} : {}),
+    ...(onCreateStore ? {onCreateStore} : {}),
   })
   if (!store) {
     if (onCreateStoreWhenEmpty) {

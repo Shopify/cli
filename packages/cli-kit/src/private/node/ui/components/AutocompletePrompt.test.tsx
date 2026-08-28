@@ -128,6 +128,34 @@ describe('AutocompletePrompt', async () => {
     expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
   })
 
+  test('searches and selects later-page items from a short paginated list', async () => {
+    const onSubmit = vi.fn()
+    const search = vi.fn(async (term: string) => ({
+      data: term === 'l' ? [{label: 'later-page-store', value: 'later-page-store'}] : [],
+    }))
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Select a store"
+        choices={[{label: 'first-page-store', value: 'first-page-store'}]}
+        onSubmit={onSubmit}
+        hasMorePages
+        search={search}
+        searchDebounceMs={0}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toContain('ype to search...')
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForContent(renderInstance, 'ater-page-store', 'l')
+    await sendInputAndWait(renderInstance, 10, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    expect(search).toHaveBeenCalledWith('l')
+    expect(onSubmit).toHaveBeenCalledWith('later-page-store')
+  })
+
   test('renders groups', async () => {
     const items = [
       {label: 'first', value: 'first', group: 'Automations'},

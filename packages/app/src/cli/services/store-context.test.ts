@@ -49,7 +49,7 @@ describe('storeContext', () => {
     activeConfig: {isLinked: true, hiddenConfig: {}} as unknown as ActiveConfig,
   }
 
-  test('uses explicitly provided storeFqdn', async () => {
+  test('uses an explicitly provided store before selection-option store selection', async () => {
     await inTemporaryDirectory(async (dir) => {
       vi.mocked(fetchStore).mockResolvedValue(mockStore)
       await prepareAppFolder(mockApp, dir)
@@ -58,6 +58,7 @@ describe('storeContext', () => {
         appContextResult,
         storeFqdn: 'explicit-store.myshopify.com',
         forceReselectStore: false,
+        storeCreationMode: 'selection-option',
       })
 
       expect(fetchStore).toHaveBeenCalledWith(
@@ -66,12 +67,14 @@ describe('storeContext', () => {
         mockDeveloperPlatformClient,
         ['APP_DEVELOPMENT'],
       )
+      expect(mockDeveloperPlatformClient.devStoresForOrg).not.toHaveBeenCalled()
+      expect(selectStore).not.toHaveBeenCalled()
       expect(ensureTransferDisabledStore).toHaveBeenCalledWith(mockStore)
       expect(result).toEqual(mockStore)
     })
   })
 
-  test('uses cached dev_store_url when no explicit storeFqdn is provided', async () => {
+  test('uses the cached dev_store_url before selection-option store selection', async () => {
     await inTemporaryDirectory(async (dir) => {
       vi.mocked(fetchStore).mockResolvedValue(mockStore)
       await prepareAppFolder(mockApp, dir)
@@ -79,6 +82,7 @@ describe('storeContext', () => {
       const result = await storeContext({
         appContextResult,
         forceReselectStore: false,
+        storeCreationMode: 'selection-option',
       })
 
       expect(fetchStore).toHaveBeenCalledWith(
@@ -87,6 +91,8 @@ describe('storeContext', () => {
         mockDeveloperPlatformClient,
         ['APP_DEVELOPMENT'],
       )
+      expect(mockDeveloperPlatformClient.devStoresForOrg).not.toHaveBeenCalled()
+      expect(selectStore).not.toHaveBeenCalled()
       expect(result).toEqual(mockStore)
     })
   })

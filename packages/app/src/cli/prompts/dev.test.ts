@@ -143,7 +143,25 @@ describe('selectStore', () => {
     expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
   })
 
-  test('creates directly when the list is empty and a creation handler is provided', async () => {
+  test('prompts when only one store is loaded but more pages are available', async () => {
+    const stores: OrganizationStore[] = [STORE1]
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(STORE1.shopId)
+
+    const got = await selectStorePrompt({
+      stores,
+      hasMorePages: true,
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+    })
+
+    expect(got).toEqual(STORE1)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which store would you like to use to view your project?',
+      choices: [{label: 'store1', value: '1'}],
+      hasMorePages: true,
+    })
+  })
+
+  test('creates directly when the list is empty and a zero-store creation handler is provided', async () => {
     const onCreateStoreWhenEmpty = vi.fn().mockResolvedValue(STORE1)
 
     const got = await selectStorePrompt({
@@ -157,7 +175,7 @@ describe('selectStore', () => {
     expect(renderAutocompletePrompt).not.toHaveBeenCalled()
   })
 
-  test('returns the only store without creating when a creation handler is provided', async () => {
+  test('returns the only store without creating when a zero-store creation handler is provided', async () => {
     const onCreateStoreWhenEmpty = vi.fn().mockResolvedValue(STORE2)
     const outputMock = mockAndCaptureOutput()
 
@@ -171,6 +189,91 @@ describe('selectStore', () => {
     expect(onCreateStoreWhenEmpty).not.toHaveBeenCalled()
     expect(renderAutocompletePrompt).not.toBeCalled()
     expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
+  })
+
+  test('offers a create choice instead of auto-selecting the only store when a picker creation handler is provided', async () => {
+    const createdStore = {...STORE2, shopId: 'created'}
+    const onCreateStore = vi.fn().mockResolvedValue(createdStore)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('__create_new_dev_store__')
+
+    const got = await selectStorePrompt({
+      stores: [STORE1],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStore,
+    })
+
+    expect(got).toEqual(createdStore)
+    expect(onCreateStore).toHaveBeenCalledOnce()
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which store would you like to use to view your project?',
+      choices: [
+        {label: 'store1', value: '1'},
+        {label: 'Create a new dev store', value: '__create_new_dev_store__'},
+      ],
+      hasMorePages: false,
+    })
+  })
+
+  test('returns the selected store when the create choice is offered with multiple stores', async () => {
+    const onCreateStore = vi.fn().mockResolvedValue(STORE3)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
+
+    const got = await selectStorePrompt({
+      stores: [STORE1, STORE2],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStore,
+    })
+
+    expect(got).toEqual(STORE2)
+    expect(onCreateStore).not.toHaveBeenCalled()
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which store would you like to use to view your project?',
+      choices: [
+        {label: 'store1', value: '1'},
+        {label: 'store2', value: '2'},
+        {label: 'Create a new dev store', value: '__create_new_dev_store__'},
+      ],
+      hasMorePages: false,
+    })
+  })
+
+  test('keeps the create choice when the store list is searched', async () => {
+    const onCreateStore = vi.fn().mockResolvedValue(STORE3)
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      const searchResults = await search!('new')
+      expect(searchResults.data).toContainEqual({label: 'Create a new dev store', value: '__create_new_dev_store__'})
+      return '__create_new_dev_store__'
+    })
+
+    const got = await selectStorePrompt({
+      stores: [STORE1],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStore,
+      onSearchForStoresByName: (_term: string) => Promise.resolve({stores: [STORE3], hasMorePages: false}),
+    })
+
+    expect(got).toEqual(STORE3)
+    expect(onCreateStore).toHaveBeenCalledOnce()
+  })
+
+  test('returns a searched store without creating when the create choice is offered', async () => {
+    const onCreateStore = vi.fn().mockResolvedValue(STORE2)
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      const searchResults = await search!('new')
+      expect(searchResults.data).toContainEqual({label: 'store3', value: '3'})
+      expect(searchResults.data).toContainEqual({label: 'Create a new dev store', value: '__create_new_dev_store__'})
+      return '3'
+    })
+
+    const got = await selectStorePrompt({
+      stores: [STORE1],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStore,
+      onSearchForStoresByName: (_term: string) => Promise.resolve({stores: [STORE3], hasMorePages: false}),
+    })
+
+    expect(got).toEqual(STORE3)
+    expect(onCreateStore).not.toHaveBeenCalled()
   })
 
   test('returns store if user selects one', async () => {
