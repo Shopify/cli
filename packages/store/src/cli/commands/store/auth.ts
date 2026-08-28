@@ -12,7 +12,7 @@ export default class StoreAuth extends StoreCommand {
 
 Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products',

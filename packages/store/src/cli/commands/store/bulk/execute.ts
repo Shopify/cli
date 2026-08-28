@@ -17,7 +17,7 @@ export default class StoreBulkExecute extends StoreCommand {
 
   Use [\`store bulk status\`](https://shopify.dev/docs/api/shopify-cli/store/store-bulk-status) to check the status of your bulk operations.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query "query { products { edges { node { id } } } }"',

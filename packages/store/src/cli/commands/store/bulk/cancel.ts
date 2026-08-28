@@ -10,7 +10,7 @@ export default class StoreBulkCancel extends StoreCommand {
 
   Run \`shopify store auth\` first to create stored auth for the store.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = ['<%= config.bin %> <%= command.id %> --store shop.myshopify.com --id 123456789']
 
