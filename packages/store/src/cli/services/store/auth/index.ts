@@ -76,7 +76,7 @@ export async function authenticateStoreWithApp(
     ...bootstrap.waitForAuthCodeOptions,
     onListening: async () => {
       const opened = await resolvedDependencies.openURL(authorizationUrl)
-      if (!opened) resolvedDependencies.presenter.manualAuthUrl(authorizationUrl, {sensitive: Boolean(input.signup)})
+      if (!opened) resolvedDependencies.presenter.manualAuthUrl(authorizationUrl, {sensitive: false})
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
