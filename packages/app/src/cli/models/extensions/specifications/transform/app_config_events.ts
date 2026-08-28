@@ -19,6 +19,8 @@ interface EventsConfig {
 /**
  * Transforms the events config from local to remote format.
  * Resolves relative URIs (starting with /) by prepending the application_url.
+ * Strips the local 'handle' field, which identifies the module locally but is
+ * not part of the remote subscription payload.
  * During dev, application_url is set to the tunnel URL, ensuring events
  * are delivered to the correct endpoint.
  */
@@ -35,9 +37,12 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
   }
 
   const subscription = eventsConfig.events.subscription
-  const resolved = wrapSubscriptions(subscription).map((sub) =>
-    typeof sub.uri === 'string' ? {...sub, uri: prependApplicationUrl(sub.uri, appUrl)} : sub,
-  )
+  const resolved = wrapSubscriptions(subscription).map((sub) => {
+    const {handle: _, ...subWithoutHandle} = sub
+    return typeof subWithoutHandle.uri === 'string'
+      ? {...subWithoutHandle, uri: prependApplicationUrl(subWithoutHandle.uri, appUrl)}
+      : subWithoutHandle
+  })
 
   return {
     ...eventsConfig,
