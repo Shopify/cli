@@ -141,7 +141,9 @@ export type AssetUrlSchema = WithUserErrors<{
   assetUrl?: string | null
 }>
 
-export enum Flag {}
+export enum Flag {
+  SingleSubscriptionEventsModules = 'single_subscription_events_modules',
+}
 
 const FlagMap: {[key: string]: Flag} = {}
 

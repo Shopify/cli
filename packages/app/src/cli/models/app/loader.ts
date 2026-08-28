@@ -26,6 +26,7 @@ import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/sp
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
+import {EventsSpecIdentifier} from '../extensions/specifications/app_config_events.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
 import {Project} from '../project/project.js'
@@ -49,6 +50,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputToken, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {joinWithAnd} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {getPathValue} from '@shopify/cli-kit/common/object'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
 import type {ActiveConfig} from '../project/active-config.js'
@@ -787,11 +790,21 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
           const specResult = parseConfigurationObjectAgainstSpecification(specification, configPath, appConfiguration)
           if (specResult.errors) {
             this.errors.addErrors(specResult.errors)
-            return [null, [] as string[]] as const
+            return [[], [] as string[]] as const
           }
           const specConfiguration = specResult.data
 
-          if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
+          if (Object.keys(specConfiguration).length === 0) return [[], Object.keys(specConfiguration)] as const
+
+          const eventSubscriptionInstances = await this.createEventSubscriptionInstances(
+            specification,
+            specConfiguration,
+            configPath,
+            directory,
+          )
+          if (eventSubscriptionInstances) {
+            return [eventSubscriptionInstances, Object.keys(specConfiguration)] as const
+          }
 
           const instance = await this.createExtensionInstance(
             specification.identifier,
@@ -805,7 +818,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
               extensionInstance,
             ),
           )
-          return [instance, Object.keys(specConfiguration)] as const
+          return [[instance], Object.keys(specConfiguration)] as const
         }),
     )
 
@@ -824,9 +837,39 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         message: `Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
       })
     }
-    return extensionInstancesWithKeys
-      .filter(([instance]) => instance)
-      .map(([instance]) => instance as ExtensionInstance)
+    return getArrayRejectingUndefined(extensionInstancesWithKeys.flatMap(([instances]) => instances))
+  }
+
+  private async createEventSubscriptionInstances(
+    specification: ExtensionSpecification,
+    specConfiguration: object,
+    configPath: string,
+    directory: string,
+  ): Promise<ExtensionInstance[] | undefined> {
+    if (specification.identifier !== EventsSpecIdentifier) return undefined
+    const fanoutEnabled =
+      this.remoteFlags.includes(Flag.SingleSubscriptionEventsModules) ||
+      isTruthy(process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT)
+    if (!fanoutEnabled) return undefined
+
+    const events = getPathValue<{api_version?: string; subscription?: {[key: string]: unknown}[]}>(
+      specConfiguration,
+      'events',
+    )
+    const subscriptions = events?.subscription
+    if (!Array.isArray(subscriptions) || subscriptions.length === 0) return undefined
+
+    const instances = await Promise.all(
+      subscriptions.map(async (subscription) =>
+        this.createExtensionInstance(
+          specification.identifier,
+          {events: {api_version: events?.api_version, subscription}},
+          configPath,
+          directory,
+        ),
+      ),
+    )
+    return getArrayRejectingUndefined(instances)
   }
 
   private async validateConfigurationExtensionInstance(
