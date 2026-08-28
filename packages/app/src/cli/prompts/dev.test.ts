@@ -143,6 +143,36 @@ describe('selectStore', () => {
     expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
   })
 
+  test('creates directly when the list is empty and a creation handler is provided', async () => {
+    const onCreateStoreWhenEmpty = vi.fn().mockResolvedValue(STORE1)
+
+    const got = await selectStorePrompt({
+      stores: [],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStoreWhenEmpty,
+    })
+
+    expect(got).toEqual(STORE1)
+    expect(onCreateStoreWhenEmpty).toHaveBeenCalledOnce()
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
+  })
+
+  test('returns the only store without creating when a creation handler is provided', async () => {
+    const onCreateStoreWhenEmpty = vi.fn().mockResolvedValue(STORE2)
+    const outputMock = mockAndCaptureOutput()
+
+    const got = await selectStorePrompt({
+      stores: [STORE1],
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onCreateStoreWhenEmpty,
+    })
+
+    expect(got).toEqual(STORE1)
+    expect(onCreateStoreWhenEmpty).not.toHaveBeenCalled()
+    expect(renderAutocompletePrompt).not.toBeCalled()
+    expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
+  })
+
   test('returns store if user selects one', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1, STORE2]
@@ -215,6 +245,25 @@ describe('selectStore', () => {
       hasMorePages: false,
       search: expect.any(Function),
     })
+  })
+
+  test('returns an initial store after a search when clearing input restores the initial choices', async () => {
+    const stores: OrganizationStore[] = [STORE1, STORE2]
+    const onSearchForStoresByName = vi.fn().mockResolvedValue({stores: [STORE3], hasMorePages: false})
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      await search!('store3')
+      return STORE1.shopId
+    })
+
+    const got = await selectStorePrompt({
+      stores,
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onSearchForStoresByName,
+    })
+
+    expect(got).toEqual(STORE1)
+    expect(onSearchForStoresByName).toHaveBeenCalledWith('store3')
+    expect(onSearchForStoresByName).toHaveBeenCalledOnce()
   })
 })
 

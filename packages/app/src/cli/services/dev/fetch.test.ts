@@ -1,4 +1,4 @@
-import {fetchOrganizations, fetchStore, NoOrgError} from './fetch.js'
+import {fetchOrganizations, fetchStore, NoOrgError, StoreNotFoundError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
   testPartnersServiceSession,
@@ -97,12 +97,13 @@ describe('fetchStore', () => {
     const got = fetchStore(ORG1, 'domain1', developerPlatformClient)
 
     // Then
-    await expect(got).rejects.toThrow(
-      new AbortError(
-        `Could not find store for domain domain1 in organization org1.`,
-        `Ensure you have provided the correct store domain, that the store is a dev store, and that you have access to the store.`,
-      ),
-    )
+    await expect(got).rejects.toBeInstanceOf(AbortError)
+    await expect(got).rejects.toBeInstanceOf(StoreNotFoundError)
+    await expect(got).rejects.toMatchObject({
+      message: 'Could not find store for domain domain1 in organization org1.',
+      tryMessage:
+        'Ensure you have provided the correct store domain, that the store is a dev store, and that you have access to the store.',
+    })
   })
 })
 

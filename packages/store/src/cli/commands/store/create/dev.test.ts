@@ -11,9 +11,16 @@ vi.mock('../../../services/store/create/dev.js')
 vi.mock('../../../prompts/store.js')
 vi.mock('@shopify/cli-kit/node/system')
 
-vi.mock('@shopify/organizations', () => ({
-  selectOrg: vi.fn(),
-}))
+vi.mock('@shopify/organizations', async (importOriginal) => {
+  const actual: Record<string, unknown> = await importOriginal()
+  return {
+    ...actual,
+    selectOrg: vi.fn(),
+    createDevStore: vi.fn(),
+    devStoreNamePrompt: vi.fn(),
+    devStorePlanPrompt: vi.fn(),
+  }
+})
 
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   const actual: Record<string, unknown> = await importOriginal()

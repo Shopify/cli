@@ -4,12 +4,25 @@ import {Paginateable} from '../utilities/developer-platform-client.js'
 import {APP_NAME_MAX_LENGTH} from '../models/app/validation/common.js'
 import {ApplicationURLs} from '../services/dev/urls.js'
 import {
+  devStoreNamePrompt as sharedDevStoreNamePrompt,
+  devStorePlanPrompt as sharedDevStorePlanPrompt,
+} from '@shopify/organizations'
+import {
   RenderAutocompleteOptions,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
+import type {DevStorePlan} from '@shopify/organizations'
+
+export function devStoreNamePrompt(): Promise<string> {
+  return sharedDevStoreNamePrompt()
+}
+
+export function devStorePlanPrompt(): Promise<DevStorePlan> {
+  return sharedDevStorePlanPrompt()
+}
 
 export async function selectAppPrompt(
   onSearchForAppsByName: (term: string) => Promise<{apps: MinimalOrganizationApp[]; hasMorePages: boolean}>,
@@ -56,6 +69,7 @@ interface SelectStorePromptOptions {
   stores: OrganizationStore[]
   hasMorePages?: boolean
   showDomainOnPrompt: boolean
+  onCreateStoreWhenEmpty?: () => Promise<OrganizationStore | undefined>
 }
 
 interface ExtraAutoCompletePropsForStoreSelect {
@@ -67,8 +81,9 @@ export async function selectStorePrompt({
   hasMorePages = false,
   onSearchForStoresByName,
   showDomainOnPrompt = true,
+  onCreateStoreWhenEmpty,
 }: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
-  if (stores.length === 0) return undefined
+  if (stores.length === 0) return onCreateStoreWhenEmpty?.()
   if (stores.length === 1) {
     outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
@@ -83,12 +98,16 @@ export async function selectStorePrompt({
   }
 
   let currentStores = stores
+  const storesById = new Map(stores.map((store) => [store.shopId, store]))
 
   const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
   if (onSearchForStoresByName) {
     extraAutocompletePromptProps.search = async (term) => {
       const result = await onSearchForStoresByName(term)
       currentStores = result.stores
+      if (currentStores.length > 0) {
+        currentStores.forEach((store) => storesById.set(store.shopId, store))
+      }
 
       return {
         data: currentStores.map(storeToChoice),
@@ -105,7 +124,7 @@ export async function selectStorePrompt({
     hasMorePages,
     ...extraAutocompletePromptProps,
   })
-  return currentStores.find((store) => store.shopId === id)
+  return storesById.get(id)
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {

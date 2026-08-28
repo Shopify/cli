@@ -1,5 +1,5 @@
 import {fetchStore} from './dev/fetch.js'
-import {ensureTransferDisabledStore, selectStore} from './dev/select-store.js'
+import {ensureTransferDisabledStore, selectStore, StoreCreationMode} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
 import {Store} from '../utilities/developer-platform-client.js'
@@ -14,12 +14,14 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
  * @param forceReselectStore - Whether to force reselecting the store.
  * @param storeFqdn - a store FQDN, optional, when explicitly provided it has preference over anything else.
  * @param storeTypes - Store types to filter by. Defaults to dev stores only.
+ * @param storeCreationMode - When store creation is offered during store selection. Defaults to disabled.
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
   forceReselectStore: boolean
   storeFqdn?: string
   storeTypes?: Store[]
+  storeCreationMode?: StoreCreationMode
 }
 
 /**
@@ -34,6 +36,7 @@ export async function storeContext({
   storeFqdn,
   forceReselectStore,
   storeTypes = ['APP_DEVELOPMENT'],
+  storeCreationMode = 'disabled',
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
@@ -60,7 +63,7 @@ export async function storeContext({
   } else {
     // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
     const allStores = await developerPlatformClient.devStoresForOrg(organization.id)
-    selectedStore = await selectStore(allStores, organization, developerPlatformClient)
+    selectedStore = await selectStore(allStores, organization, developerPlatformClient, storeCreationMode)
   }
 
   selectedStore.shopDomain = normalizeStoreFqdn(selectedStore.shopDomain)

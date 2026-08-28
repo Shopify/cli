@@ -27,6 +27,10 @@ import {
   ListAppDevStores,
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
+import {
+  DevStoreCapReached,
+  DevStoreCapReachedQuery,
+} from '../../api/graphql/business-platform-organizations/generated/dev_store_cap_reached.js'
 import {PublicApiVersionsQuery} from '../../api/graphql/webhooks/generated/public-api-versions.js'
 import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
@@ -2266,6 +2270,42 @@ describe('uidStrategyFromTypename', () => {
 
   test('returns uuid as default for unknown typename', () => {
     expect(uidStrategyFromTypename('UnknownStrategy')).toBe('uuid')
+  })
+})
+
+describe('devStoreCapReached', () => {
+  test('queries Business Platform and returns the organization development store cap state', async () => {
+    const mockedResponse: DevStoreCapReachedQuery = {
+      organization: {devStoreCapReached: true},
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockedResponse)
+
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const unsafeRefreshToken = vi
+      .spyOn(client, 'unsafeRefreshToken')
+      .mockResolvedValue('refreshed-app-management-token')
+    client.session = vi.fn().mockResolvedValue({
+      token: 'refreshed-app-management-token',
+      businessPlatformToken: 'refreshed-business-platform-token',
+    }) as unknown as typeof client.session
+
+    const result = await client.devStoreCapReached('gid://shopify/Organization/123')
+
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).toHaveBeenCalledWith({
+      query: DevStoreCapReached,
+      token: 'business-platform-token',
+      organizationId: '123',
+      variables: {},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
+    const request = vi.mocked(businessPlatformOrganizationsRequestDoc).mock.calls[0]![0]
+    await expect(request.unauthorizedHandler.handler()).resolves.toEqual({token: 'refreshed-business-platform-token'})
+    expect(unsafeRefreshToken).toHaveBeenCalledOnce()
+    expect(result).toBe(true)
   })
 })
 

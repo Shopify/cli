@@ -71,6 +71,11 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
+  DevStoreCapReached,
+  DevStoreCapReachedQuery,
+  DevStoreCapReachedQueryVariables,
+} from '../../api/graphql/business-platform-organizations/generated/dev_store_cap_reached.js'
+import {
   ProvisionShopAccess,
   ProvisionShopAccessMutationVariables,
 } from '../../api/graphql/business-platform-organizations/generated/provision_shop_access.js'
@@ -555,6 +560,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
       stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
       hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
     }
+  }
+
+  async devStoreCapReached(orgId: string): Promise<boolean> {
+    const result = await this.businessPlatformOrganizationsRequest<
+      DevStoreCapReachedQuery,
+      DevStoreCapReachedQueryVariables
+    >({
+      query: DevStoreCapReached,
+      organizationId: String(numberFromGid(orgId)),
+      variables: {},
+    })
+
+    return result.organization?.devStoreCapReached ?? false
   }
 
   async appExtensionRegistrations(

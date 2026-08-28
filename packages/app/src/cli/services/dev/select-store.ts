@@ -1,35 +1,64 @@
+import {devStoreCapReached} from './cap.js'
+import {fetchStore, StoreNotFoundError} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+import {devStoreNamePrompt, devStorePlanPrompt, reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {isTTY, renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
+import {createDevStore} from '@shopify/organizations'
 
-/**
- * Select store from list or
- * If a cachedStoreName is provided, we check if it is valid and return it. If it's not valid, ignore it.
- * If there are no stores, show a link to create a store and prompt the user to refresh the store list
- * If no store is finally selected, exit process
- * @param stores - List of available stores
- * @param org - Current organization
- * @param developerPlatformClient - The client to access the platform API
- * @returns The selected store
- */
+/** Store creation from store selection is an explicit command opt-in. */
+export type StoreCreationMode = 'disabled' | 'when-empty'
+
+/** Selects an eligible development store, or creates one when creation is enabled and the organization has none. */
 export async function selectStore(
   storesSearch: Paginateable<{stores: OrganizationStore[]}>,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
+  storeCreationMode: StoreCreationMode = 'disabled',
 ): Promise<OrganizationStore> {
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
   const onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
+  const storeCreationEnabled =
+    storeCreationMode === 'when-empty' && developerPlatformClient.clientName === ClientName.AppManagement
+
+  let onCreateStoreWhenEmpty: (() => Promise<OrganizationStore>) | undefined
+  if (storeCreationEnabled && storesSearch.stores.length === 0) {
+    if (await devStoreCapReached(org.id, developerPlatformClient)) {
+      throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage(org.id))
+    }
+    // Inline store creation needs an interactive terminal.
+    if (isTTY() === false) {
+      throw new AbortError('No development store was specified.', createDevStoreTryMessage(org.id))
+    }
+    onCreateStoreWhenEmpty = async () => {
+      if (await devStoreCapReached(org.id, developerPlatformClient)) {
+        throw new AbortError(devStoreCapReachedMessage, devStoreCapReachedTryMessage(org.id))
+      }
+
+      const name = await devStoreNamePrompt()
+      const plan = await devStorePlanPrompt()
+      const domain = await createDevStore({name, plan, organization: org, json: false, summary: false})
+      const createdStore = await waitForCreatedStoreByDomain(org, domain, developerPlatformClient)
+      renderSuccess({headline: `Development store "${createdStore.shopName}" created successfully.`})
+      return createdStore
+    }
+  }
+
   // If no stores, guide the developer through creating one.
   // Then, with a store selected, make sure it's transfer-disabled.
   let store = await selectStorePrompt({
     onSearchForStoresByName,
     ...storesSearch,
     showDomainOnPrompt,
+    ...(onCreateStoreWhenEmpty ? {onCreateStoreWhenEmpty} : {}),
   })
   if (!store) {
+    if (onCreateStoreWhenEmpty) {
+      throw new CancelExecution()
+    }
+
     renderInfo({
       body: await developerPlatformClient.getCreateDevStoreLink(org),
     })
@@ -41,7 +70,7 @@ export async function selectStore(
     }
 
     const stores = await waitForCreatedStore(org.id, developerPlatformClient)
-    store = await selectStore({stores, hasMorePages: false}, org, developerPlatformClient)
+    store = await selectStore({stores, hasMorePages: false}, org, developerPlatformClient, storeCreationMode)
   }
 
   ensureTransferDisabledStore(store)
@@ -49,13 +78,49 @@ export async function selectStore(
   return store
 }
 
-/**
- * Retrieves the list of stores from an organization, retrying a few times if the list is empty.
- * That is because after creating the dev store, it can take some seconds for the API to return it.
- * @param orgId - Current organization ID
- * @param developerPlatformClient - The client to access the platform API
- * @returns List of stores
- */
+async function waitForCreatedStoreByDomain(
+  org: Organization,
+  shopDomain: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<OrganizationStore> {
+  const retries = 10
+  const secondsToWait = 3
+  let store: OrganizationStore | undefined
+  const tasks = [
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            const fetchedStore = await fetchStore(org, shopDomain, developerPlatformClient)
+            if (fetchedStore) {
+              store = fetchedStore
+              return
+            }
+          } catch (error) {
+            if (!(error instanceof StoreNotFoundError)) throw error
+          }
+
+          // eslint-disable-next-line no-await-in-loop
+          await sleep(secondsToWait)
+        }
+      },
+    },
+  ]
+  await renderTasks(tasks)
+
+  if (!store) {
+    throw new AbortError(
+      `The newly created development store (${shopDomain}) is not available yet.`,
+      `Run \`shopify app dev --store ${shopDomain}\` to select it when it is ready.`,
+    )
+  }
+
+  return store
+}
+
+/** Store list updates can lag after dashboard creation. */
 async function waitForCreatedStore(
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
@@ -83,6 +148,20 @@ async function waitForCreatedStore(
   await renderTasks(tasks)
 
   return data
+}
+
+const devStoreCapReachedMessage = 'Your organization has reached its development store limit.'
+
+function devStoreCreationCommand(orgId: string): string {
+  return `shopify store create dev --organization-id ${orgId} --name <store-name> --plan <plan>`
+}
+
+function createDevStoreTryMessage(orgId: string): string {
+  return `Create a development store with \`${devStoreCreationCommand(orgId)}\`, then run \`shopify app dev --store <store-domain>\`.`
+}
+
+function devStoreCapReachedTryMessage(orgId: string): string {
+  return `Make a development store slot available in Dev Dashboard. Then create a development store with \`${devStoreCreationCommand(orgId)}\`, then run \`shopify app dev --store <store-domain>\`.`
 }
 
 /**

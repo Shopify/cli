@@ -1,0 +1,5 @@
+query DevStoreCapReached {
+  organization {
+    devStoreCapReached
+  }
+}

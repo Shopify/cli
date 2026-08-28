@@ -63,6 +63,7 @@ describe('app dev command', () => {
         tunnelUrl: undefined,
         localhostPort: undefined,
       })
+      expect(storeContext).toHaveBeenCalledWith(expect.objectContaining({storeCreationMode: 'when-empty'}))
       expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: undefined, tunnel: {mode: 'auto'}}))
     })
   })
