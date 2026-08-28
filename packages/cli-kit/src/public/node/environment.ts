@@ -73,10 +73,11 @@ export function getIdentityTokenInformation(): {accessToken: string; refreshToke
  * Checks if the JSON output is enabled via flag (--json or -j) or environment variable (SHOPIFY_FLAG_JSON).
  *
  * @param environment - Process environment variables.
+ * @param argv - Command arguments to inspect for JSON flags.
  * @returns True if the JSON output is enabled, false otherwise.
  */
-export function jsonOutputEnabled(environment = getEnvironmentVariables()): boolean {
-  return sniffForJson() || isTruthy(environment[environmentVariables.json])
+export function jsonOutputEnabled(environment = getEnvironmentVariables(), argv = process.argv): boolean {
+  return sniffForJson(argv) || isTruthy(environment[environmentVariables.json])
 }
 
 /**
