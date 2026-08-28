@@ -2,10 +2,15 @@ import {prependApplicationUrl} from '../validation/url_prepender.js'
 import {CurrentAppConfiguration} from '../../../app/app.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
+interface EventSubscription {
+  uri: string
+  [key: string]: unknown
+}
+
 interface EventsConfig {
   events?: {
     api_version?: string
-    subscription?: {uri: string; [key: string]: unknown}[]
+    subscription?: EventSubscription | EventSubscription[]
   }
 }
 
@@ -27,14 +32,17 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
     appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
   }
 
+  const subscription = eventsConfig.events.subscription
+  const resolved = wrapSubscriptions(subscription).map((sub) => ({
+    ...sub,
+    uri: prependApplicationUrl(sub.uri, appUrl),
+  }))
+
   return {
     ...eventsConfig,
     events: {
       ...eventsConfig.events,
-      subscription: eventsConfig.events.subscription.map((sub) => ({
-        ...sub,
-        uri: prependApplicationUrl(sub.uri, appUrl),
-      })),
+      subscription: Array.isArray(subscription) ? resolved : resolved[0],
     },
   }
 }
@@ -44,18 +52,30 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
  * Strips the server-managed 'identifier' field from subscriptions.
  */
 export function transformToEventsConfig(content: object) {
-  const eventsConfig = getPathValue(content, 'events') as {api_version: string; subscription: object[]}
+  const eventsConfig = getPathValue(content, 'events') as {
+    api_version: string
+    subscription: {identifier: string} | {identifier: string}[]
+  }
   const apiVersion = getPathValue(eventsConfig, 'api_version')
-  const subscription = getPathValue(eventsConfig, 'subscription') as {identifier: string}[]
+  const subscription = getPathValue<{identifier: string} | {identifier: string}[]>(eventsConfig, 'subscription')
 
-  // Server always includes identifier - strip it for local TOML
-  const cleanedSubscriptions = subscription?.map((sub) => {
-    const {identifier, ...rest} = sub
-    return rest
-  })
+  // Server always includes identifier - strip it for local TOML.
+  // Single-subscription modules are normalized to a one-element array so that
+  // merging multiple modules accumulates a single subscription list.
+  const cleanedSubscriptions =
+    subscription === undefined
+      ? undefined
+      : wrapSubscriptions(subscription).map((sub) => {
+          const {identifier, ...rest} = sub
+          return rest
+        })
 
   const events =
     (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}
 
   return {events}
+}
+
+function wrapSubscriptions<T>(subscription: T | T[]): T[] {
+  return Array.isArray(subscription) ? subscription : [subscription]
 }
