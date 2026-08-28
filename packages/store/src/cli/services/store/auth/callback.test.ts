@@ -59,6 +59,39 @@ describe('store auth callback server', () => {
     ).resolves.toBe('abc123')
   })
 
+  test('waitForStoreAuthCode redirects a valid authorization handoff without settling auth', async () => {
+    const port = await getAvailablePort()
+    const params = callbackParams()
+    const authorizationUrl = 'https://shop.myshopify.com/admin/oauth/authorize?signup=signed.signup.jwt'
+    const onListening = async () => {
+      const handoffResponse = await globalThis.fetch(`http://127.0.0.1:${port}/auth/handoff?nonce=nonce-123`, {
+        redirect: 'manual',
+      })
+      expect(handoffResponse.status).toBe(302)
+      expect(handoffResponse.headers.get('Location')).toBe(authorizationUrl)
+      expect(handoffResponse.headers.get('Cache-Control')).toBe('no-store')
+      expect(handoffResponse.headers.get('Referrer-Policy')).toBe('no-referrer')
+
+      const callbackResponse = await globalThis.fetch(`http://127.0.0.1:${port}/auth/callback?${params.toString()}`)
+      expect(callbackResponse.status).toBe(200)
+      await callbackResponse.text()
+    }
+
+    await expect(
+      waitForStoreAuthCode({
+        store: 'shop.myshopify.com',
+        state: 'state-123',
+        port,
+        timeoutMs: 1000,
+        authorizationRedirect: {
+          nonce: 'nonce-123',
+          authorizationUrl,
+        },
+        onListening,
+      }),
+    ).resolves.toBe('abc123')
+  })
+
   test('waitForStoreAuthCode rejects when callback state does not match', async () => {
     const port = await getAvailablePort()
     const params = callbackParams({state: 'wrong-state'})

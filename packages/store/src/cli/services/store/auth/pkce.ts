@@ -1,4 +1,4 @@
-import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, storeAuthRedirectUri} from './config.js'
+import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, storeAuthHandoffUri, storeAuthRedirectUri} from './config.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {createHash, randomBytes} from 'crypto'
@@ -68,7 +68,9 @@ export function createPkceBootstrap(options: {
   const redirectUri = storeAuthRedirectUri(port)
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = computeCodeChallenge(codeVerifier)
-  const authorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge, signup})
+  const sensitiveAuthorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge, signup})
+  const handoffNonce = signup ? randomBytes(32).toString('base64url') : undefined
+  const authorizationUrl = handoffNonce ? storeAuthHandoffUri(port, handoffNonce) : sensitiveAuthorizationUrl
 
   outputDebug(
     outputContent`Starting PKCE auth for ${outputToken.raw(store)} with scopes ${outputToken.raw(scopes.join(','))} (redirect_uri=${outputToken.raw(redirectUri)})`,
@@ -89,6 +91,12 @@ export function createPkceBootstrap(options: {
       store,
       state,
       port,
+      authorizationRedirect: handoffNonce
+        ? {
+            nonce: handoffNonce,
+            authorizationUrl: sensitiveAuthorizationUrl,
+          }
+        : undefined,
     },
     exchangeCodeForToken: (code: string) => exchangeCodeForToken({store, code, codeVerifier, redirectUri}),
   }

@@ -1,7 +1,8 @@
-import StoreStripeAuth from './stripe-auth.js'
+import StoreStripeAuth, {readSignupJwtFromStdin} from './stripe-auth.js'
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import {describe, expect, test, vi} from 'vitest'
+import {Readable} from 'stream'
 
 vi.mock('../../services/store/auth/index.js')
 vi.mock('../../services/store/attribution.js')
@@ -57,9 +58,17 @@ describe('store stripe-auth command', () => {
     expect(StoreStripeAuth.flags.store).toBeDefined()
     expect(StoreStripeAuth.flags.scopes).toBeDefined()
     expect(StoreStripeAuth.flags.signup).toBeDefined()
-    expect(StoreStripeAuth.flags.signup.required).toBe(true)
+    expect(StoreStripeAuth.flags.signup.required).toBe(false)
     expect(StoreStripeAuth.flags.json).toBeDefined()
     expect('port' in StoreStripeAuth.flags).toBe(false)
     expect('client-secret-file' in StoreStripeAuth.flags).toBe(false)
+  })
+
+  test('reads the signup JWT from stdin', async () => {
+    await expect(readSignupJwtFromStdin(Readable.from([' signed.signup.jwt\n']))).resolves.toBe('signed.signup.jwt')
+  })
+
+  test('rejects blank stdin signup JWTs', async () => {
+    await expect(readSignupJwtFromStdin(Readable.from(['\n']))).rejects.toThrow('Missing signup JWT')
   })
 })

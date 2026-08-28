@@ -1,5 +1,5 @@
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
-import {buildStoreAuthUrl, computeCodeChallenge, generateCodeVerifier} from './pkce.js'
+import {buildStoreAuthUrl, computeCodeChallenge, createPkceBootstrap, generateCodeVerifier} from './pkce.js'
 import {describe, expect, test} from 'vitest'
 
 describe('store auth PKCE helpers', () => {
@@ -33,6 +33,23 @@ describe('store auth PKCE helpers', () => {
     )
 
     expect(url.searchParams.get('signup')).toBe('signed.signup.jwt')
+  })
+
+  test('createPkceBootstrap uses a loopback handoff URL when signup is provided', () => {
+    const bootstrap = createPkceBootstrap({
+      store: 'shop.myshopify.com',
+      scopes: ['read_products'],
+      signup: 'signed.signup.jwt',
+      exchangeCodeForToken: async () => ({access_token: 'token', scope: 'read_products'}),
+    })
+
+    const authorizationUrl = new URL(bootstrap.authorization.authorizationUrl)
+    expect(authorizationUrl.hostname).toBe('127.0.0.1')
+    expect(authorizationUrl.pathname).toBe('/auth/handoff')
+    expect(authorizationUrl.searchParams.get('signup')).toBeNull()
+    expect(bootstrap.waitForAuthCodeOptions.authorizationRedirect?.authorizationUrl).toContain(
+      'signup=signed.signup.jwt',
+    )
   })
 
   test('buildStoreAuthUrl includes PKCE params and response_type=code', () => {

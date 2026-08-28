@@ -1,4 +1,4 @@
-import {STORE_AUTH_CALLBACK_PATH, maskToken} from './config.js'
+import {STORE_AUTH_CALLBACK_PATH, STORE_AUTH_HANDOFF_PATH, maskToken} from './config.js'
 import {retryStoreAuthWithPermanentDomainError} from './recovery.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -12,6 +12,10 @@ export interface WaitForAuthCodeOptions {
   port: number
   timeoutMs?: number
   onListening?: () => void | Promise<void>
+  authorizationRedirect?: {
+    nonce: string
+    authorizationUrl: string
+  }
 }
 
 function renderAuthCallbackPage(title: string, message: string): string {
@@ -99,12 +103,14 @@ export async function waitForStoreAuthCode({
   port,
   timeoutMs = 5 * 60 * 1000,
   onListening,
+  authorizationRedirect,
 }: WaitForAuthCodeOptions): Promise<string> {
   const normalizedStore = normalizeStoreFqdn(store)
 
   return new Promise<string>((resolve, reject) => {
     let settled = false
     let isListening = false
+    let authorizationRedirectUsed = false
 
     const timeout = setTimeout(() => {
       settleWithError(new AbortError('Timed out waiting for OAuth callback.'))
@@ -112,6 +118,34 @@ export async function waitForStoreAuthCode({
 
     const server = createServer((req, res) => {
       const requestUrl = new URL(req.url ?? '/', `http://127.0.0.1:${port}`)
+
+      if (requestUrl.pathname === STORE_AUTH_HANDOFF_PATH && authorizationRedirect) {
+        const returnedNonce = requestUrl.searchParams.get('nonce')
+        if (!returnedNonce || !constantTimeEqual(returnedNonce, authorizationRedirect.nonce)) {
+          res.statusCode = 403
+          res.setHeader('Cache-Control', 'no-store')
+          res.setHeader('Connection', 'close')
+          res.end('Forbidden')
+          return
+        }
+
+        if (authorizationRedirectUsed) {
+          res.statusCode = 410
+          res.setHeader('Cache-Control', 'no-store')
+          res.setHeader('Connection', 'close')
+          res.end('Authorization handoff already used')
+          return
+        }
+
+        authorizationRedirectUsed = true
+        res.statusCode = 302
+        res.setHeader('Location', authorizationRedirect.authorizationUrl)
+        res.setHeader('Cache-Control', 'no-store')
+        res.setHeader('Referrer-Policy', 'no-referrer')
+        res.setHeader('Connection', 'close')
+        res.end()
+        return
+      }
 
       if (requestUrl.pathname !== STORE_AUTH_CALLBACK_PATH) {
         res.statusCode = 404
