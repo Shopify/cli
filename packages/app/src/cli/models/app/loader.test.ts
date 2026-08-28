@@ -2174,6 +2174,217 @@ describe('load', () => {
     ])
   })
 
+  test('fans out one events module per subscription when the fan-out is enabled', async () => {
+    // Given
+    const appConfigurationWithEvents = `
+    name = "for-testing-events"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [build]
+    include_config_on_deploy = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [events]
+    api_version = "2024-01"
+
+    [[events.subscription]]
+      topic = "orders/create"
+      actions = ["create"]
+      handle = "order-notifier"
+      uri = "https://example.com/events/orders"
+
+    [[events.subscription]]
+      topic = "products/update"
+      actions = ["update"]
+      handle = "product-sync"
+      uri = "https://example.com/events/products"
+    `
+    await writeConfig(appConfigurationWithEvents)
+    process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT = '1'
+
+    try {
+      // When
+      const app = await loadTestingApp({remoteFlags: []})
+
+      // Then
+      const eventsExtensions = app.allExtensions.filter((ext) => ext.specification.identifier === 'events')
+      expect(eventsExtensions).toHaveLength(2)
+      expect(eventsExtensions.map((ext) => ext.configuration)).toEqual([
+        {
+          events: {
+            api_version: '2024-01',
+            subscription: {
+              topic: 'orders/create',
+              actions: ['create'],
+              handle: 'order-notifier',
+              uri: 'https://example.com/events/orders',
+            },
+          },
+        },
+        {
+          events: {
+            api_version: '2024-01',
+            subscription: {
+              topic: 'products/update',
+              actions: ['update'],
+              handle: 'product-sync',
+              uri: 'https://example.com/events/products',
+            },
+          },
+        },
+      ])
+      expect(eventsExtensions.map((ext) => ext.handle)).toEqual(['order-notifier', 'product-sync'])
+      expect(eventsExtensions.map((ext) => ext.uid)).toEqual(['order-notifier', 'product-sync'])
+    } finally {
+      delete process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT
+    }
+  })
+
+  test('fans out events modules when the remote flag is enabled without the environment opt-in', async () => {
+    // Given
+    const appConfigurationWithEvents = `
+    name = "for-testing-events"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [events]
+    api_version = "2024-01"
+
+    [[events.subscription]]
+      topic = "orders/create"
+      actions = ["create"]
+      handle = "order-notifier"
+      uri = "https://example.com/events/orders"
+    `
+    await writeConfig(appConfigurationWithEvents)
+
+    // When
+    const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+
+    // Then
+    const eventsExtensions = app.allExtensions.filter((ext) => ext.specification.identifier === 'events')
+    expect(eventsExtensions).toHaveLength(1)
+    expect(eventsExtensions[0]!.configuration).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          actions: ['create'],
+          handle: 'order-notifier',
+          uri: 'https://example.com/events/orders',
+        },
+      },
+    })
+    expect(eventsExtensions[0]!.handle).toEqual('order-notifier')
+  })
+
+  test('loads a single events module with the subscription list when the fan-out is disabled', async () => {
+    // Given
+    const appConfigurationWithEvents = `
+    name = "for-testing-events"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [events]
+    api_version = "2024-01"
+
+    [[events.subscription]]
+      topic = "orders/create"
+      actions = ["create"]
+      handle = "order-notifier"
+      uri = "https://example.com/events/orders"
+    `
+    await writeConfig(appConfigurationWithEvents)
+
+    // When
+    const app = await loadTestingApp({remoteFlags: []})
+
+    // Then
+    const eventsExtensions = app.allExtensions.filter((ext) => ext.specification.identifier === 'events')
+    expect(eventsExtensions).toHaveLength(1)
+    expect(eventsExtensions[0]!.configuration).toMatchObject({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            actions: ['create'],
+            handle: 'order-notifier',
+            uri: 'https://example.com/events/orders',
+          },
+        ],
+      },
+    })
+  })
+
+  test('rejects duplicate event subscription handles when the fan-out is enabled', async () => {
+    // Given
+    const appConfigurationWithEvents = `
+    name = "for-testing-events"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [events]
+    api_version = "2024-01"
+
+    [[events.subscription]]
+      topic = "orders/create"
+      actions = ["create"]
+      handle = "order-notifier"
+      uri = "https://example.com/events/orders"
+
+    [[events.subscription]]
+      topic = "products/update"
+      actions = ["update"]
+      handle = "order-notifier"
+      uri = "https://example.com/events/products"
+    `
+    await writeConfig(appConfigurationWithEvents)
+    process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT = '1'
+
+    try {
+      // When
+      const app = await loadTestingApp({remoteFlags: []})
+
+      // Then
+      const errorMessages = app.errors
+        .getErrors()
+        .map((error) => error.message)
+        .join('\n')
+      expect(errorMessages).toContain('Duplicated handle "order-notifier"')
+    } finally {
+      delete process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)

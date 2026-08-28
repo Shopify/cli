@@ -9,6 +9,7 @@ import {
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
+import {Flag} from '../developer-platform-client.js'
 import {OrganizationExpFlagsQuery} from '../../api/graphql/business-platform-organizations/generated/organization_exp_flags.js'
 import {
   testUIExtension,
@@ -1229,6 +1230,80 @@ describe('deploy', () => {
     expect(result.appDeploy.userErrors).toHaveLength(1)
     expect(result.appDeploy.userErrors[0]?.message).toBe('Invalid version')
     expect(result.appDeploy.userErrors[0]?.details).toHaveLength(0)
+  })
+
+  describe('appFromIdentifiers', () => {
+    function mockedActiveAppReleaseResponse() {
+      return {
+        app: {
+          id: 'gid://shopify/App/123',
+          key: 'api-key',
+          organizationId: 'gid://shopify/Organization/123',
+          activeRoot: {
+            grantedShopifyApprovalScopes: [],
+            clientCredentials: {secrets: [{key: 'secret'}]},
+          },
+          activeRelease: {
+            id: 'gid://shopify/Release/1',
+            version: {
+              name: 'app-name',
+              appModules: [],
+            },
+          },
+        },
+      }
+    }
+
+    test('includes the single-subscription events flag when the organization exp flag is enabled', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedActiveAppReleaseResponse())
+      const mockedExpFlagsResponse: OrganizationExpFlagsQuery = {
+        organization: {id: 'gid://organization/Organization/123', enabledFlags: [true]},
+      }
+      vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockedExpFlagsResponse)
+
+      // When
+      const app = await client.appFromIdentifiers('api-key')
+
+      // Then
+      expect(app?.flags).toEqual([Flag.SingleSubscriptionEventsModules])
+    })
+
+    test('returns no flags when the organization exp flag is disabled', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedActiveAppReleaseResponse())
+      const mockedExpFlagsResponse: OrganizationExpFlagsQuery = {
+        organization: {id: 'gid://organization/Organization/123', enabledFlags: [false]},
+      }
+      vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockedExpFlagsResponse)
+
+      // When
+      const app = await client.appFromIdentifiers('api-key')
+
+      // Then
+      expect(app?.flags).toEqual([])
+    })
+
+    test('returns no flags when the exp flag lookup fails', async () => {
+      // Given
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedActiveAppReleaseResponse())
+      vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValueOnce(new Error('boom'))
+
+      // When
+      const app = await client.appFromIdentifiers('api-key')
+
+      // Then
+      expect(app?.flags).toEqual([])
+    })
   })
 
   test('queries for versions list', async () => {

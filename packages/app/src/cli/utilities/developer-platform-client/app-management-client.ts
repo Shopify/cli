@@ -20,6 +20,7 @@ import {
   AssetUrlSchema,
   AppVersionIdentifiers,
   filterDisabledFlags,
+  Flag,
   ClientName,
   AppModuleVersion,
   CreateAppOptions,
@@ -158,6 +159,7 @@ import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/
 import {randomUUID} from 'crypto'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
+const SINGLE_SUBSCRIPTION_EVENTS_MODULES_EXP_FLAG = 'f_single_subscription_events_modules_cli'
 const commandRunId = randomUUID()
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
@@ -341,16 +343,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {name, appModules} = app.activeRelease.version
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
     const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
+    const organizationId = String(numberFromGid(app.organizationId))
     return {
       id: app.id,
       title: name,
       apiKey: app.key,
       apiSecretKeys,
-      organizationId: String(numberFromGid(app.organizationId)),
+      organizationId,
       grantedScopes: app.activeRoot.grantedShopifyApprovalScopes,
       applicationUrl: appHomeModule?.config?.app_url as string | undefined,
       embedded: appHomeModule?.config?.embedded as boolean | undefined,
-      flags: [],
+      flags: await this.remoteFlagsForOrganization(organizationId),
       developerPlatformClient: this,
     }
   }
@@ -1049,6 +1052,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   private async activeAppVersionRawResult(apiKey: string): Promise<ActiveAppReleaseQuery> {
     return this.appManagementRequest({query: ActiveAppReleaseFromApiKey, variables: {apiKey}})
+  }
+
+  private async remoteFlagsForOrganization(organizationId: string): Promise<Flag[]> {
+    try {
+      const enabledFlags = await this.organizationExpFlags(organizationId, [
+        SINGLE_SUBSCRIPTION_EVENTS_MODULES_EXP_FLAG,
+      ])
+      return enabledFlags[SINGLE_SUBSCRIPTION_EVENTS_MODULES_EXP_FLAG] ? [Flag.SingleSubscriptionEventsModules] : []
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return []
+    }
   }
 
   private async organizationBetaFlags(
