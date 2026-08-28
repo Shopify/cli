@@ -14,7 +14,7 @@ commands; remove each entry when converted, and never add new finite commands to
 ## Define the result beside the domain service
 
 Keep the schema beside the service that produces the result. One Zod schema supplies runtime validation, the inferred
-TypeScript type, JSON encoding, and the type shown in command help.
+TypeScript type, JSON encoding, and the JSON Schema shown in command help.
 
 ```ts
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
@@ -34,8 +34,8 @@ export const widgetListJsonOutputSchema = defineJsonOutputSchema({
 export type WidgetListResult = InferJsonOutputSchema<typeof widgetListJsonOutputSchema>
 ```
 
-Add nested object schemas to `definitions` so generated help gives them stable names. Use `.passthrough()` only when
-the public result deliberately permits additional keys.
+Optionally add nested object schemas to `definitions` to give them stable names and references in JSON Schema.
+Use `.passthrough()` only when the public result deliberately permits additional keys.
 
 ## Connect the command and encoder
 
@@ -75,8 +75,8 @@ Presenters continue to own terminal text, output channels, files, and exit behav
 on terminal rendering (including React/Ink), Oclif, filesystem output, or CLI errors.
 
 Events are separate from finite results. Progress events can drive spinners or status messages while the command is
-running, but they aren't fields in the final JSON result. Errors continue through the standard CLI error path and
-stderr; don't encode failures as successful result shapes merely to support `--json`.
+running, but they aren't fields in the final JSON result. Errors continue through the standard CLI error path;
+don't encode failures as successful result shapes merely to support `--json`.
 
 ## Preserve compatibility
 
@@ -104,6 +104,22 @@ The lint rule only exempts paths in that list; a `jsonOutputSupport` property al
 This exemption is only for commands whose lifetime or output is inherently streaming. A finite operation remains a
 finite command even when it emits progress events, writes a file, or has no interesting return value.
 
+## Plugin authors
+
+Plugins must adopt the result contract and control their output before their commands can be used reliably in JSON
+mode. Inheriting `--json-schema` or enabling `SHOPIFY_FLAG_JSON=1` doesn't convert all plugin output automatically.
+
+- Oclif `init` hooks run before the command's error handling. A hook that renders a warning and calls `process.exit(1)`
+  bypasses the JSON fatal error path and can leave stdout empty. Put command validation in the command lifecycle and
+  throw an `AbortError` so CLI Kit can encode the failure.
+- In the command event context, `outputInfo`, `outputWarn`, and `outputDebug` use diagnostic events in JSON mode when
+  using their default logger. Banners such as `renderSuccess` and `renderWarning` still render terminal text to stderr;
+  they aren't automatically converted to events. Use `emitCommandEvent` from `@shopify/cli-kit/node/command-events`
+  for diagnostics, and keep human-only banners in the text presenter.
+- Third-party loggers and child processes aren't automatically converted or silenced. Use `jsonOutputEnabled()` from
+  `@shopify/cli-kit/node/environment` to silence or capture their output in JSON mode. Reserve stdout for the encoded
+  result or fatal error document, and send diagnostics through the event helpers to stderr.
+
 ## Test a new command
 
 Tests should verify:
@@ -115,5 +131,9 @@ Tests should verify:
 - errors and exit behavior; and
 - prompt behavior independently from `--json` and `--no-input`.
 
-Command help includes the generated TypeScript contract automatically through `jsonOutputSchema`. Run the manifest,
+Command help includes the result's JSON Schema automatically through `jsonOutputSchema`. `--json-schema` prints one
+JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`, `Error`, and `Event`
+definitions describe these separately; results and fatal errors go to stdout, and side events go to stderr.
+
+Both outputs come from the same Zod definitions used to validate and encode results. Run the manifest,
 README, and code-documentation refresh commands required by CI after changing command metadata.

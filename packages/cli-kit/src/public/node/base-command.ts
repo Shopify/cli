@@ -8,11 +8,11 @@ import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
+import {type JsonOutputSchema} from './json-output-schema.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
-import {Command, Config, Errors} from '@oclif/core'
+import {Command, Config, Errors, Flags} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
-import type {JsonOutputSchema} from './json-output-schema.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ArgOutput = OutputArgs<any>
@@ -33,7 +33,13 @@ interface EnvironmentFlags {
 }
 
 abstract class BaseCommand extends Command {
-  static baseFlags: FlagInput<{}> = {}
+  static baseFlags: FlagInput<{}> = {
+    'json-schema': Flags.boolean({
+      description: "Print the command's JSON schemas.",
+      env: 'SHOPIFY_FLAG_JSON_SCHEMA',
+    }),
+  }
+
   static descriptionWithMarkdown?: string
 
   public static get jsonOutputSchema(): JsonOutputSchema | undefined {
@@ -50,10 +56,8 @@ abstract class BaseCommand extends Command {
 
   // Include the JSON result schema and convert Markdown links to plain text for command help.
   public static descriptionForHelp(): string | undefined {
-    return appendJsonOutputSchema(this.descriptionWithMarkdown ?? '', this.jsonOutputSchema).replace(
-      /(\[)(.*?)(])(\()(.*?)(\))/gm,
-      '"$2" ($5)',
-    )
+    const description = (this.descriptionWithMarkdown ?? '').replace(/(\[)(.*?)(])(\()(.*?)(\))/gm, '"$2" ($5)')
+    return appendJsonOutputSchema(description, this.jsonOutputSchema)
   }
 
   /** @deprecated Use descriptionForHelp instead. */
@@ -413,10 +417,12 @@ function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): bo
 function appendJsonOutputSchema(description: string, outputSchema: JsonOutputSchema | undefined): string {
   if (!outputSchema) return description
 
-  const jsonOutputDescription = `With \`--json\`, the command returns \`${outputSchema.name}\`:
+  const jsonOutputDescription = `Output from \`--json\` conforms to the \`${outputSchema.name}\` schema.
 
-\`\`\`ts
-${outputSchema.typescript}
+Use \`--json-schema\` to print the result, error, and event schemas.
+
+\`\`\`json
+${JSON.stringify(outputSchema.jsonSchema, null, 2)}
 \`\`\``
 
   return [description, jsonOutputDescription].filter(Boolean).join('\n\n')

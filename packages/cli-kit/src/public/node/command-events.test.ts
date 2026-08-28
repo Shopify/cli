@@ -1,4 +1,9 @@
-import {renderCommandEvent, renderCommandEventAsJson, runWithCommandEvents} from './command-events.js'
+import {
+  commandEventOutputSchema,
+  renderCommandEvent,
+  renderCommandEventAsJson,
+  runWithCommandEvents,
+} from './command-events.js'
 import {outputWarn} from './output.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {beforeEach, describe, expect, test} from 'vitest'
@@ -8,6 +13,29 @@ const outputMock = mockAndCaptureOutput()
 
 beforeEach(() => {
   outputMock.clear()
+})
+
+describe('commandEventOutputSchema', () => {
+  test('renders event definitions with their validation constraints', () => {
+    expect(commandEventOutputSchema.jsonSchema).toMatchObject({
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      anyOf: [{$ref: '#/definitions/CommandDiagnosticEvent'}, {$ref: '#/definitions/CommandProgressEvent'}],
+      definitions: {
+        CommandDiagnosticEvent: {
+          properties: {
+            timestamp: {type: 'string', format: 'date-time'},
+            level: {enum: ['debug', 'info', 'warning', 'error']},
+          },
+          additionalProperties: false,
+        },
+        CommandProgressEvent: {
+          properties: {current: {type: 'number', minimum: 0}, total: {type: 'number', minimum: 0}},
+          required: ['type', 'timestamp', 'status', 'operation'],
+          additionalProperties: false,
+        },
+      },
+    })
+  })
 })
 
 describe('renderCommandEvent', () => {
