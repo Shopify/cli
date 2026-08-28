@@ -20,8 +20,8 @@ describe('kitchen-sink json-output command', () => {
       .slice(0, 3)
       .map((line) => JSON.parse(line) as unknown)
     expect(sideEvents).toMatchObject([
+      {type: 'diagnostic', level: 'info', message: 'Starting command.'},
       {type: 'progress', message: 'Preparing the sample result'},
-      {type: 'diagnostic', level: 'info', message: 'Preparing the sample result.'},
       {type: 'progress', message: 'Preparing the sample result', current: 1, total: 1},
     ])
     expect(output.info()).toContain(kitchenSinkJsonOutputSchema.encode({items: [{id: 1, name: 'Example'}]}))
