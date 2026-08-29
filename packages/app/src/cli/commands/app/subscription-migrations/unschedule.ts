@@ -18,7 +18,7 @@ The CSV can contain only the \`shop_id\` header, or it can reuse the complete CS
 
 Unscheduling is not a rollback after a subscription has migrated. The command validates the entire CSV before sending any mutation. Use \`--force\` to skip confirmation and immediately submit every valid row.
 
-Operations are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same submission. With \`--watch\`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With \`--json --watch\`, the command outputs one structured JSON document after every operation reaches a terminal status.
+Operations are submitted in batches of 250 shops. Preserve every operation GID printed by the command so you can check or cancel the submitted operations. With \`--watch\`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With \`--json --watch\`, the command outputs one structured JSON document after every operation reaches a terminal status.
 
 Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to select a different app within the project. Use \`--reset\` to relink the app.`
 
@@ -28,7 +28,7 @@ Run the command from an app project. By default, it uses the Client ID from the 
     '<%= config.bin %> <%= command.id %> --input migrations.csv --force',
     'cat migrations.csv | <%= config.bin %> <%= command.id %> --force',
     '<%= config.bin %> <%= command.id %> --input migrations.csv --path ../my-app --config staging --force --json',
-    '<%= config.bin %> <%= command.id %> --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force',
+    '<%= config.bin %> <%= command.id %> --input migrations.csv --client-id <client-id> --force',
     '<%= config.bin %> <%= command.id %> --input - --force --watch',
   ]
 
@@ -48,7 +48,6 @@ Run the command from an app project. By default, it uses the Client ID from the 
       action: 'unschedule',
       input: flags.input ?? '-',
       clientId: remoteApp.apiKey,
-      rootIdempotencyKey: flags['idempotency-key'],
       skipConfirmation: flags.force,
       watch: flags.watch,
       ...(flags.watch && !flags.json ? {onSubmissionAccepted: presentAcceptedMigrationSubmission} : {}),

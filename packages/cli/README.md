@@ -1888,8 +1888,8 @@ Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing
 
 ```
 USAGE
-  $ shopify app subscription-migrations schedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [--idempotency-key
-    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+  $ shopify app subscription-migrations schedule [--auth-alias <value>] [--no-color] [--verbose] [--path <value>] [--client-id <value> |
+    -c <value>] [--reset | ] [-j] [-i <value>] [-f] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -1915,10 +1915,6 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
-
-  --idempotency-key=<value>
-      Reuse an existing root idempotency key for the same action and input.
-      [env: SHOPIFY_FLAG_IDEMPOTENCY_KEY]
 
   --no-color
       Disable color output.
@@ -1958,8 +1954,8 @@ DESCRIPTION
   `WHEN_REQUIRED` and defaults to `WHEN_REQUIRED` when omitted or blank.
 
   Validation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in
-  batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the
-  same root idempotency key with the same client ID, action, and input replays the same submission.
+  batches of 250 shops. Preserve every operation GID printed by the command so you can check or cancel the submitted
+  operations.
 
   Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
@@ -1976,7 +1972,7 @@ EXAMPLES
 
   $ shopify app subscription-migrations schedule --input migrations.csv --path ../my-app --config staging --force --json
 
-  $ shopify app subscription-migrations schedule --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force
+  $ shopify app subscription-migrations schedule --input migrations.csv --client-id <client-id> --force
 
   $ shopify app subscription-migrations schedule --input - --force --watch
 ```
@@ -2064,8 +2060,8 @@ Reverses app subscription migrations that are still scheduled.
 
 ```
 USAGE
-  $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [--idempotency-key
-    <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+  $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--no-color] [--verbose] [--path <value>] [--client-id <value> |
+    -c <value>] [--reset | ] [-j] [-i <value>] [-f] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -2091,10 +2087,6 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
-
-  --idempotency-key=<value>
-      Reuse an existing root idempotency key for the same action and input.
-      [env: SHOPIFY_FLAG_IDEMPOTENCY_KEY]
 
   --no-color
       Disable color output.
@@ -2134,11 +2126,10 @@ DESCRIPTION
   Unscheduling is not a rollback after a subscription has migrated. The command validates the entire CSV before sending
   any mutation. Use `--force` to skip confirmation and immediately submit every valid row.
 
-  Operations are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by
-  the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same
-  submission. With `--watch`, human-readable output shows accepted identifiers before polling begins, then displays
-  operation progress and the final outcome. With `--json --watch`, the command outputs one structured JSON document
-  after every operation reaches a terminal status.
+  Operations are submitted in batches of 250 shops. Preserve every operation GID printed by the command so you can check
+  or cancel the submitted operations. With `--watch`, human-readable output shows accepted identifiers before polling
+  begins, then displays operation progress and the final outcome. With `--json --watch`, the command outputs one
+  structured JSON document after every operation reaches a terminal status.
 
   Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
@@ -2151,7 +2142,7 @@ EXAMPLES
 
   $ shopify app subscription-migrations unschedule --input migrations.csv --path ../my-app --config staging --force --json
 
-  $ shopify app subscription-migrations unschedule --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force
+  $ shopify app subscription-migrations unschedule --input migrations.csv --client-id <client-id> --force
 
   $ shopify app subscription-migrations unschedule --input - --force --watch
 ```

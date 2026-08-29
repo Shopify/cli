@@ -13,7 +13,6 @@ interface RunSubmissionCommandOptions {
   action: MigrationAction
   input: string
   clientId: string
-  rootIdempotencyKey?: string
   skipConfirmation: boolean
   watch: boolean
   onSubmissionAccepted?: (submission: MigrationSubmission) => void
@@ -33,7 +32,6 @@ export async function runSubmissionCommand(options: RunSubmissionCommandOptions)
   const submissionResult = await submitMigrationPlan({
     clientId: options.clientId,
     plan: result.plan,
-    ...(options.rootIdempotencyKey === undefined ? {} : {rootIdempotencyKey: options.rootIdempotencyKey}),
   })
 
   if (submissionResult.status === 'failed' || !options.watch) return submissionResult

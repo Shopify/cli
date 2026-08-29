@@ -18,7 +18,7 @@ When \`--input\` is omitted, the command reads CSV data from stdin. Use \`--inpu
 
 \`price_behavior\` must be \`HONOR_BILLING_PRICE\` or \`PLAN_PRICE\`. \`notification\` can be \`NONE\`, \`OPT_OUT\`, or \`WHEN_REQUIRED\` and defaults to \`WHEN_REQUIRED\` when omitted or blank.
 
-Validation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in batches of 250 shops. Preserve the root idempotency key and every operation GID printed by the command. Reusing the same root idempotency key with the same client ID, action, and input replays the same submission.
+Validation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in batches of 250 shops. Preserve every operation GID printed by the command so you can check or cancel the submitted operations.
 
 Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to select a different app within the project. Use \`--reset\` to relink the app.
 
@@ -30,7 +30,7 @@ Use \`--force\` to skip confirmation and immediately submit every valid row. Wit
     '<%= config.bin %> <%= command.id %> --input migrations.csv --force',
     'cat migrations.csv | <%= config.bin %> <%= command.id %> --force',
     '<%= config.bin %> <%= command.id %> --input migrations.csv --path ../my-app --config staging --force --json',
-    '<%= config.bin %> <%= command.id %> --input migrations.csv --client-id <client-id> --idempotency-key <root-idempotency-key> --force',
+    '<%= config.bin %> <%= command.id %> --input migrations.csv --client-id <client-id> --force',
     '<%= config.bin %> <%= command.id %> --input - --force --watch',
   ]
 
@@ -50,7 +50,6 @@ Use \`--force\` to skip confirmation and immediately submit every valid row. Wit
       action: 'schedule',
       input: flags.input ?? '-',
       clientId: remoteApp.apiKey,
-      rootIdempotencyKey: flags['idempotency-key'],
       skipConfirmation: flags.force,
       watch: flags.watch,
       ...(flags.watch && !flags.json ? {onSubmissionAccepted: presentAcceptedMigrationSubmission} : {}),

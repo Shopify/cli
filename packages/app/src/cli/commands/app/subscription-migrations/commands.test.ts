@@ -60,14 +60,12 @@ const successfulSubmissionResult: MigrationSubmissionResult = {
   submission: {
     clientId: 'active-client-id',
     action: 'schedule',
-    rootIdempotencyKey: 'root-key',
     inputDigest: 'input-digest',
     total: 1,
     operations: [
       {
         batchIndex: 0,
         batchPayloadDigest: 'batch-digest',
-        idempotencyKey: 'batch-key',
         operation: completedOperation,
       },
     ],
@@ -85,14 +83,12 @@ const successfulCancellationResult: MigrationCancellationResult = {
 }
 
 describe('subscription migration submission commands', () => {
-  test('schedule delegates every submission option with an explicit root idempotency key', async () => {
+  test('schedule delegates every submission option without exposing idempotency controls', async () => {
     const result = await Schedule.run([
       '--input',
       'migrations.csv',
       '--client-id',
       'schedule-client-id',
-      '--idempotency-key',
-      'root-key',
       '--force',
       '--json',
       '--watch',
@@ -108,7 +104,6 @@ describe('subscription migration submission commands', () => {
       action: 'schedule',
       input: 'migrations.csv',
       clientId: 'remote-client-id',
-      rootIdempotencyKey: 'root-key',
       skipConfirmation: true,
       watch: true,
     })
@@ -134,7 +129,7 @@ describe('subscription migration submission commands', () => {
     )
   })
 
-  test('unschedule delegates without an omitted root idempotency key', async () => {
+  test('unschedule delegates without idempotency controls', async () => {
     const result = await Unschedule.run(['--input', '-', '--client-id', 'unschedule-client-id', '--force'])
 
     expect(linkedAppContext).toHaveBeenCalledWith({
@@ -147,7 +142,6 @@ describe('subscription migration submission commands', () => {
       action: 'unschedule',
       input: '-',
       clientId: 'remote-client-id',
-      rootIdempotencyKey: undefined,
       skipConfirmation: true,
       watch: false,
     })
@@ -433,7 +427,7 @@ describe('subscription migration command metadata', () => {
 
   test.each([Schedule, Unschedule, Status, Cancel])('$name has no legacy migration flags', (Command) => {
     expect(Object.keys(Command.flags)).not.toEqual(
-      expect.arrayContaining(['yes', 'operation', 'operation-id', 'run', 'run-id']),
+      expect.arrayContaining(['yes', 'operation', 'operation-id', 'run', 'run-id', 'idempotency-key']),
     )
   })
 

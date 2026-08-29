@@ -40,20 +40,17 @@ function submission(): MigrationSubmission {
   return {
     clientId: 'client-id',
     action: 'schedule',
-    rootIdempotencyKey: 'root-key',
     inputDigest: 'digest',
     total: 2,
     operations: [
       {
         batchIndex: 0,
         batchPayloadDigest: 'batch-digest-0',
-        idempotencyKey: 'batch-key-0',
         operation: operation('one'),
       },
       {
         batchIndex: 1,
         batchPayloadDigest: 'batch-digest-1',
-        idempotencyKey: 'batch-key-1',
         operation: operation('two'),
       },
     ],
@@ -116,15 +113,12 @@ describe('runSubmissionCommand', () => {
     vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
     vi.mocked(submitMigrationPlan).mockResolvedValue(result)
 
-    await expect(
-      runSubmissionCommand({...baseOptions, rootIdempotencyKey: 'root-key', onSubmissionAccepted}),
-    ).resolves.toBe(result)
+    await expect(runSubmissionCommand({...baseOptions, onSubmissionAccepted})).resolves.toBe(result)
 
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     expect(submitMigrationPlan).toHaveBeenCalledWith({
       clientId: 'client-id',
       plan,
-      rootIdempotencyKey: 'root-key',
     })
     expect(watchMigrationOperations).not.toHaveBeenCalled()
     expect(onSubmissionAccepted).not.toHaveBeenCalled()

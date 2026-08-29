@@ -1,5 +1,5 @@
 import {createMigrationOperation, type MigrationApiInput, type MigrationUserError} from './partners-api.js'
-import {deriveBatchIdempotencyKey, generateRootIdempotencyKey} from './plan/idempotency.js'
+import {deriveBatchIdempotencyKey, generateInvocationId} from './plan/idempotency.js'
 import type {
   MigrationOperation,
   MigrationPlan,
@@ -10,14 +10,12 @@ import type {
 export interface SubmittedMigrationOperation {
   batchIndex: number
   batchPayloadDigest: string
-  idempotencyKey: string
   operation: MigrationOperation
 }
 
 export interface MigrationSubmission {
   clientId: string
   action: MigrationPlan['action']
-  rootIdempotencyKey: string
   inputDigest: string
   total: number
   operations: SubmittedMigrationOperation[]
@@ -44,20 +42,19 @@ export class MigrationSubmissionProtocolError extends Error {
 interface SubmitMigrationPlanOptions {
   clientId: string
   plan: MigrationPlan
-  rootIdempotencyKey?: string
+  invocationId?: string
   createOperation?: typeof createMigrationOperation
 }
 
 export async function submitMigrationPlan({
   clientId,
   plan,
-  rootIdempotencyKey = generateRootIdempotencyKey(),
+  invocationId = generateInvocationId(),
   createOperation = createMigrationOperation,
 }: SubmitMigrationPlanOptions): Promise<MigrationSubmissionResult> {
   const submission: MigrationSubmission = {
     clientId,
     action: plan.action,
-    rootIdempotencyKey,
     inputDigest: plan.inputDigest,
     total: plan.rows.length,
     operations: [],
@@ -67,7 +64,7 @@ export async function submitMigrationPlan({
     const idempotencyKey = deriveBatchIdempotencyKey({
       appIdentifier: clientId,
       action: plan.action,
-      rootKey: rootIdempotencyKey,
+      invocationId,
       canonicalBatchPayload: batch.canonicalPayload,
     })
     // Each accepted batch must be recorded before the next request can fail.
@@ -82,7 +79,6 @@ export async function submitMigrationPlan({
       submission.operations.push({
         batchIndex: batch.index,
         batchPayloadDigest: batch.payloadDigest,
-        idempotencyKey,
         operation: payload.operation,
       })
     }

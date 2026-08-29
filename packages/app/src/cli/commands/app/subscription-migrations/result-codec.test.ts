@@ -15,14 +15,12 @@ function submission(): MigrationSubmission {
   return {
     clientId: 'client-id',
     action: 'schedule',
-    rootIdempotencyKey: 'root-key',
     inputDigest: 'input-digest',
     total: 1,
     operations: [
       {
         batchIndex: 0,
         batchPayloadDigest: 'batch-digest',
-        idempotencyKey: 'batch-key',
         operation: operation('operation-one'),
       },
     ],
@@ -38,6 +36,7 @@ describe('subscription migration result codecs', () => {
 
     expect(JSON.parse(document)).toEqual({schemaVersion: 1, ...value})
     expect(document).toBe(JSON.stringify({schemaVersion: 1, ...value}, null, 2))
+    expect(document).not.toContain('idempotencyKey')
   })
 
   test('encodes accepted submission evidence and failure details in one JSON document', () => {

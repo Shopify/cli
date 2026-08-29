@@ -72,11 +72,10 @@ function renderSubmissionSuccess(submission: MigrationSubmission): void {
   renderSuccess({
     headline: `Subscription migrations ${action}.`,
     body: [
-      `Root idempotency key: ${submission.rootIdempotencyKey}`,
       `Shops: ${submission.total}`,
       'Operation IDs:',
       ...submission.operations.map(({operation}) => operation.id),
-      'Save the root idempotency key and every operation ID. You will need them to check or cancel this submission.',
+      'Save every operation ID. You will need them to check or cancel this submission.',
     ],
   })
 }
@@ -86,12 +85,11 @@ function renderSubmissionFailure(result: Extract<MigrationSubmissionResult, {sta
     renderWarning({
       headline: 'Some subscription migration operations failed.',
       body: [
-        `Root idempotency key: ${result.submission.rootIdempotencyKey}`,
         'Failed operation IDs:',
         ...result.failure.operationIds,
         'Terminal operation outcomes:',
         ...result.submission.operations.map(({operation}) => formatMigrationOperationStatus(operation)),
-        'Save the root idempotency key and every operation ID. You will need them to inspect or retry this submission.',
+        'Save every operation ID. You will need them to inspect this submission.',
       ],
     })
     return
@@ -99,14 +97,18 @@ function renderSubmissionFailure(result: Extract<MigrationSubmissionResult, {sta
 
   const operationIds = result.submission.operations.map(({operation}) => operation.id)
   renderWarning({
-    headline: 'Some subscription migration operations were accepted before submission failed.',
+    headline:
+      operationIds.length === 0
+        ? 'Subscription migration submission failed.'
+        : 'Some subscription migration operations were accepted before submission failed.',
     body: [
-      `Root idempotency key: ${result.submission.rootIdempotencyKey}`,
       ...(operationIds.length === 0 ? ['Accepted operation IDs: None.'] : ['Accepted operation IDs:', ...operationIds]),
       `Batch index: ${result.failure.batchIndex}`,
       'Errors:',
       ...result.failure.userErrors.map(({message}) => message),
-      'Save the root idempotency key and every accepted operation ID. You will need them to check or cancel accepted operations.',
+      ...(operationIds.length === 0
+        ? []
+        : ['Save every accepted operation ID. You will need them to check or cancel accepted operations.']),
     ],
   })
 }

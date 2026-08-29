@@ -27,14 +27,12 @@ function submission(): MigrationSubmission {
   return {
     clientId: 'client-id',
     action: 'schedule',
-    rootIdempotencyKey: 'root-key',
     inputDigest: 'input-digest',
     total: 2,
     operations: [
       {
         batchIndex: 0,
         batchPayloadDigest: 'batch-digest',
-        idempotencyKey: 'batch-key',
         operation: operation('operation-one'),
       },
     ],
@@ -93,7 +91,7 @@ describe('migration submission result presenter', () => {
     expect(renderSuccess).toHaveBeenCalledOnce()
     const rendered = JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])
     expect(rendered).toContain('Subscription migrations scheduled.')
-    expect(rendered).toContain('Root idempotency key: root-key')
+    expect(rendered).not.toContain('idempotency')
     expect(rendered).toContain('operation-one')
     expect(outputResult).not.toHaveBeenCalled()
   })
@@ -117,7 +115,9 @@ describe('migration submission result presenter', () => {
     presentAcceptedMigrationSubmission(submission())
 
     expect(renderSuccess).toHaveBeenCalledOnce()
-    expect(JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])).toContain('Root idempotency key: root-key')
+    const rendered = JSON.stringify(vi.mocked(renderSuccess).mock.calls[0]?.[0])
+    expect(rendered).toContain('operation-one')
+    expect(rendered).not.toContain('idempotency')
   })
 
   test('renders one warning containing failed IDs and terminal operation evidence', () => {
@@ -125,7 +125,6 @@ describe('migration submission result presenter', () => {
     value.operations.push({
       batchIndex: 1,
       batchPayloadDigest: 'batch-digest-two',
-      idempotencyKey: 'batch-key-two',
       operation: operation('operation-two', 'COMPLETED'),
     })
     value.operations[0]!.operation = operation('operation-one', 'FAILED')
@@ -140,7 +139,7 @@ describe('migration submission result presenter', () => {
     expect(exitCode).toBe(1)
     expect(renderWarning).toHaveBeenCalledOnce()
     const rendered = JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])
-    expect(rendered).toContain('Root idempotency key: root-key')
+    expect(rendered).not.toContain('idempotency')
     expect(rendered).toContain('Failed operation IDs')
     expect(rendered).toContain('operation-one')
     expect(rendered).toContain('FAILED')
@@ -156,7 +155,6 @@ describe('migration submission result presenter', () => {
     value.operations.push({
       batchIndex: 1,
       batchPayloadDigest: 'batch-digest-two',
-      idempotencyKey: 'batch-key-two',
       operation: operation('operation-two'),
     })
     const result: MigrationSubmissionResult = {
@@ -177,7 +175,7 @@ describe('migration submission result presenter', () => {
     expect(exitCode).toBe(1)
     expect(renderWarning).toHaveBeenCalledOnce()
     const rendered = JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])
-    expect(rendered).toContain('Root idempotency key: root-key')
+    expect(rendered).not.toContain('idempotency')
     expect(rendered).toContain('operation-one')
     expect(rendered).toContain('operation-two')
     expect(rendered).toContain('Batch index: 2')
@@ -185,6 +183,28 @@ describe('migration submission result presenter', () => {
     expect(rendered).toContain('Invalid plan')
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test('reports a failed submission without claiming operations were accepted', () => {
+    const value = submission()
+    value.operations = []
+    const result: MigrationSubmissionResult = {
+      status: 'failed',
+      submission: value,
+      failure: {
+        type: 'submission',
+        batchIndex: 0,
+        userErrors: [{message: 'App not found', field: ['apiKey']}],
+      },
+    }
+
+    const exitCode = presentMigrationSubmissionResult(result, {json: false, watch: false})
+
+    expect(exitCode).toBe(1)
+    expect(renderWarning).toHaveBeenCalledWith(
+      expect.objectContaining({headline: 'Subscription migration submission failed.'}),
+    )
+    expect(JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])).not.toContain('operations were accepted')
   })
 })
 

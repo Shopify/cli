@@ -42,7 +42,7 @@ describe('submitMigrationPlan', () => {
     const submissionPromise = submitMigrationPlan({
       clientId: 'client-id',
       plan: migrationPlan,
-      rootIdempotencyKey: 'root-key',
+      invocationId: 'invocation-id',
       createOperation,
     })
 
@@ -58,14 +58,14 @@ describe('submitMigrationPlan', () => {
     ])
   })
 
-  test('returns successful submission and batch metadata', async () => {
+  test('returns portable submission and batch metadata without internal keys', async () => {
     const migrationPlan = plan('schedule')
     const createOperation = vi.fn().mockResolvedValue(payload(1))
 
     const result = await submitMigrationPlan({
       clientId: 'client-id',
       plan: migrationPlan,
-      rootIdempotencyKey: 'root-key',
+      invocationId: 'invocation-id',
       createOperation,
     })
 
@@ -73,48 +73,65 @@ describe('submitMigrationPlan', () => {
     const expectedBatchKey = deriveBatchIdempotencyKey({
       appIdentifier: 'client-id',
       action: 'schedule',
-      rootKey: 'root-key',
+      invocationId: 'invocation-id',
       canonicalBatchPayload: batch.canonicalPayload,
     })
+    expect(createOperation).toHaveBeenCalledWith(expect.objectContaining({idempotencyKey: expectedBatchKey}))
     expect(result).toEqual({
       status: 'success',
       submission: {
         clientId: 'client-id',
         action: 'schedule',
-        rootIdempotencyKey: 'root-key',
         inputDigest: migrationPlan.inputDigest,
         total: 1,
         operations: [
           {
             batchIndex: 0,
             batchPayloadDigest: batch.payloadDigest,
-            idempotencyKey: expectedBatchKey,
             operation: payload(1).operation,
           },
         ],
       },
     })
+    expect(JSON.stringify(result)).not.toContain('invocationId')
+    expect(JSON.stringify(result)).not.toContain('idempotencyKey')
   })
 
-  test('generates a root idempotency key when none is provided', async () => {
+  test('uses different internal keys for separate invocations with identical input', async () => {
     const createOperation = vi.fn().mockResolvedValue(payload(1))
+    const migrationPlan = plan('schedule')
 
-    const result = await submitMigrationPlan({clientId: 'client-id', plan: plan('schedule'), createOperation})
+    await submitMigrationPlan({clientId: 'client-id', plan: migrationPlan, invocationId: 'one', createOperation})
+    await submitMigrationPlan({clientId: 'client-id', plan: migrationPlan, invocationId: 'two', createOperation})
 
-    expect(result.submission.rootIdempotencyKey).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
-    )
+    expect(createOperation.mock.calls[0]![0].idempotencyKey).not.toBe(createOperation.mock.calls[1]![0].idempotencyKey)
+  })
+
+  test('uses deterministic internal keys for the same invocation', async () => {
+    const firstCreate = vi.fn().mockResolvedValue(payload(1))
+    const secondCreate = vi.fn().mockResolvedValue(payload(1))
+    const migrationPlan = plan('schedule')
+
+    await submitMigrationPlan({
+      clientId: 'client-id',
+      plan: migrationPlan,
+      invocationId: 'same',
+      createOperation: firstCreate,
+    })
+    await submitMigrationPlan({
+      clientId: 'client-id',
+      plan: migrationPlan,
+      invocationId: 'same',
+      createOperation: secondCreate,
+    })
+
+    expect(firstCreate.mock.calls[0]![0].idempotencyKey).toBe(secondCreate.mock.calls[0]![0].idempotencyKey)
   })
 
   test('maps schedule rows to schedule API inputs', async () => {
     const createOperation = vi.fn().mockResolvedValue(payload(1))
 
-    await submitMigrationPlan({
-      clientId: 'client-id',
-      plan: plan('schedule'),
-      rootIdempotencyKey: 'root-key',
-      createOperation,
-    })
+    await submitMigrationPlan({clientId: 'client-id', plan: plan('schedule'), invocationId: 'one', createOperation})
 
     expect(createOperation).toHaveBeenCalledWith({
       clientId: 'client-id',
@@ -137,17 +154,10 @@ describe('submitMigrationPlan', () => {
   test('maps unschedule rows to cancel API inputs', async () => {
     const createOperation = vi.fn().mockResolvedValue(payload(1))
 
-    await submitMigrationPlan({
-      clientId: 'client-id',
-      plan: plan('unschedule'),
-      rootIdempotencyKey: 'root-key',
-      createOperation,
-    })
+    await submitMigrationPlan({clientId: 'client-id', plan: plan('unschedule'), invocationId: 'one', createOperation})
 
     expect(createOperation).toHaveBeenCalledWith(
-      expect.objectContaining({
-        migrations: [{shopId: 'gid://shopify/Shop/1', action: {cancelMigration: true}}],
-      }),
+      expect.objectContaining({migrations: [{shopId: 'gid://shopify/Shop/1', action: {cancelMigration: true}}]}),
     )
   })
 
@@ -159,7 +169,7 @@ describe('submitMigrationPlan', () => {
     const result = await submitMigrationPlan({
       clientId: 'client-id',
       plan: plan('schedule', 251),
-      rootIdempotencyKey: 'root-key',
+      invocationId: 'one',
       createOperation,
     })
 
@@ -171,13 +181,13 @@ describe('submitMigrationPlan', () => {
         userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
       },
       submission: {
-        rootIdempotencyKey: 'root-key',
         operations: [
           {operation: {id: 'gid://shopify/AppSubscriptionMigrationOperation/1'}},
           {operation: {id: 'gid://shopify/AppSubscriptionMigrationOperation/2'}},
         ],
       },
     })
+    expect(JSON.stringify(result)).not.toContain('idempotencyKey')
   })
 
   test('returns failure without an operation when user errors explain the rejection', async () => {
@@ -189,7 +199,7 @@ describe('submitMigrationPlan', () => {
     const result = await submitMigrationPlan({
       clientId: 'client-id',
       plan: plan('schedule'),
-      rootIdempotencyKey: 'root-key',
+      invocationId: 'one',
       createOperation,
     })
 
@@ -200,7 +210,7 @@ describe('submitMigrationPlan', () => {
         batchIndex: 0,
         userErrors: [{message: 'Invalid migration', field: ['migrations']}],
       },
-      submission: {rootIdempotencyKey: 'root-key', operations: []},
+      submission: {operations: []},
     })
   })
 
@@ -210,7 +220,7 @@ describe('submitMigrationPlan', () => {
     const promise = submitMigrationPlan({
       clientId: 'client-id',
       plan: plan('schedule'),
-      rootIdempotencyKey: 'root-key',
+      invocationId: 'one',
       createOperation,
     })
 

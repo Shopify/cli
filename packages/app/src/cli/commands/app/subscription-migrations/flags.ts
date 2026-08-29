@@ -33,10 +33,6 @@ export const submissionFlags = {
     description: 'Path to the migration CSV. If omitted, standard input is used.',
     env: 'SHOPIFY_FLAG_INPUT',
   }),
-  'idempotency-key': Flags.string({
-    description: 'Reuse an existing root idempotency key for the same action and input.',
-    env: 'SHOPIFY_FLAG_IDEMPOTENCY_KEY',
-  }),
   force: requiredIfNonInteractive(
     Flags.boolean({
       char: 'f',
