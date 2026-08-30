@@ -25,15 +25,19 @@ function host(projectName: string, options: HostOptions = {}): string {
 
   const prefix = (options.nonstandardHostPrefix || projectName).replace(/_/g, '-')
 
-  if (projectName === 'shopify') {
-    if (prefix.endsWith('-dev-api')) {
-      const shopName = prefix.replace('-dev-api', '')
-      return `${shopName}.dev-api.shop.dev`
-    }
-    if (!NON_SHOP_PREFIXES.includes(prefix)) {
-      return `${prefix}.my.shop.dev`
-    }
+  if (projectName !== 'shopify') {
+    return `${prefix}.shop.dev`
   }
+
+  if (prefix.endsWith('-dev-api')) {
+    const shopName = prefix.replace('-dev-api', '')
+    return `${shopName}.dev-api.shop.dev`
+  }
+
+  if (!NON_SHOP_PREFIXES.includes(prefix)) {
+    return `${prefix}.my.shop.dev`
+  }
+
   return `${prefix}.shop.dev`
 }
 
