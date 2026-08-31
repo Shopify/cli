@@ -12,8 +12,6 @@
 │  ├─ deploy
 │  ├─ dev
 │  │  └─ clean
-│  ├─ doctor
-│  │  └─ scan
 │  ├─ env
 │  │  ├─ pull
 │  │  └─ show

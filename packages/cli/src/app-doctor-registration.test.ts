@@ -2,8 +2,8 @@ import {COMMANDS} from './index.js'
 import {describe, expect, test} from 'vitest'
 
 describe('@shopify/cli command registration', () => {
-  test('exposes app:doctor:scan from @shopify/app', () => {
-    expect(COMMANDS['app:doctor:scan']).toBeDefined()
-    expect(COMMANDS['app:doctor:scan'].customPluginName).toBe('@shopify/app')
+  test.each(['app:doctor:instructions', 'app:doctor:scan'])('exposes %s from @shopify/app', (command) => {
+    expect(COMMANDS[command]).toBeDefined()
+    expect(COMMANDS[command].customPluginName).toBe('@shopify/app')
   })
 })

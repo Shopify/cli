@@ -8,14 +8,15 @@ import {describe, expect, test, vi} from 'vitest'
 vi.mock('../../../services/doctor.js')
 
 describe('app doctor scan command', () => {
-  test('does not require linked app context', () => {
+  test('is hidden and does not require linked app context', () => {
+    expect(DoctorScan.hidden).toBe(true)
     expect(DoctorScan.prototype).toBeInstanceOf(BaseCommand)
     expect(DoctorScan.prototype).not.toBeInstanceOf(AppLinkedCommand)
   })
 
   test('forwards the directory and flags to the service', async () => {
     await DoctorScan.run(
-      ['./fixtures/unlinked-app', '--json', '--verbose', '--blocking', 'high', '--skip-skill'],
+      ['./fixtures/unlinked-app', '--json', '--verbose', '--blocking', 'high', '--skip-instructions'],
       import.meta.url,
     )
 
@@ -25,7 +26,7 @@ describe('app doctor scan command', () => {
       verbose: true,
       blocking: 'high',
       yes: false,
-      skipSkill: true,
+      skipInstructions: true,
       findingsPath: undefined,
     })
   })
@@ -39,27 +40,23 @@ describe('app doctor scan command', () => {
       verbose: false,
       blocking: 'none',
       yes: true,
-      skipSkill: false,
+      skipInstructions: false,
       findingsPath: undefined,
     })
   })
 
   test('resolves and forwards an agent findings file', async () => {
-    await DoctorScan.run(['.', '--findings', './findings.json', '--skip-skill'], import.meta.url)
+    await DoctorScan.run(['.', '--findings', './findings.json', '--skip-instructions'], import.meta.url)
 
     expect(doctor).toHaveBeenCalledWith(expect.objectContaining({findingsPath: resolvePath('./findings.json')}))
   })
 
-  test('describes --yes as showing instructions and keeps it mutually exclusive with --skip-skill', () => {
-    expect(DoctorScan.flags.yes.description).toBe(
-      'Show optional App Doctor skill setup instructions without prompting.',
-    )
-    expect(DoctorScan.flags['skip-skill'].description).toBe("Don't offer App Doctor skill setup instructions.")
-    expect(DoctorScan.flags.yes.exclusive).toEqual(['skip-skill'])
-    expect(DoctorScan.flags['skip-skill'].exclusive).toEqual(['yes'])
-    expect(DoctorScan.descriptionWithMarkdown).toContain(
-      "Shopify CLI only shows instructions; it doesn't install or configure the skill.",
-    )
+  test('describes --yes as showing instructions and keeps it mutually exclusive with --skip-instructions', () => {
+    expect(DoctorScan.flags.yes.description).toBe('Show coding-agent instructions without prompting.')
+    expect(DoctorScan.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
+    expect(DoctorScan.flags.yes.exclusive).toEqual(['skip-instructions'])
+    expect(DoctorScan.flags['skip-instructions'].exclusive).toEqual(['yes'])
+    expect(DoctorScan.descriptionWithMarkdown).toContain('shopify app doctor instructions')
   })
 
   test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {

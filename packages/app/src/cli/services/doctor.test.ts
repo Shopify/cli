@@ -1,4 +1,4 @@
-import doctor, {appDoctorSkillInstructionsPrompt, formatDoctorOutput} from './doctor.js'
+import doctor, {appDoctorInstructionsPrompt, formatDoctorOutput} from './doctor.js'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
 
@@ -16,7 +16,7 @@ function testDependencies(result: AppDoctorRunResult = engineResult) {
   return {
     runEngine: vi.fn(async (_options: AppDoctorRunOptions) => result),
     canPrompt: vi.fn(() => false),
-    confirmShowSkillInstructions: vi.fn(async () => false),
+    confirmShowInstructions: vi.fn(async () => false),
     output: vi.fn(),
     setExitCode: vi.fn(),
   }
@@ -29,7 +29,7 @@ function testOptions() {
     verbose: false,
     blocking: 'none' as const,
     yes: false,
-    skipSkill: false,
+    skipInstructions: false,
   }
 }
 
@@ -66,59 +66,70 @@ describe('doctor', () => {
       engine: engineResult.engine,
     })
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.confirmShowSkillInstructions).not.toHaveBeenCalled()
+    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
     expect(dependencies.output).toHaveBeenCalledTimes(1)
   })
 
-  test('does not offer skill instructions in CI or another non-interactive environment', async () => {
+  test('does not offer coding-agent instructions in CI or another non-interactive environment', async () => {
     const dependencies = testDependencies()
 
     await doctor(testOptions(), dependencies)
 
     expect(dependencies.canPrompt).toHaveBeenCalledOnce()
-    expect(dependencies.confirmShowSkillInstructions).not.toHaveBeenCalled()
+    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
     expect(dependencies.output).toHaveBeenCalledTimes(1)
   })
 
-  test('offers to show skill setup instructions without claiming it will perform setup', async () => {
+  test('offers instructions that start from the scan results', async () => {
     const dependencies = testDependencies()
     dependencies.canPrompt.mockReturnValue(true)
-    dependencies.confirmShowSkillInstructions.mockResolvedValue(true)
+    dependencies.confirmShowInstructions.mockResolvedValue(true)
 
     await doctor(testOptions(), dependencies)
 
-    expect(appDoctorSkillInstructionsPrompt).toEqual({
-      message: 'Show setup instructions for the Shopify App Doctor skill?',
+    expect(appDoctorInstructionsPrompt).toEqual({
+      message: 'Show instructions for handing the results to your coding agent?',
       confirmationMessage: 'Yes, show instructions',
       cancellationMessage: 'No, skip instructions',
       defaultValue: false,
     })
-    expect(dependencies.confirmShowSkillInstructions).toHaveBeenCalledOnce()
+    expect(dependencies.confirmShowInstructions).toHaveBeenCalledOnce()
     expect(dependencies.output).toHaveBeenCalledTimes(2)
-    expect(dependencies.output.mock.calls[1]![0]).toContain('Shopify App Doctor skill setup instructions')
-    expect(dependencies.output.mock.calls[1]![0]).toContain('engine 1.2.3 (ruleset 2026.08.28)')
-    expect(dependencies.output.mock.calls[1]![0]).toContain("Shopify CLI didn't install or change")
+    expect(dependencies.output.mock.calls[1]![0]).toContain('Use the existing scan results')
+    expect(dependencies.output.mock.calls[1]![0]).toContain('The initial scan has already completed.')
+    expect(dependencies.output.mock.calls[1]![0]).not.toContain('Run the initial scan from the app root')
   })
 
-  test('--yes shows instructions without prompting or claiming setup occurred, including in CI', async () => {
+  test('--yes shows post-scan instructions without prompting, including in CI', async () => {
     const dependencies = testDependencies()
 
     await doctor({...testOptions(), yes: true}, dependencies)
 
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.confirmShowSkillInstructions).not.toHaveBeenCalled()
+    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
     expect(dependencies.output).toHaveBeenCalledTimes(2)
-    expect(dependencies.output.mock.calls[1]![0]).toContain('instructions only')
+    expect(dependencies.output.mock.calls[1]![0]).toContain('Use the existing scan results')
   })
 
-  test('--skip-skill never offers instructions', async () => {
+  test('--skip-instructions never offers instructions', async () => {
     const dependencies = testDependencies()
     dependencies.canPrompt.mockReturnValue(true)
 
-    await doctor({...testOptions(), skipSkill: true}, dependencies)
+    await doctor({...testOptions(), skipInstructions: true}, dependencies)
 
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.confirmShowSkillInstructions).not.toHaveBeenCalled()
+    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
+    expect(dependencies.output).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not offer handoff instructions after compiling agent findings', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+
+    await doctor({...testOptions(), findingsPath: '/tmp/findings.json'}, dependencies)
+
+    expect(dependencies.canPrompt).not.toHaveBeenCalled()
+    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
     expect(dependencies.output).toHaveBeenCalledTimes(1)
   })
 

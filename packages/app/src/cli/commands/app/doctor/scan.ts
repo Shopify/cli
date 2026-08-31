@@ -8,11 +8,13 @@ import type {AppDoctorBlockingLevel} from '../../../services/app-doctor-api.js'
 const blockingLevels: AppDoctorBlockingLevel[] = ['critical', 'high', 'medium', 'low', 'none']
 
 export default class DoctorScan extends BaseCommand {
+  static hidden = true
+
   static summary = 'Check an app for Shopify-specific security issues.'
 
   static descriptionWithMarkdown = `Runs Shopify App Doctor locally and creates its review pack and trace.
 
-Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In CI and other non-interactive environments, skill setup instructions aren't offered unless you pass \`--yes\`. JSON output never prompts or prints those instructions. Shopify CLI only shows instructions; it doesn't install or configure the skill.`
+Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to print instructions that you can hand to your coding agent. In CI and other non-interactive environments, instructions aren't printed unless you pass \`--yes\`. JSON output never prompts or prints those instructions. You can also run \`shopify app doctor instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -38,16 +40,16 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
       env: 'SHOPIFY_FLAG_APP_DOCTOR_BLOCKING',
     }),
     yes: Flags.boolean({
-      description: 'Show optional App Doctor skill setup instructions without prompting.',
+      description: 'Show coding-agent instructions without prompting.',
       default: false,
-      exclusive: ['skip-skill'],
+      exclusive: ['skip-instructions'],
       env: 'SHOPIFY_FLAG_YES',
     }),
-    'skip-skill': Flags.boolean({
-      description: "Don't offer App Doctor skill setup instructions.",
+    'skip-instructions': Flags.boolean({
+      description: "Don't offer to show coding-agent instructions.",
       default: false,
       exclusive: ['yes'],
-      env: 'SHOPIFY_FLAG_SKIP_SKILL',
+      env: 'SHOPIFY_FLAG_APP_DOCTOR_SKIP_INSTRUCTIONS',
     }),
   }
 
@@ -60,7 +62,7 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking as AppDoctorBlockingLevel,
       yes: flags.yes,
-      skipSkill: flags['skip-skill'],
+      skipInstructions: flags['skip-instructions'],
       findingsPath: flags.findings,
     })
   }

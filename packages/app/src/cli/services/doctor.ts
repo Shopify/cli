@@ -1,13 +1,9 @@
 import {runAppDoctor} from './app-doctor-api.js'
+import {appDoctorInstructions} from './app-doctor-instructions.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import type {
-  AppDoctorBlockingLevel,
-  AppDoctorEngineMetadata,
-  AppDoctorRunOptions,
-  AppDoctorRunResult,
-} from './app-doctor-api.js'
+import type {AppDoctorBlockingLevel, AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
 
 export interface DoctorOptions {
   directory: string
@@ -15,20 +11,20 @@ export interface DoctorOptions {
   verbose: boolean
   blocking: AppDoctorBlockingLevel
   yes: boolean
-  skipSkill: boolean
+  skipInstructions: boolean
   findingsPath?: string
 }
 
 interface DoctorDependencies {
   runEngine(options: AppDoctorRunOptions): Promise<AppDoctorRunResult>
   canPrompt(): boolean
-  confirmShowSkillInstructions(): Promise<boolean>
+  confirmShowInstructions(): Promise<boolean>
   output(content: string): void
   setExitCode(exitCode: number): void
 }
 
-export const appDoctorSkillInstructionsPrompt = {
-  message: 'Show setup instructions for the Shopify App Doctor skill?',
+export const appDoctorInstructionsPrompt = {
+  message: 'Show instructions for handing the results to your coding agent?',
   confirmationMessage: 'Yes, show instructions',
   cancellationMessage: 'No, skip instructions',
   defaultValue: false,
@@ -37,7 +33,7 @@ export const appDoctorSkillInstructionsPrompt = {
 const defaultDependencies: DoctorDependencies = {
   runEngine: runAppDoctor,
   canPrompt: terminalSupportsPrompting,
-  confirmShowSkillInstructions: () => renderConfirmationPrompt(appDoctorSkillInstructionsPrompt),
+  confirmShowInstructions: () => renderConfirmationPrompt(appDoctorInstructionsPrompt),
   output: outputResult,
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
@@ -61,23 +57,11 @@ export function formatDoctorOutput(result: AppDoctorRunResult, json: boolean): s
   return JSON.stringify(reportWithEngine, null, 2)
 }
 
-function skillSetupInstructions(engine: AppDoctorEngineMetadata): string {
-  return [
-    'Shopify App Doctor skill setup instructions',
-    '',
-    'Follow the Shopify AI Toolkit setup guide for your coding agent, then enable the shopify-app-doctor skill:',
-    'https://github.com/Shopify/Shopify-AI-Toolkit',
-    '',
-    `Use a skill compatible with App Doctor engine ${engine.version} (ruleset ${engine.ruleset}).`,
-    "These are instructions only; Shopify CLI didn't install or change your coding-agent configuration.",
-  ].join('\n')
-}
-
-async function shouldShowSkillInstructions(options: DoctorOptions, dependencies: DoctorDependencies): Promise<boolean> {
-  if (options.json || options.skipSkill) return false
+async function shouldShowInstructions(options: DoctorOptions, dependencies: DoctorDependencies): Promise<boolean> {
+  if (options.json || options.skipInstructions || options.findingsPath) return false
   if (options.yes) return true
   if (!dependencies.canPrompt()) return false
-  return dependencies.confirmShowSkillInstructions()
+  return dependencies.confirmShowInstructions()
 }
 
 export default async function doctor(
@@ -94,8 +78,8 @@ export default async function doctor(
 
   dependencies.output(formatDoctorOutput(result, options.json))
 
-  if (await shouldShowSkillInstructions(options, dependencies)) {
-    dependencies.output(skillSetupInstructions(result.engine))
+  if (await shouldShowInstructions(options, dependencies)) {
+    dependencies.output(appDoctorInstructions(true))
   }
 
   if (result.exitCode !== 0) dependencies.setExitCode(result.exitCode)

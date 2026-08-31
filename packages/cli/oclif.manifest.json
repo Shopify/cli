@@ -1303,56 +1303,90 @@
       "strict": true,
       "summary": "Cleans up the dev preview from the selected store."
     },
+    "app:doctor:instructions": {
+      "aliases": [
+      ],
+      "args": {
+        "directory": {
+          "description": "The app directory containing App Doctor results. Defaults to the current directory.",
+          "name": "directory"
+        }
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. When the app directory already contains `app-doctor-review.json`, the instructions start from those existing scan results.",
+      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. When the app directory already contains `app-doctor-review.json`, the instructions start from those existing scan results.",
+      "enableJsonFlag": false,
+      "flags": {
+        "copy": {
+          "allowNo": false,
+          "description": "Copy the instructions to the clipboard instead of printing them.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_COPY",
+          "exclusive": [
+            "write"
+          ],
+          "name": "copy",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "write": {
+          "description": "Write the instructions to a file instead of printing them.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_WRITE",
+          "exclusive": [
+            "copy"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "write",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:doctor:instructions",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Provide App Doctor instructions to a coding agent."
+    },
     "app:doctor:scan": {
-      "aliases": [],
+      "aliases": [
+      ],
       "args": {
         "directory": {
           "description": "The app directory to check. Defaults to the current directory.",
           "name": "directory"
         }
       },
-      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In CI and other non-interactive environments, skill setup instructions aren't offered unless you pass `--yes`. JSON output never prompts or prints those instructions. Shopify CLI only shows instructions; it doesn't install or configure the skill.",
+      "customPluginName": "@shopify/app",
+      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to print instructions that you can hand to your coding agent. In CI and other non-interactive environments, instructions aren't printed unless you pass `--yes`. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to print instructions that you can hand to your coding agent. In CI and other non-interactive environments, instructions aren't printed unless you pass `--yes`. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
+      "enableJsonFlag": false,
       "flags": {
-        "no-color": {
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "allowNo": false,
-          "type": "boolean"
-        },
-        "verbose": {
-          "description": "Increase the verbosity of the output. May include sensitive data.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "allowNo": false,
-          "type": "boolean"
-        },
-        "json": {
-          "char": "j",
-          "description": "Output the result as JSON. Automatically disables color output.",
-          "env": "SHOPIFY_FLAG_JSON",
-          "hidden": false,
-          "name": "json",
-          "allowNo": false,
-          "type": "boolean"
-        },
-        "findings": {
-          "description": "Validate agent findings from a JSON file and compile them into the trace.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_FINDINGS",
-          "name": "findings",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "type": "option"
-        },
         "blocking": {
+          "default": "none",
           "description": "The minimum finding severity that causes a non-zero exit code.",
           "env": "SHOPIFY_FLAG_APP_DOCTOR_BLOCKING",
-          "name": "blocking",
-          "default": "none",
           "hasDynamicHelp": false,
           "multiple": false,
+          "name": "blocking",
           "options": [
             "critical",
             "high",
@@ -1362,38 +1396,70 @@
           ],
           "type": "option"
         },
-        "yes": {
-          "description": "Show optional App Doctor skill setup instructions without prompting.",
-          "env": "SHOPIFY_FLAG_YES",
-          "exclusive": [
-            "skip-skill"
-          ],
-          "name": "yes",
+        "findings": {
+          "description": "Validate agent findings from a JSON file and compile them into the trace.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_FINDINGS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "findings",
+          "type": "option"
+        },
+        "json": {
           "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
-        "skip-skill": {
-          "description": "Don't offer App Doctor skill setup instructions.",
-          "env": "SHOPIFY_FLAG_SKIP_SKILL",
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "skip-instructions": {
+          "allowNo": false,
+          "description": "Don't offer to show coding-agent instructions.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_SKIP_INSTRUCTIONS",
           "exclusive": [
             "yes"
           ],
-          "name": "skip-skill",
+          "name": "skip-instructions",
+          "type": "boolean"
+        },
+        "verbose": {
           "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "yes": {
+          "allowNo": false,
+          "description": "Show coding-agent instructions without prompting.",
+          "env": "SHOPIFY_FLAG_YES",
+          "exclusive": [
+            "skip-instructions"
+          ],
+          "name": "yes",
           "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
-      "hiddenAliases": [],
+      "hidden": true,
+      "hiddenAliases": [
+      ],
       "id": "app:doctor:scan",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Check an app for Shopify-specific security issues.",
-      "enableJsonFlag": false,
-      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In CI and other non-interactive environments, skill setup instructions aren't offered unless you pass `--yes`. JSON output never prompts or prints those instructions. Shopify CLI only shows instructions; it doesn't install or configure the skill.",
-      "customPluginName": "@shopify/app"
+      "summary": "Check an app for Shopify-specific security issues."
     },
     "app:env:pull": {
       "aliases": [
