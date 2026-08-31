@@ -309,7 +309,6 @@ describe('store auth service', () => {
     expect(presenter.openingBrowser).toHaveBeenCalledOnce()
     expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
       expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
-      {sensitive: false},
     )
     expect(presenter.success).toHaveBeenCalledWith(result)
   })
@@ -347,7 +346,6 @@ describe('store auth service', () => {
 
     expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
       expect.stringContaining('http://127.0.0.1:13387/auth/handoff?nonce='),
-      {sensitive: false},
     )
     expect(presenter.manualAuthUrl.mock.calls[0]![0]).not.toContain('signed.signup.jwt')
   })

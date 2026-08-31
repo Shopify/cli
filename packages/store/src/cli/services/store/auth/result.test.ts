@@ -121,4 +121,39 @@ describe('store auth presenter', () => {
     expect(output.info()).not.toContain('secret=sensitive')
     expect(output.info()).not.toContain('https://shop.myshopify.com/admin/oauth/authorize')
   })
+
+  test('withholds a manual auth URL carrying a signup credential even when the caller does not mark it sensitive', () => {
+    const output = mockAndCaptureOutput()
+    const presenter = createStoreAuthPresenter('text')
+
+    presenter.manualAuthUrl('https://shop.myshopify.com/admin/oauth/authorize?client_id=test&signup=signed.signup.jwt')
+
+    expect(output.info()).toContain(
+      'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
+    )
+    expect(output.info()).not.toContain('signed.signup.jwt')
+    expect(output.info()).not.toContain('signup=')
+  })
+
+  test('withholds a manual auth URL it cannot parse', () => {
+    const output = mockAndCaptureOutput()
+    const presenter = createStoreAuthPresenter('text')
+
+    presenter.manualAuthUrl('not-a-url?signup=signed.signup.jwt')
+
+    expect(output.info()).toContain(
+      'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
+    )
+    expect(output.info()).not.toContain('signed.signup.jwt')
+  })
+
+  test('prints a loopback handoff URL that carries no credential', () => {
+    const output = mockAndCaptureOutput()
+    const presenter = createStoreAuthPresenter('text')
+
+    presenter.manualAuthUrl('http://127.0.0.1:13387/auth/handoff?nonce=abc123')
+
+    expect(output.info()).toContain('Browser did not open automatically. Open this URL manually:')
+    expect(output.info()).toContain('http://127.0.0.1:13387/auth/handoff?nonce=abc123')
+  })
 })

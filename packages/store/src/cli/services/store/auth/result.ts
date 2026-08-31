@@ -51,8 +51,15 @@ function displayStoreAuthOpeningBrowser(): void {
   outputInfo('')
 }
 
+// Callers mark a URL sensitive when they know why it is; this catches the signup credential even when
+// they forget, and fails closed on anything it cannot parse well enough to clear.
+function carriesSignupCredential(authorizationUrl: string): boolean {
+  if (!URL.canParse(authorizationUrl)) return true
+  return new URL(authorizationUrl).searchParams.has('signup')
+}
+
 function displayStoreAuthManualAuthUrl(authorizationUrl: string, options: ManualAuthUrlOptions = {}): void {
-  if (options.sensitive) {
+  if (options.sensitive || carriesSignupCredential(authorizationUrl)) {
     outputInfo(
       'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
     )
