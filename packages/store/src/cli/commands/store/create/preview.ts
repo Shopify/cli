@@ -1,6 +1,10 @@
 import {countryFlag} from '../../../flags.js'
-import {type CreatePreviewStoreResult, createPreviewStoreCommand} from '../../../services/store/create/preview/index.js'
-import {writeCreatePreviewStoreResult} from '../../../services/store/create/preview/result.js'
+import {createPreviewStoreCommand} from '../../../services/store/create/preview/index.js'
+import {presentCreatePreviewStoreResult} from '../../../services/store/create/preview/result.js'
+import {
+  createPreviewStoreJsonOutputSchema,
+  type CreatePreviewStoreResult,
+} from '../../../services/store/create/preview/types.js'
 import StoreCommand from '../../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -31,6 +35,10 @@ export default class StoreCreatePreview extends StoreCommand {
     country: countryFlag,
   }
 
+  static get jsonOutputSchema() {
+    return createPreviewStoreJsonOutputSchema
+  }
+
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreCreatePreview)
 
@@ -39,6 +47,6 @@ export default class StoreCreatePreview extends StoreCommand {
       task: async () => createPreviewStoreCommand({name: flags.name, country: flags.country}),
     })
 
-    writeCreatePreviewStoreResult(result, flags.json ? 'json' : 'text')
+    presentCreatePreviewStoreResult(result, flags.json ? 'json' : 'text')
   }
 }

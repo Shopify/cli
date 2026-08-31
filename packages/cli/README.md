@@ -4000,6 +4000,27 @@ DESCRIPTION
 
   Creates a new Shopify store, with no need for an existing account.
 
+  Output from `--json` conforms to the `CreatePreviewStoreResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  interface CreatePreviewStoreResult {
+    status: "success"
+    message: string
+    store: PreviewStore
+    next_steps: string[]
+  }
+
+  interface PreviewStore {
+    id: string
+    name: string
+    subdomain: string
+    country?: string
+    storefrontUrl: string
+  }
+  ```
+
 EXAMPLES
   $ shopify store create preview --name "Lavender Candles"
 
