@@ -1888,8 +1888,8 @@ Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing
 
 ```
 USAGE
-  $ shopify app subscription-migrations schedule [--auth-alias <value>] [--no-color] [--verbose] [--path <value>] [--client-id <value> |
-    -c <value>] [--reset | ] [-j] [-i <value>] [-f] [--watch]
+  $ shopify app subscription-migrations schedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [-i <value>] [-j]
+    [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
@@ -2060,8 +2060,8 @@ Reverses app subscription migrations that are still scheduled.
 
 ```
 USAGE
-  $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--no-color] [--verbose] [--path <value>] [--client-id <value> |
-    -c <value>] [--reset | ] [-j] [-i <value>] [-f] [--watch]
+  $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [-i <value>] [-j]
+    [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
 
 FLAGS
   -c, --config=<value>
