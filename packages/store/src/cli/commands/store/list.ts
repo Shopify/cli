@@ -1,5 +1,6 @@
 import {listStores} from '../../services/store/list.js'
-import {writeStoreListResult} from '../../services/store/list/result.js'
+import {presentStoreListResult} from '../../services/store/list/result.js'
+import {storeListJsonOutputSchema} from '../../services/store/list/types.js'
 import {storeFlags} from '../../flags.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -31,10 +32,14 @@ Run \`<%= config.bin %> organization list\` to find organization IDs.`
     }),
   }
 
+  static get jsonOutputSchema() {
+    return storeListJsonOutputSchema
+  }
+
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreList)
     const result = await listStores({organizationId: flags['organization-id']})
 
-    writeStoreListResult(result, flags.json ? 'json' : 'text')
+    presentStoreListResult(result, flags.json ? 'json' : 'text')
   }
 }
