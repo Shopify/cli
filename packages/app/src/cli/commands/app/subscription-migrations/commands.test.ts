@@ -360,6 +360,10 @@ describe('subscription migration operation commands', () => {
 })
 
 describe('subscription migration command metadata', () => {
+  test.each([Schedule, Unschedule, Status, Cancel])('$name is hidden from command discovery', (Command) => {
+    expect(Command.hidden).toBe(true)
+  })
+
   test.each([Schedule, Unschedule])('$name defines optional input flag metadata', (Command) => {
     expect(Command.flags.input).toMatchObject({
       char: 'i',

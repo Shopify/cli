@@ -33,11 +33,6 @@
 │  ├─ logs
 │  │  └─ sources
 │  ├─ release
-│  ├─ subscription-migrations
-│  │  ├─ cancel
-│  │  ├─ schedule
-│  │  ├─ status
-│  │  └─ unschedule
 │  ├─ versions
 │  │  └─ list
 │  └─ webhook

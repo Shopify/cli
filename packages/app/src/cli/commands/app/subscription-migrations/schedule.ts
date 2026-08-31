@@ -5,6 +5,7 @@ import {runSubmissionCommand} from '../../../services/subscription-migrations/ru
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 
 export default class Schedule extends AppLinkedCommand {
+  static hidden = true
   static summary = 'Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.'
 
   static descriptionWithMarkdown = `Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.

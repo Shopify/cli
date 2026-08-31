@@ -3335,6 +3335,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:subscription-migrations:cancel",
@@ -3461,6 +3462,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:subscription-migrations:schedule",
@@ -3577,6 +3579,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:subscription-migrations:status",
@@ -3703,6 +3706,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:subscription-migrations:unschedule",

@@ -6,6 +6,7 @@ import {watchMigrationOperations} from '../../../services/subscription-migration
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 
 export default class Status extends AppLinkedCommand {
+  static hidden = true
   static summary = 'Checks the status of app subscription migration operations.'
 
   static descriptionWithMarkdown = `Checks app subscription migration operation status.

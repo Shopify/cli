@@ -5,6 +5,7 @@ import {cancelMigrationOperations} from '../../../services/subscription-migratio
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 
 export default class Cancel extends AppLinkedCommand {
+  static hidden = true
   static summary = 'Cancels app subscription migration operations.'
 
   static descriptionWithMarkdown = `Cancels app subscription migration operations.

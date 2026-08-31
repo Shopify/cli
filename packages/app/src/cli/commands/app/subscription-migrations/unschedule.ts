@@ -5,6 +5,7 @@ import {runSubmissionCommand} from '../../../services/subscription-migrations/ru
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 
 export default class Unschedule extends AppLinkedCommand {
+  static hidden = true
   static summary = 'Reverses app subscription migrations that are still scheduled.'
 
   static descriptionWithMarkdown = `Reverses scheduled app subscription migrations that have not migrated yet.
