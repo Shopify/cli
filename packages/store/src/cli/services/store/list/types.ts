@@ -1,27 +1,38 @@
-import {type StoreTypeFilter} from '../store-type.js'
+import {storeTypeFilters, type StoreTypeFilter} from '../store-type.js'
+import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 
-export interface StoreListEntry {
-  id?: string
-  store: string
-  createdAt: string
-  organizationId: string
-  organizationName: string
-  name?: string
-  type?: string
-  plan?: string
-}
+const StoreListEntrySchema = zod.object({
+  id: zod.string().optional(),
+  store: zod.string(),
+  createdAt: zod.string(),
+  organizationId: zod.string(),
+  organizationName: zod.string(),
+  name: zod.string().optional(),
+  type: zod.string().optional(),
+  plan: zod.string().optional(),
+})
 
-export interface StoreListOrganization {
-  id: string
-  name: string
-}
+const StoreListOrganizationSchema = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+})
 
-export interface ListStoresResult {
-  stores: StoreListEntry[]
-  source: 'organization'
-  organization?: StoreListOrganization
-  // The `--type` filter the listing was narrowed to, echoed back so output can name it.
-  storeType?: StoreTypeFilter
-  notice?: string
-  truncated?: boolean
-}
+export const storeListJsonOutputSchema = defineJsonOutputSchema({
+  name: 'StoreListResult',
+  schema: zod.object({
+    stores: zod.array(StoreListEntrySchema),
+    organization: StoreListOrganizationSchema.optional(),
+    storeType: zod.enum(storeTypeFilters as [StoreTypeFilter, ...StoreTypeFilter[]]).optional(),
+    notice: zod.string().optional(),
+    truncated: zod.boolean().optional(),
+  }),
+  definitions: {
+    StoreListEntry: StoreListEntrySchema,
+    StoreListOrganization: StoreListOrganizationSchema,
+  },
+})
+
+export type StoreListEntry = zod.infer<typeof StoreListEntrySchema>
+export type StoreListOrganization = zod.infer<typeof StoreListOrganizationSchema>
+export type StoreListResult = InferJsonOutputSchema<typeof storeListJsonOutputSchema>

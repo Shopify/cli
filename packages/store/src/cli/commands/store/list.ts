@@ -1,5 +1,6 @@
 import {listStores} from '../../services/store/list.js'
-import {writeStoreListResult} from '../../services/store/list/result.js'
+import {presentStoreListResult} from '../../services/store/list/result.js'
+import {storeListJsonOutputSchema} from '../../services/store/list/types.js'
 import {storeTypeFilters, type StoreTypeFilter} from '../../services/store/store-type.js'
 import {storeFlags} from '../../flags.js'
 import StoreCommand from '../../utilities/store-command.js'
@@ -38,6 +39,10 @@ Run \`<%= config.bin %> organization list\` to find organization IDs.`
     }),
   }
 
+  static get jsonOutputSchema() {
+    return storeListJsonOutputSchema
+  }
+
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreList)
     const result = await listStores({
@@ -46,6 +51,6 @@ Run \`<%= config.bin %> organization list\` to find organization IDs.`
       storeType: flags.type as StoreTypeFilter | undefined,
     })
 
-    writeStoreListResult(result, flags.json ? 'json' : 'text')
+    presentStoreListResult(result, flags.json ? 'json' : 'text')
   }
 }

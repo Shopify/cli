@@ -4385,6 +4385,80 @@ DESCRIPTION
 
   Use `--json` for machine-readable output.
 
+  Output from `--json` conforms to the `StoreInfoResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "displayName": {
+        "type": "string"
+      },
+      "subdomain": {
+        "type": "string"
+      },
+      "organizationId": {
+        "type": "string"
+      },
+      "organizationName": {
+        "type": "string"
+      },
+      "storeOwner": {
+        "$ref": "#/definitions/StoreInfoStoreOwner"
+      },
+      "type": {
+        "type": "string"
+      },
+      "plan": {
+        "type": "string"
+      },
+      "featurePreview": {
+        "type": "string"
+      },
+      "adminUrl": {
+        "type": "string"
+      },
+      "accessUrl": {
+        "type": "string"
+      },
+      "saveUrl": {
+        "type": "string"
+      },
+      "authScopes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "subdomain"
+    ],
+    "additionalProperties": false,
+    "title": "StoreInfoResult",
+    "definitions": {
+      "StoreInfoStoreOwner": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store info --store shop.myshopify.com
 
@@ -4436,6 +4510,102 @@ DESCRIPTION
   `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.
 
   Run `shopify organization list` to find organization IDs.
+
+  Output from `--json` conforms to the `StoreListResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "stores": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/StoreListEntry"
+        }
+      },
+      "organization": {
+        "$ref": "#/definitions/StoreListOrganization"
+      },
+      "storeType": {
+        "type": "string",
+        "enum": [
+          "dev",
+          "production",
+          "client-transfer",
+          "collaborator"
+        ]
+      },
+      "notice": {
+        "type": "string"
+      },
+      "truncated": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "stores"
+    ],
+    "additionalProperties": false,
+    "title": "StoreListResult",
+    "definitions": {
+      "StoreListEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "createdAt",
+          "organizationId",
+          "organizationName"
+        ],
+        "additionalProperties": false
+      },
+      "StoreListOrganization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store list
