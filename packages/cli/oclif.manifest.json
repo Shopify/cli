@@ -6849,10 +6849,11 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup.",
-      "descriptionWithMarkdown": "Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup.",
+      "description": "Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup or stdin.",
+      "descriptionWithMarkdown": "Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup or stdin.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --signup <signup-jwt>",
+        "printf %s <signup-jwt> | <%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --signup <signup-jwt> --json"
       ],
       "flags": {
@@ -6883,12 +6884,12 @@
           "type": "option"
         },
         "signup": {
-          "description": "Provide JWT for the store.",
+          "description": "Provide JWT for the store. When omitted, the JWT is read from stdin.",
           "env": "SHOPIFY_FLAG_SIGNUP",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "signup",
-          "required": true,
+          "required": false,
           "type": "option"
         },
         "store": {
