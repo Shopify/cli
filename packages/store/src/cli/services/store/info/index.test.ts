@@ -1,4 +1,5 @@
 import {getStoreInfo} from './index.js'
+import {storeInfoJsonOutputSchema} from './types.js'
 import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
 import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
@@ -149,6 +150,7 @@ describe('getStoreInfo', () => {
       featurePreview: 'extended_variants',
       adminUrl: 'https://admin.shopify.com/store/shop',
     })
+    expect(storeInfoJsonOutputSchema.validate(result)).toEqual(result)
   })
 
   test('returns fresh access and save URLs for locally stored preview stores', async () => {
