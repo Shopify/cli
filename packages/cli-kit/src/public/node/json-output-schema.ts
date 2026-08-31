@@ -2,6 +2,7 @@ import {
   ZodAny,
   ZodArray,
   ZodBoolean,
+  ZodDiscriminatedUnion,
   ZodEnum,
   ZodLiteral,
   ZodNull,
@@ -139,7 +140,7 @@ function renderType(
   if (schema instanceof ZodEnum) return schema.options.map((value: string) => JSON.stringify(value)).join(' | ')
   if (schema instanceof ZodArray) return `${renderArrayElementType(schema.element, namedSchemas)}[]`
   if (schema instanceof ZodRecord) return `Record<string, ${renderType(schema.valueSchema, namedSchemas)}>`
-  if (schema instanceof ZodUnion) {
+  if (schema instanceof ZodUnion || schema instanceof ZodDiscriminatedUnion) {
     return schema.options.map((option: ZodTypeAny) => renderType(option, namedSchemas)).join(' | ')
   }
 
@@ -152,7 +153,9 @@ function renderType(
 
 function renderArrayElementType(schema: ZodTypeAny, namedSchemas: ReadonlyMap<ZodTypeAny, string>): string {
   const type = renderType(schema, namedSchemas)
-  return schema instanceof ZodUnion || schema instanceof ZodNullable ? `(${type})` : type
+  return schema instanceof ZodUnion || schema instanceof ZodDiscriminatedUnion || schema instanceof ZodNullable
+    ? `(${type})`
+    : type
 }
 
 function renderLiteral(value: unknown): string {

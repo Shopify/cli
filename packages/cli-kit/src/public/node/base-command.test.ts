@@ -10,7 +10,7 @@ import {unstyled} from './output.js'
 import {defineJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {Flags} from '@oclif/core'
+import {Flags, type Config} from '@oclif/core'
 
 let originalStdinIsTTY: boolean | undefined
 let originalStdoutIsTTY: boolean | undefined
@@ -296,7 +296,9 @@ describe('command descriptions', () => {
 
     expect(CommandWithJsonOutput.description).toBe(`Returns a value. "Learn more" (https://shopify.dev).
 
-With \`--json\`, the command returns \`CommandResult\`:
+Output from \`--json\` conforms to the \`CommandResult\` schema.
+
+Use \`--json-schema\` to print the schema directly:
 
 \`\`\`ts
 interface CommandResult {
@@ -307,6 +309,110 @@ interface CommandResult {
 
     CommandWithJsonOutput.descriptionWithoutMarkdown()
     expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
+  })
+})
+
+describe('JSON output schema flag', () => {
+  class CommandWithJsonOutput extends Command {
+    static get jsonOutputSchema() {
+      return defineJsonOutputSchema({
+        name: 'CommandResult',
+        schema: zod.object({value: zod.string()}),
+      })
+    }
+
+    public async run(): Promise<void> {}
+  }
+
+  test('prints only the schema and exits', () => {
+    const outputMock = mockAndCaptureOutput()
+    const command = new CommandWithJsonOutput(['--json-schema'], {} as Config)
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit')
+    })
+
+    try {
+      expect(() =>
+        (
+          command as unknown as {
+            exitWithJsonSchemaWhenRequested(): void
+          }
+        ).exitWithJsonSchemaWhenRequested(),
+      ).toThrow('process.exit')
+      expect(outputMock.output()).toBe(`interface CommandResult {
+  value: string
+}
+
+interface JsonErrorDocument {
+  error: JsonError
+}
+
+type JsonError = JsonAbortError | JsonBugError | JsonExternalError
+
+interface JsonErrorCustomSection {
+  title?: string
+  body: string | string[][]
+}
+
+interface JsonAbortError {
+  type: "abort"
+  message: string
+  tryMessage?: string
+  nextSteps?: string[]
+  customSections?: JsonErrorCustomSection[]
+}
+
+interface JsonBugError {
+  type: "bug"
+  message: string
+  tryMessage?: string
+  nextSteps?: string[]
+  customSections?: JsonErrorCustomSection[]
+  stack?: string
+}
+
+interface JsonExternalError {
+  type: "external"
+  message: string
+  tryMessage?: string
+  nextSteps?: string[]
+  customSections?: JsonErrorCustomSection[]
+  command: string
+  args: string[]
+}
+
+type CommandEvent = CommandDiagnosticEvent | CommandProgressEvent
+
+interface CommandDiagnosticEvent {
+  type: "diagnostic"
+  timestamp: string
+  level: "debug" | "info" | "warning"
+  message: string
+  code?: string
+}
+
+interface CommandProgressEvent {
+  type: "progress"
+  timestamp: string
+  message: string
+  current?: number
+  total?: number
+}`)
+    } finally {
+      exit.mockRestore()
+    }
+  })
+
+  test('throws an error when the command has no schema', () => {
+    const command = new MockCommand(['--json-schema'], {} as Config)
+
+    expect(() =>
+      (
+        command as unknown as {
+          exitWithJsonSchemaWhenRequested(): void
+        }
+      ).exitWithJsonSchemaWhenRequested(),
+    ).toThrow('This command does not define a JSON output schema.')
   })
 })
 
