@@ -4086,6 +4086,72 @@ DESCRIPTION
 
   Creates a new Shopify store, with no need for an existing account.
 
+  Output from `--json` conforms to the `CreatePreviewStoreResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "message": {
+        "type": "string"
+      },
+      "store": {
+        "$ref": "#/definitions/PreviewStore"
+      },
+      "next_steps": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "message",
+      "store",
+      "next_steps"
+    ],
+    "additionalProperties": false,
+    "title": "CreatePreviewStoreResult",
+    "definitions": {
+      "PreviewStore": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subdomain": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "storefrontUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "subdomain",
+          "storefrontUrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store create preview --name "Lavender Candles"
 
