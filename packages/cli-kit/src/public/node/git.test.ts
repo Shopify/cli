@@ -277,6 +277,15 @@ describe('commit()', () => {
 
     expect(mockedExeca).toHaveBeenCalledWith('git', ['commit', '-m', 'msg', '--author', author], {cwd: directory})
   })
+
+  test('throws an error if author starts with a hyphen', async () => {
+    const author = '-invalid-author'
+
+    await expect(git.createGitCommit('msg', {author})).rejects.toThrowError(
+      /Invalid commit author: -invalid-author. Author name\/email can't start with a hyphen./,
+    )
+    expect(mockedExeca).not.toHaveBeenCalled()
+  })
 })
 
 describe('getHeadSymbolicRef()', () => {

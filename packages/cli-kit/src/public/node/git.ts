@@ -299,6 +299,10 @@ export interface CreateGitCommitOptions {
 export async function createGitCommit(message: string, options?: CreateGitCommitOptions): Promise<string> {
   const args = ['commit', '-m', message]
   if (options?.author) {
+    // Guard against option injection attacks if author starts with '-'
+    if (options.author.startsWith('-')) {
+      throw new AbortError(`Invalid commit author: ${options.author}. Author name/email can't start with a hyphen.`)
+    }
     args.push('--author', options.author)
   }
   await gitCommand(args, options?.directory)
