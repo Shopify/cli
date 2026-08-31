@@ -7,6 +7,8 @@ import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {unstyled} from './output.js'
+import {defineJsonOutputSchema} from './json-output-schema.js'
+import {zod} from './schema.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 
@@ -272,6 +274,39 @@ describe('command events', () => {
       timestamp: expect.any(String),
       message: 'Displayed by task UI',
     })
+  })
+})
+
+describe('command descriptions', () => {
+  test('includes a JSON output schema without mutating the Markdown description', () => {
+    class CommandWithJsonOutput extends Command {
+      static get jsonOutputSchema() {
+        return defineJsonOutputSchema({
+          name: 'CommandResult',
+          schema: zod.object({value: zod.string()}),
+        })
+      }
+
+      static descriptionWithMarkdown = 'Returns a value. [Learn more](https://shopify.dev).'
+
+      static description = this.descriptionWithoutMarkdown()
+
+      public async run(): Promise<void> {}
+    }
+
+    expect(CommandWithJsonOutput.description).toBe(`Returns a value. "Learn more" (https://shopify.dev).
+
+With \`--json\`, the command returns \`CommandResult\`:
+
+\`\`\`ts
+interface CommandResult {
+  value: string
+}
+\`\`\``)
+    expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
+
+    CommandWithJsonOutput.descriptionWithoutMarkdown()
+    expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
   })
 })
 
