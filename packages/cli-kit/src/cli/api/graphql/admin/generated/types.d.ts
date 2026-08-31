@@ -232,6 +232,8 @@ export type OnlineStoreThemeFilesUserErrorsCode =
   | 'LESS_THAN_OR_EQUAL_TO'
   /** The record with the ID used as the input value couldn't be found. */
   | 'NOT_FOUND'
+  /** Another request is already updating this theme's files. Try again. */
+  | 'OPERATION_IN_PROGRESS'
   /** Theme contextualization and condition types are not compatible with each other. */
   | 'THEME_CONTEXTUALIZATION_NOT_COMPATIBLE_WITH_CONDITION_TYPES'
   /** There are theme files with conflicts. */
