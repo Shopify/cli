@@ -1,5 +1,6 @@
 import {getStoreInfo} from '../../services/store/info/index.js'
 import {renderStoreInfoResult} from '../../services/store/info/result.js'
+import {storeInfoJsonOutputSchema} from '../../services/store/info/types.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -24,6 +25,10 @@ Use \`--json\` for machine-readable output.`
     ...globalFlags,
     ...jsonFlag,
     store: storeFlags.store,
+  }
+
+  static get jsonOutputSchema() {
+    return storeInfoJsonOutputSchema
   }
 
   public async run(): Promise<void> {

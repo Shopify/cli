@@ -4204,6 +4204,33 @@ DESCRIPTION
 
   Use `--json` for machine-readable output.
 
+  Output from `--json` conforms to the `StoreInfoResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  interface StoreInfoResult {
+    id?: string
+    displayName?: string
+    subdomain: string
+    organizationId?: string
+    organizationName?: string
+    storeOwner?: StoreInfoStoreOwner
+    type?: string
+    plan?: string
+    featurePreview?: string
+    adminUrl?: string
+    accessUrl?: string
+    saveUrl?: string
+    authScopes?: string[]
+  }
+
+  interface StoreInfoStoreOwner {
+    name?: string
+    email?: string
+  }
+  ```
+
 EXAMPLES
   $ shopify store info --store shop.myshopify.com
 
@@ -4249,6 +4276,34 @@ DESCRIPTION
   `--organization-id`. In that case, `--organization-id` is required in non-interactive environments.
 
   Run `shopify organization list` to find organization IDs.
+
+  Output from `--json` conforms to the `StoreListResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  interface StoreListResult {
+    stores: StoreListEntry[]
+    organization?: StoreListOrganization
+    notice?: string
+    truncated?: boolean
+  }
+
+  interface StoreListEntry {
+    id?: string
+    store: string
+    createdAt: string
+    organizationId: string
+    organizationName: string
+    name?: string
+    type?: string
+  }
+
+  interface StoreListOrganization {
+    id: string
+    name: string
+  }
+  ```
 
 EXAMPLES
   $ shopify store list
