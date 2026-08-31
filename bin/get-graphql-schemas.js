@@ -121,7 +121,7 @@ async function fetchFileForSchema(schema, octokit) {
           path: schema.pathToFile,
           ref: branch,
         })
-        console.log(`LFS download via ${download_url}...`)
+        console.log('Downloading LFS schema content...')
         content = await fetch(download_url).then(res => {
           if (!res.ok) {
             const error = new Error(`HTTP ${res.status}: ${res.statusText}`)
