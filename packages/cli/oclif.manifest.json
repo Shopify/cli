@@ -6919,7 +6919,7 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
+      "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.\n\nOutput from `--json` conforms to the `StoreAuthResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ninterface StoreAuthResult {\n  store: string\n  userId: string\n  scopes: string[]\n  acquiredAt: string\n  expiresAt?: string\n  refreshTokenExpiresAt?: string\n  hasRefreshToken: boolean\n  associatedUser?: StoreAuthAssociatedUser\n}\n\ninterface StoreAuthAssociatedUser {\n  id: number\n  email?: string\n  firstName?: string\n  lastName?: string\n  accountOwner?: boolean\n}\n```",
       "descriptionWithMarkdown": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products",
@@ -6994,7 +6994,7 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Lists stores authenticated directly on this machine with `shopify store auth`.\n\nUse this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.\nTo list stores in a Shopify organization, run `shopify store list`.",
+      "description": "Lists stores authenticated directly on this machine with `shopify store auth`.\n\nUse this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.\nTo list stores in a Shopify organization, run `shopify store list`.\n\nOutput from `--json` conforms to the `StoreAuthListResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ninterface StoreAuthListResult {\n  sessions: StoreAuthListSession[]\n  message?: string\n}\n\ninterface StoreAuthListSession {\n  subdomain: string\n  connected: string\n}\n```",
       "descriptionWithMarkdown": "Lists stores authenticated directly on this machine with `shopify store auth`.\n\nUse this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.\nTo list stores in a Shopify organization, run `shopify store list`.",
       "enableJsonFlag": false,
       "examples": [

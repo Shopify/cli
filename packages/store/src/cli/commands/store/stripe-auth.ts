@@ -1,5 +1,5 @@
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
-import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
+import {presentStoreAuthResult} from '../../services/store/auth/result.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -38,15 +38,11 @@ export default class StoreStripeAuth extends StoreCommand {
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreStripeAuth)
 
-    await authenticateStoreWithApp(
-      {
-        store: flags.store,
-        scopes: flags.scopes,
-        signup: flags.signup,
-      },
-      {
-        presenter: createStoreAuthPresenter(flags.json ? 'json' : 'text'),
-      },
-    )
+    const result = await authenticateStoreWithApp({
+      store: flags.store,
+      scopes: flags.scopes,
+      signup: flags.signup,
+    })
+    presentStoreAuthResult(result, flags.json ? 'json' : 'text')
   }
 }

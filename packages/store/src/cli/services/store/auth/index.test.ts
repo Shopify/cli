@@ -1,9 +1,11 @@
 import {authenticateStoreWithApp} from './index.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
+import {storeAuthJsonOutputSchema} from './types.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
-import {describe, expect, test, vi} from 'vitest'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('../attribution.js')
@@ -12,13 +14,13 @@ vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedVal
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
 
 describe('store auth service', () => {
+  afterEach(() => {
+    mockAndCaptureOutput().clear()
+  })
+
   test('authenticateStoreWithApp opens the browser, stores the session, and returns auth result', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
+    const output = mockAndCaptureOutput()
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -39,13 +41,10 @@ describe('store auth service', () => {
           refresh_token: 'refresh-token',
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        presenter,
       },
     )
 
-    expect(presenter.openingBrowser).toHaveBeenCalledOnce()
     expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/admin/oauth/authorize?'))
-    expect(presenter.manualAuthUrl).not.toHaveBeenCalled()
     expect(result).toEqual(
       expect.objectContaining({
         store: 'shop.myshopify.com',
@@ -55,7 +54,8 @@ describe('store auth service', () => {
         associatedUser: expect.objectContaining({email: 'test@example.com'}),
       }),
     )
-    expect(presenter.success).toHaveBeenCalledWith(result)
+    expect(storeAuthJsonOutputSchema.validate(result)).toEqual(result)
+    expect(output.info()).toContain('Shopify CLI will open the app authorization page in your browser.')
     expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, 'shop.myshopify.com', false)
     expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, 'shop.myshopify.com', true)
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
@@ -79,11 +79,6 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp includes signup JWT in the authorization URL when provided', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -105,7 +100,6 @@ describe('store auth service', () => {
           refresh_token: 'refresh-token',
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        presenter,
       },
     )
 
@@ -115,11 +109,6 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp uses remote scopes by default when available', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -140,7 +129,6 @@ describe('store auth service', () => {
           associated_user: {id: 42, email: 'test@example.com'},
         }),
         resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['read_customers'], authoritative: true}),
-        presenter,
       },
     )
 
@@ -150,11 +138,6 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp reuses resolved existing scopes when requesting additional access', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -175,7 +158,6 @@ describe('store auth service', () => {
           associated_user: {id: 42, email: 'test@example.com'},
         }),
         resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['read_orders'], authoritative: true}),
-        presenter,
       },
     )
 
@@ -191,11 +173,6 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp does not require non-authoritative cached scopes to still be granted', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -216,7 +193,6 @@ describe('store auth service', () => {
           associated_user: {id: 42, email: 'test@example.com'},
         }),
         resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['read_orders'], authoritative: false}),
-        presenter,
       },
     )
 
@@ -232,11 +208,6 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp avoids requesting redundant read scopes already implied by existing write scopes', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -257,7 +228,6 @@ describe('store auth service', () => {
           associated_user: {id: 42, email: 'test@example.com'},
         }),
         resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['write_products'], authoritative: true}),
-        presenter,
       },
     )
 
@@ -273,17 +243,13 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp shows a manual auth URL when the browser does not open automatically', async () => {
     const openURL = vi.fn().mockResolvedValue(false)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
+    const output = mockAndCaptureOutput()
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
     })
 
-    const result = await authenticateStoreWithApp(
+    await authenticateStoreWithApp(
       {
         store: 'shop.myshopify.com',
         scopes: 'read_products',
@@ -297,15 +263,11 @@ describe('store auth service', () => {
           expires_in: 86400,
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        presenter,
       },
     )
 
-    expect(presenter.openingBrowser).toHaveBeenCalledOnce()
-    expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
-      expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
-    )
-    expect(presenter.success).toHaveBeenCalledWith(result)
+    expect(output.info()).toContain('Browser did not open automatically. Open this URL manually:')
+    expect(output.info()).toContain('https://shop.myshopify.com/admin/oauth/authorize?')
   })
 
   test('authenticateStoreWithApp records fqdn metadata before resolving existing scopes', async () => {
@@ -317,11 +279,6 @@ describe('store auth service', () => {
         },
         {
           resolveExistingScopes: vi.fn().mockRejectedValue(new Error('scope lookup failed')),
-          presenter: {
-            openingBrowser: vi.fn(),
-            manualAuthUrl: vi.fn(),
-            success: vi.fn(),
-          },
         },
       ),
     ).rejects.toThrow('scope lookup failed')
@@ -345,11 +302,6 @@ describe('store auth service', () => {
           openURL: vi.fn().mockResolvedValue(true),
           waitForStoreAuthCode: waitForStoreAuthCodeMock,
           exchangeStoreAuthCodeForToken: vi.fn(),
-          presenter: {
-            openingBrowser: vi.fn(),
-            manualAuthUrl: vi.fn(),
-            success: vi.fn(),
-          },
         },
       ),
     ).rejects.toThrow('callback failed')
@@ -375,11 +327,6 @@ describe('store auth service', () => {
           openURL: vi.fn().mockResolvedValue(true),
           waitForStoreAuthCode: waitForStoreAuthCodeMock,
           exchangeStoreAuthCodeForToken: vi.fn().mockRejectedValue(new Error('token exchange failed')),
-          presenter: {
-            openingBrowser: vi.fn(),
-            manualAuthUrl: vi.fn(),
-            success: vi.fn(),
-          },
         },
       ),
     ).rejects.toThrow('token exchange failed')
@@ -410,11 +357,6 @@ describe('store auth service', () => {
             scope: 'read_products',
             expires_in: 86400,
           }),
-          presenter: {
-            openingBrowser: vi.fn(),
-            manualAuthUrl: vi.fn(),
-            success: vi.fn(),
-          },
         },
       ),
     ).rejects.toThrow('Shopify did not return associated user information for the online access token.')
@@ -446,11 +388,6 @@ describe('store auth service', () => {
             expires_in: 86400,
             associated_user: {id: 42, email: 'test@example.com'},
           }),
-          presenter: {
-            openingBrowser: vi.fn(),
-            manualAuthUrl: vi.fn(),
-            success: vi.fn(),
-          },
         },
       ),
     ).rejects.toMatchObject({
@@ -486,11 +423,6 @@ describe('store auth service', () => {
           expires_in: 86400,
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        presenter: {
-          openingBrowser: vi.fn(),
-          manualAuthUrl: vi.fn(),
-          success: vi.fn(),
-        },
       },
     )
 
@@ -522,11 +454,6 @@ describe('store auth service', () => {
           expires_in: 86400,
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        presenter: {
-          openingBrowser: vi.fn(),
-          manualAuthUrl: vi.fn(),
-          success: vi.fn(),
-        },
       },
     )
 
@@ -559,11 +486,6 @@ describe('store auth service', () => {
             expires_in: 86400,
             associated_user: {id: 42, email: 'test@example.com'},
           }),
-          presenter: {
-            openingBrowser: vi.fn(),
-            manualAuthUrl: vi.fn(),
-            success: vi.fn(),
-          },
         },
       ),
     ).rejects.toThrow('Shopify granted fewer scopes than were requested.')
@@ -590,11 +512,6 @@ describe('store auth service', () => {
           expires_in: 86400,
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        presenter: {
-          openingBrowser: vi.fn(),
-          manualAuthUrl: vi.fn(),
-          success: vi.fn(),
-        },
       },
     )
 
@@ -626,11 +543,6 @@ describe('store auth service', () => {
           expires_in: 86400,
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        presenter: {
-          openingBrowser: vi.fn(),
-          manualAuthUrl: vi.fn(),
-          success: vi.fn(),
-        },
       },
     )
 
@@ -646,7 +558,6 @@ describe('store auth service', () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const waitForStoreAuthCode = vi.fn()
     const exchangeStoreAuthCodeForToken = vi.fn()
-    const presenter = {openingBrowser: vi.fn(), manualAuthUrl: vi.fn(), success: vi.fn()}
     const getCurrentStoredStoreAppSessionMock = vi.fn().mockReturnValue({
       store: 'shop.myshopify.com',
       clientId: STORE_AUTH_APP_CLIENT_ID,
@@ -666,7 +577,6 @@ describe('store auth service', () => {
           waitForStoreAuthCode,
           exchangeStoreAuthCodeForToken,
           getCurrentStoredStoreAppSession: getCurrentStoredStoreAppSessionMock,
-          presenter,
         },
       ),
     ).rejects.toThrow('`store auth` is unavailable for preview stores.')
@@ -675,7 +585,6 @@ describe('store auth service', () => {
     expect(openURL).not.toHaveBeenCalled()
     expect(waitForStoreAuthCode).not.toHaveBeenCalled()
     expect(exchangeStoreAuthCodeForToken).not.toHaveBeenCalled()
-    expect(presenter.openingBrowser).not.toHaveBeenCalled()
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
     expect(recordStoreFqdnMetadata).not.toHaveBeenCalled()
   })
@@ -699,7 +608,6 @@ describe('store auth service', () => {
         waitForStoreAuthCode: vi.fn(),
         exchangeStoreAuthCodeForToken: vi.fn(),
         getCurrentStoredStoreAppSession: getCurrentStoredStoreAppSessionMock,
-        presenter: {openingBrowser: vi.fn(), manualAuthUrl: vi.fn(), success: vi.fn()},
       },
     ).then(
       () => {
