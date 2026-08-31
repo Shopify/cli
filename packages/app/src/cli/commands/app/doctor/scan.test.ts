@@ -51,11 +51,13 @@ describe('app doctor scan command', () => {
     expect(doctor).toHaveBeenCalledWith(expect.objectContaining({findingsPath: resolvePath('./findings.json')}))
   })
 
-  test('describes --yes as showing instructions and keeps it mutually exclusive with --skip-instructions', () => {
-    expect(DoctorScan.flags.yes.description).toBe('Show coding-agent instructions without prompting.')
+  test('describes --yes as printing instructions and keeps it mutually exclusive with --skip-instructions', () => {
+    expect(DoctorScan.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
     expect(DoctorScan.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
     expect(DoctorScan.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(DoctorScan.flags['skip-instructions'].exclusive).toEqual(['yes'])
+    expect(DoctorScan.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
+    expect(DoctorScan.descriptionWithMarkdown).toContain('copying is the default')
     expect(DoctorScan.descriptionWithMarkdown).toContain('shopify app doctor instructions')
   })
 

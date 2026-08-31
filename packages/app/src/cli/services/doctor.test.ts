@@ -1,6 +1,7 @@
 import doctor, {appDoctorInstructionsPrompt, formatDoctorOutput} from './doctor.js'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
+import type {AppDoctorInstructionsDestination} from './doctor.js'
 
 const engineResult: AppDoctorRunResult = {
   output: 'No security issues found.',
@@ -16,7 +17,8 @@ function testDependencies(result: AppDoctorRunResult = engineResult) {
   return {
     runEngine: vi.fn(async (_options: AppDoctorRunOptions) => result),
     canPrompt: vi.fn(() => false),
-    confirmShowInstructions: vi.fn(async () => false),
+    selectInstructionsDestination: vi.fn(async (): Promise<AppDoctorInstructionsDestination> => 'nothing'),
+    deliverInstructions: vi.fn(async () => {}),
     output: vi.fn(),
     setExitCode: vi.fn(),
   }
@@ -66,8 +68,8 @@ describe('doctor', () => {
       engine: engineResult.engine,
     })
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
-    expect(dependencies.output).toHaveBeenCalledTimes(1)
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
 
   test('does not offer coding-agent instructions in CI or another non-interactive environment', async () => {
@@ -76,39 +78,70 @@ describe('doctor', () => {
     await doctor(testOptions(), dependencies)
 
     expect(dependencies.canPrompt).toHaveBeenCalledOnce()
-    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
-    expect(dependencies.output).toHaveBeenCalledTimes(1)
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
 
-  test('offers instructions that start from the scan results', async () => {
+  test('prioritizes copying instructions that start from the scan results', async () => {
     const dependencies = testDependencies()
     dependencies.canPrompt.mockReturnValue(true)
-    dependencies.confirmShowInstructions.mockResolvedValue(true)
+    dependencies.selectInstructionsDestination.mockResolvedValue('copy')
 
     await doctor(testOptions(), dependencies)
 
     expect(appDoctorInstructionsPrompt).toEqual({
-      message: 'Show instructions for handing the results to your coding agent?',
-      confirmationMessage: 'Yes, show instructions',
-      cancellationMessage: 'No, skip instructions',
-      defaultValue: false,
+      message: 'How would you like to hand the results to your coding agent?',
+      choices: [
+        {label: 'Copy instructions to the clipboard', value: 'copy'},
+        {label: 'Print instructions to the terminal', value: 'print'},
+        {label: 'Nothing', value: 'nothing'},
+      ],
+      defaultValue: 'copy',
     })
-    expect(dependencies.confirmShowInstructions).toHaveBeenCalledOnce()
-    expect(dependencies.output).toHaveBeenCalledTimes(2)
-    expect(dependencies.output.mock.calls[1]![0]).toContain('Use the existing scan results')
-    expect(dependencies.output.mock.calls[1]![0]).toContain('The initial scan has already completed.')
-    expect(dependencies.output.mock.calls[1]![0]).not.toContain('Run the initial scan from the app root')
+    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+      directory: '/tmp/unlinked-app',
+      copy: true,
+      scanComplete: true,
+    })
   })
 
-  test('--yes shows post-scan instructions without prompting, including in CI', async () => {
+  test('prints post-scan instructions when selected', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.selectInstructionsDestination.mockResolvedValue('print')
+
+    await doctor(testOptions(), dependencies)
+
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+      directory: '/tmp/unlinked-app',
+      copy: false,
+      scanComplete: true,
+    })
+  })
+
+  test('does nothing when selected', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+
+    await doctor(testOptions(), dependencies)
+
+    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
+  })
+
+  test('--yes prints post-scan instructions without prompting, including in CI', async () => {
     const dependencies = testDependencies()
 
     await doctor({...testOptions(), yes: true}, dependencies)
 
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
-    expect(dependencies.output).toHaveBeenCalledTimes(2)
-    expect(dependencies.output.mock.calls[1]![0]).toContain('Use the existing scan results')
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+      directory: '/tmp/unlinked-app',
+      copy: false,
+      scanComplete: true,
+    })
   })
 
   test('--skip-instructions never offers instructions', async () => {
@@ -118,8 +151,8 @@ describe('doctor', () => {
     await doctor({...testOptions(), skipInstructions: true}, dependencies)
 
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
-    expect(dependencies.output).toHaveBeenCalledTimes(1)
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
 
   test('does not offer handoff instructions after compiling agent findings', async () => {
@@ -129,8 +162,8 @@ describe('doctor', () => {
     await doctor({...testOptions(), findingsPath: '/tmp/findings.json'}, dependencies)
 
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.confirmShowInstructions).not.toHaveBeenCalled()
-    expect(dependencies.output).toHaveBeenCalledTimes(1)
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
 
   test('uses the engine exit code for blocking findings', async () => {

@@ -14,7 +14,7 @@ export default class DoctorScan extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Doctor locally and creates its review pack and trace.
 
-Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to print instructions that you can hand to your coding agent. In CI and other non-interactive environments, instructions aren't printed unless you pass \`--yes\`. JSON output never prompts or prints those instructions. You can also run \`shopify app doctor instructions\` to print, copy, or write them later.`
+Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app doctor instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -40,7 +40,7 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
       env: 'SHOPIFY_FLAG_APP_DOCTOR_BLOCKING',
     }),
     yes: Flags.boolean({
-      description: 'Show coding-agent instructions without prompting.',
+      description: 'Print coding-agent instructions without prompting.',
       default: false,
       exclusive: ['skip-instructions'],
       env: 'SHOPIFY_FLAG_YES',

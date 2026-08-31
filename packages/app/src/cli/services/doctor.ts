@@ -1,9 +1,10 @@
 import {runAppDoctor} from './app-doctor-api.js'
-import {appDoctorInstructions} from './app-doctor-instructions.js'
+import deliverAppDoctorInstructions from './app-doctor-instructions.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import type {AppDoctorBlockingLevel, AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
+import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
 export interface DoctorOptions {
   directory: string
@@ -15,25 +16,32 @@ export interface DoctorOptions {
   findingsPath?: string
 }
 
+export type AppDoctorInstructionsDestination = 'copy' | 'print' | 'nothing'
+
 interface DoctorDependencies {
   runEngine(options: AppDoctorRunOptions): Promise<AppDoctorRunResult>
   canPrompt(): boolean
-  confirmShowInstructions(): Promise<boolean>
+  selectInstructionsDestination(): Promise<AppDoctorInstructionsDestination>
+  deliverInstructions(options: {directory: string; copy: boolean; scanComplete: boolean}): Promise<void>
   output(content: string): void
   setExitCode(exitCode: number): void
 }
 
-export const appDoctorInstructionsPrompt = {
-  message: 'Show instructions for handing the results to your coding agent?',
-  confirmationMessage: 'Yes, show instructions',
-  cancellationMessage: 'No, skip instructions',
-  defaultValue: false,
-} as const
+export const appDoctorInstructionsPrompt: RenderSelectPromptOptions<AppDoctorInstructionsDestination> = {
+  message: 'How would you like to hand the results to your coding agent?',
+  choices: [
+    {label: 'Copy instructions to the clipboard', value: 'copy'},
+    {label: 'Print instructions to the terminal', value: 'print'},
+    {label: 'Nothing', value: 'nothing'},
+  ],
+  defaultValue: 'copy',
+}
 
 const defaultDependencies: DoctorDependencies = {
   runEngine: runAppDoctor,
   canPrompt: terminalSupportsPrompting,
-  confirmShowInstructions: () => renderConfirmationPrompt(appDoctorInstructionsPrompt),
+  selectInstructionsDestination: () => renderSelectPrompt(appDoctorInstructionsPrompt),
+  deliverInstructions: deliverAppDoctorInstructions,
   output: outputResult,
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
@@ -57,11 +65,14 @@ export function formatDoctorOutput(result: AppDoctorRunResult, json: boolean): s
   return JSON.stringify(reportWithEngine, null, 2)
 }
 
-async function shouldShowInstructions(options: DoctorOptions, dependencies: DoctorDependencies): Promise<boolean> {
-  if (options.json || options.skipInstructions || options.findingsPath) return false
-  if (options.yes) return true
-  if (!dependencies.canPrompt()) return false
-  return dependencies.confirmShowInstructions()
+async function instructionsDestination(
+  options: DoctorOptions,
+  dependencies: DoctorDependencies,
+): Promise<AppDoctorInstructionsDestination> {
+  if (options.json || options.skipInstructions || options.findingsPath) return 'nothing'
+  if (options.yes) return 'print'
+  if (!dependencies.canPrompt()) return 'nothing'
+  return dependencies.selectInstructionsDestination()
 }
 
 export default async function doctor(
@@ -78,8 +89,13 @@ export default async function doctor(
 
   dependencies.output(formatDoctorOutput(result, options.json))
 
-  if (await shouldShowInstructions(options, dependencies)) {
-    dependencies.output(appDoctorInstructions(true))
+  const destination = await instructionsDestination(options, dependencies)
+  if (destination !== 'nothing') {
+    await dependencies.deliverInstructions({
+      directory: options.directory,
+      copy: destination === 'copy',
+      scanComplete: true,
+    })
   }
 
   if (result.exitCode !== 0) dependencies.setExitCode(result.exitCode)
