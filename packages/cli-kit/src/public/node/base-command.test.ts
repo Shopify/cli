@@ -1,7 +1,8 @@
 import Command from './base-command.js'
 import {Environments} from './environments.js'
 import {encodeToml as encodeTOML} from './toml/codec.js'
-import {globalFlags, requiredIfNonInteractive} from './cli.js'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from './cli.js'
+import {emitCommandEvent} from './command-events.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
@@ -25,6 +26,7 @@ beforeEach(() => {
 afterEach(() => {
   Object.defineProperty(process.stdin, 'isTTY', {value: originalStdinIsTTY, configurable: true, writable: true})
   Object.defineProperty(process.stdout, 'isTTY', {value: originalStdoutIsTTY, configurable: true, writable: true})
+  mockAndCaptureOutput().clear()
 })
 
 let testResult: Record<string, unknown> = {}
@@ -149,6 +151,26 @@ class MockCommandWithoutEnvironmentFlag extends Command {
   }
 }
 
+class MockCommandWithEvents extends Command {
+  static enableJsonFlag = true
+  static flags = {...jsonFlag}
+
+  async run(): Promise<void> {
+    await this.parse(MockCommandWithEvents)
+    emitCommandEvent({type: 'progress', message: 'Command event'})
+  }
+}
+
+class MockCommandWithAlreadyRenderedEvent extends Command {
+  static enableJsonFlag = true
+  static flags = {...jsonFlag}
+
+  async run(): Promise<void> {
+    await this.parse(MockCommandWithAlreadyRenderedEvent)
+    emitCommandEvent({type: 'progress', message: 'Displayed by task UI'}, {alreadyRendered: true})
+  }
+}
+
 const validEnvironment = {
   someString: 'stringy',
   someBoolean: true,
@@ -206,6 +228,52 @@ const allEnvironments: Environments = {
     environmentWithPassword,
   },
 }
+
+describe('command events', () => {
+  test('renders events for commands', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithEvents.run([])
+
+    expect(outputMock.info()).toContain('Command event')
+  })
+
+  test('renders events as JSON for JSON commands', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithEvents.run(['--json'])
+
+    expect(JSON.parse(outputMock.info())).toEqual({
+      type: 'progress',
+      timestamp: expect.any(String),
+      message: 'Command event',
+    })
+  })
+
+  test('does not duplicate events already displayed by the text UI', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithAlreadyRenderedEvent.run([])
+
+    expect(outputMock.info()).toBe('')
+  })
+
+  test('renders UI-managed events as JSON without presentation details', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithAlreadyRenderedEvent.run(['--json'])
+
+    expect(JSON.parse(outputMock.info())).toEqual({
+      type: 'progress',
+      timestamp: expect.any(String),
+      message: 'Displayed by task UI',
+    })
+  })
+})
 
 describe('applying environments', async () => {
   const runTestInTmpDir = (testName: string, testFunc: (tmpDir: string) => Promise<void>) => {

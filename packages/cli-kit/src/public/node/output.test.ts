@@ -3,12 +3,18 @@ import {
   clearCollectedLogs,
   LogLevel,
   outputDebug,
+  outputCompleted,
+  outputInfo,
+  outputNewline,
+  outputSuccess,
+  outputWarn,
   outputWhereAppropriate,
   outputToken,
   shouldDisplayColors,
   formatPackageManagerCommand,
 } from './output.js'
 
+import {runWithCommandEvents} from './command-events.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
@@ -128,6 +134,64 @@ describe('outputDebug', () => {
     } finally {
       toISOStringSpy.mockRestore()
     }
+  })
+})
+
+describe('JSON command diagnostics', () => {
+  test.each([
+    {output: outputDebug, level: 'debug'},
+    {output: outputInfo, level: 'info'},
+    {output: outputSuccess, level: 'info'},
+    {output: outputCompleted, level: 'info'},
+    {output: outputWarn, level: 'warning'},
+  ] as const)('emits output helpers as $level diagnostics', ({output, level}) => {
+    const sink = vi.fn()
+    if (level === 'debug') isVerboseMock.mockReturnValue(true)
+
+    runWithCommandEvents({sink, outputMode: 'json', clock: () => new Date('2026-08-26T12:00:00.000Z')}, () =>
+      output('Diagnostic message'),
+    )
+
+    expect(sink).toHaveBeenCalledWith({
+      type: 'diagnostic',
+      timestamp: '2026-08-26T12:00:00.000Z',
+      level,
+      message: 'Diagnostic message',
+    })
+  })
+
+  test('preserves debug verbosity filtering', () => {
+    const sink = vi.fn()
+
+    runWithCommandEvents({sink, outputMode: 'json'}, () => outputDebug('Hidden diagnostic'))
+
+    expect(sink).not.toHaveBeenCalled()
+  })
+
+  test('does not turn output sent to a custom logger into a command event', () => {
+    const sink = vi.fn()
+    const logger = vi.fn()
+
+    runWithCommandEvents({sink, outputMode: 'json'}, () => outputInfo('Stream message', logger))
+
+    expect(sink).not.toHaveBeenCalled()
+    expect(logger).toHaveBeenCalledWith('Stream message', 'info')
+  })
+
+  test('does not emit blank diagnostics', () => {
+    const sink = vi.fn()
+
+    runWithCommandEvents({sink, outputMode: 'json'}, () => outputInfo('\n'))
+
+    expect(sink).not.toHaveBeenCalled()
+  })
+
+  test('suppresses standalone newlines', () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+
+    runWithCommandEvents({outputMode: 'json'}, () => outputNewline())
+
+    expect(stderrWrite).not.toHaveBeenCalled()
   })
 })
 
