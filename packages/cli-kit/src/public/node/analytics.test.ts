@@ -429,6 +429,153 @@ describe('event tracking', () => {
     })
   })
 
+  test('does not send signup JWTs passed as command arguments to Monorail', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const signupJwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdG9yZSJ9.s1gn4tur3'
+      const commandContent = {command: 'stripe-auth', topic: 'store'}
+      const argsWithSignup = args.concat(['--signup', signupJwt, '--scopes', `--signup=${signupJwt}`])
+      await startAnalytics({commandContent, args: argsWithSignup, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(sensitivePayload.args).toContain('--signup *****')
+      expect(sensitivePayload.args).toContain('--signup=*****')
+      expect(JSON.stringify(sensitivePayload)).not.toContain('s1gn4tur3')
+    })
+  })
+
+  test('does not send signup JWTs that were quoted on the command line to Monorail', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const signupJwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdG9yZSJ9.s1gn4tur3'
+      const commandContent = {command: 'stripe-auth', topic: 'store'}
+      const argsWithSignup = args.concat(['--signup', `"${signupJwt}"`])
+      await startAnalytics({commandContent, args: argsWithSignup, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(sensitivePayload.args).toContain('--signup *****')
+      expect(JSON.stringify(sensitivePayload)).not.toContain('s1gn4tur3')
+    })
+  })
+
+  test('does not send signup environment flags to Monorail', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      const commandContent = {command: 'stripe-auth', topic: 'store'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+      await addSensitiveMetadata(() => ({
+        environmentFlags: JSON.stringify({signup: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdG9yZSJ9.s1gn4tur3'}),
+      }))
+
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject({
+        cmd_all_environment_flags: JSON.stringify({signup: '*****'}),
+      })
+    })
+  })
+
+  test('does not send signup credentials carried in an authorization URL to Monorail', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'stripe-auth', topic: 'store'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({
+        config,
+        errorMessage:
+          'Could not open https://shop.myshopify.com/admin/oauth/authorize?client_id=abc&signup=eyJhbGciOiJIUzI1NiJ9.s1gn4tur3&state=xyz',
+        exitMode: 'unexpected_error',
+      })
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(sensitivePayload.error_message).toContain('signup=*****&state=xyz')
+      expect(JSON.stringify(sensitivePayload)).not.toContain('s1gn4tur3')
+    })
+  })
+
+  test('sends URLs whose path merely mentions signup without redacting them', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({
+        config,
+        errorMessage: 'Create an account at https://partners.shopify.com/signup and retry with from_signup=true',
+        exitMode: 'unexpected_error',
+      })
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0]![2].error_message).toBe(
+        'Create an account at https://partners.shopify.com/signup and retry with from_signup=true',
+      )
+    })
+  })
+
+  test('sends analytics when a redacted flag value was quoted on the command line', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      const argsWithPassword = args.concat(['--store-password', '"store secret"'])
+      await startAnalytics({commandContent, args: argsWithPassword, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(sensitivePayload.args).toContain('--store-password *****')
+      expect(JSON.stringify(sensitivePayload)).not.toContain('store secret')
+    })
+  })
+
   test('sends only allowlisted Shopify environment variables in sensitive payload', async () => {
     const originalShopifyInvokedBy = process.env.SHOPIFY_INVOKED_BY
     const originalShopifyCliAgent = process.env.SHOPIFY_CLI_AGENT

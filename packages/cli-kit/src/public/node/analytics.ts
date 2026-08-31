@@ -267,11 +267,17 @@ async function buildPayload({
 
 function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
-  // Remove Theme Access passwords from the payload
+  // Redaction runs on the serialized payload, so a flag value that was quoted arrives with its quotes
+  // escaped. Every flag rule below matches that escaped form first, and its bare-value alternative
+  // treats a JSON escape as part of the value, so a value can never be redacted only halfway or leave
+  // behind a string that no longer parses.
   const sanitizedPayloadString = payloadString
     .replace(/shptka_\w*/g, '*****')
-    .replace(/(--store-password(?:=|\s+))(?:"[^"]*"|'[^']*'|[^\s"]+)/g, '$1*****')
+    .replace(/(--store-password(?:=|\s+))(?:\\"[^"\\]*\\"|'[^']*'|(?:\\.|[^\s"\\])+)/g, '$1*****')
     .replace(/((?:store-password|SHOPIFY_FLAG_STORE_PASSWORD)\\?":\\?")[^"\\]*/g, '$1*****')
+    .replace(/(--signup(?:=|\s+))(?:\\"[^"\\]*\\"|'[^']*'|(?:\\.|[^\s"\\])+)/g, '$1*****')
+    .replace(/((?:signup|SHOPIFY_FLAG_SIGNUP)\\?":\\?")[^"\\]*/g, '$1*****')
+    .replace(/(?<![\w-])(signup=)[^&\s"'\\]+/g, '$1*****')
   return JSON.parse(sanitizedPayloadString)
 }
 
