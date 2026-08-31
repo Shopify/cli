@@ -3744,6 +3744,31 @@ DESCRIPTION
 
   Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
 
+  Output from `--json` conforms to the `StoreAuthResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  interface StoreAuthResult {
+    store: string
+    userId: string
+    scopes: string[]
+    acquiredAt: string
+    expiresAt?: string
+    refreshTokenExpiresAt?: string
+    hasRefreshToken: boolean
+    associatedUser?: StoreAuthAssociatedUser
+  }
+
+  interface StoreAuthAssociatedUser {
+    id: number
+    email?: string
+    firstName?: string
+    lastName?: string
+    accountOwner?: boolean
+  }
+  ```
+
 EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
@@ -3782,6 +3807,22 @@ DESCRIPTION
 
   Use this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.
   To list stores in a Shopify organization, run `shopify store list`.
+
+  Output from `--json` conforms to the `StoreAuthListResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  interface StoreAuthListResult {
+    sessions: StoreAuthListSession[]
+    message?: string
+  }
+
+  interface StoreAuthListSession {
+    subdomain: string
+    connected: string
+  }
+  ```
 
 EXAMPLES
   $ shopify store auth list

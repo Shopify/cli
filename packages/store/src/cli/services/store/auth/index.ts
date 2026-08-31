@@ -4,12 +4,12 @@ import {waitForStoreAuthCode} from './callback.js'
 import {createPkceBootstrap} from './pkce.js'
 import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScopes} from './scopes.js'
 import {resolveExistingStoreAuthScopes, type ResolvedStoreAuthScopes} from './existing-scopes.js'
-import {createStoreAuthPresenter, type StoreAuthPresenter, type StoreAuthResult} from './result.js'
+import {type StoreAuthResult} from './types.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {getCurrentStoredStoreAppSession, setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -27,7 +27,6 @@ interface StoreAuthDependencies {
   exchangeStoreAuthCodeForToken: typeof exchangeStoreAuthCodeForToken
   resolveExistingScopes: (store: string) => Promise<ResolvedStoreAuthScopes>
   getCurrentStoredStoreAppSession: typeof getCurrentStoredStoreAppSession
-  presenter: StoreAuthPresenter
 }
 
 const defaultStoreAuthDependencies: StoreAuthDependencies = {
@@ -36,7 +35,6 @@ const defaultStoreAuthDependencies: StoreAuthDependencies = {
   exchangeStoreAuthCodeForToken,
   resolveExistingScopes: resolveExistingStoreAuthScopes,
   getCurrentStoredStoreAppSession,
-  presenter: createStoreAuthPresenter('text'),
 }
 
 export async function authenticateStoreWithApp(
@@ -70,13 +68,18 @@ export async function authenticateStoreWithApp(
     authorization: {authorizationUrl},
   } = bootstrap
 
-  resolvedDependencies.presenter.openingBrowser()
+  outputInfo('Shopify CLI will open the app authorization page in your browser.')
+  outputInfo('')
 
   const code = await resolvedDependencies.waitForStoreAuthCode({
     ...bootstrap.waitForAuthCodeOptions,
     onListening: async () => {
       const opened = await resolvedDependencies.openURL(authorizationUrl)
-      if (!opened) resolvedDependencies.presenter.manualAuthUrl(authorizationUrl)
+      if (!opened) {
+        outputInfo('Browser did not open automatically. Open this URL manually:')
+        outputInfo(outputContent`${outputToken.link(authorizationUrl)}`)
+        outputInfo('')
+      }
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
@@ -128,8 +131,6 @@ export async function authenticateStoreWithApp(
   outputDebug(
     outputContent`Session persisted for ${outputToken.raw(store)} (user ${outputToken.raw(userId)}, expires ${outputToken.raw(expiresAt ?? 'unknown')})`,
   )
-
-  resolvedDependencies.presenter.success(result)
   return result
 }
 
