@@ -3,9 +3,10 @@ import {spawn} from 'child_process'
 /**
  * @param {string} command
  * @param {string[]} args
+ * @param {{printOutput?: boolean}} [options]
  * @returns {Promise<string>}
  */
-export function runCommand(command, args) {
+export function runCommand(command, args, {printOutput = true} = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {stdio: ['inherit', 'pipe', 'pipe']})
 
@@ -13,12 +14,12 @@ export function runCommand(command, args) {
     let errorOutput = ''
 
     child.stdout.on('data', (data) => {
-      console.log(data.toString())
+      if (printOutput) console.log(data.toString())
       output += data.toString()
     })
 
     child.stderr.on('data', (data) => {
-      console.log(data.toString())
+      if (printOutput) console.log(data.toString())
       errorOutput += data.toString()
     })
 
