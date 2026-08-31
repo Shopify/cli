@@ -25,6 +25,10 @@ import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
 import ConfigValidate from './commands/app/config/validate.js'
 import Release from './commands/app/release.js'
+import SubscriptionMigrationsCancel from './commands/app/subscription-migrations/cancel.js'
+import SubscriptionMigrationsSchedule from './commands/app/subscription-migrations/schedule.js'
+import SubscriptionMigrationsStatus from './commands/app/subscription-migrations/status.js'
+import SubscriptionMigrationsUnschedule from './commands/app/subscription-migrations/unschedule.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
@@ -56,6 +60,10 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:init': Init,
   'app:config:validate': ConfigValidate,
   'app:release': Release,
+  'app:subscription-migrations:cancel': SubscriptionMigrationsCancel,
+  'app:subscription-migrations:schedule': SubscriptionMigrationsSchedule,
+  'app:subscription-migrations:status': SubscriptionMigrationsStatus,
+  'app:subscription-migrations:unschedule': SubscriptionMigrationsUnschedule,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
   'app:config:pull': ConfigPull,

@@ -1,0 +1,60 @@
+import {appFlags} from '../../../flags.js'
+import {Flags} from '@oclif/core'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+
+const sharedFlags = {
+  ...globalFlags,
+  ...appFlags,
+  ...jsonFlag,
+}
+
+const watchFlag = {
+  watch: Flags.boolean({
+    description:
+      'Display the current operation state while polling, then output the final outcome when every operation reaches a terminal status.',
+    env: 'SHOPIFY_FLAG_WATCH',
+    default: false,
+  }),
+}
+
+const statusWatchFlag = {
+  watch: Flags.boolean({
+    description:
+      'Display the current operation state while polling, then output the final state when every operation reaches a terminal status.',
+    env: 'SHOPIFY_FLAG_WATCH',
+    default: false,
+  }),
+}
+
+export const submissionFlags = {
+  ...sharedFlags,
+  input: Flags.string({
+    char: 'i',
+    description: 'Path to the migration CSV. If omitted, standard input is used.',
+    env: 'SHOPIFY_FLAG_INPUT',
+  }),
+  force: requiredIfNonInteractive(
+    Flags.boolean({
+      char: 'f',
+      description: 'Skip confirmation.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      default: false,
+    }),
+  ),
+  ...watchFlag,
+}
+
+export const operationFlags = {
+  ...sharedFlags,
+  id: Flags.string({
+    description: 'The app subscription migration operation ID. Can be specified multiple times.',
+    env: 'SHOPIFY_FLAG_ID',
+    required: true,
+    multiple: true,
+  }),
+}
+
+export const statusFlags = {
+  ...operationFlags,
+  ...statusWatchFlag,
+}
