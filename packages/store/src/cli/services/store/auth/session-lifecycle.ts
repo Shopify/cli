@@ -69,13 +69,14 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
   )
 
   const previousAccessToken = session.accessToken
+  const refreshInput = {
+    store: session.store,
+    refreshToken: session.refreshToken,
+  }
 
   let refreshed
   try {
-    refreshed = await refreshStoreAccessToken({
-      store: session.store,
-      refreshToken: session.refreshToken,
-    })
+    refreshed = await refreshStoreAccessToken(refreshInput)
   } catch (error) {
     clearStoredStoreAppSession(session.store, session.userId)
 
