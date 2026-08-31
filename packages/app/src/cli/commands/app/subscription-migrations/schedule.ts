@@ -17,7 +17,7 @@ When \`--input\` is omitted, the command reads CSV data from stdin. Use \`--inpu
 - Example header: \`shop_id,target_plan_handle,price_behavior,notification\`.
 - Example row: \`123456789,pro,HONOR_BILLING_PRICE,WHEN_REQUIRED\`.
 
-\`price_behavior\` must be \`HONOR_BILLING_PRICE\` or \`PLAN_PRICE\`. \`notification\` can be \`NONE\`, \`OPT_OUT\`, or \`WHEN_REQUIRED\` and defaults to \`WHEN_REQUIRED\` when omitted or blank.
+\`price_behavior\` must be \`HONOR_BILLING_PRICE\` or \`PLAN_PRICE\`. \`notification\` can be \`OPT_OUT\` or \`WHEN_REQUIRED\` and defaults to \`WHEN_REQUIRED\` when omitted or blank.
 
 Validation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in batches of 250 shops. Preserve every operation GID printed by the command so you can check or cancel the submitted operations.
 

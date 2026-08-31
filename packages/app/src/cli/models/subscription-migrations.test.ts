@@ -8,7 +8,7 @@ describe('subscription migration domain models', () => {
   })
 
   test('matches the Partners API notification kinds', () => {
-    expect(NOTIFICATION_KINDS).toEqual(['NONE', 'OPT_OUT', 'WHEN_REQUIRED'])
+    expect(NOTIFICATION_KINDS).toEqual(['OPT_OUT', 'WHEN_REQUIRED'])
   })
 
   test('represents successful and failed planning results', () => {

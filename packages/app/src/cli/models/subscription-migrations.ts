@@ -1,7 +1,7 @@
 export const PRICE_BEHAVIORS = ['HONOR_BILLING_PRICE', 'PLAN_PRICE'] as const
 export type PriceBehavior = (typeof PRICE_BEHAVIORS)[number]
 
-export const NOTIFICATION_KINDS = ['NONE', 'OPT_OUT', 'WHEN_REQUIRED'] as const
+export const NOTIFICATION_KINDS = ['OPT_OUT', 'WHEN_REQUIRED'] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 export type MigrationAction = 'schedule' | 'unschedule'

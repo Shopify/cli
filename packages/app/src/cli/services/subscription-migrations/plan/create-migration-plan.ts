@@ -74,7 +74,7 @@ export function createMigrationPlan(action: MigrationAction, rawRows: RawMigrati
       errors.push({
         row: rawRow.sourceRow,
         field: 'notification',
-        message: 'Notification must be NONE, OPT_OUT, or WHEN_REQUIRED',
+        message: 'Notification must be OPT_OUT or WHEN_REQUIRED',
       })
       rowIsValid = false
     }

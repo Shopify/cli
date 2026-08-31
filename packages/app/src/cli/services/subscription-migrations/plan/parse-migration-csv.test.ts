@@ -61,7 +61,7 @@ describe('parseMigrationCsv', () => {
   })
 
   test('rejects an unschedule CSV without shop_id', () => {
-    expect(parseMigrationCsv('notification\nNONE\n', 'unschedule')).toEqual({
+    expect(parseMigrationCsv('notification\nOPT_OUT\n', 'unschedule')).toEqual({
       ok: false,
       errors: [{field: 'shop_id', message: 'Missing required CSV header: shop_id'}],
     })

@@ -115,7 +115,30 @@ describe('createMigrationPlan', () => {
         {
           row: 2,
           field: 'notification',
-          message: 'Notification must be NONE, OPT_OUT, or WHEN_REQUIRED',
+          message: 'Notification must be OPT_OUT or WHEN_REQUIRED',
+        },
+      ],
+    })
+  })
+
+  test('rejects NONE as a notification kind', () => {
+    const result = createMigrationPlan('schedule', [
+      {
+        sourceRow: 2,
+        shopId: '1',
+        targetPlanHandle: 'basic',
+        priceBehavior: 'PLAN_PRICE',
+        notification: 'NONE',
+      },
+    ])
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [
+        {
+          row: 2,
+          field: 'notification',
+          message: 'Notification must be OPT_OUT or WHEN_REQUIRED',
         },
       ],
     })
