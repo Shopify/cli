@@ -77,7 +77,7 @@ describe('store auth service', () => {
     })
   })
 
-  test('authenticateStoreWithApp includes signup JWT in the authorization URL when provided', async () => {
+  test('authenticateStoreWithApp opens a loopback handoff URL when a signup JWT is provided', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const presenter = {
       openingBrowser: vi.fn(),
@@ -110,7 +110,12 @@ describe('store auth service', () => {
     )
 
     const authorizationUrl = new URL(openURL.mock.calls[0]![0])
-    expect(authorizationUrl.searchParams.get('signup')).toBe('signed.signup.jwt')
+    expect(authorizationUrl.hostname).toBe('127.0.0.1')
+    expect(authorizationUrl.pathname).toBe('/auth/handoff')
+    expect(authorizationUrl.searchParams.get('signup')).toBeNull()
+
+    const waitOptions = waitForStoreAuthCodeMock.mock.calls[0]![0]
+    expect(waitOptions.authorizationRedirect.authorizationUrl).toContain('signup=signed.signup.jwt')
   })
 
   test('authenticateStoreWithApp uses remote scopes by default when available', async () => {
@@ -309,7 +314,7 @@ describe('store auth service', () => {
     expect(presenter.success).toHaveBeenCalledWith(result)
   })
 
-  test('authenticateStoreWithApp marks manual auth URL as sensitive when signup JWT is present', async () => {
+  test('authenticateStoreWithApp prints the non-sensitive loopback handoff URL when signup JWT is present', async () => {
     const openURL = vi.fn().mockResolvedValue(false)
     const presenter = {
       openingBrowser: vi.fn(),
@@ -321,63 +326,30 @@ describe('store auth service', () => {
       return 'abc123'
     })
 
-    await expect(
-      authenticateStoreWithApp(
-        {
-          store: 'shop.myshopify.com',
-          scopes: 'read_products',
-          signup: 'signed.signup.jwt',
-        },
-        {
-          openURL,
-          waitForStoreAuthCode: waitForStoreAuthCodeMock,
-          exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
-            access_token: 'token',
-            scope: 'read_products',
-            expires_in: 86400,
-            associated_user: {id: 42, email: 'test@example.com'},
-          }),
-          presenter,
-        },
-      ),
-    ).rejects.toThrow()
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+        signup: 'signed.signup.jwt',
+      },
+      {
+        openURL,
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter,
+      },
+    )
 
-    expect(presenter.manualAuthUrl).toHaveBeenCalledWith(expect.stringContaining('signup=signed.signup.jwt'), {
-      sensitive: true,
-    })
-  })
-
-  test('authenticateStoreWithApp fails immediately instead of waiting for a callback that cannot arrive', async () => {
-    const openURL = vi.fn().mockResolvedValue(false)
-    const presenter = {
-      openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
-      success: vi.fn(),
-    }
-    const exchangeStoreAuthCodeForToken = vi.fn()
-    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
-      await options.onListening?.()
-      return 'abc123'
-    })
-
-    await expect(
-      authenticateStoreWithApp(
-        {
-          store: 'shop.myshopify.com',
-          scopes: 'read_products',
-          signup: 'signed.signup.jwt',
-        },
-        {
-          openURL,
-          waitForStoreAuthCode: waitForStoreAuthCodeMock,
-          exchangeStoreAuthCodeForToken,
-          presenter,
-        },
-      ),
-    ).rejects.toThrow("Authentication can't continue without a browser.")
-
-    expect(exchangeStoreAuthCodeForToken).not.toHaveBeenCalled()
-    expect(presenter.success).not.toHaveBeenCalled()
+    expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
+      expect.stringContaining('http://127.0.0.1:13387/auth/handoff?nonce='),
+      {sensitive: false},
+    )
+    expect(presenter.manualAuthUrl.mock.calls[0]![0]).not.toContain('signed.signup.jwt')
   })
 
   test('authenticateStoreWithApp records fqdn metadata before resolving existing scopes', async () => {
