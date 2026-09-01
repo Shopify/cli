@@ -13,6 +13,8 @@
  *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --delete      # Delete only (skip uninstall — delete only apps with 0 installs)
  *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --headed      # Show browser window
  *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern X   # Match apps containing "X" (default: "E2E-")
+ *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --older-than-hours 24
+ *   pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --list --fail-if-found
  *
  * Environment variables (loaded from packages/e2e/.env):
  *   E2E_ACCOUNT_EMAIL    — Shopify account email for login
@@ -29,6 +31,7 @@ import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import {getLastPageStatus, navigateToDashboard, refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {deleteAppFromDevDashboard} from '../setup/app.js'
+import {matchesOwnedE2EResource} from '../setup/resource-ownership.js'
 import {uninstallAppFromStore} from '../setup/store.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
@@ -69,6 +72,10 @@ export interface CleanupOptions {
   orgId?: string
   /** Playwright browser storage state path (default: E2E_BROWSER_STATE_PATH or global-auth path) */
   storageStatePath?: string
+  /** Match only resources older than this age */
+  olderThanHours?: number
+  /** Fail list mode when matching resources remain */
+  failIfFound?: boolean
 }
 
 interface DashboardApp {
@@ -124,11 +131,14 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
   const password = process.env.E2E_ACCOUNT_PASSWORD
   const storageStatePath = existingStorageStatePath(opts.storageStatePath)
 
+  if (opts.failIfFound && mode !== 'list') throw new Error('failIfFound requires list mode')
+
   // Banner
   console.log('')
   console.log(`[cleanup-apps] Mode:    ${MODE_LABELS[mode]}`)
   console.log(`[cleanup-apps] Org:     ${orgId || '(not set)'}`)
   console.log(`[cleanup-apps] Pattern: "${pattern}"`)
+  if (opts.olderThanHours !== undefined) console.log(`[cleanup-apps] Minimum age: ${opts.olderThanHours} hour(s)`)
   console.log('')
 
   if (!storageStatePath && (!email || !password)) {
@@ -182,7 +192,15 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
     // cleanup work before loading the full app list, because the dashboard can
     // return transient 5xx responses after many pages.
     const stats: CleanupStats = {found: 0, succeeded: 0, skipped: 0, failed: 0}
-    await cleanupAppsPageByPage({page, mode, pattern, email, orgId, stats})
+    await cleanupAppsPageByPage({
+      page,
+      mode,
+      pattern,
+      olderThanHours: opts.olderThanHours,
+      email,
+      orgId,
+      stats,
+    })
 
     // Summary
     const parts = [`${stats.found} found`, `${stats.succeeded} succeeded`]
@@ -191,6 +209,9 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
     console.log('')
     const totalElapsed = ((Date.now() - totalStart) / 1000).toFixed(1)
     console.log(`[cleanup-apps] Complete: ${parts.join(', ')} (${totalElapsed}s total)`)
+    if (opts.failIfFound && stats.found > 0) {
+      throw new Error(`[cleanup-apps] Verification failed: ${stats.found} owned app(s) remain`)
+    }
     if (stats.failed > 0) process.exitCode = 1
   } finally {
     await browser.close()
@@ -205,11 +226,12 @@ async function cleanupAppsPageByPage(opts: {
   page: Page
   mode: CleanupMode
   pattern: string
+  olderThanHours?: number
   email: string
   orgId: string
   stats: CleanupStats
 }): Promise<void> {
-  const {page, mode, pattern, email, orgId, stats} = opts
+  const {page, mode, pattern, olderThanHours, email, orgId, stats} = opts
   let totalSeen = 0
   let pageNumber = 1
   const handledAppUrls = new Set<string>()
@@ -221,7 +243,7 @@ async function cleanupAppsPageByPage(opts: {
     await recoverFromAppsPageError(page)
     await waitForAppsIndex(page)
     const nextUrl = await nextAppsPageUrl(page)
-    const {seen, matches} = await findAppsOnCurrentDashboardPage(page, pattern, handledAppUrls)
+    const {seen, matches} = await findAppsOnCurrentDashboardPage(page, {pattern, olderThanHours}, handledAppUrls)
     const matchOffset = stats.found
     totalSeen += seen
     stats.found += matches.length
@@ -447,7 +469,7 @@ function compactPageText(text: string): string {
 
 async function findAppsOnCurrentDashboardPage(
   page: Page,
-  namePattern: string,
+  filter: {pattern: string; olderThanHours?: number},
   excludeAppUrls: Set<string> = new Set(),
 ): Promise<{seen: number; matches: DashboardApp[]}> {
   const matches: DashboardApp[] = []
@@ -461,7 +483,7 @@ async function findAppsOnCurrentDashboardPage(
 
     seen++
 
-    const name = extractDashboardAppName(text, namePattern)
+    const name = extractDashboardAppName(text, filter)
     if (!name || name.length > 200) continue
 
     const installs = extractDashboardInstallCount(text, name)
@@ -474,22 +496,16 @@ async function findAppsOnCurrentDashboardPage(
   return {seen, matches}
 }
 
-function extractDashboardAppName(cardText: string, namePattern: string): string | undefined {
-  const dateStampedName = cardText.match(new RegExp(`${escapeRegExp(namePattern)}\\S*?\\d{13}`))?.[0]
-  if (dateStampedName) return dateStampedName
-
+function extractDashboardAppName(
+  cardText: string,
+  filter: {pattern: string; olderThanHours?: number},
+): string | undefined {
   const lines = cardText
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-  const matchingLine = lines.find((line) => line.includes(namePattern))
-  if (matchingLine) return stripInstallCount(matchingLine)
-
-  const patternIndex = cardText.indexOf(namePattern)
-  if (patternIndex === -1) return undefined
-
-  const fromPattern = cardText.slice(patternIndex)
-  return stripInstallCount(fromPattern)
+  const candidates = [...lines.map(stripInstallCount), ...(cardText.match(/E2E-[a-z0-9-]+/gi) ?? [])]
+  return candidates.find((candidate) => matchesOwnedE2EResource('app', candidate, filter))
 }
 
 function extractDashboardInstallCount(cardText: string, appName: string): number {
@@ -507,13 +523,7 @@ function stripInstallCount(text: string): string {
   const installCount = text.match(/\d+\s+installs?/i)
   if (!installCount || installCount.index === undefined) return text.trim()
 
-  // Date-stamped names are recovered earlier via extractDashboardAppName's 13-digit
-  // anchor; this only trims the trailing "N installs" off the non-date-stamped fallback.
   return text.slice(0, installCount.index).trim()
-}
-
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 async function nextAppsPageUrl(page: Page): Promise<string | undefined> {
@@ -636,7 +646,22 @@ async function main() {
   else if (args.includes('--uninstall')) mode = 'uninstall'
   else if (args.includes('--delete')) mode = 'delete'
 
-  await cleanupAllApps({mode, pattern, headed})
+  const olderThanHours = positiveNumberOption(args, '--older-than-hours')
+  const failIfFound = args.includes('--fail-if-found')
+
+  await cleanupAllApps({mode, pattern, headed, olderThanHours, failIfFound})
+}
+
+function positiveNumberOption(args: string[], option: string): number | undefined {
+  const optionIndex = args.indexOf(option)
+  if (optionIndex === -1) return undefined
+
+  const rawValue = args[optionIndex + 1]
+  const value = Number(rawValue)
+  if (!rawValue || rawValue.startsWith('--') || !Number.isFinite(value) || value <= 0) {
+    throw new Error(`${option} requires a number greater than zero`)
+  }
+  return value
 }
 
 // Run if executed directly (not imported)
