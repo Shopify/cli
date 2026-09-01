@@ -187,13 +187,17 @@ export function cwd(): string {
  */
 export function sniffForPath(argv = process.argv): string | undefined {
   const pathFlagIndex = argv.indexOf('--path')
-  if (pathFlagIndex === -1) {
-    const pathArg = argv.find((arg) => arg.startsWith('--path='))
-    return pathArg?.split('=')[1]
+
+  if (pathFlagIndex !== -1) {
+    const pathFlag = argv[pathFlagIndex + 1]
+    if (pathFlag && !pathFlag.startsWith('-')) {
+      return pathFlag
+    }
+    return undefined
   }
-  const pathFlag = argv[pathFlagIndex + 1]
-  if (!pathFlag || pathFlag.startsWith('-')) return
-  return pathFlag
+
+  const pathArg = argv.find((arg) => arg.startsWith('--path='))
+  return pathArg?.split('=')[1]
 }
 
 /**
