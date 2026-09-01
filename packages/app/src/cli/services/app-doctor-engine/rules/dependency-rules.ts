@@ -23,7 +23,7 @@ interface AuditSelection {
   packageManager?: string
 }
 
-export interface ParsedAdvisory {
+interface ParsedAdvisory {
   packageName: string
   severity: string
   cves: string[]
