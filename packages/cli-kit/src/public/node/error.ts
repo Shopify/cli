@@ -209,12 +209,13 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
 /**
  * Detects raw graphql-request `ClientError`s that are expected environmental conditions rather than
  * CLI bugs. These reach the reporter as plain `Error`s (not `FatalError`s) and would otherwise be
- * reported as unexpected. Two distinct cases, both kept out of crash reporting:
+ * reported as unexpected.
  *
  * HTTP 401 (unauthenticated) is not "transient" in the retry sense — it means the user's session
  * token is expired or invalid, a credential/environment condition (see issue #7891). Rate limiting
  * (HTTP 429, or a `THROTTLED`/`429` GraphQL code on any error in the response) matches the shape
- * detected by `errorsIncludeStatus429` in `private/node/api.ts`.
+ * detected by `errorsIncludeStatus429` in `private/node/api.ts`. Gateway errors (502/503/504) are
+ * also expected infrastructure failures.
  *
  * Scoped to the external `ClientError` shape only — importing the cli-kit `GraphQLClientError`
  * wrapper here would create an `error.ts → headers.ts → error.ts` import cycle.
@@ -237,7 +238,7 @@ function isExpectedApiError(error: Error): boolean {
     return false
   }
   const status = candidate.response.status
-  if (status === 401 || status === 429) {
+  if (status === 401 || status === 429 || status === 502 || status === 503 || status === 504) {
     return true
   }
   return hasRateLimitCode(candidate.response.errors)
