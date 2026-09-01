@@ -57,7 +57,7 @@ type EnvironmentName = string
 export type RequiredFlags = (string | string[])[] | null
 
 export default abstract class ThemeCommand extends Command {
-  static baseFlags = authAliasFlag
+  static baseFlags = {...Command.baseFlags, ...authAliasFlag}
 
   environmentsFilename(): string {
     return configurationFileName

@@ -118,8 +118,8 @@ Build the app, including extensions.
 
 ```
 USAGE
-  $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--skip-dependencies-installation] [--verbose]
+  $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--skip-dependencies-installation] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -133,6 +133,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -172,8 +176,8 @@ Cancel a bulk operation.
 
 ```
 USAGE
-  $ shopify app bulk cancel --id <value> [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color]
-    [--path <value>] [--reset | ] [-s <value>] [--verbose]
+  $ shopify app bulk cancel --id <value> [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -195,6 +199,10 @@ FLAGS
   --id=<value>
       (required) The bulk operation ID to cancel (numeric ID or full GID).
       [env: SHOPIFY_FLAG_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -224,9 +232,9 @@ Execute bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--output-file
-    <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>] [--variable-file
-    <value> | -v <value>...] [--verbose] [--version <value>]
+  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
+    [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
@@ -252,6 +260,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -311,8 +323,8 @@ Check the status of bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [--no-color]
-    [--path <value>] [--reset | ] [-s <value>] [--verbose]
+  $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -335,6 +347,10 @@ FLAGS
       The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations belonging to this app on
       this store in the last 7 days.
       [env: SHOPIFY_FLAG_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -372,7 +388,7 @@ Fetch your app configuration from the Developer Dashboard.
 ```
 USAGE
   $ shopify app config link [--auth-alias <value>] [--client-id <value> | -c <value>] [--force [--file-name <value> |
-    ]] [--no-color] [--path <value>] [--reset | ] [--verbose]
+    ]] [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -394,6 +410,10 @@ FLAGS
   --force
       Overwrite an existing configuration file without prompting.
       [env: SHOPIFY_FLAG_FORCE]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -427,8 +447,8 @@ Refresh an already-linked app configuration without prompts.
 
 ```
 USAGE
-  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -442,6 +462,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -488,6 +512,10 @@ FLAGS
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -517,8 +545,8 @@ Validate your app configuration and extensions.
 
 ```
 USAGE
-  $ shopify app config validate [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
-    <value>] [--reset | ] [--verbose]
+  $ shopify app config validate [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -536,6 +564,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -566,8 +598,8 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--auth-alias <value>] [--client-id <value> | -c <value>] [--message <value>]
-    [--no-build] [--no-color] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ]
+  $ shopify app deploy [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--message
+    <value>] [--no-build] [--no-color] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ]
     [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
@@ -593,6 +625,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --message=<value>
       Optional message that will be associated with this version. This is for internal use only and won't be available
@@ -654,8 +690,8 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value> | -c <value>]
-    [--install-mkcert --use-localhost] [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>] [--path
-    <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
+    [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-update] [--notify
+    <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
     [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
     [--verbose]
 
@@ -687,6 +723,10 @@ FLAGS
   --install-mkcert
       Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.
       [env: SHOPIFY_FLAG_INSTALL_MKCERT]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --localhost-port=<value>
       Port to use for localhost. Must be between 1 and 65535.
@@ -755,8 +795,8 @@ Cleans up the dev preview from the selected store.
 
 ```
 USAGE
-  $ shopify app dev clean [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [-s <value>] [--verbose]
+  $ shopify app dev clean [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -774,6 +814,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -806,7 +850,7 @@ Pull app and extensions environment variables.
 ```
 USAGE
   $ shopify app env pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--env-file <value>]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -824,6 +868,10 @@ FLAGS
   --env-file=<value>
       Specify an environment file to update if the update flag is set
       [env: SHOPIFY_FLAG_ENV_FILE]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -856,8 +904,8 @@ Display app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -871,6 +919,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -900,9 +952,9 @@ Execute GraphQL queries and mutations.
 
 ```
 USAGE
-  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--output-file
-    <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>] [--variable-file <value> |
-    -v <value>] [--verbose] [--version <value>]
+  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
+    [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
@@ -929,6 +981,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -977,8 +1033,8 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -992,6 +1048,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1021,8 +1081,8 @@ Print basic information about your function.
 
 ```
 USAGE
-  $ shopify app function info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
-    <value>] [--reset | ] [--verbose]
+  $ shopify app function info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1040,6 +1100,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1077,8 +1141,8 @@ Replays a function run from an app log.
 
 ```
 USAGE
-  $ shopify app function replay [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [-l <value>] [--no-color]
-    [--path <value>] [--reset | ] [--verbose] [-w]
+  $ shopify app function replay [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema] [-l
+    <value>] [--no-color] [--path <value>] [--reset | ] [--verbose] [-w]
 
 FLAGS
   -c, --config=<value>
@@ -1105,6 +1169,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1137,7 +1205,7 @@ Run a function locally for testing.
 ```
 USAGE
   $ shopify app function run [--auth-alias <value>] [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j]
-    [--no-color] [--path <value>] [--profile] [--reset | ] [--verbose]
+    [--json-schema] [--no-color] [--path <value>] [--profile] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1163,6 +1231,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1198,8 +1270,8 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--stdout] [--verbose]
+  $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--stdout] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1213,6 +1285,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1250,8 +1326,8 @@ Generate GraphQL types for a function.
 
 ```
 USAGE
-  $ shopify app function typegen [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app function typegen [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1265,6 +1341,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1296,8 +1376,8 @@ Generate a new app Extension.
 ```
 USAGE
   $ shopify app generate extension [--auth-alias <value>] [--client-id <value> | -c <value>] [--flavor
-    vanilla-js|react|typescript|typescript-react|wasm|rust] [-n <value>] [--no-color] [--path <value>] [--reset | ] [-t
-    <value>] [--verbose]
+    vanilla-js|react|typescript|typescript-react|wasm|rust] [--json-schema] [-n <value>] [--no-color] [--path <value>]
+    [--reset | ] [-t <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1325,6 +1405,10 @@ FLAGS
       extension template supports multiple flavors.
       [env: SHOPIFY_FLAG_FLAVOR]
       <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1360,8 +1444,8 @@ Open a local GraphiQL UI for your app and store.
 
 ```
 USAGE
-  $ shopify app graphiql [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--port <value>] [--reset | ] [-s <value>] [-v <value>] [--verbose] [--version <value>]
+  $ shopify app graphiql [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--port <value>] [--reset | ] [-s <value>] [-v <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
@@ -1384,6 +1468,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1429,7 +1517,7 @@ Import metafield and metaobject definitions.
 ```
 USAGE
   $ shopify app import-custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing]
-    [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+    [--json-schema] [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1451,6 +1539,10 @@ FLAGS
   --include-existing
       Include existing declared definitions in the output.
       [env: SHOPIFY_FLAG_INCLUDE_EXISTING]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1481,8 +1573,8 @@ Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app import-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1496,6 +1588,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1523,8 +1619,8 @@ Print basic information about your app and extensions.
 
 ```
 USAGE
-  $ shopify app info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
-    <value>] [--reset | ] [--verbose] [--web-env]
+  $ shopify app info [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose] [--web-env]
 
 FLAGS
   -c, --config=<value>
@@ -1542,6 +1638,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1582,8 +1682,9 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--auth-alias <value>] [--flavor <value>] [-n <value>] [--no-color] [--organization-id
-    <value> | [--client-id <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
+  $ shopify app init [--auth-alias <value>] [--flavor <value>] [--json-schema] [-n <value>] [--no-color]
+    [--organization-id <value> | [--client-id <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>]
+    [--verbose]
 
 FLAGS
   -d, --package-manager=<option>
@@ -1611,6 +1712,10 @@ FLAGS
       Which flavor of the given template to use. Required in non-interactive environments when the selected template
       offers multiple flavors.
       [env: SHOPIFY_FLAG_TEMPLATE_FLAVOR]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1645,8 +1750,9 @@ Stream detailed logs for your Shopify app.
 
 ```
 USAGE
-  $ shopify app logs [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
-    <value>] [--reset | ] [--source <value>...] [--status success|failure] [-s <value>...] [--verbose]
+  $ shopify app logs [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--source <value>...] [--status success|failure] [-s <value>...]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1668,6 +1774,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1713,8 +1823,8 @@ Print out a list of sources that may be used with the logs command.
 
 ```
 USAGE
-  $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1728,6 +1838,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1783,6 +1897,10 @@ FLAGS
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -1815,8 +1933,8 @@ List deployed versions of your app.
 
 ```
 USAGE
-  $ shopify app versions list [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--no-color] [--path
-    <value>] [--reset | ] [--verbose]
+  $ shopify app versions list [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1834,6 +1952,10 @@ FLAGS
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -1864,8 +1986,8 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 ```
 USAGE
   $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--auth-alias <value>] [--client-id <value> |
-    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>]
-    [--reset | ] [--topic <value>]
+    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--json-schema]
+    [--path <value>] [--reset | ] [--topic <value>]
 
 FLAGS
   -c, --config=<value>
@@ -1908,6 +2030,10 @@ FLAGS
       This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using
       flags.
       [env: SHOPIFY_FLAG_HELP]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --path=<value>
       The path to your app directory.
@@ -1954,12 +2080,16 @@ Logs you in to your Shopify account.
 
 ```
 USAGE
-  $ shopify auth login [--alias <value>]
+  $ shopify auth login [--alias <value>] [--json-schema]
 
 FLAGS
   --alias=<value>
       Alias of an existing session you want to use. Required if non interactive.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Logs you in to your Shopify account.
@@ -1971,7 +2101,12 @@ Logs you out of the Shopify account or Partner account and store.
 
 ```
 USAGE
-  $ shopify auth logout
+  $ shopify auth logout [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
@@ -2024,7 +2159,12 @@ Disable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect off
+  $ shopify config autocorrect off [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Disable autocorrect. Off by default.
@@ -2043,7 +2183,12 @@ Enable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect on
+  $ shopify config autocorrect on [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Enable autocorrect. Off by default.
@@ -2062,7 +2207,12 @@ Check whether autocorrect is enabled or disabled. On by default.
 
 ```
 USAGE
-  $ shopify config autocorrect status
+  $ shopify config autocorrect status [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Check whether autocorrect is enabled or disabled. On by default.
@@ -2081,7 +2231,12 @@ Disable automatic upgrades for Shopify CLI.
 
 ```
 USAGE
-  $ shopify config autoupgrade off
+  $ shopify config autoupgrade off [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Disable automatic upgrades for Shopify CLI.
@@ -2099,7 +2254,12 @@ Enable automatic upgrades for Shopify CLI.
 
 ```
 USAGE
-  $ shopify config autoupgrade on
+  $ shopify config autoupgrade on [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Enable automatic upgrades for Shopify CLI.
@@ -2118,7 +2278,12 @@ Check whether auto-upgrade is enabled, disabled, or not yet configured.
 
 ```
 USAGE
-  $ shopify config autoupgrade status
+  $ shopify config autoupgrade status [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Check whether auto-upgrade is enabled, disabled, or not yet configured.
@@ -2136,9 +2301,13 @@ Download a complete document from shopify.dev. Every page on shopify.dev has a M
 
 ```
 USAGE
-  $ shopify doc fetch --url <value> [--no-color] [--output <value>] [--verbose]
+  $ shopify doc fetch --url <value> [--json-schema] [--no-color] [--output <value>] [--verbose]
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -2176,7 +2345,8 @@ Query the shopify.dev vector store and print the most relevant documentation chu
 
 ```
 USAGE
-  $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [--no-color] [--verbose]
+  $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [--json-schema] [--no-color]
+    [--verbose]
 
 FLAGS
   --api-name=<value>
@@ -2187,6 +2357,10 @@ FLAGS
   --api-version=<value>
       Limit results to a specific API version (for example: 2025-10, latest, current).
       [env: SHOPIFY_FLAG_API_VERSION]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -2228,6 +2402,10 @@ FLAGS
       Include all nested commands in the output.
       [env: SHOPIFY_FLAG_CLI_NESTED_COMMANDS]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
 DESCRIPTION
   Display help for Shopify CLI
 ```
@@ -2239,7 +2417,8 @@ Builds a Hydrogen storefront for production.
 ```
 USAGE
   $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
-    [--entry <value>] [--force-client-sourcemap] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
+    [--entry <value>] [--force-client-sourcemap] [--json-schema] [--lockfile-check] [--path <value>] [--sourcemap]
+    [--watch]
 
 FLAGS
   --[no-]bundle-stats
@@ -2263,6 +2442,10 @@ FLAGS
       Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to
       force enabling it.
       [env: SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --[no-]lockfile-check
       Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with
@@ -2291,12 +2474,16 @@ Returns diagnostic information about a Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen check RESOURCE [--path <value>]
+  $ shopify hydrogen check RESOURCE [--json-schema] [--path <value>]
 
 ARGUMENTS
   RESOURCE  (routes) The resource to check. Currently only 'routes' is supported.
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2311,11 +2498,15 @@ Generate types for the Storefront API queries found in your project.
 
 ```
 USAGE
-  $ shopify hydrogen codegen [--codegen-config-path <value>] [--path <value>] [--watch]
+  $ shopify hydrogen codegen [--codegen-config-path <value>] [--json-schema] [--path <value>] [--watch]
 
 FLAGS
   --codegen-config-path=<value>
       Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -2334,12 +2525,16 @@ Push project configuration to admin
 
 ```
 USAGE
-  $ shopify hydrogen customer-account-push --dev-origin <value> [--path <value>] [--relative-logout-uri <value>]
+  $ shopify hydrogen customer-account-push --dev-origin <value> [--json-schema] [--path <value>] [--relative-logout-uri <value>]
     [--relative-redirect-uri <value>] [--storefront-id <value>]
 
 FLAGS
   --dev-origin=<value>
       (required) The development domain of your application.
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -2365,12 +2560,16 @@ Builds and profiles the server startup time the app.
 
 ```
 USAGE
-  $ shopify hydrogen debug cpu [--entry <value>] [--output <value>] [--path <value>]
+  $ shopify hydrogen debug cpu [--entry <value>] [--json-schema] [--output <value>] [--path <value>]
 
 FLAGS
   --entry=<value>
       Entry file for the worker. Defaults to `./server`.
       [env: SHOPIFY_HYDROGEN_FLAG_ENTRY]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --output=<value>
       [default: startup.cpuprofile] Specify a path to generate the profile file. Defaults to "startup.cpuprofile".
@@ -2391,8 +2590,9 @@ Builds and deploys a Hydrogen storefront to Oxygen.
 USAGE
   $ shopify hydrogen deploy [--assets-dir <value>] [--auth-bypass-token-duration <value> --auth-bypass-token]
     [--build-command <value>] [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f]
-    [--force-client-sourcemap] [--json-output] [--lockfile-check] [--metadata-description <value>] [--metadata-user
-    <value>] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>] [--worker-dir <value>]
+    [--force-client-sourcemap] [--json-output] [--json-schema] [--lockfile-check] [--metadata-description <value>]
+    [--metadata-user <value>] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>] [--worker-dir
+    <value>]
 
 FLAGS
   -f, --force
@@ -2449,6 +2649,10 @@ FLAGS
       Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to
       disable.
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --[no-]lockfile-check
       Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with
       `--no-lockfile-check`.
@@ -2490,8 +2694,8 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 USAGE
   $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--customer-account-push] [--debug]
     [--disable-deps-optimizer] [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> |
-    --env-branch <value>] [--env-file <value>] [--host] [--inspector-port <value>] [--path <value>] [--port <value>]
-    [--verbose]
+    --env-branch <value>] [--env-file <value>] [--host] [--inspector-port <value>] [--json-schema] [--path <value>]
+    [--port <value>] [--verbose]
 
 FLAGS
   --codegen
@@ -2542,6 +2746,10 @@ FLAGS
       The port where the inspector is available. Defaults to 9229.
       [env: SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2564,9 +2772,13 @@ List the environments on your linked Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen env list [--path <value>]
+  $ shopify hydrogen env list [--json-schema] [--path <value>]
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2581,7 +2793,8 @@ Populate your .env with variables from your Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--path <value>]
+  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--json-schema] [--path
+    <value>]
 
 FLAGS
   -f, --force
@@ -2599,6 +2812,10 @@ FLAGS
       [default: .env] Path to an environment file to override existing environment variables. Defaults to the '.env'
       located in your project path `--path`.
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2613,7 +2830,7 @@ Push environment variables from the local .env file to your linked Hydrogen stor
 
 ```
 USAGE
-  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--path <value>]
+  $ shopify hydrogen env push [--dry-run | -f] [--env <value> | ] [--env-file <value>] [--json-schema] [--path <value>]
 
 FLAGS
   -f, --force
@@ -2631,6 +2848,10 @@ FLAGS
       [default: .env] Path to an environment file to override existing environment variables. Defaults to the '.env'
       located in your project path `--path`.
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2645,8 +2866,8 @@ Generates a standard Shopify route.
 
 ```
 USAGE
-  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [--locale-param <value>] [--path <value>]
-    [--typescript]
+  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [--json-schema] [--locale-param <value>] [--path
+    <value>] [--typescript]
 
 ARGUMENTS
   ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
@@ -2660,6 +2881,10 @@ FLAGS
   --adapter=<value>
       React Router adapter used in the route. The default is `react-router`.
       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --locale-param=<value>
       The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
@@ -2683,7 +2908,8 @@ Generates all supported standard shopify routes.
 
 ```
 USAGE
-  $ shopify hydrogen generate routes [--adapter <value>] [-f] [--locale-param <value>] [--path <value>] [--typescript]
+  $ shopify hydrogen generate routes [--adapter <value>] [-f] [--json-schema] [--locale-param <value>] [--path <value>]
+    [--typescript]
 
 FLAGS
   -f, --force
@@ -2693,6 +2919,10 @@ FLAGS
   --adapter=<value>
       React Router adapter used in the route. The default is `react-router`.
       [env: SHOPIFY_HYDROGEN_FLAG_ADAPTER]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --locale-param=<value>
       The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
@@ -2716,8 +2946,8 @@ Creates a new Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen init [-f] [--git] [--install-deps] [--language <value>] [--markets <value>] [--mock-shop]
-    [--path <value>] [--quickstart] [--shortcut] [--styling <value>] [--template <value>]
+  $ shopify hydrogen init [-f] [--git] [--install-deps] [--json-schema] [--language <value>] [--markets <value>]
+    [--mock-shop] [--path <value>] [--quickstart] [--shortcut] [--styling <value>] [--template <value>]
 
 FLAGS
   -f, --force
@@ -2731,6 +2961,10 @@ FLAGS
   --[no-]install-deps
       Auto installs dependencies using the active package manager.
       [env: SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --language=<value>
       Sets the template language to use. One of `js` or `ts`.
@@ -2776,8 +3010,8 @@ Link a local project to one of your shop's Hydrogen storefronts.
 
 ```
 USAGE
-  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--name <value> | ] [--path <value>]
-    [-s <value>]
+  $ shopify hydrogen link [--create-storefront | --storefront <value>] [-f] [--json-schema] [--name <value> | ]
+    [--path <value>] [-s <value>]
 
 FLAGS
   -f, --force
@@ -2792,6 +3026,10 @@ FLAGS
   --create-storefront
       Create a new Hydrogen storefront.
       [env: SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --name=<value>
       The name to use when creating a new Hydrogen storefront.
@@ -2815,9 +3053,13 @@ Returns a list of Hydrogen storefronts available on a given shop.
 
 ```
 USAGE
-  $ shopify hydrogen list [--path <value>]
+  $ shopify hydrogen list [--json-schema] [--path <value>]
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2832,13 +3074,17 @@ Login to your Shopify account.
 
 ```
 USAGE
-  $ shopify hydrogen login [--path <value>] [-s <value>]
+  $ shopify hydrogen login [--json-schema] [--path <value>] [-s <value>]
 
 FLAGS
   -s, --shop=<value>
       Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com,
       https://janes-apparel.myshopify.com).
       [env: SHOPIFY_SHOP]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -2854,9 +3100,13 @@ Logout of your local session.
 
 ```
 USAGE
-  $ shopify hydrogen logout [--path <value>]
+  $ shopify hydrogen logout [--json-schema] [--path <value>]
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2872,8 +3122,8 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 USAGE
   $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
-    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--path <value>] [--port <value>]
-    [--verbose] [--watch ]
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--json-schema] [--path <value>]
+    [--port <value>] [--verbose] [--watch ]
 
 FLAGS
   --build
@@ -2908,6 +3158,10 @@ FLAGS
       The port where the inspector is available. Defaults to 9229.
       [env: SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -2933,7 +3187,7 @@ Scaffold routes and core functionality.
 
 ```
 USAGE
-  $ shopify hydrogen setup [-f] [--install-deps] [--markets <value>] [--path <value>] [--shortcut]
+  $ shopify hydrogen setup [-f] [--install-deps] [--json-schema] [--markets <value>] [--path <value>] [--shortcut]
 
 FLAGS
   -f, --force
@@ -2943,6 +3197,10 @@ FLAGS
   --[no-]install-deps
       Auto installs dependencies using the active package manager.
       [env: SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --markets=<value>
       Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`.
@@ -2967,7 +3225,7 @@ Setup CSS strategies for your project.
 
 ```
 USAGE
-  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--path <value>]
+  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--json-schema] [--path <value>]
 
 ARGUMENTS
   [STRATEGY]  (tailwind|vanilla-extract|css-modules|postcss) The CSS strategy to setup. One of
@@ -2981,6 +3239,10 @@ FLAGS
   --[no-]install-deps
       Auto installs dependencies using the active package manager.
       [env: SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -2996,13 +3258,17 @@ Setup support for multiple markets in your project.
 
 ```
 USAGE
-  $ shopify hydrogen setup markets [STRATEGY] [--path <value>]
+  $ shopify hydrogen setup markets [STRATEGY] [--json-schema] [--path <value>]
 
 ARGUMENTS
   [STRATEGY]  (subfolders|domains|subdomains) The URL structure strategy to setup multiple markets. One of
               subfolders,domains,subdomains
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3017,9 +3283,13 @@ EXPERIMENTAL: Upgrades the project to use Vite.
 
 ```
 USAGE
-  $ shopify hydrogen setup vite [--path <value>]
+  $ shopify hydrogen setup vite [--json-schema] [--path <value>]
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3034,7 +3304,12 @@ Creates a global `h2` shortcut for the Hydrogen CLI
 
 ```
 USAGE
-  $ shopify hydrogen shortcut
+  $ shopify hydrogen shortcut [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Creates a global `h2` shortcut for the Hydrogen CLI
@@ -3046,9 +3321,13 @@ Unlink a local project from a Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen unlink [--path <value>]
+  $ shopify hydrogen unlink [--json-schema] [--path <value>]
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
       [env: SHOPIFY_HYDROGEN_FLAG_PATH]
@@ -3063,7 +3342,7 @@ Upgrade Remix and Hydrogen npm dependencies.
 
 ```
 USAGE
-  $ shopify hydrogen upgrade [-f] [--path <value>] [-v <value>]
+  $ shopify hydrogen upgrade [-f] [--json-schema] [--path <value>] [-v <value>]
 
 FLAGS
   -f, --force
@@ -3072,6 +3351,10 @@ FLAGS
 
   -v, --version=<value>
       A target hydrogen version to update to
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --path=<value>
       The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
@@ -3087,7 +3370,7 @@ List Shopify organizations you have access to.
 
 ```
 USAGE
-  $ shopify organization list [--auth-alias <value>] [-j] [--no-color] [--verbose]
+  $ shopify organization list [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   -j, --json
@@ -3097,6 +3380,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3390,6 +3677,10 @@ USAGE
   $ shopify search [query]
 
 FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -3418,7 +3709,7 @@ Authenticate an app against a store for store commands.
 
 ```
 USAGE
-  $ shopify store auth --scopes <value> -s <value> [-j] [--no-color] [--verbose]
+  $ shopify store auth --scopes <value> -s <value> [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   -j, --json
@@ -3428,6 +3719,10 @@ FLAGS
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3461,12 +3756,16 @@ List stores authenticated directly with store auth.
 
 ```
 USAGE
-  $ shopify store auth list [-j] [--no-color] [--verbose]
+  $ shopify store auth list [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   -j, --json
       Output the result as JSON. Automatically disables color output.
       [env: SHOPIFY_FLAG_JSON]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3496,7 +3795,7 @@ Cancel a bulk operation on a store.
 
 ```
 USAGE
-  $ shopify store bulk cancel --id <value> -s <value> [--no-color] [--verbose]
+  $ shopify store bulk cancel --id <value> -s <value> [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   -s, --store=<value>
@@ -3506,6 +3805,10 @@ FLAGS
   --id=<value>
       (required) The bulk operation ID to cancel (numeric ID or full GID).
       [env: SHOPIFY_FLAG_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3532,8 +3835,9 @@ Execute bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk execute -s <value> [--allow-mutations] [--no-color] [--output-file <value> --watch] [-q <value>]
-    [--query-file <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
+  $ shopify store bulk execute -s <value> [--allow-mutations] [--json-schema] [--no-color] [--output-file <value>
+    --watch] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version
+    <value>]
 
 FLAGS
   -q, --query=<value>
@@ -3551,6 +3855,10 @@ FLAGS
   --allow-mutations
       Allow GraphQL mutations to run against the target store.
       [env: SHOPIFY_FLAG_ALLOW_MUTATIONS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3613,7 +3921,7 @@ Check the status of bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk status -s <value> [--id <value>] [--no-color] [--verbose]
+  $ shopify store bulk status -s <value> [--id <value>] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   -s, --store=<value>
@@ -3624,6 +3932,10 @@ FLAGS
       The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations on this store in the last
       7 days.
       [env: SHOPIFY_FLAG_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3656,7 +3968,7 @@ Create a preview Shopify store.
 
 ```
 USAGE
-  $ shopify store create preview [--country <value>] [-j] [--name <value>] [--no-color] [--verbose]
+  $ shopify store create preview [--country <value>] [-j] [--json-schema] [--name <value>] [--no-color] [--verbose]
 
 FLAGS
   -j, --json
@@ -3666,6 +3978,10 @@ FLAGS
   --country=<value>
       Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.
       [env: SHOPIFY_FLAG_STORE_COUNTRY]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --name=<value>
       The name of the store.
@@ -3698,8 +4014,8 @@ Execute GraphQL queries and mutations on a store.
 
 ```
 USAGE
-  $ shopify store execute -s <value> [--allow-mutations] [-j] [--no-color] [--output-file <value>] [-q <value>]
-    [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+  $ shopify store execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--output-file <value>]
+    [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
 
 FLAGS
   -j, --json
@@ -3721,6 +4037,10 @@ FLAGS
   --allow-mutations
       Allow GraphQL mutations to run against the target store.
       [env: SHOPIFY_FLAG_ALLOW_MUTATIONS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3771,8 +4091,8 @@ Open a local GraphiQL UI for a store.
 
 ```
 USAGE
-  $ shopify store graphiql -s <value> [--allow-mutations] [--no-color] [--port <value>] [-v <value>] [--verbose]
-    [--version <value>]
+  $ shopify store graphiql -s <value> [--allow-mutations] [--json-schema] [--no-color] [--port <value>] [-v <value>]
+    [--verbose] [--version <value>]
 
 FLAGS
   -s, --store=<value>
@@ -3786,6 +4106,10 @@ FLAGS
   --allow-mutations
       Allow GraphQL mutations to run against the target store.
       [env: SHOPIFY_FLAG_ALLOW_MUTATIONS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3826,7 +4150,7 @@ Surface metadata about a Shopify store.
 
 ```
 USAGE
-  $ shopify store info -s <value> [-j] [--no-color] [--verbose]
+  $ shopify store info -s <value> [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   -j, --json
@@ -3836,6 +4160,10 @@ FLAGS
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3867,12 +4195,16 @@ List stores in a Shopify organization.
 
 ```
 USAGE
-  $ shopify store list [-j] [--no-color] [--organization-id <value>] [--verbose]
+  $ shopify store list [-j] [--json-schema] [--no-color] [--organization-id <value>] [--verbose]
 
 FLAGS
   -j, --json
       Output the result as JSON. Automatically disables color output.
       [env: SHOPIFY_FLAG_JSON]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3911,12 +4243,16 @@ Open your Shopify store in the default web browser.
 
 ```
 USAGE
-  $ shopify store open -s <value> [--no-color] [--verbose]
+  $ shopify store open -s <value> [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -3942,8 +4278,8 @@ Validate the theme.
 ```
 USAGE
   $ shopify theme check [--auth-alias <value>] [-a] [-C <value>] [-e <value>...] [--fail-level
-    crash|error|suggestion|style|warning|info] [--init] [--list] [--no-color] [-o text|json] [--path <value>] [--print]
-    [--verbose] [-v]
+    crash|error|suggestion|style|warning|info] [--init] [--json-schema] [--list] [--no-color] [-o text|json] [--path
+    <value>] [--print] [--verbose] [-v]
 
 FLAGS
   -C, --config=<value>
@@ -3982,6 +4318,10 @@ FLAGS
   --init
       Generate a .theme-check.yml file
       [env: SHOPIFY_FLAG_INIT]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --list
       List enabled checks
@@ -4034,6 +4374,10 @@ FLAGS
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -4073,8 +4417,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [--no-color] [--password <value>]
-    [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
+  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [--json-schema] [--no-color] [--password
+    <value>] [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
 
 FLAGS
   -a, --show-all
@@ -4106,6 +4450,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4142,10 +4490,10 @@ Uploads the current theme as a development theme to the connected store, then pr
 ```
 USAGE
   $ shopify theme dev [-a] [--auth-alias <value>] [-e <value>...] [--error-overlay silent|default] [--host
-    <value>] [-x <value>...] [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify
-    <value>] [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>] [--reconciliation-strategy
-    keep-local|keep-remote|abort --theme-editor-sync] [--standard-events-inspector] [-s <value>] [--store-password
-    <value>] [-t <value>] [--verbose]
+    <value>] [-x <value>...] [--json-schema] [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color]
+    [-n] [--notify <value>] [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>]
+    [--reconciliation-strategy keep-local|keep-remote|abort --theme-editor-sync] [--standard-events-inspector] [-s
+    <value>] [--store-password <value>] [-t <value>] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -4193,6 +4541,10 @@ FLAGS
   --host=<value>
       Set which network interface the web server listens on. The default value is 127.0.0.1.
       [env: SHOPIFY_FLAG_HOST]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --listing=<value>
       The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.
@@ -4327,6 +4679,10 @@ FLAGS
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -4383,8 +4739,8 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [--auth-alias <value>] [-d] [-e <value>...] [-j] [--no-color] [--password <value>]
-    [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme info [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [--no-color] [--password
+    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development
@@ -4411,6 +4767,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4458,6 +4818,10 @@ FLAGS
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -4490,12 +4854,16 @@ Start a Language Server Protocol server.
 
 ```
 USAGE
-  $ shopify theme language-server [--auth-alias <value>] [--no-color] [--verbose]
+  $ shopify theme language-server [--auth-alias <value>] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4517,8 +4885,9 @@ Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
-  $ shopify theme list [--auth-alias <value>] [-e <value>...] [--id <value>] [-j] [--name <value>] [--no-color]
-    [--password <value>] [--path <value>] [--role live|unpublished|development] [-s <value>] [--verbose]
+  $ shopify theme list [--auth-alias <value>] [-e <value>...] [--id <value>] [-j] [--json-schema] [--name
+    <value>] [--no-color] [--password <value>] [--path <value>] [--role live|unpublished|development] [-s <value>]
+    [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -4541,6 +4910,10 @@ FLAGS
   --id=<value>
       Only list theme with the given ID.
       [env: SHOPIFY_FLAG_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --name=<value>
       Only list themes that contain the given name.
@@ -4577,8 +4950,8 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--no-color] [--password <value>] [--path <value>]
-    [-s <value>] [--verbose]
+  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--json-schema] [--no-color] [--password <value>]
+    [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -4593,6 +4966,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4624,8 +5001,8 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [-l] [--no-color] [--password <value>]
-    [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [--json-schema] [-l] [--no-color]
+    [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -E, --editor
@@ -4656,6 +5033,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4693,12 +5074,16 @@ Package your theme into a .zip file, ready to upload to the Online Store.
 
 ```
 USAGE
-  $ shopify theme package [--auth-alias <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify theme package [--auth-alias <value>] [--json-schema] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4735,7 +5120,8 @@ Applies JSON overrides to a theme and returns a preview URL.
 ```
 USAGE
   $ shopify theme preview --overrides <value> -t <value> [--auth-alias <value>] [-e <value>...] [--json]
-    [--no-color] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
+    [--json-schema] [--no-color] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>]
+    [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -4758,6 +5144,10 @@ FLAGS
   --json
       Output the preview URL and identifier as JSON.
       [env: SHOPIFY_FLAG_JSON]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4827,6 +5217,10 @@ FLAGS
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -4866,8 +5260,8 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [--no-color] [--password <value>] [--path
-    <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [--json-schema] [--no-color] [--password
+    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -4890,6 +5284,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -4928,8 +5326,8 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [-l] [--no-color] [-n] [-o
-    <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [--json-schema] [-l]
+    [--no-color] [-n] [-o <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development
@@ -4971,6 +5369,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -5070,6 +5472,10 @@ FLAGS
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
   --listing=<value>
       The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.
       [env: SHOPIFY_FLAG_LISTING]
@@ -5137,8 +5543,8 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [-l] [-n <value>] [--no-color] [--password
-    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [--json-schema] [-l] [-n <value>]
+    [--no-color] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development
@@ -5169,6 +5575,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --no-color
       Disable color output.
@@ -5201,8 +5611,8 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [--auth-alias <value>] [-e <value>...] [--listing <value>] [--no-color] [--password
-    <value>] [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme share [--auth-alias <value>] [-e <value>...] [--json-schema] [--listing <value>] [--no-color]
+    [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -5217,6 +5627,10 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
   --listing=<value>
       The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.
@@ -5254,7 +5668,12 @@ Upgrades Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade
+  $ shopify upgrade [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Upgrades Shopify CLI.
@@ -5268,7 +5687,12 @@ Shopify CLI version currently installed.
 
 ```
 USAGE
-  $ shopify version
+  $ shopify version [--json-schema]
+
+FLAGS
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
   Shopify CLI version currently installed.
