@@ -2,7 +2,6 @@
 import {computeResultHash} from '../scorer/index.js'
 import {
   compileTrace,
-  formatConsole,
   formatJson,
   mergeExternalFindings,
   scan,
@@ -324,11 +323,7 @@ describe('trace v2', () => {
     const issue = deterministicIssue()
     issue.message = secrets.join(' ')
     const scanResult = result([issue])
-    const outputs = [
-      JSON.stringify(compileTrace(scanResult)),
-      formatConsole(scanResult, {verbose: true}),
-      formatJson(scanResult),
-    ]
+    const outputs = [JSON.stringify(compileTrace(scanResult)), formatJson(scanResult)]
     for (const output of outputs) {
       for (const secret of secrets) expect(output).not.toContain(secret)
       expect(output).toContain('[REDACTED TEXT]')
@@ -368,7 +363,6 @@ describe('trace v2', () => {
 
     const scanResult = result([issue])
     scanResult.app.name = `app ${secret}`
-    expect(formatConsole(scanResult, {verbose: true})).not.toContain(secret)
     expect(formatJson(scanResult)).not.toContain(secret)
   })
 })

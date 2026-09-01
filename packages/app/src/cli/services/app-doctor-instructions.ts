@@ -1,6 +1,7 @@
 import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/checks/embedded.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
-import {outputResult, outputSuccess} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import clipboard from 'clipboardy'
 
 const SCAN_CONTEXT_PLACEHOLDER = '{{SCAN_CONTEXT}}'
@@ -41,7 +42,9 @@ const defaultDependencies: AppDoctorInstructionsDependencies = {
   copyToClipboard: (content) => clipboard.write(content),
   writeToFile: writeFile,
   output: outputResult,
-  outputConfirmation: outputSuccess,
+  outputConfirmation: (content) => {
+    renderSuccess({headline: content})
+  },
 }
 
 export function appDoctorInstructions(scanComplete: boolean): string {

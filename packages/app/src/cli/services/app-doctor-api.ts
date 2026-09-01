@@ -1,7 +1,6 @@
 import {
   buildReviewPack,
   compileTrace,
-  formatConsole,
   formatJson,
   getEngineVersion,
   loadChecks,
@@ -14,7 +13,7 @@ import {findAppRoot} from './app-doctor-engine/scanners/discover.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import type {CheckExecution, Severity, Suppression} from './app-doctor-engine/types.js'
+import type {CheckExecution, ScanResult, Severity, Suppression} from './app-doctor-engine/types.js'
 import type {AgentFindingsDocument} from './app-doctor-engine/checks/index.js'
 
 const REVIEW_FILENAME = 'app-doctor-review.json'
@@ -31,16 +30,23 @@ export type AppDoctorBlockingLevel = Severity | 'none'
 
 export interface AppDoctorRunOptions {
   directory: string
-  format: 'human' | 'json'
-  verbose: boolean
   blocking: AppDoctorBlockingLevel
   findingsPath?: string
 }
 
 export interface AppDoctorRunResult {
-  output: string
+  scan: ScanResult
   engine: AppDoctorEngineMetadata
   exitCode: number
+  elapsedMilliseconds: number
+  tracePath: string
+  reviewPath?: string
+  reviewCheckCount?: number
+  jsonReport: unknown
+  findings?: {
+    accepted: number
+    rejected: string[]
+  }
 }
 
 interface FindingsDocument extends AgentFindingsDocument {
@@ -56,30 +62,6 @@ const severityRank: Record<Severity, number> = {
 function shouldBlock(issues: {severity: Severity}[], blocking: AppDoctorBlockingLevel): boolean {
   if (blocking === 'none') return false
   return issues.some((issue) => severityRank[issue.severity] >= severityRank[blocking])
-}
-
-function humanScanOutput(scanOutput: string, checkCount: number, reviewPath: string, tracePath: string): string {
-  return [
-    scanOutput.trimEnd(),
-    '',
-    'Agentic review',
-    `${checkCount} check(s) ready for your coding agent.`,
-    `Wrote ${reviewPath}`,
-    `Trace written to ${tracePath}`,
-    '',
-    'After investigating the review pack, compile the final trace with:',
-    `  shopify app doctor --findings <findings.json>`,
-  ].join('\n')
-}
-
-function humanFindingsOutput(scanOutput: string, accepted: number, rejected: string[], tracePath: string): string {
-  return [
-    scanOutput.trimEnd(),
-    '',
-    `Merged ${accepted} agent finding(s) into the trace.`,
-    ...rejected.map((reason) => `Rejected: ${reason}`),
-    `Trace written to ${tracePath}`,
-  ].join('\n')
 }
 
 async function loadFindings(path: string): Promise<FindingsDocument> {
@@ -204,28 +186,27 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
     result.scan.result_hash = computeResultHash(result.issues, result.score)
   }
 
-  const scanOutput = formatConsole(result, {verbose: options.verbose, elapsedMilliseconds})
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted, suppressions})
   await writeFile(tracePath, `${JSON.stringify(trace, null, 2)}\n`)
 
-  let output: string
-  if (options.findingsPath) {
-    output =
-      options.format === 'json'
-        ? JSON.stringify(trace, null, 2)
-        : humanFindingsOutput(scanOutput, accepted, rejected, tracePath)
-  } else {
+  let reviewCheckCount: number | undefined
+  if (!options.findingsPath) {
     const reviewPack = buildReviewPack(engineVersion, result)
     await writeFile(reviewPath, `${JSON.stringify(reviewPack, null, 2)}\n`)
-    output =
-      options.format === 'json'
-        ? formatJson(result)
-        : humanScanOutput(scanOutput, reviewPack.checks.length, reviewPath, tracePath)
+    reviewCheckCount = reviewPack.checks.length
   }
 
   let exitCode = 0
   if (rejected.length > 0) exitCode = 2
   else if (shouldBlock(result.issues, options.blocking)) exitCode = 1
 
-  return {output, engine: trace.engine, exitCode}
+  return {
+    scan: result,
+    engine: trace.engine,
+    exitCode,
+    elapsedMilliseconds,
+    tracePath,
+    jsonReport: options.findingsPath ? trace : JSON.parse(formatJson(result)),
+    ...(options.findingsPath ? {findings: {accepted, rejected}} : {reviewPath, reviewCheckCount}),
+  }
 }

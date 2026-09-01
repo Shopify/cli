@@ -1,16 +1,56 @@
-import doctor, {appDoctorInstructionsPrompt, formatDoctorOutput} from './doctor.js'
+import doctor, {appDoctorInstructionsPrompt} from './doctor.js'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
 import type {AppDoctorInstructionsDestination} from './doctor.js'
+import type {ScanResult} from './app-doctor-engine/types.js'
+
+const scan: ScanResult = {
+  version: '0.1.0',
+  timestamp: '2026-08-24T00:00:00.000Z',
+  project: {commit: null, dirty: null},
+  app: {name: 'Test', type: 'public'},
+  detection: {framework: 'none', surface: 'config_only', languages: []},
+  capabilities: {
+    theme_app_extension: false,
+    app_embed: false,
+    script_tags: false,
+    webhooks: false,
+    app_proxy: false,
+    storefront_metafield_writes: false,
+    has_backend: false,
+    declared_ip_allowlist: false,
+    checkout_extension: false,
+  },
+  score: {total: 100, baseline: 100, grade: 'EXCELLENT'},
+  scan: {
+    timestamp: '2026-08-24T00:00:00.000Z',
+    doctor_version: '0.1.0',
+    files_scanned: 1,
+    rules_run: 1,
+    rules_skipped: 0,
+    files_skipped_count: 0,
+    coverage_complete: true,
+    coverage_gaps: [],
+    input_hash: 'sha256:input',
+    result_hash: 'sha256:result',
+    checks_executed: [],
+  },
+  issues: [],
+}
 
 const engineResult: AppDoctorRunResult = {
-  output: 'No security issues found.',
+  scan,
   engine: {
     name: 'shopify-app-doctor',
     version: '1.2.3',
     ruleset: '2026.08.28',
   },
   exitCode: 0,
+  elapsedMilliseconds: 12,
+  tracePath: '/tmp/unlinked-app/app-doctor-trace.json',
+  reviewPath: '/tmp/unlinked-app/app-doctor-review.json',
+  reviewCheckCount: 31,
+  jsonReport: {schema_version: 1, findings: []},
 }
 
 function testDependencies(result: AppDoctorRunResult = engineResult) {
@@ -20,6 +60,7 @@ function testDependencies(result: AppDoctorRunResult = engineResult) {
     selectInstructionsDestination: vi.fn(async (): Promise<AppDoctorInstructionsDestination> => 'nothing'),
     deliverInstructions: vi.fn(async () => {}),
     output: vi.fn(),
+    renderReport: vi.fn(),
     setExitCode: vi.fn(),
   }
 }
@@ -36,37 +77,44 @@ function testOptions() {
 }
 
 describe('doctor', () => {
-  test('forwards scan options to the in-tree engine and reports engine versions', async () => {
+  test('forwards scan options to the in-tree engine and renders a report', async () => {
     const dependencies = testDependencies()
 
     await doctor({...testOptions(), verbose: true, blocking: 'high'}, dependencies)
 
     expect(dependencies.runEngine).toHaveBeenCalledWith({
       directory: '/tmp/unlinked-app',
-      format: 'human',
-      verbose: true,
       blocking: 'high',
       findingsPath: undefined,
     })
-    expect(dependencies.output).toHaveBeenCalledWith(
-      'No security issues found.\n\nEngine: shopify-app-doctor 1.2.3\nRuleset: 2026.08.28',
-    )
+    expect(dependencies.renderReport).toHaveBeenCalledWith({
+      scan,
+      engine: engineResult.engine,
+      verbose: true,
+      elapsedMilliseconds: 12,
+      tracePath: engineResult.tracePath,
+      reviewPath: engineResult.reviewPath,
+      reviewCheckCount: 31,
+      findings: undefined,
+    })
+    expect(dependencies.output).not.toHaveBeenCalled()
   })
 
   test('preserves the JSON report and includes engine and ruleset versions', async () => {
     const dependencies = testDependencies({
       ...engineResult,
-      output: JSON.stringify({schema_version: 1, findings: []}),
+      jsonReport: {schema_version: 1, findings: []},
     })
 
     await doctor({...testOptions(), json: true, yes: true}, dependencies)
 
-    expect(dependencies.runEngine).toHaveBeenCalledWith(expect.objectContaining({format: 'json'}))
+    expect(dependencies.runEngine).toHaveBeenCalledWith(expect.objectContaining({blocking: 'none'}))
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
       schema_version: 1,
       findings: [],
       engine: engineResult.engine,
     })
+    expect(dependencies.renderReport).not.toHaveBeenCalled()
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
     expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
@@ -172,19 +220,5 @@ describe('doctor', () => {
     await doctor(testOptions(), dependencies)
 
     expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
-  })
-})
-
-describe('formatDoctorOutput', () => {
-  test('keeps existing JSON engine fields while applying authoritative version metadata', () => {
-    const output = formatDoctorOutput(
-      {
-        ...engineResult,
-        output: JSON.stringify({engine: {commit: 'abc123'}, findings: []}),
-      },
-      true,
-    )
-
-    expect(JSON.parse(output).engine).toEqual({...engineResult.engine, commit: 'abc123'})
   })
 })

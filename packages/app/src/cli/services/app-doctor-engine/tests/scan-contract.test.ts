@@ -4,7 +4,6 @@ import {
   assertRegistryInvariants,
   buildReviewPack,
   compileTrace,
-  formatConsole,
   scan,
   sha256,
   validateTrace,
@@ -87,7 +86,6 @@ describe('framework and surface detection', () => {
     const unknown = await scan(await app({'shopify.app.toml': appConfig(), 'server.ts': 'export const server = {}'}))
     expect(unknown.detection).toMatchObject({framework: 'unknown', surface: 'unknown'})
     expect(unknown.score).toBeNull()
-    expect(formatConsole(unknown)).toContain('Unsupported backend: agent tier only')
   })
 
   test('owns expiring-token applicability and unresolved handoff at runtime', async () => {

@@ -1,9 +1,11 @@
 import {runAppDoctor} from './app-doctor-api.js'
 import deliverAppDoctorInstructions from './app-doctor-instructions.js'
+import {formatDoctorJson, renderDoctorReport} from './doctor-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import type {AppDoctorBlockingLevel, AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
+import type {DoctorReportInput} from './doctor-output.js'
 import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
 interface DoctorOptions {
@@ -24,6 +26,7 @@ interface DoctorDependencies {
   selectInstructionsDestination(): Promise<AppDoctorInstructionsDestination>
   deliverInstructions(options: {directory: string; copy: boolean; scanComplete: boolean}): Promise<void>
   output(content: string): void
+  renderReport(input: DoctorReportInput): void
   setExitCode(exitCode: number): void
 }
 
@@ -43,26 +46,10 @@ const defaultDependencies: DoctorDependencies = {
   selectInstructionsDestination: () => renderSelectPrompt(appDoctorInstructionsPrompt),
   deliverInstructions: deliverAppDoctorInstructions,
   output: outputResult,
+  renderReport: renderDoctorReport,
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
   },
-}
-
-function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
-
-export function formatDoctorOutput(result: AppDoctorRunResult, json: boolean): string {
-  if (!json) {
-    return `${result.output.trimEnd()}\n\nEngine: ${result.engine.name} ${result.engine.version}\nRuleset: ${result.engine.ruleset}`
-  }
-
-  const report: unknown = JSON.parse(result.output)
-  const reportWithEngine = isJsonObject(report)
-    ? {...report, engine: {...(isJsonObject(report.engine) ? report.engine : {}), ...result.engine}}
-    : {engine: result.engine, result: report}
-
-  return JSON.stringify(reportWithEngine, null, 2)
 }
 
 async function instructionsDestination(
@@ -75,19 +62,34 @@ async function instructionsDestination(
   return dependencies.selectInstructionsDestination()
 }
 
+function doctorReportInput(result: AppDoctorRunResult, verbose: boolean): DoctorReportInput {
+  return {
+    scan: result.scan,
+    engine: result.engine,
+    verbose,
+    elapsedMilliseconds: result.elapsedMilliseconds,
+    tracePath: result.tracePath,
+    reviewPath: result.reviewPath,
+    reviewCheckCount: result.reviewCheckCount,
+    findings: result.findings,
+  }
+}
+
 export default async function doctor(
   options: DoctorOptions,
   dependencies: DoctorDependencies = defaultDependencies,
 ): Promise<void> {
   const result = await dependencies.runEngine({
     directory: options.directory,
-    format: options.json ? 'json' : 'human',
-    verbose: options.verbose,
     blocking: options.blocking,
     findingsPath: options.findingsPath,
   })
 
-  dependencies.output(formatDoctorOutput(result, options.json))
+  if (options.json) {
+    dependencies.output(formatDoctorJson(result.jsonReport, result.engine))
+  } else {
+    dependencies.renderReport(doctorReportInput(result, options.verbose))
+  }
 
   const destination = await instructionsDestination(options, dependencies)
   if (destination !== 'nothing') {
