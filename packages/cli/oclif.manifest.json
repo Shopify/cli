@@ -4567,6 +4567,96 @@
       "pluginType": "core",
       "strict": true
     },
+    "feedback": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Sends feedback about Shopify CLI to the team that builds it. The feedback travels on the usage analytics the CLI already reports, so it makes no separate network request and respects the analytics opt-out. It never prompts, so both humans and AI agents can run it.",
+      "descriptionWithMarkdown": "Sends feedback about Shopify CLI to the team that builds it. The feedback travels on the usage analytics the CLI already reports, so it makes no separate network request and respects the analytics opt-out. It never prompts, so both humans and AI agents can run it.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --message \"The deploy command told me to use a flag that does not exist\"",
+        "<%= config.bin %> <%= command.id %> --message \"dev keeps disconnecting from my store\" --sentiment frustrated --category tool_failure",
+        "echo \"Docs and CLI disagree about theme push\" | <%= config.bin %> <%= command.id %> --message -"
+      ],
+      "flags": {
+        "category": {
+          "description": "What the feedback is about.",
+          "env": "SHOPIFY_FLAG_CATEGORY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "category",
+          "options": [
+            "wrong_guidance",
+            "missing_capability",
+            "confusing_docs",
+            "tool_failure",
+            "slow",
+            "other"
+          ],
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "message": {
+          "char": "m",
+          "description": "The feedback message. Pass - to read the message from stdin. Messages longer than 2000 characters are truncated.",
+          "env": "SHOPIFY_FLAG_MESSAGE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "message",
+          "required": true,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "sentiment": {
+          "description": "How the experience felt.",
+          "env": "SHOPIFY_FLAG_SENTIMENT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "sentiment",
+          "options": [
+            "frustrated",
+            "blocked",
+            "confused",
+            "praise"
+          ],
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "feedback",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Send feedback about Shopify CLI."
+    },
     "help": {
       "aliases": [
       ],
