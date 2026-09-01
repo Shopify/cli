@@ -26,13 +26,18 @@ import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_f
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
-import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
+import {AdminApiRequestError, adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
+import {GraphQLClientError} from '../../../private/node/api/headers.js'
 
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
 
-vi.mock('../api/admin.js')
+vi.mock('../api/admin.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api/admin.js')>()),
+  adminRequestDoc: vi.fn(),
+  supportedApiVersions: vi.fn(),
+}))
 vi.mock('@shopify/cli-kit/node/system')
 vi.stubGlobal('fetch', vi.fn())
 
@@ -96,6 +101,22 @@ describe('fetchTheme', () => {
     await expect(fetchTheme(123, session)).rejects.toThrow(
       'The authenticated account or access token is missing `read_themes` access scope.',
     )
+  })
+
+  test.each([
+    new ClientError({status: 401, errors: []}, {query: ''}),
+    new AdminApiRequestError(401, 'Error connecting to your store my-shop.myshopify.com: Unauthorized'),
+    new GraphQLClientError('Unauthorized', 401),
+  ])('propagates HTTP 401 instead of treating the theme as missing', async (error) => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(error)
+
+    await expect(fetchTheme(123, session)).rejects.toBe(error)
+  })
+
+  test('continues to treat a typed HTTP 404 as a missing theme', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(new AdminApiRequestError(404, 'Not Found'))
+
+    await expect(fetchTheme(123, session)).resolves.toBeUndefined()
   })
 })
 

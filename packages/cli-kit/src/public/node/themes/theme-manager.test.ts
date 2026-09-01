@@ -3,6 +3,7 @@ import {Theme} from './types.js'
 import {fetchTheme, findDevelopmentThemeByName, themeCreate} from './api.js'
 import {DEVELOPMENT_THEME_ROLE, UNPUBLISHED_THEME_ROLE} from './utils.js'
 import {BugError} from '../error.js'
+import {GraphQLClientError} from '../../../private/node/api/headers.js'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('./api.js')
@@ -27,6 +28,10 @@ class TestThemeManager extends ThemeManager {
 
   setThemeId(themeId: string | undefined): void {
     this.themeId = themeId
+  }
+
+  storeTheme(themeId: string): void {
+    this.setTheme(themeId)
   }
 
   protected setTheme(themeId: string): void {
@@ -151,7 +156,7 @@ describe('ThemeManager', () => {
 
     test('removes theme when fetch returns undefined', async () => {
       // Given
-      manager.setThemeId('123')
+      manager.storeTheme('123')
       vi.mocked(fetchTheme).mockResolvedValue(undefined)
 
       // When
@@ -161,6 +166,15 @@ describe('ThemeManager', () => {
       expect(fetchTheme).toHaveBeenCalledWith(123, session)
       expect(result).toBeUndefined()
       expect(manager.getStoredThemeId()).toBeUndefined()
+    })
+
+    test('keeps the stored theme when fetching it fails with HTTP 401', async () => {
+      manager.storeTheme('123')
+      const authenticationFailure = new GraphQLClientError('Unauthorized', 401)
+      vi.mocked(fetchTheme).mockRejectedValue(authenticationFailure)
+
+      await expect(manager.fetch()).rejects.toBe(authenticationFailure)
+      expect(manager.getStoredThemeId()).toBe('123')
     })
   })
 

@@ -6,6 +6,7 @@ import * as http from '../http.js'
 import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
 
 import {test, vi, expect, describe} from 'vitest'
+import {ClientError} from 'graphql-request'
 
 vi.mock('./graphql.js')
 vi.mock('../../../private/node/api/headers.js')
@@ -111,6 +112,31 @@ describe('admin-graphql-api', () => {
       token: themeAccessToken,
       variables: {variables: 'variables'},
     })
+  })
+})
+
+describe('fetchApiVersions', () => {
+  test.each([401, 404])('preserves HTTP %i on the thrown error', async (status) => {
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(
+      new ClientError({status, data: 'body', errors: []}, {query: 'query'}),
+    )
+
+    const error = await admin
+      .fetchApiVersions({token, storeFqdn: `status-${status}.myshopify.com`})
+      .catch((thrown) => thrown)
+
+    expect(error).toBeInstanceOf(admin.AdminApiRequestError)
+    expect(error).toMatchObject({status})
+    expect((error as Error).message).toContain(`Error connecting to your store status-${status}.myshopify.com:`)
+  })
+
+  test('keeps the existing access error for HTTP 403', async () => {
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(new ClientError({status: 403, errors: []}, {query: 'query'}))
+
+    const error = await admin.fetchApiVersions({token, storeFqdn: 'forbidden.myshopify.com'}).catch((thrown) => thrown)
+
+    expect(error).not.toBeInstanceOf(admin.AdminApiRequestError)
+    expect((error as Error).message).toContain("Looks like you don't have access to this dev store")
   })
 })
 

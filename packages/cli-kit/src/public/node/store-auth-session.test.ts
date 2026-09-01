@@ -2,6 +2,7 @@ import {
   clearStoredStoreAppSession,
   getCurrentStoredStoreAppSession,
   getStoreAuthAdminSession,
+  listCurrentStoredStoreAppSessions,
   setStoredStoreAppSession,
   storeAuthSessionKey,
   type StoredStoreAppSession,
@@ -113,6 +114,25 @@ describe('store auth session storage', () => {
 
       expect(getStoreAuthAdminSession('preview.myshopify.com', storage as any)).toBeUndefined()
       expect(setLastSeenUserId).not.toHaveBeenCalled()
+    })
+  })
+
+  test('lists the current stored session for every store from real local storage', async () => {
+    await inTemporaryDirectory((cwd) => {
+      const storage = new LocalStorage<Record<string, unknown>>({cwd})
+      const previousFirstStoreUser = buildSession({store: 'first.myshopify.com', userId: '42', accessToken: 'token-1'})
+      const currentFirstStoreUser = buildSession({store: 'first.myshopify.com', userId: '84', accessToken: 'token-2'})
+      const currentSecondStoreUser = buildSession({store: 'second.myshopify.com', userId: '7', accessToken: 'token-3'})
+
+      setStoredStoreAppSession(previousFirstStoreUser, storage as any)
+      setStoredStoreAppSession(currentFirstStoreUser, storage as any)
+      setStoredStoreAppSession(currentSecondStoreUser, storage as any)
+      storage.set('unrelated-key', {currentUserId: '42', sessionsByUserId: {}})
+
+      const sessions = listCurrentStoredStoreAppSessions(storage as any)
+
+      expect(sessions).toHaveLength(2)
+      expect(sessions).toEqual(expect.arrayContaining([currentFirstStoreUser, currentSecondStoreUser]))
     })
   })
 

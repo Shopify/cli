@@ -13,6 +13,7 @@ import {
   listCurrentStoredStoreAppSessions,
   type StoredStoreAppSession,
 } from '@shopify/cli-kit/node/store-auth-session'
+import {throwIfStoredStoreAuthIsInvalid} from '@shopify/cli-kit/node/store-auth-recovery'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {
   renderWarning,
@@ -20,9 +21,10 @@ import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
   renderError,
+  type TokenItem,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -33,11 +35,17 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import type {Writable} from 'stream'
 
 type FlagValues = Record<string, boolean | string | string[] | number | undefined>
+
+interface ThemeSessionContext {
+  adminSession: AdminSession
+  storedStoreAppSession?: StoredStoreAppSession
+}
+
 interface ValidEnvironment {
   environment: EnvironmentName
   flags: FlagValues
   requiresAuth: boolean
-  storeAuthSession?: AdminSession
+  storeAuthSession?: ThemeSessionContext
 }
 type EnvironmentName = string
 /**
@@ -55,6 +63,43 @@ type EnvironmentName = string
  * ['store', 'password', ['live', 'development', 'theme']]
  */
 export type RequiredFlags = (string | string[])[] | null
+
+// Theme commands use 401 only. A missing `--theme` target can return 404.
+const THEME_INVALID_STORE_AUTH_STATUSES = [401]
+
+function throwIfThemeStoreAuthIsInvalid(error: unknown, sessionContext: ThemeSessionContext | undefined): void {
+  const storedSession = sessionContext?.storedStoreAppSession
+  // Theme does not refresh standard sessions. Their 401 may have a usable refresh token.
+  if (storedSession?.kind !== 'preview') return
+
+  throwIfStoredStoreAuthIsInvalid(error, storedSession, {invalidStatuses: THEME_INVALID_STORE_AUTH_STATUSES})
+}
+
+function bodyWithSeparateTryMessage(message: string, tryMessage: TokenItem | null): TokenItem {
+  if (!tryMessage) return message
+
+  const [firstToken, ...remainingTokens] = [tryMessage].flat()
+  if (firstToken === undefined) return message
+
+  return typeof firstToken === 'string'
+    ? [message, `\n\n${firstToken}`, ...remainingTokens]
+    : [message, '\n\n', firstToken, ...remainingTokens]
+}
+
+function renderEnvironmentFailure(environment: EnvironmentName, error: Error): void {
+  if (!(error instanceof FatalError)) {
+    renderError({body: [`Environment ${environment} failed: \n\n${error.message}`]})
+    return
+  }
+
+  // Keep FatalError next steps. They provide recovery actions.
+  renderError({
+    headline: `Environment ${environment} failed:`,
+    body: bodyWithSeparateTryMessage(error.message, error.tryMessage),
+    ...(error.nextSteps?.length ? {nextSteps: error.nextSteps} : {}),
+    ...(error.customSections?.length ? {customSections: error.customSections} : {}),
+  })
+}
 
 export default abstract class ThemeCommand extends Command {
   static baseFlags = authAliasFlag
@@ -99,7 +144,8 @@ export default abstract class ThemeCommand extends Command {
         throw new AbortError(`Please provide a valid environment.`)
       }
 
-      const session = commandRequiresAuth ? await this.createSession(flags) : undefined
+      const sessionContext = commandRequiresAuth ? await this.createSession(flags) : undefined
+      const session = sessionContext?.adminSession
       const commandName = this.constructor.name.toLowerCase()
 
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
@@ -110,6 +156,9 @@ export default abstract class ThemeCommand extends Command {
 
       try {
         await this.command(flags, session, false, args)
+      } catch (error) {
+        throwIfThemeStoreAuthIsInvalid(error, sessionContext)
+        throw error
       } finally {
         await this.logAnalyticsData(session)
       }
@@ -206,7 +255,7 @@ export default abstract class ThemeCommand extends Command {
 
     const storeAuthSessionsByStore = requiresAuth
       ? this.storeAuthSessionsForTheme(Array.from(environmentMap.values()).map(({validationFlags}) => validationFlags))
-      : new Map<string, AdminSession>()
+      : new Map<string, ThemeSessionContext>()
 
     const entriesWithStoreAuthSessions = Array.from(environmentMap.entries()).map(
       ([environmentName, {flags, validationFlags}]) => ({
@@ -306,13 +355,17 @@ export default abstract class ThemeCommand extends Command {
             try {
               const store = flags.store as string
               await useThemeStoreContext(store, async () => {
-                const session = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
+                const sessionContext = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
+                const session = sessionContext?.adminSession
 
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
                 try {
                   await this.command(flags, session, true, {}, {stdout, stderr})
+                } catch (error) {
+                  throwIfThemeStoreAuthIsInvalid(error, sessionContext)
+                  throw error
                 } finally {
                   await this.logAnalyticsData(session)
                 }
@@ -321,8 +374,7 @@ export default abstract class ThemeCommand extends Command {
               // eslint-disable-next-line no-catch-all/no-catch-all
             } catch (error) {
               if (error instanceof Error) {
-                error.message = `Environment ${environment} failed: \n\n${error.message}`
-                renderError({body: [error.message]})
+                renderEnvironmentFailure(environment, error)
               }
             }
           },
@@ -351,24 +403,21 @@ export default abstract class ThemeCommand extends Command {
     return groups
   }
 
-  /**
-   * Create an unauthenticated session object from store and password
-   * @param flags - The environment flags containing store and password
-   * @returns The unauthenticated session object
-   */
-  private async createSession(flags: FlagValues, storeAuthSession?: AdminSession) {
+  private async createSession(flags: FlagValues, storeAuthSession?: ThemeSessionContext): Promise<ThemeSessionContext> {
     const store = ensureThemeStore({store: flags.store as string | undefined})
     const password = flags.password as string | undefined
-    const session = password
-      ? await ensureAuthenticatedThemes(store, password)
-      : (storeAuthSession ??
-        (await this.storeAuthSessionForTheme({store})) ??
-        (await ensureAuthenticatedThemes(store, password)))
 
-    return session
+    if (password) {
+      return {adminSession: await ensureAuthenticatedThemes(store, password)}
+    }
+
+    const storeAuthContext = storeAuthSession ?? (await this.storeAuthSessionForTheme({store}))
+    if (storeAuthContext) return storeAuthContext
+
+    return {adminSession: await ensureAuthenticatedThemes(store, password)}
   }
 
-  private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {
+  private async storeAuthSessionForTheme(flags: FlagValues): Promise<ThemeSessionContext | undefined> {
     const requiredScopes = this.storeAuthScopes()
     if (!requiredScopes) return undefined
 
@@ -380,10 +429,10 @@ export default abstract class ThemeCommand extends Command {
     const storedSession = getCurrentStoredStoreAppSession(storeFqdn)
     if (!storedSession) return undefined
 
-    return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
+    return this.themeSessionContextFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
   }
 
-  private storeAuthSessionsForTheme(flagsList: FlagValues[]): Map<string, AdminSession> {
+  private storeAuthSessionsForTheme(flagsList: FlagValues[]): Map<string, ThemeSessionContext> {
     const requiredScopes = this.storeAuthScopes()
     if (!requiredScopes) return new Map()
 
@@ -400,17 +449,17 @@ export default abstract class ThemeCommand extends Command {
           const storeFqdn = normalizeStoreFqdn(storedSession.store)
           if (!stores.has(storeFqdn)) return undefined
 
-          const session = this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
-          return session ? ([storeFqdn, session] as const) : undefined
+          const sessionContext = this.themeSessionContextFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
+          return sessionContext ? ([storeFqdn, sessionContext] as const) : undefined
         })
-        .filter((entry): entry is readonly [string, AdminSession] => entry !== undefined),
+        .filter((entry): entry is readonly [string, ThemeSessionContext] => entry !== undefined),
     )
   }
 
   private storeAuthSessionFromCache(
     flags: FlagValues,
-    storeAuthSessionsByStore: Map<string, AdminSession>,
-  ): AdminSession | undefined {
+    storeAuthSessionsByStore: Map<string, ThemeSessionContext>,
+  ): ThemeSessionContext | undefined {
     const store = typeof flags.store === 'string' ? flags.store : undefined
     const password = flags.password
     if (!store || password) return undefined
@@ -418,11 +467,11 @@ export default abstract class ThemeCommand extends Command {
     return storeAuthSessionsByStore.get(normalizeStoreFqdn(store))
   }
 
-  private adminSessionFromStoreAuthSession(
+  private themeSessionContextFromStoreAuthSession(
     storedSession: StoredStoreAppSession,
     storeFqdn: string,
     requiredScopes: string[],
-  ): AdminSession | undefined {
+  ): ThemeSessionContext | undefined {
     if (isSessionExpired(storedSession)) {
       outputDebug(
         `Ignoring stored store auth session for ${storeFqdn}: it expired at ${storedSession.expiresAt ?? 'unknown'}.`,
@@ -444,8 +493,11 @@ export default abstract class ThemeCommand extends Command {
     setLastSeenUserId(storedSession.userId)
 
     return {
-      token: storedSession.accessToken,
-      storeFqdn,
+      adminSession: {
+        token: storedSession.accessToken,
+        storeFqdn,
+      },
+      storedStoreAppSession: storedSession,
     }
   }
 
@@ -478,7 +530,7 @@ export default abstract class ThemeCommand extends Command {
     environmentFlags: FlagValues,
     requiredFlags: Exclude<RequiredFlags, null>,
     environmentName: string,
-    storeAuthSession?: AdminSession,
+    storeAuthSession?: ThemeSessionContext,
   ): string[] | true {
     const missingFlags = requiredFlags
       .filter((flag) =>
@@ -501,7 +553,7 @@ export default abstract class ThemeCommand extends Command {
     return true
   }
 
-  private hasRequiredFlag(environmentFlags: FlagValues, flag: string, storeAuthSession?: AdminSession): boolean {
+  private hasRequiredFlag(environmentFlags: FlagValues, flag: string, storeAuthSession?: ThemeSessionContext): boolean {
     if (flag === 'password' && storeAuthSession) return true
     return Boolean(environmentFlags[flag])
   }

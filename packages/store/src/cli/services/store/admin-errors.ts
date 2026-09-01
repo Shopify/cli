@@ -1,7 +1,8 @@
-import {throwStoredAuthInvalidError} from './auth/recovery.js'
-import {clearStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+
+// Store requests target known-good endpoints, so a 404 also signals a removed
+// store or token (for example after a preview store is claimed).
+export const INVALID_STORED_AUTH_STATUSES: ReadonlyArray<number> = [401, 404]
 
 interface GraphQLClientErrorLike {
   response: {status?: number; errors?: unknown}
@@ -53,13 +54,4 @@ export function classifyAdminApiError(error: unknown, storeFqdn: string): AbortE
   }
 
   return undefined
-}
-
-export function throwIfStoredStoreAuthIsInvalid(error: unknown, session: StoredStoreAppSession): void {
-  const status = graphQLClientErrorStatus(error)
-  if (status !== 401 && status !== 404) return
-
-  clearStoredStoreAppSession(session.store, session.userId)
-
-  throwStoredAuthInvalidError(session)
 }

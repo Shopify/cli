@@ -26,6 +26,16 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 const LatestApiVersionByFQDN = new Map<string, string>()
 
+/** Error that preserves an Admin API status for caller-specific recovery. */
+export class AdminApiRequestError extends AbortError {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message)
+  }
+}
+
 /**
  * Executes a GraphQL query against the Admin API.
  *
@@ -187,7 +197,8 @@ export async function fetchApiVersions(
       )
     }
     if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {
-      throw new AbortError(
+      throw new AdminApiRequestError(
+        error.response.status,
         `Error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
       )
     }

@@ -25,7 +25,8 @@ import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
+import {AdminApiRequestError, adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
+import {GraphQLClientError} from '../../../private/node/api/headers.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
@@ -65,10 +66,12 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
         name: theme.name,
       })
     }
-
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    if (isUnauthorizedAdminApiError(error)) {
+      throw recordError(error)
+    }
+
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -621,6 +624,12 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
     abortIfMissingThemeAccessScope(error)
     throw error
   }
+}
+
+function isUnauthorizedAdminApiError(error: unknown): boolean {
+  if (error instanceof AdminApiRequestError) return error.status === 401
+  if (error instanceof GraphQLClientError) return error.statusCode === 401
+  return error instanceof ClientError && error.response.status === 401
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {

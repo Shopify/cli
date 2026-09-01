@@ -1,13 +1,13 @@
 import {mapPlanToPublicHandle} from './plan.js'
-import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
+import {classifyAdminApiError, INVALID_STORED_AUTH_STATUSES} from '../admin-errors.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
-import {throwStoredAuthInvalidError} from '../auth/recovery.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/client.js'
 import {storeTypeHandle} from '../store-type.js'
 import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
 import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
-import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import {throwIfStoredStoreAuthIsInvalid} from '@shopify/cli-kit/node/store-auth-recovery'
+import {getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
@@ -126,7 +126,7 @@ async function fetchAdminShopInfo(
 
     return response.shop
   } catch (error) {
-    throwIfStoredStoreAuthIsInvalid(error, session)
+    throwIfStoredStoreAuthIsInvalid(error, session, {invalidStatuses: INVALID_STORED_AUTH_STATUSES})
 
     const classified = classifyAdminApiError(error, session.store)
     if (classified) throw classified
@@ -160,11 +160,9 @@ async function fetchPreviewStoreUrls(previewSession: PreviewStoreSession): Promi
       ...(previewStore.claimUrl ? {saveUrl: previewStore.claimUrl} : {}),
     }
   } catch (error) {
-    // The CLI does not receive a claim event. A 401/404 is the first signal that the preview
-    // credential is invalid. Clear the session so the `store auth` command can run.
-    if (error instanceof PreviewStoreRequestError && (error.status === 401 || error.status === 404)) {
-      clearStoredStoreAppSession(previewSession.store, previewSession.userId)
-      throwStoredAuthInvalidError(previewSession)
+    // A 401/404 is the only claim signal. Clear the session so `store auth` can run.
+    if (error instanceof PreviewStoreRequestError) {
+      throwIfStoredStoreAuthIsInvalid(error, previewSession, {invalidStatuses: INVALID_STORED_AUTH_STATUSES})
     }
 
     throw error
