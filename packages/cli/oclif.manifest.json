@@ -1307,10 +1307,6 @@
       "aliases": [
       ],
       "args": {
-        "directory": {
-          "description": "The app directory to check. Defaults to the current directory.",
-          "name": "directory"
-        }
       },
       "customPluginName": "@shopify/app",
       "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
@@ -1357,6 +1353,15 @@
           "name": "no-color",
           "type": "boolean"
         },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "skip-instructions": {
           "allowNo": false,
           "description": "Don't offer to show coding-agent instructions.",
@@ -1401,10 +1406,6 @@
       "aliases": [
       ],
       "args": {
-        "directory": {
-          "description": "The app directory containing App Doctor results. Defaults to the current directory.",
-          "name": "directory"
-        }
       },
       "customPluginName": "@shopify/app",
       "description": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
@@ -1428,6 +1429,15 @@
           "hidden": false,
           "name": "no-color",
           "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
         },
         "verbose": {
           "allowNo": false,

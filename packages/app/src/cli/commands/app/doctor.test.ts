@@ -1,4 +1,5 @@
 import Doctor from './doctor.js'
+import {appFlags} from '../../flags.js'
 import doctor from '../../services/doctor.js'
 import AppLinkedCommand from '../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
@@ -12,11 +13,13 @@ describe('app doctor command', () => {
     expect(Doctor.hidden).toBe(true)
     expect(Doctor.prototype).toBeInstanceOf(BaseCommand)
     expect(Doctor.prototype).not.toBeInstanceOf(AppLinkedCommand)
+    expect(Doctor.flags.path).toBe(appFlags.path)
+    expect(Doctor.args).not.toHaveProperty('directory')
   })
 
-  test('forwards the directory and flags to the service', async () => {
+  test('forwards --path and flags to the service', async () => {
     await Doctor.run(
-      ['./fixtures/unlinked-app', '--json', '--verbose', '--blocking', 'high', '--skip-instructions'],
+      ['--path', './fixtures/unlinked-app', '--json', '--verbose', '--blocking', 'high', '--skip-instructions'],
       import.meta.url,
     )
 
@@ -32,7 +35,7 @@ describe('app doctor command', () => {
   })
 
   test('forwards --yes without requiring an app configuration', async () => {
-    await Doctor.run(['/tmp/directory-without-shopify-toml', '--yes'], import.meta.url)
+    await Doctor.run(['--path', '/tmp/directory-without-shopify-toml', '--yes'], import.meta.url)
 
     expect(doctor).toHaveBeenCalledWith({
       directory: '/tmp/directory-without-shopify-toml',
@@ -46,7 +49,7 @@ describe('app doctor command', () => {
   })
 
   test('resolves and forwards an agent findings file', async () => {
-    await Doctor.run(['.', '--findings', './findings.json', '--skip-instructions'], import.meta.url)
+    await Doctor.run(['--findings', './findings.json', '--skip-instructions'], import.meta.url)
 
     expect(doctor).toHaveBeenCalledWith(expect.objectContaining({findingsPath: resolvePath('./findings.json')}))
   })

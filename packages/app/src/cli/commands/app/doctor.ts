@@ -1,8 +1,9 @@
+import {appFlags} from '../../flags.js'
 import doctor from '../../services/doctor.js'
-import {Args, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import type {AppDoctorBlockingLevel} from '../../services/app-doctor-api.js'
 
 const blockingLevels: AppDoctorBlockingLevel[] = ['high', 'medium', 'low', 'none']
@@ -18,15 +19,9 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
 
   static description = this.descriptionWithoutMarkdown()
 
-  static args = {
-    directory: Args.string({
-      description: 'The app directory to check. Defaults to the current directory.',
-      parse: async (input) => resolvePath(input),
-    }),
-  }
-
   static flags = {
     ...globalFlags,
+    path: appFlags.path,
     ...jsonFlag,
     findings: Flags.string({
       description: 'Validate agent findings from a JSON file and compile them into the trace.',
@@ -54,10 +49,10 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
   }
 
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(Doctor)
+    const {flags} = await this.parse(Doctor)
 
     await doctor({
-      directory: args.directory ?? cwd(),
+      directory: flags.path,
       json: flags.json,
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking as AppDoctorBlockingLevel,

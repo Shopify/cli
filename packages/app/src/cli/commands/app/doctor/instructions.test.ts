@@ -1,4 +1,5 @@
 import DoctorInstructions from './instructions.js'
+import {appFlags} from '../../../flags.js'
 import deliverAppDoctorInstructions from '../../../services/app-doctor-instructions.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
@@ -12,6 +13,8 @@ describe('app doctor instructions command', () => {
     expect(DoctorInstructions.hidden).toBe(true)
     expect(DoctorInstructions.prototype).toBeInstanceOf(BaseCommand)
     expect(DoctorInstructions.prototype).not.toBeInstanceOf(AppLinkedCommand)
+    expect(DoctorInstructions.flags.path).toBe(appFlags.path)
+    expect(DoctorInstructions.args).not.toHaveProperty('directory')
   })
 
   test('prints instructions for the current directory by default', async () => {
@@ -24,8 +27,8 @@ describe('app doctor instructions command', () => {
     })
   })
 
-  test('forwards an app directory and --copy', async () => {
-    await DoctorInstructions.run(['./fixtures/unlinked-app', '--copy'], import.meta.url)
+  test('forwards --path and --copy', async () => {
+    await DoctorInstructions.run(['--path', './fixtures/unlinked-app', '--copy'], import.meta.url)
 
     expect(deliverAppDoctorInstructions).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/unlinked-app'),

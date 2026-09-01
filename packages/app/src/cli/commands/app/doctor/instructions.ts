@@ -1,8 +1,9 @@
+import {appFlags} from '../../../flags.js'
 import deliverAppDoctorInstructions from '../../../services/app-doctor-instructions.js'
-import {Args, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class DoctorInstructions extends BaseCommand {
   static hidden = true
@@ -15,15 +16,9 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
 
   static description = this.descriptionWithoutMarkdown()
 
-  static args = {
-    directory: Args.string({
-      description: 'The app directory containing App Doctor results. Defaults to the current directory.',
-      parse: async (input) => resolvePath(input),
-    }),
-  }
-
   static flags = {
     ...globalFlags,
+    path: appFlags.path,
     copy: Flags.boolean({
       description: 'Copy the instructions to the clipboard instead of printing them.',
       default: false,
@@ -39,10 +34,10 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
   }
 
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(DoctorInstructions)
+    const {flags} = await this.parse(DoctorInstructions)
 
     await deliverAppDoctorInstructions({
-      directory: args.directory ?? cwd(),
+      directory: flags.path,
       copy: flags.copy,
       writePath: flags.write,
     })
