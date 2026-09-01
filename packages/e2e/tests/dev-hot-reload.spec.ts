@@ -39,12 +39,12 @@ description = "E2E test trigger"
 }
 
 test.describe('Dev hot reload', () => {
-  test('editing app config TOML triggers reload', async ({cli, env, browserPage, storeFqdn}) => {
+  test('editing app config TOML triggers reload', async ({cli, env, browserPage, storeFqdn}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('hot-reload')
+    const appName = e2eAppName('hot-reload', testInfo.retry)
     let appUrl: string | undefined
     let appDir: string | undefined
 
@@ -104,12 +104,12 @@ test.describe('Dev hot reload', () => {
     }
   })
 
-  test('creating a new extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}) => {
+  test('creating a new extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('hot-create')
+    const appName = e2eAppName('hot-create', testInfo.retry)
     let appUrl: string | undefined
     let appDir: string | undefined
 
@@ -162,12 +162,12 @@ test.describe('Dev hot reload', () => {
     }
   })
 
-  test('deleting an extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}) => {
+  test('deleting an extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('hot-delete')
+    const appName = e2eAppName('hot-delete', testInfo.retry)
     let appUrl: string | undefined
     let appDir: string | undefined
 
