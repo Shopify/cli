@@ -1,5 +1,4 @@
 import {readOptionalRepositoryFile} from '../scanners/discover.js'
-import {canonicalAppRoot} from '../repository-io.js'
 import {dirname, isAbsolutePath, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 // eslint-disable-next-line no-restricted-imports -- cli-kit's executor merges process.env, which violates this audit boundary.
 import {spawn} from 'node:child_process'
@@ -60,14 +59,13 @@ export async function auditKnownCves(
   executor: AuditExecutor = defaultExecutor,
   timeoutMilliseconds = 15_000,
 ): Promise<DependencyAuditResult> {
-  const canonicalRoot = canonicalAppRoot(appRoot)
   const packageManifest = manifests.find((manifest) => manifest.path === 'package.json')
   if (!packageManifest)
     return {issues: [], unresolvedReason: 'No root JavaScript package.json was available.', inspectedFiles: []}
 
   const lockfileContents = new Map<string, Buffer>()
   for (const path of LOCKFILE_MANAGERS.keys()) {
-    const result = readOptionalRepositoryFile(canonicalRoot, joinPath(canonicalRoot, path))
+    const result = readOptionalRepositoryFile(appRoot, joinPath(appRoot, path))
     if (result.ok) lockfileContents.set(path, result.content)
   }
   const lockfiles = [...lockfileContents.keys()]
@@ -87,7 +85,7 @@ export async function auditKnownCves(
   let sandbox: AuditSandbox
   try {
     sandbox = await createAuditSandbox(
-      canonicalRoot,
+      appRoot,
       packageManifest,
       selection.lockfile,
       selectedLockfile,
@@ -119,7 +117,7 @@ export async function auditKnownCves(
       executor(selection.command, auditArguments(selection, sandbox.userConfigPath), {
         cwd: sandbox.workspace,
         signal: controller.signal,
-        env: auditEnvironment(canonicalRoot, sandbox),
+        env: auditEnvironment(appRoot, sandbox),
       }),
       timeoutPromise,
     ])

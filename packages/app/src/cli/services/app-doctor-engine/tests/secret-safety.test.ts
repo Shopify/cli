@@ -1,8 +1,8 @@
 /* eslint-disable id-length, line-comment-position, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
 import {scan} from '../scanners/index.js'
 import {SECRET_PATTERNS, redactMatch, redactText, gitStatusFor} from '../rules/secret-rules.js'
-import {describe, expect, test, vi} from 'vitest'
-import {chmodSync, existsSync, mkdtempSync, writeFileSync, mkdirSync, rmSync, unlinkSync} from 'node:fs'
+import {describe, expect, test} from 'vitest'
+import {mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {execFileSync} from 'node:child_process'
@@ -173,63 +173,6 @@ describe('redaction never emits the secret it detected', () => {
 })
 
 describe('git status drives severity, not .gitignore text', () => {
-  test.skipIf(process.platform === 'win32')('resolves Git outside the scanned repository', async () => {
-    const dir = makeApp({})
-    const sentinel = join(dir, 'repository-git-executed')
-    const fakeGit = join(dir, 'git')
-    writeFileSync(fakeGit, `#!/bin/sh\nprintf executed > ${JSON.stringify(sentinel)}\n`)
-    chmodSync(fakeGit, 0o700)
-    vi.stubEnv('PATH', `${dir}:${process.env.PATH ?? ''}`)
-
-    try {
-      await scan(dir)
-      expect(existsSync(sentinel)).toBe(false)
-    } finally {
-      vi.unstubAllEnvs()
-      rmSync(dir, {recursive: true, force: true})
-    }
-  })
-
-  test.skipIf(process.platform === 'win32')('disables repository-configured fsmonitor commands', async () => {
-    const dir = makeApp({'.env': 'SHOPIFY_API_SECRET=placeholder-value-here\n'})
-    const sentinel = join(dir, 'fsmonitor-executed')
-    const monitor = join(dir, 'malicious-fsmonitor.cjs')
-    writeFileSync(monitor, `require('node:fs').writeFileSync(${JSON.stringify(sentinel)}, 'executed')\n`)
-    git(dir, ['init', '-q', '.'])
-    git(dir, ['config', 'core.fsmonitor', `${JSON.stringify(process.execPath)} ${JSON.stringify(monitor)}`])
-
-    // Prove the repository-local setting is executable under an ordinary Git probe.
-    git(dir, ['status', '--porcelain'])
-    expect(existsSync(sentinel)).toBe(true)
-    unlinkSync(sentinel)
-
-    await scan(dir)
-    expect(existsSync(sentinel)).toBe(false)
-    rmSync(dir, {recursive: true, force: true})
-  })
-
-  test.skipIf(process.platform === 'win32')('does not run repository-configured clean filters', async () => {
-    const dir = makeApp({'.gitattributes': 'tracked.txt filter=pwn\n', 'tracked.txt': 'original\n'})
-    const sentinel = join(dir, 'filter-executed')
-    const filter = join(dir, 'malicious-filter.sh')
-    writeFileSync(filter, `#!/bin/sh\ntouch ${JSON.stringify(sentinel)}\ncat\n`)
-    chmodSync(filter, 0o700)
-    git(dir, ['init', '-q', '.'])
-    git(dir, ['add', '.gitattributes', 'tracked.txt'])
-    git(dir, ['commit', '-qm', 'initial'])
-    git(dir, ['config', 'filter.pwn.clean', `sh ${JSON.stringify(filter)}`])
-    writeFileSync(join(dir, 'tracked.txt'), 'modified\n')
-
-    // Prove an ordinary dirty-worktree probe executes the configured filter.
-    git(dir, ['status', '--porcelain'])
-    expect(existsSync(sentinel)).toBe(true)
-    unlinkSync(sentinel)
-
-    await scan(dir)
-    expect(existsSync(sentinel)).toBe(false)
-    rmSync(dir, {recursive: true, force: true})
-  })
-
   test('keeps a tracked .env high severity even when it is listed in .gitignore', async () => {
     // The classic leak: commit the file, then gitignore it and assume safety.
     const dir = makeApp({})

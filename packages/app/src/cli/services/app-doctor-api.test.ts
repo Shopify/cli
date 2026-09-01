@@ -3,7 +3,6 @@ import {loadChecks} from './app-doctor-engine/index.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
-import {readdir, symlink} from 'node:fs/promises'
 
 async function createApp(directory: string, source = 'export const loader = () => ({ok: true})'): Promise<string> {
   const sourceDirectory = joinPath(directory, 'app', 'routes')
@@ -51,34 +50,6 @@ describe('App Doctor CLI integration', () => {
       const review = JSON.parse(await readFile(joinPath(directory, 'app-doctor-review.json')))
       expect(review.instructions).not.toContain('expose secrets')
       expect(review.checks).toHaveLength(loadChecks().size)
-    })
-  })
-
-  test.skipIf(process.platform === 'win32')('does not follow scanner artifact symlinks', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const sentinel = joinPath(directory, 'sentinel')
-      await writeFile(sentinel, 'unchanged')
-      await symlink(sentinel, joinPath(directory, 'app-doctor-trace.json'))
-
-      await expect(runAppDoctor({directory, format: 'human', verbose: false, blocking: 'none'})).rejects.toThrow(
-        'Refusing to replace symlink',
-      )
-      await expect(readFile(sentinel)).resolves.toBe('unchanged')
-      await expect(readdir(directory)).resolves.not.toEqual(expect.arrayContaining([expect.stringMatching(/\.tmp$/)]))
-    })
-
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const sentinel = joinPath(directory, 'sentinel')
-      await writeFile(sentinel, 'unchanged')
-      await symlink(sentinel, joinPath(directory, 'app-doctor-review.json'))
-
-      await expect(runAppDoctor({directory, format: 'human', verbose: false, blocking: 'none'})).rejects.toThrow(
-        'Refusing to replace symlink',
-      )
-      await expect(readFile(sentinel)).resolves.toBe('unchanged')
-      await expect(readdir(directory)).resolves.not.toEqual(expect.arrayContaining([expect.stringMatching(/\.tmp$/)]))
     })
   })
 

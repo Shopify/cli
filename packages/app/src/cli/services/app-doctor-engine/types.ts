@@ -98,7 +98,7 @@ export type Grade = 'EXCELLENT' | 'GOOD' | 'NEEDS_WORK' | 'POOR'
 
 export interface SkippedFile {
   path: string
-  reason: 'symlink' | 'outside_root' | 'not_regular' | 'too_large' | 'unreadable'
+  reason: 'too_large' | 'unreadable'
   size_bytes?: number
   detail?: string
 }

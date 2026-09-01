@@ -1,4 +1,4 @@
-import {runHardenedGit} from '../git.js'
+import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {SourceFile} from './types.js'
 import type {Issue} from '../types.js'
 
@@ -244,10 +244,9 @@ interface GitFileStatus {
 export async function gitStatusFor(appRoot: string, file: string): Promise<GitFileStatus> {
   const run = async (args: string[]): Promise<{exitCode?: number; out: string}> => {
     try {
-      const result = await runHardenedGit(appRoot, args)
+      const result = await captureOutputWithExitCode('git', args, {cwd: appRoot})
       return {exitCode: result.exitCode, out: result.stdout.trim()}
-      // Git availability and execution failures are an unknown security state,
-      // never a reason to classify a file as untracked or ignored.
+      // Missing Git or a failed probe is unknown status, not proof the file is safe.
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       return {exitCode: undefined, out: ''}

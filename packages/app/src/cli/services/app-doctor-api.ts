@@ -11,19 +11,15 @@ import {
 } from './app-doctor-engine/index.js'
 import {computeResultHash} from './app-doctor-engine/scorer/index.js'
 import {findAppRoot} from './app-doctor-engine/scanners/discover.js'
-import {
-  atomicWriteAppArtifact,
-  canonicalAppRoot,
-  MAX_FINDINGS_FILE_SIZE_BYTES,
-  safeReadFile,
-} from './app-doctor-engine/repository-io.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileSize, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import type {CheckExecution, Severity, Suppression} from './app-doctor-engine/types.js'
 import type {AgentFindingsDocument} from './app-doctor-engine/checks/index.js'
 
 const REVIEW_FILENAME = 'app-doctor-review.json'
 const TRACE_FILENAME = 'app-doctor-trace.json'
+const MAX_FINDINGS_FILE_SIZE_BYTES = 5_000_000
 
 export interface AppDoctorEngineMetadata {
   name: string
@@ -86,18 +82,25 @@ function humanFindingsOutput(scanOutput: string, accepted: number, rejected: str
   ].join('\n')
 }
 
-function loadFindings(path: string): FindingsDocument {
-  const result = safeReadFile(path, MAX_FINDINGS_FILE_SIZE_BYTES)
-  if (!result.ok) {
+async function loadFindings(path: string): Promise<FindingsDocument> {
+  let content: string
+  try {
+    const size = await fileSize(path)
+    if (size > MAX_FINDINGS_FILE_SIZE_BYTES) {
+      throw new AbortError(`Could not read App Doctor findings from ${path}.`, 'The file is larger than 5 MB.')
+    }
+    content = await readFile(path)
+  } catch (error) {
+    if (error instanceof AbortError) throw error
     throw new AbortError(
       `Could not read App Doctor findings from ${path}.`,
-      `${result.reason}${result.detail ? `: ${result.detail}` : ''}`,
+      error instanceof Error ? error.message : undefined,
     )
   }
 
   let parsed: unknown
   try {
-    parsed = JSON.parse(result.content.toString())
+    parsed = JSON.parse(content)
   } catch (error) {
     throw new AbortError(
       `Could not parse App Doctor findings from ${path}.`,
@@ -116,7 +119,7 @@ function loadFindings(path: string): FindingsDocument {
 }
 
 export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoctorRunResult> {
-  const appRoot = canonicalAppRoot(findAppRoot(options.directory))
+  const appRoot = findAppRoot(options.directory)
   const startTime = Date.now()
   const result = await scan(appRoot)
   const elapsedMilliseconds = Date.now() - startTime
@@ -129,7 +132,7 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
   let suppressions: Suppression[] = []
 
   if (options.findingsPath) {
-    const document = loadFindings(options.findingsPath)
+    const document = await loadFindings(options.findingsPath)
     const knownFiles = new Set(Object.keys(result.scan.file_hashes ?? {}))
     const executed = validateAgentChecksExecuted(document, {detection: result.detection, knownFiles})
     const merged = mergeFindings(result.issues, document.findings, {
@@ -203,7 +206,7 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
 
   const scanOutput = formatConsole(result, {verbose: options.verbose, elapsedMilliseconds})
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted, suppressions})
-  atomicWriteAppArtifact(appRoot, TRACE_FILENAME, `${JSON.stringify(trace, null, 2)}\n`)
+  await writeFile(tracePath, `${JSON.stringify(trace, null, 2)}\n`)
 
   let output: string
   if (options.findingsPath) {
@@ -213,7 +216,7 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
         : humanFindingsOutput(scanOutput, accepted, rejected, tracePath)
   } else {
     const reviewPack = buildReviewPack(engineVersion, result)
-    atomicWriteAppArtifact(appRoot, REVIEW_FILENAME, `${JSON.stringify(reviewPack, null, 2)}\n`)
+    await writeFile(reviewPath, `${JSON.stringify(reviewPack, null, 2)}\n`)
     output =
       options.format === 'json'
         ? formatJson(result)

@@ -32,9 +32,8 @@ import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
-import {canonicalAppRoot} from '../repository-io.js'
-import {runHardenedGit} from '../git.js'
 import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {createHash} from 'node:crypto'
 import type {AuditExecutor} from '../rules/dependency-rules.js'
 import type {Rule, ScanContext, SourceFile} from '../rules/types.js'
@@ -336,15 +335,20 @@ function reactRouterFiles(context: ScanContext): SourceFile[] {
 }
 
 async function gitProject(appRoot: string): Promise<ScanResult['project']> {
-  const run = async (args: string[]): Promise<string | null> => {
-    const result = await runHardenedGit(appRoot, args)
-    return result.exitCode === 0 ? result.stdout.trim() : null
+  const run = async (args: string[]): Promise<{exitCode: number; stdout: string} | undefined> => {
+    try {
+      return await captureOutputWithExitCode('git', args, {cwd: appRoot})
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return undefined
+    }
   }
-  const commit = await run(['rev-parse', 'HEAD'])
-  // Do not use `git status` here. Worktree status can invoke repository-configured
-  // clean/process filters, so a safe read-only scan cannot determine dirtiness
-  // by asking Git to inspect untrusted worktree contents.
-  return {commit, dirty: null}
+  const head = await run(['rev-parse', 'HEAD'])
+  const status = await run(['status', '--porcelain'])
+  return {
+    commit: head?.exitCode === 0 ? head.stdout.trim() : null,
+    dirty: status?.exitCode === 0 ? status.stdout.trim().length > 0 : null,
+  }
 }
 
 function selectedFiles(definition: DeterministicCheckDefinition, context: ScanContext): string[] {
@@ -543,7 +547,7 @@ export async function scan(
   startPath?: string,
   options: {dependencyAuditExecutor?: AuditExecutor} = {},
 ): Promise<ScanResult> {
-  const appRoot = canonicalAppRoot(findAppRoot(startPath))
+  const appRoot = findAppRoot(startPath)
   resetSkippedFiles()
   const appTomls = findAppTomls(appRoot)
   const extensions = findExtensions(appRoot)

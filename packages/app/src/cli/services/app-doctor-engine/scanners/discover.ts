@@ -1,10 +1,8 @@
-import {canonicalAppRoot, safeReadRepositoryFile} from '../repository-io.js'
 import fg from 'fast-glob'
 import {parse as parseToml} from '@iarna/toml'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, fileSizeSync, readFileSync} from '@shopify/cli-kit/node/fs'
 import {cwd, dirname, extname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {lstatSync} from 'node:fs'
-import type {SafeReadFailure, SafeReadResult} from '../repository-io.js'
 import type {SourceCandidate} from '../types.js'
 import type {AppTomlContent, ExtensionInfo, SourceFile, ManifestFile, WebhookSubscription} from '../rules/types.js'
 
@@ -60,7 +58,6 @@ export function findAppTomls(appRoot: string): AppTomlContent[] {
     } catch {
       recordSkippedFile(appRoot, path, {
         ok: false,
-        path,
         reason: 'unreadable',
         detail: 'TOML could not be parsed',
       })
@@ -83,7 +80,6 @@ export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppT
   } catch {
     recordSkippedFile(appRoot, tomlPath, {
       ok: false,
-      path: tomlPath,
       reason: 'unreadable',
       detail: 'TOML could not be parsed',
     })
@@ -239,7 +235,6 @@ export function findExtensions(appRoot: string): ExtensionInfo[] {
     } catch {
       recordSkippedFile(appRoot, fullPath, {
         ok: false,
-        path: fullPath,
         reason: 'unreadable',
         detail: 'TOML could not be parsed',
       })
@@ -248,10 +243,27 @@ export function findExtensions(appRoot: string): ExtensionInfo[] {
   })
 }
 
+const MAX_REPOSITORY_FILE_SIZE_BYTES = 500_000
+
+interface RepositoryReadSuccess {
+  ok: true
+  content: Buffer
+}
+
+interface RepositoryReadFailure {
+  ok: false
+  reason: 'too_large' | 'unreadable'
+  sizeBytes?: number
+  detail?: string
+  errorCode?: string
+}
+
+type RepositoryReadResult = RepositoryReadSuccess | RepositoryReadFailure
+
 /** A file that was discovered but not analyzed, and why. */
 interface SkippedFile {
   path: string
-  reason: SafeReadFailure['reason']
+  reason: RepositoryReadFailure['reason']
   size_bytes?: number
   detail?: string
 }
@@ -264,7 +276,7 @@ interface SkippedFile {
  * `resetSkippedFiles()`.
  */
 let skippedFiles: SkippedFile[] = []
-const repositoryFileCache = new Map<string, SafeReadResult>()
+const repositoryFileCache = new Map<string, RepositoryReadResult>()
 
 export function resetSkippedFiles(): void {
   skippedFiles = []
@@ -275,7 +287,7 @@ export function getSkippedFiles(): SkippedFile[] {
   return [...skippedFiles]
 }
 
-function recordSkippedFile(appRoot: string, path: string, failure: SafeReadFailure): void {
+function recordSkippedFile(appRoot: string, path: string, failure: RepositoryReadFailure): void {
   const repositoryPath = relativePath(appRoot, path).replace(/\\/g, '/')
   skippedFiles.push({
     path: repositoryPath.length > 0 ? repositoryPath : path,
@@ -285,24 +297,36 @@ function recordSkippedFile(appRoot: string, path: string, failure: SafeReadFailu
   })
 }
 
-function canonicalRepositoryPath(appRoot: string, path: string): {root: string; path: string} {
-  const root = canonicalAppRoot(appRoot)
-  const pathFromRoot = relativePath(appRoot, path)
-  return {root, path: joinPath(root, pathFromRoot)}
+function readBoundedFile(path: string): RepositoryReadResult {
+  try {
+    const size = fileSizeSync(path)
+    if (size > MAX_REPOSITORY_FILE_SIZE_BYTES) return {ok: false, reason: 'too_large', sizeBytes: size}
+    return {ok: true, content: readFileSync(path)}
+    // Discovery records unreadable files for trace coverage.
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    const errorCode = (error as NodeJS.ErrnoException).code
+    return {
+      ok: false,
+      reason: 'unreadable',
+      detail: error instanceof Error ? error.message : String(error),
+      ...(errorCode && /^[A-Z0-9_]+$/.test(errorCode) ? {errorCode} : {}),
+    }
+  }
 }
 
-function cachedRepositoryFile(appRoot: string, path: string, recordMissing: boolean): SafeReadResult {
-  const canonical = canonicalRepositoryPath(appRoot, path)
-  const cached = repositoryFileCache.get(canonical.path)
+function cachedRepositoryFile(appRoot: string, path: string, recordMissing: boolean): RepositoryReadResult {
+  const absolutePath = resolvePath(path)
+  const cached = repositoryFileCache.get(absolutePath)
   if (cached) return cached
 
-  const result = safeReadRepositoryFile(canonical.root, canonical.path)
-  repositoryFileCache.set(canonical.path, result)
+  const result = readBoundedFile(absolutePath)
+  repositoryFileCache.set(absolutePath, result)
   if (!result.ok && (recordMissing || result.errorCode !== 'ENOENT')) recordSkippedFile(appRoot, path, result)
   return result
 }
 
-function readRepositoryFile(appRoot: string, path: string): SafeReadResult {
+function readRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
   return cachedRepositoryFile(appRoot, path, true)
 }
 
@@ -311,7 +335,7 @@ function readRepositoryText(appRoot: string, path: string): string | undefined {
   return result.ok ? result.content.toString() : undefined
 }
 
-export function readOptionalRepositoryFile(appRoot: string, path: string): SafeReadResult {
+export function readOptionalRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
   return cachedRepositoryFile(appRoot, path, false)
 }
 
@@ -381,9 +405,7 @@ function findSourceFiles(dir: string, projectRoot = dir): SourceFile[] {
     cwd: dir,
     ignore: discoveryIgnores(dir, projectRoot),
     absolute: false,
-    // Do not traverse symlinks. Third-party app code is untrusted input; a
-    // symlink to / or to a large shared directory would take the scan outside
-    // the app root and inflate the run.
+    // Don't follow directory symlinks; a link to a large shared tree would inflate the scan.
     followSymbolicLinks: false,
     onlyFiles: false,
   })
@@ -530,7 +552,6 @@ export function findManifests(appRoot: string, discoveredPaths = findManifestPat
       })
       recordSkippedFile(appRoot, fullPath, {
         ok: false,
-        path: fullPath,
         reason: 'unreadable',
         detail: 'manifest could not be parsed',
       })

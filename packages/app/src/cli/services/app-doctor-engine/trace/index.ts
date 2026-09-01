@@ -723,10 +723,7 @@ function validateTraceValue(value: unknown): TraceValidationResult {
         !(gap.file === undefined || validPath(gap.file)),
     ) ||
     value.coverage.files_skipped.some(
-      (file) =>
-        !isObject(file) ||
-        !validPath(file.path) ||
-        !['symlink', 'outside_root', 'not_regular', 'too_large', 'unreadable'].includes(String(file.reason)),
+      (file) => !isObject(file) || !validPath(file.path) || !['too_large', 'unreadable'].includes(String(file.reason)),
     )
   )
     errors.push('coverage is invalid')
