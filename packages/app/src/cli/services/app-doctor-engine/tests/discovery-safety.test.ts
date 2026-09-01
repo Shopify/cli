@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-imports -- discovery boundaries use real temporary repositories */
 import {findAppRoot} from '../scanners/discover.js'
 import {scan} from '../scanners/index.js'
+import {normalizePath} from '@shopify/cli-kit/node/path'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
@@ -43,13 +44,14 @@ describe.sequential('app root discovery', () => {
     await mkdir(routes, {recursive: true})
     await writeFile(toml, appConfiguration)
 
-    expect(findAppRoot(routes)).toBe(root)
-    expect(findAppRoot(toml)).toBe(root)
+    const normalizedRoot = normalizePath(root)
+    expect(findAppRoot(routes)).toBe(normalizedRoot)
+    expect(findAppRoot(toml)).toBe(normalizedRoot)
 
     const previousInitialDirectory = process.env.INIT_CWD
     process.env.INIT_CWD = routes
     try {
-      expect(findAppRoot()).toBe(root)
+      expect(findAppRoot()).toBe(normalizedRoot)
     } finally {
       if (previousInitialDirectory === undefined) delete process.env.INIT_CWD
       else process.env.INIT_CWD = previousInitialDirectory
