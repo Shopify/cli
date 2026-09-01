@@ -1,4 +1,16 @@
-import type {Issue, Capabilities, Severity} from '../types.js'
+import type {Issue, Capabilities, ProjectDetection, Severity, SourceCandidate} from '../types.js'
+
+export interface AuditCommandResult {
+  stdout: string
+  stderr: string
+  exitCode: number
+}
+
+export type AuditExecutor = (
+  command: string,
+  args: string[],
+  options: {cwd: string; signal: AbortSignal; env: Record<string, string | undefined>},
+) => Promise<AuditCommandResult>
 
 /**
  * A rule defines:
@@ -27,16 +39,26 @@ export interface Rule {
 export interface ScanContext {
   /** Absolute path to the app root directory */
   appRoot: string
-  /** Contents of shopify.app.toml (parsed), or null if not found */
+  /** Selected app configuration, or null if none was readable. */
   appToml: AppTomlContent | null
+  /** All readable app configurations inspected by config rules. */
+  appTomls: AppTomlContent[]
   /** All extension config files found */
   extensions: ExtensionInfo[]
-  /** All source files found (JS, TS, Liquid, PHP, Ruby, Python) */
+  /** Source files read for supported non-secret deterministic analysis. */
   sourceFiles: SourceFile[]
   /** Package manifest files found (package.json, Gemfile, composer.json) */
   manifests: ManifestFile[]
+  /** Safely readable repository text evidence available to secret scanning. */
+  sensitiveFiles: SourceFile[]
   /** Detected capabilities */
   capabilities: Capabilities
+  /** Framework, surface, and language inventory. */
+  detection: ProjectDetection
+  /** Path-only inventory, including unsupported source candidates. */
+  sourceCandidates: SourceCandidate[]
+  /** Test seam for running audits without invoking a package-manager process. */
+  dependencyAuditExecutor?: AuditExecutor
 }
 
 export interface AppTomlContent {
@@ -44,14 +66,16 @@ export interface AppTomlContent {
   raw: Record<string, unknown>
   /** Path to the file */
   path: string
-  /** The scopes string, if present */
+  /** Exact bytes decoded for parsing and hashing. */
+  content?: string
+  /** The scopes string, if present. */
   scopes?: string
-  /** Redirect URLs */
-  redirect_urls?: string[]
-  /** Webhook subscriptions */
-  webhooks?: WebhookSubscription[]
-  /** IP allowlist entries, if declared */
-  ip_allowlist?: string[]
+  /** API version selected by this configuration. */
+  apiVersion?: string
+  /** OAuth redirect URLs. */
+  redirectUrls: string[]
+  /** Webhook subscriptions. */
+  webhooks: WebhookSubscription[]
 }
 
 export interface WebhookSubscription {
@@ -64,6 +88,8 @@ export interface ExtensionInfo {
   path: string
   /** Extension type, e.g. "theme_app_extension" */
   type: string
+  /** Exact configuration bytes decoded for parsing and hashing. */
+  content?: string
   /** All files in the extension directory */
   files: SourceFile[]
 }
@@ -82,8 +108,12 @@ export interface SourceFile {
 export interface ManifestFile {
   path: string
   absolutePath: string
-  type: 'npm' | 'ruby' | 'php'
+  type: 'npm'
+  /** Exact manifest bytes decoded for parsing and hashing. */
+  content?: string
   /** Parsed dependencies, keyed by name with version specifications as values. */
   dependencies: Record<string, string>
   devDependencies?: Record<string, string>
+  /** packageManager declared by package.json, for example pnpm version 10. */
+  packageManager?: string
 }

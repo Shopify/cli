@@ -6,7 +6,7 @@ import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import type {AppDoctorBlockingLevel, AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
 import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
-export interface DoctorOptions {
+interface DoctorOptions {
   directory: string
   json: boolean
   verbose: boolean

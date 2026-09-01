@@ -65,8 +65,6 @@
     "@shopify/theme": "4.7.0",
     "@shopify/theme-check-node": "3.29.0",
     "@shopify/toml-patch": "0.3.0",
-    "acorn": "8.17.0",
-    "acorn-walk": "8.3.5",
     "chokidar": "3.6.0",
     "clipboardy": "4.0.0",
     "csv-parse": "7.0.2",

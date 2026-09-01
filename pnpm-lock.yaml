@@ -194,12 +194,6 @@ importers:
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0
-      acorn:
-        specifier: 8.17.0
-        version: 8.17.0
-      acorn-walk:
-        specifier: 8.3.5
-        version: 8.3.5
       chokidar:
         specifier: 3.6.0
         version: 3.6.0

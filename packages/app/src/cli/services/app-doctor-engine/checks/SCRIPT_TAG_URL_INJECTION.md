@@ -2,7 +2,7 @@
 id: SCRIPT_TAG_URL_INJECTION
 version: 1
 tier: agentic
-severity: critical
+severity: high
 ---
 
 Find cases where the ScriptTag API is used with a URL derived from user

@@ -33,8 +33,7 @@ because the HTML is rendered server-side or in Liquid, not via
 2. **Trace where the setting value is rendered.** For each setting:
    - Rails: `render html: setting.value`, `render(inline: setting.value)`,
      `<%= raw setting.value %>`, `setting.value.html_safe`
-   - Liquid: `{{ setting.value | raw }}`, `{{ setting.value }}` in a
-     context where the content type is `text/html` (not `text/plain`)
+   - Liquid: `{{ setting.value }}` in HTML or executable contexts without context-appropriate escaping or structured rendering
    - JavaScript: if the setting value flows into `innerHTML` — this
      overlaps with `UNSAFE_INNERHTML` but the entry point is a settings
      field, not a URL param
@@ -53,7 +52,7 @@ because the HTML is rendered server-side or in Liquid, not via
    rendering?
    - `sanitize_html(setting.value)` or equivalent
    - Content type set to `text/plain` instead of `text/html`
-   - Liquid auto-escape (no `| raw` filter)
+   - Context-appropriate Liquid filters such as `escape`, `json`, or `metafield_tag`
    - Allowlist of permitted HTML tags
 
 5. **Look for richtext settings.** Theme extension settings with
@@ -93,5 +92,6 @@ Do not report:
 - Settings rendered as `text/plain` (no HTML parsing)
 - Settings that are developer-configured constants (not merchant-editable)
 - Settings with explicit HTML sanitisation (`sanitize_html`, allowlist)
-- Liquid `{{ setting }}` without `| raw` (auto-escaped)
+- Liquid output with context-appropriate escaping/serialization for its destination
+- `{% raw %}` blocks that contain no dynamic output
 - Test files

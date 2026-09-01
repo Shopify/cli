@@ -1,8 +1,8 @@
 /* eslint-disable id-length, line-comment-position, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
 import {scan} from '../scanners/index.js'
-import {SECRET_PATTERNS, redactMatch, gitStatusFor} from '../rules/secret-rules.js'
-import {describe, expect, test} from 'vitest'
-import {mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs'
+import {SECRET_PATTERNS, redactMatch, redactText, gitStatusFor} from '../rules/secret-rules.js'
+import {describe, expect, test, vi} from 'vitest'
+import {chmodSync, existsSync, mkdtempSync, writeFileSync, mkdirSync, rmSync, unlinkSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {execFileSync} from 'node:child_process'
@@ -17,7 +17,7 @@ import {execFileSync} from 'node:child_process'
  *      independent lists, and they drifted.
  *
  *   2. A .env that was committed and only afterwards added to .gitignore was
- *      downgraded from critical to medium, because the rule inferred "not
+ *      downgraded from high to medium, because the rule inferred "not
  *      committed" from the presence of a line in .gitignore. That is the most
  *      common real-world secret leak, and the tool called it safe.
  *
@@ -136,6 +136,30 @@ describe('redaction never emits the secret it detected', () => {
     expect(exercised).toBeGreaterThanOrEqual(SECRET_PATTERNS.length - 1)
   })
 
+  test('redacts an entire multiline private key block including its body and footer', () => {
+    const keyBody = compose('base64-key-body-', 'must-never-leak')
+    const footer = compose('-----END ', 'RSA PRIVATE KEY-----')
+    const block = `${PROBES.pemHeader}\n${keyBody}\n${footer}`
+    const redacted = redactText(`reasoning before\n${block}\nevidence after`)
+
+    expect(SECRET_PATTERNS.some((pattern) => pattern.regex.test(block))).toBe(true)
+    expect(redacted).not.toContain(PROBES.pemHeader)
+    expect(redacted).not.toContain(keyBody)
+    expect(redacted).not.toContain(footer)
+    expect(redacted).toContain('REDACTED')
+    expect(redacted).toContain('reasoning before')
+    expect(redacted).toContain('evidence after')
+  })
+
+  test('redacts an entire line after a private-key header, including a truncated same-line body', () => {
+    const keyBody = compose('base64-key-body-', 'must-never-leak')
+    const malformedKey = `${PROBES.pemHeader}${keyBody}`
+    const redacted = redactText(malformedKey)
+
+    expect(redacted).toBe('[REDACTED LINE]')
+    expect(redacted).not.toContain(keyBody)
+  })
+
   test('does not leak a detected secret into the trace written for submission', async () => {
     const dir = makeApp({
       'config.js': `const awsKey = "${PROBES.awsAccessKey}";\n`,
@@ -149,7 +173,64 @@ describe('redaction never emits the secret it detected', () => {
 })
 
 describe('git status drives severity, not .gitignore text', () => {
-  test('keeps a tracked .env CRITICAL even when it is listed in .gitignore', async () => {
+  test.skipIf(process.platform === 'win32')('resolves Git outside the scanned repository', async () => {
+    const dir = makeApp({})
+    const sentinel = join(dir, 'repository-git-executed')
+    const fakeGit = join(dir, 'git')
+    writeFileSync(fakeGit, `#!/bin/sh\nprintf executed > ${JSON.stringify(sentinel)}\n`)
+    chmodSync(fakeGit, 0o700)
+    vi.stubEnv('PATH', `${dir}:${process.env.PATH ?? ''}`)
+
+    try {
+      await scan(dir)
+      expect(existsSync(sentinel)).toBe(false)
+    } finally {
+      vi.unstubAllEnvs()
+      rmSync(dir, {recursive: true, force: true})
+    }
+  })
+
+  test.skipIf(process.platform === 'win32')('disables repository-configured fsmonitor commands', async () => {
+    const dir = makeApp({'.env': 'SHOPIFY_API_SECRET=placeholder-value-here\n'})
+    const sentinel = join(dir, 'fsmonitor-executed')
+    const monitor = join(dir, 'malicious-fsmonitor.cjs')
+    writeFileSync(monitor, `require('node:fs').writeFileSync(${JSON.stringify(sentinel)}, 'executed')\n`)
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['config', 'core.fsmonitor', `${JSON.stringify(process.execPath)} ${JSON.stringify(monitor)}`])
+
+    // Prove the repository-local setting is executable under an ordinary Git probe.
+    git(dir, ['status', '--porcelain'])
+    expect(existsSync(sentinel)).toBe(true)
+    unlinkSync(sentinel)
+
+    await scan(dir)
+    expect(existsSync(sentinel)).toBe(false)
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test.skipIf(process.platform === 'win32')('does not run repository-configured clean filters', async () => {
+    const dir = makeApp({'.gitattributes': 'tracked.txt filter=pwn\n', 'tracked.txt': 'original\n'})
+    const sentinel = join(dir, 'filter-executed')
+    const filter = join(dir, 'malicious-filter.sh')
+    writeFileSync(filter, `#!/bin/sh\ntouch ${JSON.stringify(sentinel)}\ncat\n`)
+    chmodSync(filter, 0o700)
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '.gitattributes', 'tracked.txt'])
+    git(dir, ['commit', '-qm', 'initial'])
+    git(dir, ['config', 'filter.pwn.clean', `sh ${JSON.stringify(filter)}`])
+    writeFileSync(join(dir, 'tracked.txt'), 'modified\n')
+
+    // Prove an ordinary dirty-worktree probe executes the configured filter.
+    git(dir, ['status', '--porcelain'])
+    expect(existsSync(sentinel)).toBe(true)
+    unlinkSync(sentinel)
+
+    await scan(dir)
+    expect(existsSync(sentinel)).toBe(false)
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('keeps a tracked .env high severity even when it is listed in .gitignore', async () => {
     // The classic leak: commit the file, then gitignore it and assume safety.
     const dir = makeApp({})
     git(dir, ['init', '-q', '.'])
@@ -163,13 +244,13 @@ describe('git status drives severity, not .gitignore text', () => {
     const result = await scan(dir)
     const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
     expect(finding).toBeDefined()
-    expect(finding!.severity).toBe('critical')
+    expect(finding!.severity).toBe('high')
     expect(finding!.points).toBe(-50)
     expect(finding!.detection_evidence?.join(' ')).toContain('TRACKED')
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('downgrades only when git confirms the file is untracked AND ignored', async () => {
+  test('does not score a file git confirms is untracked AND ignored', async () => {
     const dir = makeApp({})
     git(dir, ['init', '-q', '.'])
     writeFileSync(join(dir, '.gitignore'), '.env\n')
@@ -179,8 +260,30 @@ describe('git status drives severity, not .gitignore text', () => {
 
     const result = await scan(dir)
     const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
-    expect(finding).toBeDefined()
-    expect(finding!.severity).toBe('medium')
+    expect(finding).toBeUndefined()
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score an empty environment file', async () => {
+    const dir = makeApp({'.env': ''})
+    const result = await scan(dir)
+    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toBeUndefined()
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score an ignored untracked named secret file', async () => {
+    const dir = makeApp({'.gitignore': 'credentials.json\n', 'credentials.json': '{}\n'})
+    git(dir, ['init', '-q', '.'])
+    const result = await scan(dir)
+    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toBeUndefined()
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('fails closed for an empty named secret file when git status is unknown', async () => {
+    const dir = makeApp({'secrets.json': ''})
+    const result = await scan(dir)
+    const finding = result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')
+    expect(finding).toMatchObject({severity: 'high', location: {file: 'secrets.json'}})
     rmSync(dir, {recursive: true, force: true})
   })
 
@@ -193,7 +296,7 @@ describe('git status drives severity, not .gitignore text', () => {
     const result = await scan(dir)
     const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
     expect(finding).toBeDefined()
-    expect(finding!.severity).toBe('critical')
+    expect(finding!.severity).toBe('high')
     rmSync(dir, {recursive: true, force: true})
   })
 
@@ -217,6 +320,40 @@ describe('git status drives severity, not .gitignore text', () => {
 
     const status = await gitStatusFor(dir, '.env.example')
     expect(status.ignored).toBe(false) // negated back in
+    rmSync(dir, {recursive: true, force: true})
+  })
+})
+
+describe('secret evidence coverage', () => {
+  test('scans common repository text formats and unsupported source languages', async () => {
+    const files = {
+      'README.md': PROBES.awsAccessKey,
+      'config/settings.yaml': PROBES.awsAccessKey,
+      'config/settings.json': PROBES.awsAccessKey,
+      'config/settings.toml': PROBES.awsAccessKey,
+      'prisma/schema.prisma': PROBES.awsAccessKey,
+      'scripts/setup.sh': PROBES.awsAccessKey,
+      'server/app.rb': PROBES.awsAccessKey,
+    }
+    const dir = makeApp(files)
+    const result = await scan(dir)
+    const findings = result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')
+
+    for (const path of Object.keys(files)) expect(findings.some((finding) => finding.location.file === path)).toBe(true)
+    expect(JSON.stringify(result)).not.toContain(PROBES.awsAccessKey)
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('excludes test, fixture, dependency, build, and binary content', async () => {
+    const dir = makeApp({
+      'tests/example.md': PROBES.awsAccessKey,
+      'fixtures/example.yaml': PROBES.awsAccessKey,
+      'node_modules/package/example.json': PROBES.awsAccessKey,
+      'dist/example.toml': PROBES.awsAccessKey,
+      'binary.json': `\0${PROBES.awsAccessKey}`,
+    })
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
     rmSync(dir, {recursive: true, force: true})
   })
 })

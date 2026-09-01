@@ -1,177 +1,121 @@
-import {readFileSync} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {relativePath} from '@shopify/cli-kit/node/path'
 import type {Issue} from '../types.js'
 import type {ScanContext, Rule, SourceFile} from './types.js'
 
-/**
- * Rule: MISSING_COMPLIANCE_WEBHOOKS (-15, high)
- *
- * Every public Shopify app must implement three mandatory compliance webhooks:
- *   - shop/redact        (GDPR right to erasure — delete shop data)
- *   - customers/data_request (GDPR data portability)
- *   - customers/redact   (GDPR right to erasure — delete customer data)
- *
- * These are App Store submission requirements. Missing them means the app
- * will be rejected during review. The doctor should catch this before
- * the developer submits.
- *
- * This rule checks the shopify.app.toml for declared webhook subscriptions
- * and flags any of the three mandatory topics that are missing.
- */
-
 const MANDATORY_TOPICS = ['shop/redact', 'customers/data_request', 'customers/redact']
+const QUARTERLY_MONTHS = new Map([
+  ['January', '01'],
+  ['April', '04'],
+  ['July', '07'],
+  ['October', '10'],
+])
 
+/** Mandatory compliance subscriptions must be present in every deployable app configuration. */
 export const missingComplianceWebhooks: Rule = {
   id: 'MISSING_COMPLIANCE_WEBHOOKS',
   title: 'Missing mandatory GDPR compliance webhooks',
-  severity: 'high',
-  points: -15,
-  requires: 'webhooks',
-  check(ctx: ScanContext): Issue[] {
-    if (!ctx.appToml?.webhooks) return []
-
-    const declaredTopics = new Set(ctx.appToml.webhooks.flatMap((sub) => sub.topics))
-
-    const missing = MANDATORY_TOPICS.filter((t) => !declaredTopics.has(t))
-
-    if (missing.length === 0) return []
-
-    return [
-      {
-        id: this.id,
-        severity: this.severity,
-        points: this.points,
-        title: this.title,
-        message: `Missing mandatory compliance webhook${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. These are required for all public apps (GDPR right to erasure and data portability). Add them to the [webhooks] section of shopify.app.toml.`,
-        location: {file: 'shopify.app.toml'},
-        fix: {
-          automated: false,
-          description: `Add the following webhook subscriptions to shopify.app.toml:\n${missing.map((t) => `  [[webhooks.subscriptions]]\n  topics = ["${t}"]\n  uri = "/webhooks/${t.replace('/', '_')}"`).join('\n')}`,
-          guide: 'https://shopify.dev/docs/apps/webhooks/configuration/mandatory-webhooks',
-        },
-      },
-    ]
+  severity: 'medium',
+  points: -10,
+  check(context: ScanContext): Issue[] {
+    return context.appTomls.flatMap((configuration) => {
+      const declaredTopics = new Set(configuration.webhooks.flatMap((subscription) => subscription.topics))
+      const missingTopics = MANDATORY_TOPICS.filter((topic) => !declaredTopics.has(topic))
+      if (missingTopics.length === 0) return []
+      return [
+        {
+          id: this.id,
+          severity: this.severity,
+          points: this.points,
+          title: this.title,
+          message: `Missing mandatory compliance webhooks: ${missingTopics.join(', ')}.`,
+          location: {file: relativePath(context.appRoot, configuration.path).replace(/\\/g, '/')},
+          fix: {
+            automated: false,
+            description: 'Add subscriptions for all three mandatory compliance topics.',
+            guide: 'https://shopify.dev/docs/apps/webhooks/configuration/mandatory-webhooks',
+          },
+        } satisfies Issue,
+      ]
+    })
   },
 }
 
 /**
- * Rule: EOL_API_VERSION (-10, medium)
- *
- * Shopify releases quarterly API versions. Each is stable for ~12 months,
- * then deprecated. Versions older than ~24 months from the latest release
- * are end-of-life or deprecation-imminent. Apps on EOL versions miss
- * security fixes and will eventually break.
- *
- * This rule checks the api_version declared in shopify.app.toml and
- * the ApiVersion enum used in shopify.server.ts (Remix apps).
+ * Shopify stable API versions have a 12-month support window. We allow a
+ * deliberately small 30-day operational grace period after that date because
+ * Shopify can briefly extend a version during a migration. The clock is an
+ * argument so boundary behavior is deterministic in tests.
  */
-
-// Shopify API versions in reverse chronological order.
-// The latest is 2025-10 (October 2025). Versions older than
-// 24 months from the latest are considered EOL.
-const SUPPORTED_API_VERSIONS = [
-  '2025-10',
-  '2025-07',
-  '2025-04',
-  '2025-01',
-  '2024-10',
-  '2024-07',
-  '2024-04',
-  '2024-01',
-  '2023-10',
-  '2023-07',
-  '2023-04',
-  '2023-01',
-]
-
-// The cutoff: versions older than this are EOL.
-// 2023-10 is ~24 months before 2025-10. Anything older is flagged.
-const EOL_CUTOFF = '2023-10'
-
-// Map ApiVersion enum names to version strings.
-const API_VERSION_ENUM_MAP: Record<string, string> = {
-  October25: '2025-10',
-  July25: '2025-07',
-  April25: '2025-04',
-  January25: '2025-01',
-  October24: '2024-10',
-  July24: '2024-07',
-  April24: '2024-04',
-  January24: '2024-01',
-  October23: '2023-10',
-  July23: '2023-07',
-  April23: '2023-04',
-  January23: '2023-01',
+export function isEolApiVersion(version: string, referenceDate: Date, graceDays = 30): boolean {
+  const match = /^(\d{4})-(01|04|07|10)$/.exec(version)
+  if (!match) return false
+  const release = Date.UTC(Number(match[1]), Number(match[2]) - 1, 1)
+  const supportEnd = Date.UTC(Number(match[1]) + 1, Number(match[2]) - 1, 1)
+  const graceEnd = supportEnd + graceDays * 24 * 60 * 60 * 1000
+  return release <= referenceDate.getTime() && referenceDate.getTime() >= graceEnd
 }
 
-function isEol(version: string): boolean {
-  const index = SUPPORTED_API_VERSIONS.indexOf(version)
-  // Unknown versions are definitely old or invalid.
-  if (index === -1) return true
-  const cutoffIndex = SUPPORTED_API_VERSIONS.indexOf(EOL_CUTOFF)
-  // Entries further down the list are older.
-  return index > cutoffIndex
+/** Inspect every parsed app TOML plus high-signal React Router server declarations. */
+export function scanEolApiVersions(context: ScanContext, referenceDate = new Date()): Issue[] {
+  const configIssues = context.appTomls.flatMap((configuration) => {
+    if (!configuration.apiVersion || !isEolApiVersion(configuration.apiVersion, referenceDate)) return []
+    return [
+      makeEolIssue(relativePath(context.appRoot, configuration.path).replace(/\\/g, '/'), configuration.apiVersion),
+    ]
+  })
+
+  if (context.detection.framework !== 'react_router') return configIssues
+  const sourceIssues = context.sourceFiles.flatMap((file) => scanReactRouterApiVersion(file, referenceDate))
+  return [...configIssues, ...sourceIssues]
 }
 
-export function scanEolApiVersion(sourceFiles: SourceFile[], appRoot: string): Issue[] {
-  const issues: Issue[] = []
-  const seen = new Set<string>()
+function scanReactRouterApiVersion(file: SourceFile, referenceDate: Date): Issue[] {
+  if (!file.content || !/^app\/shopify\.server\.[cm]?[jt]sx?$/.test(file.path)) return []
+  const content = maskStringsExceptVersions(stripComments(file.content))
+  const declarations = [
+    ...content.matchAll(/\bapiVersion\s*:\s*["'](\d{4}-(?:01|04|07|10))["']/g),
+    ...content.matchAll(/\bapiVersion\s*:\s*ApiVersion\.(January|April|July|October)(\d{2}|\d{4})\b/g),
+  ]
+  return declarations.flatMap((match) => {
+    const version = match[1]?.includes('-') ? match[1] : enumApiVersion(match[1]!, match[2]!)
+    if (!version || !isEolApiVersion(version, referenceDate)) return []
+    return [makeEolIssue(file.path, version, lineAt(file.content!, match.index ?? 0))]
+  })
+}
 
-  // 1. Check shopify.app.toml for api_version
-  try {
-    const toml = readFileSync(joinPath(appRoot, 'shopify.app.toml')).toString()
-    const match = toml.match(/api_version\s*=\s*["']([^"']+)["']/)
-    if (match?.[1] && isEol(match[1])) {
-      issues.push({
-        id: 'EOL_API_VERSION',
-        severity: 'medium',
-        points: -10,
-        title: 'End-of-life API version',
-        message: `API version ${match[1]} is end-of-life or deprecation-imminent. Update to a current version (2024-10 or newer) to get security fixes and avoid breaking changes.`,
-        location: {file: 'shopify.app.toml'},
-        fix: {
-          automated: false,
-          description: `Update api_version in shopify.app.toml to a current version (e.g., "2025-10"). Also update the ApiVersion enum in shopify.server.ts if using Remix.`,
-          guide: 'https://shopify.dev/docs/api/usage/versioning',
-        },
-      })
-    }
-    // Missing or unreadable TOML files are handled by source-file discovery.
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    // Nothing else to do.
+function enumApiVersion(monthName: string, yearText: string): string | undefined {
+  const month = QUARTERLY_MONTHS.get(monthName)
+  if (!month) return undefined
+  const year = yearText.length === 2 ? `20${yearText}` : yearText
+  return `${year}-${month}`
+}
+
+function makeEolIssue(file: string, version: string, line?: number): Issue {
+  return {
+    id: 'EOL_API_VERSION',
+    severity: 'low',
+    points: -5,
+    title: 'End-of-life API version',
+    message: `API version ${version} is past its 12-month support window and 30-day extension grace period.`,
+    location: {file, ...(line === undefined ? {} : {line})},
+    fix: {
+      automated: false,
+      description: 'Select a currently supported Shopify API version.',
+      guide: 'https://shopify.dev/docs/api/usage/versioning',
+    },
   }
+}
 
-  // 2. Check shopify.server.ts for ApiVersion enum (Remix apps)
-  for (const file of sourceFiles) {
-    if (!file.content) continue
-    if (!['shopify.server.ts', 'shopify.server.js'].some((filename) => file.path.endsWith(filename))) continue
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' ')).replace(/\/\/[^\n]*/g, '')
+}
 
-    const enumMatch = file.content.match(/ApiVersion\.(\w+)/g)
-    if (!enumMatch) continue
+function maskStringsExceptVersions(source: string): string {
+  return source.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`])*`/g, (literal) =>
+    /^["']\d{4}-(?:01|04|07|10)["']$/.test(literal) ? literal : literal.replace(/[^\n]/g, ' '),
+  )
+}
 
-    for (const match of enumMatch) {
-      const enumName = match.replace('ApiVersion.', '')
-      const version = API_VERSION_ENUM_MAP[enumName]
-      if (!version) continue
-      if (isEol(version) && !seen.has(file.path)) {
-        seen.add(file.path)
-        issues.push({
-          id: 'EOL_API_VERSION',
-          severity: 'medium',
-          points: -10,
-          title: 'End-of-life API version',
-          message: `ApiVersion.${enumName} (${version}) is end-of-life or deprecation-imminent. Update to a current version to get security fixes and avoid breaking changes.`,
-          location: {file: file.path},
-          fix: {
-            automated: false,
-            description: `Update ApiVersion.${enumName} to a current version (e.g., ApiVersion.October25) in ${file.path}.`,
-            guide: 'https://shopify.dev/docs/api/usage/versioning',
-          },
-        })
-      }
-    }
-  }
-
-  return issues
+function lineAt(source: string, index: number): number {
+  return source.slice(0, index).split('\n').length
 }

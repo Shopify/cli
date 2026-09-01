@@ -9,15 +9,15 @@ export interface RuleCatalogEntry {
   fix: string
   guide?: string
   requires?: keyof Capabilities
-  status?: 'active' | 'planned'
+  status?: 'active' | 'planned' | 'investigate'
 }
 
 export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'DEPRECATED_SCRIPT_TAG_SCOPE',
-    title: 'Using deprecated write_script_tags scope',
-    severity: 'critical',
-    points: -30,
+    title: 'Deprecated ScriptTag capability',
+    severity: 'medium',
+    points: -10,
     description: 'Detects the deprecated write_script_tags OAuth scope in shopify.app.toml.',
     fix: 'Remove write_script_tags from scopes and migrate to app embeds.',
     guide: 'https://shopify.dev/docs/apps/online-store/app-embeds',
@@ -33,10 +33,11 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'MISSING_SRI',
+    status: 'investigate',
     title: 'Missing subresource integrity on external script',
     severity: 'high',
-    points: -15,
-    description: "Detects external script tags in Liquid or HTML that don't declare integrity metadata.",
+    points: 0,
+    description: "Investigates external script tags in Liquid or HTML that don't declare integrity metadata.",
     fix: 'Add integrity and crossorigin attributes to the script tag.',
     guide: 'https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity',
     requires: 'theme_app_extension',
@@ -44,7 +45,7 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'UNSAFE_INNERHTML',
     title: 'Unsafe HTML assignment',
-    severity: 'critical',
+    severity: 'high',
     points: -25,
     description: 'Detects innerHTML, outerHTML, and insertAdjacentHTML receiving non-literal values.',
     fix: 'Use textContent where possible or sanitize with DOMPurify before rendering.',
@@ -53,20 +54,20 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'LIQUID_UNSAFE_RENDER',
-    title: 'Unsafe Liquid rendering with | raw filter',
-    severity: 'critical',
-    points: -25,
-    description: 'Detects Liquid output that renders unescaped values through the raw filter.',
-    fix: 'Replace | raw with | escape unless the value is proven trusted HTML.',
-    guide: 'https://shopify.dev/docs/api/liquid/filters/raw',
+    title: 'Unsafe Liquid metafield or setting output',
+    severity: 'medium',
+    points: -10,
+    description: 'Detects metafield and merchant-setting output without context-appropriate escaping or serialization.',
+    fix: 'Use escape for HTML text/attributes, json for JavaScript data, or metafield_tag for supported rich content.',
     requires: 'theme_app_extension',
   },
   {
     id: 'EXTERNAL_CDN_DEPENDENCY',
+    status: 'investigate',
     title: 'External CDN dependency',
     severity: 'medium',
-    points: -7,
-    description: 'Detects extension code loading dependencies or fetches from external non-Shopify domains.',
+    points: 0,
+    description: 'Investigates extension code loading dependencies or fetches from external non-Shopify domains.',
     fix: 'Bundle the dependency locally or self-host it behind a trusted boundary.',
     requires: 'theme_app_extension',
   },
@@ -83,45 +84,45 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'COMMITTED_SECRET',
     title: 'Committed secret or environment file',
-    severity: 'critical',
+    severity: 'high',
     points: -50,
     description: 'Detects environment files and common API key/token patterns in source files.',
     fix: 'Remove committed secrets, rotate exposed values, and store them in environment variables.',
   },
+
   {
-    id: 'OUTDATED_SHOPIFY_SDK',
-    title: 'Outdated Shopify SDK',
-    severity: 'medium',
-    points: -5,
-    description: 'Detects Shopify SDK packages below the expected current major version.',
-    fix: 'Upgrade the Shopify SDK dependency to the current supported major.',
-    guide: 'https://shopify.dev/docs/apps/tools/sdk',
+    id: 'CREDENTIAL_LOG_LEAKAGE',
+    title: 'Credential reaches a log sink',
+    severity: 'high',
+    points: -20,
+    description: 'Detects direct credential flows to console and logger sinks.',
+    fix: 'Remove credentials from logs; emit only safe redacted, hashed, or boolean-derived values.',
+  },
+  {
+    id: 'CREDENTIAL_BROWSER_LEAKAGE',
+    title: 'Credential reaches the client browser',
+    severity: 'high',
+    points: -20,
+    description: 'Detects direct credential flows into responses, loaders, globals, DOM, and external requests.',
+    fix: 'Keep credentials server-side and return only non-sensitive derived data.',
   },
   {
     id: 'KNOWN_CVE_IN_DEPENDENCY',
     title: 'Known CVE in dependency',
     severity: 'high',
-    points: -8,
-    description: 'Detects a small curated set of dependency versions with known CVEs.',
+    points: -20,
+    description: 'Runs the selected JavaScript package manager audit against the committed lockfile.',
     fix: 'Upgrade the dependency to a patched version.',
   },
-  {
-    id: 'MISSING_IP_ALLOWLIST',
-    title: 'No IP address spaces declared in app config',
-    severity: 'high',
-    points: -10,
-    description: 'Detects apps with no IP allowlist declaration or an allowlist open to every address.',
-    fix: 'Declare only the server IP ranges that should access Shopify APIs.',
-    guide: 'https://shopify.dev/docs/apps/launch/security-review#ip-allowlisting',
-    status: 'planned',
-  },
+
   {
     id: 'EXPIRING_OFFLINE_TOKEN',
-    title: 'Expiring offline access tokens not enabled',
-    severity: 'high',
-    points: -20,
-    description: 'Detects apps that have not opted into expiring offline access tokens (Jan 1, 2026 deadline).',
-    fix: 'Enable future.expiringOfflineAccessTokens: true (Remix) or add user session repository (Rails).',
+    title: 'Expiring offline access tokens explicitly disabled',
+    severity: 'medium',
+    points: -10,
+    description:
+      'Verifies React Router expiring offline-token configuration and refresh-metadata storage compatibility.',
+    fix: 'Enable expiringOfflineAccessTokens and ensure session storage persists expiry and refresh metadata.',
     guide: 'https://shopify.dev/docs/apps/build/authentication-authorization/access-token-types/online-access-tokens',
   },
   {
@@ -146,8 +147,8 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'MISSING_COMPLIANCE_WEBHOOKS',
     title: 'Missing mandatory GDPR compliance webhooks',
-    severity: 'high',
-    points: -15,
+    severity: 'medium',
+    points: -10,
     description:
       'Detects apps missing mandatory compliance webhooks (shop/redact, customers/data_request, customers/redact).',
     fix: 'Add the missing webhook subscriptions to shopify.app.toml.',
@@ -156,9 +157,10 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'EOL_API_VERSION',
     title: 'End-of-life API version',
-    severity: 'medium',
-    points: -10,
-    description: 'Detects apps pinned to API versions older than ~24 months from the latest release.',
+    severity: 'low',
+    points: -5,
+    description:
+      'Detects parsed config and React Router server API versions past the 12-month support window and 30-day grace period.',
     fix: 'Update api_version in shopify.app.toml and the ApiVersion enum in shopify.server.ts.',
     guide: 'https://shopify.dev/docs/api/usage/versioning',
   },
@@ -174,9 +176,10 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'APP_PROXY_LIQUID_INJECTION',
     title: 'App proxy Liquid injection risk',
-    severity: 'critical',
-    points: -25,
-    description: 'Detects app proxy endpoints that interpolate request parameters into application/liquid responses.',
+    severity: 'high',
+    points: -20,
+    description:
+      'Detects app proxy endpoints that interpolate request parameters into active Liquid or HTML responses.',
     fix: "Don't interpolate user input into application/liquid responses. Use application/json or escape all input.",
     guide: 'https://shopify.dev/docs/apps/online-store/app-proxies',
   },
@@ -189,14 +192,7 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     fix: "Add the authenticated shop to the query's where clause.",
     guide: 'https://shopify.dev/docs/apps/build/authentication-authorization/session-tokens',
   },
-  {
-    id: 'TOKEN_LEAKAGE',
-    title: 'Token or secret may be logged',
-    severity: 'high',
-    points: -20,
-    description: 'Detects log statements that reference access tokens, session tokens, or API secrets.',
-    fix: 'Remove the token from the log statement or redact it.',
-  },
+
   {
     id: 'OPEN_REDIRECT',
     title: 'Open redirect in auth callback',
@@ -220,8 +216,8 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'REQUEST_CONTROLLED_ADMIN_CONTEXT',
     title: 'Request input selects Admin API shop context',
-    severity: 'critical',
-    points: -30,
+    severity: 'high',
+    points: -20,
     description:
       "Detects request-derived shop values passed into unauthenticated.admin(...), allowing callers to select another shop's Admin API context.",
     fix: 'Use the Admin API context returned by authenticate.admin(request). Never pass form, JSON, query, or route input into unauthenticated.admin(...).',
@@ -230,20 +226,13 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'RUNTIME_CONFIG_SCRIPT_EXECUTION',
     title: 'Runtime config field is executed as script',
-    severity: 'critical',
+    severity: 'high',
     points: -25,
     description: 'Detects config fields named as executable script used in files that inject or evaluate scripts.',
     fix: 'Ship storefront JavaScript as static versioned extension assets and treat runtime config as data only.',
+    status: 'investigate',
   },
-  {
-    id: 'DEPRECATED_SCRIPT_TAG_API',
-    title: 'Deprecated ScriptTag API expands storefront attack surface',
-    severity: 'high',
-    points: -12,
-    description: 'Detects ScriptTag creation or update calls in app code.',
-    fix: 'Migrate storefront UI to a theme app extension or analytics to a web pixel.',
-    guide: 'https://shopify.dev/docs/apps/build/online-store/theme-app-extensions',
-  },
+
   {
     id: 'APP_PROXY_UNVERIFIED_SIGNATURE',
     title: 'App proxy request trusted without signature verification',
@@ -283,7 +272,61 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     fix: 'Build frame-ancestors per request from the authenticated shop domain and admin.shopify.com.',
     guide: 'https://shopify.dev/docs/apps/build/security/set-up-iframe-protection',
   },
+  {
+    id: 'OVERBROAD_DATA_ACCESS',
+    title: 'Data access may exceed the current request',
+    severity: 'medium',
+    points: -10,
+    description: 'Investigates reads that may expose data outside the authenticated shop or user boundary.',
+    fix: 'Scope data access to the authenticated shop and minimum necessary records.',
+  },
+  {
+    id: 'SSRF_REQUEST_FORGERY',
+    title: 'Server-side request forgery risk',
+    severity: 'high',
+    points: -15,
+    description: 'Investigates server-side requests whose destinations may be controlled by request input.',
+    fix: 'Allowlist destinations and reject private, local, and unsafe network targets.',
+  },
+  {
+    id: 'THEME_EXTENSION_XSS',
+    title: 'Theme extension cross-site scripting risk',
+    severity: 'high',
+    points: -15,
+    description: 'Investigates untrusted values rendered without safe escaping in theme extensions.',
+    fix: 'Escape untrusted values and avoid raw HTML rendering.',
+    requires: 'theme_app_extension',
+  },
+  {
+    id: 'CSRF_MISSING_PROTECTION',
+    title: 'Cross-site request forgery protection may be missing',
+    severity: 'medium',
+    points: -10,
+    description: 'Investigates state-changing endpoints for missing request authenticity protections.',
+    fix: 'Require an authenticated session and CSRF protection on state-changing requests.',
+  },
+  {
+    id: 'MISSING_AUTHORIZATION_CHECK',
+    title: 'Authorization check may be missing',
+    severity: 'high',
+    points: -15,
+    description: 'Investigates authenticated handlers that may not authorize access to the requested resource.',
+    fix: 'Authorize the actor and resource after authentication.',
+  },
+  {
+    id: 'SCRIPT_TAG_URL_INJECTION',
+    title: 'ScriptTag URL may be request controlled',
+    severity: 'high',
+    points: -15,
+    description: 'Investigates ScriptTag writes whose source URL may be controlled by untrusted input.',
+    fix: 'Remove ScriptTag usage or restrict sources to trusted versioned assets.',
+  },
+  {
+    id: 'TEXT_SETTING_HTML_SMUGGLING',
+    title: 'Text setting may be rendered as unsafe HTML',
+    severity: 'high',
+    points: -15,
+    description: 'Investigates merchant-configurable text rendered as HTML without sanitization.',
+    fix: 'Render settings as text or sanitize with a strict allowlist.',
+  },
 ]
-
-export const findRule = (ruleId: string): RuleCatalogEntry | undefined =>
-  RULE_CATALOG.find((rule) => rule.id.toLowerCase() === ruleId.toLowerCase())

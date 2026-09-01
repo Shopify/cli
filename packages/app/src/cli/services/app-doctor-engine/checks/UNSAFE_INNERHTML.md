@@ -1,8 +1,8 @@
 ---
 id: UNSAFE_INNERHTML
-version: 3
+version: 1
 tier: agentic
-severity: critical
+severity: high
 ---
 
 Find cases where user-controlled data is written to the DOM without
@@ -31,10 +31,7 @@ session, make API calls on their behalf, or exfiltrate data.
    - `v-html="..."` — Vue
    - Any prop or attribute named `html` that receives raw HTML
 
-3. **Find Liquid unsafe rendering.** In theme app extensions:
-   - `{{ variable }}` — safe (auto-escaped)
-   - `{{ variable | raw }}` — unsafe (bypasses escaping)
-   - `{{ variable | escape_once }}` — partially safe
+3. **Find Liquid executable contexts in theme extensions.** Shopify Liquid output is not automatically HTML-escaped, and `{% raw %}` suppresses Liquid parsing rather than escaping output. Trace dynamic output in `<script>`, event-handler, `srcdoc`, and `<script src>` contexts. `json` is appropriate when embedding a value as JavaScript data; HTML escaping alone does not make executable attributes safe. Do not treat ordinary non-script `src` attributes as executable sinks. Inspect parser failures, rendered snippets, computed filters, and URL validation when the deterministic result is ambiguous.
 
 4. **Trace the data source.** For each write, determine what's being
    inserted. User-controlled sources include:

@@ -1,6 +1,6 @@
 ---
 id: UNAUTHENTICATED_ENDPOINT
-version: 2
+version: 1
 tier: agentic
 severity: high
 ---

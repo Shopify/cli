@@ -1,4 +1,5 @@
-export {scan, DETERMINISTIC_RULES} from './scanners/index.js'
+export {scan, DETERMINISTIC_CHECKS, DETERMINISTIC_RULES} from './scanners/index.js'
+export type {DeterministicCheckDefinition} from './scanners/index.js'
 export {
   buildReviewPack,
   loadChecks,
@@ -7,7 +8,7 @@ export {
   validateAgentChecksExecuted,
 } from './checks/index.js'
 export type {AgentFinding, AgentFindingsDocument, Check, ReviewPack} from './checks/index.js'
-export {getRegistry} from './registry/index.js'
+export {assertRegistryInvariants, getRegistry} from './registry/index.js'
 export type {RegistryEntry} from './registry/index.js'
 export {
   compileTrace,
@@ -26,9 +27,16 @@ export {formatConsole, formatIssue, formatJson, sortIssues} from './output/forma
 export {ENGINE_NAME, SUPPORTED_TRACE_SCHEMA_VERSIONS, TRACE_SCHEMA_VERSION} from './types.js'
 export {getEngineVersion} from './version.js'
 export type {
+  AnalysisMode,
   Capabilities,
   CheckExecution,
+  CheckExecutionReason,
+  CheckExecutionStatus,
   Confidence,
+  CoverageGap,
+  DetectedFramework,
+  DetectedLanguage,
+  DetectedSurface,
   FindingEvidence,
   FindingSource,
   Fix,
@@ -44,4 +52,5 @@ export type {
   SuppressionProvenance,
   TraceFinding,
   TraceV1,
+  TraceV2,
 } from './types.js'

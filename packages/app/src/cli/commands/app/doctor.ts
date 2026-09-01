@@ -1,13 +1,13 @@
-import doctor from '../../../services/doctor.js'
+import doctor from '../../services/doctor.js'
 import {Args, Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
-import type {AppDoctorBlockingLevel} from '../../../services/app-doctor-api.js'
+import type {AppDoctorBlockingLevel} from '../../services/app-doctor-api.js'
 
-const blockingLevels: AppDoctorBlockingLevel[] = ['critical', 'high', 'medium', 'low', 'none']
+const blockingLevels: AppDoctorBlockingLevel[] = ['high', 'medium', 'low', 'none']
 
-export default class DoctorScan extends BaseCommand {
+export default class Doctor extends BaseCommand {
   static hidden = true
 
   static summary = 'Check an app for Shopify-specific security issues.'
@@ -54,7 +54,7 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
   }
 
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(DoctorScan)
+    const {args, flags} = await this.parse(Doctor)
 
     await doctor({
       directory: args.directory ?? cwd(),

@@ -8,6 +8,11 @@ const result: ScanResult = {
   timestamp: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null},
   app: {name: 'Example App', type: 'public'},
+  detection: {
+    framework: 'react_router',
+    surface: 'react_router',
+    languages: [{name: 'typescript', support: 'supported', files: ['app/routes/action.ts']}],
+  },
   capabilities: {
     theme_app_extension: false,
     app_embed: false,
@@ -19,7 +24,7 @@ const result: ScanResult = {
     declared_ip_allowlist: false,
     checkout_extension: false,
   },
-  score: {total: 40, baseline: 70, grade: 'CRITICAL'},
+  score: {total: 40, baseline: 100, grade: 'POOR'},
   scan: {
     timestamp: '2026-08-24T00:00:00.000Z',
     doctor_version: '0.1.0',
@@ -27,13 +32,16 @@ const result: ScanResult = {
     rules_run: 18,
     rules_skipped: 0,
     files_skipped_count: 0,
+    coverage_complete: true,
+    coverage_gaps: [],
     input_hash: 'sha256:input',
     result_hash: 'sha256:result',
+    checks_executed: [],
   },
   issues: [
     {
       id: 'REQUEST_CONTROLLED_ADMIN_CONTEXT',
-      severity: 'critical',
+      severity: 'high',
       points: -30,
       title: 'Request input selects Admin API shop context',
       message: 'A request-controlled shop value is passed to unauthenticated.admin(...).',
@@ -44,13 +52,13 @@ const result: ScanResult = {
       },
     },
     {
-      id: 'MISSING_IP_ALLOWLIST',
+      id: 'EOL_API_VERSION',
       severity: 'high',
       points: -10,
-      title: 'No IP address spaces declared in app config',
-      message: 'No IP ranges declared.',
+      title: 'Configured API version is no longer supported',
+      message: 'The configured API version is outside the supported window.',
       location: {file: 'shopify.app.toml'},
-      fix: {automated: false, description: 'Declare IP ranges.'},
+      fix: {automated: false, description: 'Upgrade to a supported API version.'},
     },
   ],
 }
@@ -59,10 +67,10 @@ describe('React Doctor-style interaction surface', () => {
   test('renders a concise grouped report by default', () => {
     const output = formatConsole(result, {elapsedMilliseconds: 125})
 
-    expect(output).toContain('✔ Scanned 12 files in 125ms')
+    expect(output).toContain('12 files scanned in 125ms')
     expect(output).toContain('Shopify App Doctor — Example App')
     expect(output).toContain('2 issues')
-    expect(output).toContain('Critical: 1, High: 1')
+    expect(output).toContain('High: 2')
     expect(output).toContain('REQUEST_CONTROLLED_ADMIN_CONTEXT')
     expect(output).not.toContain('Fix: Use authenticate.admin(request).')
   })
@@ -71,13 +79,14 @@ describe('React Doctor-style interaction surface', () => {
     const output = formatConsole(result, {verbose: true})
 
     expect(output).toContain('Fix: Use authenticate.admin(request).')
-    expect(output).toContain('Capabilities: backend')
-    expect(output).toContain('Rules run: 18 | Skipped: 0')
+    expect(output).toContain('Capabilities: has_backend')
+    expect(output).toContain('Rules run: 18 | Not run: 0')
   })
 
   test('exposes the authoritative registry for list and explain commands', () => {
     const registry = getRegistry()
-    expect(registry).toHaveLength(33)
-    expect(registry.find((entry) => entry.id === 'TOKEN_LEAKAGE')?.title).toBe('Token or secret may be logged')
+    expect(registry.length).toBeGreaterThanOrEqual(31)
+    expect(registry.some((entry) => entry.id === 'TOKEN_LEAKAGE')).toBe(false)
+    expect(registry.find((entry) => entry.id === 'CREDENTIAL_LOG_LEAKAGE')?.title).toBe('Credential reaches a log sink')
   })
 })

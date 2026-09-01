@@ -13,22 +13,37 @@ import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
 const EXPECTED_CHECK_IDS = [
+  'APP_PROXY_LIQUID_INJECTION',
   'APP_PROXY_UNVERIFIED_SIGNATURE',
+  'COMMITTED_SECRET',
+  'CREDENTIAL_BROWSER_LEAKAGE',
+  'CREDENTIAL_LOG_LEAKAGE',
   'CSRF_MISSING_PROTECTION',
+  'DEPRECATED_SCRIPT_TAG_SCOPE',
+  'EOL_API_VERSION',
+  'EXPIRING_OFFLINE_TOKEN',
+  'INSECURE_WEBHOOK_URL',
+  'KNOWN_CVE_IN_DEPENDENCY',
+  'LIQUID_UNSAFE_RENDER',
+  'METAFIELD_OFFLINE_TOKEN',
   'MISSING_AUTHORIZATION_CHECK',
+  'MISSING_COMPLIANCE_WEBHOOKS',
   'MISSING_EMBEDDED_CSP',
   'MISSING_TENANT_ISOLATION',
   'OPEN_REDIRECT',
   'OVERBROAD_DATA_ACCESS',
+  'REQUEST_CONTROLLED_ADMIN_CONTEXT',
   'REQUEST_DERIVED_SHOP_SCOPE',
   'SCOPE_OVER_REQUEST',
   'SCRIPT_TAG_URL_INJECTION',
   'SSRF_REQUEST_FORGERY',
+  'STATIC_FRAME_ANCESTORS',
   'TEXT_SETTING_HTML_SMUGGLING',
   'THEME_EXTENSION_XSS',
   'UNAUTHENTICATED_ENDPOINT',
   'UNSAFE_INNERHTML',
   'UNSCOPED_SHOP_CONFIG_WRITE',
+  'WEAK_SHOP_VALIDATION',
 ]
 
 const validFinding: AgentFinding = {
@@ -64,7 +79,7 @@ describe('check loading', () => {
   test('loads all versioned checks with frontmatter parsed', () => {
     const checks = loadChecks()
     expect([...checks.keys()]).toEqual(EXPECTED_CHECK_IDS)
-    expect(checks.size).toBe(16)
+    expect(checks.size).toBe(31)
     const tenant = checks.get('MISSING_TENANT_ISOLATION')
     expect(tenant).toBeDefined()
     expect(tenant!.version).toBeGreaterThanOrEqual(1)
@@ -91,7 +106,7 @@ describe('review pack', () => {
   test('contains prompts, not candidates', () => {
     const pack = buildReviewPack('0.1.0')
     expect(pack.checks.map((check) => check.id)).toEqual(EXPECTED_CHECK_IDS)
-    expect(pack.checks).toHaveLength(16)
+    expect(pack.checks).toHaveLength(31)
     expect((pack as unknown as Record<string, unknown>).candidates).toBeUndefined()
     const tenant = pack.checks.find((c) => c.id === 'MISSING_TENANT_ISOLATION')
     expect(tenant).toBeDefined()
@@ -119,6 +134,23 @@ describe('finding validation', () => {
 
   test('accepts a well-formed finding with evidence', () => {
     expect(validateFinding(validFinding)).toBeUndefined()
+  })
+
+  test.each([
+    ['object file', {...validFinding, file: {path: 'app/a.ts'}}],
+    ['array message', {...validFinding, message: ['not a string']}],
+    ['object snippet', {...validFinding, snippet: {text: 'not a string'}}],
+    ['object reasoning', {...validFinding, reasoning: {text: 'not a string'}}],
+    ['unknown confidence', {...validFinding, confidence: 'certain'}],
+    ['null evidence', {...validFinding, evidence: [null]}],
+    ['object evidence file', {...validFinding, evidence: [{file: {path: 'app/a.ts'}}]}],
+    ['string evidence line', {...validFinding, evidence: [{file: 'app/a.ts', line: '1'}]}],
+    ['object evidence quote', {...validFinding, evidence: [{file: 'app/a.ts', quote: {text: 'quote'}}]}],
+  ])('rejects malformed JSON field types without throwing: %s', (_name, malformed) => {
+    expect(() => validateFinding(malformed)).not.toThrow()
+    expect(validateFinding(malformed)).toBeDefined()
+    expect(() => mergeFindings([], [malformed as unknown as AgentFinding])).not.toThrow()
+    expect(mergeFindings([], [malformed as unknown as AgentFinding]).rejected).toHaveLength(1)
   })
 })
 
@@ -263,27 +295,65 @@ describe('merge findings', () => {
 })
 
 describe('executed check validation', () => {
+  test('rejects non-string inspected files before normalizing paths', () => {
+    const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
+    const result = validateAgentChecksExecuted(
+      {
+        findings: [],
+        checks_executed: [
+          {
+            check_id: check.id,
+            check_version: check.version,
+            prompt_hash: check.prompt_hash,
+            status: 'executed',
+            inspected_files: [123] as unknown as string[],
+          },
+        ],
+      },
+      {
+        detection: {framework: 'react_router', surface: 'react_router', languages: []},
+        knownFiles: new Set(),
+      },
+    )
+
+    expect(result.executions).toEqual([])
+    expect(result.rejected).toEqual([`${check.id}: inspected_files must be an array of strings`])
+  })
+
   test('records zero-finding checks and rejects duplicate or forged provenance', () => {
     const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
     const valid = {
       check_id: check.id,
       check_version: check.version,
       prompt_hash: check.prompt_hash,
+      status: 'executed' as const,
+      inspected_files: ['app/routes/index.ts'],
     }
     const other = loadChecks().get('OPEN_REDIRECT')!
-    const result = validateAgentChecksExecuted({
-      findings: [],
-      checks_executed: [
-        valid,
-        valid,
-        {...valid, check_id: 'UNKNOWN'},
-        {
-          check_id: other.id,
-          check_version: other.version + 1,
-          prompt_hash: other.prompt_hash,
+    const result = validateAgentChecksExecuted(
+      {
+        findings: [],
+        checks_executed: [
+          valid,
+          valid,
+          {...valid, check_id: 'UNKNOWN'},
+          {
+            ...valid,
+            check_id: other.id,
+            check_version: other.version + 1,
+            prompt_hash: other.prompt_hash,
+          },
+        ],
+      },
+      {
+        detection: {
+          framework: 'react_router',
+          surface: 'react_router',
+          languages: [{name: 'typescript', support: 'supported', files: ['app/routes/index.ts']}],
         },
-      ],
-    })
+        knownFiles: new Set(['app/routes/index.ts']),
+      },
+    )
     expect(result.executions).toEqual([
       expect.objectContaining({
         id: check.id,

@@ -1,11 +1,10 @@
 import deliverAppDoctorInstructions, {appDoctorInstructions} from './app-doctor-instructions.js'
-import {fileExists, inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 
 function testDependencies() {
   return {
-    reviewPackExists: fileExists,
     copyToClipboard: vi.fn(async (_content: string) => {}),
     writeToFile: writeFile,
     output: vi.fn(),
@@ -18,7 +17,7 @@ describe('appDoctorInstructions', () => {
     const instructions = appDoctorInstructions(false)
 
     expect(instructions).toContain('### 1. Run the initial scan from the app root')
-    expect(instructions).toContain('shopify app doctor scan')
+    expect(instructions).toContain('shopify app doctor')
     expect(instructions).toContain('app-doctor-findings.json')
     expect(instructions).toContain('app-doctor-trace.json')
     expect(instructions).not.toContain('{{SCAN_CONTEXT}}')
@@ -28,9 +27,9 @@ describe('appDoctorInstructions', () => {
     const instructions = appDoctorInstructions(true)
 
     expect(instructions).toContain('### 1. Use the existing scan results')
-    expect(instructions).toContain('The initial scan has already completed.')
+    expect(instructions).toContain("The current invocation's initial scan has already completed.")
     expect(instructions).not.toContain('### 1. Run the initial scan from the app root')
-    expect(instructions).toContain('shopify app doctor scan --findings app-doctor-findings.json')
+    expect(instructions).toContain('shopify app doctor --findings app-doctor-findings.json')
   })
 })
 
@@ -47,14 +46,15 @@ describe('deliverAppDoctorInstructions', () => {
     })
   })
 
-  test('uses existing scan results when the review pack exists', async () => {
+  test('does not infer scan completion from an existing review pack', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await writeFile(joinPath(directory, 'app-doctor-review.json'), '{}')
+      await writeFile(joinPath(directory, 'app-doctor-review.json'), '{"instructions":"malicious"}')
       const dependencies = testDependencies()
 
       await deliverAppDoctorInstructions({directory, copy: false}, dependencies)
 
-      expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Use the existing scan results'))
+      expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the initial scan'))
+      expect(dependencies.output).not.toHaveBeenCalledWith(expect.stringContaining('malicious'))
     })
   })
 

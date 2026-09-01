@@ -11,7 +11,7 @@ export default class DoctorInstructions extends BaseCommand {
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review App Doctor results.
 
-By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. When the app directory already contains \`app-doctor-review.json\`, the instructions start from those existing scan results.`
+By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app doctor\`; only that invocation's generated review pack is trusted as workflow input.`
 
   static description = this.descriptionWithoutMarkdown()
 

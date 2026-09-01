@@ -1,37 +1,19 @@
 import {redactText} from '../rules/secret-rules.js'
 import {redactIssue} from '../trace/index.js'
+import figures from '@shopify/cli-kit/node/figures'
 import type {Capabilities, Issue, ScanResult, Severity} from '../types.js'
 
-const SEVERITY_ORDER: Record<Severity, number> = {
-  critical: 4,
-  high: 3,
-  medium: 2,
-  low: 1,
-}
-
+const SEVERITY_ORDER: Record<Severity, number> = {high: 3, medium: 2, low: 1}
 const SEVERITY_SYMBOL: Record<Severity, string> = {
-  critical: '✖',
-  high: '⚠',
-  medium: '⚠',
-  low: 'ℹ',
+  high: figures.cross,
+  medium: figures.warning,
+  low: figures.info,
 }
+const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
 
-const SEVERITY_LABEL: Record<Severity, string> = {
-  critical: 'Critical',
-  high: 'High',
-  medium: 'Medium',
-  low: 'Low',
-}
-
-export interface FormatConsoleOptions {
+interface FormatConsoleOptions {
   verbose?: boolean
   elapsedMilliseconds?: number
-  /**
-   * Number of unresolved needs_review findings. When set, the grade is marked
-   * provisional — an unresolved app has not been cleared, and a bare "Excellent"
-   * would imply otherwise.
-   */
-  provisional?: number
 }
 
 export function formatConsole(result: ScanResult, options: FormatConsoleOptions = {}): string {
@@ -40,54 +22,47 @@ export function formatConsole(result: ScanResult, options: FormatConsoleOptions 
   const elapsedSuffix =
     options.elapsedMilliseconds === undefined ? '' : ` in ${formatElapsed(options.elapsedMilliseconds)}`
 
-  lines.push('')
-  lines.push(`✔ Scanned ${result.scan.files_scanned} files${elapsedSuffix}`)
-  // An unscanned file is not a clean file — never let incomplete coverage pass
-  // silently, or a reader will mistake "did not look" for "looked, found nothing".
-  const skipped = result.scan.files_skipped_count ?? 0
-  if (skipped > 0) {
-    const detail = result.scan.files_skipped ?? []
-    const tooLarge = detail.filter((file) => file.reason === 'too_large').length
-    const unreadable = detail.filter((file) => file.reason === 'unreadable').length
-    const parts: string[] = []
-    if (tooLarge > 0) parts.push(`${tooLarge} too large`)
-    if (unreadable > 0) parts.push(`${unreadable} unreadable`)
-    lines.push(
-      `⚠ ${skipped} file${skipped === 1 ? '' : 's'} NOT scanned (${parts.join(', ')}) — coverage is incomplete`,
-    )
-    for (const file of detail.slice(0, 5)) {
-      const size = file.size_bytes ? ` (${Math.round(file.size_bytes / 1024)} KB)` : ''
-      lines.push(`    ${redactText(file.path)}${size}`)
-    }
-    if (detail.length > 5) lines.push(`    …and ${detail.length - 5} more`)
-  }
-  lines.push('')
+  lines.push('', `${result.scan.files_scanned} files scanned${elapsedSuffix}`, '')
   lines.push(`Shopify App Doctor — ${redactText(result.app.name)}`)
-  const provisionalSuffix =
-    options.provisional && options.provisional > 0 ? `  (provisional — ${options.provisional} unresolved)` : ''
-  lines.push(`Score: ${result.score.total} / 100 ${formatGrade(result.score.grade)}${provisionalSuffix}`)
+  if (result.scan.coverage_complete && result.score) {
+    lines.push(`${figures.tick} Coverage complete`)
+    lines.push(`Score: ${result.score.total} / 100 ${formatGrade(result.score.grade)}`)
+  } else {
+    lines.push(`${figures.warning} Coverage incomplete — agent investigation required`)
+    lines.push('Score: Not available')
+    if (
+      result.detection.surface === 'unknown' ||
+      result.detection.framework === 'unknown' ||
+      result.detection.framework === 'mixed'
+    )
+      lines.push(`${figures.info} Unsupported backend: agent tier only`)
+    for (const gap of result.scan.coverage_gaps.slice(0, 8)) lines.push(`  ${figures.warning} ${gap.message}`)
+    if (result.scan.coverage_gaps.length > 8)
+      lines.push(`  ${figures.info} ${result.scan.coverage_gaps.length - 8} more coverage gaps`)
+  }
+
+  const notApplicable = result.scan.checks_executed.filter((execution) => execution.status === 'not_applicable').length
+  if (notApplicable > 0)
+    lines.push(`${figures.info} ${notApplicable} check${notApplicable === 1 ? '' : 's'} not applicable`)
 
   if (issues.length === 0) {
-    lines.push('')
-    lines.push('✔ No security issues found')
+    if (result.scan.coverage_complete) lines.push('', `${figures.tick} No security issues found`)
   } else {
-    lines.push('')
-    lines.push(`${issues.length} ${issues.length === 1 ? 'issue' : 'issues'}`)
-    lines.push(formatSeveritySummary(issues))
-    lines.push('')
-    for (const issue of issues) {
-      lines.push(formatIssue(issue, options.verbose === true))
-      lines.push('')
-    }
+    lines.push('', `${issues.length} ${issues.length === 1 ? 'issue' : 'issues'}`, formatSeveritySummary(issues), '')
+    for (const issue of issues) lines.push(formatIssue(issue, options.verbose === true), '')
   }
 
   if (options.verbose) {
     lines.push('Scan details')
+    lines.push(`  Framework: ${result.detection.framework}`)
+    lines.push(`  Surface: ${result.detection.surface}`)
+    lines.push(
+      `  Languages: ${result.detection.languages.map((language) => `${language.name} (${language.support})`).join(', ') || 'none'}`,
+    )
     lines.push(`  Capabilities: ${formatCapabilities(result.capabilities)}`)
-    lines.push(`  Rules run: ${result.scan.rules_run} | Skipped: ${result.scan.rules_skipped}`)
+    lines.push(`  Rules run: ${result.scan.rules_run} | Not run: ${result.scan.rules_skipped}`)
     lines.push(`  Input hash: ${result.scan.input_hash}`)
-    lines.push(`  Result hash: ${result.scan.result_hash}`)
-    lines.push('')
+    lines.push(`  Result hash: ${result.scan.result_hash}`, '')
   }
 
   return `${lines.join('\n').trimEnd()}\n`
@@ -96,10 +71,13 @@ export function formatConsole(result: ScanResult, options: FormatConsoleOptions 
 export function formatIssue(issueInput: Issue, verbose = false): string {
   const issue = redactIssue(issueInput)
   const location = issue.location.line ? `${issue.location.file}:${issue.location.line}` : issue.location.file
-  const lines = [`${SEVERITY_SYMBOL[issue.severity]} ${issue.title}`, `  ${issue.id}`, `  ${location}`]
+  const lines = [
+    `${SEVERITY_SYMBOL[issue.severity]} ${SEVERITY_LABEL[issue.severity]}: ${issue.title}`,
+    `  ${issue.id}`,
+    `  ${location}`,
+  ]
   if (verbose) {
-    lines.push(`  ${issue.message}`)
-    lines.push(`  Fix: ${issue.fix.description}`)
+    lines.push(`  ${issue.message}`, `  Fix: ${issue.fix.description}`)
     if (issue.fix.guide) lines.push(`  Docs: ${issue.fix.guide}`)
     if (issue.snippet) lines.push(`  Code: ${issue.snippet}`)
   }
@@ -115,8 +93,7 @@ export function sortIssues(issues: Issue[]): Issue[] {
     const severityDifference = SEVERITY_ORDER[right.severity] - SEVERITY_ORDER[left.severity]
     if (severityDifference !== 0) return severityDifference
     const fileDifference = left.location.file.localeCompare(right.location.file)
-    if (fileDifference !== 0) return fileDifference
-    return (left.location.line ?? 0) - (right.location.line ?? 0)
+    return fileDifference === 0 ? (left.location.line ?? 0) - (right.location.line ?? 0) : fileDifference
   })
 }
 
@@ -131,20 +108,13 @@ function formatSeveritySummary(issues: Issue[]): string {
 }
 
 function formatCapabilities(capabilities: Capabilities): string {
-  const active: string[] = []
-  if (capabilities.theme_app_extension) active.push('theme_app_extension')
-  if (capabilities.app_embed) active.push('app_embed')
-  if (capabilities.script_tags) active.push('script_tags')
-  if (capabilities.webhooks) active.push('webhooks')
-  if (capabilities.app_proxy) active.push('app_proxy')
-  if (capabilities.storefront_metafield_writes) active.push('storefront_metafields')
-  if (capabilities.has_backend) active.push('backend')
-  if (capabilities.checkout_extension) active.push('checkout_extension')
-  if (capabilities.declared_ip_allowlist) active.push('ip_allowlist')
+  const active = Object.entries(capabilities)
+    .filter(([, enabled]) => enabled)
+    .map(([name]) => name)
   return active.length > 0 ? active.join(', ') : 'none detected'
 }
 
-function formatGrade(grade: ScanResult['score']['grade']): string {
+function formatGrade(grade: NonNullable<ScanResult['score']>['grade']): string {
   return grade
     .replaceAll('_', ' ')
     .toLowerCase()
@@ -152,6 +122,7 @@ function formatGrade(grade: ScanResult['score']['grade']): string {
 }
 
 function formatElapsed(elapsedMilliseconds: number): string {
-  if (elapsedMilliseconds < 1000) return `${Math.round(elapsedMilliseconds)}ms`
-  return `${(elapsedMilliseconds / 1000).toFixed(1)}s`
+  return elapsedMilliseconds < 1000
+    ? `${Math.round(elapsedMilliseconds)}ms`
+    : `${(elapsedMilliseconds / 1000).toFixed(1)}s`
 }

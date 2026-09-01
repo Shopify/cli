@@ -27,6 +27,11 @@ const result = (issues: Issue[] = []): ScanResult => ({
   timestamp: '2026-08-28T00:00:00.000Z',
   project: {commit: 'a'.repeat(40), dirty: false},
   app: {name: 'trace-test', type: 'public'},
+  detection: {
+    framework: 'react_router',
+    surface: 'react_router',
+    languages: [{name: 'typescript', support: 'supported', files: ['app/a.ts']}],
+  },
   capabilities: {
     theme_app_extension: false,
     app_embed: false,
@@ -38,7 +43,7 @@ const result = (issues: Issue[] = []): ScanResult => ({
     declared_ip_allowlist: false,
     checkout_extension: false,
   },
-  score: {total: 70, baseline: 70, grade: 'NEEDS_WORK'},
+  score: {total: 70, baseline: 100, grade: 'NEEDS_WORK'},
   scan: {
     timestamp: '2026-08-28T00:00:00.000Z',
     doctor_version: '0.1.0',
@@ -46,16 +51,25 @@ const result = (issues: Issue[] = []): ScanResult => ({
     rules_run: 1,
     rules_skipped: 0,
     files_skipped_count: 0,
+    coverage_complete: true,
+    coverage_gaps: [],
     input_hash: `sha256:${'b'.repeat(64)}`,
     result_hash: `sha256:${'c'.repeat(64)}`,
     file_hashes: {'app/a.ts': `sha256:${'d'.repeat(64)}`},
     checks_executed: [
       {
-        id: 'TOKEN_LEAKAGE',
+        id: 'CREDENTIAL_LOG_LEAKAGE',
         version: 1,
-        kind: 'rule',
+        kind: 'deterministic',
         status: 'executed',
+        required: true,
+        applicable: true,
+        languages: ['typescript'],
+        framework: 'react_router',
+        surface: 'react_router',
+        inspected_files: ['app/a.ts'],
         findings: 0,
+        analysis_mode: 'regex',
       },
     ],
   },
@@ -63,7 +77,7 @@ const result = (issues: Issue[] = []): ScanResult => ({
 })
 
 const deterministicIssue = (): Issue => ({
-  id: 'TOKEN_LEAKAGE',
+  id: 'CREDENTIAL_LOG_LEAKAGE',
   rule_version: 1,
   found_by: 'static',
   severity: 'high',
@@ -76,12 +90,12 @@ const deterministicIssue = (): Issue => ({
   fix: {automated: false, description: 'Remove it'},
 })
 
-describe('trace v1', () => {
-  test('compiles and validates a portable v1 trace with zero-finding checks', () => {
+describe('trace v2', () => {
+  test('compiles and validates a portable v2 trace with zero-finding checks', () => {
     const trace = compileTrace(result(), {
       generatedAt: '2026-08-28T00:00:00.000Z',
     })
-    expect(trace.schema_version).toBe(1)
+    expect(trace.schema_version).toBe(2)
     expect(trace.engine.name).toBe('shopify-app-doctor')
     expect(trace.project).toMatchObject({
       commit: 'a'.repeat(40),
@@ -89,7 +103,7 @@ describe('trace v1', () => {
     })
     expect(trace.checks_executed).toContainEqual(
       expect.objectContaining({
-        id: 'TOKEN_LEAKAGE',
+        id: 'CREDENTIAL_LOG_LEAKAGE',
         status: 'executed',
         findings: 0,
       }),
@@ -154,7 +168,7 @@ describe('trace v1', () => {
     const trace = compileTrace(result([deterministicIssue()]), {
       generatedAt: '2026-08-28T00:00:00.000Z',
     })
-    expect(validateTrace({...trace, schema_version: 2}).errors).toContain('unsupported schema_version: 2')
+    expect(validateTrace({...trace, schema_version: 1}).errors).toContain('unsupported schema_version: 1')
     const changed = structuredClone(trace)
     const [changedFinding] = changed.findings
     if (!changedFinding) throw new Error('Expected the trace to contain a finding')
@@ -238,6 +252,18 @@ describe('trace v1', () => {
     }
     expect(validateExternalFinding({...valid, rule_id: ''})).toMatch(/rule_id/)
     expect(validateExternalFinding({...valid, location: {file: '../secret'}})).toMatch(/unsafe/)
+    for (const malformed of [
+      {...valid, title: []},
+      {...valid, location: null},
+      {...valid, location: {file: {path: 'app/a.ts'}}},
+      {...valid, evidence: [null]},
+      {...valid, evidence: [{location: null}]},
+      {...valid, fix: {description: {text: 'review'}}},
+    ]) {
+      expect(() => validateExternalFinding(malformed)).not.toThrow()
+      expect(validateExternalFinding(malformed)).toBeDefined()
+      expect(() => mergeExternalFindings([], [malformed as unknown as typeof valid])).not.toThrow()
+    }
     expect(
       mergeExternalFindings([], [{...valid, location: {file: 'unknown.ts'}}], {knownFiles: new Set(['app/a.ts'])})
         .rejected[0],
@@ -307,6 +333,24 @@ describe('trace v1', () => {
       for (const secret of secrets) expect(output).not.toContain(secret)
       expect(output).toContain('[REDACTED TEXT]')
     }
+  })
+
+  test('redacts complete private key blocks from every free-form finding field', () => {
+    const header = ['-----BEGIN RSA', 'PRIVATE KEY-----'].join(' ')
+    const body = ['private-key-body', 'must-not-leak'].join('-')
+    const footer = ['-----END RSA', 'PRIVATE KEY-----'].join(' ')
+    const block = `${header}\n${body}\n${footer}`
+    const issue = deterministicIssue()
+    issue.message = block
+    issue.snippet = block
+    issue.agent_reasoning = block
+    issue.detection_evidence = [block]
+    issue.evidence = [{location: issue.location, quote: block}]
+
+    const serialized = JSON.stringify(compileTrace(result([issue])))
+    expect(serialized).not.toContain(body)
+    expect(serialized).not.toContain(footer)
+    expect(serialized).toContain('REDACTED')
   })
 
   test('redacts matched secrets from every finding output field', () => {

@@ -2,7 +2,7 @@
 id: THEME_EXTENSION_XSS
 version: 1
 tier: agentic
-severity: critical
+severity: high
 ---
 
 Find cases where theme app extensions render user-controlled data
@@ -27,12 +27,7 @@ template, not a JavaScript file.
    - Liquid blocks, snippets, sections
    - Theme extension entry points
 
-2. **Find `| raw` filter usage.** The `raw` filter bypasses Liquid's
-   auto-escaping:
-   - `{{ variable | raw }}` — renders unescaped HTML
-   - `{{ variable | raw }}` where variable is user-controlled — XSS
-   - Check whether the variable is proven trusted HTML (e.g. a constant
-     or app-generated content) or user-controlled
+2. **Inspect every dynamic output context.** Shopify Liquid output is not automatically HTML-escaped, and `{% raw %}` suppresses Liquid parsing so apparent output inside it is literal text. Determine whether each value uses context-appropriate handling such as `escape`/`escape_once` in HTML text or ordinary attributes, `json` when embedding JavaScript data, or `metafield_tag` for supported rich metafield rendering. HTML escaping is not sufficient for event handlers, `srcdoc`, or `<script src>` URLs.
 
 3. **Trace Liquid data sources.** For each `{{ }}` output, determine
    where the data comes from:
@@ -45,13 +40,7 @@ template, not a JavaScript file.
    - `{{ app.metafield.namespace.key }}` — app metafield, could be
      merchant-writable depending on permissions
 
-4. **Check Liquid rendering context.** Liquid auto-escapes `{{ }}`
-   output, but there are exceptions:
-   - `| raw` — bypasses escaping entirely
-   - `{% liquid %}` blocks with `echo` — auto-escaped
-   - `{% render %}` with `{{ }}` inside the rendered snippet — escaped,
-     but check the snippet's own output
-   - JSON responses with `{{ }}` — escaped for JSON, not for HTML context
+4. **Check Liquid rendering context.** `{{ }}` and `echo` emit the rendered value; safety depends on its type, filters, and destination context. Follow rendered snippets and require HTML escaping, URL validation, or JSON serialization as appropriate.
 
 5. **Find JavaScript in theme extensions.** Theme extension assets
    (`.js` files) that:
@@ -70,25 +59,24 @@ without escaping:
 {
   "file": "extensions/theme-app-extension/blocks/widget.liquid",
   "line": 15,
-  "message": "Metafield value rendered with | raw filter — XSS in storefront",
-  "snippet": "{{ product.metafield.custom.html | raw }}",
+  "message": "Metafield value rendered into an executable attribute without context-appropriate escaping",
+  "snippet": "<div onclick=\"{{ product.metafields.custom.code }}\">",
   "evidence": [
     {
       "file": "extensions/.../blocks/widget.liquid",
       "line": 15,
-      "quote": "{{ product.metafield.custom.html | raw }}"
+      "quote": "<div onclick=\"{{ product.metafields.custom.code }}\">"
     }
   ],
   "confidence": "high",
-  "reasoning": "The metafield value is merchant-writable (user-controlled) and rendered with the raw filter, bypassing Liquid's auto-escaping. An attacker who controls the metafield can inject script that executes on the merchant's storefront."
+  "reasoning": "The metafield value is merchant-writable and emitted into an executable attribute without context-appropriate handling. An attacker who controls the metafield can inject script that executes on the merchant's storefront."
 }
 ```
 
 Do not report:
 
-- `{{ variable }}` without `| raw` (auto-escaped by Liquid)
-- `{{ variable | raw }}` where the variable is a constant or app-generated
-  trusted HTML
+- Output whose value and destination are both proven safe
+- Apparent Liquid output inside `{% raw %}...{% endraw %}`, because the raw tag suppresses Liquid parsing and leaves those delimiters as literal text
 - `{{ variable | escape }}` or `{{ variable | escape_once }}` (escaped)
 - JavaScript `textContent` assignments (safe)
 - Test files
