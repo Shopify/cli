@@ -111,7 +111,8 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     title: 'Known CVE in dependency',
     severity: 'high',
     points: -20,
-    description: 'Runs the selected JavaScript package manager audit against the committed lockfile.',
+    description:
+      'Runs the selected JavaScript package manager audit against production dependencies in the committed lockfile.',
     fix: 'Upgrade the dependency to a patched version.',
   },
 

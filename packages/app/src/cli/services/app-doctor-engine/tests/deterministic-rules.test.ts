@@ -155,7 +155,7 @@ describe('Liquid AST mode', () => {
 describe('package-manager audit', () => {
   test('parses npm and yarn machine output', () => {
     expect(parseAuditOutput(JSON.stringify({vulnerabilities: {lodash: {severity: 'high'}}}), 'npm')).toEqual([
-      {packageName: 'lodash', severity: 'high'},
+      {packageName: 'lodash', severity: 'high', cves: [], topLevelParents: []},
     ])
     expect(parseAuditOutput('{not-json', 'npm')).toBeNull()
     expect(
@@ -163,7 +163,7 @@ describe('package-manager audit', () => {
         `${JSON.stringify({type: 'auditAdvisory', data: {advisory: {module_name: 'x', severity: 'medium'}}})}\n${JSON.stringify({type: 'auditSummary', data: {}})}`,
         'yarn',
       ),
-    ).toEqual([{packageName: 'x', severity: 'medium'}])
+    ).toEqual([{packageName: 'x', severity: 'medium', cves: [], topLevelParents: []}])
   })
 
   test('uses an injected non-mutating executor and surfaces operational failure', async () => {
@@ -179,6 +179,7 @@ describe('package-manager audit', () => {
       const success = await auditKnownCves(directory, [manifest], async (command, args, options) => {
         expect(command).toBe('npm')
         expect(args.slice(0, 2)).toEqual(['audit', '--json'])
+        expect(args).toContain('--omit=dev')
         expect(args).toContain('--ignore-scripts')
         expect(args).toContain('--registry=https://registry.npmjs.org/')
         expect(options.env.NPM_CONFIG_USERCONFIG).toBeTruthy()
@@ -187,6 +188,7 @@ describe('package-manager audit', () => {
         return {stdout: JSON.stringify({vulnerabilities: {lodash: {severity: 'high'}}}), stderr: '', exitCode: 1}
       })
       expect(success.issues.map((finding) => finding.id)).toEqual(['KNOWN_CVE_IN_DEPENDENCY'])
+      expect(success.issues[0]?.title).toBe('lodash has a high vulnerability')
       const failure = await auditKnownCves(directory, [manifest], async () => ({
         stdout: 'bad',
         stderr: 'network unavailable',

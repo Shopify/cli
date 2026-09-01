@@ -23,6 +23,13 @@ interface AuditSelection {
   packageManager?: string
 }
 
+export interface ParsedAdvisory {
+  packageName: string
+  severity: string
+  cves: string[]
+  topLevelParents: string[]
+}
+
 const PATH_DELIMITER = process.platform === 'win32' ? ';' : ':'
 const defaultExecutor: AuditExecutor = (command, args, options) =>
   new Promise((resolve, reject) => {
@@ -149,19 +156,9 @@ export async function auditKnownCves(
     return {issues: [], unresolvedReason: 'Dependency audit failed operationally.', inspectedFiles}
 
   return {
-    issues: parsed.map((advisory) => {
-      const packageName = redactAuditText(advisory.packageName).slice(0, 160)
-      const classification = classifySeverity(advisory.severity)
-      return {
-        id: 'KNOWN_CVE_IN_DEPENDENCY',
-        severity: classification.severity,
-        points: classification.points,
-        title: 'Known CVE in dependency',
-        message: `${packageName} has a ${advisory.severity} vulnerability reported by the package-manager audit.`,
-        location: {file: selection.lockfile},
-        fix: {automated: false, description: 'Upgrade to a patched dependency version and regenerate the lockfile.'},
-      }
-    }),
+    issues: collapseAdvisories(parsed.filter((advisory) => isProductionAdvisory(advisory, packageManifest))).map(
+      (advisory) => toCveIssue(advisory, selection.lockfile),
+    ),
     inspectedFiles,
   }
 }
@@ -169,7 +166,7 @@ export async function auditKnownCves(
 export function parseAuditOutput(
   output: string,
   packageManager: 'npm' | 'pnpm' | 'yarn' | 'yarn-classic' | 'yarn-berry' | string,
-): {packageName: string; severity: string}[] | null {
+): ParsedAdvisory[] | null {
   const trimmed = output.trim()
   if (!trimmed) return null
   try {
@@ -188,31 +185,51 @@ export function parseAuditOutput(
       if (!recognized) return null
       return records.flatMap((record) => {
         if (record.type !== 'auditAdvisory') return []
-        const data = record.data as {advisory?: {module_name?: string; severity?: string}}
+        const data = record.data as {
+          advisory?: {
+            module_name?: string
+            severity?: string
+            cves?: string[]
+            url?: string
+            title?: string
+            github_advisory_id?: string
+          }
+          resolution?: {path?: string}
+        }
         const advisory = data.advisory
-        return advisory?.module_name
-          ? [{packageName: advisory.module_name, severity: advisory.severity ?? 'unknown'}]
-          : []
+        if (!advisory?.module_name) return []
+        const parent = data.resolution?.path ? topLevelParentFromPath(data.resolution.path) : undefined
+        return [
+          {
+            packageName: advisory.module_name,
+            severity: advisory.severity ?? 'unknown',
+            cves: identifiersFromText(advisory.cves, advisory.url, advisory.title, advisory.github_advisory_id),
+            topLevelParents: parent ? [parent] : [],
+          },
+        ]
       })
     }
 
     const report = JSON.parse(trimmed) as {
       error?: unknown
-      vulnerabilities?: Record<string, {severity?: string}>
-      advisories?: Record<string, {module_name?: string; severity?: string}>
+      vulnerabilities?: Record<string, {severity?: string; via?: unknown}>
+      advisories?: Record<
+        string,
+        {
+          module_name?: string
+          severity?: string
+          cves?: string[]
+          url?: string
+          title?: string
+          findings?: {paths?: string[]}[]
+        }
+      >
       metadata?: {vulnerabilities?: Record<string, number>}
       children?: unknown
     }
     if (report.error) return null
-    if (report.vulnerabilities)
-      return Object.entries(report.vulnerabilities).map(([packageName, vulnerability]) => ({
-        packageName,
-        severity: vulnerability.severity ?? 'unknown',
-      }))
-    if (report.advisories)
-      return Object.values(report.advisories).flatMap((advisory) =>
-        advisory.module_name ? [{packageName: advisory.module_name, severity: advisory.severity ?? 'unknown'}] : [],
-      )
+    if (report.vulnerabilities) return npmAdvisories(report.vulnerabilities)
+    if (report.advisories) return pnpmAdvisories(report.advisories)
     if (report.children) return berryAdvisories(report)
     if (report.metadata?.vulnerabilities) return []
     return null
@@ -223,7 +240,45 @@ export function parseAuditOutput(
   }
 }
 
-function berryAdvisories(value: unknown, inheritedName?: string): {packageName: string; severity: string}[] {
+function npmAdvisories(vulnerabilities: Record<string, {severity?: string; via?: unknown}>): ParsedAdvisory[] {
+  return Object.entries(vulnerabilities).map(([packageName, vulnerability]) => ({
+    packageName,
+    severity: vulnerability.severity ?? 'unknown',
+    cves: identifiersFromText(...viaIdentifierSources(vulnerability.via)),
+    topLevelParents: [],
+  }))
+}
+
+function pnpmAdvisories(
+  advisories: Record<
+    string,
+    {
+      module_name?: string
+      severity?: string
+      cves?: string[]
+      url?: string
+      title?: string
+      findings?: {paths?: string[]}[]
+    }
+  >,
+): ParsedAdvisory[] {
+  return Object.values(advisories).flatMap((advisory) => {
+    if (!advisory.module_name) return []
+    const paths = (advisory.findings ?? []).flatMap((finding) => finding.paths ?? [])
+    return [
+      {
+        packageName: advisory.module_name,
+        severity: advisory.severity ?? 'unknown',
+        cves: identifiersFromText(advisory.cves, advisory.url, advisory.title),
+        topLevelParents: unique(
+          paths.map(topLevelParentFromPath).filter((parent): parent is string => Boolean(parent)),
+        ),
+      },
+    ]
+  })
+}
+
+function berryAdvisories(value: unknown, inheritedName?: string): ParsedAdvisory[] {
   if (!value || typeof value !== 'object') return []
   if (Array.isArray(value)) return value.flatMap((item) => berryAdvisories(item, inheritedName))
 
@@ -235,11 +290,145 @@ function berryAdvisories(value: unknown, inheritedName?: string): {packageName: 
   const severity = [node.severity, node.Severity, children.Severity].find(
     (candidate): candidate is string => typeof candidate === 'string',
   )
-  const current = severity && nodeName ? [{packageName: nodeName, severity}] : []
+  const current = severity && nodeName ? [{packageName: nodeName, severity, cves: [], topLevelParents: []}] : []
   const descendants = Object.entries(children).flatMap(([name, child]) =>
     name === 'Severity' ? [] : berryAdvisories(child, name),
   )
   return [...current, ...descendants]
+}
+
+function viaIdentifierSources(via: unknown): (string | string[] | undefined)[] {
+  if (!Array.isArray(via)) return []
+  return via.flatMap((item) => {
+    if (typeof item === 'string') return [item]
+    if (!item || typeof item !== 'object') return []
+    const record = item as Record<string, unknown>
+    return [
+      Array.isArray(record.cves)
+        ? record.cves.filter((value): value is string => typeof value === 'string')
+        : undefined,
+      typeof record.url === 'string' ? record.url : undefined,
+      typeof record.title === 'string' ? record.title : undefined,
+    ]
+  })
+}
+
+function collapseAdvisories(advisories: ParsedAdvisory[]): ParsedAdvisory[] {
+  const collapsed = new Map<string, ParsedAdvisory>()
+  for (const advisory of advisories) {
+    const existing = collapsed.get(advisory.packageName)
+    if (!existing) {
+      collapsed.set(advisory.packageName, {
+        packageName: advisory.packageName,
+        severity: advisory.severity,
+        cves: unique(advisory.cves),
+        topLevelParents: unique(advisory.topLevelParents),
+      })
+      continue
+    }
+    const higher = severityRank(advisory.severity) > severityRank(existing.severity)
+    collapsed.set(advisory.packageName, {
+      packageName: existing.packageName,
+      severity: higher ? advisory.severity : existing.severity,
+      cves: unique(higher ? [...advisory.cves, ...existing.cves] : [...existing.cves, ...advisory.cves]),
+      topLevelParents: unique([...existing.topLevelParents, ...advisory.topLevelParents]),
+    })
+  }
+  return [...collapsed.values()]
+}
+
+function isProductionAdvisory(advisory: ParsedAdvisory, manifest: ManifestFile): boolean {
+  if (advisory.topLevelParents.length === 0) return true
+  const production = new Set(Object.keys(manifest.dependencies ?? {}))
+  const development = new Set(Object.keys(manifest.devDependencies ?? {}))
+  return advisory.topLevelParents.some((parent) => production.has(parent) || !development.has(parent))
+}
+
+function toCveIssue(advisory: ParsedAdvisory, lockfile: string): Issue {
+  const packageName = redactAuditText(advisory.packageName).slice(0, 160)
+  const classification = classifySeverity(advisory.severity)
+  const cves = unique(advisory.cves.map((identifier) => redactAuditText(identifier)).filter(Boolean))
+  const parents = unique(
+    advisory.topLevelParents.map((parent) => redactAuditText(parent).slice(0, 160)).filter(Boolean),
+  )
+  return {
+    id: 'KNOWN_CVE_IN_DEPENDENCY',
+    severity: classification.severity,
+    points: classification.points,
+    title: cveIssueTitle(packageName, classification.severity, cves),
+    message: cveIssueMessage(packageName, classification.severity, cves, parents),
+    location: {file: lockfile},
+    fix: {
+      automated: false,
+      description: `Upgrade ${packageName} to a patched version and regenerate the lockfile.`,
+    },
+  }
+}
+
+function cveIssueTitle(packageName: string, severity: Severity, cves: string[]): string {
+  if (cves.length === 0) return `${packageName} has a ${severity} vulnerability`
+  if (cves.length === 1) return `${packageName} has a ${severity} vulnerability (${cves[0]})`
+  return `${packageName} has a ${severity} vulnerability (${cves[0]} + ${cves.length - 1} more)`
+}
+
+function cveIssueMessage(packageName: string, severity: Severity, cves: string[], parents: string[]): string {
+  const identifiers = cves.length > 0 ? ` (${cves.join(', ')})` : ''
+  const via = parents.length > 0 ? ` Pulled in via ${parents.join(', ')}.` : ''
+  return `${packageName} has a ${severity} vulnerability in the production dependency tree${identifiers}.${via}`
+}
+
+function identifiersFromText(...values: (string | string[] | undefined)[]): string[] {
+  const cves: string[] = []
+  const ghsas: string[] = []
+  const seen = new Set<string>()
+  for (const value of values) {
+    const texts = (Array.isArray(value) ? value : [value]).filter((text): text is string => typeof text === 'string')
+    for (const text of texts) {
+      for (const match of text.matchAll(/CVE-\d{4}-\d+/gi)) {
+        const identifier = match[0].toUpperCase()
+        if (!seen.has(identifier)) {
+          seen.add(identifier)
+          cves.push(identifier)
+        }
+      }
+      for (const match of text.matchAll(/GHSA-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+/gi)) {
+        if (!seen.has(match[0])) {
+          seen.add(match[0])
+          ghsas.push(match[0])
+        }
+      }
+    }
+  }
+  return cves.length > 0 ? cves : ghsas
+}
+
+function topLevelParentFromPath(path: string): string | undefined {
+  return path
+    .split('>')
+    .map((part) => part.trim())
+    .find((part) => part.length > 0 && part !== '.')
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values)]
+}
+
+function severityRank(value: string): number {
+  switch (value.toLowerCase()) {
+    case 'critical':
+      return 4
+    case 'high':
+      return 3
+    case 'moderate':
+    case 'medium':
+      return 2
+    case 'low':
+      return 1
+    case 'info':
+      return 0
+    default:
+      return 2
+  }
 }
 
 function classifySeverity(value: string): {severity: Severity; points: number} {
@@ -403,10 +592,19 @@ async function removeAuditSandbox(root: string): Promise<void> {
   }
 }
 
+function productionAuditFlags(selection: AuditSelection): string[] {
+  if (selection.command === 'npm') return ['--omit=dev']
+  if (selection.command === 'pnpm') return ['--prod']
+  if (selection.outputFormat === 'yarn-classic') return ['--groups', 'dependencies']
+  if (selection.outputFormat === 'yarn-berry') return ['--environment', 'production']
+  return []
+}
+
 function auditArguments(selection: AuditSelection, userConfigPath: string): string[] {
   if (selection.command === 'npm')
     return [
       ...selection.args,
+      ...productionAuditFlags(selection),
       '--ignore-scripts',
       `--registry=${TRUSTED_REGISTRY}`,
       `--userconfig=${userConfigPath}`,
@@ -415,6 +613,7 @@ function auditArguments(selection: AuditSelection, userConfigPath: string): stri
   if (selection.command === 'pnpm')
     return [
       ...selection.args,
+      ...productionAuditFlags(selection),
       '--config.ignore-scripts=true',
       `--config.registry=${TRUSTED_REGISTRY}`,
       `--config.userconfig=${userConfigPath}`,
@@ -423,6 +622,7 @@ function auditArguments(selection: AuditSelection, userConfigPath: string): stri
   if (selection.outputFormat === 'yarn-classic')
     return [
       ...selection.args,
+      ...productionAuditFlags(selection),
       '--ignore-scripts',
       '--no-default-rc',
       '--non-interactive',
@@ -430,7 +630,7 @@ function auditArguments(selection: AuditSelection, userConfigPath: string): stri
       '--registry',
       TRUSTED_REGISTRY,
     ]
-  return selection.args
+  return [...selection.args, ...productionAuditFlags(selection)]
 }
 
 function auditEnvironment(appRoot: string, sandbox: AuditSandbox): Record<string, string | undefined> {

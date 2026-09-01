@@ -260,6 +260,10 @@ describe('dependency audit selection and output handling', () => {
         const result = await auditKnownCves(directory, [manifest], async (command, args, options) => {
           expect(command).toBe(expectedCommand)
           expect(args.slice(0, expectedArgs.length)).toEqual(expectedArgs)
+          if (command === 'npm') expect(args).toContain('--omit=dev')
+          if (command === 'pnpm') expect(args).toContain('--prod')
+          if (command === 'yarn') expect(args.slice(2, 4)).toEqual(['--groups', 'dependencies'])
+          if (command === 'corepack') expect(args.slice(-2)).toEqual(['--environment', 'production'])
           expect(options.cwd).not.toBe(directory)
           expect(options.env).not.toHaveProperty('NODE_AUTH_TOKEN')
           expect(options.env.NPM_CONFIG_REGISTRY).toBe('https://registry.npmjs.org/')
@@ -322,7 +326,7 @@ describe('dependency audit selection and output handling', () => {
       const result = await auditKnownCves(directory, [manifest], async (command, args, options) => {
         sandboxPath = options.cwd
         expect(command).toBe('corepack')
-        expect(args).toEqual(['yarn@4.1.0', 'npm', 'audit', '--all', '--json'])
+        expect(args).toEqual(['yarn@4.1.0', 'npm', 'audit', '--all', '--json', '--environment', 'production'])
         expect(relative(directory, options.cwd).startsWith('..')).toBe(true)
         expect(options.env.PATH).not.toContain(directory)
         await expect(readFile(join(options.cwd, 'yarn.lock'), 'utf8')).resolves.toBe('# exact selected lock bytes\n')
@@ -373,19 +377,19 @@ describe('dependency audit selection and output handling', () => {
         JSON.stringify({advisories: {'1': {module_name: 'pnpm-package', severity: 'moderate'}}}),
         'pnpm',
       ),
-    ).toEqual([{packageName: 'pnpm-package', severity: 'moderate'}])
+    ).toEqual([{packageName: 'pnpm-package', severity: 'moderate', cves: [], topLevelParents: []}])
     expect(
       parseAuditOutput(
         JSON.stringify({children: {one: {ident: 'berry-package', severity: 'critical', children: {}}}}),
         'yarn-berry',
       ),
-    ).toEqual([{packageName: 'berry-package', severity: 'critical'}])
+    ).toEqual([{packageName: 'berry-package', severity: 'critical', cves: [], topLevelParents: []}])
     expect(
       parseAuditOutput(
         JSON.stringify({value: 'tree-package', children: {Issue: 'advisory', Severity: 'high'}}),
         'yarn-berry',
       ),
-    ).toEqual([{packageName: 'tree-package', severity: 'high'}])
+    ).toEqual([{packageName: 'tree-package', severity: 'high', cves: [], topLevelParents: []}])
     expect(parseAuditOutput(JSON.stringify({error: {code: 'ENETUNREACH'}}), 'npm')).toBeNull()
 
     const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-severity-'))
@@ -421,6 +425,166 @@ describe('dependency audit selection and output handling', () => {
         exitCode: 1,
       }))
       expect(operational.unresolvedReason).toMatch(/operationally/)
+    } finally {
+      await rm(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('collapses same-package advisories and puts CVE identity in the default title', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-collapse-'))
+    try {
+      await writeFile(join(directory, 'package-lock.json'), '{}')
+      const manifest: ManifestFile = {
+        path: 'package.json',
+        absolutePath: join(directory, 'package.json'),
+        type: 'npm',
+        dependencies: {lodash: '4.17.23'},
+      }
+      const result = await auditKnownCves(directory, [manifest], async () => ({
+        stdout: JSON.stringify({
+          vulnerabilities: {
+            lodash: {
+              severity: 'high',
+              via: [
+                {
+                  title: 'lodash template injection',
+                  url: 'https://github.com/advisories/GHSA-r5fr-rjxr-66jc',
+                  cves: ['CVE-2026-4800'],
+                  severity: 'high',
+                },
+                {
+                  title: 'lodash prototype pollution',
+                  url: 'https://github.com/advisories/GHSA-f23m-r3pf-42rh',
+                  cves: ['CVE-2026-2950'],
+                  severity: 'moderate',
+                },
+              ],
+            },
+          },
+        }),
+        stderr: '',
+        exitCode: 1,
+      }))
+      expect(result.unresolvedReason).toBeUndefined()
+      expect(result.issues).toHaveLength(1)
+      expect(result.issues[0]).toMatchObject({
+        id: 'KNOWN_CVE_IN_DEPENDENCY',
+        severity: 'high',
+        points: -20,
+        title: 'lodash has a high vulnerability (CVE-2026-4800 + 1 more)',
+        location: {file: 'package-lock.json'},
+      })
+      expect(result.issues[0]?.message).toContain('CVE-2026-4800')
+      expect(result.issues[0]?.message).toContain('CVE-2026-2950')
+    } finally {
+      await rm(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('drops dev-only lockfile hits, collapses remaining packages, and treats zero production vulns as clean', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-prod-'))
+    try {
+      await writeFile(join(directory, 'pnpm-lock.yaml'), 'lockfileVersion: 9')
+      const manifest: ManifestFile = {
+        path: 'package.json',
+        absolutePath: join(directory, 'package.json'),
+        type: 'npm',
+        packageManager: 'pnpm@10.0.0',
+        dependencies: {prisma: '^6.16.3'},
+        devDependencies: {
+          '@typescript-eslint/eslint-plugin': '^6.21.0',
+          '@shopify/api-codegen-preset': '^2.0.0',
+        },
+      }
+      const pnpmReport = {
+        advisories: {
+          '1113465': {
+            module_name: 'minimatch',
+            severity: 'high',
+            cves: ['CVE-2026-26996'],
+            url: 'https://github.com/advisories/GHSA-3ppc-4f35-3m26',
+            findings: [
+              {
+                paths: ['.>@typescript-eslint/eslint-plugin>@typescript-eslint/typescript-estree>minimatch'],
+              },
+            ],
+          },
+          '1113544': {
+            module_name: 'minimatch',
+            severity: 'high',
+            cves: ['CVE-2026-27903'],
+            findings: [
+              {
+                paths: ['.>@typescript-eslint/eslint-plugin>@typescript-eslint/typescript-estree>minimatch'],
+              },
+            ],
+          },
+          '1113552': {
+            module_name: 'minimatch',
+            severity: 'high',
+            cves: ['CVE-2026-27904'],
+            findings: [
+              {
+                paths: ['.>@typescript-eslint/eslint-plugin>@typescript-eslint/typescript-estree>minimatch'],
+              },
+            ],
+          },
+          '1115806': {
+            module_name: 'lodash',
+            severity: 'high',
+            cves: ['CVE-2026-4800'],
+            findings: [
+              {
+                paths: ['.>@shopify/api-codegen-preset>@graphql-codegen/cli>lodash'],
+              },
+            ],
+          },
+          '1115810': {
+            module_name: 'lodash',
+            severity: 'moderate',
+            cves: ['CVE-2026-2950'],
+            findings: [
+              {
+                paths: ['.>@shopify/api-codegen-preset>@graphql-codegen/cli>lodash'],
+              },
+            ],
+          },
+          '1145093': {
+            module_name: 'deepmerge-ts',
+            severity: 'high',
+            cves: ['CVE-2026-40345'],
+            findings: [{paths: ['.>prisma>@prisma/config>deepmerge-ts']}],
+          },
+        },
+      }
+      const result = await auditKnownCves(directory, [manifest], async (command, args) => {
+        expect(command).toBe('pnpm')
+        expect(args).toContain('--prod')
+        return {stdout: JSON.stringify(pnpmReport), stderr: '', exitCode: 1}
+      })
+      expect(result.unresolvedReason).toBeUndefined()
+      expect(result.issues).toHaveLength(1)
+      expect(result.issues[0]).toMatchObject({
+        id: 'KNOWN_CVE_IN_DEPENDENCY',
+        severity: 'high',
+        points: -20,
+        title: 'deepmerge-ts has a high vulnerability (CVE-2026-40345)',
+        location: {file: 'pnpm-lock.yaml'},
+      })
+      expect(result.issues[0]?.message).toContain('Pulled in via prisma')
+
+      const clean = await auditKnownCves(directory, [manifest], async () => ({
+        stdout: JSON.stringify({
+          advisories: {
+            '1113465': pnpmReport.advisories['1113465'],
+            '1115806': pnpmReport.advisories['1115806'],
+          },
+        }),
+        stderr: '',
+        exitCode: 1,
+      }))
+      expect(clean.unresolvedReason).toBeUndefined()
+      expect(clean.issues).toEqual([])
     } finally {
       await rm(directory, {recursive: true, force: true})
     }
