@@ -56,7 +56,6 @@
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
-    "@iarna/toml": "2.2.5",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "4.8.3",
     "@shopify/cli-kit": "4.7.0",
@@ -70,7 +69,6 @@
     "csv-parse": "7.0.2",
     "diff": "5.2.2",
     "esbuild": "0.28.1",
-    "fast-glob": "3.3.3",
     "graphql-request": "6.1.0",
     "h3": "1.15.11",
     "http-proxy-node16": "1.0.6",

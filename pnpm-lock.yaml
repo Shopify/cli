@@ -167,9 +167,6 @@ importers:
       '@graphql-typed-document-node/core':
         specifier: 3.2.0
         version: 3.2.0(graphql@16.14.2)
-      '@iarna/toml':
-        specifier: 2.2.5
-        version: 2.2.5
       '@luckycatfactory/esbuild-graphql-loader':
         specifier: 3.8.1
         version: 3.8.1(esbuild@0.28.1)(graphql-tag@2.12.7(graphql@16.14.2))(graphql@16.14.2)
@@ -209,9 +206,6 @@ importers:
       esbuild:
         specifier: 0.28.1
         version: 0.28.1
-      fast-glob:
-        specifier: 3.3.3
-        version: 3.3.3
       graphql-request:
         specifier: 6.1.0
         version: 6.1.0(graphql@16.14.2)

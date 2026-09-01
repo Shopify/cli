@@ -1,7 +1,6 @@
-import fg from 'fast-glob'
-import {parse as parseToml} from '@iarna/toml'
-import {fileExistsSync, fileSizeSync, readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, fileSizeSync, globSync, readFileSync} from '@shopify/cli-kit/node/fs'
 import {cwd, dirname, extname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {lstatSync} from 'node:fs'
 import type {SourceCandidate} from '../types.js'
 import type {AppTomlContent, ExtensionInfo, SourceFile, ManifestFile, WebhookSubscription} from '../rules/types.js'
@@ -19,9 +18,10 @@ export function findAppRoot(startPath?: string): string {
   if (!lstatSync(directory).isDirectory()) throw new Error(`App path is not a directory: ${startPath ?? directory}`)
 
   while (true) {
-    const tomls = fg.sync('shopify.app*.toml', {
+    const tomls = globSync('shopify.app*.toml', {
       cwd: directory,
       deep: 1,
+      dot: false,
       onlyFiles: false,
       followSymbolicLinks: false,
     })
@@ -39,9 +39,10 @@ export function findAppRoot(startPath?: string): string {
  * Find and parse all shopify.app.*.toml files in the app root.
  */
 export function findAppTomls(appRoot: string): AppTomlContent[] {
-  const files = fg.sync('shopify.app*.toml', {
+  const files = globSync('shopify.app*.toml', {
     cwd: appRoot,
     deep: 1,
+    dot: false,
     onlyFiles: false,
     followSymbolicLinks: false,
   })
@@ -51,7 +52,7 @@ export function findAppTomls(appRoot: string): AppTomlContent[] {
     const content = readRepositoryText(appRoot, path)
     if (content === undefined) return []
     try {
-      const raw = parseToml(content) as Record<string, unknown>
+      const raw = decodeToml(content) as Record<string, unknown>
       return [parseAppToml(raw, path, content)]
       // Invalid repository TOML is a coverage gap, not a scanner crash.
       // eslint-disable-next-line no-catch-all/no-catch-all
@@ -73,7 +74,7 @@ export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppT
   const content = readRepositoryText(appRoot, tomlPath)
   if (content === undefined) return null
   try {
-    const raw = parseToml(content) as Record<string, unknown>
+    const raw = decodeToml(content) as Record<string, unknown>
     return parseAppToml(raw, tomlPath, content)
     // Invalid repository TOML is a coverage gap, not a scanner crash.
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -187,14 +188,14 @@ function normalizePath(path: string): string {
 function findNestedAppDirectories(appRoot: string): string[] {
   return [
     ...new Set(
-      fg
-        .sync('**/shopify.app*.toml', {
-          followSymbolicLinks: false,
-          cwd: appRoot,
-          ignore: IGNORED_DIRECTORIES,
-          absolute: false,
-          onlyFiles: false,
-        })
+      globSync('**/shopify.app*.toml', {
+        followSymbolicLinks: false,
+        cwd: appRoot,
+        ignore: IGNORED_DIRECTORIES,
+        absolute: false,
+        dot: false,
+        onlyFiles: false,
+      })
         .map((path) => normalizePath(dirname(path)))
         .filter((path) => path !== '.' && path.length > 0),
     ),
@@ -211,11 +212,12 @@ function discoveryIgnores(directory: string, projectRoot: string): string[] {
 
 /** Find all theme app extensions and their files. */
 export function findExtensions(appRoot: string): ExtensionInfo[] {
-  const extensionTomls = fg.sync('**/shopify.extension.toml', {
+  const extensionTomls = globSync('**/shopify.extension.toml', {
     followSymbolicLinks: false,
     cwd: appRoot,
     ignore: discoveryIgnores(appRoot, appRoot),
     absolute: false,
+    dot: false,
     onlyFiles: false,
   })
 
@@ -225,7 +227,7 @@ export function findExtensions(appRoot: string): ExtensionInfo[] {
     if (content === undefined) return []
 
     try {
-      const raw = parseToml(content) as Record<string, unknown>
+      const raw = decodeToml(content) as Record<string, unknown>
       const type = raw.type as string
       const extDir = joinPath(appRoot, tomlPath, '..')
       const files = findSourceFiles(extDir, appRoot)
@@ -370,12 +372,13 @@ const SOURCE_LANGUAGES = {
 
 /** A path-only inventory; non-secret deterministic checks never open unsupported source. */
 export function findSourceCandidates(dir: string, projectRoot = dir): SourceCandidate[] {
-  const paths = fg.sync(
+  const paths = globSync(
     Object.keys(SOURCE_LANGUAGES).map((extension) => `**/*${extension}`),
     {
       cwd: dir,
       ignore: discoveryIgnores(dir, projectRoot),
       absolute: false,
+      dot: false,
       followSymbolicLinks: false,
       onlyFiles: false,
     },
@@ -401,10 +404,11 @@ function findSourceFiles(dir: string, projectRoot = dir): SourceFile[] {
     .filter(([, language]) => language.supported)
     .map(([extension]) => `**/*${extension}`)
 
-  const files = fg.sync(patterns, {
+  const files = globSync(patterns, {
     cwd: dir,
     ignore: discoveryIgnores(dir, projectRoot),
     absolute: false,
+    dot: false,
     // Don't follow directory symlinks; a link to a large shared tree would inflate the scan.
     followSymbolicLinks: false,
     onlyFiles: false,
@@ -486,10 +490,11 @@ export function findSensitiveFiles(appRoot: string): SourceFile[] {
   ]
   const paths = [
     ...new Set(
-      fg.sync(patterns, {
+      globSync(patterns, {
         cwd: appRoot,
         ignore: discoveryIgnores(appRoot, appRoot),
         absolute: false,
+        dot: false,
         followSymbolicLinks: false,
         onlyFiles: false,
       }),
@@ -509,11 +514,12 @@ export function findSensitiveFiles(appRoot: string): SourceFile[] {
 
 /** Find JavaScript package manifests. Dependency analysis intentionally supports JavaScript only. */
 export function findManifestPaths(appRoot: string): string[] {
-  const paths = fg.sync(['**/package.json'], {
+  const paths = globSync(['**/package.json'], {
     followSymbolicLinks: false,
     cwd: appRoot,
     ignore: discoveryIgnores(appRoot, appRoot),
     absolute: false,
+    dot: false,
     onlyFiles: false,
   })
   return [...new Set(paths)].sort()
