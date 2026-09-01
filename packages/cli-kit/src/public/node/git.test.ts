@@ -546,4 +546,13 @@ describe('removeGitRemote()', () => {
     expect(mockedExeca).toHaveBeenCalledWith('git', ['remote'], {cwd: directory})
     expect(mockedExeca).not.toHaveBeenCalledWith('git', ['remote', 'remove', remoteName], {cwd: directory})
   })
+
+  test('throws an error if remote name starts with a hyphen', async () => {
+    const directory = '/test/directory'
+
+    await expect(git.removeGitRemote(directory, '-invalid-remote')).rejects.toThrowError(
+      /Invalid remote name: -invalid-remote. Remote names can't start with a hyphen./,
+    )
+    expect(mockedExeca).not.toHaveBeenCalled()
+  })
 })
