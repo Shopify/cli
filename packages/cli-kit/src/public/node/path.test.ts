@@ -131,6 +131,14 @@ describe('sniffForJson', () => {
   test('returns false if neither is present', () => {
     expect(sniffForJson(['node', 'script.js', '--other-flag'])).toBe(false)
   })
+
+  test.each(['--json', '-j'])('returns false if %s is a passthrough argument', (jsonFlag) => {
+    expect(sniffForJson(['node', 'script.js', '--', jsonFlag])).toBe(false)
+  })
+
+  test('does not treat clustered short flags as JSON output', () => {
+    expect(sniffForJson(['node', 'script.js', '-vj'])).toBe(false)
+  })
 })
 
 describe('sanitizeRelativePath', () => {

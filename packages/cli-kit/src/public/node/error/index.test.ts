@@ -1,14 +1,23 @@
-import {AbortError, BugError, handler, cleanSingleStackTracePath, shouldReportErrorAsUnexpected} from './error.js'
-import {renderFatalError} from './ui.js'
+import {AbortError, BugError, handler, cleanSingleStackTracePath, shouldReportErrorAsUnexpected} from '../error.js'
+import {jsonOutputEnabled} from '../environment.js'
+import {renderFatalError} from '../ui.js'
+import {mockAndCaptureOutput} from '../testing/output.js'
 import {ClientError} from 'graphql-request'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 function clientError(status: number, code?: string): ClientError {
   const errors = code ? [{message: 'boom', extensions: {code}}] : undefined
   return new ClientError({status, errors, headers: {}} as any, {query: 'q'} as any)
 }
 
-vi.mock('./ui.js')
+vi.mock('../ui.js')
+vi.mock('../environment.js')
+
+beforeEach(() => {
+  vi.mocked(jsonOutputEnabled).mockReturnValue(false)
+  vi.mocked(renderFatalError).mockClear()
+  mockAndCaptureOutput().clear()
+})
 
 describe('handler', () => {
   test('error output uses same input error instance when the error type is abort', async () => {
@@ -46,6 +55,18 @@ describe('handler', () => {
     // Then
     expect(renderFatalError).toHaveBeenCalledWith(expect.objectContaining({type: expect.any(Number)}))
     expect(unknownError).not.contains({type: expect.any(Number)})
+  })
+
+  test('renders one JSON document instead of a banner when JSON output is enabled', async () => {
+    const output = mockAndCaptureOutput()
+    vi.mocked(jsonOutputEnabled).mockReturnValue(true)
+
+    await handler(new AbortError('Expected failure', 'Try again'))
+
+    expect(JSON.parse(output.info())).toStrictEqual({
+      error: {type: 'abort', message: 'Expected failure', tryMessage: 'Try again'},
+    })
+    expect(renderFatalError).not.toHaveBeenCalled()
   })
 })
 
