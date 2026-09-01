@@ -17,6 +17,9 @@ import type {
 } from '../types.js'
 
 const SHA256 = /^sha256:[0-9a-f]{64}$/
+const MAX_TRACE_VALIDATION_NODES = 500_000
+const MAX_TRACE_VALIDATION_DEPTH = 100
+const TRACE_COMPLEXITY_ERROR = 'trace is cyclic or exceeds validation complexity limits'
 const SEVERITIES = new Set<Severity>(['high', 'medium', 'low'])
 const EXECUTION_STATUSES = new Set<CheckExecutionStatus>([
   'executed',
@@ -242,7 +245,12 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
   }
   const trace: TraceV2 = {...unsigned, attestation: {digest: sha256(unsigned), signed: false}}
   const validation = validateTraceValue(trace)
-  if (!validation.valid) throw new Error(`App Doctor produced an invalid trace: ${validation.errors.join('; ')}`)
+  if (!validation.valid) {
+    // Self-compiled traces are acyclic. A complexity miss on a large app must
+    // still write a local trace; inbound validateTrace keeps the same cap.
+    const complexityOnly = validation.errors.length === 1 && validation.errors[0] === TRACE_COMPLEXITY_ERROR
+    if (!complexityOnly) throw new Error(`App Doctor produced an invalid trace: ${validation.errors.join('; ')}`)
+  }
   return trace
 }
 
@@ -387,7 +395,9 @@ const inspectUnknownValue = (root: unknown): {containsSecret: boolean; unsafe: b
   let visited = 0
   while (stack.length > 0) {
     const {value, depth} = stack.pop()!
-    if (++visited > 50_000 || depth > 100) return {containsSecret, unsafe: true}
+    if (++visited > MAX_TRACE_VALIDATION_NODES || depth > MAX_TRACE_VALIDATION_DEPTH) {
+      return {containsSecret, unsafe: true}
+    }
     if (typeof value === 'string') {
       if (redactText(value) !== value) containsSecret = true
       continue
@@ -395,8 +405,17 @@ const inspectUnknownValue = (root: unknown): {containsSecret: boolean; unsafe: b
     if (value === null || typeof value !== 'object') continue
     if (seen.has(value)) continue
     seen.add(value)
-    for (const item of Array.isArray(value) ? value : Object.entries(value).flat())
-      stack.push({value: item, depth: depth + 1})
+    if (Array.isArray(value)) {
+      for (const item of value) stack.push({value: item, depth: depth + 1})
+      continue
+    }
+    // Scan keys for leaked secrets without counting them as graph nodes.
+    // Walking Object.entries().flat() treated every input_hashes path as a
+    // nested visit and rejected large-but-valid apps as "cyclic".
+    for (const [key, child] of Object.entries(value)) {
+      if (redactText(key) !== key) containsSecret = true
+      stack.push({value: child, depth: depth + 1})
+    }
   }
   return {containsSecret, unsafe: false}
 }
@@ -608,7 +627,7 @@ function validateTraceValue(value: unknown): TraceValidationResult {
   const errors: string[] = []
   if (!isObject(value)) return {valid: false, errors: ['trace must be an object']}
   const inspection = inspectUnknownValue(value)
-  if (inspection.unsafe) return {valid: false, errors: ['trace is cyclic or exceeds validation complexity limits']}
+  if (inspection.unsafe) return {valid: false, errors: [TRACE_COMPLEXITY_ERROR]}
   if (!isTraceSchemaVersionSupported(value.schema_version))
     errors.push(`unsupported schema_version: ${String(value.schema_version)}`)
   if (

@@ -268,6 +268,28 @@ describe('git status drives severity, not .gitignore text', () => {
 })
 
 describe('secret evidence coverage', () => {
+  test('does not flag the public client_id in shopify.app.toml', async () => {
+    const dir = makeApp({
+      'app.js': `const client_id = "${HEX32}";\n`,
+    })
+    writeFileSync(
+      join(dir, 'shopify.app.toml'),
+      `name = "t"\nclient_id = "${HEX32}"\napi_secret = "${PROBES.shopifySecret}"\n`,
+    )
+    writeFileSync(join(dir, 'shopify.app.staging.toml'), `name = "s"\nclient_id = "${HEX32}"\n`)
+    const result = await scan(dir)
+    const secrets = result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')
+    expect(
+      secrets.some((issue) => issue.location.file === 'shopify.app.toml' && issue.title.includes('Shopify API key')),
+    ).toBe(false)
+    expect(secrets.some((issue) => issue.location.file === 'shopify.app.staging.toml')).toBe(false)
+    expect(secrets.some((issue) => issue.location.file === 'app.js')).toBe(true)
+    expect(
+      secrets.some((issue) => issue.location.file === 'shopify.app.toml' && issue.title.includes('Shopify API secret')),
+    ).toBe(true)
+    rmSync(dir, {recursive: true, force: true})
+  })
+
   test('scans common repository text formats and unsupported source languages', async () => {
     const files = {
       'README.md': PROBES.awsAccessKey,

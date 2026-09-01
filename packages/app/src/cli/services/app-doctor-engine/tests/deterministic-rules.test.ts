@@ -176,11 +176,14 @@ describe('package-manager audit', () => {
         type: 'npm',
         dependencies: {},
       }
-      const success = await auditKnownCves(directory, [manifest], async (command, args) => {
+      const success = await auditKnownCves(directory, [manifest], async (command, args, options) => {
         expect(command).toBe('npm')
         expect(args.slice(0, 2)).toEqual(['audit', '--json'])
         expect(args).toContain('--ignore-scripts')
         expect(args).toContain('--registry=https://registry.npmjs.org/')
+        expect(options.env.NPM_CONFIG_USERCONFIG).toBeTruthy()
+        expect(options.env.NPM_CONFIG_GLOBALCONFIG).toBeTruthy()
+        expect(options.env.NPM_CONFIG_USERCONFIG).not.toBe(options.env.NPM_CONFIG_GLOBALCONFIG)
         return {stdout: JSON.stringify({vulnerabilities: {lodash: {severity: 'high'}}}), stderr: '', exitCode: 1}
       })
       expect(success.issues.map((finding) => finding.id)).toEqual(['KNOWN_CVE_IN_DEPENDENCY'])

@@ -295,6 +295,7 @@ interface AuditSandbox {
   temporaryDirectory: string
   cache: string
   userConfigPath: string
+  globalConfigPath: string
 }
 
 function isWithin(root: string, path: string): boolean {
@@ -356,6 +357,7 @@ async function createAuditSandbox(
     const temporaryDirectory = joinPath(root, 'tmp')
     const cache = joinPath(root, 'cache')
     const userConfigPath = joinPath(root, 'empty-user-config')
+    const globalConfigPath = joinPath(root, 'empty-global-config')
     await Promise.all([
       mkdir(workspace, {mode: 0o700}),
       mkdir(home, {mode: 0o700}),
@@ -374,13 +376,14 @@ async function createAuditSandbox(
       writeFile(joinPath(workspace, 'package.json'), packageJson, {mode: 0o600}),
       writeFile(joinPath(workspace, lockfile), lockfileContent, {mode: 0o600}),
       writeFile(userConfigPath, '', {mode: 0o600}),
+      writeFile(globalConfigPath, '', {mode: 0o600}),
       writeFile(
         joinPath(workspace, '.app-doctor-yarnrc.yml'),
         `enableScripts: false\nenableTelemetry: false\nnpmRegistryServer: "${TRUSTED_REGISTRY}"\n`,
         {mode: 0o600},
       ),
     ])
-    return {root, workspace, home, temporaryDirectory, cache, userConfigPath}
+    return {root, workspace, home, temporaryDirectory, cache, userConfigPath, globalConfigPath}
   } catch (error) {
     // Never strand a partially initialized sandbox after a filesystem failure.
     await removeAuditSandbox(root)
@@ -447,7 +450,7 @@ function auditEnvironment(appRoot: string, sandbox: AuditSandbox): Record<string
     NO_COLOR: '1',
     FORCE_COLOR: '0',
     NPM_CONFIG_USERCONFIG: sandbox.userConfigPath,
-    NPM_CONFIG_GLOBALCONFIG: sandbox.userConfigPath,
+    NPM_CONFIG_GLOBALCONFIG: sandbox.globalConfigPath,
     NPM_CONFIG_REGISTRY: TRUSTED_REGISTRY,
     NPM_CONFIG_IGNORE_SCRIPTS: 'true',
     NPM_CONFIG_FUND: 'false',

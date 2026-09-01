@@ -425,6 +425,29 @@ describe('dependency audit selection and output handling', () => {
       await rm(directory, {recursive: true, force: true})
     }
   })
+
+  test('real npm audit does not fail by double-loading the isolated config', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-npm-'))
+    try {
+      await Promise.all([
+        writeFile(
+          join(directory, 'package.json'),
+          JSON.stringify({name: 'app-doctor-audit-npm', version: '0.0.0', private: true}),
+        ),
+        writeFile(join(directory, 'package-lock.json'), JSON.stringify({lockfileVersion: 3, packages: {}})),
+      ])
+      const manifest: ManifestFile = {
+        path: 'package.json',
+        absolutePath: join(directory, 'package.json'),
+        type: 'npm',
+        dependencies: {},
+      }
+      const result = await auditKnownCves(directory, [manifest])
+      expect(result.unresolvedReason ?? '').not.toMatch(/double-loading/i)
+    } finally {
+      await rm(directory, {recursive: true, force: true})
+    }
+  }, 20_000)
 })
 
 describe('Liquid public AST analysis', () => {

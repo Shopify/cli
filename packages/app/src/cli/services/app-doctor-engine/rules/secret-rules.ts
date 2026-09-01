@@ -132,6 +132,13 @@ export function redactText(text: string): string {
 
 const ENV_FILE_PATTERN = /(^|\/)\.env(?:\.[^/]+)?$/
 const NAMED_SECRET_FILE_PATTERN = /(^|\/)(?:\.env\.(?:secrets|keys)|(?:secrets|credentials)\.json)$/
+const SHOPIFY_APP_TOML = /(^|\/)shopify\.app(?:\.[^/]+)?\.toml$/
+
+/** `client_id` in shopify.app.toml is the public app client ID the CLI writes. */
+function isPublicAppTomlClientId(filePath: string, pattern: SecretPattern): boolean {
+  return pattern.name === 'Shopify API key' && SHOPIFY_APP_TOML.test(filePath)
+}
+
 const SECRET_ASSIGNMENT_PATTERN =
   /(?:api[_-]?key|api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_KEY|SHOPIFY_API_SECRET)\s*[:=]\s*(?:"[^"\r\n]+"|'[^'\r\n]+'|[^\s#'"\r\n][^#\r\n]*)/i
 
@@ -194,6 +201,7 @@ export async function scanCommittedSecrets(secretEvidenceFiles: SourceFile[], ap
       for (const pattern of SECRET_PATTERNS) {
         // Patterns are non-global so `.test()` has no lastIndex state to leak
         // between iterations. Do not add the /g flag here.
+        if (isPublicAppTomlClientId(file.path, pattern)) continue
         if (!pattern.regex.test(line)) continue
         issues.push({
           id: 'COMMITTED_SECRET',

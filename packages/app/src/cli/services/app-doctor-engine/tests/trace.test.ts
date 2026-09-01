@@ -148,6 +148,19 @@ describe('trace v2', () => {
     ).toMatch(/actor/)
   })
 
+  test('compiles a large-app input_hashes map instead of rejecting it as cyclic', () => {
+    const scanResult = result()
+    const fileHashes: Record<string, string> = {}
+    for (let index = 0; index < 25_000; index++) {
+      fileHashes[`app/generated-${index}.ts`] = `sha256:${'ab'.repeat(32)}`
+    }
+    scanResult.scan.file_hashes = fileHashes
+    scanResult.scan.files_scanned = 25_000
+    const trace = compileTrace(scanResult, {generatedAt: '2026-08-28T00:00:00.000Z'})
+    expect(validateTrace(trace).valid).toBe(true)
+    expect(Object.keys(trace.project.input_hashes)).toHaveLength(25_000)
+  })
+
   test('never throws on cyclic or excessively deep unknown input', () => {
     const cyclic: Record<string, unknown> = {}
     cyclic.self = cyclic
