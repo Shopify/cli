@@ -34,7 +34,6 @@ interface DoctorAlert {
 }
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
-const COVERAGE_INCOMPLETE_HEADLINE = 'Coverage incomplete — agent investigation required.'
 
 function isJsonObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -83,7 +82,6 @@ function doctorAlertType(input: DoctorReportInput): DoctorAlertType {
   if (input.findings && input.findings.rejected.length > 0) return 'error'
   if (input.scan.issues.some((issue) => issue.severity === 'high')) return 'error'
   if (input.scan.issues.length > 0) return 'warning'
-  if (!input.scan.scan.coverage_complete) return 'warning'
   return 'success'
 }
 
@@ -94,7 +92,6 @@ function doctorHeadline(input: DoctorReportInput): string {
 
   const count = input.scan.issues.length
   if (count > 0) return `${count} security ${count === 1 ? 'issue' : 'issues'} found.`
-  if (!input.scan.scan.coverage_complete) return COVERAGE_INCOMPLETE_HEADLINE
   return 'No security issues found.'
 }
 
@@ -105,10 +102,6 @@ function doctorBody(input: DoctorReportInput): TokenItem {
     {char: '.'},
     `${scan.scan.files_scanned} files scanned in ${formatElapsed(input.elapsedMilliseconds)}.`,
   ]
-
-  if (!scan.scan.coverage_complete && doctorHeadline(input) !== COVERAGE_INCOMPLETE_HEADLINE) {
-    tokens.push({warn: `\n${COVERAGE_INCOMPLETE_HEADLINE}`})
-  }
 
   const notApplicable = scan.scan.checks_executed.filter((execution) => execution.status === 'not_applicable').length
   if (notApplicable > 0) {
