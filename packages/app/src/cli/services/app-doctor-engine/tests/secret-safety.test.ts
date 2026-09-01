@@ -12,7 +12,7 @@ import {execFileSync} from 'node:child_process'
  * suite and the eval gate passed cleanly:
  *
  *   1. The secret scanner printed detected AWS keys verbatim into the console
- *      AND into app-doctor-trace.json — the artifact developers are told to
+ *      AND into .shopify/app-doctor/trace.json — the artifact developers are told to
  *      submit to Shopify. Detection patterns and redaction patterns were two
  *      independent lists, and they drifted.
  *

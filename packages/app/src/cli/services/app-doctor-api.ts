@@ -6,18 +6,17 @@ import {
   loadChecks,
   mergeFindings,
   scan,
+  searchBoundaryFiles,
   validateAgentChecksExecuted,
 } from './app-doctor-engine/index.js'
 import {computeResultHash} from './app-doctor-engine/scorer/index.js'
 import {findAppRoot} from './app-doctor-engine/scanners/discover.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileSize, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileSize, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import type {CheckExecution, ScanResult, Severity, Suppression} from './app-doctor-engine/types.js'
 import type {AgentFindingsDocument} from './app-doctor-engine/checks/index.js'
 
-const REVIEW_FILENAME = 'app-doctor-review.json'
-const TRACE_FILENAME = 'app-doctor-trace.json'
 const MAX_FINDINGS_FILE_SIZE_BYTES = 5_000_000
 
 export interface AppDoctorEngineMetadata {
@@ -46,6 +45,7 @@ export interface AppDoctorRunResult {
   findings?: {
     accepted: number
     rejected: string[]
+    warnings: string[]
   }
 }
 
@@ -106,16 +106,18 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
   const result = await scan(appRoot)
   const elapsedMilliseconds = Date.now() - startTime
   const engineVersion = getEngineVersion()
-  const reviewPath = joinPath(appRoot, REVIEW_FILENAME)
-  const tracePath = joinPath(appRoot, TRACE_FILENAME)
+  const artifactDirectory = joinPath(appRoot, '.shopify', 'app-doctor')
+  const reviewPath = joinPath(artifactDirectory, 'review.json')
+  const tracePath = joinPath(artifactDirectory, 'trace.json')
   let rejected: string[] = []
+  let warnings: string[] = []
   let accepted = 0
   let agentChecksExecuted: CheckExecution[] = []
   let suppressions: Suppression[] = []
 
   if (options.findingsPath) {
     const document = await loadFindings(options.findingsPath)
-    const knownFiles = new Set(Object.keys(result.scan.file_hashes ?? {}))
+    const knownFiles = new Set(searchBoundaryFiles(result))
     const executed = validateAgentChecksExecuted(document, {detection: result.detection, knownFiles})
     const merged = mergeFindings(result.issues, document.findings, {
       knownFiles,
@@ -127,6 +129,7 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
     })
     accepted = merged.accepted
     rejected = [...executed.rejected, ...merged.rejected]
+    warnings = executed.warnings
     const checks = loadChecks()
     const knownCheckIds = new Set(checks.keys())
     const rejectedCheckIds = new Set(
@@ -187,6 +190,7 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
   }
 
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted, suppressions})
+  await mkdir(artifactDirectory)
   await writeFile(tracePath, `${JSON.stringify(trace, null, 2)}\n`)
 
   let reviewCheckCount: number | undefined
@@ -207,6 +211,6 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
     elapsedMilliseconds,
     tracePath,
     jsonReport: options.findingsPath ? trace : JSON.parse(formatJson(result)),
-    ...(options.findingsPath ? {findings: {accepted, rejected}} : {reviewPath, reviewCheckCount}),
+    ...(options.findingsPath ? {findings: {accepted, rejected, warnings}} : {reviewPath, reviewCheckCount}),
   }
 }

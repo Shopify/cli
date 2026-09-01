@@ -4,6 +4,7 @@ export {
   buildReviewPack,
   loadChecks,
   mergeFindings,
+  searchBoundaryFiles,
   validateFinding,
   validateAgentChecksExecuted,
 } from './checks/index.js'

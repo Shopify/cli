@@ -122,6 +122,17 @@ Rules:
 - An unsupported or unresolved check didn't pass. Never describe it as passing or complete.
 - Don't report things you couldn't confirm — uncertainty is not a finding.`
 
+/** Files the review pack tells an agent it may inspect, and that compile will accept. */
+export function searchBoundaryFiles(scanResult: ScanResult): string[] {
+  return [
+    ...new Set([
+      ...Object.keys(scanResult.scan.file_hashes ?? {}),
+      ...(scanResult.scan.files_skipped ?? []).map((file) => file.path),
+      ...scanResult.detection.languages.flatMap((language) => language.files),
+    ]),
+  ].sort()
+}
+
 /**
  * Build the review pack — the prompts for the developer's agent.
  * No candidates, no scan output. The agent explores independently.
@@ -136,15 +147,7 @@ export const buildReviewPack = (doctorVersion: string, scanResult?: ScanResult):
         execution.id === check.id &&
         (execution.status === 'unsupported_framework' || execution.status === 'unresolved'),
     )
-    const searchBoundaryFiles = scanResult
-      ? [
-          ...new Set([
-            ...Object.keys(scanResult.scan.file_hashes ?? {}),
-            ...(scanResult.scan.files_skipped ?? []).map((file) => file.path),
-            ...scanResult.detection.languages.flatMap((language) => language.files),
-          ]),
-        ].sort()
-      : []
+    const searchBoundary = scanResult ? searchBoundaryFiles(scanResult) : []
     const inspectedFiles = deterministicExecution?.inspected_files ?? []
     return {
       id: check.id,
@@ -162,8 +165,8 @@ export const buildReviewPack = (doctorVersion: string, scanResult?: ScanResult):
               surface: scanResult.detection.surface,
               languages: scanResult.detection.languages,
               inspected_files: inspectedFiles,
-              uninspected_files: searchBoundaryFiles.filter((file) => !inspectedFiles.includes(file)),
-              search_boundary_files: searchBoundaryFiles,
+              uninspected_files: searchBoundary.filter((file) => !inspectedFiles.includes(file)),
+              search_boundary_files: searchBoundary,
               reason: deterministicExecution.reason,
               guidance: deterministicExecution.guidance,
             },
@@ -409,13 +412,14 @@ interface ValidateAgentExecutionOptions {
 export function validateAgentChecksExecuted(
   document: AgentFindingsDocument,
   options: ValidateAgentExecutionOptions,
-): {executions: CheckExecution[]; rejected: string[]} {
+): {executions: CheckExecution[]; rejected: string[]; warnings: string[]} {
   const checks = loadChecks()
   const rejected: string[] = []
+  const warnings: string[] = []
   const seen = new Set<string>()
   const executions: CheckExecution[] = []
   if (document.checks_executed !== undefined && !Array.isArray(document.checks_executed))
-    return {executions, rejected: ['checks_executed must be an array']}
+    return {executions, rejected: ['checks_executed must be an array'], warnings}
   for (const claimed of document.checks_executed ?? []) {
     if (!claimed || typeof claimed !== 'object') {
       rejected.push('executed check must be an object')
@@ -450,18 +454,25 @@ export function validateAgentChecksExecuted(
       rejected.push(`${claimed.check_id}: inspected_files must be an array of strings`)
       continue
     }
-    const inspectedFiles = [...new Set(claimed.inspected_files ?? [])]
+    const claimedInspectedFiles = [...new Set(claimed.inspected_files ?? [])]
       .map((path) => redactText(path.replace(/\\/g, '/')))
       .sort()
-    if (status === 'executed' && inspectedFiles.length === 0) {
-      rejected.push(`${claimed.check_id}: executed source check requires inspected_files`)
+    const unsafeFile = claimedInspectedFiles.find((path) => !isSafeRelativePath(path))
+    if (unsafeFile) {
+      rejected.push(`${claimed.check_id}: unsafe inspected file path: ${unsafeFile}`)
       continue
     }
-    const unsafeFile = inspectedFiles.find(
-      (path) => !isSafeRelativePath(path) || (options.knownFiles && !options.knownFiles.has(path)),
-    )
-    if (unsafeFile) {
-      rejected.push(`${claimed.check_id}: inspected file was not part of the scanned inputs: ${unsafeFile}`)
+    const unknownInspectedFiles = options.knownFiles
+      ? claimedInspectedFiles.filter((path) => !options.knownFiles!.has(path))
+      : []
+    const inspectedFiles = options.knownFiles
+      ? claimedInspectedFiles.filter((path) => options.knownFiles!.has(path))
+      : claimedInspectedFiles
+    for (const path of unknownInspectedFiles) {
+      warnings.push(`${claimed.check_id}: ignored inspected file outside the scanned inputs: ${path}`)
+    }
+    if (status === 'executed' && inspectedFiles.length === 0) {
+      rejected.push(`${claimed.check_id}: executed source check requires inspected_files`)
       continue
     }
     if (
@@ -514,5 +525,5 @@ export function validateAgentChecksExecuted(
       ...(claimed.reason ? {reason: claimed.reason} : {}),
     })
   }
-  return {executions, rejected}
+  return {executions, rejected, warnings}
 }

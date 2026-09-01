@@ -47,8 +47,8 @@ const engineResult: AppDoctorRunResult = {
   },
   exitCode: 0,
   elapsedMilliseconds: 12,
-  tracePath: '/tmp/unlinked-app/app-doctor-trace.json',
-  reviewPath: '/tmp/unlinked-app/app-doctor-review.json',
+  tracePath: '/tmp/unlinked-app/.shopify/app-doctor/trace.json',
+  reviewPath: '/tmp/unlinked-app/.shopify/app-doctor/review.json',
   reviewCheckCount: 31,
   jsonReport: {schema_version: 1, findings: []},
 }

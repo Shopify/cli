@@ -22,6 +22,7 @@ export interface DoctorReportInput {
   findings?: {
     accepted: number
     rejected: string[]
+    warnings?: string[]
   }
 }
 
@@ -105,16 +106,8 @@ function doctorBody(input: DoctorReportInput): TokenItem {
     `${scan.scan.files_scanned} files scanned in ${formatElapsed(input.elapsedMilliseconds)}.`,
   ]
 
-  if (scan.scan.coverage_complete && scan.score) {
-    tokens.push(`Score: ${scan.score.total} / 100 ${formatGrade(scan.score.grade)}.`)
-  } else {
-    tokens.push('Score is not available.')
-    if (doctorHeadline(input) !== COVERAGE_INCOMPLETE_HEADLINE) {
-      tokens.push({warn: `\n${COVERAGE_INCOMPLETE_HEADLINE}`})
-    }
-    if (isUnsupportedBackend(scan)) {
-      tokens.push({info: '\nUnsupported backend: agent tier only.'})
-    }
+  if (!scan.scan.coverage_complete && doctorHeadline(input) !== COVERAGE_INCOMPLETE_HEADLINE) {
+    tokens.push({warn: `\n${COVERAGE_INCOMPLETE_HEADLINE}`})
   }
 
   const notApplicable = scan.scan.checks_executed.filter((execution) => execution.status === 'not_applicable').length
@@ -135,7 +128,7 @@ function doctorNextSteps(): TokenItem<InlineToken>[] {
   return [
     [
       'Investigate the review pack, then compile the trace with',
-      {command: 'shopify app doctor --findings <findings.json>'},
+      {command: 'shopify app doctor --findings .shopify/app-doctor/findings.json'},
     ],
   ]
 }
@@ -163,8 +156,11 @@ function doctorCustomSections(input: DoctorReportInput): AlertCustomSection[] {
 
   if (input.findings) {
     const items: TokenItem<InlineToken>[] = [
-      `Merged ${input.findings.accepted} agent finding(s) into the trace.`,
+      input.findings.accepted === 0 && input.findings.rejected.length > 0
+        ? 'No agent findings were merged.'
+        : `Merged ${input.findings.accepted} agent finding(s) into the trace.`,
       ...input.findings.rejected.map((reason) => ({error: `Rejected: ${redactText(reason)}`})),
+      ...(input.findings.warnings ?? []).map((reason) => ({warn: redactText(reason)})),
       ['Trace written to', {filePath: input.tracePath}],
     ]
     sections.push({title: 'Agent findings', body: {list: {items}}})
@@ -238,26 +234,11 @@ function groupIssuesBySeverity(issues: Issue[]): {severity: Severity; issues: Is
   return groups
 }
 
-function isUnsupportedBackend(scan: ScanResult): boolean {
-  return (
-    scan.detection.surface === 'unknown' ||
-    scan.detection.framework === 'unknown' ||
-    scan.detection.framework === 'mixed'
-  )
-}
-
 function formatCapabilities(capabilities: Capabilities): string {
   const active = Object.entries(capabilities)
     .filter(([, enabled]) => enabled)
     .map(([name]) => name)
   return active.length > 0 ? active.join(', ') : 'none detected'
-}
-
-function formatGrade(grade: NonNullable<ScanResult['score']>['grade']): string {
-  return grade
-    .replaceAll('_', ' ')
-    .toLowerCase()
-    .replace(/^./, (character) => character.toUpperCase())
 }
 
 function formatElapsed(elapsedMilliseconds: number): string {

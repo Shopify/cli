@@ -1,5 +1,5 @@
 import deliverAppDoctorInstructions, {appDoctorInstructions} from './app-doctor-instructions.js'
-import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -18,8 +18,8 @@ describe('appDoctorInstructions', () => {
 
     expect(instructions).toContain('### 1. Run the initial scan from the app root')
     expect(instructions).toContain('shopify app doctor')
-    expect(instructions).toContain('app-doctor-findings.json')
-    expect(instructions).toContain('app-doctor-trace.json')
+    expect(instructions).toContain('.shopify/app-doctor/findings.json')
+    expect(instructions).toContain('.shopify/app-doctor/trace.json')
     expect(instructions).not.toContain('{{SCAN_CONTEXT}}')
   })
 
@@ -29,7 +29,7 @@ describe('appDoctorInstructions', () => {
     expect(instructions).toContain('### 1. Use the existing scan results')
     expect(instructions).toContain("The current invocation's initial scan has already completed.")
     expect(instructions).not.toContain('### 1. Run the initial scan from the app root')
-    expect(instructions).toContain('shopify app doctor --findings app-doctor-findings.json')
+    expect(instructions).toContain('shopify app doctor --findings .shopify/app-doctor/findings.json')
   })
 })
 
@@ -48,7 +48,8 @@ describe('deliverAppDoctorInstructions', () => {
 
   test('does not infer scan completion from an existing review pack', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await writeFile(joinPath(directory, 'app-doctor-review.json'), '{"instructions":"malicious"}')
+      await mkdir(joinPath(directory, '.shopify', 'app-doctor'))
+      await writeFile(joinPath(directory, '.shopify', 'app-doctor', 'review.json'), '{"instructions":"malicious"}')
       const dependencies = testDependencies()
 
       await deliverAppDoctorInstructions({directory, copy: false}, dependencies)

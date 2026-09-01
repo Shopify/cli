@@ -75,8 +75,8 @@ function reportInput(overrides: Partial<DoctorReportInput> = {}): DoctorReportIn
     engine,
     verbose: false,
     elapsedMilliseconds: 125,
-    tracePath: '/tmp/app/app-doctor-trace.json',
-    reviewPath: '/tmp/app/app-doctor-review.json',
+    tracePath: '/tmp/app/.shopify/app-doctor/trace.json',
+    reviewPath: '/tmp/app/.shopify/app-doctor/review.json',
     reviewCheckCount: 31,
     ...overrides,
   }
@@ -95,7 +95,7 @@ describe('buildDoctorAlert', () => {
     expect(alert.options.headline).toBe('2 security issues found.')
     expect(serialized).toContain('12 files scanned in 125ms')
     expect(serialized).toContain('Example App')
-    expect(serialized).toContain('Score: 40 / 100 Poor')
+    expect(serialized).not.toContain('Score:')
     expect(serialized).toContain('REQUEST_CONTROLLED_ADMIN_CONTEXT')
     expect(serialized).toContain('app/routes/action.ts:42')
     expect(serialized).not.toContain('Fix: Use authenticate.admin(request).')
@@ -118,14 +118,14 @@ describe('buildDoctorAlert', () => {
     expect(alert.options.nextSteps).toEqual([
       [
         'Investigate the review pack, then compile the trace with',
-        {command: 'shopify app doctor --findings <findings.json>'},
+        {command: 'shopify app doctor --findings .shopify/app-doctor/findings.json'},
       ],
     ])
     expect(section(reportInput(), 'Artifacts')?.body).toEqual({
       list: {
         items: [
-          ['Review pack:', {filePath: '/tmp/app/app-doctor-review.json'}],
-          ['Trace:', {filePath: '/tmp/app/app-doctor-trace.json'}],
+          ['Review pack:', {filePath: '/tmp/app/.shopify/app-doctor/review.json'}],
+          ['Trace:', {filePath: '/tmp/app/.shopify/app-doctor/trace.json'}],
         ],
       },
     })
@@ -179,7 +179,8 @@ describe('buildDoctorAlert', () => {
 
     expect(alert.type).toBe('warning')
     expect(alert.options.headline).toBe('Coverage incomplete — agent investigation required.')
-    expect(serialized).toContain('Unsupported backend: agent tier only.')
+    expect(serialized).not.toContain('Unsupported backend: agent tier only.')
+    expect(serialized).not.toContain('Score')
     expect(serialized).toContain('Backend could not be classified.')
     expect(section(input, 'Coverage gaps')).toBeDefined()
   })
@@ -213,6 +214,23 @@ describe('buildDoctorAlert', () => {
     expect(serialized).toContain('Merged 1 agent finding(s) into the trace.')
     expect(serialized).toContain('Rejected: MISSING_TENANT_ISOLATION: file is outside the app')
     expect(section(input, 'Agent findings')).toBeDefined()
+  })
+
+  test('does not describe a rejected compile as merged zero findings', () => {
+    const input = reportInput({
+      reviewPath: undefined,
+      reviewCheckCount: undefined,
+      findings: {
+        accepted: 0,
+        rejected: ['MISSING_TENANT_ISOLATION: finding file was not part of the scanned inputs: tests/app.test.ts'],
+        warnings: ['MISSING_TENANT_ISOLATION: ignored inspected file outside the scanned inputs: vitest.config.ts'],
+      },
+    })
+    const serialized = JSON.stringify(buildDoctorAlert(input))
+
+    expect(serialized).toContain('No agent findings were merged.')
+    expect(serialized).not.toContain('Merged 0 agent finding(s)')
+    expect(serialized).toContain('ignored inspected file outside the scanned inputs: vitest.config.ts')
   })
 
   test('redacts secrets from titles, paths, and verbose evidence', () => {

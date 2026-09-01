@@ -115,18 +115,15 @@ describe('repository discovery exclusions', () => {
     await writeFiles(root, {'shopify.app.toml': appConfiguration, 'src/index.ts': 'export const stable = true'})
     const before = await scan(root)
     await writeFiles(root, {
-      'app-doctor-review.json': '{"changed":true}',
-      'app-doctor-trace.json': '{"changed":true}',
-      'app-doctor-findings.json': '{"changed":true}',
-      '.app-doctor-review.json.0123456789abcdef.tmp': '{"temporary":true}',
-      '.app-doctor-trace.json.0123456789abcdef.tmp': '{"temporary":true}',
-      '.app-doctor-findings.json.0123456789abcdef.tmp': '{"temporary":true}',
+      '.shopify/app-doctor/review.json': '{"changed":true}',
+      '.shopify/app-doctor/trace.json': '{"changed":true}',
+      '.shopify/app-doctor/findings.json': '{"changed":true}',
     })
     const after = await scan(root)
 
     expect(after.scan.input_hash).toBe(before.scan.input_hash)
     expect(after.scan.file_hashes).toEqual(before.scan.file_hashes)
-    expect(Object.keys(after.scan.file_hashes ?? {}).some((path) => path.includes('app-doctor-'))).toBe(false)
+    expect(Object.keys(after.scan.file_hashes ?? {}).some((path) => path.includes('.shopify/app-doctor'))).toBe(false)
   })
 })
 

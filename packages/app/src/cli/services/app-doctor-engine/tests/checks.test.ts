@@ -365,4 +365,64 @@ describe('executed check validation', () => {
     expect(result.rejected.join(' ')).toMatch(/unknown/)
     expect(result.rejected.join(' ')).toMatch(/provenance/)
   })
+
+  test('keeps executed checks when inspected_files includes extra relative paths', () => {
+    const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
+    const result = validateAgentChecksExecuted(
+      {
+        findings: [],
+        checks_executed: [
+          {
+            check_id: check.id,
+            check_version: check.version,
+            prompt_hash: check.prompt_hash,
+            status: 'executed',
+            inspected_files: ['app/routes/index.ts', 'tests/app.test.ts', 'vitest.config.ts'],
+          },
+        ],
+      },
+      {
+        detection: {framework: 'react_router', surface: 'react_router', languages: []},
+        knownFiles: new Set(['app/routes/index.ts']),
+      },
+    )
+
+    expect(result.executions).toEqual([
+      expect.objectContaining({
+        id: check.id,
+        status: 'executed',
+        inspected_files: ['app/routes/index.ts'],
+      }),
+    ])
+    expect(result.rejected).toEqual([])
+    expect(result.warnings).toEqual([
+      `${check.id}: ignored inspected file outside the scanned inputs: tests/app.test.ts`,
+      `${check.id}: ignored inspected file outside the scanned inputs: vitest.config.ts`,
+    ])
+  })
+
+  test('still rejects unsafe inspected file paths', () => {
+    const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
+    const result = validateAgentChecksExecuted(
+      {
+        findings: [],
+        checks_executed: [
+          {
+            check_id: check.id,
+            check_version: check.version,
+            prompt_hash: check.prompt_hash,
+            status: 'executed',
+            inspected_files: ['../outside.ts'],
+          },
+        ],
+      },
+      {
+        detection: {framework: 'react_router', surface: 'react_router', languages: []},
+        knownFiles: new Set(['app/routes/index.ts']),
+      },
+    )
+
+    expect(result.executions).toEqual([])
+    expect(result.rejected).toEqual([`${check.id}: unsafe inspected file path: ../outside.ts`])
+  })
 })

@@ -86,6 +86,13 @@ describe('framework and surface detection', () => {
     const unknown = await scan(await app({'shopify.app.toml': appConfig(), 'server.ts': 'export const server = {}'}))
     expect(unknown.detection).toMatchObject({framework: 'unknown', surface: 'unknown'})
     expect(unknown.score).toBeNull()
+    expect(
+      unknown.scan.checks_executed.find((execution) => execution.id === 'MISSING_COMPLIANCE_WEBHOOKS'),
+    ).toMatchObject({status: 'executed'})
+    expect(unknown.issues.some((issue) => issue.id === 'MISSING_COMPLIANCE_WEBHOOKS')).toBe(true)
+    expect(
+      unknown.scan.checks_executed.find((execution) => execution.id === 'REQUEST_CONTROLLED_ADMIN_CONTEXT')?.status,
+    ).toBe('unsupported_framework')
   })
 
   test('owns expiring-token applicability and unresolved handoff at runtime', async () => {
