@@ -1,6 +1,6 @@
-/* eslint-disable no-restricted-imports, no-await-in-loop */
+/* eslint-disable no-restricted-imports */
 import {authFixture} from './auth.js'
-import {getLastPageStatus, isVisibleWithin, navigateToDashboard, refreshIfPageError} from './browser.js'
+import {getLastPageStatus, isVisibleWithin} from './browser.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import * as toml from '@iarna/toml'
 import * as path from 'path'
@@ -320,39 +320,39 @@ export async function configLink(
 }
 
 // ---------------------------------------------------------------------------
-// Dev dashboard browser actions — find and delete apps
+// Dev dashboard browser actions — delete apps
 // ---------------------------------------------------------------------------
 
-/** Search dev dashboard for an app by name. Returns the app URL or null. */
-export async function findAppOnDevDashboard(page: Page, appName: string, orgId?: string): Promise<string | null> {
-  const org = orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
+/**
+ * Load the app's settings page, clicking through the accounts.shopify.com
+ * account picker if the session bounces there — which is common when the
+ * browser context has not visited the Dev Dashboard yet.
+ */
+async function gotoAppSettings(page: Page, appUrl: string): Promise<void> {
+  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+
+  if (!isAccountsShopifyUrl(page.url())) return
+
   const email = process.env.E2E_ACCOUNT_EMAIL
-
-  await navigateToDashboard({browserPage: page, email, orgId: org})
-
-  // Scan current page + pagination for the app
-  while (true) {
-    const allLinks = await page.locator('a[href*="/apps/"]').all()
-    for (const link of allLinks) {
-      const text = (await link.textContent()) ?? ''
-      if (text.includes(appName)) {
-        const href = await link.getAttribute('href')
-        if (href) return href.startsWith('http') ? href : `https://dev.shopify.com${href}`
-      }
+  if (email) {
+    const accountButton = page.locator(`text=${email}`).first()
+    if (await isVisibleWithin(accountButton, BROWSER_TIMEOUT.long)) {
+      await accountButton.click()
+      await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     }
-
-    // Check for next page
-    const nextLink = page.locator('a[href*="next_cursor"]').first()
-    if (!(await isVisibleWithin(nextLink, BROWSER_TIMEOUT.medium))) break
-    const nextHref = await nextLink.getAttribute('href')
-    if (!nextHref) break
-    const nextUrl = nextHref.startsWith('http') ? nextHref : `https://dev.shopify.com${nextHref}`
-    await page.goto(nextUrl, {waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-    await refreshIfPageError(page)
   }
+  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+}
 
-  return null
+function isAccountsShopifyUrl(rawUrl: string): boolean {
+  try {
+    return new URL(rawUrl).hostname === 'accounts.shopify.com'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -360,13 +360,12 @@ export async function findAppOnDevDashboard(page: Page, appName: string, orgId?:
  *
  * Single attempt — caller owns the retry loop.
  *
- * Fail-fast on STILL_HAS_INSTALLS: the Delete button stays disabled while
- * installs exist, so we throw to let the caller skip instead of spinning.
+ * Throws STILL_HAS_INSTALLS when the Delete button remains disabled after a
+ * reload so the caller can apply its bounded retry policy.
  */
 export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Promise<boolean> {
   // Step 1: Navigate to the app's settings page. 404 → already deleted. 5xx → throw for retry.
-  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+  await gotoAppSettings(page, appUrl)
   const gotoStatus = getLastPageStatus(page)
   if (gotoStatus === 404) return true
   if (gotoStatus !== undefined && gotoStatus >= 500) {
@@ -377,6 +376,11 @@ export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Pro
   // Button can be below the fold, and takes ~1-2s to enable after uninstall (one reload covers propagation lag).
   // If it stays disabled after reload, installs remain — fail fast for caller.
   const deleteBtn = page.locator('button:has-text("Delete app")').first()
+  if (!(await isVisibleWithin(deleteBtn, BROWSER_TIMEOUT.long))) {
+    // Include the landed URL: the usual cause is a session bounce that the
+    // account-picker handling above did not cover.
+    throw new Error(`Delete app button not found (page: ${page.url()})`)
+  }
   await deleteBtn.scrollIntoViewIfNeeded({timeout: BROWSER_TIMEOUT.long})
   if (!(await deleteBtn.isEnabled())) {
     await page.reload({waitUntil: 'domcontentloaded'})
