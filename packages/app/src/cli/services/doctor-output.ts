@@ -25,9 +25,9 @@ export interface DoctorReportInput {
   }
 }
 
-export type DoctorAlertType = 'success' | 'warning' | 'error'
+type DoctorAlertType = 'success' | 'warning' | 'error'
 
-export interface DoctorAlert {
+interface DoctorAlert {
   type: DoctorAlertType
   options: RenderAlertOptions
 }

@@ -111,7 +111,8 @@ function stripComments(source: string): string {
 }
 
 function maskStringsExceptVersions(source: string): string {
-  return source.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`])*`/g, (literal) =>
+  // Template-literal arm uses [^`\\] so it cannot also match \\., which would ReDoS on unclosed `\\_\\_...` input.
+  return source.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`\\])*`/g, (literal) =>
     /^["']\d{4}-(?:01|04|07|10)["']$/.test(literal) ? literal : literal.replace(/[^\n]/g, ' '),
   )
 }

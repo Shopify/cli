@@ -447,14 +447,15 @@ function maskComments(source: string): string {
 }
 
 function maskStringsExceptShopKeys(source: string): string {
-  return source.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`])*`/g, (literal) =>
+  // Template-literal arm uses [^`\\] so it cannot also match \\., which would ReDoS on unclosed `\\_\\_...` input.
+  return source.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`\\])*`/g, (literal) =>
     /^["']shop(?:Domain)?["']$/.test(literal) ? literal : literal.replace(/[^\n]/g, ' '),
   )
 }
 
 /** Blank literal text while optionally retaining expressions embedded in template literals. */
 function maskCommentsAndStrings(source: string, options: {preserveTemplateExpressions?: boolean} = {}): string {
-  return maskComments(source).replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`])*`/g, (literal) => {
+  return maskComments(source).replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`\\])*`/g, (literal) => {
     if (!options.preserveTemplateExpressions || !literal.startsWith('`')) return literal.replace(/[^\n]/g, ' ')
     const original = [...literal]
     const masked: string[] = original.map((character) => (character === '\n' ? '\n' : ' '))

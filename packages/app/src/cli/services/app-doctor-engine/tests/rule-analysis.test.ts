@@ -94,6 +94,35 @@ describe('REQUEST_CONTROLLED_ADMIN_CONTEXT trust provenance', () => {
   })
 })
 
+describe('string masking', () => {
+  test('does not hang on unclosed template literals with repeated escapes', () => {
+    const poison = '`' + '\\_'.repeat(40)
+
+    expect(
+      scanRequestControlledAdminContext([
+        source(`${poison}
+export const action = async ({request}) => {
+  await unauthenticated.admin(request.query.shop);
+}`),
+      ]),
+    ).toHaveLength(1)
+    expect(scanUnsafeInnerHTML([source(`${poison}\nelement.innerHTML = payload`)])).toHaveLength(1)
+    expect(
+      scanEolApiVersions(
+        context({
+          files: [
+            source(
+              `${poison}\nexport default shopifyApp({apiVersion: ApiVersion.January24});`,
+              'app/shopify.server.mts',
+            ),
+          ],
+        }),
+        new Date('2026-08-31T00:00:00.000Z'),
+      ).map((finding) => finding.location.file),
+    ).toEqual(['app/shopify.server.mts'])
+  })
+})
+
 describe('EOL_API_VERSION quarterly lifecycle', () => {
   test('uses a 12-month window plus the documented 30-day extension grace', () => {
     expect(isEolApiVersion('2025-07', new Date('2026-07-30T00:00:00.000Z'))).toBe(false)
