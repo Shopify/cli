@@ -96,7 +96,7 @@ describe('REQUEST_CONTROLLED_ADMIN_CONTEXT trust provenance', () => {
 
 describe('string masking', () => {
   test('does not hang on unclosed template literals with repeated escapes', () => {
-    const poison = '`' + '\\_'.repeat(40)
+    const poison = `\`${'\\_'.repeat(40)}`
 
     expect(
       scanRequestControlledAdminContext([
