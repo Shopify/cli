@@ -25,7 +25,7 @@ interface ManualAuthUrlOptions {
 
 export interface StoreAuthPresenter {
   openingBrowser: () => void
-  manualAuthUrl: (authorizationUrl: string, options?: ManualAuthUrlOptions) => void
+  manualAuthUrl: (authorizationUrl: string, options?: ManualAuthUrlOptions) => boolean
   success: (result: StoreAuthResult) => void
 }
 
@@ -58,19 +58,21 @@ function carriesSignupCredential(authorizationUrl: string): boolean {
   return new URL(authorizationUrl).searchParams.has('signup')
 }
 
-function displayStoreAuthManualAuthUrl(authorizationUrl: string, options: ManualAuthUrlOptions = {}): void {
+function displayStoreAuthManualAuthUrl(authorizationUrl: string, options: ManualAuthUrlOptions = {}): boolean {
   if (options.sensitive || carriesSignupCredential(authorizationUrl)) {
     outputInfo(
       'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
     )
     outputInfo('Run this command again in an environment where Shopify CLI can open a browser automatically.')
     outputInfo('')
-    return
+    return false
   }
 
   outputInfo('Browser did not open automatically. Open this URL manually:')
   outputInfo(outputContent`${outputToken.link(authorizationUrl)}`)
   outputInfo('')
+
+  return true
 }
 
 function displayStoreAuthResult(result: StoreAuthResult, format: StoreAuthOutputFormat = 'text'): void {

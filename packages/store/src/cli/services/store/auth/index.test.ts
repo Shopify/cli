@@ -280,7 +280,7 @@ describe('store auth service', () => {
     const openURL = vi.fn().mockResolvedValue(false)
     const presenter = {
       openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
+      manualAuthUrl: vi.fn().mockReturnValue(true),
       success: vi.fn(),
     }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
@@ -317,7 +317,7 @@ describe('store auth service', () => {
     const openURL = vi.fn().mockResolvedValue(false)
     const presenter = {
       openingBrowser: vi.fn(),
-      manualAuthUrl: vi.fn(),
+      manualAuthUrl: vi.fn().mockReturnValue(true),
       success: vi.fn(),
     }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
@@ -348,6 +348,39 @@ describe('store auth service', () => {
       expect.stringContaining('http://127.0.0.1:13387/auth/handoff?nonce='),
     )
     expect(presenter.manualAuthUrl.mock.calls[0]![0]).not.toContain('signed.signup.jwt')
+  })
+
+  test('authenticateStoreWithApp fails immediately when the presenter withholds the authorization URL', async () => {
+    const openURL = vi.fn().mockResolvedValue(false)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn().mockReturnValue(false),
+      success: vi.fn(),
+    }
+    const exchangeStoreAuthCodeForToken = vi.fn()
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products',
+          signup: 'signed.signup.jwt',
+        },
+        {
+          openURL,
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken,
+          presenter,
+        },
+      ),
+    ).rejects.toThrow("Authentication can't continue without a browser.")
+
+    expect(exchangeStoreAuthCodeForToken).not.toHaveBeenCalled()
+    expect(presenter.success).not.toHaveBeenCalled()
   })
 
   test('authenticateStoreWithApp records fqdn metadata before resolving existing scopes', async () => {

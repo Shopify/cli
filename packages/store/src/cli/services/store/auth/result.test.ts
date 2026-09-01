@@ -108,9 +108,12 @@ describe('store auth presenter', () => {
     const output = mockAndCaptureOutput()
     const presenter = createStoreAuthPresenter('text')
 
-    presenter.manualAuthUrl('https://shop.myshopify.com/admin/oauth/authorize?client_id=test&secret=sensitive', {
-      sensitive: true,
-    })
+    const surfaced = presenter.manualAuthUrl(
+      'https://shop.myshopify.com/admin/oauth/authorize?client_id=test&secret=sensitive',
+      {sensitive: true},
+    )
+
+    expect(surfaced).toBe(false)
 
     expect(output.info()).toContain(
       'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
@@ -126,7 +129,11 @@ describe('store auth presenter', () => {
     const output = mockAndCaptureOutput()
     const presenter = createStoreAuthPresenter('text')
 
-    presenter.manualAuthUrl('https://shop.myshopify.com/admin/oauth/authorize?client_id=test&signup=signed.signup.jwt')
+    const surfaced = presenter.manualAuthUrl(
+      'https://shop.myshopify.com/admin/oauth/authorize?client_id=test&signup=signed.signup.jwt',
+    )
+
+    expect(surfaced).toBe(false)
 
     expect(output.info()).toContain(
       'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
@@ -139,7 +146,9 @@ describe('store auth presenter', () => {
     const output = mockAndCaptureOutput()
     const presenter = createStoreAuthPresenter('text')
 
-    presenter.manualAuthUrl('not-a-url?signup=signed.signup.jwt')
+    const surfaced = presenter.manualAuthUrl('not-a-url?signup=signed.signup.jwt')
+
+    expect(surfaced).toBe(false)
 
     expect(output.info()).toContain(
       'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
@@ -151,7 +160,9 @@ describe('store auth presenter', () => {
     const output = mockAndCaptureOutput()
     const presenter = createStoreAuthPresenter('text')
 
-    presenter.manualAuthUrl('http://127.0.0.1:13387/auth/handoff?nonce=abc123')
+    const surfaced = presenter.manualAuthUrl('http://127.0.0.1:13387/auth/handoff?nonce=abc123')
+
+    expect(surfaced).toBe(true)
 
     expect(output.info()).toContain('Browser did not open automatically. Open this URL manually:')
     expect(output.info()).toContain('http://127.0.0.1:13387/auth/handoff?nonce=abc123')
