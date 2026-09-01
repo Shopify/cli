@@ -367,9 +367,6 @@ importers:
       conf:
         specifier: 11.0.2
         version: 11.0.2
-      deepmerge:
-        specifier: 4.3.1
-        version: 4.3.1
       dotenv:
         specifier: 16.6.1
         version: 16.6.1
