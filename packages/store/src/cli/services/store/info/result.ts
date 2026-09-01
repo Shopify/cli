@@ -1,13 +1,13 @@
+import {storeInfoJsonOutputSchema, type StoreInfoResult, type StoreInfoStoreOwner} from './types.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, type InlineToken, type LinkToken} from '@shopify/cli-kit/node/ui'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
-import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
 
 type StoreInfoOutputFormat = 'text' | 'json'
 
 export function renderStoreInfoResult(result: StoreInfoResult, format: StoreInfoOutputFormat): void {
   if (format === 'json') {
-    outputResult(JSON.stringify(result, null, 2))
+    outputResult(storeInfoJsonOutputSchema.encode(result))
     return
   }
   const actions = storeActions(result)
