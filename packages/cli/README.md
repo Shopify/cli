@@ -1702,9 +1702,9 @@ DESCRIPTION
   Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle.
   Use the `shopify app logs sources` command to view a list of sources.
   Use the `--status` argument to filter on status, either `success` or `failure`.
-  ```
-  shopify app logs --status=success --source=extension.discount-function
-  ```
+    ```
+    shopify app logs --status=success --source=extension.discount-function
+    ```
 ```
 
 ## `shopify app logs sources`
@@ -4359,20 +4359,20 @@ DESCRIPTION
 
   ```json
   {
-  "theme": {
-  "id": 108267175958,
-  "name": "A Duplicated Theme",
-  "role": "unpublished",
-  "shop": "mystore.myshopify.com"
-  }
+    "theme": {
+      "id": 108267175958,
+      "name": "A Duplicated Theme",
+      "role": "unpublished",
+      "shop": "mystore.myshopify.com"
+    }
   }
   ```
 
   ```json
   {
-  "message": "The theme 'Summer Edition' could not be duplicated due to errors",
-  "errors": ["Maximum number of themes reached"],
-  "requestId": "12345-abcde-67890"
+    "message": "The theme 'Summer Edition' could not be duplicated due to errors",
+    "errors": ["Maximum number of themes reached"],
+    "requestId": "12345-abcde-67890"
   }
   ```
 ```
@@ -5117,18 +5117,18 @@ DESCRIPTION
 
   Sample output:
 
-  ```json
-  {
-  "theme": {
-  "id": 108267175958,
-  "name": "MyTheme",
-  "role": "unpublished",
-  "shop": "mystore.myshopify.com",
-  "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
-  "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
-  }
-  }
-  ```
+    ```json
+    {
+      "theme": {
+        "id": 108267175958,
+        "name": "MyTheme",
+        "role": "unpublished",
+        "shop": "mystore.myshopify.com",
+        "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+        "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+      }
+    }
+    ```
 ```
 
 ## `shopify theme rename`
