@@ -23,7 +23,7 @@ afterEach(async () => {
 })
 
 async function app(files: Record<string, string>): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), 'app-doctor-phase2-'))
+  const directory = await mkdtemp(join(tmpdir(), 'app-doctor-scan-contract-'))
   directories.push(directory)
   await Promise.all(
     Object.entries(files).map(async ([path, content]) => {
@@ -35,7 +35,7 @@ async function app(files: Record<string, string>): Promise<string> {
   return directory
 }
 
-const appConfig = (scopes = '') => `name = "Phase 2"\n[access_scopes]\nscopes = "${scopes}"\n`
+const appConfig = (scopes = '') => `name = "Scan contract"\n[access_scopes]\nscopes = "${scopes}"\n`
 const reactPackage = JSON.stringify({dependencies: {'@shopify/shopify-app-react-router': '^1.0.0'}})
 
 function resign(trace: TraceV2): void {

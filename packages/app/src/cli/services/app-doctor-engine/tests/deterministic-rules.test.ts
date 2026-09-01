@@ -41,7 +41,7 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
   content,
 })
 
-describe('Phase 3 product contract', () => {
+describe('deterministic rules product contract', () => {
   test('has exactly fourteen active executable deterministic identities', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
