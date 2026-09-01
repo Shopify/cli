@@ -1,4 +1,5 @@
 import {PreviewStoreClientOptions, PreviewStoreCreateResponse, createPreviewStore} from './client.js'
+import {type CreatePreviewStoreResult} from './types.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../../auth/config.js'
 import {recordStoreFqdnMetadata} from '../../attribution.js'
 import {setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
@@ -16,18 +17,6 @@ interface CreatePreviewStoreDependencies {
   recordStoreFqdnMetadata: typeof recordStoreFqdnMetadata
   setLastSeenUserId: typeof setLastSeenUserId
   now: () => Date
-}
-
-export interface CreatePreviewStoreResult {
-  status: 'success'
-  message: string
-  store: {
-    id: string
-    name: string
-    subdomain: string
-    country?: string
-    storefrontUrl: string
-  }
 }
 
 const defaultDependencies: CreatePreviewStoreDependencies = {
@@ -101,5 +90,14 @@ async function persistPreviewStoreSession(
       ...(country ? {country} : {}),
       storefrontUrl: response.accessUrl,
     },
+    next_steps: previewStoreNextSteps(response.shop.domain),
   }
+}
+
+function previewStoreNextSteps(store: string): string[] {
+  return [
+    `Use \`shopify store open --store ${store}\` to preview the storefront.`,
+    `Use \`shopify store execute --store ${store}\` to add products, collections, pages, and more.`,
+    `Use \`shopify theme pull --store ${store}\` and \`shopify theme push --store ${store}\` to edit your store design.`,
+  ]
 }

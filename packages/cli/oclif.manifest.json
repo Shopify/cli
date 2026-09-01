@@ -7902,7 +7902,7 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Creates a new Shopify store, with no need for an existing account.",
+      "description": "Creates a new Shopify store, with no need for an existing account.\n\nOutput from `--json` conforms to the `CreatePreviewStoreResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ninterface CreatePreviewStoreResult {\n  status: \"success\"\n  message: string\n  store: PreviewStore\n  next_steps: string[]\n}\n\ninterface PreviewStore {\n  id: string\n  name: string\n  subdomain: string\n  country?: string\n  storefrontUrl: string\n}\n```",
       "descriptionWithMarkdown": "Creates a new Shopify store, with no need for an existing account.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\"",
