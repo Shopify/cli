@@ -103,4 +103,22 @@ describe('store auth presenter', () => {
     expect(streams.stdout()).toContain('"store": "shop.myshopify.com"')
     expect(streams.stdout()).not.toContain('Authenticated')
   })
+
+  test('does not print manual auth URL output when marked sensitive', () => {
+    const output = mockAndCaptureOutput()
+    const presenter = createStoreAuthPresenter('text')
+
+    presenter.manualAuthUrl('https://shop.myshopify.com/admin/oauth/authorize?client_id=test&secret=sensitive', {
+      sensitive: true,
+    })
+
+    expect(output.info()).toContain(
+      'Browser did not open automatically. The manual authorization URL contains sensitive credentials and was not printed.',
+    )
+    expect(output.info()).toContain(
+      'Run this command again in an environment where Shopify CLI can open a browser automatically.',
+    )
+    expect(output.info()).not.toContain('secret=sensitive')
+    expect(output.info()).not.toContain('https://shop.myshopify.com/admin/oauth/authorize')
+  })
 })

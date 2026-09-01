@@ -304,8 +304,80 @@ describe('store auth service', () => {
     expect(presenter.openingBrowser).toHaveBeenCalledOnce()
     expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
       expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
+      {sensitive: false},
     )
     expect(presenter.success).toHaveBeenCalledWith(result)
+  })
+
+  test('authenticateStoreWithApp marks manual auth URL as sensitive when signup JWT is present', async () => {
+    const openURL = vi.fn().mockResolvedValue(false)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products',
+          signup: 'signed.signup.jwt',
+        },
+        {
+          openURL,
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+            access_token: 'token',
+            scope: 'read_products',
+            expires_in: 86400,
+            associated_user: {id: 42, email: 'test@example.com'},
+          }),
+          presenter,
+        },
+      ),
+    ).rejects.toThrow()
+
+    expect(presenter.manualAuthUrl).toHaveBeenCalledWith(expect.stringContaining('signup=signed.signup.jwt'), {
+      sensitive: true,
+    })
+  })
+
+  test('authenticateStoreWithApp fails immediately instead of waiting for a callback that cannot arrive', async () => {
+    const openURL = vi.fn().mockResolvedValue(false)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const exchangeStoreAuthCodeForToken = vi.fn()
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products',
+          signup: 'signed.signup.jwt',
+        },
+        {
+          openURL,
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken,
+          presenter,
+        },
+      ),
+    ).rejects.toThrow("Authentication can't continue without a browser.")
+
+    expect(exchangeStoreAuthCodeForToken).not.toHaveBeenCalled()
+    expect(presenter.success).not.toHaveBeenCalled()
   })
 
   test('authenticateStoreWithApp records fqdn metadata before resolving existing scopes', async () => {
