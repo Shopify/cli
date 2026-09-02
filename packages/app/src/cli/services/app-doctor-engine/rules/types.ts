@@ -1,7 +1,7 @@
 import type {Issue, Capabilities, ProjectDetection, Severity, SourceCandidate} from '../types.js'
 import type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../scanners/types.js'
 
-export type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile, WebhookSubscription} from '../scanners/types.js'
+export type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../scanners/types.js'
 
 export interface AuditCommandResult {
   stdout: string
