@@ -7276,7 +7276,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:create:dev",
@@ -7422,7 +7421,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:delete",
