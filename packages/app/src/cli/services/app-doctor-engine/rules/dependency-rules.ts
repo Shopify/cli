@@ -1,9 +1,11 @@
 import {readOptionalRepositoryFile} from '../scanners/discover.js'
 import {dirname, isAbsolutePath, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 // eslint-disable-next-line no-restricted-imports -- cli-kit's executor merges process.env, which violates this audit boundary.
-import {spawn} from 'node:child_process'
+import {spawn, type ChildProcess} from 'node:child_process'
 import {tmpdir} from 'node:os'
 import {lstat, mkdir, mkdtemp, rm, unlink, writeFile} from 'node:fs/promises'
+import type {Readable} from 'node:stream'
 import type {Issue, Severity} from '../types.js'
 import type {AuditCommandResult, AuditExecutor, ManifestFile} from './types.js'
 
@@ -31,27 +33,103 @@ interface ParsedAdvisory {
 }
 
 const PATH_DELIMITER = process.platform === 'win32' ? ';' : ':'
+const MAX_AUDIT_STREAM_BYTES = 1_048_576
+const PROCESS_ESCALATION_MILLISECONDS = 2_000
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+function killProcessTree(pid: number, signal: NodeJS.Signals): Promise<void> {
+  return new Promise((resolve) => {
+    treeKill(pid, signal, true, () => resolve())
+  })
+}
+
+function collectBoundedStream(stream: Readable | null, onOverflow: () => void): {text(): string} {
+  let text = ''
+  let size = 0
+  let overflowed = false
+  if (!stream) return {text: () => text}
+
+  stream.setEncoding('utf8')
+  stream.on('data', (chunk: string) => {
+    if (overflowed) return
+    const chunkSize = Buffer.byteLength(chunk)
+    if (size + chunkSize > MAX_AUDIT_STREAM_BYTES) {
+      const remaining = MAX_AUDIT_STREAM_BYTES - size
+      if (remaining > 0) text += Buffer.from(chunk, 'utf8').subarray(0, remaining).toString('utf8')
+      size = MAX_AUDIT_STREAM_BYTES
+      overflowed = true
+      onOverflow()
+      return
+    }
+    text += chunk
+    size += chunkSize
+  })
+  return {text: () => text}
+}
+
+function processHasExited(child: ChildProcess): boolean {
+  return child.exitCode !== null || child.signalCode !== null
+}
+
+function waitForProcessExit(child: ChildProcess): Promise<void> {
+  if (processHasExited(child)) return Promise.resolve()
+  return new Promise((resolve) => {
+    child.once('close', () => resolve())
+  })
+}
+
+async function terminateProcessTree(child: ChildProcess): Promise<void> {
+  if (child.pid === undefined || processHasExited(child)) return
+  await killProcessTree(child.pid, 'SIGTERM')
+  await Promise.race([delay(PROCESS_ESCALATION_MILLISECONDS), waitForProcessExit(child)])
+  if (child.pid !== undefined && !processHasExited(child)) {
+    await killProcessTree(child.pid, 'SIGKILL')
+  }
+}
+
 const defaultExecutor: AuditExecutor = (command, args, options) =>
   new Promise((resolve, reject) => {
-    // cli-kit's general executor intentionally inherits process.env. Audits require an exact environment boundary.
+    // Do not pass AbortSignal to spawn: Node would kill only the immediate child.
+    // Audits must terminate the process tree, wait for close, then resolve.
     const child = spawn(command, args, {
       cwd: options.cwd,
       env: options.env,
-      signal: options.signal,
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     })
-    let stdout = ''
-    let stderr = ''
-    child.stdout.setEncoding('utf8').on('data', (chunk: string) => {
-      stdout += chunk
+    let settled = false
+    let terminating = false
+
+    const finish = (result: AuditCommandResult) => {
+      if (settled) return
+      settled = true
+      resolve(result)
+    }
+
+    const terminate = () => {
+      if (terminating || settled) return
+      terminating = true
+      // Termination continues in the background until `close` settles the executor.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      terminateProcessTree(child)
+    }
+
+    const stdout = collectBoundedStream(child.stdout, terminate)
+    const stderr = collectBoundedStream(child.stderr, terminate)
+
+    child.once('error', (error) => {
+      if (settled) return
+      settled = true
+      reject(error)
     })
-    child.stderr.setEncoding('utf8').on('data', (chunk: string) => {
-      stderr += chunk
-    })
-    child.once('error', reject)
-    child.once('close', (exitCode) => resolve({stdout, stderr, exitCode: exitCode ?? 1}))
+    child.once('close', (exitCode) => finish({stdout: stdout.text(), stderr: stderr.text(), exitCode: exitCode ?? 1}))
+
+    if (options.signal.aborted) terminate()
+    else options.signal.addEventListener('abort', terminate, {once: true})
   })
 const TRUSTED_REGISTRY = 'https://registry.npmjs.org/'
 const LOCKFILE_MANAGERS = new Map<string, 'npm' | 'pnpm' | 'yarn'>([
@@ -109,13 +187,12 @@ export async function auditKnownCves(
   }
 
   const controller = new AbortController()
-  let timeout: ReturnType<typeof setTimeout> | undefined
   const timedOut = Symbol('audit-timeout')
-  const timeoutPromise = new Promise<typeof timedOut>((resolve) => {
-    timeout = setTimeout(() => {
-      controller.abort()
-      resolve(timedOut)
-    }, timeoutMilliseconds)
+  const escalationMilliseconds = Math.min(PROCESS_ESCALATION_MILLISECONDS, Math.max(200, timeoutMilliseconds * 5))
+  const timeout = setTimeout(() => controller.abort(), timeoutMilliseconds)
+  let hardTimeout: ReturnType<typeof setTimeout> | undefined
+  const hardStop = new Promise<typeof timedOut>((resolve) => {
+    hardTimeout = setTimeout(() => resolve(timedOut), timeoutMilliseconds + escalationMilliseconds)
   })
 
   let execution: AuditCommandResult | typeof timedOut
@@ -126,22 +203,28 @@ export async function auditKnownCves(
         signal: controller.signal,
         env: auditEnvironment(appRoot, sandbox),
       }),
-      timeoutPromise,
+      hardStop,
     ])
     // Command absence, network failures, and aborts are expected audit outcomes.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    if (controller.signal.aborted) {
+      return {issues: [], unresolvedReason: 'Dependency audit timed out.', inspectedFiles}
+    }
     return {
       issues: [],
       unresolvedReason: `Dependency audit could not run: ${redactAuditText(error instanceof Error ? error.message : String(error))}`,
       inspectedFiles,
     }
   } finally {
-    if (timeout) clearTimeout(timeout)
+    clearTimeout(timeout)
+    clearTimeout(hardTimeout)
     await removeAuditSandbox(sandbox.root)
   }
 
-  if (execution === timedOut) return {issues: [], unresolvedReason: 'Dependency audit timed out.', inspectedFiles}
+  if (execution === timedOut || controller.signal.aborted) {
+    return {issues: [], unresolvedReason: 'Dependency audit timed out.', inspectedFiles}
+  }
 
   const parsed = parseAuditOutput(execution.stdout, selection.outputFormat)
   if (!parsed) {
@@ -580,16 +663,28 @@ async function createAuditSandbox(
   }
 }
 
-async function removeAuditSandbox(root: string): Promise<void> {
+async function tryRemoveAuditSandbox(root: string): Promise<boolean> {
   try {
     const stats = await lstat(root)
     if (stats.isSymbolicLink() || !stats.isDirectory()) await unlink(root)
     else await rm(root, {recursive: true, force: true})
+    return true
     // Cleanup is best-effort and must not hide an audit result.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    // The unique private directory is already absent or became unverifiable.
+    return false
   }
+}
+
+async function removeAuditSandbox(root: string): Promise<void> {
+  if (await tryRemoveAuditSandbox(root)) return
+  if (process.platform !== 'win32') return
+  await delay(50)
+  if (await tryRemoveAuditSandbox(root)) return
+  await delay(150)
+  if (await tryRemoveAuditSandbox(root)) return
+  await delay(400)
+  await tryRemoveAuditSandbox(root)
 }
 
 function productionAuditFlags(selection: AuditSelection): string[] {
