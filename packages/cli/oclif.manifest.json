@@ -7188,6 +7188,12 @@
       "description": "Creates a new development store in your organization.",
       "descriptionWithMarkdown": "Creates a new development store in your organization.",
       "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic --with-demo-data",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic --json"
+      ],
       "flags": {
         "country": {
           "description": "Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.",
