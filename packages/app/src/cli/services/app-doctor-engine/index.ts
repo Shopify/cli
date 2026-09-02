@@ -1,5 +1,9 @@
 export {scan, DETERMINISTIC_CHECKS, DETERMINISTIC_RULES} from './scanners/index.js'
 export type {DeterministicCheckDefinition} from './scanners/index.js'
+export {AppRootDiscoveryError, findAppRoot} from './scanners/discover.js'
+export {computeResultHash} from './scorer/index.js'
+export {redactText} from './rules/secret-rules.js'
+export {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './checks/embedded.js'
 export {
   buildReviewPack,
   loadChecks,
@@ -19,6 +23,7 @@ export {
   isTraceSchemaVersionSupported,
   canonicalJson,
   findingFingerprint,
+  redactIssue,
   sha256,
 } from './trace/index.js'
 export type {CompileTraceOptions, TraceValidationResult} from './trace/index.js'

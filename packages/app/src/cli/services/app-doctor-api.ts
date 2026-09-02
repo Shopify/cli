@@ -1,6 +1,9 @@
 import {
+  AppRootDiscoveryError,
   buildReviewPack,
   compileTrace,
+  computeResultHash,
+  findAppRoot,
   formatJson,
   getEngineVersion,
   loadChecks,
@@ -8,14 +11,15 @@ import {
   scan,
   searchBoundaryFiles,
   validateAgentChecksExecuted,
+  type AgentFindingsDocument,
+  type CheckExecution,
+  type ScanResult,
+  type Severity,
+  type Suppression,
 } from './app-doctor-engine/index.js'
-import {computeResultHash} from './app-doctor-engine/scorer/index.js'
-import {AppRootDiscoveryError, findAppRoot} from './app-doctor-engine/scanners/discover.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import type {CheckExecution, ScanResult, Severity, Suppression} from './app-doctor-engine/types.js'
-import type {AgentFindingsDocument} from './app-doctor-engine/checks/index.js'
 
 const MAX_FINDINGS_FILE_SIZE_BYTES = 5_000_000
 

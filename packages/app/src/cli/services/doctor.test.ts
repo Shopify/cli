@@ -2,7 +2,7 @@ import doctor, {appDoctorInstructionsPrompt} from './doctor.js'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
 import type {AppDoctorInstructionsDestination} from './doctor.js'
-import type {ScanResult} from './app-doctor-engine/types.js'
+import type {ScanResult} from './app-doctor-engine/index.js'
 
 const scan: ScanResult = {
   version: '0.1.0',

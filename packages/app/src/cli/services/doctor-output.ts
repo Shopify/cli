@@ -1,8 +1,13 @@
-import {sortIssues} from './app-doctor-engine/output/format.js'
-import {redactText} from './app-doctor-engine/rules/secret-rules.js'
-import {redactIssue} from './app-doctor-engine/trace/index.js'
+import {
+  redactIssue,
+  redactText,
+  sortIssues,
+  type Capabilities,
+  type Issue,
+  type ScanResult,
+  type Severity,
+} from './app-doctor-engine/index.js'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import type {Capabilities, Issue, ScanResult, Severity} from './app-doctor-engine/types.js'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
 interface DoctorEngineMetadata {

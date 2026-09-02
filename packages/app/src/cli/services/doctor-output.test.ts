@@ -1,7 +1,7 @@
 import {buildDoctorAlert, formatDoctorJson} from './doctor-output.js'
 import {describe, expect, test} from 'vitest'
 import type {DoctorReportInput} from './doctor-output.js'
-import type {ScanResult} from './app-doctor-engine/types.js'
+import type {ScanResult} from './app-doctor-engine/index.js'
 
 const engine = {
   name: 'shopify-app-doctor',

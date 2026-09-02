@@ -1,5 +1,5 @@
 import {resolveAppDoctorRoot} from './app-doctor-api.js'
-import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/checks/embedded.js'
+import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/index.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
