@@ -33,8 +33,8 @@ import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
 import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {sha256} from '@shopify/cli-kit/node/crypto'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
-import {createHash} from 'node:crypto'
 import type {AuditExecutor} from '../rules/dependency-rules.js'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {SourceFile} from './types.js'
@@ -675,7 +675,7 @@ export async function scan(
   const fileHashMap: Record<string, string> = {}
   for (const file of [...sourceFiles, ...sensitiveFiles])
     if (file.content !== undefined)
-      fileHashMap[redactText(file.path)] = `sha256:${createHash('sha256').update(file.content).digest('hex')}`
+      fileHashMap[redactText(file.path)] = contentDigest(file.content)
   const auditedLockfiles =
     checksExecuted
       .find((execution) => execution.id === 'KNOWN_CVE_IN_DEPENDENCY')
@@ -697,7 +697,7 @@ export async function scan(
     if (content !== undefined) {
       const relativeFilePath = relativePath(appRoot, absolutePath)
       const path = redactText(relativeFilePath.length > 0 ? relativeFilePath : basename(absolutePath))
-      fileHashMap[path] ??= `sha256:${createHash('sha256').update(content).digest('hex')}`
+      fileHashMap[path] ??= contentDigest(content)
     }
 
   const skippedFiles = [
@@ -760,4 +760,9 @@ export async function scan(
     scan: scanMetadata,
     issues,
   }
+}
+
+function contentDigest(content: string | Buffer): string {
+  const value = typeof content === 'string' ? content : content.toString('utf8')
+  return `sha256:${sha256(value).toString('hex')}`
 }

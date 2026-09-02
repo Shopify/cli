@@ -1,6 +1,6 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
 import {redactText} from '../rules/secret-rules.js'
-import {createHash} from 'node:crypto'
+import {sha256} from '@shopify/cli-kit/node/crypto'
 import type {
   CheckExecution,
   CheckExecutionReason,
@@ -72,7 +72,7 @@ export const loadChecks = (): Map<string, Check> => {
       tier: 'agentic',
       severity: isSeverity(meta.severity) ? meta.severity : 'medium',
       prompt: body,
-      prompt_hash: `sha256:${createHash('sha256').update(body).digest('hex')}`,
+      prompt_hash: `sha256:${sha256(body).toString('hex')}`,
     })
   }
   return checks

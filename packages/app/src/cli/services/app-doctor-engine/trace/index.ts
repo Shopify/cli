@@ -1,7 +1,7 @@
 import {ENGINE_NAME, SUPPORTED_TRACE_SCHEMA_VERSIONS, TRACE_SCHEMA_VERSION} from '../types.js'
 import {loadChecks} from '../checks/index.js'
 import {redactText} from '../rules/secret-rules.js'
-import {createHash} from 'node:crypto'
+import {sha256 as sha256Buffer} from '@shopify/cli-kit/node/crypto'
 import type {
   AnalysisMode,
   CheckExecution,
@@ -56,7 +56,7 @@ export function canonicalJson(value: unknown): string {
 
 export function sha256(value: unknown): string {
   const input = typeof value === 'string' ? value : canonicalJson(value)
-  return `sha256:${createHash('sha256').update(input).digest('hex')}`
+  return `sha256:${sha256Buffer(input).toString('hex')}`
 }
 
 const safeLocation = (location: Location): Location => ({
