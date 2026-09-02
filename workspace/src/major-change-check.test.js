@@ -17,7 +17,13 @@ import {mkdtemp, rm, writeFile, mkdir} from 'node:fs/promises'
 import os from 'node:os'
 import * as path from 'pathe'
 
-import {checkChangesets, extractSchemaFields, resolveContext, stripStringsAndComments} from './major-change-check.js'
+import {
+  checkChangesets,
+  extractManifestSurface,
+  extractSchemaFields,
+  resolveContext,
+  stripStringsAndComments,
+} from './major-change-check.js'
 
 test('extracts top-level keys from a flat .object({...})', () => {
   const src = `
@@ -269,4 +275,57 @@ test('resolveContext: no GITHUB_BASE_REF falls back to scanning main (local invo
   assert.equal(ctx.baselineRef, 'main')
   assert.equal(ctx.changedFiles, null)
   assert.equal(called, false, 'must not shell out to git when no base ref is known')
+})
+
+test('manifest surface omits hidden commands and their flags', () => {
+  const surface = extractManifestSurface({
+    commands: {
+      'app:dev': {flags: {store: {type: 'option'}}},
+      'store:create:dev': {hidden: true, flags: {'with-demo-data': {type: 'boolean'}}},
+    },
+  })
+
+  assert.deepEqual(Object.keys(surface.commands), ['app:dev'])
+  assert.equal(surface.commands['store:create:dev'], undefined)
+})
+
+test('manifest surface omits env vars used only by hidden commands', () => {
+  const surface = extractManifestSurface({
+    commands: {
+      'store:create:dev': {
+        hidden: true,
+        flags: {'with-demo-data': {type: 'boolean', env: 'SHOPIFY_FLAG_STORE_WITH_DEMO_DATA'}},
+      },
+    },
+  })
+
+  assert.deepEqual(surface.envVars, {})
+})
+
+test('manifest surface keeps an env var shared with a visible command', () => {
+  // Only the hidden command drops out; the visible command keeps the env var
+  // under watch, so removing it there is still reported.
+  const surface = extractManifestSurface({
+    commands: {
+      'app:dev': {flags: {store: {type: 'option', env: 'SHOPIFY_FLAG_STORE'}}},
+      'store:create:dev': {hidden: true, flags: {store: {type: 'option', env: 'SHOPIFY_FLAG_STORE'}}},
+    },
+  })
+
+  assert.deepEqual(surface.envVars.SHOPIFY_FLAG_STORE, [{command: 'app:dev', flag: 'store'}])
+})
+
+test('manifest surface still tracks a command that is visible in one manifest and hidden in another', () => {
+  // Reading `hidden` per manifest is what stops a PR from hiding a command and
+  // stripping its flags in one move: the baseline still lists it, so the
+  // removal surfaces.
+  const baseline = extractManifestSurface({
+    commands: {'app:dev': {flags: {store: {type: 'option'}}}},
+  })
+  const current = extractManifestSurface({
+    commands: {'app:dev': {hidden: true, flags: {}}},
+  })
+
+  assert.deepEqual(Object.keys(baseline.commands), ['app:dev'])
+  assert.deepEqual(Object.keys(current.commands), [])
 })

@@ -163,11 +163,24 @@ async function parseManifest(directory) {
   }
 }
 
-function extractManifestSurface(manifest) {
+export function extractManifestSurface(manifest) {
   const surface = {commands: {}, envVars: {}}
   if (!manifest?.commands) return surface
 
   for (const [cmdName, cmd] of Object.entries(manifest.commands)) {
+    // Hidden commands are not part of the stable command surface that
+    // CONTRIBUTING.md defines, so renaming or removing their flags is not a
+    // breaking change. Dropping them here excludes them from the removed
+    // command, flag and env var scans alike, since all three derive from this
+    // surface. An env var shared with a visible command stays tracked through
+    // that command.
+    //
+    // Hidden-ness is read from each manifest independently, on purpose: a
+    // command that was visible in the baseline and is hidden now still reports
+    // as a removed command, so a PR cannot hide a command and strip its flags
+    // in one move without being flagged.
+    if (cmd.hidden) continue
+
     const flags = {}
     if (cmd.flags) {
       for (const [flagName, flag] of Object.entries(cmd.flags)) {
