@@ -94,6 +94,13 @@ function quoteWindowsAuditArgument(value: string): string {
   return `"${value.replace(/%/g, '%%').replace(/"/g, '""')}"`
 }
 
+export function windowsCmdAuditArguments(command: string, args: string[]): string[] {
+  const commandLine = [command, ...args].map(quoteWindowsAuditArgument).join(' ')
+  // cmd /s /c strips the first and last quote of the remainder. Wrap the quoted
+  // command line so per-argument quotes survive instead of becoming `npm" "audit`.
+  return ['/d', '/s', '/c', `"${commandLine}"`]
+}
+
 function needsWindowsCmdShim(command: string): boolean {
   if (process.platform !== 'win32') return false
   if (/\.(?:exe|com)$/i.test(command)) return false
@@ -114,8 +121,7 @@ function spawnAuditProcess(
   }
   if (!needsWindowsCmdShim(command)) return spawn(command, args, spawnOptions)
 
-  const commandLine = [command, ...args].map(quoteWindowsAuditArgument).join(' ')
-  return spawn(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', commandLine], {
+  return spawn(process.env.ComSpec ?? 'cmd.exe', windowsCmdAuditArguments(command, args), {
     ...spawnOptions,
     windowsVerbatimArguments: true,
   })
