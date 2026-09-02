@@ -12,6 +12,33 @@ vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedVal
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
 
 describe('store auth service', () => {
+  test('fails before starting browser authentication when input is disabled', async () => {
+    const openURL = vi.fn()
+    const waitForStoreAuthCode = vi.fn()
+    const presenter = {openingBrowser: vi.fn(), manualAuthUrl: vi.fn(), success: vi.fn()}
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
+
+    try {
+      await expect(
+        authenticateStoreWithApp(
+          {store: 'shop.myshopify.com', scopes: 'read_products'},
+          {
+            openURL,
+            waitForStoreAuthCode,
+            getCurrentStoredStoreAppSession: vi.fn().mockReturnValue(undefined),
+            presenter,
+          },
+        ),
+      ).rejects.toThrow('Store authentication requires browser interaction, but user input is disabled.')
+
+      expect(openURL).not.toHaveBeenCalled()
+      expect(waitForStoreAuthCode).not.toHaveBeenCalled()
+      expect(presenter.openingBrowser).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
   test('authenticateStoreWithApp opens the browser, stores the session, and returns auth result', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const presenter = {

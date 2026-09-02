@@ -212,7 +212,6 @@ describe('applying environments', async () => {
     test(testName, async () => {
       testResult = {}
       testError = undefined
-
       await inTemporaryDirectory(async (tmpDir) => {
         await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML(allEnvironments as any))
         await testFunc(tmpDir)
@@ -469,6 +468,32 @@ describe('applying environments', async () => {
     },
   )
 
+  runTestInTmpDir('provides --no-input to commands through the global flags', async (tmpDir: string) => {
+    // When
+    await MockCommand.run(['--path', tmpDir, '--no-input'])
+
+    // Then
+    expect(testError).toBeUndefined()
+    expect(testResult['no-input']).toBe(true)
+  })
+
+  runTestInTmpDir('treats disabled input as non-interactive in a TTY', async (tmpDir: string) => {
+    // When
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir, '--no-input'])
+
+    // Then
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
+  })
+
+  runTestInTmpDir('supports disabling input through the environment', async (tmpDir: string) => {
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
+
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
+
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
+  })
+
   runTestInTmpDir('does not throw in TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
     // Given — simulate interactive terminal
     Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
@@ -490,6 +515,14 @@ describe('applying environments', async () => {
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
 
     // Then
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
+  })
+
+  runTestInTmpDir('treats piped stdin as non-interactive', async (tmpDir: string) => {
+    Object.defineProperty(process.stdin, 'isTTY', {value: false, configurable: true, writable: true})
+
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
+
     expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\n--nonTTYRequiredFlag')
   })
 

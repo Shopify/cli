@@ -2,6 +2,7 @@ import {evaluate, SessionItem} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 
 import {createInterface, Interface} from 'readline'
@@ -10,6 +11,10 @@ export const DELIMITER_WARNING =
   "Liquid Console doesn't support Liquid delimiters such as '{{ ... }}' or '{% ... %}'.\nPlease use 'collections.first' instead of '{{ collections.first }}'."
 
 export async function replLoop(themeSession: DevServerSession, themeId: string, url: string) {
+  if (isInputDisabled()) {
+    throw new AbortError("The theme console requires user input and can't run with `--no-input`.")
+  }
+
   if (process.stdin.isTTY) {
     // We want to indicate that we're still using stdin, so that the process
     // doesn't exit early.
