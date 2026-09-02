@@ -1,4 +1,5 @@
-import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
+import {graphqlRequest, graphqlRequestDoc, handleDeprecations, GraphQLResponse} from './graphql.js'
+import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import * as api from '../../../private/node/api.js'
 import * as debugRequest from '../../../private/node/api/graphql.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
@@ -15,6 +16,8 @@ import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} 
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {setupServer} from 'msw/node'
 import {graphql, HttpResponse} from 'msw'
+
+vi.mock('../../../private/node/context/deprecations-store.js')
 
 let mockedRequestId = 'request-id-123'
 
@@ -686,5 +689,31 @@ describe('graphqlRequest with caching', () => {
     // Then
     expect(cacheRetrieveSpy).not.toHaveBeenCalled()
     expect(retryAwareSpy).toHaveBeenCalled()
+  })
+})
+
+describe('handleDeprecations', () => {
+  test('does not call setNextDeprecationDate if response contains no deprecations', () => {
+    // Given
+    const response = {data: {}} as GraphQLResponse<object>
+
+    // When
+    handleDeprecations(response)
+
+    // Then
+    expect(setNextDeprecationDate).not.toBeCalled()
+  })
+
+  test('calls setNextDeprecationDate with response extensions deprecation dates', () => {
+    // Given
+    const deprecationDates = [new Date()]
+    const deprecations = deprecationDates.map((supportedUntilDate) => ({supportedUntilDate}))
+    const response = {data: {}, extensions: {deprecations}} as GraphQLResponse<object>
+
+    // When
+    handleDeprecations(response)
+
+    // Then
+    expect(setNextDeprecationDate).toHaveBeenLastCalledWith(deprecationDates)
   })
 })
