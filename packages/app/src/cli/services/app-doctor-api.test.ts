@@ -275,6 +275,34 @@ describe('App Doctor CLI integration', () => {
     })
   })
 
+  test('does not invent a check ID from document-level rejection messages', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const findingsPath = joinPath(directory, 'findings.json')
+      await writeFile(findingsPath, `${JSON.stringify({checks_executed: 'nope', findings: []})}\n`)
+
+      const result = await runAppDoctor({
+        directory,
+        findingsPath,
+        blocking: 'none',
+      })
+      const trace = result.jsonReport as {coverage: {gaps: {code: string; check_id?: string; message: string}[]}}
+
+      expect(result.exitCode).toBe(2)
+      expect(result.findings?.rejected).toContain('checks_executed must be an array')
+      expect(trace.coverage.gaps).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'unresolved_check',
+            message: 'Rejected agent result: checks_executed must be an array',
+          }),
+        ]),
+      )
+      expect(trace.coverage.gaps.every((gap) => gap.check_id === undefined || gap.check_id.length > 0)).toBe(true)
+      expect(trace.coverage.gaps.some((gap) => gap.check_id === 'checks_executed must be an arra')).toBe(false)
+    })
+  })
+
   test('translates a missing --path into an AbortError with a next step', async () => {
     await inTemporaryDirectory(async (directory) => {
       const missing = joinPath(directory, 'missing-app')

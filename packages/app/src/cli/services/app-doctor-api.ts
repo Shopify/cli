@@ -64,6 +64,13 @@ function shouldBlock(issues: {severity: Severity}[], blocking: AppDoctorBlocking
   return issues.some((issue) => severityRank[issue.severity] >= severityRank[blocking])
 }
 
+function checkIdFromRejection(message: string, knownCheckIds: Set<string>): string | undefined {
+  const delimiter = message.indexOf(':')
+  if (delimiter <= 0) return undefined
+  const checkId = message.slice(0, delimiter)
+  return knownCheckIds.has(checkId) ? checkId : undefined
+}
+
 async function loadFindings(path: string): Promise<FindingsDocument> {
   let content: string
   try {
@@ -144,7 +151,10 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
     const checks = loadChecks()
     const knownCheckIds = new Set(checks.keys())
     const rejectedCheckIds = new Set(
-      rejected.map((message) => message.slice(0, message.indexOf(':'))).filter((checkId) => knownCheckIds.has(checkId)),
+      rejected.flatMap((message) => {
+        const checkId = checkIdFromRejection(message, knownCheckIds)
+        return checkId ? [checkId] : []
+      }),
     )
     agentChecksExecuted = executed.executions.map((execution) =>
       rejectedCheckIds.has(execution.id)
@@ -188,10 +198,10 @@ export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoc
       result.scan.coverage_complete = false
       result.scan.coverage_gaps.push(
         ...rejected.map((message) => {
-          const checkId = message.slice(0, message.indexOf(':'))
+          const checkId = checkIdFromRejection(message, knownCheckIds)
           return {
             code: 'unresolved_check' as const,
-            ...(knownCheckIds.has(checkId) ? {check_id: checkId} : {}),
+            ...(checkId ? {check_id: checkId} : {}),
             message: `Rejected agent result: ${message}`,
           }
         }),
