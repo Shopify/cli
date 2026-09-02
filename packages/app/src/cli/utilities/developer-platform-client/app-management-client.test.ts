@@ -43,6 +43,8 @@ import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {RequestSourceScanUploadUrl} from '../../api/graphql/app-management/generated/request-source-scan-upload-url.js'
+import {CreateSourceScan} from '../../api/graphql/app-management/generated/create-source-scan.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -1413,6 +1415,61 @@ describe('AppManagementClient', () => {
       const commandRunId = calls[0]?.replace('app-one-api-key-', '')
       expect(commandRunId).toMatch(/^[\da-f-]{36}$/)
       expect(calls).toEqual([`app-one-api-key-${commandRunId}`, `app-two-api-key-${commandRunId}`])
+    })
+  })
+
+  describe('generateSourceScanUploadUrl', () => {
+    test('passes the app ID and byte size, does not cache, and maps the upload response', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        appRequestSourceScanUploadUrl: {
+          sourceScanUploadUrl: 'https://example.com/source-scan-upload',
+          userErrors: [],
+        },
+      })
+
+      const result = await client.generateSourceScanUploadUrl({
+        appId: 'gid://shopify/App/1',
+        byteSize: 1234,
+      })
+
+      expect(result).toEqual({sourceScanUploadUrl: 'https://example.com/source-scan-upload', userErrors: []})
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: RequestSourceScanUploadUrl,
+          token: 'token',
+          variables: {appId: 'gid://shopify/App/1', byteSize: 1234},
+        }),
+      )
+      expect(vi.mocked(appManagementRequestDoc).mock.calls[0]![0]).not.toHaveProperty('cacheOptions')
+    })
+  })
+
+  describe('createSourceScan', () => {
+    test('passes the app ID and source scan URL and maps the accepted result', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        appSourceScanCreate: {accepted: true, userErrors: []},
+      })
+
+      const result = await client.createSourceScan({
+        appId: 'gid://shopify/App/1',
+        sourceScanUrl: 'https://example.com/source-scan-upload',
+      })
+
+      expect(result).toEqual({accepted: true, userErrors: []})
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: CreateSourceScan,
+          token: 'token',
+          variables: {
+            appId: 'gid://shopify/App/1',
+            sourceScanUrl: 'https://example.com/source-scan-upload',
+          },
+        }),
+      )
     })
   })
 

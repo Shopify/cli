@@ -144,16 +144,39 @@ describe('deliverAppDoctorInstructions', () => {
     })
   })
 
-  test('copies instructions without printing them', async () => {
+  test('copies instructions including the optional authorized submission workflow without printing them', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const dependencies = testDependencies()
 
       await deliverAppDoctorInstructions({directory, copy: true, scanComplete: true}, dependencies)
 
-      expect(dependencies.copyToClipboard).toHaveBeenCalledWith(
-        expect.stringContaining('Use the existing scan results'),
+      expect(dependencies.copyToClipboard).toHaveBeenCalledOnce()
+      const instructions = dependencies.copyToClipboard.mock.calls[0]![0]
+      expect(instructions).toContain('Use the existing scan results')
+      expect(instructions).toContain('shopify app doctor submit --dry-run')
+      expect(instructions).toContain('Read `.shopify/app-doctor/submission.json` before uploading')
+      expect(instructions).toContain('`--config <name>` or `--client-id <id>`')
+      expect(instructions).toContain('only when the user explicitly requests or authorizes an upload to Shopify')
+      expect(instructions).toContain('Do not upload automatically; local compilation does not require submission.')
+      expect(instructions).toContain('normal interactive confirmation')
+      expect(instructions).toContain(
+        'For live automation, use `shopify app doctor submit --json --force` only with that authorization',
       )
+      expect(instructions).toContain('`--feedback <text>` or read it from stdin with `--feedback -`')
+      expect(instructions).toContain('Feedback is passed without redaction')
+      expect(instructions).toContain("Don't include source code, file paths or secrets in your optional feedback.")
+      expect(instructions).toContain(
+        'Optionally use `--version` to identify the app version corresponding to the scanned files. This may be a past, current, or future app version. Providing it does not create an app version.',
+      )
+      expect(instructions).not.toContain('--source-control-url')
+      expect(instructions).not.toContain('--source-control-hash')
+      expect(instructions).toContain('Submission does not make the trace signed or proof of App Store approval')
+      const submitSection = instructions.indexOf('### 7. Submit only when explicitly authorized (optional)')
+      expect(submitSection).toBeGreaterThan(instructions.indexOf('### 6. Explain findings and help fix them'))
+      expect(instructions).toContain('Only after compiling and reviewing')
+      expect(instructions).not.toContain('reserved for a future authenticated upload workflow')
+      expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
       expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.outputConfirmation).toHaveBeenCalledWith('Copied App Doctor instructions to the clipboard')
     })
