@@ -18,6 +18,13 @@ export default class StoreCreateDev extends Command {
 
   static description = this.descriptionWithoutMarkdown()
 
+  static examples = [
+    '<%= config.bin %> <%= command.id %>',
+    '<%= config.bin %> <%= command.id %> --name "Lavender Candles" --organization-id 1234567 --plan basic',
+    '<%= config.bin %> <%= command.id %> --name "Lavender Candles" --organization-id 1234567 --plan basic --with-demo-data',
+    '<%= config.bin %> <%= command.id %> --name "Lavender Candles" --organization-id 1234567 --plan basic --json',
+  ]
+
   static flags = {
     ...globalFlags,
     ...jsonFlag,
