@@ -1,4 +1,5 @@
 import deliverAppDoctorInstructions, {appDoctorInstructions} from './app-doctor-instructions.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -64,6 +65,17 @@ describe('appDoctorInstructions', () => {
         expect(instructions).not.toContain('shopify app doctor\n')
         expect(instructions).not.toContain('--findings .shopify/app-doctor/findings.json')
       })
+    })
+  })
+
+  test('translates a missing app directory into an AbortError', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const missing = joinPath(directory, 'missing-app')
+
+      expect(() => appDoctorInstructions({directory: missing, scanComplete: false})).toThrow(AbortError)
+      expect(() => appDoctorInstructions({directory: missing, scanComplete: false})).toThrow(
+        `App path does not exist: ${missing}`,
+      )
     })
   })
 

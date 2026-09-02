@@ -10,7 +10,7 @@ import {
   validateAgentChecksExecuted,
 } from './app-doctor-engine/index.js'
 import {computeResultHash} from './app-doctor-engine/scorer/index.js'
-import {findAppRoot} from './app-doctor-engine/scanners/discover.js'
+import {AppRootDiscoveryError, findAppRoot} from './app-doctor-engine/scanners/discover.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -100,8 +100,19 @@ async function loadFindings(path: string): Promise<FindingsDocument> {
   return parsed as FindingsDocument
 }
 
+export function resolveAppDoctorRoot(directory?: string): string {
+  try {
+    return findAppRoot(directory)
+  } catch (error) {
+    if (error instanceof AppRootDiscoveryError) {
+      throw new AbortError(error.message, 'Run this command from a Shopify app directory or pass --path to one.')
+    }
+    throw error
+  }
+}
+
 export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoctorRunResult> {
-  const appRoot = findAppRoot(options.directory)
+  const appRoot = resolveAppDoctorRoot(options.directory)
   const startTime = Date.now()
   const result = await scan(appRoot)
   const elapsedMilliseconds = Date.now() - startTime

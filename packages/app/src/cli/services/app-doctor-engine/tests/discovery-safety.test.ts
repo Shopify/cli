@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-imports -- discovery boundaries use real temporary repositories */
-import {findAppRoot} from '../scanners/discover.js'
+import {AppRootDiscoveryError, findAppRoot} from '../scanners/discover.js'
 import {scan} from '../scanners/index.js'
 import {normalizePath} from '@shopify/cli-kit/node/path'
 import {afterEach, describe, expect, test} from 'vitest'
@@ -61,6 +61,7 @@ describe.sequential('app root discovery', () => {
   test('fails clearly for an explicit missing path instead of scanning cwd', async () => {
     const root = await makeDirectory()
     const missing = join(root, 'missing-app')
+    expect(() => findAppRoot(missing)).toThrow(AppRootDiscoveryError)
     expect(() => findAppRoot(missing)).toThrow(`App path does not exist: ${missing}`)
   })
 })

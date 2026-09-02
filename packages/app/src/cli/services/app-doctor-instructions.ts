@@ -1,5 +1,5 @@
+import {resolveAppDoctorRoot} from './app-doctor-api.js'
 import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/checks/embedded.js'
-import {findAppRoot} from './app-doctor-engine/scanners/discover.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -29,7 +29,7 @@ function markdownPath(value: string): string {
 }
 
 function instructionPaths(directory: string): AppDoctorInstructionPaths {
-  const appRoot = findAppRoot(resolvePath(directory))
+  const appRoot = resolveAppDoctorRoot(resolvePath(directory))
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-doctor')
   const reviewPath = joinPath(artifactDirectory, 'review.json')
   const tracePath = joinPath(artifactDirectory, 'trace.json')

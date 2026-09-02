@@ -1,5 +1,6 @@
 import {runAppDoctor} from './app-doctor-api.js'
 import {loadChecks} from './app-doctor-engine/index.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -271,6 +272,27 @@ describe('App Doctor CLI integration', () => {
         status: 'executed',
         inspected_files: ['app/routes/index.ts'],
       })
+    })
+  })
+
+  test('translates a missing --path into an AbortError with a next step', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const missing = joinPath(directory, 'missing-app')
+
+      await expect(runAppDoctor({directory: missing, blocking: 'none'})).rejects.toMatchObject({
+        constructor: AbortError,
+        message: `App path does not exist: ${missing}`,
+        tryMessage: 'Run this command from a Shopify app directory or pass --path to one.',
+      })
+    })
+  })
+
+  test('translates a directory without an app configuration into an AbortError', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await expect(runAppDoctor({directory, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
+      await expect(runAppDoctor({directory, blocking: 'none'})).rejects.toThrow(
+        `Could not find a shopify.app*.toml from: ${directory}`,
+      )
     })
   })
 })

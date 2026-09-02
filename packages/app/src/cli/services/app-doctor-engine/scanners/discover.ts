@@ -5,17 +5,31 @@ import {lstatSync} from 'node:fs'
 import type {SourceCandidate} from '../types.js'
 import type {AppTomlContent, ExtensionInfo, SourceFile, ManifestFile, WebhookSubscription} from '../rules/types.js'
 
+/** Expected user error while locating a Shopify app root. */
+export class AppRootDiscoveryError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AppRootDiscoveryError'
+  }
+}
+
 /** Find the nearest app root without ever substituting CWD for a bad explicit path. */
 export function findAppRoot(startPath?: string): string {
   const requestedPath = resolvePath(startPath ?? cwd())
-  if (startPath && !fileExistsSync(requestedPath)) throw new Error(`App path does not exist: ${startPath}`)
+  if (startPath && !fileExistsSync(requestedPath)) {
+    throw new AppRootDiscoveryError(`App path does not exist: ${startPath}`)
+  }
 
   let directory = requestedPath
   if (startPath && lstatSync(requestedPath).isFile()) {
-    if (!requestedPath.endsWith('.toml')) throw new Error(`App path is not a directory or TOML file: ${startPath}`)
+    if (!requestedPath.endsWith('.toml')) {
+      throw new AppRootDiscoveryError(`App path is not a directory or TOML file: ${startPath}`)
+    }
     return dirname(requestedPath)
   }
-  if (!lstatSync(directory).isDirectory()) throw new Error(`App path is not a directory: ${startPath ?? directory}`)
+  if (!lstatSync(directory).isDirectory()) {
+    throw new AppRootDiscoveryError(`App path is not a directory: ${startPath ?? directory}`)
+  }
 
   while (true) {
     const tomls = globSync('shopify.app*.toml', {
@@ -32,7 +46,7 @@ export function findAppRoot(startPath?: string): string {
     directory = parent
   }
 
-  throw new Error(`Could not find a shopify.app*.toml from: ${startPath ?? cwd()}`)
+  throw new AppRootDiscoveryError(`Could not find a shopify.app*.toml from: ${startPath ?? cwd()}`)
 }
 
 /**
