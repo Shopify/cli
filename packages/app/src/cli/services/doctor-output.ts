@@ -78,10 +78,15 @@ export function renderDoctorReport(input: DoctorReportInput): void {
   renderError(options)
 }
 
+function coverageIncomplete(input: DoctorReportInput): boolean {
+  return input.scan.score === null || !input.scan.scan.coverage_complete || input.scan.scan.coverage_gaps.length > 0
+}
+
 function doctorAlertType(input: DoctorReportInput): DoctorAlertType {
   if (input.findings && input.findings.rejected.length > 0) return 'error'
   if (input.scan.issues.some((issue) => issue.severity === 'high')) return 'error'
   if (input.scan.issues.length > 0) return 'warning'
+  if (coverageIncomplete(input)) return 'warning'
   return 'success'
 }
 
@@ -92,6 +97,7 @@ function doctorHeadline(input: DoctorReportInput): string {
 
   const count = input.scan.issues.length
   if (count > 0) return `${count} security ${count === 1 ? 'issue' : 'issues'} found.`
+  if (coverageIncomplete(input)) return 'Scan completed with coverage gaps.'
   return 'No security issues found.'
 }
 

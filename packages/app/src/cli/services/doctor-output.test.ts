@@ -159,7 +159,7 @@ describe('buildDoctorAlert', () => {
     expect(alert.options.headline).toBe('No security issues found.')
   })
 
-  test('still lists coverage gaps when no issues were found', () => {
+  test('warns when coverage is incomplete even if no issues were found', () => {
     const input = reportInput({
       scan: {
         ...scanWithIssues,
@@ -176,8 +176,8 @@ describe('buildDoctorAlert', () => {
     const alert = buildDoctorAlert(input)
     const serialized = JSON.stringify(alert)
 
-    expect(alert.type).toBe('success')
-    expect(alert.options.headline).toBe('No security issues found.')
+    expect(alert.type).toBe('warning')
+    expect(alert.options.headline).toBe('Scan completed with coverage gaps.')
     expect(serialized).toContain('Backend could not be classified.')
     expect(section(input, 'Coverage gaps')).toBeDefined()
   })
