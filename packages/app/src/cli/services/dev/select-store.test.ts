@@ -12,7 +12,7 @@ import {
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ClientName} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {isTTY, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {isTTY, renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {createDevStore} from '@shopify/organizations'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
@@ -404,6 +404,8 @@ describe('selectStore', async () => {
       json: false,
       summary: false,
     })
+    // The developer picked the create choice, so no explanatory notice is needed.
+    expect(renderInfo).not.toHaveBeenCalled()
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'Development store "store1" created successfully.'})
   })
 
@@ -477,6 +479,9 @@ describe('selectStore', async () => {
     })
     expect(fetchStore).toHaveBeenCalledTimes(2)
     expect(sleep).toHaveBeenCalledWith(3)
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: "You don't have any dev stores associated with org1's Dev Dashboard. Let's create one.",
+    })
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'Development store "store1" created successfully.'})
   })
 
