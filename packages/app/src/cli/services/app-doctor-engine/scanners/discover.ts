@@ -13,7 +13,15 @@ export class AppRootDiscoveryError extends Error {
   }
 }
 
-/** Find the nearest app root without ever substituting CWD for a bad explicit path. */
+/**
+ * Find the nearest app root without ever substituting CWD for a bad explicit path.
+ *
+ * This is intentionally not `Project.load()`. That loader also reads package,
+ * environment, and hidden configuration, and it does not keep the bounded raw
+ * bytes App Doctor hashes and reports as coverage. App Doctor reuses the same
+ * `shopify.app*.toml` candidate shape, then reads those files through its own
+ * repository boundary.
+ */
 export function findAppRoot(startPath?: string): string {
   const requestedPath = resolvePath(startPath ?? cwd())
   if (startPath && !fileExistsSync(requestedPath)) {
@@ -51,6 +59,9 @@ export function findAppRoot(startPath?: string): string {
 
 /**
  * Find and parse all shopify.app.*.toml files in the app root.
+ *
+ * Candidate discovery matches `Project.load()`, but parsing stays on bounded
+ * raw reads so unreadable files become coverage gaps instead of loader errors.
  */
 export function findAppTomls(appRoot: string): AppTomlContent[] {
   const files = globSync('shopify.app*.toml', {
@@ -219,7 +230,15 @@ function discoveryIgnores(directory: string, projectRoot: string): string[] {
   return [...IGNORED_DIRECTORIES, ...nestedApps]
 }
 
-/** Find all theme app extensions and their files. */
+/**
+ * Find extension-like repository content under the app root.
+ *
+ * `Project.load()` only considers paths in each app configuration's
+ * `extension_directories`. App Doctor scans every `shopify.extension.toml`
+ * inside the repository boundary, including unconfigured extensions, because
+ * those files can still contain secrets, XSS, and other security evidence.
+ * Nested apps, generated output, and test trees remain excluded.
+ */
 export function findExtensions(appRoot: string): ExtensionInfo[] {
   const extensionTomls = globSync('**/shopify.extension.toml', {
     followSymbolicLinks: false,

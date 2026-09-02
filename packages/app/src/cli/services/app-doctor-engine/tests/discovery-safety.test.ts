@@ -126,7 +126,31 @@ describe('repository discovery exclusions', () => {
     expect(after.scan.file_hashes).toEqual(before.scan.file_hashes)
     expect(Object.keys(after.scan.file_hashes ?? {}).some((path) => path.includes('.shopify/app-doctor'))).toBe(false)
   })
-})
+
+  test('scans unconfigured extension files outside extension_directories', async () => {
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': `${appConfiguration}extension_directories = ["configured"]\n`,
+      'configured/shopify.extension.toml': 'type = "theme"\n',
+      'configured/blocks/configured.liquid': '{{ shop.name }}',
+      'unconfigured/shopify.extension.toml': 'type = "theme"\n',
+      'unconfigured/blocks/unconfigured.liquid': '{{ shop.name }}',
+    })
+
+    const result = await scan(root)
+    const paths = Object.keys(result.scan.file_hashes ?? {})
+
+    expect(result.capabilities.theme_app_extension).toBe(true)
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        'configured/shopify.extension.toml',
+        'configured/blocks/configured.liquid',
+        'unconfigured/shopify.extension.toml',
+        'unconfigured/blocks/unconfigured.liquid',
+      ]),
+    )
+  })
+}
 
 describe('dependency audit input hashes', () => {
   for (const [manager, lockfile, content] of [
