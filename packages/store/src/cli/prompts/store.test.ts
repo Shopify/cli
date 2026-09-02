@@ -1,6 +1,6 @@
-import {storeNamePrompt, storePlanPrompt} from './store.js'
+import {storeNamePrompt, storePlanPrompt, storeDemoDataPrompt} from './store.js'
 import {describe, expect, test, vi} from 'vitest'
-import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -32,6 +32,22 @@ describe('storePlanPrompt', () => {
         {label: 'Advanced', value: 'advanced'},
         {label: 'Plus', value: 'plus'},
       ],
+    })
+  })
+})
+
+describe('storeDemoDataPrompt', () => {
+  test('asks whether to add demo data and returns the answer', async () => {
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+    const result = await storeDemoDataPrompt()
+
+    expect(result).toBe(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      message: 'Populate the store with demo data?',
+      confirmationMessage: 'Yes, add demo data',
+      cancellationMessage: 'No, start with an empty store',
+      defaultValue: true,
     })
   })
 })

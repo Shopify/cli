@@ -19,3 +19,12 @@ export function devStorePlanPrompt(): Promise<DevStorePlan> {
     choices: devStorePlanHandles.map((handle) => ({label: PLAN_LABELS[handle], value: handle})),
   })
 }
+
+export function devStoreDemoDataPrompt(): Promise<boolean> {
+  return ui.renderConfirmationPrompt({
+    message: 'Populate the store with demo data?',
+    confirmationMessage: 'Yes, add demo data',
+    cancellationMessage: 'No, start with an empty store',
+    defaultValue: true,
+  })
+}

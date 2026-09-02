@@ -1,7 +1,13 @@
 import {devStoreCapReached} from './cap.js'
 import {fetchStore, StoreNotFoundError} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {devStoreNamePrompt, devStorePlanPrompt, reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+import {
+  devStoreDemoDataPrompt,
+  devStoreNamePrompt,
+  devStorePlanPrompt,
+  reloadStoreListPrompt,
+  selectStorePrompt,
+} from '../../prompts/dev.js'
 import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {isTTY, renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
@@ -30,7 +36,8 @@ export async function selectStore(
 
     const name = await devStoreNamePrompt()
     const plan = await devStorePlanPrompt()
-    const domain = await createDevStore({name, plan, organization: org, json: false, summary: false})
+    const withDemoData = await devStoreDemoDataPrompt()
+    const domain = await createDevStore({name, plan, withDemoData, organization: org, json: false, summary: false})
     const createdStore = await waitForCreatedStoreByDomain(org, domain, developerPlatformClient)
     renderSuccess({headline: `Development store "${createdStore.shopName}" created successfully.`})
     return createdStore

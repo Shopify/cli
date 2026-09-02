@@ -1,10 +1,11 @@
 import {createDevStore} from '../../../services/store/create/dev.js'
 import {devStorePlanHandles, DevStorePlan} from '../../../services/store/constants.js'
-import {storeNamePrompt, storePlanPrompt} from '../../../prompts/store.js'
+import {storeNamePrompt, storePlanPrompt, storeDemoDataPrompt} from '../../../prompts/store.js'
 import {countryFlag, storeFlags} from '../../../flags.js'
 import {selectOrg} from '@shopify/organizations'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
@@ -21,7 +22,7 @@ export default class StoreCreateDev extends Command {
   static examples = [
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --name "Lavender Candles" --organization-id 1234567 --plan basic',
-    '<%= config.bin %> <%= command.id %> --name "Lavender Candles" --organization-id 1234567 --plan basic --with-demo-data',
+    '<%= config.bin %> <%= command.id %> --name "Lavender Candles" --organization-id 1234567 --plan basic --demo-data',
     '<%= config.bin %> <%= command.id %> --name "Lavender Candles" --organization-id 1234567 --plan basic --json',
   ]
 
@@ -46,10 +47,10 @@ export default class StoreCreateDev extends Command {
       description: 'The handle of a feature preview to enable on the new development store.',
       env: 'SHOPIFY_FLAG_STORE_FEATURE_PREVIEW',
     }),
-    'with-demo-data': Flags.boolean({
+    'demo-data': Flags.boolean({
       description: 'Populate the new development store with demo data.',
-      default: false,
-      env: 'SHOPIFY_FLAG_STORE_WITH_DEMO_DATA',
+      allowNo: true,
+      env: 'SHOPIFY_FLAG_STORE_DEMO_DATA',
     }),
     country: countryFlag,
   }
@@ -60,6 +61,8 @@ export default class StoreCreateDev extends Command {
     const organization = await selectOrg(flags['organization-id']?.toString())
     const name = flags.name ?? (await storeNamePrompt())
     const plan = (flags.plan as DevStorePlan | undefined) ?? (await storePlanPrompt())
+    // An unspecified flag means "ask" where we can prompt and "no" where we can't.
+    const withDemoData = flags['demo-data'] ?? (terminalSupportsPrompting() ? await storeDemoDataPrompt() : false)
 
     try {
       await createDevStore({
@@ -67,7 +70,7 @@ export default class StoreCreateDev extends Command {
         organization,
         plan,
         featurePreview: flags['feature-preview'],
-        withDemoData: flags['with-demo-data'],
+        withDemoData,
         country: flags.country,
         json: flags.json,
       })

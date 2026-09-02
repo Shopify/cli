@@ -7191,7 +7191,7 @@
       "examples": [
         "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic",
-        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic --with-demo-data",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic --demo-data",
         "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic --json"
       ],
       "flags": {
@@ -7203,6 +7203,13 @@
           "name": "country",
           "required": false,
           "type": "option"
+        },
+        "demo-data": {
+          "allowNo": true,
+          "description": "Populate the new development store with demo data.",
+          "env": "SHOPIFY_FLAG_STORE_DEMO_DATA",
+          "name": "demo-data",
+          "type": "boolean"
         },
         "feature-preview": {
           "description": "The handle of a feature preview to enable on the new development store.",
@@ -7265,13 +7272,6 @@
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
-          "type": "boolean"
-        },
-        "with-demo-data": {
-          "allowNo": false,
-          "description": "Populate the new development store with demo data.",
-          "env": "SHOPIFY_FLAG_STORE_WITH_DEMO_DATA",
-          "name": "with-demo-data",
           "type": "boolean"
         }
       },

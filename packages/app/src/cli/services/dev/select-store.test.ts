@@ -2,7 +2,13 @@ import {selectStore} from './select-store.js'
 import {devStoreCapReached} from './cap.js'
 import {fetchStore, StoreNotFoundError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
-import {devStoreNamePrompt, devStorePlanPrompt, reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+import {
+  devStoreDemoDataPrompt,
+  devStoreNamePrompt,
+  devStorePlanPrompt,
+  reloadStoreListPrompt,
+  selectStorePrompt,
+} from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ClientName} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -374,6 +380,7 @@ describe('selectStore', async () => {
     vi.mocked(devStoreCapReached).mockResolvedValue(false)
     vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
     vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(devStoreDemoDataPrompt).mockResolvedValue(false)
     vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
     vi.mocked(fetchStore).mockResolvedValueOnce(STORE1)
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
@@ -392,11 +399,36 @@ describe('selectStore', async () => {
     expect(createDevStore).toHaveBeenCalledWith({
       name: 'created-store',
       plan: 'grow',
+      withDemoData: false,
       organization: ORG1,
       json: false,
       summary: false,
     })
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'Development store "store1" created successfully.'})
+  })
+
+  test('passes an affirmative demo data answer through to store creation', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+    vi.mocked(devStoreCapReached).mockResolvedValue(false)
+    vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
+    vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(devStoreDemoDataPrompt).mockResolvedValue(true)
+    vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
+    vi.mocked(fetchStore).mockResolvedValueOnce(STORE1)
+    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task({}, task)
+      }
+      return {}
+    })
+    vi.mocked(selectStorePrompt).mockImplementation(async ({onCreateStore}) => onCreateStore!())
+
+    await expect(
+      selectStore({stores: [STORE2], hasMorePages: false}, ORG1, developerPlatformClient, 'selection-option'),
+    ).resolves.toEqual(STORE1)
+    expect(devStoreDemoDataPrompt).toHaveBeenCalled()
+    expect(createDevStore).toHaveBeenCalledWith(expect.objectContaining({withDemoData: true}))
   })
 
   test('keeps the dashboard fallback when the app-management store prompt is cancelled', async () => {
@@ -418,6 +450,7 @@ describe('selectStore', async () => {
     vi.mocked(devStoreCapReached).mockResolvedValue(false)
     vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
     vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(devStoreDemoDataPrompt).mockResolvedValue(false)
     vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
     vi.mocked(fetchStore)
       .mockRejectedValueOnce(new StoreNotFoundError('Store is still being provisioned'))
@@ -437,6 +470,7 @@ describe('selectStore', async () => {
     expect(createDevStore).toHaveBeenCalledWith({
       name: 'created-store',
       plan: 'grow',
+      withDemoData: false,
       organization: ORG1,
       json: false,
       summary: false,
@@ -451,6 +485,7 @@ describe('selectStore', async () => {
     vi.mocked(devStoreCapReached).mockResolvedValue(false)
     vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
     vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(devStoreDemoDataPrompt).mockResolvedValue(false)
     vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
     vi.mocked(fetchStore).mockRejectedValue(new StoreNotFoundError('Store is still being provisioned'))
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
@@ -476,6 +511,7 @@ describe('selectStore', async () => {
     vi.mocked(devStoreCapReached).mockResolvedValue(false)
     vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
     vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(devStoreDemoDataPrompt).mockResolvedValue(false)
     vi.mocked(createDevStore).mockResolvedValue('created-store.myshopify.com')
     vi.mocked(fetchStore).mockRejectedValueOnce(new AbortError('Fetching failed'))
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
