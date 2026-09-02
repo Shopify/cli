@@ -43,6 +43,8 @@ import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {RequestScanUploadUrl} from '../../api/graphql/app-management/generated/request-scan-upload-url.js'
+import {CreateAppScan} from '../../api/graphql/app-management/generated/create-app-scan.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -1413,6 +1415,85 @@ describe('AppManagementClient', () => {
       const commandRunId = calls[0]?.replace('app-one-api-key-', '')
       expect(commandRunId).toMatch(/^[\da-f-]{36}$/)
       expect(calls).toEqual([`app-one-api-key-${commandRunId}`, `app-two-api-key-${commandRunId}`])
+    })
+  })
+
+  describe('generateScanUploadUrl', () => {
+    test('converts the organization ID, does not cache, and maps the upload response', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        appRequestScanUploadUrl: {scanUploadUrl: 'https://example.com/scan-upload', userErrors: []},
+      })
+
+      const result = await client.generateScanUploadUrl({
+        apiKey: 'test-api-key',
+        organizationId: '213141',
+        id: 'gid://shopify/App/1',
+      })
+
+      expect(result).toEqual({assetUrl: 'https://example.com/scan-upload', userErrors: []})
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: RequestScanUploadUrl,
+          token: 'token',
+          variables: {organizationId: 'gid://shopify/Organization/213141'},
+        }),
+      )
+      expect(vi.mocked(appManagementRequestDoc).mock.calls[0]![0]).not.toHaveProperty('cacheOptions')
+    })
+  })
+
+  describe('createAppScan', () => {
+    test('passes scan metadata and maps the scan receipt', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        appScanCreate: {scan: {id: 'gid://shopify/AppScan/1'}, userErrors: []},
+      })
+
+      const result = await client.createAppScan({
+        appId: 'gid://shopify/App/1',
+        organizationId: '213141',
+        scanUrl: 'https://example.com/scan-upload',
+        metadata: {
+          versionTag: 'v1.2.3',
+          sourceControlUrl: 'https://github.com/example/app/tree/v1.2.3',
+        },
+      })
+
+      expect(result).toEqual({scan: {id: 'gid://shopify/AppScan/1'}, userErrors: []})
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: CreateAppScan,
+          token: 'token',
+          variables: {
+            appId: 'gid://shopify/App/1',
+            scanUrl: 'https://example.com/scan-upload',
+            metadata: {
+              versionTag: 'v1.2.3',
+              sourceControlUrl: 'https://github.com/example/app/tree/v1.2.3',
+            },
+          },
+        }),
+      )
+    })
+
+    test('normalizes an omitted nullable scan receipt to null', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        appScanCreate: {userErrors: []},
+      })
+
+      const result = await client.createAppScan({
+        appId: 'gid://shopify/App/1',
+        organizationId: '213141',
+        scanUrl: 'https://example.com/scan-upload',
+        metadata: {},
+      })
+
+      expect(result).toEqual({scan: null, userErrors: []})
     })
   })
 

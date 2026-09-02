@@ -141,6 +141,17 @@ export type AssetUrlSchema = WithUserErrors<{
   assetUrl?: string | null
 }>
 
+export interface AppScanCreateInput {
+  appId: string
+  organizationId: string
+  scanUrl: string
+  metadata: {versionTag?: string; sourceControlUrl?: string}
+}
+
+export type AppScanCreateSchema = WithUserErrors<{
+  scan: {id: string} | null
+}>
+
 export enum Flag {}
 
 const FlagMap: {[key: string]: Flag} = {}
@@ -221,6 +232,8 @@ export interface DeveloperPlatformClient {
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
+  generateScanUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
+  createAppScan: (input: AppScanCreateInput) => Promise<AppScanCreateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>

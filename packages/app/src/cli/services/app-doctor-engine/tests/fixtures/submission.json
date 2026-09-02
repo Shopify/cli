@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "trace_schema_version": 2,
+  "engine": {
+    "name": "shopify-app-doctor",
+    "version": "0.1.0",
+    "ruleset": "app-doctor-rules@0.1.0"
+  },
+  "cli_version": "3.99.0",
+  "generated_at": "2026-08-31T10:00:00.000Z",
+  "submitted_at": "2026-09-01T09:30:00.000Z",
+  "metadata": {
+    "version_tag": "v1.2.3",
+    "source_control_url": "https://github.com/example/app/tree/v1.2.3"
+  },
+  "project": {
+    "dirty": true,
+    "input_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "detection": {
+    "framework": "react_router",
+    "surface": "mixed",
+    "languages": [
+      {"name": "typescript", "support": "supported", "file_count": 2},
+      {"name": "liquid", "support": "supported", "file_count": 1}
+    ]
+  },
+  "findings": [
+    {
+      "fingerprint": "sha256:298c67d67fe725a4636e1650ef5ff8149dac7d911d647b566073b3ff7a7614aa",
+      "source": "deterministic",
+      "severity": "high",
+      "title": "Vulnerable package lodash (CVE-2026-0001)",
+      "rule_id": "KNOWN_CVE_IN_DEPENDENCY",
+      "rule_version": 2,
+      "suppressed": true,
+      "suppression_id": "accepted-migration-risk"
+    },
+    {
+      "fingerprint": "sha256:65ff76089b245ca615248ca0c1802cf6cccc2815b24c1359cacb3b1d679ad59d",
+      "source": "agent",
+      "severity": "medium",
+      "title": "Authorization check is missing",
+      "check_id": "MISSING_AUTHORIZATION_CHECK",
+      "check_version": 3,
+      "prompt_hash": "sha256:45da65952a69e7ed52d574a142fa37194222224fed232541a0387b494f9f174a",
+      "suppressed": false
+    },
+    {
+      "fingerprint": "sha256:e199e53672bb3ec8a7b819c3588b7514d89d2eb02f16284594578b01497c91e8",
+      "source": "external",
+      "severity": "low",
+      "title": "External scanner finding",
+      "rule_id": "EXTERNAL_SAST_001",
+      "rule_version": 1,
+      "suppressed": false
+    }
+  ],
+  "checks_executed": [
+    {
+      "id": "KNOWN_CVE_IN_DEPENDENCY",
+      "version": 2,
+      "kind": "deterministic",
+      "status": "executed",
+      "required": true,
+      "applicable": true,
+      "analysis_mode": "audit",
+      "finding_count": 1,
+      "inspected_file_count": 1,
+      "implementations": [
+        {
+          "id": "npm-audit",
+          "analysis_mode": "audit",
+          "status": "executed",
+          "finding_count": 1,
+          "inspected_file_count": 1
+        }
+      ]
+    },
+    {
+      "id": "MISSING_AUTHORIZATION_CHECK",
+      "version": 3,
+      "kind": "agent",
+      "status": "executed",
+      "required": false,
+      "applicable": true,
+      "analysis_mode": "agent",
+      "finding_count": 1,
+      "inspected_file_count": 1,
+      "prompt_hash": "sha256:45da65952a69e7ed52d574a142fa37194222224fed232541a0387b494f9f174a"
+    },
+    {
+      "id": "EXTERNAL_SAST_001",
+      "version": 1,
+      "kind": "external",
+      "status": "executed",
+      "required": false,
+      "applicable": true,
+      "analysis_mode": "external",
+      "finding_count": 1,
+      "inspected_file_count": 0
+    },
+    {
+      "id": "NO_RELEVANT_CHECK",
+      "version": 1,
+      "kind": "deterministic",
+      "status": "not_applicable",
+      "required": false,
+      "applicable": false,
+      "analysis_mode": "regex",
+      "finding_count": 0,
+      "inspected_file_count": 0,
+      "reason_code": "no_relevant_files"
+    },
+    {
+      "id": "UNREPORTED_AGENT_CHECK",
+      "version": 1,
+      "kind": "agent",
+      "status": "unresolved",
+      "required": true,
+      "applicable": true,
+      "analysis_mode": "agent",
+      "finding_count": 0,
+      "inspected_file_count": 0,
+      "reason_code": "not_reported",
+      "prompt_hash": "sha256:9ebb0f49910f170703a64d75b0d3e50c0031dd71c2f40cfaa70088de88a91c18"
+    }
+  ],
+  "suppressions": [
+    {
+      "id": "accepted-migration-risk",
+      "finding_fingerprint": "sha256:298c67d67fe725a4636e1650ef5ff8149dac7d911d647b566073b3ff7a7614aa",
+      "justification": "Accepted until migration finishes",
+      "provenance": {"source": "human", "created_at": "2026-08-31T11:00:00.000Z"}
+    }
+  ],
+  "coverage": {
+    "files_scanned": 3,
+    "complete": false,
+    "files_skipped": {"too_large": 1, "unreadable": 2},
+    "gaps": [
+      {"code": "skipped_file"},
+      {"code": "unresolved_check", "check_id": "UNREPORTED_AGENT_CHECK"}
+    ]
+  },
+  "attestation": {
+    "trace_digest": "sha256:d21dc8ca875f71ef87c386edcef6f6b97df81719425c7a398d430d32034064cc"
+  }
+}

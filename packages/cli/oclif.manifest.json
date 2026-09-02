@@ -1470,6 +1470,117 @@
       "strict": true,
       "summary": "Provide App Doctor instructions to a coding agent."
     },
+    "app:doctor:submit": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Reads the most recent App Doctor trace, writes a redacted `.shopify/app-doctor/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nNo source code, file paths, snippets, or commit identifiers are sent. Optional `--version` and `--source-control-url` metadata is included only when supplied. Use `--dry-run` to write and inspect the exact payload without uploading it.",
+      "descriptionWithMarkdown": "Reads the most recent App Doctor trace, writes a redacted `.shopify/app-doctor/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nNo source code, file paths, snippets, or commit identifiers are sent. Optional `--version` and `--source-control-url` metadata is included only when supplied. Use `--dry-run` to write and inspect the exact payload without uploading it.",
+      "enableJsonFlag": false,
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "dry-run": {
+          "allowNo": false,
+          "description": "Write the submission payload without uploading it.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_DRY_RUN",
+          "name": "dry-run",
+          "type": "boolean"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Skip confirmation. Required if non interactive.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "source-control-url": {
+          "description": "URL associated with the new app version.",
+          "env": "SHOPIFY_FLAG_SOURCE_CONTROL_URL",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "source-control-url",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:doctor:submit",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Submit App Doctor results to Shopify."
+    },
     "app:env:pull": {
       "aliases": [
       ],

@@ -8,6 +8,7 @@ import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
 import DoctorInstructions from './commands/app/doctor/instructions.js'
+import DoctorSubmit from './commands/app/doctor/submit.js'
 import Doctor from './commands/app/doctor.js'
 import Logs from './commands/app/logs.js'
 import Sources from './commands/app/app-logs/sources.js'
@@ -55,6 +56,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:dev': Dev,
   'app:dev:clean': DevClean,
   'app:doctor:instructions': DoctorInstructions,
+  'app:doctor:submit': DoctorSubmit,
   'app:doctor': Doctor,
   'app:logs': Logs,
   'app:logs:sources': Sources,

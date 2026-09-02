@@ -1,0 +1,11 @@
+mutation CreateAppScan($appId: ID!, $scanUrl: URL!, $metadata: AppScanMetadataInput) {
+  appScanCreate(appId: $appId, scanUrl: $scanUrl, metadata: $metadata) {
+    scan {
+      id
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}

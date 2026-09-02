@@ -11,6 +11,7 @@ import metadata from '../metadata.js'
 import * as loader from '../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
@@ -46,6 +47,78 @@ beforeEach(() => {
 })
 
 describe('linkedAppContext', () => {
+  test('passes skipPrompts to active config selection', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+      const getAppConfigSpy = vi.spyOn(loader, 'getAppConfigurationContext')
+
+      try {
+        await linkedAppContext({
+          directory: tmp,
+          forceRelink: false,
+          userProvidedConfigName: undefined,
+          clientId: undefined,
+          skipPrompts: true,
+        })
+
+        expect(getAppConfigSpy).toHaveBeenCalledWith(tmp, undefined, {skipPrompts: true})
+      } finally {
+        getAppConfigSpy.mockRestore()
+      }
+    })
+  })
+
+  test('aborts before linking an unlinked app without a client ID when prompts are skipped', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const content = `
+name = "test-app"`
+      await writeAppConfig(tmp, content)
+
+      const error = await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+        skipPrompts: true,
+      }).catch((error: unknown) => error)
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect(error).toMatchObject({
+        message: 'This app must be linked before continuing in non-interactive mode.',
+        nextSteps: ['Pass `--client-id <client-id>` to select the app without prompting.'],
+      })
+      expect(link).not.toHaveBeenCalled()
+    })
+  })
+
+  test('links an unlinked app without rendering success when prompts are skipped and client ID is explicit', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const content = `
+name = "test-app"`
+      await writeAppConfig(tmp, content)
+      const stoppedAfterLink = new Error('stop after verifying link arguments')
+      vi.mocked(link).mockRejectedValueOnce(stoppedAfterLink)
+
+      await expect(
+        linkedAppContext({
+          directory: tmp,
+          forceRelink: false,
+          userProvidedConfigName: undefined,
+          clientId: 'explicit-client-id',
+          skipPrompts: true,
+        }),
+      ).rejects.toBe(stoppedAfterLink)
+
+      expect(link).toHaveBeenCalledWith(
+        {directory: tmp, apiKey: 'explicit-client-id', configName: 'shopify.app.toml'},
+        false,
+      )
+    })
+  })
+
   test('returns linked app context when app is already linked', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given

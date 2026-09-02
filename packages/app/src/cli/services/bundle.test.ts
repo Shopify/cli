@@ -302,4 +302,32 @@ describe('uploadToGCS', () => {
       expect(fetch).not.toHaveBeenCalled()
     })
   })
+
+  test('uses a custom artifact label in storage failure copy', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const artifactPath = joinPath(tmpDir, 'submission.json')
+      await writeFile(artifactPath, '{}')
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve('forbidden'),
+      } as never)
+
+      await expect(
+        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Doctor submission'}),
+      ).rejects.toThrow('Failed to upload your App Doctor submission to storage (HTTP 403).')
+    })
+  })
+
+  test('uses a custom artifact label in size-limit copy', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const artifactPath = joinPath(tmpDir, 'submission.json')
+      await writeFile(artifactPath, '{}')
+      vi.mocked(fileSize).mockResolvedValueOnce(101 * 1024 * 1024)
+
+      await expect(
+        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Doctor submission'}),
+      ).rejects.toThrow('Your App Doctor submission exceeds the 100 MB upload limit')
+    })
+  })
 })

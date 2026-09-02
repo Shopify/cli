@@ -1,7 +1,7 @@
 import {appFromIdentifiers} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import link from './app/config/link.js'
+import link, {type LinkOptions} from './app/config/link.js'
 import {fetchOrgFromId} from './dev/fetch.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
@@ -45,6 +45,7 @@ export interface LoadedAppContextOutput {
  * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
  * @param clientId - The client ID to use when linking the app or when fetching the remote app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param skipPrompts - When true, config selection and required linking must not prompt or render link success.
  * @param unsafeTolerateErrors - When true, the loaded app may contain validation errors without throwing.
  * Only use this for commands that explicitly handle invalid configs (e.g. `app info`, `app validate`).
  */
@@ -53,6 +54,7 @@ interface LoadedAppContextOptions {
   forceRelink: boolean
   clientId: string | undefined
   userProvidedConfigName: string | undefined
+  skipPrompts?: boolean
   unsafeTolerateErrors?: boolean
 }
 
@@ -77,11 +79,22 @@ interface LocalAppContextOptions {
  *
  * @returns The local app, the remote app, the correct developer platform client, and the remote specifications list.
  */
+async function linkForAppContext(options: LinkOptions, skipPrompts: boolean) {
+  if (skipPrompts && !options.apiKey) {
+    throw new AbortError('This app must be linked before continuing in non-interactive mode.', null, [
+      'Pass `--client-id <client-id>` to select the app without prompting.',
+    ])
+  }
+
+  return skipPrompts ? link(options, false) : link(options)
+}
+
 export async function linkedAppContext({
   directory,
   clientId,
   forceRelink,
   userProvidedConfigName,
+  skipPrompts = false,
   unsafeTolerateErrors = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   let project: Project
@@ -91,13 +104,13 @@ export async function linkedAppContext({
   if (forceRelink) {
     // Skip getAppConfigurationContext() when force-relinking — it may prompt the
     // user to select a TOML file that will be immediately discarded by link().
-    const result = await link({directory, apiKey: clientId})
+    const result = await linkForAppContext({directory, apiKey: clientId}, skipPrompts)
     remoteApp = result.remoteApp
-    const reloaded = await getAppConfigurationContext(directory, result.configFileName)
+    const reloaded = await getAppConfigurationContext(directory, result.configFileName, {skipPrompts})
     project = reloaded.project
     activeConfig = reloaded.activeConfig
   } else {
-    const loaded = await getAppConfigurationContext(directory, userProvidedConfigName)
+    const loaded = await getAppConfigurationContext(directory, userProvidedConfigName, {skipPrompts})
     project = loaded.project
     activeConfig = loaded.activeConfig
 
@@ -106,9 +119,12 @@ export async function linkedAppContext({
     }
 
     if (!activeConfig.isLinked) {
-      const result = await link({directory, apiKey: clientId, configName: basename(activeConfig.file.path)})
+      const result = await linkForAppContext(
+        {directory, apiKey: clientId, configName: basename(activeConfig.file.path)},
+        skipPrompts,
+      )
       remoteApp = result.remoteApp
-      const reloaded = await getAppConfigurationContext(directory, result.configFileName)
+      const reloaded = await getAppConfigurationContext(directory, result.configFileName, {skipPrompts})
       project = reloaded.project
       activeConfig = reloaded.activeConfig
     }

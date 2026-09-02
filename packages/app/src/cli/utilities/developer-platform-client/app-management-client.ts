@@ -18,6 +18,8 @@ import {
   AppVersionWithContext,
   AppDeployOptions,
   AssetUrlSchema,
+  AppScanCreateInput,
+  AppScanCreateSchema,
   AppVersionIdentifiers,
   filterDisabledFlags,
   ClientName,
@@ -92,6 +94,11 @@ import {
   CreateAppVersionMutationVariables,
 } from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {RequestScanUploadUrl} from '../../api/graphql/app-management/generated/request-scan-upload-url.js'
+import {
+  CreateAppScan,
+  CreateAppScanMutationVariables,
+} from '../../api/graphql/app-management/generated/create-app-scan.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppInstallCount} from '../../api/graphql/app-management/generated/app-install-count.js'
@@ -738,6 +745,26 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
+    }
+  }
+
+  async generateScanUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const result = await this.appManagementRequest({
+      query: RequestScanUploadUrl,
+      variables: {organizationId: gidFromOrganizationIdForShopify(organizationId)},
+    })
+    return {
+      assetUrl: result.appRequestScanUploadUrl.scanUploadUrl,
+      userErrors: result.appRequestScanUploadUrl.userErrors,
+    }
+  }
+
+  async createAppScan({appId, scanUrl, metadata}: AppScanCreateInput): Promise<AppScanCreateSchema> {
+    const variables: CreateAppScanMutationVariables = {appId, scanUrl, metadata}
+    const result = await this.appManagementRequest({query: CreateAppScan, variables})
+    return {
+      scan: result.appScanCreate.scan ?? null,
+      userErrors: result.appScanCreate.userErrors,
     }
   }
 

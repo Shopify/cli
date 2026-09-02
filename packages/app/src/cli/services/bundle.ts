@@ -35,6 +35,10 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
   }
 }
 
+interface UploadToGCSOptions {
+  artifactName?: string
+}
+
 /**
  * Upload a file to GCS using a signed URL.
  *
@@ -48,14 +52,19 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
  *
  * @param signedURL - The signed URL to upload the file to
  * @param filePath - The path to the file
+ * @param options - Optional settings; `artifactName` labels the uploaded artifact in error copy (defaults to `app bundle`).
  */
-export async function uploadToGCS(signedURL: string, filePath: string) {
+export async function uploadToGCS(
+  signedURL: string,
+  filePath: string,
+  {artifactName = 'app bundle'}: UploadToGCSOptions = {},
+) {
   const size = await fileSize(filePath)
   if (size > MAX_BUNDLE_SIZE_BYTES) {
     // Round up so a size that barely exceeds the cap never displays as the cap.
     const humanSize = `${(Math.ceil((size / MEGABYTE) * 100) / 100).toFixed(2)} MB`
     throw new AbortError(
-      `Your app bundle exceeds the ${MAX_BUNDLE_SIZE_MB} MB upload limit (it is ${humanSize}).`,
+      `Your ${artifactName} exceeds the ${MAX_BUNDLE_SIZE_MB} MB upload limit (it is ${humanSize}).`,
       `Check the asset paths in your extension configuration — a misconfigured source can pull in much more than intended. Exclude large files or directories from your bundle, then try again.`,
     )
   }
@@ -87,7 +96,7 @@ export async function uploadToGCS(signedURL: string, filePath: string) {
   const status = response?.status
   const responseBody = (await response?.text().catch(() => ''))?.trim()
   throw new AbortError(
-    `Failed to upload your app bundle to storage${status ? ` (HTTP ${status})` : ''}.`,
+    `Failed to upload your ${artifactName} to storage${status ? ` (HTTP ${status})` : ''}.`,
     'This is usually transient. Please try again, and check your network connection if it persists.',
     responseBody ? [`Storage responded with: ${responseBody.slice(0, 300)}`] : undefined,
   )
