@@ -1,10 +1,13 @@
-import {runAppDoctor} from './app-doctor-api.js'
+import {doctorExitCode, executeAppDoctor, loadAppDoctorFindings, resolveAppDoctorRoot} from './app-doctor-api.js'
+import {writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
 import deliverAppDoctorInstructions from './app-doctor-instructions.js'
-import {formatDoctorJson, renderDoctorReport} from './doctor-output.js'
+import {encodeDoctorJson, toDoctorJson} from './doctor-json.js'
+import {renderDoctorReport} from './doctor-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import type {AppDoctorBlockingLevel, AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
+import type {AppDoctorArtifactPaths} from './app-doctor-artifacts.js'
+import type {AppDoctorBlockingLevel, AppDoctorExecution} from './app-doctor-api.js'
 import type {DoctorReportInput} from './doctor-output.js'
 import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
@@ -21,7 +24,8 @@ interface DoctorOptions {
 export type AppDoctorInstructionsDestination = 'copy' | 'print' | 'nothing'
 
 interface DoctorDependencies {
-  runEngine(options: AppDoctorRunOptions): Promise<AppDoctorRunResult>
+  execute(options: {directory: string; findingsPath?: string}): Promise<AppDoctorExecution>
+  writeArtifacts(execution: AppDoctorExecution): Promise<AppDoctorArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppDoctorInstructionsDestination>
   deliverInstructions(options: {directory: string; copy: boolean; scanComplete: boolean}): Promise<void>
@@ -41,7 +45,12 @@ export const appDoctorInstructionsPrompt: RenderSelectPromptOptions<AppDoctorIns
 }
 
 const defaultDependencies: DoctorDependencies = {
-  runEngine: runAppDoctor,
+  execute: async ({directory, findingsPath}) => {
+    const appRoot = resolveAppDoctorRoot(directory)
+    const findings = findingsPath ? await loadAppDoctorFindings(findingsPath) : undefined
+    return executeAppDoctor({appRoot, findings})
+  },
+  writeArtifacts: writeAppDoctorArtifacts,
   canPrompt: terminalSupportsPrompting,
   selectInstructionsDestination: () => renderSelectPrompt(appDoctorInstructionsPrompt),
   deliverInstructions: deliverAppDoctorInstructions,
@@ -62,16 +71,20 @@ async function instructionsDestination(
   return dependencies.selectInstructionsDestination()
 }
 
-function doctorReportInput(result: AppDoctorRunResult, verbose: boolean): DoctorReportInput {
+function doctorReportInput(
+  execution: AppDoctorExecution,
+  artifacts: AppDoctorArtifactPaths,
+  verbose: boolean,
+): DoctorReportInput {
   return {
-    scan: result.scan,
-    engine: result.engine,
+    scan: execution.scan,
+    engine: execution.engine,
     verbose,
-    elapsedMilliseconds: result.elapsedMilliseconds,
-    tracePath: result.tracePath,
-    reviewPath: result.reviewPath,
-    reviewCheckCount: result.reviewCheckCount,
-    findings: result.findings,
+    elapsedMilliseconds: execution.elapsedMilliseconds,
+    tracePath: artifacts.tracePath,
+    reviewPath: artifacts.reviewPath,
+    reviewCheckCount: execution.operation === 'scan' ? execution.reviewPack.checks.length : undefined,
+    findings: execution.operation === 'compile' ? execution.findings : undefined,
   }
 }
 
@@ -79,16 +92,16 @@ export default async function doctor(
   options: DoctorOptions,
   dependencies: DoctorDependencies = defaultDependencies,
 ): Promise<void> {
-  const result = await dependencies.runEngine({
+  const execution = await dependencies.execute({
     directory: options.directory,
-    blocking: options.blocking,
     findingsPath: options.findingsPath,
   })
+  const artifacts = await dependencies.writeArtifacts(execution)
 
   if (options.json) {
-    dependencies.output(formatDoctorJson(result.jsonReport, result.engine))
+    dependencies.output(encodeDoctorJson(toDoctorJson(execution)))
   } else {
-    dependencies.renderReport(doctorReportInput(result, options.verbose))
+    dependencies.renderReport(doctorReportInput(execution, artifacts, options.verbose))
   }
 
   const destination = await instructionsDestination(options, dependencies)
@@ -100,5 +113,6 @@ export default async function doctor(
     })
   }
 
-  if (result.exitCode !== 0) dependencies.setExitCode(result.exitCode)
+  const exitCode = doctorExitCode(execution, options.blocking)
+  if (exitCode !== 0) dependencies.setExitCode(exitCode)
 }

@@ -40,18 +40,6 @@ interface DoctorAlert {
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
 
-function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
-
-export function formatDoctorJson(report: unknown, engine: DoctorEngineMetadata): string {
-  const reportWithEngine = isJsonObject(report)
-    ? {...report, engine: {...(isJsonObject(report.engine) ? report.engine : {}), ...engine}}
-    : {engine, result: report}
-
-  return JSON.stringify(reportWithEngine, null, 2)
-}
-
 export function buildDoctorAlert(input: DoctorReportInput): DoctorAlert {
   const type = doctorAlertType(input)
 

@@ -674,8 +674,7 @@ export async function scan(
 
   const fileHashMap: Record<string, string> = {}
   for (const file of [...sourceFiles, ...sensitiveFiles])
-    if (file.content !== undefined)
-      fileHashMap[redactText(file.path)] = contentDigest(file.content)
+    if (file.content !== undefined) fileHashMap[redactText(file.path)] = contentDigest(file.content)
   const auditedLockfiles =
     checksExecuted
       .find((execution) => execution.id === 'KNOWN_CVE_IN_DEPENDENCY')

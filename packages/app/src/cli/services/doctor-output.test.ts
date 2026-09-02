@@ -1,4 +1,4 @@
-import {buildDoctorAlert, formatDoctorJson} from './doctor-output.js'
+import {buildDoctorAlert} from './doctor-output.js'
 import {describe, expect, test} from 'vitest'
 import type {DoctorReportInput} from './doctor-output.js'
 import type {ScanResult} from './app-doctor-engine/index.js'
@@ -254,14 +254,5 @@ describe('buildDoctorAlert', () => {
 
     expect(serialized).not.toContain(secret)
     expect(serialized).toContain('[REDACTED:')
-  })
-})
-
-describe('formatDoctorJson', () => {
-  test('keeps existing JSON engine fields while applying authoritative version metadata', () => {
-    expect(JSON.parse(formatDoctorJson({engine: {commit: 'abc123'}, findings: []}, engine)).engine).toEqual({
-      ...engine,
-      commit: 'abc123',
-    })
   })
 })

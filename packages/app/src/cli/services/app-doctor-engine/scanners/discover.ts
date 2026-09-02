@@ -162,10 +162,7 @@ function projectAccessScopes(value: unknown, path: string, appRoot?: string): st
     recordSectionGap(appRoot, path, 'access_scopes section could not be parsed')
     return undefined
   }
-  const legacyScopes =
-    parsed.data.scopes
-      ?.split(/[\s,]+/)
-      .filter(Boolean) ?? []
+  const legacyScopes = parsed.data.scopes?.split(/[\s,]+/).filter(Boolean) ?? []
   const scopes = [...new Set([...legacyScopes, ...(parsed.data.required_scopes ?? [])])]
   return scopes.length > 0 ? scopes.join(',') : undefined
 }

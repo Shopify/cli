@@ -4,7 +4,6 @@ import {
   compileTrace,
   computeResultHash,
   findAppRoot,
-  formatJson,
   getEngineVersion,
   loadChecks,
   mergeFindings,
@@ -13,13 +12,14 @@ import {
   validateAgentChecksExecuted,
   type AgentFindingsDocument,
   type CheckExecution,
+  type ReviewPack,
   type ScanResult,
   type Severity,
   type Suppression,
+  type TraceV2,
 } from './app-doctor-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileSize, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileSize, readFile} from '@shopify/cli-kit/node/fs'
 
 const MAX_FINDINGS_FILE_SIZE_BYTES = 5_000_000
 
@@ -31,27 +31,31 @@ export interface AppDoctorEngineMetadata {
 
 export type AppDoctorBlockingLevel = Severity | 'none'
 
-export interface AppDoctorRunOptions {
-  directory: string
-  blocking: AppDoctorBlockingLevel
-  findingsPath?: string
+export interface AppDoctorFindings {
+  accepted: number
+  rejected: string[]
+  warnings: string[]
 }
 
-export interface AppDoctorRunResult {
-  scan: ScanResult
-  engine: AppDoctorEngineMetadata
-  exitCode: number
-  elapsedMilliseconds: number
-  tracePath: string
-  reviewPath?: string
-  reviewCheckCount?: number
-  jsonReport: unknown
-  findings?: {
-    accepted: number
-    rejected: string[]
-    warnings: string[]
-  }
-}
+export type AppDoctorExecution =
+  | {
+      operation: 'scan'
+      appRoot: string
+      scan: ScanResult
+      trace: TraceV2
+      reviewPack: ReviewPack
+      engine: AppDoctorEngineMetadata
+      elapsedMilliseconds: number
+    }
+  | {
+      operation: 'compile'
+      appRoot: string
+      scan: ScanResult
+      trace: TraceV2
+      findings: AppDoctorFindings
+      engine: AppDoctorEngineMetadata
+      elapsedMilliseconds: number
+    }
 
 interface FindingsDocument extends AgentFindingsDocument {
   suppressions?: Suppression[]
@@ -61,6 +65,12 @@ const severityRank: Record<Severity, number> = {
   high: 3,
   medium: 2,
   low: 1,
+}
+
+export function doctorExitCode(execution: AppDoctorExecution, blocking: AppDoctorBlockingLevel): number {
+  if (execution.operation === 'compile' && execution.findings.rejected.length > 0) return 2
+  if (shouldBlock(execution.scan.issues, blocking)) return 1
+  return 0
 }
 
 function shouldBlock(issues: {severity: Severity}[], blocking: AppDoctorBlockingLevel): boolean {
@@ -75,7 +85,7 @@ function checkIdFromRejection(message: string, knownCheckIds: Set<string>): stri
   return knownCheckIds.has(checkId) ? checkId : undefined
 }
 
-async function loadFindings(path: string): Promise<FindingsDocument> {
+export async function loadAppDoctorFindings(path: string): Promise<FindingsDocument> {
   let content: string
   try {
     const size = await fileSize(path)
@@ -122,120 +132,114 @@ export function resolveAppDoctorRoot(directory?: string): string {
   }
 }
 
-export async function runAppDoctor(options: AppDoctorRunOptions): Promise<AppDoctorRunResult> {
-  const appRoot = resolveAppDoctorRoot(options.directory)
+export async function executeAppDoctor(options: {
+  appRoot: string
+  findings?: FindingsDocument
+}): Promise<AppDoctorExecution> {
   const startTime = Date.now()
-  const result = await scan(appRoot)
+  const result = await scan(options.appRoot)
   const elapsedMilliseconds = Date.now() - startTime
   const engineVersion = getEngineVersion()
-  const artifactDirectory = joinPath(appRoot, '.shopify', 'app-doctor')
-  const reviewPath = joinPath(artifactDirectory, 'review.json')
-  const tracePath = joinPath(artifactDirectory, 'trace.json')
-  let rejected: string[] = []
-  let warnings: string[] = []
-  let accepted = 0
   let agentChecksExecuted: CheckExecution[] = []
   let suppressions: Suppression[] = []
 
-  if (options.findingsPath) {
-    const document = await loadFindings(options.findingsPath)
-    const knownFiles = new Set(searchBoundaryFiles(result))
-    const executed = validateAgentChecksExecuted(document, {detection: result.detection, knownFiles})
-    const merged = mergeFindings(result.issues, document.findings, {
-      knownFiles,
-      executedChecks: new Set(
-        executed.executions
-          .filter((execution) => execution.status === 'executed' || execution.status === 'unresolved')
-          .map((execution) => execution.id),
-      ),
+  if (!options.findings) {
+    const reviewPack = buildReviewPack(engineVersion, result)
+    const trace = compileTrace(result, {engineVersion, agentChecksExecuted, suppressions})
+    return {
+      operation: 'scan',
+      appRoot: options.appRoot,
+      scan: result,
+      trace,
+      reviewPack,
+      engine: trace.engine,
+      elapsedMilliseconds,
+    }
+  }
+
+  const document = options.findings
+  const knownFiles = new Set(searchBoundaryFiles(result))
+  const executed = validateAgentChecksExecuted(document, {detection: result.detection, knownFiles})
+  const merged = mergeFindings(result.issues, document.findings, {
+    knownFiles,
+    executedChecks: new Set(
+      executed.executions
+        .filter((execution) => execution.status === 'executed' || execution.status === 'unresolved')
+        .map((execution) => execution.id),
+    ),
+  })
+  const accepted = merged.accepted
+  const rejected = [...executed.rejected, ...merged.rejected]
+  const warnings = executed.warnings
+  const checks = loadChecks()
+  const knownCheckIds = new Set(checks.keys())
+  const rejectedCheckIds = new Set(
+    rejected.flatMap((message) => {
+      const checkId = checkIdFromRejection(message, knownCheckIds)
+      return checkId ? [checkId] : []
+    }),
+  )
+  agentChecksExecuted = executed.executions.map((execution) =>
+    rejectedCheckIds.has(execution.id)
+      ? {
+          ...execution,
+          status: 'unresolved',
+          applicable: true,
+          reason: {
+            code: 'input_rejected',
+            message: `One or more submitted results for ${execution.id} were rejected.`,
+          },
+          guidance: 'Correct the rejected check record or findings, then compile the trace again.',
+        }
+      : execution,
+  )
+  for (const checkId of rejectedCheckIds) {
+    if (agentChecksExecuted.some((execution) => execution.id === checkId)) continue
+    const check = checks.get(checkId)!
+    agentChecksExecuted.push({
+      id: check.id,
+      version: check.version,
+      kind: 'agent',
+      status: 'unresolved',
+      required: false,
+      applicable: true,
+      languages: result.detection.languages.map((language) => language.name),
+      framework: result.detection.framework,
+      surface: result.detection.surface,
+      inspected_files: [],
+      findings: 0,
+      analysis_mode: 'agent',
+      reason: {code: 'input_rejected', message: `The submitted execution or findings for ${check.id} were rejected.`},
+      prompt: check.prompt,
+      prompt_hash: check.prompt_hash,
+      guidance: 'Correct the rejected check record or findings, then compile the trace again.',
     })
-    accepted = merged.accepted
-    rejected = [...executed.rejected, ...merged.rejected]
-    warnings = executed.warnings
-    const checks = loadChecks()
-    const knownCheckIds = new Set(checks.keys())
-    const rejectedCheckIds = new Set(
-      rejected.flatMap((message) => {
+  }
+  suppressions = document.suppressions ?? []
+  if (rejected.length > 0) {
+    result.score = null
+    result.scan.coverage_complete = false
+    result.scan.coverage_gaps.push(
+      ...rejected.map((message) => {
         const checkId = checkIdFromRejection(message, knownCheckIds)
-        return checkId ? [checkId] : []
+        return {
+          code: 'unresolved_check' as const,
+          ...(checkId ? {check_id: checkId} : {}),
+          message: `Rejected agent result: ${message}`,
+        }
       }),
     )
-    agentChecksExecuted = executed.executions.map((execution) =>
-      rejectedCheckIds.has(execution.id)
-        ? {
-            ...execution,
-            status: 'unresolved',
-            applicable: true,
-            reason: {
-              code: 'input_rejected',
-              message: `One or more submitted results for ${execution.id} were rejected.`,
-            },
-            guidance: 'Correct the rejected check record or findings, then compile the trace again.',
-          }
-        : execution,
-    )
-    for (const checkId of rejectedCheckIds) {
-      if (agentChecksExecuted.some((execution) => execution.id === checkId)) continue
-      const check = checks.get(checkId)!
-      agentChecksExecuted.push({
-        id: check.id,
-        version: check.version,
-        kind: 'agent',
-        status: 'unresolved',
-        required: false,
-        applicable: true,
-        languages: result.detection.languages.map((language) => language.name),
-        framework: result.detection.framework,
-        surface: result.detection.surface,
-        inspected_files: [],
-        findings: 0,
-        analysis_mode: 'agent',
-        reason: {code: 'input_rejected', message: `The submitted execution or findings for ${check.id} were rejected.`},
-        prompt: check.prompt,
-        prompt_hash: check.prompt_hash,
-        guidance: 'Correct the rejected check record or findings, then compile the trace again.',
-      })
-    }
-    suppressions = document.suppressions ?? []
-    if (rejected.length > 0) {
-      result.score = null
-      result.scan.coverage_complete = false
-      result.scan.coverage_gaps.push(
-        ...rejected.map((message) => {
-          const checkId = checkIdFromRejection(message, knownCheckIds)
-          return {
-            code: 'unresolved_check' as const,
-            ...(checkId ? {check_id: checkId} : {}),
-            message: `Rejected agent result: ${message}`,
-          }
-        }),
-      )
-    }
-    result.scan.result_hash = computeResultHash(result.issues, result.score)
   }
+  result.scan.result_hash = computeResultHash(result.issues, result.score)
 
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted, suppressions})
-  await mkdir(artifactDirectory)
-  await writeFile(tracePath, `${JSON.stringify(trace, null, 2)}\n`)
-
-  let reviewCheckCount: number | undefined
-  if (!options.findingsPath) {
-    const reviewPack = buildReviewPack(engineVersion, result)
-    await writeFile(reviewPath, `${JSON.stringify(reviewPack, null, 2)}\n`)
-    reviewCheckCount = reviewPack.checks.length
-  }
-
-  let exitCode = 0
-  if (rejected.length > 0) exitCode = 2
-  else if (shouldBlock(result.issues, options.blocking)) exitCode = 1
-
   return {
+    operation: 'compile',
+    appRoot: options.appRoot,
     scan: result,
+    trace,
+    findings: {accepted, rejected, warnings},
     engine: trace.engine,
-    exitCode,
     elapsedMilliseconds,
-    tracePath,
-    jsonReport: options.findingsPath ? trace : JSON.parse(formatJson(result)),
-    ...(options.findingsPath ? {findings: {accepted, rejected, warnings}} : {reviewPath, reviewCheckCount}),
   }
 }

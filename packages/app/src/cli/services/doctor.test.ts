@@ -1,8 +1,9 @@
 import doctor, {appDoctorInstructionsPrompt} from './doctor.js'
 import {describe, expect, test, vi} from 'vitest'
-import type {AppDoctorRunOptions, AppDoctorRunResult} from './app-doctor-api.js'
+import type {AppDoctorArtifactPaths} from './app-doctor-artifacts.js'
+import type {AppDoctorExecution} from './app-doctor-api.js'
 import type {AppDoctorInstructionsDestination} from './doctor.js'
-import type {ScanResult} from './app-doctor-engine/index.js'
+import type {ScanResult, TraceV2} from './app-doctor-engine/index.js'
 
 const scan: ScanResult = {
   version: '0.1.0',
@@ -38,24 +39,59 @@ const scan: ScanResult = {
   issues: [],
 }
 
-const engineResult: AppDoctorRunResult = {
-  scan,
-  engine: {
-    name: 'shopify-app-doctor',
-    version: '1.2.3',
-    ruleset: '2026.08.28',
-  },
-  exitCode: 0,
-  elapsedMilliseconds: 12,
-  tracePath: '/tmp/unlinked-app/.shopify/app-doctor/trace.json',
-  reviewPath: '/tmp/unlinked-app/.shopify/app-doctor/review.json',
-  reviewCheckCount: 31,
-  jsonReport: {schema_version: 1, findings: []},
+const engine = {
+  name: 'shopify-app-doctor',
+  version: '1.2.3',
+  ruleset: '2026.08.28',
 }
 
-function testDependencies(result: AppDoctorRunResult = engineResult) {
+const trace = {
+  schema_version: 2,
+  engine,
+  generated_at: '2026-08-24T00:00:00.000Z',
+  project: {commit: null, dirty: null, input_hash: 'sha256:input', input_hashes: {}},
+  detection: scan.detection,
+  score: scan.score,
+  findings: [],
+  checks_executed: [],
+  suppressions: [],
+  coverage: {files_scanned: 1, files_skipped: [], complete: true, gaps: []},
+  attestation: {digest: 'sha256:digest', signed: false},
+} as TraceV2
+
+const reviewPack = {
+  doctor_version: '1.2.3',
+  generated_at: '2026-08-24T00:00:00.000Z',
+  checks: Array.from({length: 31}, (_, index) => ({
+    id: `CHECK_${index}`,
+    version: 1,
+    prompt_hash: 'sha256:prompt',
+    prompt: 'prompt',
+    severity: 'medium' as const,
+  })),
+  instructions: 'review',
+}
+
+const scanExecution: AppDoctorExecution = {
+  operation: 'scan',
+  appRoot: '/tmp/unlinked-app',
+  scan,
+  trace,
+  reviewPack,
+  engine,
+  elapsedMilliseconds: 12,
+}
+
+const artifacts: AppDoctorArtifactPaths = {
+  artifactDirectory: '/tmp/unlinked-app/.shopify/app-doctor',
+  tracePath: '/tmp/unlinked-app/.shopify/app-doctor/trace.json',
+  reviewPath: '/tmp/unlinked-app/.shopify/app-doctor/review.json',
+}
+
+function testDependencies(execution: AppDoctorExecution = scanExecution) {
   return {
-    runEngine: vi.fn(async (_options: AppDoctorRunOptions) => result),
+    execute: vi.fn(async () => execution),
+    writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     selectInstructionsDestination: vi.fn(async (): Promise<AppDoctorInstructionsDestination> => 'nothing'),
     deliverInstructions: vi.fn(async () => {}),
@@ -77,42 +113,41 @@ function testOptions() {
 }
 
 describe('doctor', () => {
-  test('forwards scan options to the in-tree engine and renders a report', async () => {
+  test('executes, writes artifacts, then renders a report', async () => {
     const dependencies = testDependencies()
 
     await doctor({...testOptions(), verbose: true, blocking: 'high'}, dependencies)
 
-    expect(dependencies.runEngine).toHaveBeenCalledWith({
+    expect(dependencies.execute).toHaveBeenCalledWith({
       directory: '/tmp/unlinked-app',
-      blocking: 'high',
       findingsPath: undefined,
     })
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution)
     expect(dependencies.renderReport).toHaveBeenCalledWith({
       scan,
-      engine: engineResult.engine,
+      engine,
       verbose: true,
       elapsedMilliseconds: 12,
-      tracePath: engineResult.tracePath,
-      reviewPath: engineResult.reviewPath,
+      tracePath: artifacts.tracePath,
+      reviewPath: artifacts.reviewPath,
       reviewCheckCount: 31,
       findings: undefined,
     })
     expect(dependencies.output).not.toHaveBeenCalled()
   })
 
-  test('preserves the JSON report and includes engine and ruleset versions', async () => {
-    const dependencies = testDependencies({
-      ...engineResult,
-      jsonReport: {schema_version: 1, findings: []},
-    })
+  test('encodes a tagged JSON scan result', async () => {
+    const dependencies = testDependencies()
 
     await doctor({...testOptions(), json: true, yes: true}, dependencies)
 
-    expect(dependencies.runEngine).toHaveBeenCalledWith(expect.objectContaining({blocking: 'none'}))
+    expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({directory: '/tmp/unlinked-app'}))
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
-      schema_version: 1,
-      findings: [],
-      engine: engineResult.engine,
+      operation: 'scan',
+      engine,
+      scan,
+      trace,
+      reviewPack,
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
@@ -214,10 +249,26 @@ describe('doctor', () => {
     expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
 
-  test('uses the engine exit code for blocking findings', async () => {
-    const dependencies = testDependencies({...engineResult, exitCode: 1})
+  test('sets a blocking exit code from the execution result', async () => {
+    const dependencies = testDependencies({
+      ...scanExecution,
+      scan: {
+        ...scan,
+        issues: [
+          {
+            id: 'COMMITTED_SECRET',
+            severity: 'high',
+            points: -25,
+            title: 'Secret',
+            message: 'secret',
+            location: {file: 'app/routes/index.ts'},
+            fix: {automated: false, description: 'remove it'},
+          },
+        ],
+      },
+    })
 
-    await doctor(testOptions(), dependencies)
+    await doctor({...testOptions(), blocking: 'high'}, dependencies)
 
     expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
   })
