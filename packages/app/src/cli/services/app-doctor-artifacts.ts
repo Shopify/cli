@@ -10,7 +10,7 @@ export interface AppDoctorArtifactPaths {
   reviewPath?: string
 }
 
-export function appDoctorArtifactPaths(appRoot: string): Required<AppDoctorArtifactPaths> {
+function appDoctorArtifactPaths(appRoot: string): Required<AppDoctorArtifactPaths> {
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-doctor')
   return {
     artifactDirectory,

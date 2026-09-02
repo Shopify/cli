@@ -1,7 +1,7 @@
 import type {AppDoctorEngineMetadata, AppDoctorExecution, AppDoctorFindings} from './app-doctor-api.js'
 import type {ReviewPack, ScanResult, TraceV2} from './app-doctor-engine/index.js'
 
-export type AppDoctorJsonResult =
+type AppDoctorJsonResult =
   | {
       operation: 'scan'
       engine: AppDoctorEngineMetadata
