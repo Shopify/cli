@@ -275,6 +275,58 @@ describe('App Doctor CLI integration', () => {
     })
   })
 
+  test('rejects a missing findings file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const findingsPath = joinPath(directory, 'missing-findings.json')
+
+      await expect(runAppDoctor({directory, findingsPath, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
+      await expect(runAppDoctor({directory, findingsPath, blocking: 'none'})).rejects.toThrow(
+        `Could not read App Doctor findings from ${findingsPath}.`,
+      )
+    })
+  })
+
+  test('rejects an unreadable findings path', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const findingsPath = joinPath(directory, 'findings-dir')
+      await mkdir(findingsPath)
+
+      await expect(runAppDoctor({directory, findingsPath, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
+      await expect(runAppDoctor({directory, findingsPath, blocking: 'none'})).rejects.toThrow(
+        `Could not read App Doctor findings from ${findingsPath}.`,
+      )
+    })
+  })
+
+  test('rejects invalid JSON findings', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const findingsPath = joinPath(directory, 'findings.json')
+      await writeFile(findingsPath, '{')
+
+      await expect(runAppDoctor({directory, findingsPath, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
+      await expect(runAppDoctor({directory, findingsPath, blocking: 'none'})).rejects.toThrow(
+        `Could not parse App Doctor findings from ${findingsPath}.`,
+      )
+    })
+  })
+
+  test('rejects findings files larger than 5 MB', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const findingsPath = joinPath(directory, 'findings.json')
+      await writeFile(findingsPath, 'x'.repeat(5_000_001))
+
+      await expect(runAppDoctor({directory, findingsPath, blocking: 'none'})).rejects.toMatchObject({
+        constructor: AbortError,
+        message: `Could not read App Doctor findings from ${findingsPath}.`,
+        tryMessage: 'The file is larger than 5 MB.',
+      })
+    })
+  })
+
   test('does not invent a check ID from document-level rejection messages', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
