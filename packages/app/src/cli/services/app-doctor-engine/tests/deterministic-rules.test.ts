@@ -82,6 +82,34 @@ describe('deterministic rules product contract', () => {
       ],
     })
   })
+
+  test('keeps valid sections when another configuration section is invalid', () => {
+    const parsed = parseAppToml(
+      {
+        access_scopes: {scopes: 'read_products'},
+        auth: {redirect_urls: ['https://app.example/callback']},
+        webhooks: 'not-a-section',
+      },
+      '/app/shopify.app.toml',
+    )
+    expect(parsed.scopes).toBe('read_products')
+    expect(parsed.redirectUrls).toEqual(['https://app.example/callback'])
+    expect(parsed.webhooks).toEqual([])
+    expect(parsed.apiVersion).toBeUndefined()
+  })
+
+  test('keeps insecure webhook URIs that the CLI schema rejects', () => {
+    const parsed = parseAppToml(
+      {
+        webhooks: {
+          api_version: '2023-07',
+          subscriptions: [{topics: ['orders/create'], uri: 'http://insecure.example/webhooks'}],
+        },
+      },
+      '/app/shopify.app.toml',
+    )
+    expect(parsed.webhooks).toEqual([{topics: ['orders/create'], uri: 'http://insecure.example/webhooks'}])
+  })
 })
 
 describe('JavaScript regex mode', () => {

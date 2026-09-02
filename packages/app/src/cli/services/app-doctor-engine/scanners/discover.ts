@@ -1,5 +1,8 @@
+import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
+import {WebhookSubscriptionSchema} from '../../../models/extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {fileExistsSync, fileSizeSync, globSync, readFileSync} from '@shopify/cli-kit/node/fs'
 import {cwd, dirname, extname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {lstatSync} from 'node:fs'
 import type {SourceCandidate} from '../types.js'
@@ -78,7 +81,7 @@ export function findAppTomls(appRoot: string): AppTomlContent[] {
     if (content === undefined) return []
     try {
       const raw = decodeToml(content) as Record<string, unknown>
-      return [parseAppToml(raw, path, content)]
+      return [parseAppToml(raw, path, content, appRoot)]
       // Invalid repository TOML is a coverage gap, not a scanner crash.
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
@@ -100,7 +103,7 @@ export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppT
   if (content === undefined) return null
   try {
     const raw = decodeToml(content) as Record<string, unknown>
-    return parseAppToml(raw, tomlPath, content)
+    return parseAppToml(raw, tomlPath, content, appRoot)
     // Invalid repository TOML is a coverage gap, not a scanner crash.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
@@ -113,57 +116,123 @@ export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppT
   }
 }
 
-export function parseAppToml(raw: Record<string, unknown>, path: string, content?: string): AppTomlContent {
-  const accessScopes = asRecord(raw.access_scopes)
-  const auth = asRecord(raw.auth)
-  const webhooksSection = asRecord(raw.webhooks)
-  const legacyScopes =
-    optionalString(accessScopes?.scopes)
-      ?.split(/[\s,]+/)
-      .filter(Boolean) ?? []
-  const scopes = [...new Set([...legacyScopes, ...stringArray(accessScopes?.required_scopes)])]
-  const webhookSubscriptions = Array.isArray(webhooksSection?.subscriptions)
-    ? webhooksSection.subscriptions.flatMap((value): WebhookSubscription[] => {
-        const subscription = asRecord(value)
-        if (!subscription || typeof subscription.uri !== 'string') return []
-        return [
-          {
-            topics: [...stringArray(subscription.topics), ...stringArray(subscription.compliance_topics)],
-            uri: subscription.uri,
-          },
-        ]
-      })
-    : []
-  const privacyCompliance = asRecord(webhooksSection?.privacy_compliance)
-  const privacyComplianceWebhooks = [
-    {topic: 'customers/redact', uri: optionalString(privacyCompliance?.customer_deletion_url)},
-    {topic: 'customers/data_request', uri: optionalString(privacyCompliance?.customer_data_request_url)},
-    {topic: 'shop/redact', uri: optionalString(privacyCompliance?.shop_deletion_url)},
-  ].flatMap(({topic, uri}): WebhookSubscription[] => (uri ? [{topics: [topic], uri}] : []))
+const WebhooksSectionSchema = zod.object({
+  api_version: zod.string().optional(),
+  privacy_compliance: zod
+    .object({
+      customer_deletion_url: zod.string().optional(),
+      customer_data_request_url: zod.string().optional(),
+      shop_deletion_url: zod.string().optional(),
+    })
+    .optional(),
+  subscriptions: zod.array(zod.unknown()).optional(),
+})
+
+const EvidenceWebhookSubscriptionSchema = zod.object({
+  uri: zod.string(),
+  topics: zod.array(zod.string()).optional(),
+  compliance_topics: zod.array(zod.string()).optional(),
+})
+
+export function parseAppToml(
+  raw: Record<string, unknown>,
+  path: string,
+  content?: string,
+  appRoot?: string,
+): AppTomlContent {
+  const scopes = projectAccessScopes(raw.access_scopes, path, appRoot)
+  const redirectUrls = projectRedirectUrls(raw.auth, path, appRoot)
+  const webhooks = projectWebhooks(raw.webhooks, path, appRoot)
 
   return {
     raw,
     path,
     content,
-    scopes: scopes.length > 0 ? scopes.join(',') : undefined,
-    apiVersion: optionalString(webhooksSection?.api_version),
-    redirectUrls: stringArray(auth?.redirect_urls),
-    webhooks: [...webhookSubscriptions, ...privacyComplianceWebhooks],
+    scopes,
+    apiVersion: webhooks.apiVersion,
+    redirectUrls,
+    webhooks: webhooks.subscriptions,
   }
 }
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined
+function projectAccessScopes(value: unknown, path: string, appRoot?: string): string | undefined {
+  if (value === undefined) return undefined
+  const parsed = AppAccessScopesSchema.safeParse(value)
+  if (!parsed.success) {
+    recordSectionGap(appRoot, path, 'access_scopes section could not be parsed')
+    return undefined
+  }
+  const legacyScopes =
+    parsed.data.scopes
+      ?.split(/[\s,]+/)
+      .filter(Boolean) ?? []
+  const scopes = [...new Set([...legacyScopes, ...(parsed.data.required_scopes ?? [])])]
+  return scopes.length > 0 ? scopes.join(',') : undefined
 }
 
-function stringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+function projectRedirectUrls(value: unknown, path: string, appRoot?: string): string[] {
+  if (value === undefined) return []
+  const parsed = AppAuthSchema.safeParse(value)
+  if (parsed.success) return parsed.data.redirect_urls
+
+  const fallback = zod.object({redirect_urls: zod.array(zod.string())}).safeParse(value)
+  if (!fallback.success) {
+    recordSectionGap(appRoot, path, 'auth section could not be parsed')
+    return []
+  }
+  return fallback.data.redirect_urls
 }
 
-function optionalString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined
+function projectWebhooks(
+  value: unknown,
+  path: string,
+  appRoot?: string,
+): {apiVersion?: string; subscriptions: WebhookSubscription[]} {
+  if (value === undefined) return {subscriptions: []}
+  const parsed = WebhooksSectionSchema.safeParse(value)
+  if (!parsed.success) {
+    recordSectionGap(appRoot, path, 'webhooks section could not be parsed')
+    return {subscriptions: []}
+  }
+
+  const webhookSubscriptions = (parsed.data.subscriptions ?? []).flatMap(projectWebhookSubscription)
+  const privacyCompliance = parsed.data.privacy_compliance
+  const privacyComplianceWebhooks = [
+    {topic: 'customers/redact', uri: privacyCompliance?.customer_deletion_url},
+    {topic: 'customers/data_request', uri: privacyCompliance?.customer_data_request_url},
+    {topic: 'shop/redact', uri: privacyCompliance?.shop_deletion_url},
+  ].flatMap(({topic, uri}): WebhookSubscription[] => (uri ? [{topics: [topic], uri}] : []))
+
+  return {
+    apiVersion: parsed.data.api_version,
+    subscriptions: [...webhookSubscriptions, ...privacyComplianceWebhooks],
+  }
+}
+
+function projectWebhookSubscription(value: unknown): WebhookSubscription[] {
+  const strict = WebhookSubscriptionSchema.safeParse(value)
+  if (strict.success) {
+    return [
+      {
+        topics: [...(strict.data.topics ?? []), ...(strict.data.compliance_topics ?? [])],
+        uri: strict.data.uri,
+      },
+    ]
+  }
+
+  const evidence = EvidenceWebhookSubscriptionSchema.safeParse(value)
+  if (!evidence.success) return []
+  return [
+    {
+      topics: [...(evidence.data.topics ?? []), ...(evidence.data.compliance_topics ?? [])],
+      uri: evidence.data.uri,
+    },
+  ]
+}
+
+function recordSectionGap(appRoot: string | undefined, path: string, detail: string): void {
+  if (!appRoot) return
+  recordSkippedFile(appRoot, path, {ok: false, reason: 'unreadable', detail})
 }
 
 /**
