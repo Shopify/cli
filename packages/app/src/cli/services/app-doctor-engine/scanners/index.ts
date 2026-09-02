@@ -36,7 +36,8 @@ import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {createHash} from 'node:crypto'
 import type {AuditExecutor} from '../rules/dependency-rules.js'
-import type {Rule, ScanContext, SourceFile} from '../rules/types.js'
+import type {Rule, ScanContext} from '../rules/types.js'
+import type {SourceFile} from './types.js'
 import type {
   AnalysisMode,
   CheckExecution,

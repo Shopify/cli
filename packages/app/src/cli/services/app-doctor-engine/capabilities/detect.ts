@@ -1,4 +1,4 @@
-import type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../rules/types.js'
+import type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../scanners/types.js'
 import type {Capabilities, DetectedLanguage, ProjectDetection, SourceCandidate} from '../types.js'
 
 /** Capabilities describe observed behavior. They do not imply framework support. */

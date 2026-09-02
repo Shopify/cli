@@ -3,7 +3,7 @@ import {cwd, dirname, extname, joinPath, relativePath, resolvePath} from '@shopi
 import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {lstatSync} from 'node:fs'
 import type {SourceCandidate} from '../types.js'
-import type {AppTomlContent, ExtensionInfo, SourceFile, ManifestFile, WebhookSubscription} from '../rules/types.js'
+import type {AppTomlContent, ExtensionInfo, SourceFile, ManifestFile, WebhookSubscription} from './types.js'
 
 /** Expected user error while locating a Shopify app root. */
 export class AppRootDiscoveryError extends Error {
