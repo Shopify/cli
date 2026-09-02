@@ -1,6 +1,6 @@
 import StoreCreateDev from './dev.js'
 import {createDevStore} from '../../../services/store/create/dev.js'
-import {storeNamePrompt, storePlanPrompt} from '../../../prompts/store.js'
+import {storeNamePrompt, storePlanPrompt, storeDemoDataPrompt} from '../../../prompts/store.js'
 import {selectOrg} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -39,7 +39,15 @@ beforeEach(() => {
 
 describe('store create dev command', () => {
   test('resolves the organization and passes parsed flags through to the service', async () => {
-    await StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345'])
+    await StoreCreateDev.run([
+      '--name',
+      'my-test-store',
+      '--plan',
+      'plus',
+      '--organization-id',
+      '12345',
+      '--no-demo-data',
+    ])
 
     expect(selectOrg).toHaveBeenCalledWith('12345')
     expect(createDevStore).toHaveBeenCalledWith({
@@ -54,7 +62,16 @@ describe('store create dev command', () => {
   })
 
   test('passes json flag through to the service', async () => {
-    await StoreCreateDev.run(['--name', 'my-test-store', '--json', '--plan', 'plus', '--organization-id', '12345'])
+    await StoreCreateDev.run([
+      '--name',
+      'my-test-store',
+      '--json',
+      '--plan',
+      'plus',
+      '--organization-id',
+      '12345',
+      '--no-demo-data',
+    ])
 
     expect(createDevStore).toHaveBeenCalledWith({
       name: 'my-test-store',
@@ -67,7 +84,7 @@ describe('store create dev command', () => {
     })
   })
 
-  test('passes plan, feature-preview, and with-demo-data flags through to the service', async () => {
+  test('passes plan, feature-preview, and demo-data flags through to the service', async () => {
     await StoreCreateDev.run([
       '--name',
       'my-test-store',
@@ -77,7 +94,7 @@ describe('store create dev command', () => {
       '12345',
       '--feature-preview',
       'extended_variants',
-      '--with-demo-data',
+      '--demo-data',
     ])
 
     expect(createDevStore).toHaveBeenCalledWith({
@@ -146,11 +163,51 @@ describe('store create dev command', () => {
     expect(createDevStore).toHaveBeenCalledWith(expect.objectContaining({plan: 'advanced'}))
   })
 
-  test('does not prompt when all flags are provided', async () => {
+  test('does not prompt for the name or plan when both flags are provided', async () => {
     await StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345'])
 
     expect(storeNamePrompt).not.toHaveBeenCalled()
     expect(storePlanPrompt).not.toHaveBeenCalled()
+  })
+
+  test('prompts for demo data when the flag is omitted in an interactive environment', async () => {
+    vi.mocked(storeDemoDataPrompt).mockResolvedValue(true)
+
+    await StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345'])
+
+    expect(storeDemoDataPrompt).toHaveBeenCalled()
+    expect(createDevStore).toHaveBeenCalledWith(expect.objectContaining({withDemoData: true}))
+  })
+
+  test('defaults demo data to false in a non-interactive environment', async () => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+
+    await StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345'])
+
+    expect(storeDemoDataPrompt).not.toHaveBeenCalled()
+    expect(createDevStore).toHaveBeenCalledWith(expect.objectContaining({withDemoData: false}))
+  })
+
+  test('skips the demo data prompt when --demo-data is set explicitly', async () => {
+    await StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--demo-data'])
+
+    expect(storeDemoDataPrompt).not.toHaveBeenCalled()
+    expect(createDevStore).toHaveBeenCalledWith(expect.objectContaining({withDemoData: true}))
+  })
+
+  test('skips the demo data prompt when --no-demo-data is set explicitly', async () => {
+    await StoreCreateDev.run([
+      '--name',
+      'my-test-store',
+      '--plan',
+      'plus',
+      '--organization-id',
+      '12345',
+      '--no-demo-data',
+    ])
+
+    expect(storeDemoDataPrompt).not.toHaveBeenCalled()
+    expect(createDevStore).toHaveBeenCalledWith(expect.objectContaining({withDemoData: false}))
   })
 
   test('rejects an invalid plan value without calling the service', async () => {
@@ -187,7 +244,7 @@ describe('store create dev command', () => {
     expect(StoreCreateDev.flags['organization-id']).toBeDefined()
     expect(StoreCreateDev.flags.plan).toBeDefined()
     expect(StoreCreateDev.flags['feature-preview']).toBeDefined()
-    expect(StoreCreateDev.flags['with-demo-data']).toBeDefined()
+    expect(StoreCreateDev.flags['demo-data']).toBeDefined()
     expect(StoreCreateDev.flags.country).toBeDefined()
     expect(StoreCreateDev.flags.json).toBeDefined()
   })

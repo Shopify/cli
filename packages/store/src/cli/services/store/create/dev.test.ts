@@ -125,7 +125,7 @@ describe('createDevStore', () => {
     )
   })
 
-  test('passes prepopulateTestData when --with-demo-data is set', async () => {
+  test('passes prepopulateTestData when withDemoData is set', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc)
       .mockResolvedValueOnce(defaultMutationResult)
       .mockResolvedValueOnce({
