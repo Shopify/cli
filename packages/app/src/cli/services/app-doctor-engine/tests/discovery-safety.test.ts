@@ -150,7 +150,7 @@ describe('repository discovery exclusions', () => {
       ]),
     )
   })
-}
+})
 
 describe('dependency audit input hashes', () => {
   for (const [manager, lockfile, content] of [
