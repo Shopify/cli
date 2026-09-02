@@ -59,12 +59,7 @@ export function throwIfStoredStoreAuthIsInvalid(error: unknown, session: StoredS
   const status = graphQLClientErrorStatus(error)
   if (status !== 401 && status !== 404) return
 
-  // Preview-store sessions are left uncleared: `store auth` overwrites the bucket's
-  // `currentUserId` regardless, and clearing here would make a follow-up `store info` run
-  // fall through to a full interactive login instead of repeating this same actionable message.
-  if (session.kind !== 'preview') {
-    clearStoredStoreAppSession(session.store, session.userId)
-  }
+  clearStoredStoreAppSession(session.store, session.userId)
 
   throwStoredAuthInvalidError(session)
 }
