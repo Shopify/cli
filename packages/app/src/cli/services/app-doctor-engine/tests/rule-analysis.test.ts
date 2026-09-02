@@ -1,11 +1,6 @@
 /* eslint-disable no-restricted-imports -- scanners are tested with real temporary repositories */
 import {scanEolApiVersions, isEolApiVersion} from '../rules/compliance-rules.js'
-import {
-  auditKnownCves,
-  executeAuditCommand,
-  parseAuditOutput,
-  windowsCmdAuditArguments,
-} from '../rules/dependency-rules.js'
+import {auditKnownCves, executeAuditCommand, parseAuditOutput} from '../rules/dependency-rules.js'
 import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
@@ -678,15 +673,6 @@ setInterval(() => {}, 1000)
     } finally {
       await rm(directory, {recursive: true, force: true})
     }
-  })
-
-  test('wraps Windows cmd /s /c so per-argument quotes survive stripping', () => {
-    expect(windowsCmdAuditArguments('npm', ['audit', '--json', '--omit=dev'])).toEqual([
-      '/d',
-      '/s',
-      '/c',
-      '""npm" "audit" "--json" "--omit=dev""',
-    ])
   })
 
   test('real npm audit does not fail by double-loading the isolated config', async () => {

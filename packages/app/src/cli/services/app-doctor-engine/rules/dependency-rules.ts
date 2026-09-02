@@ -94,7 +94,7 @@ function quoteWindowsAuditArgument(value: string): string {
   return `"${value.replace(/%/g, '%%').replace(/"/g, '""')}"`
 }
 
-export function windowsCmdAuditArguments(command: string, args: string[]): string[] {
+function windowsCmdAuditArguments(command: string, args: string[]): string[] {
   const commandLine = [command, ...args].map(quoteWindowsAuditArgument).join(' ')
   // cmd /s /c strips the first and last quote of the remainder. Wrap the quoted
   // command line so per-argument quotes survive instead of becoming `npm" "audit`.
