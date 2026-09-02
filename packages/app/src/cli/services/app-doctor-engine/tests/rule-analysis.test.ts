@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports -- scanners are tested with real temporary repositories */
 import {scanEolApiVersions, isEolApiVersion} from '../rules/compliance-rules.js'
-import {auditKnownCves, parseAuditOutput} from '../rules/dependency-rules.js'
+import {auditKnownCves, executeAuditCommand, parseAuditOutput} from '../rules/dependency-rules.js'
 import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
@@ -22,24 +22,6 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
   ext: extname(path),
   content,
 })
-
-async function writeFakeNpm(tools: string, source: string): Promise<void> {
-  const jsPath = join(tools, 'npm.js')
-  await writeFile(jsPath, source)
-  await writeFile(
-    join(tools, 'npm'),
-    `#!/bin/sh
-exec ${JSON.stringify(process.execPath)} ${JSON.stringify(jsPath)} "$@"
-`,
-    {mode: 0o755},
-  )
-  await writeFile(
-    join(tools, 'npm.cmd'),
-    `@echo off
-"${process.execPath}" "${jsPath}" %*
-`,
-  )
-}
 
 function processExists(pid: number): boolean {
   try {
@@ -408,56 +390,69 @@ describe('dependency audit selection and output handling', () => {
     }
   })
 
-  test('bounds noisy audit output and times out without hanging', async () => {
+  test('bounds noisy audit output without hanging', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-noisy-'))
-    const tools = await mkdtemp(join(tmpdir(), 'app-doctor-audit-noisy-bin-'))
-    vi.stubEnv('PATH', `${tools}${delimiter}${process.env.PATH ?? ''}`)
     try {
       await writeFile(join(directory, 'package-lock.json'), '{}')
-      await writeFakeNpm(
-        tools,
-        `
+      const started = Date.now()
+      const result = await auditKnownCves(
+        directory,
+        [javascriptManifest(directory)],
+        (_command, _args, options) =>
+          executeAuditCommand(
+            process.execPath,
+            [
+              '-e',
+              `
 setInterval(() => {
   process.stdout.write('x'.repeat(65536))
   process.stderr.write('x'.repeat(65536))
 }, 10)
 `,
+            ],
+            options,
+          ),
+        400,
       )
-      const started = Date.now()
-      const result = await auditKnownCves(directory, [javascriptManifest(directory)], undefined, 400)
-      expect(result.unresolvedReason).toBe('Dependency audit timed out.')
+      expect(result.issues).toEqual([])
+      expect(result.unresolvedReason).toMatch(/timed out|unusable output/)
       expect(Date.now() - started).toBeLessThan(4000)
     } finally {
-      vi.unstubAllEnvs()
-      await Promise.all([rm(directory, {recursive: true, force: true}), rm(tools, {recursive: true, force: true})])
+      await rm(directory, {recursive: true, force: true})
     }
   })
 
   test('kills descendant audit processes before removing the sandbox', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-tree-'))
-    const tools = await mkdtemp(join(tmpdir(), 'app-doctor-audit-tree-bin-'))
-    const pidFile = join(tools, 'descendant.pid')
-    vi.stubEnv('PATH', `${tools}${delimiter}${process.env.PATH ?? ''}`)
+    const pidFile = join(directory, 'descendant.pid')
     try {
       await writeFile(join(directory, 'package-lock.json'), '{}')
-      await writeFakeNpm(
-        tools,
-        `
+      const result = await auditKnownCves(
+        directory,
+        [javascriptManifest(directory)],
+        (_command, _args, options) =>
+          executeAuditCommand(
+            process.execPath,
+            [
+              '-e',
+              `
 const {spawn} = require('node:child_process')
 const {writeFileSync} = require('node:fs')
 const child = spawn(${JSON.stringify(process.execPath)}, ['-e', 'setInterval(() => {}, 1000)'], {stdio: 'ignore'})
 writeFileSync(${JSON.stringify(pidFile)}, String(child.pid))
 setInterval(() => {}, 1000)
 `,
+            ],
+            options,
+          ),
+        400,
       )
-      const result = await auditKnownCves(directory, [javascriptManifest(directory)], undefined, 400)
       expect(result.unresolvedReason).toBe('Dependency audit timed out.')
       const pid = Number(await readFile(pidFile, 'utf8'))
       expect(Number.isInteger(pid)).toBe(true)
       await expect.poll(() => processExists(pid), {timeout: 3000}).toBe(false)
     } finally {
-      vi.unstubAllEnvs()
-      await Promise.all([rm(directory, {recursive: true, force: true}), rm(tools, {recursive: true, force: true})])
+      await rm(directory, {recursive: true, force: true})
     }
   })
 

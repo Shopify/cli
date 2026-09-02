@@ -90,7 +90,7 @@ async function terminateProcessTree(child: ChildProcess): Promise<void> {
   }
 }
 
-const defaultExecutor: AuditExecutor = (command, args, options) =>
+export const executeAuditCommand: AuditExecutor = (command, args, options) =>
   new Promise((resolve, reject) => {
     // Do not pass AbortSignal to spawn: Node would kill only the immediate child.
     // Audits must terminate the process tree, wait for close, then resolve.
@@ -141,7 +141,7 @@ const LOCKFILE_MANAGERS = new Map<string, 'npm' | 'pnpm' | 'yarn'>([
 export async function auditKnownCves(
   appRoot: string,
   manifests: ManifestFile[],
-  executor: AuditExecutor = defaultExecutor,
+  executor: AuditExecutor = executeAuditCommand,
   timeoutMilliseconds = 15_000,
 ): Promise<DependencyAuditResult> {
   const packageManifest = manifests.find((manifest) => manifest.path === 'package.json')
