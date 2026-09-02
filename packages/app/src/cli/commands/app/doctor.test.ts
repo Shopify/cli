@@ -62,6 +62,8 @@ describe('app doctor command', () => {
     expect(Doctor.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
     expect(Doctor.descriptionWithMarkdown).toContain('copying is the default')
     expect(Doctor.descriptionWithMarkdown).toContain('shopify app doctor instructions')
+    expect(Doctor.descriptionWithMarkdown).toContain('npm audit')
+    expect(Doctor.descriptionWithMarkdown).toContain('https://registry.npmjs.org/')
   })
 
   test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {

@@ -15,7 +15,9 @@ export default class Doctor extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Doctor locally and creates its review pack and trace.
 
-Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app doctor instructions\` to print, copy, or write them later.`
+Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app doctor instructions\` to print, copy, or write them later.
+
+CVE detection runs \`npm audit\` (or the pnpm/yarn equivalent) in an isolated sandbox and sends package names and versions to the public npm registry at https://registry.npmjs.org/.`
 
   static description = this.descriptionWithoutMarkdown()
 
