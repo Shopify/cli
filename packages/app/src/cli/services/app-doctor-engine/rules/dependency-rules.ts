@@ -108,8 +108,8 @@ function spawnAuditProcess(
   const spawnOptions = {
     cwd: options.cwd,
     env: options.env,
-    shell: false as const,
-    stdio: ['ignore', 'pipe', 'pipe'] as const,
+    shell: false,
+    stdio: ['ignore', 'pipe', 'pipe'] as ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
   }
   if (!needsWindowsCmdShim(command)) return spawn(command, args, spawnOptions)

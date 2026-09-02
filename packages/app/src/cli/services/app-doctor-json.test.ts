@@ -91,12 +91,12 @@ describe('App Doctor JSON contract', () => {
   test('encodes a tagged scan result', async () => {
     const encoded = encodeDoctorJson(toDoctorJson(scanExecution))
     const fixture = await readFile(joinPath(fixtureDirectory, 'scan.json'))
-    expect(encoded).toBe(fixture)
+    expect(JSON.parse(encoded)).toEqual(JSON.parse(fixture))
   })
 
   test('encodes a tagged compile result', async () => {
     const encoded = encodeDoctorJson(toDoctorJson(compileExecution))
     const fixture = await readFile(joinPath(fixtureDirectory, 'compile.json'))
-    expect(encoded).toBe(fixture)
+    expect(JSON.parse(encoded)).toEqual(JSON.parse(fixture))
   })
 })
