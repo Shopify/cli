@@ -1,7 +1,6 @@
 ---
 id: SCOPE_OVER_REQUEST
 version: 1
-tier: agentic
 severity: high
 ---
 

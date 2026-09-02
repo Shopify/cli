@@ -1,7 +1,6 @@
 ---
 id: THEME_EXTENSION_XSS
 version: 1
-tier: agentic
 severity: high
 ---
 

@@ -1,7 +1,6 @@
 ---
 id: CSRF_MISSING_PROTECTION
 version: 1
-tier: agentic
 severity: medium
 ---
 

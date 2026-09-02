@@ -1,7 +1,6 @@
 ---
 id: MISSING_EMBEDDED_CSP
 version: 2
-tier: agentic
 severity: medium
 ---
 

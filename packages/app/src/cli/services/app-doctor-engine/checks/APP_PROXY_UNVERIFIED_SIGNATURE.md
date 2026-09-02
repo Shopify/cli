@@ -1,7 +1,6 @@
 ---
 id: APP_PROXY_UNVERIFIED_SIGNATURE
 version: 1
-tier: agentic
 severity: high
 ---
 

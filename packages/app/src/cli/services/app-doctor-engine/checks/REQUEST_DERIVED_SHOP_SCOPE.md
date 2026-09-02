@@ -1,7 +1,6 @@
 ---
 id: REQUEST_DERIVED_SHOP_SCOPE
 version: 2
-tier: agentic
 severity: high
 ---
 

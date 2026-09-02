@@ -1,7 +1,6 @@
 ---
 id: UNSCOPED_SHOP_CONFIG_WRITE
 version: 1
-tier: agentic
 severity: high
 ---
 

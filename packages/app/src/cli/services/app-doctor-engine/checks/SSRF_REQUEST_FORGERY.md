@@ -1,7 +1,6 @@
 ---
 id: SSRF_REQUEST_FORGERY
 version: 1
-tier: agentic
 severity: high
 ---
 

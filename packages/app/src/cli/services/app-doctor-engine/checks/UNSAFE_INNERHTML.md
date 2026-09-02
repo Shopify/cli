@@ -1,7 +1,6 @@
 ---
 id: UNSAFE_INNERHTML
 version: 1
-tier: agentic
 severity: high
 ---
 

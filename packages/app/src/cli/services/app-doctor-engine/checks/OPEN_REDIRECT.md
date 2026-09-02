@@ -1,7 +1,6 @@
 ---
 id: OPEN_REDIRECT
 version: 1
-tier: agentic
 severity: medium
 ---
 

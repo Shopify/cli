@@ -1,7 +1,6 @@
 ---
 id: SCRIPT_TAG_URL_INJECTION
 version: 1
-tier: agentic
 severity: high
 ---
 

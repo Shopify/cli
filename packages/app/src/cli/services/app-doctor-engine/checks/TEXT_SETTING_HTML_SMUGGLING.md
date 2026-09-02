@@ -1,7 +1,6 @@
 ---
 id: TEXT_SETTING_HTML_SMUGGLING
 version: 1
-tier: agentic
 severity: high
 ---
 

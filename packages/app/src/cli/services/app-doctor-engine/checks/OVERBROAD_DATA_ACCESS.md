@@ -1,7 +1,6 @@
 ---
 id: OVERBROAD_DATA_ACCESS
 version: 1
-tier: agentic
 severity: medium
 ---
 

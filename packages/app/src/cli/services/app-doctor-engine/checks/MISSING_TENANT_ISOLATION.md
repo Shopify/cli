@@ -1,7 +1,6 @@
 ---
 id: MISSING_TENANT_ISOLATION
 version: 3
-tier: agentic
 severity: high
 ---
 

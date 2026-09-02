@@ -1,7 +1,6 @@
 ---
 id: MISSING_AUTHORIZATION_CHECK
 version: 1
-tier: agentic
 severity: high
 ---
 
