@@ -111,6 +111,8 @@ describe('preview store client', () => {
       }),
       body: JSON.stringify({
         name: 'Lavender Candles',
+        source: 'shopify_cli',
+        pool: true,
         variables: {storeCreatePayload: {country: 'US'}},
       }),
     })
@@ -153,7 +155,7 @@ describe('preview store client', () => {
     expect(got.adminApiScopes).toEqual(['read_themes', 'write_themes'])
   })
 
-  test('omits name and country variables when absent', async () => {
+  test('omits name and country variables when absent (label and pool opt-in always sent)', async () => {
     vi.mocked(shopifyFetch).mockResolvedValueOnce(
       response(201, {
         shop: {id: 123, name: 'My Store', domain: 'x.myshopify.com'},
@@ -165,7 +167,7 @@ describe('preview store client', () => {
 
     await createPreviewStore({}, {storage: inMemoryStorage('instance-1')})
 
-    expect(vi.mocked(shopifyFetch).mock.calls[0]![1]!.body).toBe('{}')
+    expect(vi.mocked(shopifyFetch).mock.calls[0]![1]!.body).toBe(JSON.stringify({source: 'shopify_cli', pool: true}))
   })
 
   test.each([

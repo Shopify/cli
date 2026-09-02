@@ -25,6 +25,15 @@ function clientStorage() {
 
 export interface PreviewStoreClientOptions extends PreviewStoreRequestOptions {}
 
+// The CLI's create label + warm-pool opt-in, sent together on purpose: the
+// backend stocks warm preview stores per (country, source) cell, so the same
+// release that asks for a pooled store (pool: true) must label the request
+// (source: "shopify_cli") for the pool to have a matching cell. Both fields
+// are inert until the backend enables the pool for this source: an unstocked
+// or disabled pool falls back to inline creation and the response shape is
+// unchanged.
+export const PREVIEW_STORE_SOURCE = 'shopify_cli'
+
 interface PreviewStoreCreateRequest {
   name?: string
   country?: string
@@ -137,6 +146,8 @@ export async function createPreviewStore(
   const url = `https://${fqdn}/services/preview-stores`
   const body = JSON.stringify({
     ...(request.name ? {name: request.name} : {}),
+    source: PREVIEW_STORE_SOURCE,
+    pool: true,
     ...(request.country
       ? {
           variables: {
