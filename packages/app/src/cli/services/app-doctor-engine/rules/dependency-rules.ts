@@ -3,6 +3,7 @@ import {dirname, isAbsolutePath, joinPath, relativePath, resolvePath} from '@sho
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 // eslint-disable-next-line no-restricted-imports -- cli-kit's executor merges process.env, which violates this audit boundary.
 import {spawn, type ChildProcess} from 'node:child_process'
+import {existsSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {lstat, mkdir, mkdtemp, rm, unlink, writeFile} from 'node:fs/promises'
 import type {Readable} from 'node:stream'
@@ -107,6 +108,24 @@ function needsWindowsCmdShim(command: string): boolean {
   return !isAbsolutePath(command) || /\.(?:cmd|bat)$/i.test(command)
 }
 
+function resolveWindowsAuditCommand(command: string, pathValue: string | undefined): string {
+  // npm.cmd uses %~dp0 to find npm-prefix.js. Invoking `npm` without a path makes
+  // %~dp0 the sandbox cwd, so resolve to an absolute .cmd/.bat/.exe first.
+  if (isAbsolutePath(command)) return command
+  const extensions = ['.cmd', '.bat', '.exe']
+  const hasExtension = extensions.some((extension) => command.toLowerCase().endsWith(extension))
+  const names = hasExtension ? [command] : extensions.map((extension) => `${command}${extension}`)
+  const directories = [dirname(process.execPath), ...(pathValue ?? '').split(PATH_DELIMITER)]
+  for (const directory of directories) {
+    if (!directory || !isAbsolutePath(directory)) continue
+    for (const name of names) {
+      const candidate = resolvePath(directory, name)
+      if (existsSync(candidate)) return candidate
+    }
+  }
+  return command
+}
+
 function spawnAuditProcess(
   command: string,
   args: string[],
@@ -119,9 +138,10 @@ function spawnAuditProcess(
     stdio: ['ignore', 'pipe', 'pipe'] as ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
   }
-  if (!needsWindowsCmdShim(command)) return spawn(command, args, spawnOptions)
+  const resolved = process.platform === 'win32' ? resolveWindowsAuditCommand(command, options.env.PATH) : command
+  if (!needsWindowsCmdShim(resolved)) return spawn(resolved, args, spawnOptions)
 
-  return spawn(process.env.ComSpec ?? 'cmd.exe', windowsCmdAuditArguments(command, args), {
+  return spawn(process.env.ComSpec ?? 'cmd.exe', windowsCmdAuditArguments(resolved, args), {
     ...spawnOptions,
     windowsVerbatimArguments: true,
   })
