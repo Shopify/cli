@@ -1,4 +1,4 @@
-import deliverAppDoctorInstructions, {appDoctorInstructions} from './app-doctor-instructions.js'
+import deliverAppDoctorInstructions, {appDoctorInstructions, shellQuote} from './app-doctor-instructions.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
@@ -11,11 +11,6 @@ function testDependencies() {
     output: vi.fn(),
     outputConfirmation: vi.fn(),
   }
-}
-
-function shellQuote(value: string): string {
-  if (process.platform === 'win32') return `"${value.replace(/"/g, '\\"')}"`
-  return `'${value.replace(/'/g, `'\\''`)}'`
 }
 
 async function createApp(directory: string): Promise<string> {
