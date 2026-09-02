@@ -102,6 +102,13 @@ export interface Schemas {
       cmd_app_validate_issue_count?: Optional<number>
       cmd_app_validate_file_count?: Optional<number>
 
+      // shopify validate <subcommand>
+      cmd_validate_subcommand?: Optional<string>
+      cmd_validate_result?: Optional<string>
+      cmd_validate_api?: Optional<string>
+      cmd_validate_api_version?: Optional<string>
+      cmd_validate_json?: Optional<boolean>
+
       // Dev related commands
       cmd_dev_tunnel_type?: Optional<string>
       cmd_dev_tunnel_custom_hash?: Optional<string>

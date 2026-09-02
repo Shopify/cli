@@ -1,0 +1,384 @@
+{
+  "_always_loaded": [
+    {
+      "package": "preact",
+      "version": "10.29.2"
+    },
+    {
+      "package": "@types/react",
+      "version": "18.3.29"
+    }
+  ],
+  "polaris-app-home": {
+    "_": [
+      {
+        "package": "@shopify/polaris-types",
+        "version": "1.0.7"
+      },
+      {
+        "package": "@shopify/app-bridge-types",
+        "version": "0.7.0"
+      },
+      {
+        "package": "@shopify/app-bridge-react",
+        "version": "4.2.10"
+      }
+    ]
+  },
+  "polaris-admin-extensions": {
+    "2026-04": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.4.3"
+      }
+    ],
+    "2026-01": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.1.4"
+      }
+    ],
+    "2025-10": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.10.15"
+      }
+    ],
+    "2025-07": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@shopify/ui-extensions-react",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@remote-ui/react",
+        "version": "5.0.8"
+      },
+      {
+        "package": "@remote-ui/async-subscription",
+        "version": "2.1.18"
+      },
+      {
+        "package": "@remote-ui/core",
+        "version": "2.2.7"
+      },
+      {
+        "package": "@remote-ui/rpc",
+        "version": "1.4.7"
+      },
+      {
+        "package": "@remote-ui/types",
+        "version": "1.1.3"
+      },
+      {
+        "package": "@types/react-reconciler",
+        "version": "0.28.9"
+      }
+    ]
+  },
+  "polaris-checkout-extensions": {
+    "2026-07": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.7.0-rc.5"
+      }
+    ],
+    "2026-04": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.4.3"
+      }
+    ],
+    "2026-01": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.1.4"
+      }
+    ],
+    "2025-10": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.10.15"
+      }
+    ],
+    "2025-07": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@shopify/ui-extensions-react",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@remote-ui/react",
+        "version": "5.0.8"
+      },
+      {
+        "package": "@remote-ui/async-subscription",
+        "version": "2.1.18"
+      },
+      {
+        "package": "@remote-ui/core",
+        "version": "2.2.7"
+      },
+      {
+        "package": "@remote-ui/rpc",
+        "version": "1.4.7"
+      },
+      {
+        "package": "@remote-ui/types",
+        "version": "1.1.3"
+      },
+      {
+        "package": "@types/react-reconciler",
+        "version": "0.28.9"
+      }
+    ]
+  },
+  "polaris-customer-account-extensions": {
+    "2026-07": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.7.0-rc.5"
+      }
+    ],
+    "2026-04": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.4.3"
+      }
+    ],
+    "2026-01": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.1.4"
+      }
+    ],
+    "2025-10": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.10.15"
+      }
+    ],
+    "2025-07": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@shopify/ui-extensions-react",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@remote-ui/react",
+        "version": "5.0.8"
+      },
+      {
+        "package": "@remote-ui/async-subscription",
+        "version": "2.1.18"
+      },
+      {
+        "package": "@remote-ui/core",
+        "version": "2.2.7"
+      },
+      {
+        "package": "@remote-ui/rpc",
+        "version": "1.4.7"
+      },
+      {
+        "package": "@remote-ui/types",
+        "version": "1.1.3"
+      },
+      {
+        "package": "@types/react-reconciler",
+        "version": "0.28.9"
+      }
+    ]
+  },
+  "pos-ui": {
+    "2026-07": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.7.0-rc.5"
+      }
+    ],
+    "2026-04": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.4.3"
+      }
+    ],
+    "2026-01": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2026.1.4"
+      }
+    ],
+    "2025-10": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.10.15"
+      }
+    ],
+    "2025-07": [
+      {
+        "package": "@shopify/ui-extensions",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@shopify/ui-extensions-react",
+        "version": "2025.7.4"
+      },
+      {
+        "package": "@remote-ui/react",
+        "version": "5.0.8"
+      },
+      {
+        "package": "@remote-ui/async-subscription",
+        "version": "2.1.18"
+      },
+      {
+        "package": "@remote-ui/core",
+        "version": "2.2.7"
+      },
+      {
+        "package": "@remote-ui/rpc",
+        "version": "1.4.7"
+      },
+      {
+        "package": "@remote-ui/types",
+        "version": "1.1.3"
+      },
+      {
+        "package": "@types/react-reconciler",
+        "version": "0.28.9"
+      }
+    ]
+  },
+  "hydrogen": {
+    "2026-04": [
+      {
+        "package": "@shopify/hydrogen",
+        "version": "2026.4.2"
+      },
+      {
+        "package": "@shopify/hydrogen-react",
+        "version": "2026.4.2"
+      },
+      {
+        "package": "react-router",
+        "version": "7.14.0"
+      },
+      {
+        "package": "@react-router/dev",
+        "version": "7.14.0"
+      },
+      {
+        "package": "graphql",
+        "version": "16.14.0"
+      },
+      {
+        "package": "type-fest",
+        "version": "4.41.0"
+      },
+      {
+        "package": "schema-dts",
+        "version": "2.0.0"
+      }
+    ],
+    "2026-01": [
+      {
+        "package": "@shopify/hydrogen",
+        "version": "2026.1.4"
+      },
+      {
+        "package": "@shopify/hydrogen-react",
+        "version": "2026.1.2"
+      },
+      {
+        "package": "react-router",
+        "version": "7.12.0"
+      },
+      {
+        "package": "@react-router/dev",
+        "version": "7.12.0"
+      },
+      {
+        "package": "graphql",
+        "version": "16.14.0"
+      },
+      {
+        "package": "type-fest",
+        "version": "4.41.0"
+      },
+      {
+        "package": "schema-dts",
+        "version": "2.0.0"
+      }
+    ],
+    "2025-10": [
+      {
+        "package": "@shopify/hydrogen",
+        "version": "2025.10.1"
+      },
+      {
+        "package": "@shopify/hydrogen-react",
+        "version": "2025.10.0"
+      },
+      {
+        "package": "react-router",
+        "version": "7.12.0"
+      },
+      {
+        "package": "@react-router/dev",
+        "version": "7.12.0"
+      },
+      {
+        "package": "graphql",
+        "version": "16.14.0"
+      },
+      {
+        "package": "type-fest",
+        "version": "4.41.0"
+      },
+      {
+        "package": "schema-dts",
+        "version": "2.0.0"
+      }
+    ],
+    "2025-07": [
+      {
+        "package": "@shopify/hydrogen",
+        "version": "2025.7.3"
+      },
+      {
+        "package": "@shopify/hydrogen-react",
+        "version": "2025.7.2"
+      },
+      {
+        "package": "react-router",
+        "version": "7.12.0"
+      },
+      {
+        "package": "@react-router/dev",
+        "version": "7.12.0"
+      },
+      {
+        "package": "graphql",
+        "version": "16.14.0"
+      },
+      {
+        "package": "type-fest",
+        "version": "4.41.0"
+      },
+      {
+        "package": "schema-dts",
+        "version": "2.0.0"
+      }
+    ]
+  }
+}

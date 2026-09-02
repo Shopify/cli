@@ -10185,6 +10185,410 @@
       "strict": true,
       "summary": "Upgrades Shopify CLI."
     },
+    "validate:components": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Type-checks a UI-framework component code block (Polaris web components, UI extensions, Hydrogen) against the bundled type definitions for a Shopify API and reports invalid components, unknown props, and disallowed elements.\n\nProvide the code inline with `--code` or from a file with `--file`. Extension-surface APIs also require a `--target`. With `--json`, emits `{ success, responses, resolvedVersion }` for machine consumers.",
+      "descriptionWithMarkdown": "Type-checks a UI-framework component code block (Polaris web components, UI extensions, Hydrogen) against the bundled type definitions for a Shopify API and reports invalid components, unknown props, and disallowed elements.\n\nProvide the code inline with `--code` or from a file with `--file`. Extension-surface APIs also require a `--target`. With `--json`, emits `{ success, responses, resolvedVersion }` for machine consumers.",
+      "enableJsonFlag": false,
+      "flags": {
+        "api": {
+          "char": "a",
+          "description": "The Shopify API to validate the components against.",
+          "env": "SHOPIFY_FLAG_API",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api",
+          "options": [
+            "polaris-app-home",
+            "polaris-admin-extensions",
+            "polaris-checkout-extensions",
+            "polaris-customer-account-extensions",
+            "pos-ui",
+            "hydrogen"
+          ],
+          "required": true,
+          "type": "option"
+        },
+        "code": {
+          "char": "c",
+          "description": "The component code to validate.",
+          "env": "SHOPIFY_FLAG_CODE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "code",
+          "type": "option"
+        },
+        "file": {
+          "char": "f",
+          "description": "Path to a file whose contents will be validated.",
+          "env": "SHOPIFY_FLAG_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "file",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "language": {
+          "description": "The code block's language. Use 'html' only for raw HTML in polaris-app-home.",
+          "env": "SHOPIFY_FLAG_LANGUAGE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "language",
+          "options": [
+            "html",
+            "tsx",
+            "jsx"
+          ],
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "target": {
+          "char": "t",
+          "description": "The extension target (required for extension-surface APIs).",
+          "env": "SHOPIFY_FLAG_TARGET",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "target",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "The API version to validate against. Defaults to the latest version for the API.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "validate:components",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Validate UI component code against a Shopify API."
+    },
+    "validate:functions": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Validates a GraphQL input-query operation for a Shopify Functions API against the schema bundled with the CLI. Runs fully offline — no network and no login — so results are deterministic.\n\nProvide the operation with `--code`, `--file`, or by piping it to stdin. `--api` is required. When `--version` is omitted, the latest stable version for the API is used and noted in the output.\n\nExits 0 when the operation is valid (including valid-with-deprecation-warnings) and 1 when it is invalid or an error occurs.",
+      "descriptionWithMarkdown": "Validates a GraphQL input-query operation for a Shopify Functions API against the schema bundled with the CLI. Runs fully offline — no network and no login — so results are deterministic.\n\nProvide the operation with `--code`, `--file`, or by piping it to stdin. `--api` is required. When `--version` is omitted, the latest stable version for the API is used and noted in the output.\n\nExits 0 when the operation is valid (including valid-with-deprecation-warnings) and 1 when it is invalid or an error occurs.",
+      "enableJsonFlag": false,
+      "examples": [
+        "# validate an inline operation against the latest Discount Function schema\nshopify validate functions --api functions_discount --code \"query Input { cart { lines { quantity } } }\"",
+        "# validate a file against a specific version\nshopify validate functions --api functions_cart_transform --file input.graphql --version 2026-04",
+        "# pipe an operation via stdin and get JSON output\necho \"query Input { cart { lines { quantity } } }\" | shopify validate functions --api functions_discount --json"
+      ],
+      "flags": {
+        "api": {
+          "char": "a",
+          "description": "The Functions API to validate against. One of: functions_discount, functions_cart_transform, functions_cart_checkout_validation, functions_delivery_customization, functions_fulfillment_constraints, functions_order_routing_location_rule, functions_payment_customization, functions_order_discounts, functions_product_discounts, functions_shipping_discounts, functions_discounts_allocator, functions_local_pickup_delivery_option_generator, functions_pickup_point_delivery_option_generator.",
+          "env": "SHOPIFY_FLAG_API",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api",
+          "required": true,
+          "type": "option"
+        },
+        "code": {
+          "char": "c",
+          "description": "The GraphQL operation to validate, as a string.",
+          "env": "SHOPIFY_FLAG_CODE",
+          "exclusive": [
+            "file"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "code",
+          "type": "option"
+        },
+        "file": {
+          "char": "f",
+          "description": "Read the GraphQL operation from this file.",
+          "env": "SHOPIFY_FLAG_FILE",
+          "exclusive": [
+            "code"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "file",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "The API version to validate against (e.g. 2026-04, unstable). Defaults to the API's latest stable version.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "validate:functions",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Validate a Shopify Functions input query against a bundled GraphQL schema."
+    },
+    "validate:graphql": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Validates a GraphQL query or mutation against the bundled introspection schema for the selected Shopify API. Runs fully offline — no network access or login required — so results are deterministic.\n\nPass the operation with `--code`, `--file`, or pipe it via stdin. On success, the required offline access scopes for the operation are reported. Use `--json` for a machine-readable result.\n\nExits with code 0 when the operation is valid (including when it only uses deprecated fields) and 1 when it is invalid or an error occurs.",
+      "descriptionWithMarkdown": "Validates a GraphQL query or mutation against the bundled introspection schema for the selected Shopify API. Runs fully offline — no network access or login required — so results are deterministic.\n\nPass the operation with `--code`, `--file`, or pipe it via stdin. On success, the required offline access scopes for the operation are reported. Use `--json` for a machine-readable result.\n\nExits with code 0 when the operation is valid (including when it only uses deprecated fields) and 1 when it is invalid or an error occurs.",
+      "enableJsonFlag": false,
+      "examples": [
+        "# validate an Admin API query passed inline\nshopify validate graphql --api admin --code \"{ shop { name } }\"",
+        "# validate a query from a file against a specific version\nshopify validate graphql --api admin --file query.graphql --version 2026-04",
+        "# pipe an operation via stdin and get JSON output\necho \"{ shop { name } }\" | shopify validate graphql --api storefront-graphql --json"
+      ],
+      "flags": {
+        "api": {
+          "char": "a",
+          "description": "The Shopify API to validate against. One of: admin, storefront-graphql, customer, partner, payments-apps.",
+          "env": "SHOPIFY_FLAG_API",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api",
+          "required": true,
+          "type": "option"
+        },
+        "code": {
+          "char": "c",
+          "description": "The GraphQL operation to validate, as a string.",
+          "env": "SHOPIFY_FLAG_CODE",
+          "exclusive": [
+            "file"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "code",
+          "type": "option"
+        },
+        "file": {
+          "char": "f",
+          "description": "Path to a file containing the GraphQL operation to validate.",
+          "env": "SHOPIFY_FLAG_FILE",
+          "exclusive": [
+            "code"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "file",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "The API version to validate against. Defaults to the latest stable version.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "validate:graphql",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Validate a GraphQL operation against a bundled Shopify API schema."
+    },
+    "validate:theme": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Validates Liquid and theme code with \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) — fully offline, with no login required.\n\nRuns in one of two modes:\n\n- **Full app:** pass `--theme-path` and `--files` to validate specific files inside an on-disk theme.\n- **Codeblock:** pass `--filename` (and `--code` or `--file`) to validate a single stateless snippet, e.g. a codeblock produced by an agent.",
+      "descriptionWithMarkdown": "Validates Liquid and theme code with [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) — fully offline, with no login required.\n\nRuns in one of two modes:\n\n- **Full app:** pass `--theme-path` and `--files` to validate specific files inside an on-disk theme.\n- **Codeblock:** pass `--filename` (and `--code` or `--file`) to validate a single stateless snippet, e.g. a codeblock produced by an agent.",
+      "enableJsonFlag": false,
+      "examples": [
+        "# validate a single section codeblock\nshopify validate theme --filename hero.liquid --code \"{{ section.settings.title }}\"",
+        "# validate a theme app extension app block\nshopify validate theme --context app --filetype blocks --filename rating.liquid --file ./rating.liquid",
+        "# validate specific files inside an on-disk theme\nshopify validate theme --theme-path ./my-theme --files sections/hero.liquid,snippets/card.liquid",
+        "# machine-readable output for agents and eval harnesses\nshopify validate theme --filename hero.liquid --code \"{{ x }}\" --json"
+      ],
+      "flags": {
+        "code": {
+          "char": "c",
+          "description": "The codeblock content to validate (stateless mode).",
+          "env": "SHOPIFY_FLAG_CODE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "code",
+          "type": "option"
+        },
+        "context": {
+          "description": "Validation context for the codeblock: theme or app. Defaults to \"theme\".",
+          "env": "SHOPIFY_FLAG_CONTEXT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "context",
+          "type": "option"
+        },
+        "file": {
+          "char": "f",
+          "description": "Path to a file whose content is validated as a codeblock (stateless mode).",
+          "env": "SHOPIFY_FLAG_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "file",
+          "type": "option"
+        },
+        "filename": {
+          "description": "File name for the codeblock being validated (stateless mode).",
+          "env": "SHOPIFY_FLAG_FILENAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "filename",
+          "type": "option"
+        },
+        "files": {
+          "description": "Comma-separated list of theme-relative file paths to validate (full app mode).",
+          "env": "SHOPIFY_FLAG_FILES",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "files",
+          "type": "option"
+        },
+        "filetype": {
+          "description": "Theme file type of the codeblock: assets, blocks, config, layout, locales, sections, snippets, or templates. Defaults to \"sections\".",
+          "env": "SHOPIFY_FLAG_FILETYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "filetype",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "theme-path": {
+          "description": "Absolute or relative path to the theme directory (full app mode).",
+          "env": "SHOPIFY_FLAG_THEME_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "theme-path",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "validate:theme",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Validate Liquid/theme code offline."
+    },
     "version": {
       "aliases": [
       ],

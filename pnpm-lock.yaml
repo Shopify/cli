@@ -258,12 +258,33 @@ importers:
       '@ast-grep/napi':
         specifier: 0.43.0
         version: 0.43.0
+      '@shopify/theme-check-common':
+        specifier: 3.27.0
+        version: 3.27.0
+      '@shopify/theme-check-docs-updater':
+        specifier: 3.27.0
+        version: 3.27.0
+      '@shopify/theme-check-node':
+        specifier: 3.27.0
+        version: 3.27.0
       esbuild:
         specifier: 0.28.1
         version: 0.28.1
       global-agent:
         specifier: 3.0.0
         version: 3.0.0
+      graphql:
+        specifier: 16.14.2
+        version: 16.14.2
+      html-tags:
+        specifier: ^5.1.0
+        version: 5.1.0
+      svg-tag-names:
+        specifier: ^3.0.1
+        version: 3.0.1
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
     devDependencies:
       '@oclif/core':
         specifier: 4.8.3
@@ -6098,6 +6119,10 @@ packages:
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==, tarball: https://registry.npmjs.org/html-escaper/-/html-escaper-2.0.2.tgz}
 
+  html-tags@5.1.0:
+    resolution: {integrity: sha512-n6l5uca7/y5joxZ3LUePhzmBFUJ+U2YWzhMa8XUTecSeSlQiZdF5XAd/Q3/WUl0VsXgUwWi8I7CNIwdI5WN1SQ==, tarball: https://registry.npmjs.org/html-tags/-/html-tags-5.1.0.tgz}
+    engines: {node: '>=20.10'}
+
   http-cache-semantics@4.2.0:
     resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==, tarball: https://registry.npmjs.org/http-cache-semantics/-/http-cache-semantics-4.2.0.tgz}
 
@@ -8186,6 +8211,9 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==, tarball: https://registry.npmjs.org/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz}
     engines: {node: '>= 0.4'}
+
+  svg-tag-names@3.0.1:
+    resolution: {integrity: sha512-R5EDS44RQSOwwKIOOUZLKZggMeFL8fDSSZr1hVK5Z0KkyuGVOZfyepBZDkPu/aoL+hSOysxxvAk8uN4yN2LOMQ==, tarball: https://registry.npmjs.org/svg-tag-names/-/svg-tag-names-3.0.1.tgz}
 
   swap-case@2.0.2:
     resolution: {integrity: sha512-kc6S2YS/2yXbtkSMunBtKdah4VFETZ8Oh6ONSmSd9bRxhqTrtARUCBUiWXH3xVPpvR7tz2CSnkuXVE42EcGnMw==, tarball: https://registry.npmjs.org/swap-case/-/swap-case-2.0.2.tgz}
@@ -15301,6 +15329,8 @@ snapshots:
 
   html-escaper@2.0.2: {}
 
+  html-tags@5.1.0: {}
+
   http-cache-semantics@4.2.0: {}
 
   http-call@5.3.0:
@@ -17634,6 +17664,8 @@ snapshots:
       supports-color: 7.2.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  svg-tag-names@3.0.1: {}
 
   swap-case@2.0.2:
     dependencies:

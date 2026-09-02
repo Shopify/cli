@@ -110,6 +110,10 @@
 * [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
+* [`shopify validate components`](#shopify-validate-components)
+* [`shopify validate functions`](#shopify-validate-functions)
+* [`shopify validate graphql`](#shopify-validate-graphql)
+* [`shopify validate theme`](#shopify-validate-theme)
 * [`shopify version`](#shopify-version)
 
 ## `shopify app build`
@@ -5265,6 +5269,276 @@ DESCRIPTION
   Upgrades Shopify CLI.
 
   Upgrades Shopify CLI using your package manager.
+```
+
+## `shopify validate components`
+
+Validate UI component code against a Shopify API.
+
+```
+USAGE
+  $ shopify validate components -a
+    polaris-app-home|polaris-admin-extensions|polaris-checkout-extensions|polaris-customer-account-extensions|pos-ui|hyd
+    rogen [-c <value>] [-f <value>] [-j] [--language html|tsx|jsx] [--no-color] [-t <value>] [--verbose] [--version
+    <value>]
+
+FLAGS
+  -a, --api=<option>
+      (required) The Shopify API to validate the components against.
+      [env: SHOPIFY_FLAG_API]
+      <options: polaris-app-home|polaris-admin-extensions|polaris-checkout-extensions|polaris-customer-account-extensions|
+      pos-ui|hydrogen>
+
+  -c, --code=<value>
+      The component code to validate.
+      [env: SHOPIFY_FLAG_CODE]
+
+  -f, --file=<value>
+      Path to a file whose contents will be validated.
+      [env: SHOPIFY_FLAG_FILE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  -t, --target=<value>
+      The extension target (required for extension-surface APIs).
+      [env: SHOPIFY_FLAG_TARGET]
+
+  --language=<option>
+      The code block's language. Use 'html' only for raw HTML in polaris-app-home.
+      [env: SHOPIFY_FLAG_LANGUAGE]
+      <options: html|tsx|jsx>
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --version=<value>
+      The API version to validate against. Defaults to the latest version for the API.
+      [env: SHOPIFY_FLAG_VERSION]
+
+DESCRIPTION
+  Validate UI component code against a Shopify API.
+
+  Type-checks a UI-framework component code block (Polaris web components, UI extensions, Hydrogen) against the bundled
+  type definitions for a Shopify API and reports invalid components, unknown props, and disallowed elements.
+
+  Provide the code inline with `--code` or from a file with `--file`. Extension-surface APIs also require a `--target`.
+  With `--json`, emits `{ success, responses, resolvedVersion }` for machine consumers.
+```
+
+## `shopify validate functions`
+
+Validate a Shopify Functions input query against a bundled GraphQL schema.
+
+```
+USAGE
+  $ shopify validate functions -a <value> [-c <value> | -f <value>] [-j] [--no-color] [--verbose] [--version <value>]
+
+FLAGS
+  -a, --api=<value>
+      (required) The Functions API to validate against. One of: functions_discount, functions_cart_transform,
+      functions_cart_checkout_validation, functions_delivery_customization, functions_fulfillment_constraints,
+      functions_order_routing_location_rule, functions_payment_customization, functions_order_discounts,
+      functions_product_discounts, functions_shipping_discounts, functions_discounts_allocator,
+      functions_local_pickup_delivery_option_generator, functions_pickup_point_delivery_option_generator.
+      [env: SHOPIFY_FLAG_API]
+
+  -c, --code=<value>
+      The GraphQL operation to validate, as a string.
+      [env: SHOPIFY_FLAG_CODE]
+
+  -f, --file=<value>
+      Read the GraphQL operation from this file.
+      [env: SHOPIFY_FLAG_FILE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --version=<value>
+      The API version to validate against (e.g. 2026-04, unstable). Defaults to the API's latest stable version.
+      [env: SHOPIFY_FLAG_VERSION]
+
+DESCRIPTION
+  Validate a Shopify Functions input query against a bundled GraphQL schema.
+
+  Validates a GraphQL input-query operation for a Shopify Functions API against the schema bundled with the CLI. Runs
+  fully offline — no network and no login — so results are deterministic.
+
+  Provide the operation with `--code`, `--file`, or by piping it to stdin. `--api` is required. When `--version` is
+  omitted, the latest stable version for the API is used and noted in the output.
+
+  Exits 0 when the operation is valid (including valid-with-deprecation-warnings) and 1 when it is invalid or an error
+  occurs.
+
+EXAMPLES
+  # validate an inline operation against the latest Discount Function schema
+
+    $ shopify validate functions --api functions_discount --code "query Input { cart { lines { quantity } } }"
+
+  # validate a file against a specific version
+
+    $ shopify validate functions --api functions_cart_transform --file input.graphql --version 2026-04
+
+  # pipe an operation via stdin and get JSON output
+  echo "query Input { cart { lines { quantity } } }" | shopify validate functions --api functions_discount --json
+```
+
+## `shopify validate graphql`
+
+Validate a GraphQL operation against a bundled Shopify API schema.
+
+```
+USAGE
+  $ shopify validate graphql -a <value> [-c <value> | -f <value>] [-j] [--no-color] [--verbose] [--version <value>]
+
+FLAGS
+  -a, --api=<value>
+      (required) The Shopify API to validate against. One of: admin, storefront-graphql, customer, partner, payments-apps.
+      [env: SHOPIFY_FLAG_API]
+
+  -c, --code=<value>
+      The GraphQL operation to validate, as a string.
+      [env: SHOPIFY_FLAG_CODE]
+
+  -f, --file=<value>
+      Path to a file containing the GraphQL operation to validate.
+      [env: SHOPIFY_FLAG_FILE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --version=<value>
+      The API version to validate against. Defaults to the latest stable version.
+      [env: SHOPIFY_FLAG_VERSION]
+
+DESCRIPTION
+  Validate a GraphQL operation against a bundled Shopify API schema.
+
+  Validates a GraphQL query or mutation against the bundled introspection schema for the selected Shopify API. Runs
+  fully offline — no network access or login required — so results are deterministic.
+
+  Pass the operation with `--code`, `--file`, or pipe it via stdin. On success, the required offline access scopes for
+  the operation are reported. Use `--json` for a machine-readable result.
+
+  Exits with code 0 when the operation is valid (including when it only uses deprecated fields) and 1 when it is invalid
+  or an error occurs.
+
+EXAMPLES
+  # validate an Admin API query passed inline
+
+    $ shopify validate graphql --api admin --code "{ shop { name } }"
+
+  # validate a query from a file against a specific version
+
+    $ shopify validate graphql --api admin --file query.graphql --version 2026-04
+
+  # pipe an operation via stdin and get JSON output
+  echo "{ shop { name } }" | shopify validate graphql --api storefront-graphql --json
+```
+
+## `shopify validate theme`
+
+Validate Liquid/theme code offline.
+
+```
+USAGE
+  $ shopify validate theme [-c <value>] [--context <value>] [-f <value>] [--filename <value>] [--files <value>]
+    [--filetype <value>] [-j] [--no-color] [--theme-path <value>] [--verbose]
+
+FLAGS
+  -c, --code=<value>
+      The codeblock content to validate (stateless mode).
+      [env: SHOPIFY_FLAG_CODE]
+
+  -f, --file=<value>
+      Path to a file whose content is validated as a codeblock (stateless mode).
+      [env: SHOPIFY_FLAG_FILE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --context=<value>
+      Validation context for the codeblock: theme or app. Defaults to "theme".
+      [env: SHOPIFY_FLAG_CONTEXT]
+
+  --filename=<value>
+      File name for the codeblock being validated (stateless mode).
+      [env: SHOPIFY_FLAG_FILENAME]
+
+  --files=<value>
+      Comma-separated list of theme-relative file paths to validate (full app mode).
+      [env: SHOPIFY_FLAG_FILES]
+
+  --filetype=<value>
+      Theme file type of the codeblock: assets, blocks, config, layout, locales, sections, snippets, or templates.
+      Defaults to "sections".
+      [env: SHOPIFY_FLAG_FILETYPE]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --theme-path=<value>
+      Absolute or relative path to the theme directory (full app mode).
+      [env: SHOPIFY_FLAG_THEME_PATH]
+
+  --verbose
+      Increase the verbosity of the output.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Validate Liquid/theme code offline.
+
+  Validates Liquid and theme code with "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) — fully
+  offline, with no login required.
+
+  Runs in one of two modes:
+
+  - **Full app:** pass `--theme-path` and `--files` to validate specific files inside an on-disk theme.
+  - **Codeblock:** pass `--filename` (and `--code` or `--file`) to validate a single stateless snippet, e.g. a codeblock
+  produced by an agent.
+
+EXAMPLES
+  # validate a single section codeblock
+
+    $ shopify validate theme --filename hero.liquid --code "{{ section.settings.title }}"
+
+  # validate a theme app extension app block
+
+    $ shopify validate theme --context app --filetype blocks --filename rating.liquid --file ./rating.liquid
+
+  # validate specific files inside an on-disk theme
+
+    $ shopify validate theme --theme-path ./my-theme --files sections/hero.liquid,snippets/card.liquid
+
+  # machine-readable output for agents and eval harnesses
+
+    $ shopify validate theme --filename hero.liquid --code "{{ x }}" --json
 ```
 
 ## `shopify version`

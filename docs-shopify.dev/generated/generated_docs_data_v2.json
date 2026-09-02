@@ -7450,6 +7450,344 @@
       "value": "export interface upgrade {\n\n}"
     }
   },
+  "validatecomponents": {
+    "docs-shopify.dev/commands/interfaces/validate-components.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+      "name": "validatecomponents",
+      "description": "The following flags are available for the `validate components` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--language <value>",
+          "value": "string",
+          "description": "The code block's language. Use 'html' only for raw HTML in polaris-app-home.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_LANGUAGE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--version <value>",
+          "value": "string",
+          "description": "The API version to validate against. Defaults to the latest version for the API.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERSION"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-a, --api <value>",
+          "value": "string",
+          "description": "The Shopify API to validate the components against.",
+          "environmentValue": "SHOPIFY_FLAG_API"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-c, --code <value>",
+          "value": "string",
+          "description": "The component code to validate.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_CODE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-f, --file <value>",
+          "value": "string",
+          "description": "Path to a file whose contents will be validated.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-components.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-t, --target <value>",
+          "value": "string",
+          "description": "The extension target (required for extension-surface APIs).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_TARGET"
+        }
+      ],
+      "value": "export interface validatecomponents {\n  /**\n   * The Shopify API to validate the components against.\n   * @environment SHOPIFY_FLAG_API\n   */\n  '-a, --api <value>': string\n\n  /**\n   * The component code to validate.\n   * @environment SHOPIFY_FLAG_CODE\n   */\n  '-c, --code <value>'?: string\n\n  /**\n   * Path to a file whose contents will be validated.\n   * @environment SHOPIFY_FLAG_FILE\n   */\n  '-f, --file <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * The code block's language. Use 'html' only for raw HTML in polaris-app-home.\n   * @environment SHOPIFY_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The extension target (required for extension-surface APIs).\n   * @environment SHOPIFY_FLAG_TARGET\n   */\n  '-t, --target <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to validate against. Defaults to the latest version for the API.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+    }
+  },
+  "validatefunctions": {
+    "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+      "name": "validatefunctions",
+      "description": "The following flags are available for the `validate functions` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--version <value>",
+          "value": "string",
+          "description": "The API version to validate against (e.g. 2026-04, unstable). Defaults to the API's latest stable version.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERSION"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-a, --api <value>",
+          "value": "string",
+          "description": "The Functions API to validate against. One of: functions_discount, functions_cart_transform, functions_cart_checkout_validation, functions_delivery_customization, functions_fulfillment_constraints, functions_order_routing_location_rule, functions_payment_customization, functions_order_discounts, functions_product_discounts, functions_shipping_discounts, functions_discounts_allocator, functions_local_pickup_delivery_option_generator, functions_pickup_point_delivery_option_generator.",
+          "environmentValue": "SHOPIFY_FLAG_API"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-c, --code <value>",
+          "value": "string",
+          "description": "The GraphQL operation to validate, as a string.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_CODE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-f, --file <value>",
+          "value": "string",
+          "description": "Read the GraphQL operation from this file.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-functions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface validatefunctions {\n  /**\n   * The Functions API to validate against. One of: functions_discount, functions_cart_transform, functions_cart_checkout_validation, functions_delivery_customization, functions_fulfillment_constraints, functions_order_routing_location_rule, functions_payment_customization, functions_order_discounts, functions_product_discounts, functions_shipping_discounts, functions_discounts_allocator, functions_local_pickup_delivery_option_generator, functions_pickup_point_delivery_option_generator.\n   * @environment SHOPIFY_FLAG_API\n   */\n  '-a, --api <value>': string\n\n  /**\n   * The GraphQL operation to validate, as a string.\n   * @environment SHOPIFY_FLAG_CODE\n   */\n  '-c, --code <value>'?: string\n\n  /**\n   * Read the GraphQL operation from this file.\n   * @environment SHOPIFY_FLAG_FILE\n   */\n  '-f, --file <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to validate against (e.g. 2026-04, unstable). Defaults to the API's latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+    }
+  },
+  "validategraphql": {
+    "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+      "name": "validategraphql",
+      "description": "The following flags are available for the `validate graphql` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--version <value>",
+          "value": "string",
+          "description": "The API version to validate against. Defaults to the latest stable version.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERSION"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-a, --api <value>",
+          "value": "string",
+          "description": "The Shopify API to validate against. One of: admin, storefront-graphql, customer, partner, payments-apps.",
+          "environmentValue": "SHOPIFY_FLAG_API"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-c, --code <value>",
+          "value": "string",
+          "description": "The GraphQL operation to validate, as a string.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_CODE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-f, --file <value>",
+          "value": "string",
+          "description": "Path to a file containing the GraphQL operation to validate.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-graphql.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface validategraphql {\n  /**\n   * The Shopify API to validate against. One of: admin, storefront-graphql, customer, partner, payments-apps.\n   * @environment SHOPIFY_FLAG_API\n   */\n  '-a, --api <value>': string\n\n  /**\n   * The GraphQL operation to validate, as a string.\n   * @environment SHOPIFY_FLAG_CODE\n   */\n  '-c, --code <value>'?: string\n\n  /**\n   * Path to a file containing the GraphQL operation to validate.\n   * @environment SHOPIFY_FLAG_FILE\n   */\n  '-f, --file <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to validate against. Defaults to the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+    }
+  },
+  "validatetheme": {
+    "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+      "name": "validatetheme",
+      "description": "The following flags are available for the `validate theme` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--context <value>",
+          "value": "string",
+          "description": "Validation context for the codeblock: theme or app. Defaults to \"theme\".",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_CONTEXT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--filename <value>",
+          "value": "string",
+          "description": "File name for the codeblock being validated (stateless mode).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FILENAME"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--files <value>",
+          "value": "string",
+          "description": "Comma-separated list of theme-relative file paths to validate (full app mode).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FILES"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--filetype <value>",
+          "value": "string",
+          "description": "Theme file type of the codeblock: assets, blocks, config, layout, locales, sections, snippets, or templates. Defaults to \"sections\".",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FILETYPE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--theme-path <value>",
+          "value": "string",
+          "description": "Absolute or relative path to the theme directory (full app mode).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_THEME_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-c, --code <value>",
+          "value": "string",
+          "description": "The codeblock content to validate (stateless mode).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_CODE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-f, --file <value>",
+          "value": "string",
+          "description": "Path to a file whose content is validated as a codeblock (stateless mode).",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/validate-theme.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface validatetheme {\n  /**\n   * The codeblock content to validate (stateless mode).\n   * @environment SHOPIFY_FLAG_CODE\n   */\n  '-c, --code <value>'?: string\n\n  /**\n   * Validation context for the codeblock: theme or app. Defaults to \"theme\".\n   * @environment SHOPIFY_FLAG_CONTEXT\n   */\n  '--context <value>'?: string\n\n  /**\n   * Path to a file whose content is validated as a codeblock (stateless mode).\n   * @environment SHOPIFY_FLAG_FILE\n   */\n  '-f, --file <value>'?: string\n\n  /**\n   * File name for the codeblock being validated (stateless mode).\n   * @environment SHOPIFY_FLAG_FILENAME\n   */\n  '--filename <value>'?: string\n\n  /**\n   * Comma-separated list of theme-relative file paths to validate (full app mode).\n   * @environment SHOPIFY_FLAG_FILES\n   */\n  '--files <value>'?: string\n\n  /**\n   * Theme file type of the codeblock: assets, blocks, config, layout, locales, sections, snippets, or templates. Defaults to \"sections\".\n   * @environment SHOPIFY_FLAG_FILETYPE\n   */\n  '--filetype <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Absolute or relative path to the theme directory (full app mode).\n   * @environment SHOPIFY_FLAG_THEME_PATH\n   */\n  '--theme-path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "version": {
     "docs-shopify.dev/commands/interfaces/version.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/version.interface.ts",
