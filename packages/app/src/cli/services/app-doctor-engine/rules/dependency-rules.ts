@@ -90,17 +90,42 @@ async function terminateProcessTree(child: ChildProcess): Promise<void> {
   }
 }
 
+function quoteWindowsAuditArgument(value: string): string {
+  return `"${value.replace(/%/g, '%%').replace(/"/g, '""')}"`
+}
+
+function needsWindowsCmdShim(command: string): boolean {
+  if (process.platform !== 'win32') return false
+  if (/\.(?:exe|com)$/i.test(command)) return false
+  return !isAbsolutePath(command) || /\.(?:cmd|bat)$/i.test(command)
+}
+
+function spawnAuditProcess(
+  command: string,
+  args: string[],
+  options: {cwd: string; env: Record<string, string | undefined>},
+): ChildProcess {
+  const spawnOptions = {
+    cwd: options.cwd,
+    env: options.env,
+    shell: false as const,
+    stdio: ['ignore', 'pipe', 'pipe'] as const,
+    windowsHide: true,
+  }
+  if (!needsWindowsCmdShim(command)) return spawn(command, args, spawnOptions)
+
+  const commandLine = [command, ...args].map(quoteWindowsAuditArgument).join(' ')
+  return spawn(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', commandLine], {
+    ...spawnOptions,
+    windowsVerbatimArguments: true,
+  })
+}
+
 export const executeAuditCommand: AuditExecutor = (command, args, options) =>
   new Promise((resolve, reject) => {
     // Do not pass AbortSignal to spawn: Node would kill only the immediate child.
     // Audits must terminate the process tree, wait for close, then resolve.
-    const child = spawn(command, args, {
-      cwd: options.cwd,
-      env: options.env,
-      shell: false,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      windowsHide: true,
-    })
+    const child = spawnAuditProcess(command, args, options)
     let settled = false
     let terminating = false
 
