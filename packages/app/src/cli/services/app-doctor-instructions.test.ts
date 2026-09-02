@@ -1,8 +1,11 @@
 import deliverAppDoctorInstructions, {appDoctorInstructions, shellQuote} from './app-doctor-instructions.js'
+import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
+import {readFileSync} from 'node:fs'
+import {fileURLToPath} from 'node:url'
 
 function testDependencies() {
   return {
@@ -17,6 +20,13 @@ async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test app"\nclient_id = "test"\n')
   return normalizePath(directory)
 }
+
+describe('embedded instructions', () => {
+  test('matches INSTRUCTIONS.md', () => {
+    const source = readFileSync(fileURLToPath(new URL('./app-doctor-engine/INSTRUCTIONS.md', import.meta.url)), 'utf8')
+    expect(EMBEDDED_APP_DOCTOR_INSTRUCTIONS).toBe(source)
+  })
+})
 
 describe('appDoctorInstructions', () => {
   test('includes the initial scan for an agent that has not received results', async () => {

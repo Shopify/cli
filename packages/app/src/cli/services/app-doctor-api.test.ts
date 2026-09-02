@@ -6,11 +6,12 @@ import {
   type AppDoctorBlockingLevel,
 } from './app-doctor-api.js'
 import {writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
+import doctor from './doctor.js'
 import {loadChecks} from './app-doctor-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 function artifactPath(directory: string, name: string): string {
   return joinPath(directory, '.shopify', 'app-doctor', name)
@@ -397,6 +398,46 @@ describe('App Doctor CLI integration', () => {
       await expect(runDoctor({directory, blocking: 'none'})).rejects.toThrow(
         `Could not find a shopify.app*.toml from: ${directory}`,
       )
+    })
+  })
+
+  test('unmocked doctor scan writes artifacts, JSON output, and a zero exit status', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const output = vi.fn()
+      const setExitCode = vi.fn()
+
+      await doctor(
+        {
+          directory,
+          json: true,
+          verbose: false,
+          blocking: 'none',
+          yes: false,
+          skipInstructions: true,
+        },
+        {
+          execute: async ({directory: appDirectory, findingsPath}) => {
+            const appRoot = resolveAppDoctorRoot(appDirectory)
+            const findings = findingsPath ? await loadAppDoctorFindings(findingsPath) : undefined
+            return executeAppDoctor({appRoot, findings})
+          },
+          writeArtifacts: writeAppDoctorArtifacts,
+          canPrompt: () => false,
+          selectInstructionsDestination: async () => 'nothing',
+          deliverInstructions: async () => {},
+          output,
+          renderReport: vi.fn(),
+          setExitCode,
+        },
+      )
+
+      const payload = JSON.parse(output.mock.calls[0]![0]) as {operation: string; trace: {schema_version: number}}
+      expect(payload.operation).toBe('scan')
+      expect(payload.trace.schema_version).toBe(2)
+      await expect(readFile(artifactPath(directory, 'review.json'))).resolves.toContain('"checks"')
+      await expect(readFile(artifactPath(directory, 'trace.json'))).resolves.toContain('"schema_version"')
+      expect(setExitCode).not.toHaveBeenCalled()
     })
   })
 })

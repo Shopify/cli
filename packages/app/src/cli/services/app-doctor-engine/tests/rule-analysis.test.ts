@@ -697,7 +697,8 @@ setInterval(() => {}, 1000)
         dependencies: {},
       }
       const result = await auditKnownCves(directory, [manifest])
-      expect(result.unresolvedReason ?? '').not.toMatch(/double-loading/i)
+      expect(result.unresolvedReason).toBeUndefined()
+      expect(result.issues).toEqual([])
     } finally {
       await rm(directory, {recursive: true, force: true})
     }
