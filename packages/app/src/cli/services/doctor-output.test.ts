@@ -144,9 +144,8 @@ describe('buildDoctorAlert', () => {
     expect(alert.options.nextSteps).toEqual([
       ['Investigate the review pack, then compile the trace with', {command: compileCommand}],
     ])
-    expect(compileCommand).toContain('50%')
     expect(compileCommand).not.toContain('50%%')
-    expect(formatAppDoctorCommand(commands.compile, 'cmd')).toContain('"C:/Users/50%/my app"')
+    expect(formatAppDoctorCommand(commands.compile, 'cmd')).toContain('^%')
     expect(formatAppDoctorCommand(commands.compile, 'powershell')).toContain("'C:/Users/50%/my app'")
   })
 

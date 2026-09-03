@@ -32,8 +32,14 @@ export function shellForPlatform(
   platform: NodeJS.Platform = process.platform,
   env: NodeJS.ProcessEnv = process.env,
 ): AppDoctorShell {
-  if (platform !== 'win32') return 'posix'
+  if (platform !== 'win32' || isPosixCompatibleWindowsShell(env)) return 'posix'
   return windowsShell(env)
+}
+
+function isPosixCompatibleWindowsShell(env: NodeJS.ProcessEnv): boolean {
+  if (env.MSYSTEM || env.CYGWIN) return true
+  const shell = env.SHELL ?? ''
+  return /(?:^|[\\/])(bash|zsh|sh|fish|dash)(?:\.exe)?$/i.test(shell)
 }
 
 function windowsShell(env: NodeJS.ProcessEnv): Exclude<AppDoctorShell, 'posix'> {
@@ -47,12 +53,18 @@ function windowsShell(env: NodeJS.ProcessEnv): Exclude<AppDoctorShell, 'posix'> 
 }
 
 export function quoteShellArgument(value: string, shell: AppDoctorShell): string {
-  if (shell === 'cmd') {
-    // Interactive cmd.exe does not treat %% as an escaped percent the way batch files do. Quote and double quotes only.
-    return `"${value.replace(/"/g, '""')}"`
-  }
+  if (shell === 'cmd') return quoteCmdArgument(value)
   if (shell === 'powershell') return `'${value.replaceAll("'", "''")}'`
   return `'${value.replaceAll("'", `'\\''`)}'`
+}
+
+function quoteCmdArgument(value: string): string {
+  // Interactive cmd.exe expands %VAR% even inside quotes. Quote each segment and join with ^%
+  // so percents sit outside quotes. Batch-style %% is not used.
+  return value
+    .split('%')
+    .map((part) => `"${part.replace(/"/g, '""')}"`)
+    .join('^%')
 }
 
 export function formatAppDoctorCommand(action: AppDoctorCommand, shell: AppDoctorShell = shellForPlatform()): string {
