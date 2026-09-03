@@ -28,6 +28,14 @@ describe('embedded instructions', () => {
   })
 })
 
+describe('shellQuote', () => {
+  test('uses cmd.exe quoting on Windows for percents, quotes, and backslashes', () => {
+    expect(shellQuote('C:\\Users\\app', 'win32')).toBe('"C:\\Users\\app"')
+    expect(shellQuote('C:\\Users\\%NAME%\\app', 'win32')).toBe('"C:\\Users\\%%NAME%%\\app"')
+    expect(shellQuote('C:\\Users\\my "app"', 'win32')).toBe('"C:\\Users\\my ""app"""')
+  })
+})
+
 describe('appDoctorInstructions', () => {
   test('includes the initial scan for an agent that has not received results', async () => {
     await inTemporaryDirectory(async (directory) => {

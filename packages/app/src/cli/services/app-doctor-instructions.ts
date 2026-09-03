@@ -18,9 +18,10 @@ interface AppDoctorInstructionPaths {
   artifactDirectory: string
 }
 
-export function shellQuote(value: string): string {
-  if (process.platform === 'win32') {
-    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+export function shellQuote(value: string, platform: NodeJS.Platform = process.platform): string {
+  if (platform === 'win32') {
+    // cmd.exe expands %NAME% inside quotes and does not treat \ as an escape.
+    return `"${value.replace(/%/g, '%%').replace(/"/g, '""')}"`
   }
   return `'${value.replace(/'/g, `'\\''`)}'`
 }
