@@ -31,7 +31,9 @@ describe('embedded instructions', () => {
 describe('shellQuote', () => {
   test('quotes Windows cmd paths with spaces and paired percents for interactive cmd.exe', () => {
     expect(shellQuote('C:\\Users\\50%\\my app', 'win32', {PROMPT: '$P$G'})).toBe('"C:\\Users\\50"^%"\\my app"')
-    expect(shellQuote('C:\\Users\\%NAME%\\my app', 'win32', {PROMPT: '$P$G'})).toBe('"C:\\Users\\"^%"NAME"^%"\\my app"')
+    expect(shellQuote('C:\\Users\\%NAME%\\my app', 'win32', {PROMPT: '$P$G'})).toBe(
+      '"C:\\Users\\\\"^%"NAME"^%"\\my app"',
+    )
     expect(shellQuote('C:\\Users\\my "app"', 'win32', {PROMPT: '$P$G'})).toBe('"C:\\Users\\my ""app"""')
   })
 

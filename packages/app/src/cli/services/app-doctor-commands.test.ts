@@ -14,6 +14,13 @@ import {spawnSync} from 'node:child_process'
 const WINDOWS_APP_ROOT = 'C:/Users/50%/my app'
 const PAIRED_PERCENT_ROOT = 'C:\\Users\\%NAME%\\my app'
 
+function undoubleTrailingBackslashes(value: string): string {
+  // Inverse of quoteCmdSegment: CommandLineToArgvW keeps half the backslashes before a closer.
+  const trailingBackslashes = /\\+$/.exec(value)?.[0]
+  if (!trailingBackslashes) return value
+  return value.slice(0, value.length - Math.floor(trailingBackslashes.length / 2))
+}
+
 function splitQuotedCommand(command: string, shell: AppDoctorShell): string[] {
   const tokens: string[] = []
   let current = ''
@@ -36,6 +43,7 @@ function splitQuotedCommand(command: string, shell: AppDoctorShell): string[] {
           continue
         }
         if (command[index] === '"') {
+          current = undoubleTrailingBackslashes(current)
           index += 1
           break
         }
@@ -115,12 +123,13 @@ describe('quoteShellArgument', () => {
     expect(quoteShellArgument(WINDOWS_APP_ROOT, 'powershell')).toBe("'C:/Users/50%/my app'")
     expect(quoteShellArgument(WINDOWS_APP_ROOT, 'posix')).toBe("'C:/Users/50%/my app'")
     expect(quoteShellArgument('C:\\Users\\my "app"', 'cmd')).toBe('"C:\\Users\\my ""app"""')
+    expect(quoteShellArgument('C:\\Users\\my app\\', 'cmd')).toBe('"C:\\Users\\my app\\\\"')
     expect(quoteShellArgument("C:\\Users\\O'Brien\\app", 'powershell')).toBe("'C:\\Users\\O''Brien\\app'")
     expect(quoteShellArgument("C:\\Users\\O'Brien\\app", 'posix')).toBe(`'C:\\Users\\O'\\''Brien\\app'`)
   })
 
   test('escapes paired percent tokens for interactive cmd.exe', () => {
-    expect(quoteShellArgument(PAIRED_PERCENT_ROOT, 'cmd')).toBe('"C:\\Users\\"^%"NAME"^%"\\my app"')
+    expect(quoteShellArgument(PAIRED_PERCENT_ROOT, 'cmd')).toBe('"C:\\Users\\\\"^%"NAME"^%"\\my app"')
     expect(quoteShellArgument(PAIRED_PERCENT_ROOT, 'cmd')).not.toContain('%NAME%')
     expect(quoteShellArgument(PAIRED_PERCENT_ROOT, 'powershell')).toBe("'C:\\Users\\%NAME%\\my app'")
     expect(quoteShellArgument(PAIRED_PERCENT_ROOT, 'posix')).toBe("'C:\\Users\\%NAME%\\my app'")

@@ -1,7 +1,7 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
 import {redactText} from '../rules/secret-rules.js'
-import {sha256} from '@shopify/cli-kit/node/crypto'
 import {FINDINGS_SCHEMA_VERSION} from '../types.js'
+import {sha256} from '@shopify/cli-kit/node/crypto'
 import type {
   CheckExecution,
   CheckExecutionReason,

@@ -61,10 +61,15 @@ export function quoteShellArgument(value: string, shell: AppDoctorShell): string
 function quoteCmdArgument(value: string): string {
   // Interactive cmd.exe expands %VAR% even inside quotes. Quote each segment and join with ^%
   // so percents sit outside quotes. Batch-style %% is not used.
-  return value
-    .split('%')
-    .map((part) => `"${part.replace(/"/g, '""')}"`)
-    .join('^%')
+  return value.split('%').map(quoteCmdSegment).join('^%')
+}
+
+function quoteCmdSegment(part: string): string {
+  const escapedQuotes = part.replace(/"/g, '""')
+  // CommandLineToArgvW treats \" as an escaped quote. Double trailing backslashes so they
+  // stay path separators instead of escaping this closer.
+  const trailingBackslashes = /\\+$/.exec(escapedQuotes)?.[0] ?? ''
+  return `"${escapedQuotes}${trailingBackslashes}"`
 }
 
 export function formatAppDoctorCommand(action: AppDoctorCommand, shell: AppDoctorShell = shellForPlatform()): string {

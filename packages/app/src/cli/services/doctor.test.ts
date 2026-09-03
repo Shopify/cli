@@ -1,6 +1,6 @@
 import doctor, {appDoctorInstructionsPrompt} from './doctor.js'
-import {describe, expect, test, vi} from 'vitest'
 import {resolveAppDoctorCommands} from './app-doctor-commands.js'
+import {describe, expect, test, vi} from 'vitest'
 import type {AppDoctorArtifactPaths} from './app-doctor-artifacts.js'
 import type {AppDoctorExecution} from './app-doctor-api.js'
 import type {AppDoctorInstructionsDestination} from './doctor.js'
