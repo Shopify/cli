@@ -15,9 +15,11 @@ import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '.
 import {renderSuccess} from './ui.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
-import {isPreReleaseVersion} from './version.js'
+import {globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {lt as semverLt} from 'semver'
 
 export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
 
@@ -104,9 +106,29 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
    Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
     )
     await exec(command, args, {stdio: 'inherit'})
+
+    // A zero exit code doesn't guarantee the right version landed: the version check above
+    // queries the public npm registry, while the install goes through whatever registry the
+    // user has configured. A private registry with a stale `latest` tag (or one that serves
+    // stale metadata on auth errors) can "successfully" install an outdated version. Verify
+    // what's actually installed before claiming success.
+    const installedVersion = await globalCLIVersion()
+    if (!installedVersion) {
+      throw new AbortError(
+        "Couldn't verify the Shopify CLI version after upgrading.",
+        outputContent`Check the installed version by running ${outputToken.genericShellCommand('shopify version')}.`,
+      )
+    }
+    const expectedVersion = newerVersion ?? CLI_KIT_VERSION
+    if (semverLt(installedVersion, expectedVersion)) {
+      throw new AbortError(
+        `Failed to upgrade Shopify CLI. Expected to be on version ${expectedVersion}, but version ${installedVersion} is now installed.`,
+        'Your package manager may be resolving @shopify/cli from a registry with outdated versions. Check your npm registry configuration and try again.',
+      )
+    }
     renderSuccess({
       headline: 'Shopify CLI upgraded.',
-      body: newerVersion ? `You're now on version ${newerVersion}.` : "You're now on the latest version.",
+      body: `You're now on version ${installedVersion}.`,
     })
   } else if (projectDir) {
     await upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
