@@ -406,7 +406,7 @@ describe('selectStore', async () => {
     })
     // The developer picked the create choice, so no explanatory notice is needed.
     expect(renderInfo).not.toHaveBeenCalled()
-    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Development store "store1" created successfully.'})
+    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Dev store "store1" created successfully.'})
   })
 
   test('passes an affirmative demo data answer through to store creation', async () => {
@@ -482,7 +482,7 @@ describe('selectStore', async () => {
     expect(renderInfo).toHaveBeenCalledWith({
       body: "You don't have any dev stores associated with org1's Dev Dashboard. Let's create one.",
     })
-    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Development store "store1" created successfully.'})
+    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Dev store "store1" created successfully.'})
   })
 
   test('reports how to select a created store after provisioning retries are exhausted', async () => {

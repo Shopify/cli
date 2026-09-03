@@ -13,9 +13,9 @@ import {Flags} from '@oclif/core'
 export default class StoreCreateDev extends Command {
   static hidden = true
 
-  static summary = 'Create a new development store.'
+  static summary = 'Create a new dev store.'
 
-  static descriptionWithMarkdown = 'Creates a new development store in your organization.'
+  static descriptionWithMarkdown = 'Creates a new dev store in your organization.'
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -31,24 +31,24 @@ export default class StoreCreateDev extends Command {
     ...jsonFlag,
     name: requiredIfNonInteractive(
       Flags.string({
-        description: 'Name for the new development store.',
+        description: 'Name for the new dev store.',
         env: 'SHOPIFY_FLAG_STORE_NAME',
       }),
     ),
     'organization-id': requiredIfNonInteractive(storeFlags['organization-id']),
     plan: requiredIfNonInteractive(
       Flags.string({
-        description: 'The Shopify plan to use for the new development store.',
+        description: 'The Shopify plan to use for the new dev store.',
         options: devStorePlanHandles,
         env: 'SHOPIFY_FLAG_STORE_PLAN',
       }),
     ),
     'feature-preview': Flags.string({
-      description: 'The handle of a feature preview to enable on the new development store.',
+      description: 'The handle of a feature preview to enable on the new dev store.',
       env: 'SHOPIFY_FLAG_STORE_FEATURE_PREVIEW',
     }),
     'demo-data': Flags.boolean({
-      description: 'Populate the new development store with demo data.',
+      description: 'Populate the new dev store with demo data.',
       allowNo: true,
       env: 'SHOPIFY_FLAG_STORE_DEMO_DATA',
     }),

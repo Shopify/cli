@@ -11,9 +11,7 @@ describe('storeNamePrompt', () => {
     const result = await storeNamePrompt()
 
     expect(result).toBe('my-store')
-    expect(renderTextPrompt).toHaveBeenCalledWith(
-      expect.objectContaining({message: 'Name for the new development store'}),
-    )
+    expect(renderTextPrompt).toHaveBeenCalledWith(expect.objectContaining({message: 'Name for the new dev store'}))
   })
 })
 

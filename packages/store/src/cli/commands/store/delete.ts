@@ -11,9 +11,9 @@ import {Flags} from '@oclif/core'
 export default class StoreDelete extends Command {
   static hidden = true
 
-  static summary = 'Delete a development store.'
+  static summary = 'Delete a dev store.'
 
-  static descriptionWithMarkdown = 'Deletes a development store from your organization.'
+  static descriptionWithMarkdown = 'Deletes a dev store from your organization.'
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -43,7 +43,7 @@ export default class StoreDelete extends Command {
       // Deleting a store is irreversible: in non-interactive runs (CI, agents, piped
       // input) confirmation is impossible, so an explicit --force is required instead.
       if (!flags.force && !isTTY()) {
-        throw new AbortError(`Deleting the development store ${flags.store} requires confirmation.`, null, [
+        throw new AbortError(`Deleting the dev store ${flags.store} requires confirmation.`, null, [
           'Use the `--force` flag to skip confirmation when running non-interactively.',
         ])
       }
@@ -52,7 +52,7 @@ export default class StoreDelete extends Command {
 
       if (!flags.force) {
         const confirmed = await renderDangerousConfirmationPrompt({
-          message: `Delete development store ${flags.store}? This can't be undone.`,
+          message: `Delete dev store ${flags.store}? This can't be undone.`,
           confirmation: flags.store,
         })
         if (!confirmed) throw new AbortSilentError()

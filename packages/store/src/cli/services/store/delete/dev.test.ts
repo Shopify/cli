@@ -145,7 +145,7 @@ describe('deleteDevStore', () => {
       },
     })
 
-    await expect(deleteDevStore(defaultOptions)).rejects.toThrow('Failed to delete development store: Store not found')
+    await expect(deleteDevStore(defaultOptions)).rejects.toThrow('Failed to delete dev store: Store not found')
 
     expect(renderSingleTask).not.toHaveBeenCalled()
     expect(mutationRequests()).toHaveLength(1)
@@ -169,7 +169,7 @@ describe('deleteDevStore', () => {
     })
 
     await expect(deleteDevStore(defaultOptions)).rejects.toThrow(
-      'Failed to delete development store: Store management from the Shopify CLI is not yet enabled for your organization.',
+      'Failed to delete dev store: Store management from the Shopify CLI is not yet enabled for your organization.',
     )
 
     expect(renderSingleTask).not.toHaveBeenCalled()
