@@ -8,6 +8,7 @@ describe('non-interactive store command flags', () => {
     {command: StoreCreateDev, flag: 'name'},
     {command: StoreCreateDev, flag: 'organization-id'},
     {command: StoreCreateDev, flag: 'plan'},
+    {command: StoreDelete, flag: 'store'},
   ])('$command.name marks --$flag as required', ({command, flag}) => {
     const flags = command.flags as Record<string, {description?: string; requiredIfNonInteractive?: boolean}>
     expect(flags[flag]!.requiredIfNonInteractive).toBe(true)

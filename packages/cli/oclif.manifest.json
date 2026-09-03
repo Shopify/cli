@@ -7360,10 +7360,11 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Deletes a dev store from your organization.",
-      "descriptionWithMarkdown": "Deletes a dev store from your organization.",
+      "description": "Deletes a dev store from your organization.\n\nWhen `--store` is omitted, the command prompts you to pick one of your organization's dev stores, so the flag is only required in non-interactive environments.",
+      "descriptionWithMarkdown": "Deletes a dev store from your organization.\n\nWhen `--store` is omitted, the command prompts you to pick one of your organization's dev stores, so the flag is only required in non-interactive environments.",
       "enableJsonFlag": false,
       "examples": [
+        "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --json",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --force"
@@ -7404,12 +7405,11 @@
         },
         "store": {
           "char": "s",
-          "description": "The myshopify.com domain of the store.",
+          "description": "The myshopify.com domain of the store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
-          "required": true,
           "type": "option"
         },
         "verbose": {
