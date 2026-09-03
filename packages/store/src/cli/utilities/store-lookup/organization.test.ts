@@ -3,6 +3,7 @@ import {fetchDestinationsContext} from './destinations.js'
 import {selectOrg} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 vi.mock('./destinations.js')
@@ -45,6 +46,7 @@ describe('resolveOrganizationForStore', () => {
     vi.mocked(selectOrg).mockResolvedValue(selectedOrg)
     vi.mocked(fetchDestinationsContext).mockResolvedValue({owningOrg: {id: '67890', name: 'Inferred Org'}})
     vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+    mockAndCaptureOutput().clear()
   })
 
   test('selects the organization by ID when an organization ID is provided', async () => {
@@ -70,6 +72,32 @@ describe('resolveOrganizationForStore', () => {
 
     expect(selectOrg).toHaveBeenCalledWith()
     expect(organization).toEqual(selectedOrg)
+  })
+
+  test('explains why the organization prompt is appearing, naming the store the developer provided', async () => {
+    vi.mocked(fetchDestinationsContext).mockResolvedValue({owningOrg: undefined})
+    const output = mockAndCaptureOutput()
+
+    await resolveOrganizationForStore(STORE)
+
+    expect(output.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Could not determine which organization owns shop.myshopify.com.             │
+      │                                                                              │
+      │  Select one below, or specify it with \`--organization-id\`.                   │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('stays quiet when the owning organization is inferred', async () => {
+    const output = mockAndCaptureOutput()
+
+    await resolveOrganizationForStore(STORE)
+
+    expect(output.info()).toBe('')
   })
 
   test('does not prompt non-interactively when ownership can be inferred', async () => {
