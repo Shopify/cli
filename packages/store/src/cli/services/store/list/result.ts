@@ -1,9 +1,20 @@
 import {STORE_LIST_LIMIT} from './constants.js'
-import {type ListStoresResult, type StoreListEntry} from './types.js'
+import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './types.js'
 import {extractSubdomain, formatShortDate} from '../display.js'
 import {storeTypeLabel} from '../store-type.js'
-import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
-import {renderInfo, renderTable} from '@shopify/cli-kit/node/ui'
+import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
+import {renderInfo, renderTable, type AlertCustomSection, type TokenItem} from '@shopify/cli-kit/node/ui'
+
+// Both listing paths point at the separate `shopify store auth` credential store, so the hint is
+// the same whether or not the organization returned any stores.
+const STORE_AUTH_HINT: TokenItem = [
+  'To list stores authenticated directly with',
+  {command: 'shopify store auth'},
+  {char: ','},
+  'run',
+  {command: 'shopify store auth list'},
+  {char: '.'},
+]
 
 export function writeStoreListResult(result: ListStoresResult, format: 'text' | 'json'): void {
   // Human diagnostics always go to stderr so they never corrupt the JSON document on stdout, and so
@@ -36,28 +47,36 @@ function truncationWarning(result: ListStoresResult): string {
 }
 
 function renderTextResult(result: ListStoresResult): void {
-  if (result.stores.length === 0) {
-    outputInfo(emptyStateMessage(result))
-    return
-  }
-
-  const headline = result.organization
-    ? `Listing stores in ${result.organization.name} (${result.organization.id}).`
-    : 'Listing stores.'
-
   renderInfo({
-    headline,
-    body: [
-      'To list stores authenticated directly with',
-      {command: 'shopify store auth'},
-      {char: ','},
-      'run',
-      {command: 'shopify store auth list'},
-      {char: '.'},
-    ],
+    headline: textResultHeadline(result),
+    customSections: [...organizationSections(result.organization), {body: STORE_AUTH_HINT}],
   })
 
-  renderOrganizationTable(result.stores)
+  if (result.stores.length > 0) {
+    renderOrganizationTable(result.stores)
+  }
+}
+
+function textResultHeadline(result: ListStoresResult): string {
+  if (result.stores.length > 0) return 'Listing stores.'
+  // The notice explains on stderr why the session couldn't be resolved; this states the outcome.
+  if (result.notice) return 'No stores were returned for the current CLI session.'
+  return 'No stores found.'
+}
+
+// The organization is only known once one has been selected, so the unresolved-session path
+// renders the banner without this section.
+function organizationSections(organization: StoreListOrganization | undefined): AlertCustomSection[] {
+  if (!organization) return []
+
+  return [
+    {
+      body: {
+        tabularData: [['Organization', `${organization.name} (${organization.id})`]],
+        firstColumnSubdued: true,
+      },
+    },
+  ]
 }
 
 function renderOrganizationTable(stores: StoreListEntry[]): void {
@@ -75,26 +94,6 @@ function renderOrganizationTable(stores: StoreListEntry[]): void {
       created: {header: 'Created'},
     },
   })
-}
-
-function emptyStateMessage(result: ListStoresResult): string {
-  if (result.notice) {
-    return [
-      'No stores were returned for the current CLI session.',
-      '',
-      'Run `shopify store auth list` to list stores authenticated directly with `shopify store auth`.',
-    ].join('\n')
-  }
-
-  if (result.organization) {
-    return `No stores found in ${result.organization.name}.`
-  }
-
-  return [
-    'No stores found in your Shopify organization.',
-    '',
-    'Run `shopify store auth list` to list stores authenticated directly with `shopify store auth`.',
-  ].join('\n')
 }
 
 function subdomainFor(store: string): string {

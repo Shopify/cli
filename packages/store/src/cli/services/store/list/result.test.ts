@@ -31,7 +31,7 @@ describe('writeStoreListResult', () => {
       'text',
     )
 
-    expect(output.info()).toContain('Listing stores in Acme (1234).')
+    expect(output.info()).toContain('Acme (1234)')
     expect(output.info()).toContain('Subdomain')
     expect(output.info()).toContain('my-shop')
     expect(output.info()).not.toContain('my-shop.myshopify.com')
@@ -41,7 +41,7 @@ describe('writeStoreListResult', () => {
     expect(output.info()).toContain('shopify store auth list')
   })
 
-  test('renders the organization and the store auth hint in a single info banner above the table', () => {
+  test('renders the organization row and the store auth hint in a single info banner above the table', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult(
@@ -62,17 +62,12 @@ describe('writeStoreListResult', () => {
       'text',
     )
 
-    // Terminal width in the test environment is quite narrow, so the table columns wrap.
-    const outputWithoutTrailingWhitespace = output
-      .info()
-      .split('\n')
-      .map((line) => line.trimEnd())
-      .join('\n')
-
-    expect(outputWithoutTrailingWhitespace).toMatchInlineSnapshot(`
+    expect(trimmedLines(output.info())).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Listing stores in Acme (1234).                                              │
+      │  Listing stores.                                                             │
+      │                                                                              │
+      │  Organization  Acme (1234)                                                   │
       │                                                                              │
       │  To list stores authenticated directly with \`shopify store auth\`, run        │
       │  \`shopify store auth list\`.                                                  │
@@ -126,21 +121,34 @@ describe('writeStoreListResult', () => {
     expect(output.info()).toContain('shopify store auth list')
   })
 
-  test('renders the selected organization empty state', () => {
+  test('renders the selected organization empty state in the same banner shape', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult({source: 'organization', organization, stores: []}, 'text')
 
-    expect(output.info()).toContain('No stores found in Acme.')
+    expect(trimmedLines(output.info())).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  No stores found.                                                            │
+      │                                                                              │
+      │  Organization  Acme (1234)                                                   │
+      │                                                                              │
+      │  To list stores authenticated directly with \`shopify store auth\`, run        │
+      │  \`shopify store auth list\`.                                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
-  test('renders the fallback organization empty state when no organization is selected', () => {
+  test('omits the organization row from the empty state when no organization is selected', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult({source: 'organization', stores: []}, 'text')
 
-    expect(output.info()).toContain('No stores found in your Shopify organization.')
+    expect(output.info()).toContain('No stores found.')
     expect(output.info()).toContain('shopify store auth list')
+    expect(output.info()).not.toContain('Organization')
   })
 
   test('emits a {stores, organization} JSON document on stdout', () => {
@@ -226,3 +234,12 @@ describe('writeStoreListResult', () => {
     expect(jsonOutput.output()).toContain('"truncated": true')
   })
 })
+
+// The banner pads every line out to the terminal width, which is narrow in the test environment.
+// Trimming keeps the snapshots readable and free of trailing whitespace.
+function trimmedLines(output: string): string {
+  return output
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .join('\n')
+}

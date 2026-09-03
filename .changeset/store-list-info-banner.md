@@ -2,4 +2,4 @@
 '@shopify/store': minor
 ---
 
-Show the organization and `shopify store auth list` hint in an info banner in `store list`
+Show `store list` context in an info banner, with the organization as a label/value row
