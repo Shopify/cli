@@ -180,9 +180,7 @@ export async function executeAppDoctor(options: {
   const provenanceRejected =
     document.source_scan_id === result.scan.input_hash
       ? []
-      : [
-          `Findings source scan ${document.source_scan_id} does not match the current scan ${result.scan.input_hash}.`,
-        ]
+      : [`Findings source scan ${document.source_scan_id} does not match the current scan ${result.scan.input_hash}.`]
   const executed =
     provenanceRejected.length > 0
       ? {executions: [] as CheckExecution[], rejected: provenanceRejected, warnings: [] as string[]}

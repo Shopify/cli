@@ -41,10 +41,7 @@ export function quoteShellArgument(value: string, shell: AppDoctorShell): string
   return `'${value.replaceAll("'", `'\\''`)}'`
 }
 
-export function formatAppDoctorCommand(
-  action: AppDoctorCommand,
-  shell: AppDoctorShell = shellForPlatform(),
-): string {
+export function formatAppDoctorCommand(action: AppDoctorCommand, shell: AppDoctorShell = shellForPlatform()): string {
   return [action.command, ...action.args]
     .map((argument, index) => {
       const isCommandSyntax = index === 0 || argument === 'app' || argument === 'doctor' || argument.startsWith('-')

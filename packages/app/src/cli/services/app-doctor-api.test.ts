@@ -12,6 +12,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
+import {symlink} from 'node:fs/promises'
 
 function artifactPath(directory: string, name: string): string {
   return joinPath(directory, '.shopify', 'app-doctor', name)
@@ -469,6 +470,30 @@ describe('App Doctor CLI integration', () => {
       await expect(runDoctor({directory, blocking: 'none'})).rejects.toThrow(
         `Could not find a shopify.app*.toml from: ${directory}`,
       )
+    })
+  })
+
+  test('rejects artifact symlinks that target outside the app', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await inTemporaryDirectory(async (externalDirectory) => {
+        await symlink(externalDirectory, joinPath(directory, '.shopify'), 'dir')
+
+        await expect(runDoctor({directory, blocking: 'none'})).rejects.toThrow(/outside the app/)
+        await expect(readFile(joinPath(externalDirectory, 'app-doctor', 'trace.json'))).rejects.toThrow()
+      })
+    })
+  })
+
+  test.skipIf(process.platform !== 'win32')('rejects artifact junctions that target outside the app', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await inTemporaryDirectory(async (externalDirectory) => {
+        await symlink(externalDirectory, joinPath(directory, '.shopify'), 'junction')
+
+        await expect(runDoctor({directory, blocking: 'none'})).rejects.toThrow(/outside the app/)
+        await expect(readFile(joinPath(externalDirectory, 'app-doctor', 'trace.json'))).rejects.toThrow()
+      })
     })
   })
 

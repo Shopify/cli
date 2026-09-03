@@ -120,10 +120,7 @@ function doctorBody(input: DoctorReportInput): TokenItem {
 
 function doctorNextSteps(commands: AppDoctorCommands): TokenItem<InlineToken>[] {
   return [
-    [
-      'Investigate the review pack, then compile the trace with',
-      {command: formatAppDoctorCommand(commands.compile)},
-    ],
+    ['Investigate the review pack, then compile the trace with', {command: formatAppDoctorCommand(commands.compile)}],
   ]
 }
 
