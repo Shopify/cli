@@ -1,6 +1,8 @@
 export {fetchOrganizations, fetchOrganizationsWithAccessInfo} from './cli/services/fetch.js'
 export {selectOrg} from './cli/services/select.js'
 export {selectOrganizationPrompt} from './cli/prompts/organization.js'
+export {storeChoiceList} from './cli/prompts/store.js'
+export type {StoreChoice} from './cli/prompts/store.js'
 export type {Organization} from './cli/models/organization.js'
 export {businessPlatformTokenRefreshHandler} from './cli/services/business-platform.js'
 export {createDevStore, devStorePlanHandles} from './cli/services/dev/create-dev-store.js'

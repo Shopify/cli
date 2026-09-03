@@ -1,14 +1,10 @@
 import {listBusinessPlatformStores} from './list/bp-source.js'
-import {STORE_LIST_LIMIT} from './list/constants.js'
 import {type StoreListEntry} from './list/types.js'
+import {DEV_STORE_TYPE_FILTER} from './store-type.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputWarn} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {selectOrg, storeChoiceList, type Organization, type StoreChoice} from '@shopify/organizations'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {selectOrg, type Organization} from '@shopify/organizations'
-
-// The `store list` type handle every dev store variant maps to.
-const DEV_STORE_TYPE = 'dev'
 
 interface SelectDevStoreOptions {
   // The `--organization-id` flag value, when one was given. Skips the organization prompt.
@@ -29,39 +25,39 @@ export interface SelectedDevStore {
  */
 export async function selectDevStore(options: SelectDevStoreOptions): Promise<SelectedDevStore> {
   const organization = await selectOrg(options.organizationId)
-  const devStores = await fetchDevStores(organization)
+  const token = await ensureAuthenticatedBusinessPlatform()
+  const listDevStores = async (searchTerm?: string) => {
+    const {entries, hasMore} = await listBusinessPlatformStores({
+      token,
+      organization,
+      storeTypeFilter: DEV_STORE_TYPE_FILTER,
+      ...(searchTerm ? {searchTerm} : {}),
+    })
 
-  if (devStores.length === 0) {
+    return {stores: entries, hasMorePages: hasMore}
+  }
+
+  const {stores, hasMorePages} = await listDevStores()
+  if (stores.length === 0) {
     throw new AbortError(
       `No dev stores found in ${organization.businessName}.`,
       `Create one with \`shopify store create dev --organization-id ${organization.id}\`.`,
     )
   }
 
-  const store = await renderAutocompletePrompt({
-    message: options.message,
-    choices: devStores.map(toStoreChoice),
-  })
+  const {promptProps, storeFor} = storeChoiceList({stores, toChoice: toStoreChoice, onSearch: listDevStores})
 
-  return {store, organization}
+  // A lone dev store is still offered as a choice rather than auto-selected: the caller is about to
+  // act on it, so the developer should see which store that is before confirming.
+  const selectedValue = await renderAutocompletePrompt({message: options.message, hasMorePages, ...promptProps})
+  const selected = storeFor(selectedValue)
+
+  // Every choice offered is a store, so the prompt can only submit one we can resolve.
+  if (!selected) throw new AbortError('No dev store was selected.')
+
+  return {store: selected.store, organization}
 }
 
-// Reuses the `store list` source, so the choices are the organization's newest stores, and narrows
-// them to the dev stores the caller can act on. A store beyond the fetched page can still be named
-// with `--store`, so truncation is reported rather than treated as an error.
-async function fetchDevStores(organization: Organization): Promise<StoreListEntry[]> {
-  const token = await ensureAuthenticatedBusinessPlatform()
-  const {entries, hasMore} = await listBusinessPlatformStores({token, organization})
-
-  if (hasMore) outputWarn(truncationWarning(organization))
-
-  return entries.filter((entry) => entry.type === DEV_STORE_TYPE)
-}
-
-function truncationWarning(organization: Organization): string {
-  return `Showing the dev stores among the ${STORE_LIST_LIMIT} most recent stores in ${organization.businessName}. More stores exist: use \`--store\` to name one that isn't listed.`
-}
-
-function toStoreChoice(entry: StoreListEntry): {label: string; value: string} {
-  return {label: entry.name ? `${entry.name} (${entry.store})` : entry.store, value: entry.store}
+function toStoreChoice(entry: StoreListEntry): StoreChoice {
+  return {id: entry.store, domain: entry.store, ...(entry.name ? {name: entry.name} : {})}
 }

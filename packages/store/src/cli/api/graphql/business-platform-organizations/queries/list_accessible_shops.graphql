@@ -1,12 +1,8 @@
-query ListAccessibleShops($first: Int!) {
+query ListAccessibleShops($first: Int!, $filters: [ShopFilterInput!], $search: String) {
   organization {
     id
     name
-    accessibleShops(
-      first: $first
-      sort: SHOP_CREATED_AT_DESC
-      filters: [{field: STORE_STATUS, operator: EQUALS, value: "active"}]
-    ) {
+    accessibleShops(first: $first, sort: SHOP_CREATED_AT_DESC, filters: $filters, search: $search) {
       edges {
         node {
           id

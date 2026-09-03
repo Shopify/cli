@@ -3,15 +3,16 @@ import * as bpSource from './list/bp-source.js'
 import {type StoreListEntry} from './list/types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputWarn} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {selectOrg} from '@shopify/organizations'
 
-vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/organizations')
+vi.mock('@shopify/organizations', async (importOriginal) => {
+  const actual: Record<string, unknown> = await importOriginal()
+  return {...actual, selectOrg: vi.fn()}
+})
 
 const acme = {id: '1234', businessName: 'Acme'}
 
@@ -30,12 +31,12 @@ function storeEntry(overrides: Partial<StoreListEntry> = {}): StoreListEntry {
 function mockStores(entries: StoreListEntry[], hasMore = false) {
   vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('bp-token')
   vi.mocked(selectOrg).mockResolvedValue(acme)
-  vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries, hasMore})
+  return vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries, hasMore})
 }
 
 describe('selectDevStore', () => {
-  test('prompts with the organization dev stores and returns the selection', async () => {
-    mockStores([
+  test('asks Business Platform for the organization dev stores and returns the selection', async () => {
+    const listStores = mockStores([
       storeEntry({store: 'first.myshopify.com', name: 'First'}),
       storeEntry({store: 'second.myshopify.com', name: 'Second'}),
     ])
@@ -44,13 +45,20 @@ describe('selectDevStore', () => {
     const selected = await selectDevStore({organizationId: '1234', message: 'Which dev store?'})
 
     expect(selectOrg).toHaveBeenCalledWith('1234')
-    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: acme})
+    // The store type is filtered server-side, so the page holds dev stores rather than a mix.
+    expect(listStores).toHaveBeenCalledWith({
+      token: 'bp-token',
+      organization: acme,
+      storeTypeFilter: 'development_superset',
+    })
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
       message: 'Which dev store?',
       choices: [
         {label: 'First (first.myshopify.com)', value: 'first.myshopify.com'},
         {label: 'Second (second.myshopify.com)', value: 'second.myshopify.com'},
       ],
+      hasMorePages: false,
+      search: expect.any(Function),
     })
     expect(selected).toEqual({store: 'second.myshopify.com', organization: acme})
   })
@@ -64,6 +72,16 @@ describe('selectDevStore', () => {
     expect(selectOrg).toHaveBeenCalledWith(undefined)
   })
 
+  test('prompts for a lone dev store rather than auto-selecting it', async () => {
+    mockStores([storeEntry()])
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('shop.myshopify.com')
+
+    const selected = await selectDevStore({message: 'Which dev store?'})
+
+    expect(renderAutocompletePrompt).toHaveBeenCalledOnce()
+    expect(selected).toEqual({store: 'shop.myshopify.com', organization: acme})
+  })
+
   test('labels a store without a name by its domain alone', async () => {
     mockStores([storeEntry({name: undefined})])
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('shop.myshopify.com')
@@ -75,23 +93,30 @@ describe('selectDevStore', () => {
     )
   })
 
-  test('offers only the dev stores in the organization', async () => {
-    mockStores([
-      storeEntry({store: 'dev.myshopify.com', name: 'Dev', type: 'dev'}),
-      storeEntry({store: 'live.myshopify.com', name: 'Live', type: 'production'}),
-      storeEntry({store: 'unknown.myshopify.com', name: 'Unknown', type: undefined}),
-    ])
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('dev.myshopify.com')
+  test('searches Business Platform for stores beyond the fetched page', async () => {
+    const listStores = mockStores([storeEntry({store: 'first.myshopify.com', name: 'First'})], true)
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      listStores.mockResolvedValue({entries: [storeEntry({store: 'far.myshopify.com', name: 'Far'})], hasMore: false})
+      const results = await search!('far')
+      expect(results.data).toEqual([{label: 'Far (far.myshopify.com)', value: 'far.myshopify.com'}])
+      return 'far.myshopify.com'
+    })
 
-    await selectDevStore({message: 'Which dev store?'})
+    const selected = await selectDevStore({message: 'Which dev store?'})
 
-    expect(renderAutocompletePrompt).toHaveBeenCalledWith(
-      expect.objectContaining({choices: [{label: 'Dev (dev.myshopify.com)', value: 'dev.myshopify.com'}]}),
-    )
+    expect(listStores).toHaveBeenLastCalledWith({
+      token: 'bp-token',
+      organization: acme,
+      storeTypeFilter: 'development_superset',
+      searchTerm: 'far',
+    })
+    // The prompt reports the extra pages, so its hint to type a name is accurate.
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith(expect.objectContaining({hasMorePages: true}))
+    expect(selected).toEqual({store: 'far.myshopify.com', organization: acme})
   })
 
   test('aborts when the organization has no dev stores', async () => {
-    mockStores([storeEntry({type: 'production'})])
+    mockStores([])
 
     await expect(selectDevStore({message: 'Which dev store?'})).rejects.toThrow(
       new AbortError(
@@ -100,25 +125,5 @@ describe('selectDevStore', () => {
       ),
     )
     expect(renderAutocompletePrompt).not.toHaveBeenCalled()
-  })
-
-  test('warns that stores beyond the fetched page are missing from the choices', async () => {
-    mockStores([storeEntry()], true)
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('shop.myshopify.com')
-
-    await selectDevStore({message: 'Which dev store?'})
-
-    expect(outputWarn).toHaveBeenCalledWith(
-      "Showing the dev stores among the 250 most recent stores in Acme. More stores exist: use `--store` to name one that isn't listed.",
-    )
-  })
-
-  test('does not warn when every store was fetched', async () => {
-    mockStores([storeEntry()])
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('shop.myshopify.com')
-
-    await selectDevStore({message: 'Which dev store?'})
-
-    expect(outputWarn).not.toHaveBeenCalled()
   })
 })
