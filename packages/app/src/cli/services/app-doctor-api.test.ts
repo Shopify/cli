@@ -60,6 +60,19 @@ async function appFindingsPath(directory: string): Promise<string> {
   return path
 }
 
+function suppressionFor(fingerprint: string) {
+  return {
+    id: 'accepted-risk',
+    finding_fingerprint: fingerprint,
+    justification: 'Accepted during migration',
+    provenance: {
+      source: 'human',
+      actor: 'security@example.com',
+      created_at: '2026-08-28T00:00:00.000Z',
+    },
+  }
+}
+
 describe('App Doctor CLI integration', () => {
   test('runs the in-tree engine and writes the review pack and trace', async () => {
     await inTemporaryDirectory(async (directory) => {
@@ -299,6 +312,64 @@ describe('App Doctor CLI integration', () => {
     })
   })
 
+  test('does not apply a stale suppression whose fingerprint still matches a current finding', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const testToken = ['shpat', '0123456789abcdef0123456789abcdef'].join('_')
+      await createApp(directory, `const access_token = "${testToken}"`)
+      const initial = await executeAppDoctor({appRoot: resolveAppDoctorRoot(directory)})
+      const secretFinding = initial.trace.findings.find((finding) => finding.rule_id === 'COMMITTED_SECRET')
+      if (!secretFinding) throw new Error('Expected COMMITTED_SECRET in the initial scan')
+      const findingsPath = await appFindingsPath(directory)
+      await writeFile(
+        findingsPath,
+        `${JSON.stringify({
+          schema_version: 1,
+          source_scan_id: initial.scan.scan.input_hash,
+          findings: [],
+          suppressions: [suppressionFor(secretFinding.fingerprint)],
+        })}\n`,
+      )
+      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Changed app"\nclient_id = "test"\n')
+
+      const result = await runDoctor({directory, findingsPath, blocking: 'none'})
+      const trace = result.jsonReport as {
+        findings: {rule_id?: string; suppressed: boolean}[]
+        suppressions: unknown[]
+      }
+      const compiledSecret = trace.findings.find((finding) => finding.rule_id === 'COMMITTED_SECRET')
+
+      expect(result.exitCode).toBe(2)
+      expect(result.findings?.rejected).toEqual([expect.stringContaining('does not match the current scan')])
+      expect(compiledSecret?.suppressed).toBe(false)
+      expect(trace.suppressions).toEqual([])
+    })
+  })
+
+  test('does not throw when a stale suppression fingerprint no longer matches', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const sourcePath = await createApp(directory)
+      const initial = await executeAppDoctor({appRoot: resolveAppDoctorRoot(directory)})
+      const findingsPath = await appFindingsPath(directory)
+      await writeFile(
+        findingsPath,
+        `${JSON.stringify({
+          schema_version: 1,
+          source_scan_id: initial.scan.scan.input_hash,
+          findings: [],
+          suppressions: [suppressionFor(`sha256:${'e'.repeat(64)}`)],
+        })}\n`,
+      )
+      await writeFile(sourcePath, 'export const loader = () => ({changed: true})\n')
+
+      const result = await runDoctor({directory, findingsPath, blocking: 'none'})
+      const trace = result.jsonReport as {suppressions: unknown[]}
+
+      expect(result.exitCode).toBe(2)
+      expect(result.findings?.rejected).toEqual([expect.stringContaining('does not match the current scan')])
+      expect(trace.suppressions).toEqual([])
+    })
+  })
+
   test('keeps a check when inspected_files includes extra relative paths', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
@@ -402,6 +473,21 @@ describe('App Doctor CLI integration', () => {
     })
   })
 
+  test('rejects a source_scan_id that is not a SHA-256 identifier', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const findingsPath = joinPath(directory, 'findings.json')
+      const oversized = `not-a-hash:${'x'.repeat(100_000)}`
+      await writeFile(findingsPath, `${JSON.stringify({schema_version: 1, source_scan_id: oversized, findings: []})}\n`)
+
+      await expect(runDoctor({directory, findingsPath, blocking: 'none'})).rejects.toMatchObject({
+        constructor: AbortError,
+        message: 'The App Doctor findings file must identify its source scan.',
+        tryMessage: 'Copy the source_scan_id from the generated review.json.',
+      })
+    })
+  })
+
   test('rejects findings files larger than 5 MB', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
@@ -479,7 +565,11 @@ describe('App Doctor CLI integration', () => {
       await inTemporaryDirectory(async (externalDirectory) => {
         await symlink(externalDirectory, joinPath(directory, '.shopify'), 'dir')
 
-        await expect(runDoctor({directory, blocking: 'none'})).rejects.toThrow(/outside the app/)
+        await expect(runDoctor({directory, blocking: 'none'})).rejects.toMatchObject({
+          constructor: AbortError,
+          message: expect.stringMatching(/outside the app/),
+          tryMessage: 'Remove or replace the unsafe App Doctor artifact path, then run the command again.',
+        })
         await expect(readFile(joinPath(externalDirectory, 'app-doctor', 'trace.json'))).rejects.toThrow()
       })
     })
@@ -491,7 +581,11 @@ describe('App Doctor CLI integration', () => {
       await inTemporaryDirectory(async (externalDirectory) => {
         await symlink(externalDirectory, joinPath(directory, '.shopify'), 'junction')
 
-        await expect(runDoctor({directory, blocking: 'none'})).rejects.toThrow(/outside the app/)
+        await expect(runDoctor({directory, blocking: 'none'})).rejects.toMatchObject({
+          constructor: AbortError,
+          message: expect.stringMatching(/outside the app/),
+          tryMessage: 'Remove or replace the unsafe App Doctor artifact path, then run the command again.',
+        })
         await expect(readFile(joinPath(externalDirectory, 'app-doctor', 'trace.json'))).rejects.toThrow()
       })
     })

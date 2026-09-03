@@ -28,14 +28,28 @@ export function resolveAppDoctorCommands(appRoot: string): AppDoctorCommands {
   }
 }
 
-export function shellForPlatform(platform: NodeJS.Platform = process.platform): AppDoctorShell {
-  return platform === 'win32' ? 'cmd' : 'posix'
+export function shellForPlatform(
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+): AppDoctorShell {
+  if (platform !== 'win32') return 'posix'
+  return windowsShell(env)
+}
+
+function windowsShell(env: NodeJS.ProcessEnv): Exclude<AppDoctorShell, 'posix'> {
+  // cmd.exe sets PROMPT when it starts. PowerShell uses a prompt function and usually leaves it unset.
+  // Check PROMPT first so a cmd.exe child of PowerShell is not quoted for PowerShell.
+  if (env.PROMPT) return 'cmd'
+  if (env.POWERSHELL_DISTRIBUTION_CHANNEL || env.PSExecutionPolicyPreference || env.PSModulePath) {
+    return 'powershell'
+  }
+  return 'cmd'
 }
 
 export function quoteShellArgument(value: string, shell: AppDoctorShell): string {
   if (shell === 'cmd') {
-    // cmd.exe expands %NAME% inside quotes and does not treat backslashes as escapes.
-    return `"${value.replace(/%/g, '%%').replace(/"/g, '""')}"`
+    // Interactive cmd.exe does not treat %% as an escaped percent the way batch files do. Quote and double quotes only.
+    return `"${value.replace(/"/g, '""')}"`
   }
   if (shell === 'powershell') return `'${value.replaceAll("'", "''")}'`
   return `'${value.replaceAll("'", `'\\''`)}'`

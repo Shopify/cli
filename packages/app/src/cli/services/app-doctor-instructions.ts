@@ -26,8 +26,12 @@ interface AppDoctorInstructionPaths {
   artifactDirectory: string
 }
 
-export function shellQuote(value: string, platform: NodeJS.Platform = process.platform): string {
-  return quoteShellArgument(value, shellForPlatform(platform))
+export function shellQuote(
+  value: string,
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  return quoteShellArgument(value, shellForPlatform(platform, env))
 }
 
 function markdownPath(value: string): string {

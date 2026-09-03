@@ -1,3 +1,4 @@
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {randomBytes} from 'node:crypto'
 import {lstat, mkdir, realpath, rename, unlink, writeFile} from 'node:fs/promises'
@@ -37,7 +38,7 @@ async function ensureArtifactDirectory(appRoot: string, artifactDirectory: strin
 
   const rootStats = await lstat(resolvedRoot)
   if (rootStats.isSymbolicLink() || !rootStats.isDirectory()) {
-    throw artifactPathError(resolvedDirectory)
+    refuseArtifactPath(resolvedDirectory)
   }
 
   let currentPath = resolvedRoot
@@ -56,7 +57,7 @@ async function ensureArtifactDirectory(appRoot: string, artifactDirectory: strin
 async function ensureDirectoryComponent(path: string): Promise<void> {
   try {
     const stats = await lstat(path)
-    if (stats.isSymbolicLink() || !stats.isDirectory()) throw artifactPathError(path)
+    if (stats.isSymbolicLink() || !stats.isDirectory()) refuseArtifactPath(path)
     return
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
@@ -64,16 +65,19 @@ async function ensureDirectoryComponent(path: string): Promise<void> {
 
   await mkdir(path, {mode: 0o700})
   const stats = await lstat(path)
-  if (stats.isSymbolicLink() || !stats.isDirectory()) throw artifactPathError(path)
+  if (stats.isSymbolicLink() || !stats.isDirectory()) refuseArtifactPath(path)
 }
 
 function assertWithinRoot(root: string, candidate: string): void {
   const relative = relativePath(root, candidate)
-  if (!relative || relative.startsWith('..') || relative.startsWith('/')) throw artifactPathError(candidate)
+  if (!relative || relative.startsWith('..') || relative.startsWith('/')) refuseArtifactPath(candidate)
 }
 
-function artifactPathError(path: string): Error {
-  return new Error(`Refusing to write App Doctor artifacts through a symbolic link or outside the app: ${path}`)
+function refuseArtifactPath(path: string): never {
+  throw new AbortError(
+    `Refusing to write App Doctor artifacts through a symbolic link or outside the app: ${path}`,
+    'Remove or replace the unsafe App Doctor artifact path, then run the command again.',
+  )
 }
 
 async function writeAtomicArtifact(path: string, contents: string): Promise<void> {
@@ -93,9 +97,7 @@ async function writeAtomicArtifact(path: string, contents: string): Promise<void
 async function assertNotSymbolicLink(path: string): Promise<void> {
   try {
     const stats = await lstat(path)
-    if (stats.isSymbolicLink()) {
-      throw new Error(`Refusing to write App Doctor artifact through a symbolic link: ${path}`)
-    }
+    if (stats.isSymbolicLink()) refuseArtifactPath(path)
     // Missing paths are writable; any other lstat failure is unexpected.
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return

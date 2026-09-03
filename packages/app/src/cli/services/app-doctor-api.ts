@@ -23,6 +23,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize, readFile} from '@shopify/cli-kit/node/fs'
 
 const MAX_FINDINGS_FILE_SIZE_BYTES = 5_000_000
+const SOURCE_SCAN_ID = /^sha256:[0-9a-f]{64}$/
 
 export interface AppDoctorEngineMetadata {
   name: string
@@ -123,7 +124,11 @@ export async function loadAppDoctorFindings(path: string): Promise<FindingsDocum
       'Generate a new review pack and use its findings schema.',
     )
   }
-  if (!('source_scan_id' in parsed) || typeof parsed.source_scan_id !== 'string' || !parsed.source_scan_id) {
+  if (
+    !('source_scan_id' in parsed) ||
+    typeof parsed.source_scan_id !== 'string' ||
+    !SOURCE_SCAN_ID.test(parsed.source_scan_id)
+  ) {
     throw new AbortError(
       'The App Doctor findings file must identify its source scan.',
       'Copy the source_scan_id from the generated review.json.',
@@ -243,7 +248,8 @@ export async function executeAppDoctor(options: {
       guidance: 'Correct the rejected check record or findings, then compile the trace again.',
     })
   }
-  suppressions = document.suppressions ?? []
+  // Stale documents must not suppress current findings or crash compile when fingerprints no longer exist.
+  suppressions = provenanceRejected.length > 0 ? [] : (document.suppressions ?? [])
   if (rejected.length > 0) {
     result.score = null
     result.scan.coverage_complete = false

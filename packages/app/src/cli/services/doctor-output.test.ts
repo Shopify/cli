@@ -136,6 +136,20 @@ describe('buildDoctorAlert', () => {
     ])
   })
 
+  test('quotes compile commands for Windows paths with spaces and percents', () => {
+    const commands = resolveAppDoctorCommands('C:/Users/50%/my app')
+    const alert = buildDoctorAlert(reportInput({commands}))
+    const compileCommand = formatAppDoctorCommand(commands.compile)
+
+    expect(alert.options.nextSteps).toEqual([
+      ['Investigate the review pack, then compile the trace with', {command: compileCommand}],
+    ])
+    expect(compileCommand).toContain('50%')
+    expect(compileCommand).not.toContain('50%%')
+    expect(formatAppDoctorCommand(commands.compile, 'cmd')).toContain('"C:/Users/50%/my app"')
+    expect(formatAppDoctorCommand(commands.compile, 'powershell')).toContain("'C:/Users/50%/my app'")
+  })
+
   test('adds evidence, fix guidance, and scan details in verbose mode', () => {
     const serialized = JSON.stringify(buildDoctorAlert(reportInput({verbose: true})))
 

@@ -29,10 +29,15 @@ describe('embedded instructions', () => {
 })
 
 describe('shellQuote', () => {
-  test('uses cmd.exe quoting on Windows for percents, quotes, and backslashes', () => {
-    expect(shellQuote('C:\\Users\\app', 'win32')).toBe('"C:\\Users\\app"')
-    expect(shellQuote('C:\\Users\\%NAME%\\app', 'win32')).toBe('"C:\\Users\\%%NAME%%\\app"')
-    expect(shellQuote('C:\\Users\\my "app"', 'win32')).toBe('"C:\\Users\\my ""app"""')
+  test('quotes Windows cmd paths with spaces and percents without doubling percents', () => {
+    expect(shellQuote('C:\\Users\\50%\\my app', 'win32', {PROMPT: '$P$G'})).toBe('"C:\\Users\\50%\\my app"')
+    expect(shellQuote('C:\\Users\\my "app"', 'win32', {PROMPT: '$P$G'})).toBe('"C:\\Users\\my ""app"""')
+  })
+
+  test('quotes Windows PowerShell paths with literal percents', () => {
+    expect(shellQuote('C:\\Users\\50%\\my app', 'win32', {POWERSHELL_DISTRIBUTION_CHANNEL: 'MSI'})).toBe(
+      "'C:\\Users\\50%\\my app'",
+    )
   })
 })
 
@@ -92,14 +97,15 @@ describe('appDoctorInstructions', () => {
     })
   })
 
-  test('quotes paths that contain spaces', async () => {
+  test('quotes paths that contain spaces and percents', async () => {
     await inTemporaryDirectory(async (parent) => {
-      const appRoot = joinPath(parent, 'my app')
+      const appRoot = joinPath(parent, '50% my app')
       await mkdir(appRoot)
       await createApp(appRoot)
       const instructions = appDoctorInstructions({directory: appRoot, scanComplete: false})
 
       expect(instructions).toContain(`shopify app doctor --path ${shellQuote(normalizePath(appRoot))}`)
+      expect(instructions).not.toContain('50%%')
     })
   })
 })
