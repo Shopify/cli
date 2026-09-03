@@ -38,7 +38,11 @@ describe('listStores', () => {
 
     const result = await listStores()
 
-    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: acme})
+    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({
+      token: 'bp-token',
+      organization: acme,
+      storeType: undefined,
+    })
     expect(renderAutocompletePrompt).not.toHaveBeenCalled()
     expect(result).toEqual({
       stores: [orgEntry],
@@ -47,13 +51,40 @@ describe('listStores', () => {
     })
   })
 
+  test('passes the requested store type to the source and echoes it in the result', async () => {
+    mockOrganizations([acme])
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [orgEntry], hasMore: false})
+
+    const result = await listStores({storeType: 'dev'})
+
+    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({
+      token: 'bp-token',
+      organization: acme,
+      storeType: 'dev',
+    })
+    expect(result.storeType).toBe('dev')
+  })
+
+  test('omits the store type from the result when the listing was not filtered', async () => {
+    mockOrganizations([acme])
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [orgEntry], hasMore: false})
+
+    const result = await listStores()
+
+    expect(result).not.toHaveProperty('storeType')
+  })
+
   test('uses the requested organization id when provided', async () => {
     mockOrganizations([acme, beta])
     vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [], hasMore: false})
 
     await listStores({organizationId: 5678})
 
-    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: beta})
+    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({
+      token: 'bp-token',
+      organization: beta,
+      storeType: undefined,
+    })
     expect(renderAutocompletePrompt).not.toHaveBeenCalled()
   })
 
@@ -72,7 +103,11 @@ describe('listStores', () => {
         {label: 'Beta', value: '5678'},
       ],
     })
-    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({token: 'bp-token', organization: beta})
+    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({
+      token: 'bp-token',
+      organization: beta,
+      storeType: undefined,
+    })
     expect(result.organization).toEqual({id: '5678', name: 'Beta'})
   })
 
