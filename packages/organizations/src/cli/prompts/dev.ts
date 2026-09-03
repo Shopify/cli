@@ -10,7 +10,7 @@ const PLAN_LABELS: {[plan in DevStorePlan]: string} = {
 }
 
 export function devStoreNamePrompt(): Promise<string> {
-  return ui.renderTextPrompt({message: 'Name for the new development store'})
+  return ui.renderTextPrompt({message: 'Name for the new dev store'})
 }
 
 export function devStorePlanPrompt(): Promise<DevStorePlan> {

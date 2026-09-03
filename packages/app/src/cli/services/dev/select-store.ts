@@ -39,7 +39,7 @@ export async function selectStore(
     const withDemoData = await devStoreDemoDataPrompt()
     const domain = await createDevStore({name, plan, withDemoData, organization: org, json: false, summary: false})
     const createdStore = await waitForCreatedStoreByDomain(org, domain, developerPlatformClient)
-    renderSuccess({headline: `Development store "${createdStore.shopName}" created successfully.`})
+    renderSuccess({headline: `Dev store "${createdStore.shopName}" created successfully.`})
     return createdStore
   }
 

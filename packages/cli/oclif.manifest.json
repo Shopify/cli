@@ -7185,8 +7185,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Creates a new development store in your organization.",
-      "descriptionWithMarkdown": "Creates a new development store in your organization.",
+      "description": "Creates a new dev store in your organization.",
+      "descriptionWithMarkdown": "Creates a new dev store in your organization.",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %>",
@@ -7206,13 +7206,13 @@
         },
         "demo-data": {
           "allowNo": true,
-          "description": "Populate the new development store with demo data.",
+          "description": "Populate the new dev store with demo data.",
           "env": "SHOPIFY_FLAG_STORE_DEMO_DATA",
           "name": "demo-data",
           "type": "boolean"
         },
         "feature-preview": {
-          "description": "The handle of a feature preview to enable on the new development store.",
+          "description": "The handle of a feature preview to enable on the new dev store.",
           "env": "SHOPIFY_FLAG_STORE_FEATURE_PREVIEW",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7229,7 +7229,7 @@
           "type": "boolean"
         },
         "name": {
-          "description": "Name for the new development store. Required if non interactive.",
+          "description": "Name for the new dev store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_NAME",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7253,7 +7253,7 @@
           "type": "option"
         },
         "plan": {
-          "description": "The Shopify plan to use for the new development store. Required if non interactive.",
+          "description": "The Shopify plan to use for the new dev store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_PLAN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7284,7 +7284,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a new development store."
+      "summary": "Create a new dev store."
     },
     "store:create:preview": {
       "aliases": [
@@ -7360,8 +7360,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Deletes a development store from your organization.",
-      "descriptionWithMarkdown": "Deletes a development store from your organization.",
+      "description": "Deletes a dev store from your organization.",
+      "descriptionWithMarkdown": "Deletes a dev store from your organization.",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567",
@@ -7430,7 +7430,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Delete a development store."
+      "summary": "Delete a dev store."
     },
     "store:execute": {
       "aliases": [
