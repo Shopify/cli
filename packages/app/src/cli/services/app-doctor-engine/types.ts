@@ -219,6 +219,7 @@ interface LegacyCheckExecution {
 }
 
 export const TRACE_SCHEMA_VERSION = 2 as const
+export const FINDINGS_SCHEMA_VERSION = 1 as const
 export const SUPPORTED_TRACE_SCHEMA_VERSIONS = [TRACE_SCHEMA_VERSION] as const
 export const ENGINE_NAME = 'shopify-app-doctor' as const
 

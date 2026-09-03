@@ -3,6 +3,7 @@ import {
   buildReviewPack,
   compileTrace,
   computeResultHash,
+  FINDINGS_SCHEMA_VERSION,
   findAppRoot,
   getEngineVersion,
   loadChecks,
@@ -58,6 +59,8 @@ export type AppDoctorExecution =
     }
 
 interface FindingsDocument extends AgentFindingsDocument {
+  schema_version: typeof FINDINGS_SCHEMA_VERSION
+  source_scan_id: string
   suppressions?: Suppression[]
 }
 
@@ -111,7 +114,22 @@ export async function loadAppDoctorFindings(path: string): Promise<FindingsDocum
     )
   }
 
-  if (!parsed || typeof parsed !== 'object' || !('findings' in parsed) || !Array.isArray(parsed.findings)) {
+  if (!parsed || typeof parsed !== 'object') {
+    throw new AbortError('The App Doctor findings file must contain a JSON object.')
+  }
+  if (!('schema_version' in parsed) || parsed.schema_version !== FINDINGS_SCHEMA_VERSION) {
+    throw new AbortError(
+      `The App Doctor findings file must use schema version ${FINDINGS_SCHEMA_VERSION}.`,
+      'Generate a new review pack and use its findings schema.',
+    )
+  }
+  if (!('source_scan_id' in parsed) || typeof parsed.source_scan_id !== 'string' || !parsed.source_scan_id) {
+    throw new AbortError(
+      'The App Doctor findings file must identify its source scan.',
+      'Copy the source_scan_id from the generated review.json.',
+    )
+  }
+  if (!('findings' in parsed) || !Array.isArray(parsed.findings)) {
     throw new AbortError('The App Doctor findings file must contain a findings array.')
   }
   if ('suppressions' in parsed && parsed.suppressions !== undefined && !Array.isArray(parsed.suppressions)) {
@@ -159,15 +177,27 @@ export async function executeAppDoctor(options: {
 
   const document = options.findings
   const knownFiles = new Set(searchBoundaryFiles(result))
-  const executed = validateAgentChecksExecuted(document, {detection: result.detection, knownFiles})
-  const merged = mergeFindings(result.issues, document.findings, {
-    knownFiles,
-    executedChecks: new Set(
-      executed.executions
-        .filter((execution) => execution.status === 'executed' || execution.status === 'unresolved')
-        .map((execution) => execution.id),
-    ),
-  })
+  const provenanceRejected =
+    document.source_scan_id === result.scan.input_hash
+      ? []
+      : [
+          `Findings source scan ${document.source_scan_id} does not match the current scan ${result.scan.input_hash}.`,
+        ]
+  const executed =
+    provenanceRejected.length > 0
+      ? {executions: [] as CheckExecution[], rejected: provenanceRejected, warnings: [] as string[]}
+      : validateAgentChecksExecuted(document, {detection: result.detection, knownFiles})
+  const merged =
+    provenanceRejected.length > 0
+      ? {accepted: 0, rejected: [] as string[]}
+      : mergeFindings(result.issues, document.findings, {
+          knownFiles,
+          executedChecks: new Set(
+            executed.executions
+              .filter((execution) => execution.status === 'executed' || execution.status === 'unresolved')
+              .map((execution) => execution.id),
+          ),
+        })
   const accepted = merged.accepted
   const rejected = [...executed.rejected, ...merged.rejected]
   const warnings = executed.warnings

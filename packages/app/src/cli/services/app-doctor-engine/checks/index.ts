@@ -1,6 +1,7 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
 import {redactText} from '../rules/secret-rules.js'
 import {sha256} from '@shopify/cli-kit/node/crypto'
+import {FINDINGS_SCHEMA_VERSION} from '../types.js'
 import type {
   CheckExecution,
   CheckExecutionReason,
@@ -79,6 +80,8 @@ export const loadChecks = (): Map<string, Check> => {
 }
 
 export interface ReviewPack {
+  schema_version: typeof FINDINGS_SCHEMA_VERSION
+  source_scan_id?: string
   doctor_version: string
   generated_at: string
   checks: (Pick<Check, 'id' | 'version' | 'prompt_hash' | 'prompt' | 'severity'> & {
@@ -103,9 +106,11 @@ const INSTRUCTIONS = `Each check below is a prompt for you to run against this
 codebase. For each one, explore the repository, find real instances of what
 it describes, and report them with evidence.
 
-Write the results to a JSON file:
+Write the results to a JSON file. Preserve the \`schema_version\` and
+\`source_scan_id\` from this review pack:
 
-  { "checks_executed": [ { "check_id": "...", "check_version": N,
+  { "schema_version": 1, "source_scan_id": "sha256:<review input hash>",
+    "checks_executed": [ { "check_id": "...", "check_version": N,
       "prompt_hash": "sha256:...", "status": "executed",
       "inspected_files": ["app/routes/example.ts"] } ],
     "findings": [ { "check_id": "...", "check_version": N, ...fields... } ] }
@@ -138,6 +143,8 @@ export function searchBoundaryFiles(scanResult: ScanResult): string[] {
  * No candidates, no scan output. The agent explores independently.
  */
 export const buildReviewPack = (doctorVersion: string, scanResult?: ScanResult): ReviewPack => ({
+  schema_version: FINDINGS_SCHEMA_VERSION,
+  ...(scanResult ? {source_scan_id: scanResult.scan.input_hash} : {}),
   doctor_version: doctorVersion,
   generated_at: new Date().toISOString(),
   checks: [...loadChecks().values()].map((check) => {

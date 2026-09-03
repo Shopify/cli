@@ -48,6 +48,17 @@ async function createApp(directory: string, source = 'export const loader = () =
   return sourcePath
 }
 
+async function sourceScanId(directory: string): Promise<string> {
+  const execution = await executeAppDoctor({appRoot: resolveAppDoctorRoot(directory)})
+  return execution.scan.scan.input_hash
+}
+
+async function appFindingsPath(directory: string): Promise<string> {
+  const path = artifactPath(directory, 'findings.json')
+  await mkdir(joinPath(directory, '.shopify', 'app-doctor'))
+  return path
+}
+
 describe('App Doctor CLI integration', () => {
   test('runs the in-tree engine and writes the review pack and trace', async () => {
     await inTemporaryDirectory(async (directory) => {
@@ -57,6 +68,8 @@ describe('App Doctor CLI integration', () => {
       const review = JSON.parse(await readFile(artifactPath(directory, 'review.json')))
       const trace = JSON.parse(await readFile(artifactPath(directory, 'trace.json')))
 
+      expect(review.schema_version).toBe(1)
+      expect(review.source_scan_id).toBe(result.execution.scan.scan.input_hash)
       expect(review.checks).toHaveLength(loadChecks().size)
       expect(review.checks.every((check: {prompt: string}) => check.prompt.length > 0)).toBe(true)
       expect(trace.schema_version).toBe(2)
@@ -102,10 +115,12 @@ describe('App Doctor CLI integration', () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
-      const findingsPath = joinPath(directory, 'findings.json')
+      const findingsPath = await appFindingsPath(directory)
       await writeFile(
         findingsPath,
         `${JSON.stringify({
+          schema_version: 1,
+          source_scan_id: await sourceScanId(directory),
           checks_executed: [
             {
               check_id: check.id,
@@ -154,10 +169,12 @@ describe('App Doctor CLI integration', () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
-      const findingsPath = joinPath(directory, 'findings.json')
+      const findingsPath = await appFindingsPath(directory)
       await writeFile(
         findingsPath,
         `${JSON.stringify({
+          schema_version: 1,
+          source_scan_id: await sourceScanId(directory),
           checks_executed: [
             {
               check_id: check.id,
@@ -205,6 +222,8 @@ describe('App Doctor CLI integration', () => {
         await writeFile(
           findingsPath,
           `${JSON.stringify({
+            schema_version: 1,
+            source_scan_id: await sourceScanId(directory),
             checks_executed: [
               {
                 check_id: check.id,
@@ -250,14 +269,45 @@ describe('App Doctor CLI integration', () => {
     })
   })
 
+  test('rejects findings from a scan whose inputs have changed', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const sourcePath = await createApp(directory)
+      const initial = await executeAppDoctor({appRoot: resolveAppDoctorRoot(directory)})
+      const findingsPath = await appFindingsPath(directory)
+      await writeFile(
+        findingsPath,
+        `${JSON.stringify({
+          schema_version: 1,
+          source_scan_id: initial.scan.scan.input_hash,
+          findings: [],
+        })}\n`,
+      )
+      await writeFile(sourcePath, 'export const loader = () => ({changed: true})\n')
+
+      const result = await runDoctor({directory, findingsPath, blocking: 'none'})
+
+      expect(result.findings).toEqual({
+        accepted: 0,
+        rejected: [expect.stringContaining('does not match the current scan')],
+        warnings: [],
+      })
+      expect(result.exitCode).toBe(2)
+      expect((result.jsonReport as {findings: {source: string}[]}).findings).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({source: 'agent'})]),
+      )
+    })
+  })
+
   test('keeps a check when inspected_files includes extra relative paths', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
-      const findingsPath = joinPath(directory, 'findings.json')
+      const findingsPath = await appFindingsPath(directory)
       await writeFile(
         findingsPath,
         `${JSON.stringify({
+          schema_version: 1,
+          source_scan_id: await sourceScanId(directory),
           checks_executed: [
             {
               check_id: check.id,
@@ -338,6 +388,19 @@ describe('App Doctor CLI integration', () => {
     })
   })
 
+  test('rejects findings without a schema version and source scan', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const findingsPath = joinPath(directory, 'findings.json')
+      await writeFile(findingsPath, `${JSON.stringify({findings: []})}\n`)
+
+      await expect(runDoctor({directory, findingsPath, blocking: 'none'})).rejects.toMatchObject({
+        constructor: AbortError,
+        message: 'The App Doctor findings file must use schema version 1.',
+      })
+    })
+  })
+
   test('rejects findings files larger than 5 MB', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
@@ -355,8 +418,16 @@ describe('App Doctor CLI integration', () => {
   test('does not invent a check ID from document-level rejection messages', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      const findingsPath = joinPath(directory, 'findings.json')
-      await writeFile(findingsPath, `${JSON.stringify({checks_executed: 'nope', findings: []})}\n`)
+      const findingsPath = await appFindingsPath(directory)
+      await writeFile(
+        findingsPath,
+        `${JSON.stringify({
+          schema_version: 1,
+          source_scan_id: await sourceScanId(directory),
+          checks_executed: 'nope',
+          findings: [],
+        })}\n`,
+      )
 
       const result = await runDoctor({
         directory,

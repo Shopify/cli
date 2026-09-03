@@ -68,6 +68,8 @@ const scanExecution: AppDoctorExecution = {
   scan,
   trace,
   reviewPack: {
+    schema_version: 1,
+    source_scan_id: 'sha256:input',
     doctor_version: '1.2.3',
     generated_at: '2026-08-24T00:00:00.000Z',
     checks: [],

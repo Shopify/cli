@@ -50,6 +50,8 @@ Write the result to {{FINDINGS_PATH}} (or the path requested by the user), using
 
 ```json
 {
+  "schema_version": 1,
+  "source_scan_id": "<source_scan_id from review.json>",
   "checks_executed": [
     {
       "check_id": "<id from review pack>",
