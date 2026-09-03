@@ -3,7 +3,7 @@ import {type ListStoresResult, type StoreListEntry} from './types.js'
 import {extractSubdomain, formatShortDate} from '../display.js'
 import {storeTypeLabel} from '../store-type.js'
 import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
-import {renderTable} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTable} from '@shopify/cli-kit/node/ui'
 
 export function writeStoreListResult(result: ListStoresResult, format: 'text' | 'json'): void {
   // Human diagnostics always go to stderr so they never corrupt the JSON document on stdout, and so
@@ -41,12 +41,23 @@ function renderTextResult(result: ListStoresResult): void {
     return
   }
 
-  if (result.organization) {
-    outputInfo(`Organization: ${result.organization.name} (${result.organization.id})`)
-  }
+  const headline = result.organization
+    ? `Listing stores in ${result.organization.name} (${result.organization.id}).`
+    : 'Listing stores.'
+
+  renderInfo({
+    headline,
+    body: [
+      'To list stores authenticated directly with',
+      {command: 'shopify store auth'},
+      {char: ','},
+      'run',
+      {command: 'shopify store auth list'},
+      {char: '.'},
+    ],
+  })
 
   renderOrganizationTable(result.stores)
-  outputInfo('To list stores authenticated directly with `shopify store auth`, run `shopify store auth list`.')
 }
 
 function renderOrganizationTable(stores: StoreListEntry[]): void {

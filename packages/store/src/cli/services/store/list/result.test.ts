@@ -31,7 +31,7 @@ describe('writeStoreListResult', () => {
       'text',
     )
 
-    expect(output.info()).toContain('Organization: Acme (1234)')
+    expect(output.info()).toContain('Listing stores in Acme (1234).')
     expect(output.info()).toContain('Subdomain')
     expect(output.info()).toContain('my-shop')
     expect(output.info()).not.toContain('my-shop.myshopify.com')
@@ -39,6 +39,50 @@ describe('writeStoreListResult', () => {
     expect(output.info()).toContain('Dev')
     expect(output.info()).toContain('May 22, 2026')
     expect(output.info()).toContain('shopify store auth list')
+  })
+
+  test('renders the organization and the store auth hint in a single info banner above the table', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        stores: [
+          {
+            store: 'my-shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+            name: 'My Shop',
+            type: 'dev',
+          },
+        ],
+      },
+      'text',
+    )
+
+    // Terminal width in the test environment is quite narrow, so the table columns wrap.
+    const outputWithoutTrailingWhitespace = output
+      .info()
+      .split('\n')
+      .map((line) => line.trimEnd())
+      .join('\n')
+
+    expect(outputWithoutTrailingWhitespace).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Listing stores in Acme (1234).                                              │
+      │                                                                              │
+      │  To list stores authenticated directly with \`shopify store auth\`, run        │
+      │  \`shopify store auth list\`.                                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+
+      Subdomain  Name     Type  Created
+      ─────────  ───────  ────  ────────────
+      my-shop    My Shop  Dev   May 22, 2026"
+    `)
   })
 
   test('renders the subdomain handle for non-myshopify hosts (local dev)', () => {
