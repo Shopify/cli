@@ -37,7 +37,7 @@ export async function info(
   if (options.webEnv) {
     return infoWeb(app, remoteApp, organization, options)
   } else {
-    return infoApp(app, remoteApp, project, options)
+    return infoApp(app, remoteApp, organization, project, options)
   }
 }
 
@@ -53,6 +53,7 @@ async function infoWeb(
 async function infoApp(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
+  organization: Organization,
   project: Project,
   options: InfoOptions,
 ): Promise<OutputMessage | AlertCustomSection[]> {
@@ -63,6 +64,7 @@ async function infoApp(
       packageManager: project.packageManager,
       nodeDependencies: project.nodeDependencies,
       usesWorkspaces: project.usesWorkspaces,
+      organization: {id: organization.id, businessName: organization.businessName},
       allExtensions: extensionsInfo,
     }
     if ('realExtensions' in appWithSupportedExtensions) {
@@ -88,7 +90,7 @@ async function infoApp(
       2,
     )}`
   } else {
-    const appInfo = new AppInfo(app, remoteApp, project, options)
+    const appInfo = new AppInfo(app, remoteApp, organization, project, options)
     return appInfo.output()
   }
 }
@@ -120,12 +122,20 @@ const NOT_LOADED_TEXT = 'NOT LOADED'
 class AppInfo {
   private readonly app: AppLinkedInterface
   private readonly remoteApp: OrganizationApp
+  private readonly organization: Organization
   private readonly project: Project
   private readonly options: InfoOptions
 
-  constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, project: Project, options: InfoOptions) {
+  constructor(
+    app: AppLinkedInterface,
+    remoteApp: OrganizationApp,
+    organization: Organization,
+    project: Project,
+    options: InfoOptions,
+  ) {
     this.app = app
     this.remoteApp = remoteApp
+    this.organization = organization
     this.project = project
     this.options = options
   }
@@ -160,6 +170,7 @@ class AppInfo {
           ['Configuration file', {filePath: basename(this.app.configPath) || configurationFileNames.app}],
           ['App name', this.remoteApp.title ? {userInput: this.remoteApp.title} : NOT_CONFIGURED_TOKEN],
           ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TOKEN],
+          ['Organization', `${this.organization.businessName} (${this.organization.id})`],
           ['Access scopes', getAppScopes(this.app.configuration)],
           [
             'Dev store',

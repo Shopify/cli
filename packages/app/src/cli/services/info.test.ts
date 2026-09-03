@@ -265,6 +265,34 @@ describe('info', () => {
       expect(rawResult.usesWorkspaces).toBe(false)
     })
   })
+
+  test('returns the organization name and ID using the default output format', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const app = mockApp({directory: tmp})
+
+      // When
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
+      const configData = tabularDataSectionFromInfo(result, 'CURRENT APP CONFIGURATION\n')
+
+      // Then
+      expect(configData).toContainEqual(['Organization', 'test (123)'])
+    })
+  })
+
+  test('returns the organization name and ID using the json output format', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const app = mockApp({directory: tmp})
+
+      // When
+      const result = await info(app, remoteApp, ORG1, testProject(), {...infoOptions(), format: 'json'})
+
+      // Then
+      const resultObject = JSON.parse((result as TokenizedString).value)
+      expect(resultObject.organization).toEqual({id: '123', businessName: 'test'})
+    })
+  })
 })
 
 function mockApp({
