@@ -3,6 +3,7 @@ import {selectOrg, type Organization} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 interface FindStoreOwningOrganizationOptions {
   store: string
@@ -54,6 +55,13 @@ export async function resolveOrganizationForStore(store: string, organizationId?
       'Provide `--organization-id`, for example `--organization-id 1234567`. Run `shopify organization list` to find IDs.',
     )
   }
+
+  // The developer only gave a store domain, so explain why they're suddenly being asked to
+  // pick an organization. Echoing the domain back also makes a typo in it easy to spot.
+  renderInfo({
+    headline: `Could not determine which organization owns ${store}.`,
+    body: ['Select one below, or specify it with', {command: '--organization-id'}, {char: '.'}],
+  })
 
   return selectOrg()
 }
