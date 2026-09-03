@@ -1,6 +1,7 @@
 import {STORE_LIST_LIMIT} from './constants.js'
 import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './types.js'
 import {extractSubdomain, formatShortDate} from '../display.js'
+import {planLabel} from '../plan.js'
 import {storeTypeLabel} from '../store-type.js'
 import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderTable, type AlertCustomSection, type TokenItem} from '@shopify/cli-kit/node/ui'
@@ -81,12 +82,14 @@ function renderOrganizationTable(stores: StoreListEntry[]): void {
       subdomain: subdomainFor(entry.store),
       name: entry.name ?? '',
       type: storeTypeLabel(entry.type),
+      plan: planLabel(entry.plan),
       created: formatShortDate(entry.createdAt),
     })),
     columns: {
       subdomain: {header: 'Subdomain'},
       name: {header: 'Name'},
       type: {header: 'Type'},
+      plan: {header: 'Plan'},
       created: {header: 'Created'},
     },
   })

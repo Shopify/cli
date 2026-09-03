@@ -9,7 +9,7 @@ describe('writeStoreListResult', () => {
     mockAndCaptureOutput().clear()
   })
 
-  test('renders organization context and rows with subdomain, name, type, and created date', () => {
+  test('renders organization context and rows with subdomain, name, type, plan, and created date', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult(
@@ -25,6 +25,7 @@ describe('writeStoreListResult', () => {
             organizationName: 'Acme',
             name: 'My Shop',
             type: 'dev',
+            plan: 'plus',
           },
         ],
       },
@@ -37,6 +38,7 @@ describe('writeStoreListResult', () => {
     expect(output.info()).not.toContain('my-shop.myshopify.com')
     expect(output.info()).toContain('My Shop')
     expect(output.info()).toContain('Dev')
+    expect(output.info()).toContain('Plus')
     expect(output.info()).toContain('May 22, 2026')
     expect(output.info()).toContain('shopify store auth list')
   })
@@ -56,6 +58,7 @@ describe('writeStoreListResult', () => {
             organizationName: 'Acme',
             name: 'My Shop',
             type: 'dev',
+            plan: 'grow',
           },
         ],
       },
@@ -74,10 +77,34 @@ describe('writeStoreListResult', () => {
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
 
-      Subdomain  Name     Type  Created
-      ─────────  ───────  ────  ────────────
-      my-shop    My Shop  Dev   May 22, 2026"
+      Subdomain  Name     Type  Plan  Created
+      ─────────  ───────  ────  ────  ────────────
+      my-shop    My Shop  Dev   Grow  May 22, 2026"
     `)
+  })
+
+  test('leaves the plan column blank when the plan is unrecognized', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        stores: [
+          {
+            store: 'my-shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+            name: 'My Shop',
+            type: 'dev',
+          },
+        ],
+      },
+      'text',
+    )
+
+    expect(trimmedLines(output.info())).toContain('my-shop    My Shop  Dev         May 22, 2026')
   })
 
   test('renders the subdomain handle for non-myshopify hosts (local dev)', () => {
@@ -167,6 +194,7 @@ describe('writeStoreListResult', () => {
             organizationName: 'Acme',
             name: 'My Shop',
             type: 'dev',
+            plan: 'plus',
           },
         ],
       },
@@ -183,6 +211,7 @@ describe('writeStoreListResult', () => {
           organizationName: 'Acme',
           name: 'My Shop',
           type: 'dev',
+          plan: 'plus',
         },
       ],
       organization,

@@ -1,6 +1,7 @@
 import {STORE_LIST_LIMIT} from './constants.js'
 import {type StoreListEntry} from './types.js'
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {planHandle} from '../plan.js'
 import {storeTypeHandle} from '../store-type.js'
 import {
   ListAccessibleShops,
@@ -80,6 +81,7 @@ function toStoreListEntry(node: ShopNode, organization: Organization): StoreList
     organizationName: organization.businessName,
     name: node.name,
     type: storeTypeHandle(node.storeType),
+    plan: planHandle(node.planName),
   }
 }
 
