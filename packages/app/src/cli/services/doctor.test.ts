@@ -1,5 +1,6 @@
 import doctor, {appDoctorInstructionsPrompt} from './doctor.js'
 import {describe, expect, test, vi} from 'vitest'
+import {resolveAppDoctorCommands} from './app-doctor-commands.js'
 import type {AppDoctorArtifactPaths} from './app-doctor-artifacts.js'
 import type {AppDoctorExecution} from './app-doctor-api.js'
 import type {AppDoctorInstructionsDestination} from './doctor.js'
@@ -128,6 +129,7 @@ describe('doctor', () => {
       engine,
       verbose: true,
       elapsedMilliseconds: 12,
+      commands: resolveAppDoctorCommands(scanExecution.appRoot),
       tracePath: artifacts.tracePath,
       reviewPath: artifacts.reviewPath,
       reviewCheckCount: 31,
@@ -186,6 +188,7 @@ describe('doctor', () => {
       directory: '/tmp/unlinked-app',
       copy: true,
       scanComplete: true,
+      commands: resolveAppDoctorCommands(scanExecution.appRoot),
     })
   })
 
@@ -200,6 +203,7 @@ describe('doctor', () => {
       directory: '/tmp/unlinked-app',
       copy: false,
       scanComplete: true,
+      commands: resolveAppDoctorCommands(scanExecution.appRoot),
     })
   })
 
@@ -224,6 +228,7 @@ describe('doctor', () => {
       directory: '/tmp/unlinked-app',
       copy: false,
       scanComplete: true,
+      commands: resolveAppDoctorCommands(scanExecution.appRoot),
     })
   })
 

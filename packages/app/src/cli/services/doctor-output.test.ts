@@ -1,4 +1,5 @@
 import {buildDoctorAlert} from './doctor-output.js'
+import {formatAppDoctorCommand, resolveAppDoctorCommands} from './app-doctor-commands.js'
 import {describe, expect, test} from 'vitest'
 import type {DoctorReportInput} from './doctor-output.js'
 import type {ScanResult} from './app-doctor-engine/index.js'
@@ -75,6 +76,7 @@ function reportInput(overrides: Partial<DoctorReportInput> = {}): DoctorReportIn
     engine,
     verbose: false,
     elapsedMilliseconds: 125,
+    commands: resolveAppDoctorCommands('/tmp/app'),
     tracePath: '/tmp/app/.shopify/app-doctor/trace.json',
     reviewPath: '/tmp/app/.shopify/app-doctor/review.json',
     reviewCheckCount: 31,
@@ -117,7 +119,7 @@ describe('buildDoctorAlert', () => {
     expect(alert.options.nextSteps).toEqual([
       [
         'Investigate the review pack, then compile the trace with',
-        {command: 'shopify app doctor --findings .shopify/app-doctor/findings.json'},
+        {command: formatAppDoctorCommand(resolveAppDoctorCommands('/tmp/app').compile)},
       ],
     ])
     expect(section(reportInput(), 'Artifacts')?.body).toEqual({

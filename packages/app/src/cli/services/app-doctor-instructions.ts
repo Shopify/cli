@@ -1,4 +1,11 @@
 import {resolveAppDoctorRoot} from './app-doctor-api.js'
+import {
+  formatAppDoctorCommand,
+  quoteShellArgument,
+  resolveAppDoctorCommands,
+  shellForPlatform,
+  type AppDoctorCommands,
+} from './app-doctor-commands.js'
 import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/index.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -10,6 +17,7 @@ const SCAN_CONTEXT_PLACEHOLDER = '{{SCAN_CONTEXT}}'
 
 interface AppDoctorInstructionPaths {
   appRoot: string
+  commands: AppDoctorCommands
   scanCommand: string
   compileCommand: string
   reviewPath: string
@@ -19,11 +27,7 @@ interface AppDoctorInstructionPaths {
 }
 
 export function shellQuote(value: string, platform: NodeJS.Platform = process.platform): string {
-  if (platform === 'win32') {
-    // cmd.exe expands %NAME% inside quotes and does not treat \ as an escape.
-    return `"${value.replace(/%/g, '%%').replace(/"/g, '""')}"`
-  }
-  return `'${value.replace(/'/g, `'\\''`)}'`
+  return quoteShellArgument(value, shellForPlatform(platform))
 }
 
 function markdownPath(value: string): string {
@@ -31,17 +35,18 @@ function markdownPath(value: string): string {
   return `\`${escaped}\``
 }
 
-function instructionPaths(directory: string): AppDoctorInstructionPaths {
+function instructionPaths(directory: string, commands?: AppDoctorCommands): AppDoctorInstructionPaths {
   const appRoot = resolveAppDoctorRoot(resolvePath(directory))
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-doctor')
   const reviewPath = joinPath(artifactDirectory, 'review.json')
   const tracePath = joinPath(artifactDirectory, 'trace.json')
   const findingsPath = joinPath(artifactDirectory, 'findings.json')
-  const quotedRoot = shellQuote(appRoot)
+  const resolvedCommands = commands ?? resolveAppDoctorCommands(appRoot)
   return {
     appRoot,
-    scanCommand: `shopify app doctor --path ${quotedRoot}`,
-    compileCommand: `shopify app doctor --path ${quotedRoot} --findings ${shellQuote(findingsPath)}`,
+    commands: resolvedCommands,
+    scanCommand: formatAppDoctorCommand(resolvedCommands.scan),
+    compileCommand: formatAppDoctorCommand(resolvedCommands.compile),
     reviewPath,
     tracePath,
     findingsPath,
@@ -74,6 +79,7 @@ interface AppDoctorInstructionsOptions {
   copy: boolean
   writePath?: string
   scanComplete?: boolean
+  commands?: AppDoctorCommands
 }
 
 interface AppDoctorInstructionsDependencies {
@@ -92,8 +98,12 @@ const defaultDependencies: AppDoctorInstructionsDependencies = {
   },
 }
 
-export function appDoctorInstructions(options: {directory: string; scanComplete: boolean}): string {
-  const paths = instructionPaths(options.directory)
+export function appDoctorInstructions(options: {
+  directory: string
+  scanComplete: boolean
+  commands?: AppDoctorCommands
+}): string {
+  const paths = instructionPaths(options.directory, options.commands)
   const scanContext = options.scanComplete ? completedScanInstructions(paths) : initialScanInstructions(paths)
   return EMBEDDED_APP_DOCTOR_INSTRUCTIONS.replace(SCAN_CONTEXT_PLACEHOLDER, scanContext)
     .replaceAll('{{SCAN_COMMAND}}', paths.scanCommand)
@@ -111,6 +121,7 @@ export default async function deliverAppDoctorInstructions(
   const instructions = appDoctorInstructions({
     directory: options.directory,
     scanComplete: options.scanComplete ?? false,
+    commands: options.commands,
   })
 
   if (options.copy) {

@@ -7,6 +7,7 @@ import {
   type ScanResult,
   type Severity,
 } from './app-doctor-engine/index.js'
+import {formatAppDoctorCommand, type AppDoctorCommands} from './app-doctor-commands.js'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
@@ -21,6 +22,7 @@ export interface DoctorReportInput {
   engine: DoctorEngineMetadata
   verbose: boolean
   elapsedMilliseconds: number
+  commands: AppDoctorCommands
   tracePath: string
   reviewPath?: string
   reviewCheckCount?: number
@@ -48,7 +50,7 @@ export function buildDoctorAlert(input: DoctorReportInput): DoctorAlert {
     options: {
       headline: doctorHeadline(input),
       body: doctorBody(input),
-      ...(input.findings ? {} : {nextSteps: doctorNextSteps()}),
+      ...(input.findings ? {} : {nextSteps: doctorNextSteps(input.commands)}),
       reference: [
         {subdued: `Engine: ${input.engine.name} ${input.engine.version}`},
         {subdued: `Ruleset: ${input.engine.ruleset}`},
@@ -116,11 +118,11 @@ function doctorBody(input: DoctorReportInput): TokenItem {
   return tokens
 }
 
-function doctorNextSteps(): TokenItem<InlineToken>[] {
+function doctorNextSteps(commands: AppDoctorCommands): TokenItem<InlineToken>[] {
   return [
     [
       'Investigate the review pack, then compile the trace with',
-      {command: 'shopify app doctor --findings .shopify/app-doctor/findings.json'},
+      {command: formatAppDoctorCommand(commands.compile)},
     ],
   ]
 }
