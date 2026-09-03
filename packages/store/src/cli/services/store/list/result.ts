@@ -5,8 +5,6 @@ import {storeTypeLabel} from '../store-type.js'
 import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderTable, type AlertCustomSection, type TokenItem} from '@shopify/cli-kit/node/ui'
 
-// Both listing paths point at the separate `shopify store auth` credential store, so the hint is
-// the same whether or not the organization returned any stores.
 const STORE_AUTH_HINT: TokenItem = [
   'To list stores authenticated directly with',
   {command: 'shopify store auth'},
@@ -64,8 +62,6 @@ function textResultHeadline(result: ListStoresResult): string {
   return 'No stores found.'
 }
 
-// The organization is only known once one has been selected, so the unresolved-session path
-// renders the banner without this section.
 function organizationSections(organization: StoreListOrganization | undefined): AlertCustomSection[] {
   if (!organization) return []
 
