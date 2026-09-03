@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable jsdoc/require-throws */
 /* eslint-disable no-restricted-imports */
 
@@ -85,12 +84,8 @@ function adaptedTreeKill(
         rootPid,
         tree,
         pidsToProcess,
-        function (parentPid: string) {
-          return spawn('pgrep', ['-lfP', parentPid])
-        },
-        function () {
-          killAll(tree, killSignal, rootPid, killRoot, callback)
-        },
+        (parentPid: string) => spawn('pgrep', ['-lfP', parentPid]),
+        () => killAll(tree, killSignal, rootPid, killRoot, callback),
       )
       break
     default:
@@ -98,12 +93,8 @@ function adaptedTreeKill(
         rootPid,
         tree,
         pidsToProcess,
-        function (parentPid: string) {
-          return spawn('ps', ['-o', 'pid command', '--no-headers', '--ppid', parentPid])
-        },
-        function () {
-          killAll(tree, killSignal, rootPid, killRoot, callback)
-        },
+        (parentPid: string) => spawn('ps', ['-o', 'pid command', '--no-headers', '--ppid', parentPid]),
+        () => killAll(tree, killSignal, rootPid, killRoot, callback),
       )
       break
   }
@@ -127,22 +118,21 @@ function killAll(
 ): void {
   const killed = new Set<string>()
   try {
-    Object.keys(tree).forEach(function (pid) {
-      tree[pid]!.forEach(function (pidpid) {
-        if (!killed.has(pidpid)) {
-          killPid(pidpid, killSignal)
-          killed.add(pidpid)
+    for (const [pid, children] of Object.entries(tree)) {
+      for (const childPid of children) {
+        if (!killed.has(childPid)) {
+          killPid(childPid, killSignal)
+          killed.add(childPid)
         }
-      })
+      }
       if (pid === rootPid && killRoot && !killed.has(pid)) {
         killPid(pid, killSignal)
         killed.add(pid)
       }
-    })
+    }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err: unknown) {
-    // @ts-ignore
-    callback(err)
+    callback(err instanceof Error ? err : new Error(String(err)))
     return
   }
   callback()
@@ -158,8 +148,7 @@ function killPid(pid: string, killSignal: string) {
   try {
     process.kill(parseInt(pid, 10), killSignal)
   } catch (err) {
-    // @ts-ignore
-    if (err.code !== 'ESRCH') throw err
+    if ((err as {code?: string}).code !== 'ESRCH') throw err
   }
 }
 
@@ -181,7 +170,7 @@ function buildProcessTree(
 ) {
   const ps = spawnChildProcessesList(parentPid)
   let allData = ''
-  ps.stdout?.on('data', function (data: Buffer) {
+  ps.stdout?.on('data', (data: Buffer) => {
     const dataStr = data.toString('ascii')
     allData += dataStr
   })
@@ -198,21 +187,18 @@ function buildProcessTree(
       return
     }
 
-    allData
-      .trim()
-      .split('\n')
-      .forEach(function (line) {
-        const match = line.match(/^(\d+)\s(.*)$/)
-        if (match) {
-          const pid = match[1]!
-          const cmd = match[2]!
-          tree[parentPid]!.push(pid)
-          tree[pid] = []
-          outputDebug(`Killing process ${pid}: ${cmd}`)
-          pidsToProcess.add(pid)
-          buildProcessTree(pid, tree, pidsToProcess, spawnChildProcessesList, cb)
-        }
-      })
+    for (const line of allData.trim().split('\n')) {
+      const match = line.match(/^(\d+)\s(.*)$/)
+      if (match) {
+        const pid = match[1]!
+        const cmd = match[2]!
+        tree[parentPid]!.push(pid)
+        tree[pid] = []
+        outputDebug(`Killing process ${pid}: ${cmd}`)
+        pidsToProcess.add(pid)
+        buildProcessTree(pid, tree, pidsToProcess, spawnChildProcessesList, cb)
+      }
+    }
   }
 
   ps.on('close', onClose)
