@@ -24,32 +24,28 @@ function userErrorMessage(userErrors: {message: string}[], fallback: string): st
 export async function submitAppDoctorScan(
   options: SubmitAppDoctorScanOptions,
   dependencies: SubmitAppDoctorScanDependencies = defaultDependencies,
-): Promise<{id: string} | null> {
-  const uploadResult = await options.developerPlatformClient.generateScanUploadUrl(options.app)
-  if (!uploadResult.assetUrl || uploadResult.userErrors.length > 0) {
-    throw new AbortError(userErrorMessage(uploadResult.userErrors, 'Shopify did not return a scan upload URL.'))
+): Promise<void> {
+  const uploadResult = await options.developerPlatformClient.generateSourceScanUploadUrl(options.app)
+  if (!uploadResult.sourceScanUploadUrl || uploadResult.userErrors.length > 0) {
+    throw new AbortError(userErrorMessage(uploadResult.userErrors, 'Shopify did not return a source scan upload URL.'))
   }
 
-  await dependencies.upload(uploadResult.assetUrl, options.submissionPath, {
+  await dependencies.upload(uploadResult.sourceScanUploadUrl, options.submissionPath, {
     artifactName: 'App Doctor submission',
+    contentType: 'application/json',
   })
 
-  const createResult = await options.developerPlatformClient.createAppScan({
+  const createResult = await options.developerPlatformClient.createSourceScan({
     appId: options.app.id,
-    organizationId: options.app.organizationId,
-    scanUrl: uploadResult.assetUrl,
-    metadata: {
-      ...(options.submission.metadata.version_tag === undefined
-        ? {}
-        : {versionTag: options.submission.metadata.version_tag}),
-      ...(options.submission.metadata.source_control_url === undefined
-        ? {}
-        : {sourceControlUrl: options.submission.metadata.source_control_url}),
-    },
+    sourceScanUrl: uploadResult.sourceScanUploadUrl,
   })
   if (createResult.userErrors.length > 0) {
     throw new AbortError(userErrorMessage(createResult.userErrors, 'Shopify could not create the App Doctor scan.'))
   }
-
-  return createResult.scan
+  if (!createResult.accepted) {
+    throw new AbortError(
+      'Shopify did not accept the App Doctor submission.',
+      'Try submitting the App Doctor results again.',
+    )
+  }
 }

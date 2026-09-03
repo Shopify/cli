@@ -44,12 +44,11 @@ interface DoctorSubmitAppContext {
   developerPlatformClient: DeveloperPlatformClient
 }
 
-export interface DoctorSubmitJsonResult {
+interface DoctorSubmitJsonResult {
   operation: 'submit'
   dry_run: boolean
   app: {title: string}
   payload: {path: string; schema_version: typeof SUBMISSION_SCHEMA_VERSION}
-  scan?: {id: string}
   submitted_at?: string
 }
 
@@ -68,7 +67,7 @@ export interface DoctorSubmitDependencies {
   writeSubmission(path: string, payload: AppDoctorSubmission): Promise<void>
   canPrompt(): boolean
   confirm(input: DoctorSubmitConfirmationInput): Promise<boolean>
-  submitScan(options: SubmitAppDoctorScanOptions): Promise<{id: string} | null>
+  submitScan(options: SubmitAppDoctorScanOptions): Promise<void>
   renderDryRun(input: DoctorSubmitDryRunInput): void
   renderSuccess(input: DoctorSubmitSuccessInput): void
   output(content: string): void
@@ -98,23 +97,15 @@ interface JsonResultInput {
   submissionPath: string
   submission: AppDoctorSubmission
   dryRun: boolean
-  scan?: {id: string} | null
 }
 
-function jsonResult({
-  appTitle,
-  submissionPath,
-  submission,
-  dryRun,
-  scan = null,
-}: JsonResultInput): DoctorSubmitJsonResult {
+function jsonResult({appTitle, submissionPath, submission, dryRun}: JsonResultInput): DoctorSubmitJsonResult {
   return {
     operation: 'submit',
     dry_run: dryRun,
     app: {title: appTitle},
-    payload: {path: submissionPath, schema_version: SUBMISSION_SCHEMA_VERSION},
-    ...(scan === null ? {} : {scan}),
-    ...(dryRun ? {} : {submitted_at: submission.submitted_at}),
+    payload: {path: submissionPath, schema_version: submission.schemaVersion},
+    ...(dryRun ? {} : {submitted_at: submission.report.submitted_at}),
   }
 }
 
@@ -182,7 +173,7 @@ export default async function doctorSubmit(
     if (!confirmed) return
   }
 
-  const scan = await dependencies.submitScan({
+  await dependencies.submitScan({
     app: remoteApp,
     submission,
     submissionPath: paths.submission,
@@ -197,7 +188,6 @@ export default async function doctorSubmit(
           submissionPath: paths.submission,
           submission,
           dryRun: false,
-          scan,
         }),
         null,
         2,
@@ -206,7 +196,6 @@ export default async function doctorSubmit(
   } else {
     dependencies.renderSuccess({
       appTitle: remoteApp.title,
-      scanId: scan?.id,
       submissionPath: paths.submission,
     })
   }

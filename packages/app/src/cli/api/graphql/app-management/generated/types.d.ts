@@ -46,11 +46,6 @@ export type Scalars = {
   URL: { input: string; output: string; }
 };
 
-export type AppScanMetadataInput = {
-  sourceControlUrl?: InputMaybe<Scalars['String']['input']>;
-  versionTag?: InputMaybe<Scalars['String']['input']>;
-};
-
 /** The input fields used to create a new app version. */
 export type AppVersionInput = {
   /** The manifest from which to create the app version. */

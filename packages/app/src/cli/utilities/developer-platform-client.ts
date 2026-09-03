@@ -141,15 +141,17 @@ export type AssetUrlSchema = WithUserErrors<{
   assetUrl?: string | null
 }>
 
-export interface AppScanCreateInput {
+export type SourceScanUploadUrlSchema = WithUserErrors<{
+  sourceScanUploadUrl?: string | null
+}>
+
+export interface SourceScanCreateInput {
   appId: string
-  organizationId: string
-  scanUrl: string
-  metadata: {versionTag?: string; sourceControlUrl?: string}
+  sourceScanUrl: string
 }
 
-export type AppScanCreateSchema = WithUserErrors<{
-  scan: {id: string} | null
+export type SourceScanCreateSchema = WithUserErrors<{
+  accepted: boolean
 }>
 
 export enum Flag {}
@@ -232,8 +234,8 @@ export interface DeveloperPlatformClient {
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
-  generateScanUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
-  createAppScan: (input: AppScanCreateInput) => Promise<AppScanCreateSchema>
+  generateSourceScanUploadUrl: (app: MinimalAppIdentifiers) => Promise<SourceScanUploadUrlSchema>
+  createSourceScan: (input: SourceScanCreateInput) => Promise<SourceScanCreateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>

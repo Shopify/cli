@@ -228,6 +228,26 @@ describe('uploadToGCS', () => {
         expect.objectContaining({method: 'put'}),
         'slow-request',
       )
+      expect(vi.mocked(fetch).mock.calls[0]![1]).not.toHaveProperty('headers')
+    })
+  })
+
+  test('sends the content type when the signed URL requires it', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const submissionPath = joinPath(tmpDir, 'submission.json')
+      await writeFile(submissionPath, '{}')
+      vi.mocked(fetch).mockResolvedValue({ok: true, status: 200} as never)
+
+      await uploadToGCS('https://signed.example/upload', submissionPath, {contentType: 'application/json'})
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://signed.example/upload',
+        expect.objectContaining({
+          method: 'put',
+          headers: {'Content-Type': 'application/json'},
+        }),
+        'slow-request',
+      )
     })
   })
 

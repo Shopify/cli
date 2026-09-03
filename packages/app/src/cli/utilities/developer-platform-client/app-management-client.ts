@@ -18,8 +18,9 @@ import {
   AppVersionWithContext,
   AppDeployOptions,
   AssetUrlSchema,
-  AppScanCreateInput,
-  AppScanCreateSchema,
+  SourceScanCreateInput,
+  SourceScanCreateSchema,
+  SourceScanUploadUrlSchema,
   AppVersionIdentifiers,
   filterDisabledFlags,
   ClientName,
@@ -94,11 +95,11 @@ import {
   CreateAppVersionMutationVariables,
 } from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
-import {RequestScanUploadUrl} from '../../api/graphql/app-management/generated/request-scan-upload-url.js'
+import {RequestSourceScanUploadUrl} from '../../api/graphql/app-management/generated/request-source-scan-upload-url.js'
 import {
-  CreateAppScan,
-  CreateAppScanMutationVariables,
-} from '../../api/graphql/app-management/generated/create-app-scan.js'
+  CreateSourceScan,
+  CreateSourceScanMutationVariables,
+} from '../../api/graphql/app-management/generated/create-source-scan.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppInstallCount} from '../../api/graphql/app-management/generated/app-install-count.js'
@@ -748,24 +749,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async generateScanUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+  async generateSourceScanUploadUrl({id}: MinimalAppIdentifiers): Promise<SourceScanUploadUrlSchema> {
     const result = await this.appManagementRequest({
-      query: RequestScanUploadUrl,
-      variables: {organizationId: gidFromOrganizationIdForShopify(organizationId)},
+      query: RequestSourceScanUploadUrl,
+      variables: {appId: id},
     })
-    return {
-      assetUrl: result.appRequestScanUploadUrl.scanUploadUrl,
-      userErrors: result.appRequestScanUploadUrl.userErrors,
-    }
+    return result.appRequestSourceScanUploadUrl
   }
 
-  async createAppScan({appId, scanUrl, metadata}: AppScanCreateInput): Promise<AppScanCreateSchema> {
-    const variables: CreateAppScanMutationVariables = {appId, scanUrl, metadata}
-    const result = await this.appManagementRequest({query: CreateAppScan, variables})
-    return {
-      scan: result.appScanCreate.scan ?? null,
-      userErrors: result.appScanCreate.userErrors,
-    }
+  async createSourceScan({appId, sourceScanUrl}: SourceScanCreateInput): Promise<SourceScanCreateSchema> {
+    const variables: CreateSourceScanMutationVariables = {appId, sourceScanUrl}
+    const result = await this.appManagementRequest({query: CreateSourceScan, variables})
+    return result.appSourceScanCreate
   }
 
   async deploy({

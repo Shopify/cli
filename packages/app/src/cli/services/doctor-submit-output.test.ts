@@ -51,17 +51,8 @@ describe('renderDoctorSubmitDryRun', () => {
 })
 
 describe('renderDoctorSubmitSuccess', () => {
-  test('includes the app, scan ID, and payload path', () => {
-    renderDoctorSubmitSuccess({appTitle: 'Example app', scanId: 'gid://shopify/AppScan/1', submissionPath})
-
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Submitted App Doctor results for Example app.',
-      body: ['Scan ID: gid://shopify/AppScan/1\nPayload: ', {filePath: submissionPath}],
-    })
-  })
-
-  test('omits the scan ID when Core returns no scan receipt', () => {
-    renderDoctorSubmitSuccess({appTitle: 'Example app', scanId: undefined, submissionPath})
+  test('includes the app and payload path', () => {
+    renderDoctorSubmitSuccess({appTitle: 'Example app', submissionPath})
 
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Submitted App Doctor results for Example app.',

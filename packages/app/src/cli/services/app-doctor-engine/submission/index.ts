@@ -62,7 +62,12 @@ interface SubmissionCheck {
 }
 
 export interface AppDoctorSubmission {
-  schema_version: typeof SUBMISSION_SCHEMA_VERSION
+  // Envelope keys are camelCase because Core's Apps::Management::SourceScans::Envelope reads them verbatim.
+  schemaVersion: typeof SUBMISSION_SCHEMA_VERSION
+  report: AppDoctorSubmissionReport
+}
+
+export interface AppDoctorSubmissionReport {
   trace_schema_version: TraceV2['schema_version']
   engine: {name: string; version: string; ruleset: string}
   cli_version: string
@@ -164,53 +169,55 @@ function skippedFileCounts(trace: TraceV2): {too_large: number; unreadable: numb
 
 export function buildSubmission(trace: TraceV2, options: BuildSubmissionOptions): AppDoctorSubmission {
   return {
-    schema_version: SUBMISSION_SCHEMA_VERSION,
-    trace_schema_version: trace.schema_version,
-    engine: {
-      name: redactText(trace.engine.name),
-      version: redactText(trace.engine.version),
-      ruleset: redactText(trace.engine.ruleset),
-    },
-    cli_version: options.cliVersion,
-    generated_at: trace.generated_at,
-    submitted_at: options.submittedAt,
-    metadata: {
-      ...(options.versionTag === undefined ? {} : {version_tag: redactText(options.versionTag)}),
-      ...(options.sourceControlUrl === undefined ? {} : {source_control_url: redactText(options.sourceControlUrl)}),
-    },
-    project: {
-      dirty: trace.project.dirty,
-      input_hash: trace.project.input_hash,
-    },
-    detection: {
-      framework: trace.detection.framework,
-      surface: trace.detection.surface,
-      languages: trace.detection.languages.map((language) => ({
-        name: language.name,
-        support: language.support,
-        file_count: language.files.length,
-      })),
-    },
-    findings: trace.findings.map(submissionFinding),
-    checks_executed: trace.checks_executed.map(submissionCheck),
-    suppressions: trace.suppressions.map((suppression) => ({
-      id: suppression.id,
-      finding_fingerprint: suppression.finding_fingerprint,
-      justification: redactText(suppression.justification),
-      provenance: {
-        source: suppression.provenance.source,
-        created_at: suppression.provenance.created_at,
+    schemaVersion: SUBMISSION_SCHEMA_VERSION,
+    report: {
+      trace_schema_version: trace.schema_version,
+      engine: {
+        name: redactText(trace.engine.name),
+        version: redactText(trace.engine.version),
+        ruleset: redactText(trace.engine.ruleset),
       },
-    })),
-    coverage: {
-      files_scanned: trace.coverage.files_scanned,
-      complete: trace.coverage.complete,
-      files_skipped: skippedFileCounts(trace),
-      gaps: trace.coverage.gaps.map((gap) => ({
-        code: gap.code,
-        ...(gap.check_id === undefined ? {} : {check_id: gap.check_id}),
+      cli_version: options.cliVersion,
+      generated_at: trace.generated_at,
+      submitted_at: options.submittedAt,
+      metadata: {
+        ...(options.versionTag === undefined ? {} : {version_tag: redactText(options.versionTag)}),
+        ...(options.sourceControlUrl === undefined ? {} : {source_control_url: redactText(options.sourceControlUrl)}),
+      },
+      project: {
+        dirty: trace.project.dirty,
+        input_hash: trace.project.input_hash,
+      },
+      detection: {
+        framework: trace.detection.framework,
+        surface: trace.detection.surface,
+        languages: trace.detection.languages.map((language) => ({
+          name: language.name,
+          support: language.support,
+          file_count: language.files.length,
+        })),
+      },
+      findings: trace.findings.map(submissionFinding),
+      checks_executed: trace.checks_executed.map(submissionCheck),
+      suppressions: trace.suppressions.map((suppression) => ({
+        id: suppression.id,
+        finding_fingerprint: suppression.finding_fingerprint,
+        justification: redactText(suppression.justification),
+        provenance: {
+          source: suppression.provenance.source,
+          created_at: suppression.provenance.created_at,
+        },
       })),
+      coverage: {
+        files_scanned: trace.coverage.files_scanned,
+        complete: trace.coverage.complete,
+        files_skipped: skippedFileCounts(trace),
+        gaps: trace.coverage.gaps.map((gap) => ({
+          code: gap.code,
+          ...(gap.check_id === undefined ? {} : {check_id: gap.check_id}),
+        })),
+      },
+      attestation: {trace_digest: trace.attestation.digest},
     },
-    attestation: {trace_digest: trace.attestation.digest},
   }
 }

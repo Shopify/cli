@@ -48,7 +48,7 @@ function testDependencies(directory: string): DoctorSubmitDependencies {
     writeSubmission,
     canPrompt: vi.fn(() => false),
     confirm: vi.fn(async () => true),
-    submitScan: vi.fn(async () => ({id: 'gid://shopify/AppScan/1'})),
+    submitScan: vi.fn(async () => {}),
     renderDryRun: vi.fn(),
     renderSuccess: vi.fn(),
     output: vi.fn(),
@@ -120,7 +120,7 @@ describe('doctorSubmit', () => {
       await doctorSubmit({...options(directory), dryRun: true}, dependencies)
 
       const payloadPath = appDoctorArtifactPaths(directory).submission
-      await expect(readFile(payloadPath)).resolves.toContain('"schema_version": 1')
+      await expect(readFile(payloadPath)).resolves.toContain('"schemaVersion": 1')
       expect(dependencies.submitScan).not.toHaveBeenCalled()
       expect(dependencies.confirm).not.toHaveBeenCalled()
       expect(dependencies.renderDryRun).toHaveBeenCalledWith({submissionPath: payloadPath})
@@ -141,12 +141,10 @@ describe('doctorSubmit', () => {
       expect(dependencies.output).toHaveBeenCalledOnce()
       const actual = JSON.parse(vi.mocked(dependencies.output).mock.calls[0]![0]) as {
         payload: {path: string}
-        scan?: {id: string}
         submitted_at?: string
       }
       actual.payload.path = actual.payload.path.replace(directory, '<APP_ROOT>')
       expect(actual).toEqual(await jsonFixture('doctor-submit-dry-run-result.json'))
-      expect(actual).not.toHaveProperty('scan')
       expect(actual).not.toHaveProperty('submitted_at')
     })
   })
@@ -159,7 +157,7 @@ describe('doctorSubmit', () => {
 
       await doctorSubmit(options(directory), dependencies)
 
-      await expect(readFile(appDoctorArtifactPaths(directory).submission)).resolves.toContain('"schema_version": 1')
+      await expect(readFile(appDoctorArtifactPaths(directory).submission)).resolves.toContain('"schemaVersion": 1')
       expect(dependencies.submitScan).not.toHaveBeenCalled()
     })
   })
@@ -182,7 +180,6 @@ describe('doctorSubmit', () => {
       expect(dependencies.submitScan).toHaveBeenCalledOnce()
       expect(dependencies.renderSuccess).toHaveBeenCalledWith({
         appTitle: 'Example app',
-        scanId: 'gid://shopify/AppScan/1',
         submissionPath: appDoctorArtifactPaths(directory).submission,
       })
     })
@@ -195,7 +192,7 @@ describe('doctorSubmit', () => {
       const error = await capturedAbort(doctorSubmit({...options(directory), json: true}, dependencies))
 
       expect(error.message).toBe('Pass --force to submit without confirmation.')
-      await expect(readFile(appDoctorArtifactPaths(directory).submission)).resolves.toContain('"schema_version": 1')
+      await expect(readFile(appDoctorArtifactPaths(directory).submission)).resolves.toContain('"schemaVersion": 1')
       expect(dependencies.submitScan).not.toHaveBeenCalled()
       expectNoOutput(dependencies)
     })
@@ -251,10 +248,12 @@ describe('doctorSubmit', () => {
       expect(dependencies.submitScan).toHaveBeenCalledWith(
         expect.objectContaining({
           submission: expect.objectContaining({
-            metadata: {
-              version_tag: 'v1.2.3',
-              source_control_url: 'https://github.com/example/app/tree/v1.2.3',
-            },
+            report: expect.objectContaining({
+              metadata: {
+                version_tag: 'v1.2.3',
+                source_control_url: 'https://github.com/example/app/tree/v1.2.3',
+              },
+            }),
           }),
         }),
       )
@@ -270,22 +269,6 @@ describe('doctorSubmit', () => {
     })
   })
 
-  test('omits scan from JSON when Core returns a null scan receipt', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const dependencies = testDependencies(directory)
-      vi.mocked(dependencies.submitScan).mockResolvedValue(null)
-
-      await doctorSubmit({...options(directory), json: true, force: true}, dependencies)
-
-      expect(dependencies.output).toHaveBeenCalledOnce()
-      const actual = JSON.parse(vi.mocked(dependencies.output).mock.calls[0]![0]) as Record<string, unknown>
-      expect(actual).not.toHaveProperty('scan')
-      expect(actual).toHaveProperty('submitted_at', submittedAt)
-      expect(dependencies.renderSuccess).not.toHaveBeenCalled()
-      expect(dependencies.renderDryRun).not.toHaveBeenCalled()
-    })
-  })
-
   test('passes dirty state to the human confirmation renderer', async () => {
     await inTemporaryDirectory(async (directory) => {
       const dependencies = testDependencies(directory)
@@ -295,7 +278,9 @@ describe('doctorSubmit', () => {
 
       expect(dependencies.confirm).toHaveBeenCalledWith(
         expect.objectContaining({
-          submission: expect.objectContaining({project: expect.objectContaining({dirty: true})}),
+          submission: expect.objectContaining({
+            report: expect.objectContaining({project: expect.objectContaining({dirty: true})}),
+          }),
         }),
       )
     })

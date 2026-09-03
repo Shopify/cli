@@ -1,0 +1,9 @@
+mutation CreateSourceScan($appId: ID!, $sourceScanUrl: URL!) {
+  appSourceScanCreate(appId: $appId, sourceScanUrl: $sourceScanUrl) {
+    accepted
+    userErrors {
+      field
+      message
+    }
+  }
+}

@@ -29,8 +29,8 @@ function validTrace(): TraceV2 {
 }
 
 const submission = {
-  schema_version: SUBMISSION_SCHEMA_VERSION,
-  metadata: {},
+  schemaVersion: SUBMISSION_SCHEMA_VERSION,
+  report: {metadata: {}},
 } as AppDoctorSubmission
 
 describe('appDoctorArtifactPaths', () => {

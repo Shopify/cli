@@ -37,6 +37,7 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
 
 interface UploadToGCSOptions {
   artifactName?: string
+  contentType?: string
 }
 
 /**
@@ -52,12 +53,12 @@ interface UploadToGCSOptions {
  *
  * @param signedURL - The signed URL to upload the file to
  * @param filePath - The path to the file
- * @param options - Optional settings; `artifactName` labels the uploaded artifact in error copy (defaults to `app bundle`).
+ * @param options - Optional settings; `artifactName` labels the uploaded artifact in error copy (defaults to `app bundle`), and `contentType` sends a signed Content-Type header.
  */
 export async function uploadToGCS(
   signedURL: string,
   filePath: string,
-  {artifactName = 'app bundle'}: UploadToGCSOptions = {},
+  {artifactName = 'app bundle', contentType}: UploadToGCSOptions = {},
 ) {
   const size = await fileSize(filePath)
   if (size > MAX_BUNDLE_SIZE_BYTES) {
@@ -73,10 +74,19 @@ export async function uploadToGCS(
 
   let response: Response | undefined
   for (let attempt = 1; attempt <= UPLOAD_MAX_ATTEMPTS; attempt++) {
-    // The signed URL only signs the `host` header, so no extra headers are
-    // required; node-fetch derives Content-Length from the buffer body.
+    // Most signed URLs only bind the `host` header, but some (including App
+    // Doctor source scans) are also bound to a Content-Type and must send it.
+    // node-fetch derives Content-Length from the buffer body.
     // eslint-disable-next-line no-await-in-loop
-    response = await fetch(signedURL, {method: 'put', body: buffer}, 'slow-request')
+    response = await fetch(
+      signedURL,
+      {
+        method: 'put',
+        body: buffer,
+        ...(contentType === undefined ? {} : {headers: {'Content-Type': contentType}}),
+      },
+      'slow-request',
+    )
     if (response.ok) return
     const lastAttempt = attempt === UPLOAD_MAX_ATTEMPTS
     const retryable = RETRYABLE_UPLOAD_STATUS_CODES.has(response.status)

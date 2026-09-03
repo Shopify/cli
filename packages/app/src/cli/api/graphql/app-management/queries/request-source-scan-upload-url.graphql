@@ -1,0 +1,9 @@
+mutation RequestSourceScanUploadUrl($appId: ID!) {
+  appRequestSourceScanUploadUrl(appId: $appId) {
+    sourceScanUploadUrl
+    userErrors {
+      field
+      message
+    }
+  }
+}

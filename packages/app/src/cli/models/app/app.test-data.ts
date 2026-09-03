@@ -27,8 +27,9 @@ import {WebhooksConfig} from '../extensions/specifications/types/app_config_webh
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
   AppLogsResponse,
-  AppScanCreateInput,
-  AppScanCreateSchema,
+  SourceScanCreateInput,
+  SourceScanCreateSchema,
+  SourceScanUploadUrlSchema,
   AppVersion,
   AppVersionIdentifiers,
   AppVersionWithContext,
@@ -1244,13 +1245,13 @@ const generateSignedUploadUrlResponse: AssetUrlSchema = {
   userErrors: [],
 }
 
-const generateScanUploadUrlResponse: AssetUrlSchema = {
-  assetUrl: 'scan-upload-url',
+const generateSourceScanUploadUrlResponse: SourceScanUploadUrlSchema = {
+  sourceScanUploadUrl: 'source-scan-upload-url',
   userErrors: [],
 }
 
-const createAppScanResponse: AppScanCreateSchema = {
-  scan: {id: 'gid://shopify/AppScan/1'},
+const createSourceScanResponse: SourceScanCreateSchema = {
+  accepted: true,
   userErrors: [],
 }
 
@@ -1342,8 +1343,8 @@ export function testDeveloperPlatformClient(
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
-    generateScanUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateScanUploadUrlResponse),
-    createAppScan: (_input: AppScanCreateInput) => Promise.resolve(createAppScanResponse),
+    generateSourceScanUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSourceScanUploadUrlResponse),
+    createSourceScan: (_input: SourceScanCreateInput) => Promise.resolve(createSourceScanResponse),
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),

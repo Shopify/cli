@@ -27,15 +27,15 @@ describe('buildSubmission', () => {
     expect(validateTrace(structuredClone(submissionTraceFixture))).toEqual({valid: true, errors: []})
     const expected = await jsonFixture<AppDoctorSubmission>('submission.json')
 
-    expect(expected.findings.map(({fingerprint}) => fingerprint)).toEqual([
+    expect(expected.report.findings.map(({fingerprint}) => fingerprint)).toEqual([
       submissionTraceHashes.deterministicFingerprint,
       submissionTraceHashes.agentFingerprint,
       submissionTraceHashes.externalFingerprint,
     ])
-    expect(expected.findings[1]!.prompt_hash).toBe(submissionTraceHashes.agentPromptHash)
-    expect(expected.checks_executed[1]!.prompt_hash).toBe(submissionTraceHashes.agentPromptHash)
-    expect(expected.checks_executed[4]!.prompt_hash).toBe(submissionTraceHashes.unresolvedPromptHash)
-    expect(expected.attestation.trace_digest).toBe(submissionTraceHashes.traceDigest)
+    expect(expected.report.findings[1]!.prompt_hash).toBe(submissionTraceHashes.agentPromptHash)
+    expect(expected.report.checks_executed[1]!.prompt_hash).toBe(submissionTraceHashes.agentPromptHash)
+    expect(expected.report.checks_executed[4]!.prompt_hash).toBe(submissionTraceHashes.unresolvedPromptHash)
+    expect(expected.report.attestation.trace_digest).toBe(submissionTraceHashes.traceDigest)
     expect(buildSubmission(structuredClone(submissionTraceFixture), options)).toEqual(expected)
   })
 
@@ -65,15 +65,15 @@ describe('buildSubmission', () => {
     const serialized = JSON.stringify(submission)
 
     expect(serialized).not.toContain(secret)
-    expect(submission.findings[0]!.title).toContain('[REDACTED:20]')
-    expect(submission.suppressions[0]!.justification).toContain('[REDACTED:20]')
-    expect(submission.metadata.version_tag).toContain('[REDACTED:20]')
-    expect(submission.metadata.source_control_url).toContain('[REDACTED:20]')
+    expect(submission.report.findings[0]!.title).toContain('[REDACTED:20]')
+    expect(submission.report.suppressions[0]!.justification).toContain('[REDACTED:20]')
+    expect(submission.report.metadata.version_tag).toContain('[REDACTED:20]')
+    expect(submission.report.metadata.source_control_url).toContain('[REDACTED:20]')
   })
 
   test('keeps the public package and CVE identifiers in a known-CVE title', () => {
     const submission = buildSubmission(structuredClone(submissionTraceFixture), options)
 
-    expect(submission.findings[0]!.title).toBe('Vulnerable package lodash (CVE-2026-0001)')
+    expect(submission.report.findings[0]!.title).toBe('Vulnerable package lodash (CVE-2026-0001)')
   })
 })

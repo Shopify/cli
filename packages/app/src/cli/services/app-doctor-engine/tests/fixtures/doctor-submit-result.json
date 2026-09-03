@@ -6,6 +6,5 @@
     "path": "<APP_ROOT>/.shopify/app-doctor/submission.json",
     "schema_version": 1
   },
-  "scan": {"id": "gid://shopify/AppScan/1"},
   "submitted_at": "2026-09-01T09:30:00.000Z"
 }
