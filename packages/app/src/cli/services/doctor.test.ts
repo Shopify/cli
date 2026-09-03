@@ -61,7 +61,7 @@ const trace = {
 } as TraceV2
 
 const reviewPack = {
-  schema_version: 1,
+  schema_version: 1 as const,
   source_scan_id: 'sha256:input',
   doctor_version: '1.2.3',
   generated_at: '2026-08-24T00:00:00.000Z',
