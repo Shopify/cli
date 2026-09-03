@@ -1,5 +1,11 @@
-import {CacheOptions, GraphQLVariables, UnauthorizedHandler, graphqlRequest, graphqlRequestDoc} from './graphql.js'
-import {handleDeprecations} from './partners.js'
+import {
+  CacheOptions,
+  GraphQLVariables,
+  UnauthorizedHandler,
+  graphqlRequest,
+  graphqlRequestDoc,
+  handleDeprecations,
+} from './graphql.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'

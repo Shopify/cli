@@ -6,7 +6,13 @@ import {setNextDeprecationDate} from '../../../private/node/context/deprecations
 import {test, vi, expect, describe, beforeEach, beforeAll} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
-vi.mock('./graphql.js')
+vi.mock('./graphql.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./graphql.js')>()
+  return {
+    ...actual,
+    graphqlRequestDoc: vi.fn(),
+  }
+})
 vi.mock('../../../private/node/context/deprecations-store.js')
 vi.mock('../context/fqdn.js')
 
