@@ -1,7 +1,7 @@
 import {STORE_LIST_LIMIT} from './constants.js'
 import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './types.js'
 import {extractSubdomain, formatShortDate} from '../display.js'
-import {storeTypeLabel} from '../store-type.js'
+import {storeTypeLabel, type StoreTypeFilter} from '../store-type.js'
 import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderTable, type AlertCustomSection, type TokenItem} from '@shopify/cli-kit/node/ui'
 
@@ -26,6 +26,7 @@ export function writeStoreListResult(result: ListStoresResult, format: 'text' | 
         {
           stores: result.stores,
           ...(result.organization ? {organization: result.organization} : {}),
+          ...(result.storeType ? {storeType: result.storeType} : {}),
           ...(result.notice ? {notice: result.notice} : {}),
           ...(result.truncated ? {truncated: true} : {}),
         },
@@ -41,7 +42,13 @@ export function writeStoreListResult(result: ListStoresResult, format: 'text' | 
 
 function truncationWarning(result: ListStoresResult): string {
   const organization = result.organization ? ` in ${result.organization.name}` : ' in this organization'
-  return `Showing the ${STORE_LIST_LIMIT} most recent stores${organization}. More stores exist.`
+  return `Showing the ${STORE_LIST_LIMIT} most recent ${storeNounPhrase(result.storeType)}${organization}. More stores exist.`
+}
+
+// Names what was listed, qualified by the active `--type` filter (`client_transfer` -> `client
+// transfer stores`).
+function storeNounPhrase(storeType: StoreTypeFilter | undefined): string {
+  return storeType ? `${storeType.replaceAll('_', ' ')} stores` : 'stores'
 }
 
 function renderTextResult(result: ListStoresResult): void {
@@ -56,10 +63,11 @@ function renderTextResult(result: ListStoresResult): void {
 }
 
 function textResultHeadline(result: ListStoresResult): string {
-  if (result.stores.length > 0) return 'Listing stores.'
+  const stores = storeNounPhrase(result.storeType)
+  if (result.stores.length > 0) return `Listing ${stores}.`
   // The notice explains on stderr why the session couldn't be resolved; this states the outcome.
-  if (result.notice) return 'No stores were returned for the current CLI session.'
-  return 'No stores found.'
+  if (result.notice) return `No ${stores} were returned for the current CLI session.`
+  return `No ${stores} found.`
 }
 
 function organizationSections(organization: StoreListOrganization | undefined): AlertCustomSection[] {

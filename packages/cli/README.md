@@ -3872,7 +3872,8 @@ List stores in a Shopify organization.
 
 ```
 USAGE
-  $ shopify store list [-j] [--no-color] [--organization-id <value>] [--verbose]
+  $ shopify store list [-j] [--no-color] [--organization-id <value>] [--type
+    dev|production|client_transfer|collaborator] [--verbose]
 
 FLAGS
   -j, --json
@@ -3887,6 +3888,11 @@ FLAGS
       The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive when
       more than one organization is available.
       [env: SHOPIFY_FLAG_ORGANIZATION_ID]
+
+  --type=<option>
+      List only stores of this type.
+      [env: SHOPIFY_FLAG_STORE_TYPE]
+      <options: dev|production|client_transfer|collaborator>
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.
@@ -3906,6 +3912,8 @@ EXAMPLES
   $ shopify store list
 
   $ shopify store list --organization-id 1234567
+
+  $ shopify store list --type dev
 
   $ shopify store list --json
 ```

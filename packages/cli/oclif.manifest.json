@@ -7710,6 +7710,7 @@
       "examples": [
         "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --organization-id 1234567",
+        "<%= config.bin %> <%= command.id %> --type dev",
         "<%= config.bin %> <%= command.id %> --json"
       ],
       "flags": {
@@ -7736,6 +7737,20 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "organization-id",
+          "type": "option"
+        },
+        "type": {
+          "description": "List only stores of this type.",
+          "env": "SHOPIFY_FLAG_STORE_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "type",
+          "options": [
+            "dev",
+            "production",
+            "client_transfer",
+            "collaborator"
+          ],
           "type": "option"
         },
         "verbose": {

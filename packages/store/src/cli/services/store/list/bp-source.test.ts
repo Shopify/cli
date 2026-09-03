@@ -55,6 +55,8 @@ function latestBusinessPlatformRequestOptions() {
   return requestOptions
 }
 
+const activeStatusFilter = {field: 'STORE_STATUS', operator: 'EQUALS', value: 'active'}
+
 describe('listBusinessPlatformStores', () => {
   beforeEach(() => {
     mockAndCaptureOutput().clear()
@@ -64,11 +66,7 @@ describe('listBusinessPlatformStores', () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
-    const requestOptions = latestBusinessPlatformRequestOptions()
 
-    expect(JSON.stringify(requestOptions.query)).toContain('STORE_STATUS')
-    expect(JSON.stringify(requestOptions.query)).toContain('EQUALS')
-    expect(JSON.stringify(requestOptions.query)).toContain('active')
     expect(result).toEqual({
       entries: [
         {
@@ -84,7 +82,44 @@ describe('listBusinessPlatformStores', () => {
       hasMore: false,
     })
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({token: 'bp-token', organizationId: '1234', variables: {first: 250}}),
+      expect.objectContaining({
+        token: 'bp-token',
+        organizationId: '1234',
+        variables: {first: 250, filters: [activeStatusFilter]},
+      }),
+    )
+  })
+
+  test('narrows the query to a single store type when one is requested', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
+
+    await listBusinessPlatformStores({token: 'bp-token', organization, storeType: 'client_transfer'})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          first: 250,
+          filters: [activeStatusFilter, {field: 'STORE_TYPE', operator: 'EQUALS', value: 'client_transfer'}],
+        },
+      }),
+    )
+  })
+
+  // `dev` covers both BP dev store types, and `development_superset` is BP's alias for the pair, so
+  // the filter stays a single query rather than one request per underlying type.
+  test('filters dev stores with the development superset alias', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
+
+    await listBusinessPlatformStores({token: 'bp-token', organization, storeType: 'dev'})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(1)
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          first: 250,
+          filters: [activeStatusFilter, {field: 'STORE_TYPE', operator: 'EQUALS', value: 'development_superset'}],
+        },
+      }),
     )
   })
 
@@ -139,7 +174,7 @@ describe('listBusinessPlatformStores', () => {
     expect(result.entries.map((entry) => entry.store)).toEqual(['newer.myshopify.com', 'older.myshopify.com'])
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(1)
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({variables: {first: 250}}),
+      expect.objectContaining({variables: {first: 250, filters: [activeStatusFilter]}}),
     )
   })
 

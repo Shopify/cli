@@ -1,4 +1,5 @@
 import {writeStoreListResult} from './result.js'
+import {storeTypeFilters} from '../store-type.js'
 import {beforeEach, describe, expect, test} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -78,6 +79,52 @@ describe('writeStoreListResult', () => {
       ─────────  ───────  ────  ────────────
       my-shop    My Shop  Dev   May 22, 2026"
     `)
+  })
+
+  test('names the active store type filter in the headline', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        storeType: 'client_transfer',
+        stores: [
+          {
+            store: 'my-shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+            name: 'My Shop',
+            type: 'client_transfer',
+          },
+        ],
+      },
+      'text',
+    )
+
+    expect(output.info()).toContain('Listing client transfer stores.')
+  })
+
+  test('names the active store type filter in the empty state', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult({source: 'organization', organization, storeType: 'dev', stores: []}, 'text')
+
+    expect(output.info()).toContain('No dev stores found.')
+  })
+
+  // Every accepted filter has to read as prose, however many underscores a future handle carries.
+  test('humanizes every accepted store type filter', () => {
+    const output = mockAndCaptureOutput()
+
+    for (const storeType of storeTypeFilters) {
+      writeStoreListResult({source: 'organization', organization, storeType, stores: []}, 'text')
+    }
+
+    // Keeps the assertion below from passing vacuously if the filter list is ever emptied.
+    expect(storeTypeFilters.length).toBeGreaterThan(0)
+    expect(output.info()).not.toContain('_')
   })
 
   test('renders the subdomain handle for non-myshopify hosts (local dev)', () => {
@@ -189,6 +236,14 @@ describe('writeStoreListResult', () => {
     })
   })
 
+  test('includes the active store type filter in JSON output', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult({source: 'organization', organization, storeType: 'dev', stores: []}, 'json')
+
+    expect(JSON.parse(output.output())).toEqual({stores: [], organization, storeType: 'dev'})
+  })
+
   test('includes unresolved-session notices in JSON output', () => {
     const output = mockAndCaptureOutput()
 
@@ -232,6 +287,31 @@ describe('writeStoreListResult', () => {
     expect(jsonOutput.warn()).toContain('Showing the 250 most recent stores in Acme. More stores exist')
     // The structured truncation flag is part of the JSON document on stdout (prose stays on stderr).
     expect(jsonOutput.output()).toContain('"truncated": true')
+  })
+
+  // The cap applies to the filtered set, so the warning has to say which stores were capped.
+  test('names the active store type filter in the truncation warning', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        storeType: 'production',
+        stores: [
+          {
+            store: 'shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+          },
+        ],
+        truncated: true,
+      },
+      'text',
+    )
+
+    expect(output.warn()).toContain('Showing the 250 most recent production stores in Acme. More stores exist')
   })
 })
 
