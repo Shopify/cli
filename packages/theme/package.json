@@ -40,7 +40,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "4.8.3",
+    "@oclif/core": "4.14.0",
     "@shopify/cli-kit": "4.7.0",
     "@shopify/theme-check-node": "3.29.0",
     "@shopify/theme-language-server-node": "2.22.2",

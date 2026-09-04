@@ -52,13 +52,13 @@
     "type-check": "nx type-check"
   },
   "dependencies": {
-    "@ast-grep/napi": "0.43.0",
+    "@ast-grep/napi": "0.45.2",
     "clipboardy": "4.0.0",
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.2",
     "global-agent": "3.0.0"
   },
   "devDependencies": {
-    "@oclif/core": "4.8.3",
+    "@oclif/core": "4.14.0",
     "@oclif/plugin-commands": "4.1.60",
     "@oclif/plugin-plugins": "5.4.84",
     "@shopify/app": "4.7.0",
