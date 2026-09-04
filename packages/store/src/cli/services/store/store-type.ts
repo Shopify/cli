@@ -25,3 +25,24 @@ export function storeTypeHandle(storeType: string | null | undefined): string | 
 export function storeTypeLabel(handle: string | undefined): string {
   return handle ? capitalizeWords(handle) : ''
 }
+
+// The BP `STORE_TYPE` filter value for every public handle `store list --type` accepts. `dev` maps
+// to `development_superset`, BP's alias for "development OR app_development", so one query returns
+// both the legacy partner dev store and the kind `store create dev` makes. `production` is an alias
+// too, folding in the expansion/retail/internal/wholesale/buyer-facing variants. A handle maps to
+// exactly one value because `STORE_TYPE` doesn't support the `In` operator.
+const STORE_TYPE_FILTERS = {
+  dev: 'development_superset',
+  production: 'production',
+  client_transfer: 'client_transfer',
+  collaborator: 'collaborator',
+} as const
+
+export type StoreTypeFilter = keyof typeof STORE_TYPE_FILTERS
+
+// The accepted `--type` values, in the order they appear in help output.
+export const storeTypeFilters = Object.keys(STORE_TYPE_FILTERS) as StoreTypeFilter[]
+
+export function storeTypeFilterValue(filter: StoreTypeFilter): string {
+  return STORE_TYPE_FILTERS[filter]
+}
