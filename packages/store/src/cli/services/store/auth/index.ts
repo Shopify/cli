@@ -76,7 +76,12 @@ export async function authenticateStoreWithApp(
     ...bootstrap.waitForAuthCodeOptions,
     onListening: async () => {
       const opened = await resolvedDependencies.openURL(authorizationUrl)
-      if (!opened) resolvedDependencies.presenter.manualAuthUrl(authorizationUrl, {sensitive: false})
+      if (opened) return
+
+      // The callback server can only be reached by a browser that was given a URL, so waiting after a
+      // withheld one would idle until the timeout instead of reporting that authentication cannot proceed.
+      const surfaced = resolvedDependencies.presenter.manualAuthUrl(authorizationUrl)
+      if (!surfaced) throw new AbortError("Authentication can't continue without a browser.")
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)

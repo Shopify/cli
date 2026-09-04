@@ -92,6 +92,100 @@ describe('store auth callback server', () => {
     ).resolves.toBe('abc123')
   })
 
+  test('waitForStoreAuthCode answers 404 for a wrong nonce, a replay, and a non-GET handoff request', async () => {
+    const port = await getAvailablePort()
+    const params = callbackParams()
+    const authorizationUrl = 'https://shop.myshopify.com/admin/oauth/authorize?signup=signed.signup.jwt'
+    const handoffUrl = `http://127.0.0.1:${port}/auth/handoff?nonce=nonce-123`
+    const statuses: Record<string, number> = {}
+    const bodies: string[] = []
+
+    const onListening = async () => {
+      const wrongNonce = await globalThis.fetch(`http://127.0.0.1:${port}/auth/handoff?nonce=wrong`, {
+        redirect: 'manual',
+      })
+      statuses.wrongNonce = wrongNonce.status
+      bodies.push(await wrongNonce.text())
+
+      const missingNonce = await globalThis.fetch(`http://127.0.0.1:${port}/auth/handoff`, {redirect: 'manual'})
+      statuses.missingNonce = missingNonce.status
+      bodies.push(await missingNonce.text())
+
+      const notGet = await globalThis.fetch(handoffUrl, {method: 'POST', redirect: 'manual'})
+      statuses.notGet = notGet.status
+      bodies.push(await notGet.text())
+
+      const served = await globalThis.fetch(handoffUrl, {redirect: 'manual'})
+      statuses.served = served.status
+      await served.text()
+
+      const replay = await globalThis.fetch(handoffUrl, {redirect: 'manual'})
+      statuses.replay = replay.status
+      bodies.push(await replay.text())
+
+      const callbackResponse = await globalThis.fetch(`http://127.0.0.1:${port}/auth/callback?${params.toString()}`)
+      await callbackResponse.text()
+    }
+
+    await expect(
+      waitForStoreAuthCode({
+        store: 'shop.myshopify.com',
+        state: 'state-123',
+        port,
+        timeoutMs: 1000,
+        authorizationRedirect: {nonce: 'nonce-123', authorizationUrl},
+        onListening,
+      }),
+    ).resolves.toBe('abc123')
+
+    expect(statuses).toEqual({wrongNonce: 404, missingNonce: 404, notGet: 404, served: 302, replay: 404})
+    expect(bodies.join('')).not.toContain('signed.signup.jwt')
+  })
+
+  test('waitForStoreAuthCode does not spend the handoff on a speculative browser fetch', async () => {
+    const port = await getAvailablePort()
+    const params = callbackParams()
+    const authorizationUrl = 'https://shop.myshopify.com/admin/oauth/authorize?signup=signed.signup.jwt'
+    const handoffUrl = `http://127.0.0.1:${port}/auth/handoff?nonce=nonce-123`
+    let prefetchStatus = 0
+    let prefetchBody = ''
+    let navigationStatus = 0
+    let navigationLocation: string | null = null
+
+    const onListening = async () => {
+      const prefetch = await globalThis.fetch(handoffUrl, {
+        headers: {'Sec-Purpose': 'prefetch;prerender'},
+        redirect: 'manual',
+      })
+      prefetchStatus = prefetch.status
+      prefetchBody = await prefetch.text()
+
+      const navigation = await globalThis.fetch(handoffUrl, {redirect: 'manual'})
+      navigationStatus = navigation.status
+      navigationLocation = navigation.headers.get('Location')
+      await navigation.text()
+
+      const callbackResponse = await globalThis.fetch(`http://127.0.0.1:${port}/auth/callback?${params.toString()}`)
+      await callbackResponse.text()
+    }
+
+    await expect(
+      waitForStoreAuthCode({
+        store: 'shop.myshopify.com',
+        state: 'state-123',
+        port,
+        timeoutMs: 1000,
+        authorizationRedirect: {nonce: 'nonce-123', authorizationUrl},
+        onListening,
+      }),
+    ).resolves.toBe('abc123')
+
+    expect(prefetchStatus).toBe(404)
+    expect(prefetchBody).not.toContain('signed.signup.jwt')
+    expect(navigationStatus).toBe(302)
+    expect(navigationLocation).toBe(authorizationUrl)
+  })
+
   test('waitForStoreAuthCode rejects when callback state does not match', async () => {
     const port = await getAvailablePort()
     const params = callbackParams({state: 'wrong-state'})
