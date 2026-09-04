@@ -211,6 +211,7 @@ export function appendFileSync(path: string, data: string): void {
 
 export interface WriteOptions {
   encoding: BufferEncoding
+  flag?: 'w' | 'wx'
 }
 
 /**
