@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.5.0
+
+### Minor Changes
+
+- 86d164b: Add support for the `intercepts` UI extension target capability.
+
 ## 5.4.1
 
 ### Patch Changes
