@@ -1,6 +1,7 @@
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
+import {runWithCommandEventsForCommand} from './command-events.js'
 import {outputContent, outputResult, outputToken} from './output.js'
 import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
@@ -60,6 +61,10 @@ abstract class BaseCommand extends Command {
     const {errorHandler} = await import('./error-handler.js')
     await errorHandler(error, this.config)
     return Errors.handle(error)
+  }
+
+  protected async _run<T>(): Promise<T> {
+    return runWithCommandEventsForCommand(this.argv, () => super._run<T>())
   }
 
   protected async init(): Promise<unknown> {

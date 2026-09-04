@@ -1,6 +1,7 @@
 /* eslint-disable tsdoc/syntax */
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
-import {outputContent, outputDebug, outputToken, TokenizedString} from './output.js'
+import {commandEventOutputMode, emitCommandEvent} from './command-events.js'
+import {outputContent, outputDebug, outputToken, TokenizedString, unstyled} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
@@ -529,11 +530,30 @@ export async function renderSingleTask<T>({
   onAbort,
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
+  let currentStatus = title
+  const taskWithProgressEvents = async (updateStatus: (status: TokenizedString) => void): Promise<T> => {
+    emitCommandEvent({type: 'progress', message: unstyled(currentStatus.value)}, {alreadyRendered: true})
+    const result = await task((status) => {
+      currentStatus = status
+      emitCommandEvent({type: 'progress', message: unstyled(status.value)}, {alreadyRendered: true})
+      updateStatus(status)
+    })
+    emitCommandEvent(
+      {type: 'progress', message: unstyled(currentStatus.value), current: 1, total: 1},
+      {alreadyRendered: true},
+    )
+    return result
+  }
+
+  if (commandEventOutputMode() === 'json') {
+    return taskWithProgressEvents(() => {})
+  }
+
   let taskResult: T
   await render(
     <SingleTask
       title={title}
-      task={task}
+      task={taskWithProgressEvents}
       onComplete={(result) => {
         taskResult = result
       }}
