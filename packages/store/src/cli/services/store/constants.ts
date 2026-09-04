@@ -2,7 +2,8 @@ export {devStorePlanHandles} from '@shopify/organizations'
 export type {DevStorePlan} from '@shopify/organizations'
 
 /**
- * `store info`: a raw BP plan name (`Shop.planName`) → the public plan handle it reports.
+ * A raw BP plan name (`Shop.planName`) → the public plan handle reported by `store info` and
+ * `store list`.
  * The raw names are Shopify-internal and intentionally differ from the marketing names
  * (e.g. `professional` is Grow, `unlimited` is Advanced). The public handle is also accepted
  * as a key, because the exact form BP returns isn't pinned down by the schema. Anything not

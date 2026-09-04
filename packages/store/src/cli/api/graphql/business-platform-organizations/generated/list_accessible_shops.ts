@@ -18,6 +18,7 @@ export type ListAccessibleShopsQuery = {
           shopifyShopId?: string | null
           name: string
           storeType?: Types.Store | null
+          planName?: string | null
           primaryDomain?: string | null
           url?: string | null
           createdAt: unknown
@@ -116,6 +117,7 @@ export const ListAccessibleShops = {
                                   {kind: 'Field', name: {kind: 'Name', value: 'shopifyShopId'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'name'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'storeType'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'planName'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'primaryDomain'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'url'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'createdAt'}},

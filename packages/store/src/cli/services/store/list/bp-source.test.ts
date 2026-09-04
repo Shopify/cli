@@ -21,6 +21,7 @@ function accessibleShopNode(overrides: Partial<AccessibleShopNode> = {}): Access
     shopifyShopId: '1',
     name: 'Acme Production',
     storeType: 'PRODUCTION',
+    planName: 'shopify_plus',
     primaryDomain: 'acme.myshopify.com',
     url: null,
     createdAt: '2026-01-15T00:00:00Z',
@@ -79,6 +80,7 @@ describe('listBusinessPlatformStores', () => {
           organizationName: 'Acme',
           name: 'Acme Production',
           type: 'production',
+          plan: 'plus',
         },
       ],
       hasMore: false,
@@ -109,6 +111,16 @@ describe('listBusinessPlatformStores', () => {
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
 
     expect(result).toEqual({entries: [], hasMore: false})
+  })
+
+  test('omits the plan for an unrecognized plan name', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
+      shopPage({shops: [accessibleShopNode({planName: 'some_new_plan'})]}),
+    )
+
+    const result = await listBusinessPlatformStores({token: 'bp-token', organization})
+
+    expect(result.entries[0]?.plan).toBeUndefined()
   })
 
   test('fetches a single bounded page for the selected organization and orders newest first', async () => {

@@ -6,6 +6,7 @@ export interface StoreListEntry {
   organizationName: string
   name?: string
   type?: string
+  plan?: string
 }
 
 export interface StoreListOrganization {
