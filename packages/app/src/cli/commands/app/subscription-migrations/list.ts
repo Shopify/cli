@@ -14,11 +14,11 @@ export default class List extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Lists every app subscription eligible for migration, fetching all pages before producing output.
 
-Use --output <path> to write CSV, or combine --json --output <path> to write JSON. With --json and no output path, the JSON document is written to stdout. The command does not overwrite an existing output file unless --force is provided.
+Use \`--output <path>\` to write CSV, or combine \`--json\` \`--output <path>\` to write JSON. With \`--json\` and no output path, the JSON document is written to stdout. The command does not overwrite an existing output file unless \`--force\` is provided.
 
-Use --status to filter subscriptions by migration status. Supported values are UNSCHEDULED, SCHEDULED, and MIGRATED.
+Use \`--status\` to filter subscriptions by migration status. Supported values are \`UNSCHEDULED\`, \`SCHEDULED\`, and \`MIGRATED\`.
 
-Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use --path to select an app directory or --config to select a configuration. Pass --client-id to select a different app within the project. Use --reset to relink the app.`
+Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to select a different app within the project. Use \`--reset\` to relink the app.`
 
   static description = this.descriptionWithoutMarkdown()
 
