@@ -1,5 +1,19 @@
 # @shopify/store
 
+## 4.8.0
+
+### Minor Changes
+
+- 5bdb862: Show `store list` context in an info banner, with the organization as a label/value row
+- f8ab0a2: Show each store's plan in `shopify store list`
+
+### Patch Changes
+
+- c60d9c3: Allow store auth recovery after a preview store is claimed.
+- 97943ff: Correct development store command help text.
+  - @shopify/organizations@4.8.0
+  - @shopify/cli-kit@4.8.0
+
 ## 4.7.0
 
 ### Patch Changes

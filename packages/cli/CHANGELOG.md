@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 4.8.0
+
+### Patch Changes
+
+- 2604627: Reject invalid variable values before store execute requests are sent.
+
 ## 4.7.0
 
 ## 4.6.0
