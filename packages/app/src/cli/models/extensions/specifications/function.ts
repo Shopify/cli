@@ -17,8 +17,19 @@ interface UI {
   ui_extension_handle?: string
 }
 
+// Only offers the target-level remedy, even though removing either side would resolve the conflict:
+// extension-level `[input.variables]` is on its way out, so the fix we suggest is the one that lasts.
+const mixedInputVariablesMessage =
+  'Input variables must be defined either at the extension level or on a target, not both. ' +
+  'Remove `[input.variables]` from your extension configuration and declare `input_variables` on each target that needs them.'
+
+const InputVariablesSchema = zod.object({
+  namespace: zod.string(),
+  key: zod.string(),
+})
+
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
-const FunctionExtensionSchema = BaseSchema.extend({
+export const FunctionExtensionSchema = BaseSchema.extend({
   build: zod
     .object({
       command: zod
@@ -52,12 +63,7 @@ const FunctionExtensionSchema = BaseSchema.extend({
   api_version: zod.string(),
   input: zod
     .object({
-      variables: zod
-        .object({
-          namespace: zod.string(),
-          key: zod.string(),
-        })
-        .optional(),
+      variables: InputVariablesSchema.optional(),
     })
     .optional(),
   targeting: zod
@@ -65,10 +71,25 @@ const FunctionExtensionSchema = BaseSchema.extend({
       zod.object({
         target: zod.string(),
         input_query: zod.string().optional(),
+        input_variables: InputVariablesSchema.optional(),
         export: zod.string().optional(),
       }),
     )
     .optional(),
+}).superRefine((config, ctx) => {
+  if (!config.input?.variables) return
+
+  // Reported per offending target so the error points at the line to change, rather than at the
+  // top of the TOML.
+  config.targeting?.forEach((targeting, index) => {
+    if (!targeting.input_variables) return
+
+    ctx.addIssue({
+      code: zod.ZodIssueCode.custom,
+      path: ['targeting', index, 'input_variables'],
+      message: mixedInputVariablesMessage,
+    })
+  })
 })
 
 const functionSpec = createExtensionSpecification({
@@ -118,14 +139,21 @@ const functionSpec = createExtensionSpecification({
     const targets =
       config.targeting &&
       (await Promise.all(
-        config.targeting.map(async (config) => {
+        config.targeting.map(async (targeting) => {
           let inputQuery
 
-          if (config.input_query) {
-            inputQuery = await readInputQuery(joinPath(directory, config.input_query))
+          if (targeting.input_query) {
+            inputQuery = await readInputQuery(joinPath(directory, targeting.input_query))
           }
 
-          return {handle: config.target, export: config.export, input_query: inputQuery}
+          return {
+            handle: targeting.target,
+            export: targeting.export,
+            input_query: inputQuery,
+            input_query_variables: targeting.input_variables
+              ? {single_json_metafield: targeting.input_variables}
+              : undefined,
+          }
         }),
       ))
 
