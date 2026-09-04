@@ -6,7 +6,7 @@ import type {MigratableSubscription} from '../../models/subscription-migrations.
 const CSV_HEADER =
   'shop_id,status,manual_subscription_name,manual_subscription_price_amount,manual_subscription_price_currency_code,manual_subscription_interval,target_plan_handle,notification_kind,notification_opt_out_deadline,notification_sent_at,price_behavior,effective_date,last_failure_reason'
 
-export interface MigrationListOutputOptions {
+interface MigrationListOutputOptions {
   subscriptions: MigratableSubscription[]
   json: boolean
   output?: string
