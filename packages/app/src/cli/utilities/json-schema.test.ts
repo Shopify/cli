@@ -1,6 +1,7 @@
 import {unifiedConfigurationParserFactory} from './json-schema.js'
 import {describe, test, expect} from 'vitest'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 describe('unifiedConfigurationParserFactory', () => {
   const mockParseConfigurationObject = (config: any) => {
@@ -184,5 +185,82 @@ describe('unifiedConfigurationParserFactory', () => {
       extensions: {},
       custom: 'value',
     })
+  })
+
+  test('falls back to the zod result when the contract fails to compile (e.g. empty enum)', async () => {
+    // Given: the shape a server renders when its template registry is empty —
+    // an empty enum is invalid JSON Schema and AJV refuses to compile it.
+    const invalidContract = JSON.stringify({
+      type: 'object',
+      properties: {
+        metaobjects: {
+          type: 'array',
+          items: {type: 'string', enum: []},
+        },
+      },
+    })
+    const merged = {
+      identifier: randomUUID(),
+      parseConfigurationObject: mockParseConfigurationObject,
+    }
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, {jsonSchema: invalidContract})
+    const mockOutput = mockAndCaptureOutput()
+    const result = parser({type: 'product_subscription'})
+
+    // Then: no throw, zod result served, warning emitted once
+    expect(result).toEqual({
+      state: 'ok',
+      data: {type: 'product_subscription'},
+      errors: undefined,
+    })
+    expect(mockOutput.warn()).toContain(`The validation schema provided for "${merged.identifier}"`)
+
+    mockOutput.clear()
+    parser({type: 'product_subscription'})
+    expect(mockOutput.warn()).toBe('')
+  })
+
+  test('still reports zod errors when the contract fails to compile', async () => {
+    // Given
+    const invalidContract = JSON.stringify({
+      type: 'object',
+      properties: {anything: {type: 'string', enum: []}},
+    })
+    const merged = {
+      identifier: randomUUID(),
+      parseConfigurationObject: mockParseConfigurationObject,
+    }
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, {jsonSchema: invalidContract})
+    const result = parser({type: 'invalid'})
+
+    // Then: local validation still gates the config
+    expect(result.state).toBe('error')
+    expect(result.errors).toEqual([{path: ['type'], message: 'Invalid type'}])
+  })
+
+  test('falls back to the zod parser when the contract cannot be normalised (broken $ref)', async () => {
+    // Given
+    const brokenRefContract = JSON.stringify({
+      type: 'object',
+      properties: {thing: {$ref: '#/definitions/DoesNotExist'}},
+    })
+    const merged = {
+      identifier: randomUUID(),
+      parseConfigurationObject: mockParseConfigurationObject,
+    }
+
+    // When
+    const mockOutput = mockAndCaptureOutput()
+    const parser = await unifiedConfigurationParserFactory(merged as any, {jsonSchema: brokenRefContract})
+    const result = parser({type: 'product_subscription'})
+
+    // Then: the factory degrades to the local parser instead of throwing
+    expect(parser).toBe(merged.parseConfigurationObject)
+    expect(result.state).toBe('ok')
+    expect(mockOutput.warn()).toContain(`The validation schema provided for "${merged.identifier}"`)
   })
 })
