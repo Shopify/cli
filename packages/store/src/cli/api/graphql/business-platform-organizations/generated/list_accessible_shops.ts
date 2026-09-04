@@ -5,6 +5,8 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type ListAccessibleShopsQueryVariables = Types.Exact<{
   first: Types.Scalars['Int']['input']
+  filters?: Types.InputMaybe<Types.ShopFilterInput[] | Types.ShopFilterInput>
+  search?: Types.InputMaybe<Types.Scalars['String']['input']>
 }>
 
 export type ListAccessibleShopsQuery = {
@@ -42,6 +44,19 @@ export const ListAccessibleShops = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'first'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'Int'}}},
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'filters'}},
+          type: {
+            kind: 'ListType',
+            type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ShopFilterInput'}}},
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'search'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -71,31 +86,12 @@ export const ListAccessibleShops = {
                     {
                       kind: 'Argument',
                       name: {kind: 'Name', value: 'filters'},
-                      value: {
-                        kind: 'ListValue',
-                        values: [
-                          {
-                            kind: 'ObjectValue',
-                            fields: [
-                              {
-                                kind: 'ObjectField',
-                                name: {kind: 'Name', value: 'field'},
-                                value: {kind: 'EnumValue', value: 'STORE_STATUS'},
-                              },
-                              {
-                                kind: 'ObjectField',
-                                name: {kind: 'Name', value: 'operator'},
-                                value: {kind: 'EnumValue', value: 'EQUALS'},
-                              },
-                              {
-                                kind: 'ObjectField',
-                                name: {kind: 'Name', value: 'value'},
-                                value: {kind: 'StringValue', value: 'active', block: false},
-                              },
-                            ],
-                          },
-                        ],
-                      },
+                      value: {kind: 'Variable', name: {kind: 'Name', value: 'filters'}},
+                    },
+                    {
+                      kind: 'Argument',
+                      name: {kind: 'Name', value: 'search'},
+                      value: {kind: 'Variable', name: {kind: 'Name', value: 'search'}},
                     },
                   ],
                   selectionSet: {

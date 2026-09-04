@@ -65,11 +65,7 @@ describe('listBusinessPlatformStores', () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
-    const requestOptions = latestBusinessPlatformRequestOptions()
 
-    expect(JSON.stringify(requestOptions.query)).toContain('STORE_STATUS')
-    expect(JSON.stringify(requestOptions.query)).toContain('EQUALS')
-    expect(JSON.stringify(requestOptions.query)).toContain('active')
     expect(result).toEqual({
       entries: [
         {
@@ -86,7 +82,44 @@ describe('listBusinessPlatformStores', () => {
       hasMore: false,
     })
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({token: 'bp-token', organizationId: '1234', variables: {first: 250}}),
+      expect.objectContaining({
+        token: 'bp-token',
+        organizationId: '1234',
+        variables: {
+          first: 250,
+          filters: [{field: 'STORE_STATUS', operator: 'EQUALS', value: 'active'}],
+          search: undefined,
+        },
+      }),
+    )
+  })
+
+  test('narrows the query to one store type when the caller asks for it', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
+
+    await listBusinessPlatformStores({token: 'bp-token', organization, storeTypeFilter: 'development_superset'})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          first: 250,
+          filters: [
+            {field: 'STORE_STATUS', operator: 'EQUALS', value: 'active'},
+            {field: 'STORE_TYPE', operator: 'EQUALS', value: 'development_superset'},
+          ],
+          search: undefined,
+        },
+      }),
+    )
+  })
+
+  test('passes a search term through to the query', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
+
+    await listBusinessPlatformStores({token: 'bp-token', organization, searchTerm: 'acme'})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({variables: expect.objectContaining({search: 'acme'})}),
     )
   })
 
@@ -151,7 +184,13 @@ describe('listBusinessPlatformStores', () => {
     expect(result.entries.map((entry) => entry.store)).toEqual(['newer.myshopify.com', 'older.myshopify.com'])
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(1)
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({variables: {first: 250}}),
+      expect.objectContaining({
+        variables: {
+          first: 250,
+          filters: [{field: 'STORE_STATUS', operator: 'EQUALS', value: 'active'}],
+          search: undefined,
+        },
+      }),
     )
   })
 

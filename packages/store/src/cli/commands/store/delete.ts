@@ -1,5 +1,6 @@
 import {deleteDevStore} from '../../services/store/delete/dev.js'
-import {storeFlags} from '../../flags.js'
+import {selectDevStore, type SelectedDevStore} from '../../services/store/select.js'
+import {selectableStoreFlag, storeFlags} from '../../flags.js'
 import {resolveOrganizationForStore} from '../../utilities/store-lookup/organization.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -13,11 +14,14 @@ export default class StoreDelete extends Command {
 
   static summary = 'Delete a dev store.'
 
-  static descriptionWithMarkdown = 'Deletes a dev store from your organization.'
+  static descriptionWithMarkdown = `Deletes a dev store from your organization.
+
+When \`--store\` is omitted, the command prompts you to pick one of your organization's dev stores, so the flag is only required in non-interactive environments.`
 
   static description = this.descriptionWithoutMarkdown()
 
   static examples = [
+    '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567',
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --json',
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567 --force',
@@ -26,7 +30,7 @@ export default class StoreDelete extends Command {
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    store: storeFlags.store,
+    store: selectableStoreFlag,
     'organization-id': storeFlags['organization-id'],
     force: Flags.boolean({
       char: 'f',
@@ -48,18 +52,18 @@ export default class StoreDelete extends Command {
         ])
       }
 
-      const organization = await resolveOrganizationForStore(flags.store, flags['organization-id']?.toString())
+      const {store, organization} = await resolveStoreToDelete(flags.store, flags['organization-id']?.toString())
 
       if (!flags.force) {
         const confirmed = await renderDangerousConfirmationPrompt({
-          message: `Delete dev store ${flags.store}? This can't be undone.`,
-          confirmation: flags.store,
+          message: `Delete dev store ${store}? This can't be undone.`,
+          confirmation: store,
         })
         if (!confirmed) throw new AbortSilentError()
       }
 
       await deleteDevStore({
-        store: flags.store,
+        store,
         organization,
         json: flags.json,
       })
@@ -84,4 +88,17 @@ export default class StoreDelete extends Command {
       throw error
     }
   }
+}
+
+// A `--store` value only needs the organization that owns it looked up. Without one, the selector
+// resolves the organization first and lists its dev stores to pick from.
+async function resolveStoreToDelete(
+  store: string | undefined,
+  organizationId: string | undefined,
+): Promise<SelectedDevStore> {
+  if (store) {
+    return {store, organization: await resolveOrganizationForStore(store, organizationId)}
+  }
+
+  return selectDevStore({organizationId, message: 'Which dev store do you want to delete?'})
 }

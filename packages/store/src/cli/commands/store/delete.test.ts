@@ -1,13 +1,17 @@
 import StoreDelete from './delete.js'
 import {deleteDevStore} from '../../services/store/delete/dev.js'
+import {selectDevStore} from '../../services/store/select.js'
 import {resolveOrganizationForStore} from '../../utilities/store-lookup/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {isTTY, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 vi.mock('../../services/store/delete/dev.js')
+vi.mock('../../services/store/select.js')
 vi.mock('../../utilities/store-lookup/organization.js')
+vi.mock('@shopify/cli-kit/node/system')
 
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   const actual: Record<string, unknown> = await importOriginal()
@@ -30,7 +34,9 @@ const defaultOrg = {id: '12345', businessName: 'Test Org'}
 
 beforeEach(() => {
   vi.mocked(resolveOrganizationForStore).mockResolvedValue(defaultOrg)
+  vi.mocked(selectDevStore).mockResolvedValue({store: 'selected-store.myshopify.com', organization: defaultOrg})
   vi.mocked(isTTY).mockReturnValue(true)
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(true)
 })
 
@@ -67,6 +73,43 @@ describe('store delete command', () => {
 
     expect(resolveOrganizationForStore).toHaveBeenCalledWith('my-store.myshopify.com', undefined)
     expect(deleteDevStore).toHaveBeenCalledWith(expect.objectContaining({organization: defaultOrg}))
+  })
+
+  test('prompts for a dev store when --store is omitted', async () => {
+    await StoreDelete.run([])
+
+    expect(selectDevStore).toHaveBeenCalledWith({
+      organizationId: undefined,
+      message: 'Which dev store do you want to delete?',
+    })
+    // The selector already knows which organization owns the store it returned.
+    expect(resolveOrganizationForStore).not.toHaveBeenCalled()
+    expect(deleteDevStore).toHaveBeenCalledWith({
+      store: 'selected-store.myshopify.com',
+      organization: defaultOrg,
+      json: false,
+    })
+  })
+
+  test('passes --organization-id through to the store selector', async () => {
+    await StoreDelete.run(['--organization-id', '12345'])
+
+    expect(selectDevStore).toHaveBeenCalledWith(expect.objectContaining({organizationId: '12345'}))
+  })
+
+  test('confirms the selected store before deleting it', async () => {
+    await StoreDelete.run([])
+
+    expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith({
+      message: `Delete dev store selected-store.myshopify.com? This can't be undone.`,
+      confirmation: 'selected-store.myshopify.com',
+    })
+  })
+
+  test('does not prompt for a store when --store is provided', async () => {
+    await StoreDelete.run(['--store', 'my-store.myshopify.com'])
+
+    expect(selectDevStore).not.toHaveBeenCalled()
   })
 
   test('defines the expected flags', () => {

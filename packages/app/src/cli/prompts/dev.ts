@@ -7,13 +7,9 @@ import {
   devStoreNamePrompt as sharedDevStoreNamePrompt,
   devStorePlanPrompt as sharedDevStorePlanPrompt,
   devStoreDemoDataPrompt as sharedDevStoreDemoDataPrompt,
+  storeChoiceList,
 } from '@shopify/organizations'
-import {
-  RenderAutocompleteOptions,
-  renderAutocompletePrompt,
-  renderConfirmationPrompt,
-  renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import type {DevStorePlan} from '@shopify/organizations'
 
@@ -78,9 +74,12 @@ interface SelectStorePromptOptions {
   onCreateStore?: () => Promise<OrganizationStore | undefined>
 }
 
-interface ExtraAutoCompletePropsForStoreSelect {
-  search?: RenderAutocompleteOptions<string>['search']
-}
+/**
+ * Picks the dev store to preview the project on. The picking mechanics are shared with the `store`
+ * commands; this adds what is specific to `app dev` — the wording, and the organization store shape.
+ */
+// The value the "create a new store" choice submits. Namespaced so it can't collide with a store id.
+const CREATE_STORE_CHOICE = '__create_new_dev_store__'
 
 export async function selectStorePrompt({
   stores,
@@ -96,48 +95,22 @@ export async function selectStorePrompt({
     return stores[0]
   }
 
-  const storeToChoice = (store: OrganizationStore): RenderAutocompleteOptions<string>['choices'][number] => {
-    let label = store.shopName
-    if (showDomainOnPrompt && store.shopDomain) {
-      label = `${store.shopName} (${store.shopDomain})`
-    }
-    return {label, value: store.shopId}
-  }
-
-  let currentStores = stores
-  const storesById = new Map(stores.map((store) => [store.shopId, store]))
-  const createStoreChoice = '__create_new_dev_store__'
-  const choices = () => [
-    ...currentStores.map(storeToChoice),
-    ...(onCreateStore ? [{label: 'Create a new dev store', value: createStoreChoice}] : []),
-  ]
-
-  const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
-  if (onSearchForStoresByName) {
-    extraAutocompletePromptProps.search = async (term) => {
-      const result = await onSearchForStoresByName(term)
-      currentStores = result.stores
-      if (currentStores.length > 0) {
-        currentStores.forEach((store) => storesById.set(store.shopId, store))
-      }
-
-      return {
-        data: choices(),
-        meta: {
-          hasNextPage: result.hasMorePages,
-        },
-      }
-    }
-  }
-
-  const id = await renderAutocompletePrompt({
-    message: 'Which store would you like to use to view your project?',
-    choices: choices(),
-    hasMorePages,
-    ...extraAutocompletePromptProps,
+  const {promptProps, storeFor} = storeChoiceList({
+    stores,
+    toChoice: (store) => ({id: store.shopId, domain: store.shopDomain, name: store.shopName}),
+    showDomain: showDomainOnPrompt,
+    ...(onSearchForStoresByName ? {onSearch: onSearchForStoresByName} : {}),
+    ...(onCreateStore ? {extraChoices: [{label: 'Create a new dev store', value: CREATE_STORE_CHOICE}]} : {}),
   })
-  if (id === createStoreChoice) return onCreateStore?.()
-  return storesById.get(id)
+
+  const selectedValue = await renderAutocompletePrompt({
+    message: 'Which store would you like to use to view your project?',
+    hasMorePages,
+    ...promptProps,
+  })
+
+  if (selectedValue === CREATE_STORE_CHOICE) return onCreateStore?.()
+  return storeFor(selectedValue)
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {

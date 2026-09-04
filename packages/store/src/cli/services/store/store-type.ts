@@ -13,6 +13,11 @@ const STORE_TYPE_HANDLES: {[key in Store]: string} = {
   PRODUCTION: 'production',
 }
 
+// BP's `STORE_TYPE` filter alias for "development OR app_development", so one query returns both
+// the legacy dev store and the kind `store create dev` makes. Asking BP for dev stores keeps the
+// page size meaningful, which filtering the response client-side would not.
+export const DEV_STORE_TYPE_FILTER = 'development_superset'
+
 // Returns undefined for an unrecognized value (e.g. a newer enum member than the generated types
 // know about) so the field is omitted rather than shown as a guessed handle.
 export function storeTypeHandle(storeType: string | null | undefined): string | undefined {

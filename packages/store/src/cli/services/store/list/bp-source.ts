@@ -7,6 +7,7 @@ import {
   ListAccessibleShops,
   type ListAccessibleShopsQuery,
 } from '../../../api/graphql/business-platform-organizations/generated/list_accessible_shops.js'
+import {type ShopFilterInput} from '../../../api/graphql/business-platform-organizations/generated/types.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {extractHost} from '@shopify/cli-kit/common/url'
 import {type Organization} from '@shopify/organizations'
@@ -14,6 +15,10 @@ import {type Organization} from '@shopify/organizations'
 interface ListBusinessPlatformStoresOptions {
   token: string
   organization: Organization
+  // A BP `STORE_TYPE` filter value, to list only the stores of that type.
+  storeTypeFilter?: string
+  // Free-text term BP matches against store names and domains.
+  searchTerm?: string
 }
 
 interface BusinessPlatformStoreListResult {
@@ -25,7 +30,7 @@ interface BusinessPlatformStoreListResult {
 export async function listBusinessPlatformStores(
   options: ListBusinessPlatformStoresOptions,
 ): Promise<BusinessPlatformStoreListResult> {
-  const {entries, hasMore} = await fetchOrganizationStores(options.token, options.organization)
+  const {entries, hasMore} = await fetchOrganizationStores(options)
 
   return {
     entries: entries.sort(byCreatedAtDescending),
@@ -36,16 +41,16 @@ export async function listBusinessPlatformStores(
 // Fetches one server-sorted page of the selected organization's newest stores. The page size is the
 // maximum number of stores we can display, and hasMore reflects whether more stores exist beyond it.
 async function fetchOrganizationStores(
-  token: string,
-  organization: Organization,
+  options: ListBusinessPlatformStoresOptions,
 ): Promise<{entries: StoreListEntry[]; hasMore: boolean}> {
+  const {token, organization} = options
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
   const result = await businessPlatformOrganizationsRequestDoc({
     query: ListAccessibleShops,
     token,
     organizationId: organization.id,
-    variables: {first: STORE_LIST_LIMIT},
+    variables: {first: STORE_LIST_LIMIT, filters: shopFilters(options.storeTypeFilter), search: options.searchTerm},
     unauthorizedHandler,
   })
 
@@ -59,6 +64,17 @@ async function fetchOrganizationStores(
   }
 
   return {entries, hasMore: accessibleShops.pageInfo.hasNextPage}
+}
+
+// The active-store filter every listing shares, plus the caller's store type when it asked for one.
+function shopFilters(storeTypeFilter: string | undefined): ShopFilterInput[] {
+  const filters: ShopFilterInput[] = [{field: 'STORE_STATUS', operator: 'EQUALS', value: 'active'}]
+
+  if (storeTypeFilter) {
+    filters.push({field: 'STORE_TYPE', operator: 'EQUALS', value: storeTypeFilter})
+  }
+
+  return filters
 }
 
 type ShopNode = NonNullable<

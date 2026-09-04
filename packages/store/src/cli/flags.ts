@@ -2,6 +2,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {normalizeBulkOperationId} from '@shopify/cli-kit/node/api/bulk-operations'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 // Error message shown when a `--country` flag value is not a two-letter code.
@@ -31,19 +32,29 @@ export const countryFlag = Flags.string({
   },
 })
 
+// Shared base for the `--store` flag so the domain normalization lives in one place. Commands
+// reference either the required flag below or, when they can prompt for the store instead, the
+// optional `selectableStoreFlag`.
+const storeFlagBase = {
+  char: 's',
+  description: 'The myshopify.com domain of the store.',
+  env: 'SHOPIFY_FLAG_STORE',
+  parse: async (input: string) => normalizeStoreFqdn(input),
+} as const
+
 export const storeFlags = {
-  store: Flags.string({
-    char: 's',
-    description: 'The myshopify.com domain of the store.',
-    env: 'SHOPIFY_FLAG_STORE',
-    parse: async (input) => normalizeStoreFqdn(input),
-    required: true,
-  }),
+  store: Flags.string({...storeFlagBase, required: true}),
   'organization-id': Flags.integer({
     description: 'The numeric organization ID. Auto-selects if you belong to a single organization.',
     env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
   }),
 }
+
+/**
+ * `--store` for commands that show a store selector when it's omitted, so the flag is only
+ * required where prompting is impossible.
+ */
+export const selectableStoreFlag = requiredIfNonInteractive(Flags.string(storeFlagBase))
 
 // Shared base for the bulk operation `--id` flag so the GID normalization lives in one place.
 // Commands reference the exported flags directly (status = optional, cancel = required).
