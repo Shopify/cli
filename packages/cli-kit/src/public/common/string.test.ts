@@ -1,23 +1,94 @@
 import {
+  camelize,
+  capitalize,
+  capitalizeWords,
+  constantize,
+  escapeRegExp,
   formatDate,
   formatLocalDate,
   getRandomName,
+  hyphenate,
   joinWithAnd,
   linesToColumns,
   normalizeDelimitedString,
+  pascalize,
   pluralize,
+  slugify,
   timeAgo,
   tryParseInt,
+  underscore,
 } from './string.js'
 import {describe, expect, test} from 'vitest'
 
 describe('getRandomName', () => {
-  test('generates a non-empty string', () => {
+  test('generates a non-empty string for business family by default', () => {
     // Given/When
     const got = getRandomName()
 
     // Then
     expect(got.length).not.toBe(0)
+  })
+
+  test('generates a non-empty string for creative family', () => {
+    // Given/When
+    const got = getRandomName('creative')
+
+    // Then
+    expect(got.length).not.toBe(0)
+  })
+})
+
+describe('capitalize', () => {
+  test('capitalizes the first letter of a string', () => {
+    expect(capitalize('hello world')).toBe('Hello world')
+  })
+})
+
+describe('slugify', () => {
+  test('converts strings to slugs', () => {
+    expect(slugify('  Hello World!  ')).toBe('hello-world')
+  })
+})
+
+describe('escapeRegExp', () => {
+  test('escapes special regex characters', () => {
+    expect(escapeRegExp('hello [world] (1+1=2) *.?')).toBe('hello \\[world\\] \\(1\\+1=2\\) \\*\\.\\?')
+  })
+})
+
+describe('camelize', () => {
+  test('transforms string to camelCase', () => {
+    expect(camelize('hello-world_foo bar')).toBe('helloWorldFooBar')
+  })
+})
+
+describe('capitalizeWords', () => {
+  test('transforms string to Capital Case', () => {
+    expect(capitalizeWords('hello_world-foo')).toBe('Hello World Foo')
+  })
+})
+
+describe('hyphenate', () => {
+  test('transforms string to param-case', () => {
+    expect(hyphenate('helloWorld_foo')).toBe('hello-world-foo')
+  })
+})
+
+describe('underscore', () => {
+  test('transforms string to snake_case', () => {
+    expect(underscore('helloWorld-foo')).toBe('hello_world_foo')
+  })
+})
+
+describe('constantize', () => {
+  test('transforms string to CONSTANT_CASE', () => {
+    expect(constantize('helloWorld-foo')).toBe('HELLO_WORLD_FOO')
+  })
+})
+
+describe('pascalize', () => {
+  test('transforms string to PascalCase', () => {
+    expect(pascalize('hello_world-foo')).toBe('HelloWorldFoo')
   })
 })
 
@@ -122,6 +193,10 @@ describe('formatLocalDate', () => {
 })
 
 describe('joinWithAnd', () => {
+  test('returns empty string when given empty array', () => {
+    expect(joinWithAnd([])).toBe('')
+  })
+
   test('joins one string', () => {
     // Given
     const strings = ['one']
