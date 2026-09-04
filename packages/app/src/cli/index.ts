@@ -28,6 +28,7 @@ import Init from './commands/app/init.js'
 import ConfigValidate from './commands/app/config/validate.js'
 import Release from './commands/app/release.js'
 import SubscriptionMigrationsCancel from './commands/app/subscription-migrations/cancel.js'
+import SubscriptionMigrationsList from './commands/app/subscription-migrations/list.js'
 import SubscriptionMigrationsSchedule from './commands/app/subscription-migrations/schedule.js'
 import SubscriptionMigrationsStatus from './commands/app/subscription-migrations/status.js'
 import SubscriptionMigrationsUnschedule from './commands/app/subscription-migrations/unschedule.js'
@@ -65,6 +66,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:config:validate': ConfigValidate,
   'app:release': Release,
   'app:subscription-migrations:cancel': SubscriptionMigrationsCancel,
+  'app:subscription-migrations:list': SubscriptionMigrationsList,
   'app:subscription-migrations:schedule': SubscriptionMigrationsSchedule,
   'app:subscription-migrations:status': SubscriptionMigrationsStatus,
   'app:subscription-migrations:unschedule': SubscriptionMigrationsUnschedule,

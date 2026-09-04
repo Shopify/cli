@@ -1,6 +1,8 @@
 import {appFlags} from '../../../flags.js'
+import {MIGRATABLE_SUBSCRIPTION_STATUSES} from '../../../models/subscription-migrations.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 const sharedFlags = {
   ...globalFlags,
@@ -22,6 +24,26 @@ const statusWatchFlag = {
     description:
       'Display the current operation state while polling, then output the final state when every operation reaches a terminal status.',
     env: 'SHOPIFY_FLAG_WATCH',
+    default: false,
+  }),
+}
+
+export const listFlags = {
+  ...sharedFlags,
+  output: Flags.string({
+    description: 'Path to write the subscription export.',
+    env: 'SHOPIFY_FLAG_OUTPUT',
+    parse: async (input) => resolvePath(input),
+  }),
+  status: Flags.option({
+    description: 'Filter subscriptions by migration status.',
+    env: 'SHOPIFY_FLAG_STATUS',
+    options: [...MIGRATABLE_SUBSCRIPTION_STATUSES],
+  })(),
+  force: Flags.boolean({
+    char: 'f',
+    description: 'Overwrite an existing output file.',
+    env: 'SHOPIFY_FLAG_FORCE',
     default: false,
   }),
 }
