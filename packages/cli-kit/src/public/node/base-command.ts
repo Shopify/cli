@@ -12,6 +12,7 @@ import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Config, Errors} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
+import type {JsonOutputSchema} from './json-output-schema.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ArgOutput = OutputArgs<any>
@@ -33,6 +34,11 @@ interface EnvironmentFlags {
 
 abstract class BaseCommand extends Command {
   static baseFlags: FlagInput<{}> = {}
+  static descriptionWithMarkdown?: string
+
+  public static get jsonOutputSchema(): JsonOutputSchema | undefined {
+    return undefined
+  }
 
   public static get requiresSyncAnalytics(): boolean {
     return false
@@ -44,8 +50,10 @@ abstract class BaseCommand extends Command {
 
   // Replace markdown links to plain text like: "link label" (url)
   public static descriptionWithoutMarkdown(): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ((this as any).descriptionWithMarkdown ?? '').replace(/(\[)(.*?)(])(\()(.*?)(\))/gm, '"$2" ($5)')
+    return appendJsonOutputSchema(this.descriptionWithMarkdown ?? '', this.jsonOutputSchema).replace(
+      /(\[)(.*?)(])(\()(.*?)(\))/gm,
+      '"$2" ($5)',
+    )
   }
 
   public static analyticsNameOverride(): string | undefined {
@@ -395,6 +403,18 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
 
 function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): boolean {
   return Boolean(flags) && Object.prototype.hasOwnProperty.call(flags, flagName)
+}
+
+function appendJsonOutputSchema(description: string, outputSchema: JsonOutputSchema | undefined): string {
+  if (!outputSchema) return description
+
+  const jsonOutputDescription = `With \`--json\`, the command returns \`${outputSchema.name}\`:
+
+\`\`\`ts
+${outputSchema.typescript}
+\`\`\``
+
+  return [description, jsonOutputDescription].filter(Boolean).join('\n\n')
 }
 
 async function removeDuplicatedPlugins(config: Config): Promise<void> {
