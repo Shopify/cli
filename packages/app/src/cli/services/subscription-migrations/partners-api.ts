@@ -1,4 +1,6 @@
 import {
+  type MigratableSubscription,
+  type MigratableSubscriptionStatus,
   type MigrationOperation,
   type NotificationKind,
   type PriceBehavior,
@@ -7,6 +9,7 @@ import {
   AppSubscriptionMigrationOperationCancelMutation,
   AppSubscriptionMigrationOperationCreateMutation,
   AppSubscriptionMigrationOperationQuery,
+  MigratableAppSubscriptionsQuery,
 } from '../../api/graphql/subscription_migrations.js'
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 
@@ -48,6 +51,15 @@ interface RawMigrationOperationPayload {
   userErrors: MigrationUserError[] | null
 }
 
+interface RawMigratableSubscriptionConnection {
+  edges: ({cursor: string; node: MigratableSubscription} | null)[] | null
+  pageInfo: MigratableSubscriptionPageInfo
+}
+
+interface MigratableAppSubscriptionsResponse {
+  migratableAppSubscriptions: RawMigratableSubscriptionConnection | null
+}
+
 interface CreateMigrationOperationResponse {
   appSubscriptionMigrationOperationCreate: RawMigrationOperationPayload
 }
@@ -58,6 +70,23 @@ interface GetMigrationOperationResponse {
 
 interface CancelMigrationOperationResponse {
   appSubscriptionMigrationOperationCancel: RawMigrationOperationPayload
+}
+
+export interface MigratableSubscriptionPageInfo {
+  hasNextPage: boolean
+  endCursor: string | null
+}
+
+export interface MigratableSubscriptionPage {
+  subscriptions: MigratableSubscription[]
+  pageInfo: MigratableSubscriptionPageInfo
+}
+
+interface GetMigratableSubscriptionPageOptions {
+  clientId: string
+  first: number
+  after?: string
+  status?: MigratableSubscriptionStatus
 }
 
 interface CreateMigrationOperationOptions {
@@ -86,6 +115,25 @@ function normalizeMigrationOperationPayload(payload: RawMigrationOperationPayloa
   return {
     operation: normalizeMigrationOperation(payload.operation),
     userErrors: payload.userErrors ?? [],
+  }
+}
+
+export async function getMigratableSubscriptionPage({
+  clientId,
+  first,
+  after,
+  status,
+}: GetMigratableSubscriptionPageOptions): Promise<MigratableSubscriptionPage | null> {
+  const response = await PartnersClient.getInstance().request<MigratableAppSubscriptionsResponse>(
+    MigratableAppSubscriptionsQuery,
+    {apiKey: clientId, first, after, status},
+  )
+  const connection = response.migratableAppSubscriptions
+  if (connection === null) return null
+
+  return {
+    subscriptions: connection.edges?.flatMap((edge) => (edge === null ? [] : [edge.node])) ?? [],
+    pageInfo: connection.pageInfo,
   }
 }
 

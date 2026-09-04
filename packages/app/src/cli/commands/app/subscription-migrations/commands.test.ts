@@ -1,4 +1,5 @@
 import Cancel from './cancel.js'
+import List from './list.js'
 import Schedule from './schedule.js'
 import Status from './status.js'
 import Unschedule from './unschedule.js'
@@ -12,7 +13,7 @@ import {getMigrationOperations} from '../../../services/subscription-migrations/
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
-import {jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -360,7 +361,7 @@ describe('subscription migration operation commands', () => {
 })
 
 describe('subscription migration command metadata', () => {
-  test.each([Schedule, Unschedule, Status, Cancel])('$name is hidden from command discovery', (Command) => {
+  test.each([Schedule, Unschedule, Status, Cancel, List])('$name is hidden from command discovery', (Command) => {
     expect(Command.hidden).toBe(true)
   })
 
@@ -416,7 +417,7 @@ describe('subscription migration command metadata', () => {
     })
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])('$name uses all canonical app context flags', (Command) => {
+  test.each([Schedule, Unschedule, Status, Cancel, List])('$name uses all canonical app context flags', (Command) => {
     expect(Command.flags.path).toBe(appFlags.path)
     expect(Command.flags.config).toBe(appFlags.config)
     expect(Command.flags['client-id']).toBe(appFlags['client-id'])
@@ -425,30 +426,32 @@ describe('subscription migration command metadata', () => {
     expect(Command.flags['client-id']?.exclusive).toEqual(['config'])
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])('$name uses the canonical JSON flag', (Command) => {
+  test.each([Schedule, Unschedule, Status, Cancel, List])('$name uses the canonical JSON flag', (Command) => {
     expect(Command.flags.json).toBe(jsonFlag.json)
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])('$name has no legacy migration flags', (Command) => {
+  test.each([Schedule, Unschedule, Status, Cancel, List])('$name has no legacy migration flags', (Command) => {
     expect(Object.keys(Command.flags)).not.toEqual(
       expect.arrayContaining(['yes', 'operation', 'operation-id', 'run', 'run-id', 'idempotency-key']),
     )
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])('$name extends AppLinkedCommand', (Command) => {
+  test.each([Schedule, Unschedule, Status, Cancel, List])('$name extends AppLinkedCommand', (Command) => {
     expect(Object.getPrototypeOf(Command)).toBe(AppLinkedCommand)
     expect(Command.baseFlags).toBe(AppLinkedCommand.baseFlags)
     expect(Command.flags['auth-alias' as keyof typeof Command.flags]).toBeUndefined()
   })
 
-  test('registers the four command IDs with their exact classes', () => {
+  test('registers the five command IDs with their exact classes', () => {
     expect({
       'app:subscription-migrations:cancel': commands['app:subscription-migrations:cancel'],
+      'app:subscription-migrations:list': commands['app:subscription-migrations:list'],
       'app:subscription-migrations:schedule': commands['app:subscription-migrations:schedule'],
       'app:subscription-migrations:status': commands['app:subscription-migrations:status'],
       'app:subscription-migrations:unschedule': commands['app:subscription-migrations:unschedule'],
     }).toEqual({
       'app:subscription-migrations:cancel': Cancel,
+      'app:subscription-migrations:list': List,
       'app:subscription-migrations:schedule': Schedule,
       'app:subscription-migrations:status': Status,
       'app:subscription-migrations:unschedule': Unschedule,
@@ -460,11 +463,12 @@ describe('subscription migration command metadata', () => {
     [Unschedule, 'Reverses app subscription migrations that are still scheduled.'],
     [Status, 'Checks the status of app subscription migration operations.'],
     [Cancel, 'Cancels app subscription migration operations.'],
+    [List, 'Lists app subscriptions eligible for migration.'],
   ])('$Command.name has an exact third-person summary', (Command, summary) => {
     expect(Command.summary).toBe(summary)
   })
 
-  test.each([Schedule, Unschedule, Status, Cancel])(
+  test.each([Schedule, Unschedule, Status, Cancel, List])(
     '$name provides action-oriented command documentation',
     (Command) => {
       expect(Command.summary).toMatch(/[.!]$/)
@@ -482,6 +486,49 @@ describe('subscription migration command metadata', () => {
     },
   )
 
+  test('list defines exact status metadata without file destination flags', () => {
+    expect('output' in List.flags).toBe(false)
+    expect('force' in List.flags).toBe(false)
+    expect(List.flags.status).toMatchObject({
+      description: 'Filter subscriptions by migration status.',
+      env: 'SHOPIFY_FLAG_STATUS',
+      options: ['UNSCHEDULED', 'SCHEDULED', 'MIGRATED'],
+    })
+    expect(List.flags.json).toBe(jsonFlag.json)
+    expect(List.flags.path).toBe(appFlags.path)
+    expect(List.flags.config).toBe(appFlags.config)
+    expect(List.flags['client-id']).toBe(appFlags['client-id'])
+    expect(List.flags.reset).toBe(appFlags.reset)
+  })
+
+  test('list spreads the canonical global flags', () => {
+    expect(
+      Object.entries(globalFlags).every(([flagName, flag]) => List.flags[flagName as keyof typeof List.flags] === flag),
+    ).toBe(true)
+  })
+
+  test('list documents stdout formats, shell redirection, and filters', () => {
+    expect(List.descriptionWithMarkdown).toContain('all pages')
+    expect(List.descriptionWithMarkdown).toContain('CSV')
+    expect(List.descriptionWithMarkdown).toContain('stdout')
+    expect(List.descriptionWithMarkdown).toContain('`--json`')
+    expect(List.descriptionWithMarkdown).toContain('> subscriptions.csv')
+    expect(List.descriptionWithMarkdown).toContain('> subscriptions.json')
+    expect(List.descriptionWithMarkdown).not.toContain('`--output')
+    expect(List.descriptionWithMarkdown).not.toContain('`--force`')
+    expect(List.examples.some((example) => example.includes('> subscriptions.csv'))).toBe(true)
+    expect(List.examples.some((example) => example.includes('--json > subscriptions.json'))).toBe(true)
+    expect(List.examples.every((example) => !example.includes('--output') && !example.includes('--force'))).toBe(true)
+    expect(List.descriptionWithMarkdown).toContain('`--status`')
+    expect(List.descriptionWithMarkdown).toContain('`UNSCHEDULED`')
+    expect(List.descriptionWithMarkdown).toContain('`SCHEDULED`')
+    expect(List.descriptionWithMarkdown).toContain('`MIGRATED`')
+    expect(List.descriptionWithMarkdown).toContain('`--path`')
+    expect(List.descriptionWithMarkdown).toContain('`--config`')
+    expect(List.descriptionWithMarkdown).toContain('`--client-id`')
+    expect(List.descriptionWithMarkdown).toContain('`--reset`')
+  })
+
   test.each([Schedule, Unschedule])(
     '$name documents input flag and stdin usage without positional syntax',
     (Command) => {
@@ -495,14 +542,14 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test.each([Schedule, Unschedule, Status, Cancel])(
+  test.each([Schedule, Unschedule, Status, Cancel, List])(
     '$name uses the configured binary and command ID in every example',
     (Command) => {
       expect(Command.examples.every((example) => example.includes('<%= config.bin %> <%= command.id %>'))).toBe(true)
     },
   )
 
-  test.each([Schedule, Unschedule, Status, Cancel])(
+  test.each([Schedule, Unschedule, Status, Cancel, List])(
     '$name has no fenced-code markers in its plain description',
     (Command) => {
       expect(Command.description).not.toContain('```')
