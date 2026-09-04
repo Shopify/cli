@@ -1,4 +1,4 @@
-import {listMigratableSubscriptions, MigrationListProtocolError} from './list-migratable-subscriptions.js'
+import {iterateMigratableSubscriptionPages, MigrationListProtocolError} from './list-migratable-subscriptions.js'
 import {MIGRATABLE_SUBSCRIPTION_STATUSES} from '../../models/subscription-migrations.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
@@ -27,12 +27,20 @@ function page(
   return {subscriptions, pageInfo}
 }
 
-describe('listMigratableSubscriptions', () => {
-  test('returns one page in API order and sends the exact initial request', async () => {
+async function collectPages(pages: AsyncIterable<MigratableSubscription[]>): Promise<MigratableSubscription[][]> {
+  const collected: MigratableSubscription[][] = []
+  for await (const subscriptions of pages) collected.push(subscriptions)
+  return collected
+}
+
+describe('iterateMigratableSubscriptionPages', () => {
+  test('yields one page in API order and sends the exact initial request', async () => {
     const subscriptions = [subscription('shop-two'), subscription('shop-one')]
     const getPage = vi.fn().mockResolvedValue(page(subscriptions))
 
-    await expect(listMigratableSubscriptions({clientId: 'client-id', getPage})).resolves.toEqual(subscriptions)
+    await expect(collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', getPage}))).resolves.toEqual([
+      subscriptions,
+    ])
 
     expect(getPage).toHaveBeenCalledOnce()
     expect(getPage).toHaveBeenCalledWith({
@@ -43,27 +51,40 @@ describe('listMigratableSubscriptions', () => {
     })
   })
 
-  test('returns an empty list for an empty page', async () => {
+  test('yields a single empty page for an empty result', async () => {
     const getPage = vi.fn().mockResolvedValue(page([]))
 
-    await expect(listMigratableSubscriptions({clientId: 'client-id', getPage})).resolves.toEqual([])
+    await expect(collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', getPage}))).resolves.toEqual([
+      [],
+    ])
   })
 
-  test('fetches every page sequentially and forwards the exact opaque cursor and status', async () => {
+  test('does not request a page until the consumer asks for it', async () => {
+    const getPage = vi.fn().mockResolvedValue(page([]))
+
+    const pages = iterateMigratableSubscriptionPages({clientId: 'client-id', getPage})
+    expect(getPage).not.toHaveBeenCalled()
+
+    await pages.next()
+    expect(getPage).toHaveBeenCalledOnce()
+  })
+
+  test('yields every page in order and forwards the exact opaque cursor and status on each request', async () => {
     const firstSubscription = subscription('shop-one')
     const secondSubscription = subscription('shop-two')
+    const thirdSubscription = subscription('shop-three')
     const opaqueCursor = ' opaque cursor '
     const getPage = vi
       .fn()
       .mockResolvedValueOnce(page([firstSubscription], {hasNextPage: true, endCursor: opaqueCursor}))
-      .mockResolvedValueOnce(page([secondSubscription]))
+      .mockResolvedValueOnce(page([secondSubscription], {hasNextPage: true, endCursor: 'second-cursor'}))
+      .mockResolvedValueOnce(page([thirdSubscription]))
 
-    await expect(listMigratableSubscriptions({clientId: 'client-id', status: 'SCHEDULED', getPage})).resolves.toEqual([
-      firstSubscription,
-      secondSubscription,
-    ])
+    await expect(
+      collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', status: 'SCHEDULED', getPage})),
+    ).resolves.toEqual([[firstSubscription], [secondSubscription], [thirdSubscription]])
 
-    expect(getPage).toHaveBeenCalledTimes(2)
+    expect(getPage).toHaveBeenCalledTimes(3)
     expect(getPage).toHaveBeenNthCalledWith(1, {
       clientId: 'client-id',
       first: 250,
@@ -76,24 +97,60 @@ describe('listMigratableSubscriptions', () => {
       after: opaqueCursor,
       status: 'SCHEDULED',
     })
+    expect(getPage).toHaveBeenNthCalledWith(3, {
+      clientId: 'client-id',
+      first: 250,
+      after: 'second-cursor',
+      status: 'SCHEDULED',
+    })
   })
 
-  test.each(MIGRATABLE_SUBSCRIPTION_STATUSES)('forwards the %s status', async (status) => {
-    const getPage = vi.fn().mockResolvedValue(page([]))
+  test('yields page one before requesting page two', async () => {
+    const firstSubscription = subscription('shop-one')
+    const secondSubscription = subscription('shop-two')
+    const getPage = vi
+      .fn()
+      .mockResolvedValueOnce(page([firstSubscription], {hasNextPage: true, endCursor: 'cursor'}))
+      .mockResolvedValueOnce(page([secondSubscription]))
 
-    await listMigratableSubscriptions({clientId: 'client-id', status, getPage})
+    const pages = iterateMigratableSubscriptionPages({clientId: 'client-id', getPage})
 
-    expect(getPage).toHaveBeenCalledWith({
+    await expect(pages.next()).resolves.toEqual({done: false, value: [firstSubscription]})
+    expect(getPage).toHaveBeenCalledOnce()
+
+    await expect(pages.next()).resolves.toEqual({done: false, value: [secondSubscription]})
+    expect(getPage).toHaveBeenCalledTimes(2)
+
+    await expect(pages.next()).resolves.toEqual({done: true, value: undefined})
+    expect(getPage).toHaveBeenCalledTimes(2)
+  })
+
+  test.each(MIGRATABLE_SUBSCRIPTION_STATUSES)('forwards the %s status on every page', async (status) => {
+    const getPage = vi
+      .fn()
+      .mockResolvedValueOnce(page([], {hasNextPage: true, endCursor: 'cursor'}))
+      .mockResolvedValueOnce(page([]))
+
+    await collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', status, getPage}))
+
+    expect(getPage).toHaveBeenCalledTimes(2)
+    expect(getPage).toHaveBeenNthCalledWith(1, {
       clientId: 'client-id',
       first: 250,
       after: undefined,
+      status,
+    })
+    expect(getPage).toHaveBeenNthCalledWith(2, {
+      clientId: 'client-id',
+      first: 250,
+      after: 'cursor',
       status,
     })
   })
 
   test('throws an exact AbortError when the app connection is null', async () => {
     const getPage = vi.fn().mockResolvedValue(null)
-    const promise = listMigratableSubscriptions({clientId: 'client-id', getPage})
+    const promise = collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', getPage}))
 
     await expect(promise).rejects.toBeInstanceOf(AbortError)
     await expect(promise).rejects.toThrow('App not found')
@@ -101,7 +158,7 @@ describe('listMigratableSubscriptions', () => {
 
   test.each([null, '', '   \t'])('rejects a next page with an invalid cursor: %j', async (endCursor) => {
     const getPage = vi.fn().mockResolvedValue(page([], {hasNextPage: true, endCursor}))
-    const promise = listMigratableSubscriptions({clientId: 'client-id', getPage})
+    const promise = collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', getPage}))
 
     await expect(promise).rejects.toBeInstanceOf(MigrationListProtocolError)
     expect(getPage).toHaveBeenCalledOnce()
@@ -112,20 +169,24 @@ describe('listMigratableSubscriptions', () => {
       .fn()
       .mockResolvedValueOnce(page([], {hasNextPage: true, endCursor: 'cursor'}))
       .mockResolvedValueOnce(page([], {hasNextPage: true, endCursor: 'cursor'}))
-    const promise = listMigratableSubscriptions({clientId: 'client-id', getPage})
+    const promise = collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', getPage}))
 
     await expect(promise).rejects.toBeInstanceOf(MigrationListProtocolError)
     expect(getPage).toHaveBeenCalledTimes(2)
   })
 
-  test('rejects a later-page API failure without returning partial data', async () => {
+  test('yields earlier pages and then propagates a later-page API failure', async () => {
     const apiError = new Error('Partners API unavailable')
+    const firstSubscription = subscription('shop-one')
     const getPage = vi
       .fn()
-      .mockResolvedValueOnce(page([subscription('shop-one')], {hasNextPage: true, endCursor: 'next'}))
+      .mockResolvedValueOnce(page([firstSubscription], {hasNextPage: true, endCursor: 'next'}))
       .mockRejectedValueOnce(apiError)
 
-    await expect(listMigratableSubscriptions({clientId: 'client-id', getPage})).rejects.toBe(apiError)
+    const pages = iterateMigratableSubscriptionPages({clientId: 'client-id', getPage})
+
+    await expect(pages.next()).resolves.toEqual({done: false, value: [firstSubscription]})
+    await expect(pages.next()).rejects.toBe(apiError)
     expect(getPage).toHaveBeenCalledTimes(2)
   })
 })

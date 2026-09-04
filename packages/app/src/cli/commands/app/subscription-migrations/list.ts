@@ -1,6 +1,6 @@
 import {listFlags} from './flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {listMigratableSubscriptions} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
+import {iterateMigratableSubscriptionPages} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
 import {outputMigrationList} from '../../../services/subscription-migrations/list-output.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 
@@ -8,9 +8,9 @@ export default class List extends AppLinkedCommand {
   static hidden = true
   static summary = 'Lists app subscriptions eligible for migration.'
 
-  static descriptionWithMarkdown = `Lists every app subscription eligible for migration, fetching all pages before producing output.
+  static descriptionWithMarkdown = `Lists every app subscription eligible for migration.
 
-By default, the command writes CSV to stdout. Use \`--json\` to write the versioned JSON envelope to stdout. Use shell redirection to save either format, for example \`shopify app subscription-migrations list > subscriptions.csv\` or \`shopify app subscription-migrations list --json > subscriptions.json\`.
+By default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the rows already written remain valid CSV. Use \`--json\` to fetch all pages first and then write a single versioned JSON envelope to stdout. Use shell redirection to save either format, for example \`shopify app subscription-migrations list > subscriptions.csv\` or \`shopify app subscription-migrations list --json > subscriptions.json\`.
 
 Use \`--status\` to filter subscriptions by migration status. Supported values are \`UNSCHEDULED\`, \`SCHEDULED\`, and \`MIGRATED\`.
 
@@ -36,11 +36,11 @@ Run the command from an app project. By default, it uses the Client ID from the 
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    const subscriptions = await listMigratableSubscriptions({
+    const pages = iterateMigratableSubscriptionPages({
       clientId: remoteApp.apiKey,
       status: flags.status,
     })
-    outputMigrationList({subscriptions, json: flags.json})
+    await outputMigrationList({pages, json: flags.json})
     return {app}
   }
 }
