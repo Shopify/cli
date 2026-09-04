@@ -3518,14 +3518,14 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Lists every app subscription eligible for migration, fetching all pages before producing output.\n\nUse `--output <path>` to write CSV, or combine `--json` `--output <path>` to write JSON. With `--json` and no output path, the JSON document is written to stdout. The command does not overwrite an existing output file unless `--force` is provided.\n\nUse `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and `MIGRATED`.\n\nRun the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app within the project. Use `--reset` to relink the app.",
-      "descriptionWithMarkdown": "Lists every app subscription eligible for migration, fetching all pages before producing output.\n\nUse `--output <path>` to write CSV, or combine `--json` `--output <path>` to write JSON. With `--json` and no output path, the JSON document is written to stdout. The command does not overwrite an existing output file unless `--force` is provided.\n\nUse `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and `MIGRATED`.\n\nRun the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app within the project. Use `--reset` to relink the app.",
+      "description": "Lists every app subscription eligible for migration, fetching all pages before producing output.\n\nBy default, the command writes CSV to stdout. Use `--json` to write the versioned JSON envelope to stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list > subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.\n\nUse `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and `MIGRATED`.\n\nRun the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app within the project. Use `--reset` to relink the app.",
+      "descriptionWithMarkdown": "Lists every app subscription eligible for migration, fetching all pages before producing output.\n\nBy default, the command writes CSV to stdout. Use `--json` to write the versioned JSON envelope to stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list > subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.\n\nUse `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and `MIGRATED`.\n\nRun the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app within the project. Use `--reset` to relink the app.",
       "examples": [
-        "<%= config.bin %> <%= command.id %> --output subscriptions.csv",
-        "<%= config.bin %> <%= command.id %> --status SCHEDULED --output scheduled-subscriptions.csv",
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --status SCHEDULED > scheduled-subscriptions.csv",
         "<%= config.bin %> <%= command.id %> --json",
-        "<%= config.bin %> <%= command.id %> --json --output subscriptions.json --force",
-        "<%= config.bin %> <%= command.id %> --client-id <client-id> --output subscriptions.csv"
+        "<%= config.bin %> <%= command.id %> --json > subscriptions.json",
+        "<%= config.bin %> <%= command.id %> --client-id <client-id> > subscriptions.csv"
       ],
       "flags": {
         "auth-alias": {
@@ -3558,14 +3558,6 @@
           "name": "config",
           "type": "option"
         },
-        "force": {
-          "allowNo": false,
-          "char": "f",
-          "description": "Overwrite an existing output file.",
-          "env": "SHOPIFY_FLAG_FORCE",
-          "name": "force",
-          "type": "boolean"
-        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -3582,14 +3574,6 @@
           "hidden": false,
           "name": "no-color",
           "type": "boolean"
-        },
-        "output": {
-          "description": "Path to write the subscription export.",
-          "env": "SHOPIFY_FLAG_OUTPUT",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "output",
-          "type": "option"
         },
         "path": {
           "description": "The path to your app directory.",

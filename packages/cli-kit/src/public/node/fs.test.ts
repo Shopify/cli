@@ -44,20 +44,6 @@ describe('inTemporaryDirectory', () => {
     await expect(fileExists(gotTmpDir)).resolves.toBe(false)
   })
 })
-describe('writeFile', () => {
-  test('does not replace an existing file when opened exclusively', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const filePath = joinPath(tmpDir, 'test-file')
-      await writeFile(filePath, 'original')
-
-      await expect(writeFile(filePath, 'replacement', {encoding: 'utf8', flag: 'wx'})).rejects.toMatchObject({
-        code: 'EEXIST',
-      })
-      await expect(readFile(filePath)).resolves.toBe('original')
-    })
-  })
-})
-
 describe('copy', () => {
   test('copies the file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {

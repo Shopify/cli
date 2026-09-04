@@ -4,9 +4,6 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {listMigratableSubscriptions} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
 import {outputMigrationList} from '../../../services/subscription-migrations/list-output.js'
 import {Config} from '@oclif/core'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigratableSubscription} from '../../../models/subscription-migrations.js'
 
@@ -42,73 +39,27 @@ async function runListWithoutOclifErrorHandling(argv: string[]) {
 beforeEach(() => {
   vi.mocked(linkedAppContext).mockResolvedValue({app, remoteApp} as Awaited<ReturnType<typeof linkedAppContext>>)
   vi.mocked(listMigratableSubscriptions).mockResolvedValue(subscriptions)
-  vi.mocked(outputMigrationList).mockResolvedValue()
 })
 
 describe('subscription migration list command', () => {
-  test('rejects a missing output and JSON mode before resolving app context or fetching subscriptions', async () => {
-    const promise = runListWithoutOclifErrorHandling([])
+  test('fetches subscriptions and delegates default CSV stdout output', async () => {
+    const result = await List.run(['--path', '/selected/app', '--config', 'staging'])
 
-    await expect(promise).rejects.toEqual(
-      new AbortError('Provide --output <path> or use --json to write subscriptions to stdout.'),
-    )
-    expect(linkedAppContext).not.toHaveBeenCalled()
-    expect(listMigratableSubscriptions).not.toHaveBeenCalled()
-    expect(outputMigrationList).not.toHaveBeenCalled()
-  })
-
-  test('rejects a real existing output without force before resolving app context or fetching subscriptions', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputPath = joinPath(tmpDir, 'subscriptions.csv')
-      await writeFile(outputPath, 'original')
-
-      const promise = runListWithoutOclifErrorHandling(['--output', outputPath])
-
-      await expect(promise).rejects.toEqual(
-        new AbortError(`Output file already exists: ${outputPath}. Use --force to overwrite it.`),
-      )
-      expect(linkedAppContext).not.toHaveBeenCalled()
-      expect(listMigratableSubscriptions).not.toHaveBeenCalled()
-      expect(outputMigrationList).not.toHaveBeenCalled()
+    expect(linkedAppContext).toHaveBeenCalledWith({
+      directory: '/selected/app',
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: 'staging',
     })
-  })
-
-  test('lists filtered subscriptions and delegates CSV file output', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputPath = joinPath(tmpDir, 'subscriptions.csv')
-
-      const result = await List.run([
-        '--output',
-        outputPath,
-        '--status',
-        'SCHEDULED',
-        '--path',
-        '/selected/app',
-        '--config',
-        'staging',
-      ])
-
-      expect(linkedAppContext).toHaveBeenCalledWith({
-        directory: '/selected/app',
-        clientId: undefined,
-        forceRelink: false,
-        userProvidedConfigName: 'staging',
-      })
-      expect(listMigratableSubscriptions).toHaveBeenCalledWith({
-        clientId: 'remote-client-id',
-        status: 'SCHEDULED',
-      })
-      expect(outputMigrationList).toHaveBeenCalledWith({
-        subscriptions,
-        json: false,
-        output: outputPath,
-        force: false,
-      })
-      expect(result).toEqual({app})
+    expect(listMigratableSubscriptions).toHaveBeenCalledWith({
+      clientId: 'remote-client-id',
+      status: undefined,
     })
+    expect(outputMigrationList).toHaveBeenCalledWith({subscriptions, json: false})
+    expect(result).toEqual({app})
   })
 
-  test('delegates JSON stdout mode without an output path', async () => {
+  test('delegates JSON stdout output when requested', async () => {
     await List.run(['--json', '--client-id', 'selected-client-id', '--reset'])
 
     expect(linkedAppContext).toHaveBeenCalledWith({
@@ -117,53 +68,35 @@ describe('subscription migration list command', () => {
       forceRelink: true,
       userProvidedConfigName: undefined,
     })
-    expect(listMigratableSubscriptions).toHaveBeenCalledWith({
-      clientId: 'remote-client-id',
-      status: undefined,
-    })
-    expect(outputMigrationList).toHaveBeenCalledWith({
-      subscriptions,
-      json: true,
-      output: undefined,
-      force: false,
-    })
+    expect(outputMigrationList).toHaveBeenCalledWith({subscriptions, json: true})
   })
 
-  test('delegates forced JSON file output', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputPath = joinPath(tmpDir, 'subscriptions.json')
+  test('forwards a status filter to the API', async () => {
+    await List.run(['--status', 'SCHEDULED'])
 
-      await List.run(['--json', '--output', outputPath, '--force'])
-
-      expect(outputMigrationList).toHaveBeenCalledWith({
-        subscriptions,
-        json: true,
-        output: outputPath,
-        force: true,
-      })
+    expect(listMigratableSubscriptions).toHaveBeenCalledWith({
+      clientId: 'remote-client-id',
+      status: 'SCHEDULED',
     })
+    expect(outputMigrationList).toHaveBeenCalledWith({subscriptions, json: false})
   })
 
   test('rejects an invalid status during parsing before resolving app context or fetching subscriptions', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    await expect(runListWithoutOclifErrorHandling(['--json', '--status', 'PENDING'])).rejects.toThrow()
+    await expect(runListWithoutOclifErrorHandling(['--status', 'PENDING'])).rejects.toThrow()
 
     expect(linkedAppContext).not.toHaveBeenCalled()
     expect(listMigratableSubscriptions).not.toHaveBeenCalled()
     expect(outputMigrationList).not.toHaveBeenCalled()
   })
 
-  test('does not invoke the output writer or create the destination when listing fails', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputPath = joinPath(tmpDir, 'subscriptions.csv')
-      const apiError = new Error('Partners API unavailable')
-      vi.mocked(listMigratableSubscriptions).mockRejectedValue(apiError)
+  test('does not produce output when listing fails', async () => {
+    const apiError = new Error('Partners API unavailable')
+    vi.mocked(listMigratableSubscriptions).mockRejectedValue(apiError)
 
-      await expect(runListWithoutOclifErrorHandling(['--output', outputPath])).rejects.toBe(apiError)
+    await expect(runListWithoutOclifErrorHandling([])).rejects.toBe(apiError)
 
-      expect(outputMigrationList).not.toHaveBeenCalled()
-      await expect(fileExists(outputPath)).resolves.toBe(false)
-    })
+    expect(outputMigrationList).not.toHaveBeenCalled()
   })
 })

@@ -2,11 +2,8 @@ import List from './list.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {listMigratableSubscriptions} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
-import {Config} from '@oclif/core'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, readFile, readdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {parse} from 'csv-parse/sync'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigratableSubscription} from '../../../models/subscription-migrations.js'
 
@@ -38,45 +35,46 @@ const subscriptions: MigratableSubscription[] = [
   },
 ]
 
-async function runListWithoutOclifErrorHandling(argv: string[]) {
-  const config = await Config.load()
-  return new List(argv, config).run()
-}
-
 beforeEach(() => {
   vi.mocked(linkedAppContext).mockResolvedValue({app, remoteApp} as Awaited<ReturnType<typeof linkedAppContext>>)
   vi.mocked(listMigratableSubscriptions).mockResolvedValue(subscriptions)
 })
 
 describe('subscription migration list command output integration', () => {
-  test('preserves a file created after the initial availability check', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputPath = joinPath(tmpDir, 'subscriptions.csv')
-      const sentinel = 'created while subscriptions were loading'
-      vi.mocked(listMigratableSubscriptions).mockImplementation(async () => {
-        await writeFile(outputPath, sentinel)
-        return subscriptions
-      })
+  test('writes default CSV to stdout exactly once', async () => {
+    await List.run([])
 
-      const promise = runListWithoutOclifErrorHandling(['--output', outputPath])
-
-      await expect(promise).rejects.toEqual(
-        new AbortError(`Output file already exists: ${outputPath}. Use --force to overwrite it.`),
-      )
-      await expect(readFile(outputPath)).resolves.toBe(sentinel)
-    })
+    expect(outputResult).toHaveBeenCalledOnce()
+    const output = vi.mocked(outputResult).mock.calls[0]![0] as string
+    expect(output).toBe(
+      'shop_id,status,manual_subscription_name,manual_subscription_price_amount,manual_subscription_price_currency_code,manual_subscription_interval,target_plan_handle,notification_kind,notification_opt_out_deadline,notification_sent_at,price_behavior,effective_date,last_failure_reason\n' +
+        'gid://shopify/Shop/123456789,MIGRATED,Historical legacy plan,29.95,CAD,ANNUAL,plus,NONE,2025-12-01T00:00:00Z,2025-11-01T00:00:00Z,PLAN_PRICE,2026-01-01T00:00:00Z,SUPERSEDED',
+    )
+    expect(parse(output, {columns: true})).toEqual([
+      {
+        shop_id: 'gid://shopify/Shop/123456789',
+        status: 'MIGRATED',
+        manual_subscription_name: 'Historical legacy plan',
+        manual_subscription_price_amount: '29.95',
+        manual_subscription_price_currency_code: 'CAD',
+        manual_subscription_interval: 'ANNUAL',
+        target_plan_handle: 'plus',
+        notification_kind: 'NONE',
+        notification_opt_out_deadline: '2025-12-01T00:00:00Z',
+        notification_sent_at: '2025-11-01T00:00:00Z',
+        price_behavior: 'PLAN_PRICE',
+        effective_date: '2026-01-01T00:00:00Z',
+        last_failure_reason: 'SUPERSEDED',
+      },
+    ])
   })
 
-  test('writes the exact JSON schema to stdout once without creating a file', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      await List.run(['--json', '--path', tmpDir])
+  test('writes versioned JSON to stdout exactly once when requested', async () => {
+    await List.run(['--json'])
 
-      expect(outputResult).toHaveBeenCalledOnce()
-      const output = vi.mocked(outputResult).mock.calls[0]![0]
-      expect(JSON.parse(output as string)).toEqual({schemaVersion: 1, subscriptions})
-      expect(output).toBe(JSON.stringify({schemaVersion: 1, subscriptions}, null, 2))
-      await expect(readdir(tmpDir)).resolves.toEqual([])
-      expect(listMigratableSubscriptions).toHaveBeenCalledOnce()
-    })
+    expect(outputResult).toHaveBeenCalledOnce()
+    const output = vi.mocked(outputResult).mock.calls[0]![0] as string
+    expect(output).toBe(JSON.stringify({schemaVersion: 1, subscriptions}, null, 2))
+    expect(JSON.parse(output)).toEqual({schemaVersion: 1, subscriptions})
   })
 })

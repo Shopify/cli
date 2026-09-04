@@ -486,26 +486,19 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test('list defines exact output, status, and overwrite force flag metadata', async () => {
-    expect(List.flags.output).toMatchObject({
-      description: 'Path to write the subscription export.',
-      env: 'SHOPIFY_FLAG_OUTPUT',
-    })
-    await expect(List.flags.output.parse?.('relative/subscriptions.csv', {} as never, {} as never)).resolves.toMatch(
-      /relative[/\\]subscriptions\.csv$/,
-    )
+  test('list defines exact status metadata without file destination flags', () => {
+    expect('output' in List.flags).toBe(false)
+    expect('force' in List.flags).toBe(false)
     expect(List.flags.status).toMatchObject({
       description: 'Filter subscriptions by migration status.',
       env: 'SHOPIFY_FLAG_STATUS',
       options: ['UNSCHEDULED', 'SCHEDULED', 'MIGRATED'],
     })
-    expect(List.flags.force).toMatchObject({
-      char: 'f',
-      description: 'Overwrite an existing output file.',
-      env: 'SHOPIFY_FLAG_FORCE',
-      default: false,
-    })
-    expect('requiredIfNonInteractive' in List.flags.force).toBe(false)
+    expect(List.flags.json).toBe(jsonFlag.json)
+    expect(List.flags.path).toBe(appFlags.path)
+    expect(List.flags.config).toBe(appFlags.config)
+    expect(List.flags['client-id']).toBe(appFlags['client-id'])
+    expect(List.flags.reset).toBe(appFlags.reset)
   })
 
   test('list spreads the canonical global flags', () => {
@@ -514,13 +507,18 @@ describe('subscription migration command metadata', () => {
     ).toBe(true)
   })
 
-  test('list documents destinations, formats, filters, and overwrite behavior', () => {
+  test('list documents stdout formats, shell redirection, and filters', () => {
     expect(List.descriptionWithMarkdown).toContain('all pages')
     expect(List.descriptionWithMarkdown).toContain('CSV')
     expect(List.descriptionWithMarkdown).toContain('stdout')
-    expect(List.descriptionWithMarkdown).toContain('`--output <path>`')
     expect(List.descriptionWithMarkdown).toContain('`--json`')
-    expect(List.descriptionWithMarkdown).toContain('`--force`')
+    expect(List.descriptionWithMarkdown).toContain('> subscriptions.csv')
+    expect(List.descriptionWithMarkdown).toContain('> subscriptions.json')
+    expect(List.descriptionWithMarkdown).not.toContain('`--output')
+    expect(List.descriptionWithMarkdown).not.toContain('`--force`')
+    expect(List.examples.some((example) => example.includes('> subscriptions.csv'))).toBe(true)
+    expect(List.examples.some((example) => example.includes('--json > subscriptions.json'))).toBe(true)
+    expect(List.examples.every((example) => !example.includes('--output') && !example.includes('--force'))).toBe(true)
     expect(List.descriptionWithMarkdown).toContain('`--status`')
     expect(List.descriptionWithMarkdown).toContain('`UNSCHEDULED`')
     expect(List.descriptionWithMarkdown).toContain('`SCHEDULED`')
