@@ -85,7 +85,12 @@ export type FanoutHookFunction<
 export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: string[]; error?: string}> {
   const hooks = await fanoutHooks(config, 'tunnel_provider', {})
   const names = getArrayRejectingUndefined(Object.values(hooks).map((key) => key?.name))
-  if (getArrayContainsDuplicates(names)) return {plugins: names, error: 'multiple-plugins-for-provider'}
+  const hasDuplicates = getArrayContainsDuplicates(names)
+
+  if (hasDuplicates) {
+    return {plugins: names, error: 'multiple-plugins-for-provider'}
+  }
+
   return {plugins: names}
 }
 
