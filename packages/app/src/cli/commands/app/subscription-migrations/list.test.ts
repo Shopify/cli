@@ -1,8 +1,13 @@
 import List from './list.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {iterateMigratableSubscriptionPages} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
+import {
+  iterateMigratableSubscriptionPages,
+  MigrationListProtocolError,
+  MigratableSubscriptionsNotFoundError,
+} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
 import {outputMigrationList} from '../../../services/subscription-migrations/list-output.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigratableSubscription} from '../../../models/subscription-migrations.js'
@@ -98,6 +103,23 @@ describe('subscription migration list command', () => {
     expect(linkedAppContext).not.toHaveBeenCalled()
     expect(iterateMigratableSubscriptionPages).not.toHaveBeenCalled()
     expect(outputMigrationList).not.toHaveBeenCalled()
+  })
+
+  test('translates a missing migratable-subscriptions connection at the command boundary', async () => {
+    const missingConnectionError = new MigratableSubscriptionsNotFoundError()
+    vi.mocked(outputMigrationList).mockRejectedValue(missingConnectionError)
+
+    await expect(runListWithoutOclifErrorHandling([])).rejects.toMatchObject({
+      constructor: AbortError,
+      message: 'App not found',
+    })
+  })
+
+  test('propagates a migration list protocol error without rewriting it', async () => {
+    const protocolError = new MigrationListProtocolError('Migratable subscription page has no cursor for its next page')
+    vi.mocked(outputMigrationList).mockRejectedValue(protocolError)
+
+    await expect(runListWithoutOclifErrorHandling([])).rejects.toBe(protocolError)
   })
 
   test('propagates an output failure without returning a result', async () => {

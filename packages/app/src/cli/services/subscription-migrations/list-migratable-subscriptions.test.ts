@@ -1,6 +1,9 @@
-import {iterateMigratableSubscriptionPages, MigrationListProtocolError} from './list-migratable-subscriptions.js'
+import {
+  iterateMigratableSubscriptionPages,
+  MigrationListProtocolError,
+  MigratableSubscriptionsNotFoundError,
+} from './list-migratable-subscriptions.js'
 import {MIGRATABLE_SUBSCRIPTION_STATUSES} from '../../models/subscription-migrations.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
 import type {MigratableSubscription} from '../../models/subscription-migrations.js'
 import type {MigratableSubscriptionPage} from './partners-api.js'
@@ -148,12 +151,15 @@ describe('iterateMigratableSubscriptionPages', () => {
     })
   })
 
-  test('throws an exact AbortError when the app connection is null', async () => {
+  test('throws a domain-specific error when the app connection is null', async () => {
     const getPage = vi.fn().mockResolvedValue(null)
     const promise = collectPages(iterateMigratableSubscriptionPages({clientId: 'client-id', getPage}))
 
-    await expect(promise).rejects.toBeInstanceOf(AbortError)
-    await expect(promise).rejects.toThrow('App not found')
+    await expect(promise).rejects.toBeInstanceOf(MigratableSubscriptionsNotFoundError)
+    await expect(promise).rejects.toMatchObject({
+      name: 'MigratableSubscriptionsNotFoundError',
+      message: 'Migratable subscriptions were not found',
+    })
   })
 
   test.each([null, '', '   \t'])('rejects a next page with an invalid cursor: %j', async (endCursor) => {

@@ -1,8 +1,12 @@
 import {listFlags} from './flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {iterateMigratableSubscriptionPages} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
+import {
+  iterateMigratableSubscriptionPages,
+  MigratableSubscriptionsNotFoundError,
+} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
 import {outputMigrationList} from '../../../services/subscription-migrations/list-output.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class List extends AppLinkedCommand {
   static hidden = true
@@ -36,11 +40,16 @@ Run the command from an app project. By default, it uses the Client ID from the 
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    const pages = iterateMigratableSubscriptionPages({
-      clientId: remoteApp.apiKey,
-      status: flags.status,
-    })
-    await outputMigrationList({pages, json: flags.json})
+    try {
+      const pages = iterateMigratableSubscriptionPages({
+        clientId: remoteApp.apiKey,
+        status: flags.status,
+      })
+      await outputMigrationList({pages, json: flags.json})
+    } catch (error) {
+      if (error instanceof MigratableSubscriptionsNotFoundError) throw new AbortError('App not found')
+      throw error
+    }
     return {app}
   }
 }

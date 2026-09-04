@@ -4,6 +4,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {MigrationListProtocolError} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
 import {getMigratableSubscriptionPage} from '../../../services/subscription-migrations/partners-api.js'
 import {Config} from '@oclif/core'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {parse} from 'csv-parse/sync'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -209,6 +210,34 @@ describe('subscription migration list command output integration', () => {
     expect(getMigratableSubscriptionPage).toHaveBeenCalledTimes(2)
     const rows = parseCsvRows(stdoutContent())
     expect(rows.map((row) => row.shop_id)).toEqual(['gid://shopify/Shop/1', 'gid://shopify/Shop/2'])
+  })
+
+  test.each([
+    {args: [], format: 'CSV'},
+    {args: ['--json'], format: 'JSON'},
+  ])('translates a first-page missing connection without writing $format output', async ({args}) => {
+    vi.mocked(getMigratableSubscriptionPage).mockResolvedValue(null)
+
+    const command = runListWithoutOclifErrorHandling(args)
+    await expect(command).rejects.toBeInstanceOf(AbortError)
+    await expect(command).rejects.toThrow('App not found')
+
+    expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test('keeps earlier CSV pages when a later page has a missing connection', async () => {
+    vi.mocked(getMigratableSubscriptionPage)
+      .mockResolvedValueOnce(page([subscription('gid://shopify/Shop/1')], {hasNextPage: true, endCursor: 'cursor-one'}))
+      .mockResolvedValueOnce(null)
+
+    const command = runListWithoutOclifErrorHandling([])
+    await expect(command).rejects.toBeInstanceOf(AbortError)
+    await expect(command).rejects.toThrow('App not found')
+
+    expect(getMigratableSubscriptionPage).toHaveBeenCalledTimes(2)
+    expect(outputResult).toHaveBeenCalledOnce()
+    const rows = parseCsvRows(stdoutContent())
+    expect(rows.map((row) => row.shop_id)).toEqual(['gid://shopify/Shop/1'])
   })
 
   test('writes nothing when the first page fails', async () => {

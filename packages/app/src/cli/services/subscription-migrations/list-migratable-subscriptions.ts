@@ -1,8 +1,14 @@
 import {getMigratableSubscriptionPage} from './partners-api.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import type {MigratableSubscription, MigratableSubscriptionStatus} from '../../models/subscription-migrations.js'
 
 const PAGE_SIZE = 250
+
+export class MigratableSubscriptionsNotFoundError extends Error {
+  constructor() {
+    super('Migratable subscriptions were not found')
+    this.name = 'MigratableSubscriptionsNotFoundError'
+  }
+}
 
 export class MigrationListProtocolError extends Error {
   constructor(message: string) {
@@ -34,7 +40,7 @@ export async function* iterateMigratableSubscriptionPages({
     // Pages must be requested sequentially because each request depends on the previous opaque cursor.
     // eslint-disable-next-line no-await-in-loop
     const page = await getPage({clientId, first: PAGE_SIZE, after, status})
-    if (page === null) throw new AbortError('App not found')
+    if (page === null) throw new MigratableSubscriptionsNotFoundError()
 
     yield page.subscriptions
     if (!page.pageInfo.hasNextPage) return
