@@ -1,7 +1,7 @@
 import {ConfigField, FlowExtensionTypes} from './types.js'
 import {SUPPORTED_COMMERCE_OBJECTS} from './constants.js'
 import {FlowTriggerSettingsSchema} from '../../models/extensions/specifications/flow_trigger.js'
-import {validateRelativeUrl} from '../../models/app/validation/common.js'
+import {URL_CONTROL_CHARACTERS, validateRelativeUrl} from '../../models/app/validation/common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
@@ -56,14 +56,12 @@ export const validateFieldShape = (
 
 export const isSchemaTypeReference = (type: string) => type.startsWith('schema.')
 
-const containsUrlControlCharacter = (value: string) => /[\r\n\t]/.test(value)
-
 export const validateFlowActionUrl = (zodType: zod.ZodString) => {
   return validateRelativeUrl(zodType, {
     message:
       'Invalid URL: URL must be an absolute HTTPS URL or a relative URL starting with a single slash (e.g. "/api/endpoint").',
   })
-    .refine((value) => !containsUrlControlCharacter(value), {
+    .refine((value) => !URL_CONTROL_CHARACTERS.test(value), {
       message: 'Invalid URL: URL must not contain control characters such as newlines or tabs.',
     })
     .refine((value) => !value.startsWith('//'), {message: 'Invalid URL: Relative URLs must start with a single slash.'})

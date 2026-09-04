@@ -1,5 +1,6 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
+import {patchAppRelativeUrls} from './specifications/validation/app_relative_urls.js'
 import {blocks} from '../../constants.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
 
@@ -318,8 +319,19 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     uidStrategy: spec.uidStrategy,
     transformRemoteToLocal: spec.transformRemoteToLocal,
     devSessionWatchConfig: spec.devSessionWatchConfig,
-    deployConfig: async (config, directory) => {
+    // A contract based module has no local schema, so its configuration is deployed as authored. The exception is
+    // the app relative URL fields declared in app_relative_urls.ts: those are resolved against the dev tunnel here,
+    // and against the app's application_url in deployConfig below.
+    patchWithAppDevURLs: (config, urls) => {
+      patchAppRelativeUrls(spec.identifier, config, urls.applicationUrl)
+    },
+    deployConfig: async (config, directory, _apiKey, _moduleId, context) => {
+      const applicationUrl = context?.appConfiguration?.application_url
+      const appUrl = typeof applicationUrl === 'string' ? applicationUrl : undefined
+
+      // configWithoutFirstClassFields returns a fresh object, so patching it in place cannot affect the caller.
       let parsedConfig = configWithoutFirstClassFields(config)
+      patchAppRelativeUrls(spec.identifier, parsedConfig, appUrl)
       if (spec.appModuleFeatures().includes('localization')) {
         const localization = await loadLocalesConfig(directory, spec.identifier)
         parsedConfig = {...parsedConfig, localization}
