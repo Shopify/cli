@@ -42,6 +42,7 @@
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
+    "generate:app-doctor-checks": "node src/cli/services/app-doctor-engine/embed-checks.mjs",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
@@ -64,6 +65,7 @@
     "@shopify/theme-check-node": "3.29.0",
     "@shopify/toml-patch": "0.3.0",
     "chokidar": "3.6.0",
+    "clipboardy": "4.0.0",
     "csv-parse": "7.0.2",
     "diff": "5.2.2",
     "esbuild": "0.28.1",

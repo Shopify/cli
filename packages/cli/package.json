@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.43.0",
+    "clipboardy": "4.0.0",
     "esbuild": "0.28.1",
     "global-agent": "3.0.0"
   },
