@@ -27,6 +27,7 @@ import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {filterAutocompleteChoices} from '../../private/node/ui/components/AutocompletePromptSearch.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import {SingleTask} from '../../private/node/ui/components/SingleTask.js'
@@ -420,11 +421,8 @@ export async function renderAutocompletePrompt<T>(
   const usingDefaultSearch = props.search === undefined
   const newProps = {
     search(term: string) {
-      const lowerTerm = term.toLowerCase()
       return Promise.resolve({
-        data: props.choices.filter((item) => {
-          return item.label.toLowerCase().includes(lowerTerm) || item.group?.toLowerCase().includes(lowerTerm)
-        }),
+        data: filterAutocompleteChoices(props.choices, term),
       })
     },
     ...(usingDefaultSearch ? {searchDebounceMs: 0} : {}),

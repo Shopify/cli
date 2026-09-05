@@ -87,6 +87,7 @@ function Item<T>({
   index,
 }: ItemProps<T>): React.ReactElement {
   const label = highlightedLabel(item.label, highlightedTerm)
+  const helperText = item.helperText ? highlightedLabel(item.helperText, highlightedTerm) : undefined
   let title: string | undefined
   let labelColor
 
@@ -120,6 +121,7 @@ function Item<T>({
         <Text wrap="end" color={labelColor}>
           {showKey ? `(${item.key}) ${label}` : label}
         </Text>
+        {helperText ? <Text dimColor>{` ${helperText}`}</Text> : null}
       </Box>
     </Box>
   )
