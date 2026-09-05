@@ -98,6 +98,9 @@ importers:
       eslint-plugin-jsdoc:
         specifier: 50.8.0
         version: 50.8.0(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-node-security:
+        specifier: 4.13.1
+        version: 4.13.1(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
       execa:
         specifier: ^7.2.0
         version: 7.2.0
@@ -2870,6 +2873,22 @@ packages:
       '@types/node':
         optional: true
 
+  '@interlace/eslint-devkit@1.17.1':
+    resolution: {integrity: sha512-rKSJAdtJGHKgTOZm1S/DUSRFgAdjvG1fQA6JvxpSiiT9YYRwSaiuYsckyijAg9krPmHWwN+3Ho3WiyNSu548lg==, tarball: https://registry.npmjs.org/@interlace/eslint-devkit/-/eslint-devkit-1.17.1.tgz}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@typescript-eslint/utils': 8.56.1
+      eslint: ^8.40.0 || ^9.0.0 || ^10.0.0
+      oxc-resolver: ^11.24.2
+      typescript: '>=4.8.4'
+    peerDependenciesMeta:
+      '@typescript-eslint/utils':
+        optional: true
+      oxc-resolver:
+        optional: true
+      typescript:
+        optional: true
+
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==, tarball: https://registry.npmjs.org/@isaacs/cliui/-/cliui-8.0.2.tgz}
     engines: {node: '>=12'}
@@ -5501,6 +5520,12 @@ packages:
     resolution: {integrity: sha512-VkP62jLTmccPrFGN/W6V7a3SEwdtTZm+Su2k4T3uyJirtkm0OMMm97h7qd8pRFAHus/jQg9FpUpLRc7sAylBEQ==, tarball: https://registry.npmjs.org/eslint-plugin-no-catch-all/-/eslint-plugin-no-catch-all-1.1.0.tgz}
     peerDependencies:
       eslint: '>=2.0.0'
+
+  eslint-plugin-node-security@4.13.1:
+    resolution: {integrity: sha512-gwuZbhvPK7CjxG2YqXTH8QcXa0d70rdmEYleGfG8I8SFKP490LtoE3OdnU4gM7hrB8PJrwX3I99affEiP7QiLw==, tarball: https://registry.npmjs.org/eslint-plugin-node-security/-/eslint-plugin-node-security-4.13.1.tgz}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      eslint: ^8.40.0 || ^9.0.0 || ^10.0.0
 
   eslint-plugin-prettier@5.5.6:
     resolution: {integrity: sha512-ifetmTcxWfz+4qRW3pH/ujdTq2jQIj59AxJMIN26K5avYgU8dxycUETQonWiW+wPrYXA0j3Try0l1CnwVQtDqQ==, tarball: https://registry.npmjs.org/eslint-plugin-prettier/-/eslint-plugin-prettier-5.5.6.tgz}
@@ -11542,6 +11567,13 @@ snapshots:
     optionalDependencies:
       '@types/node': 26.1.1
 
+  '@interlace/eslint-devkit@1.17.1(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)':
+    dependencies:
+      eslint: 9.39.5(jiti@2.6.1)
+    optionalDependencies:
+      '@typescript-eslint/utils': 8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
+      typescript: 5.9.3
+
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -14619,6 +14651,15 @@ snapshots:
   eslint-plugin-no-catch-all@1.1.0(eslint@9.39.5(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.5(jiti@2.6.1)
+
+  eslint-plugin-node-security@4.13.1(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3):
+    dependencies:
+      '@interlace/eslint-devkit': 1.17.1(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
+      eslint: 9.39.5(jiti@2.6.1)
+    transitivePeerDependencies:
+      - '@typescript-eslint/utils'
+      - oxc-resolver
+      - typescript
 
   eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4):
     dependencies:

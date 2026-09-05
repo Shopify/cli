@@ -118,7 +118,12 @@ export function unauthorizedTemplate({hasAppContext}: UnauthorizedTemplateOption
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shopify/polaris@12.10.0/build/esm/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@shopify/polaris@12.10.0/build/esm/styles.css"
+      integrity="sha384-Hf961G5EtH2Bzpf8q3a7FibjfEPaKMyUpa1RUlLZa8NFyHi0Oel0bOUI30HMIucL"
+      crossorigin="anonymous"
+    />
     <style>
       .vertical-center {
         display: flex;

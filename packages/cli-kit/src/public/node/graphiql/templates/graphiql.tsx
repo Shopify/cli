@@ -73,7 +73,12 @@ export function graphiqlTemplate({
   <head>
     <title>GraphiQL</title>
     <link rel="shortcut icon" href="{{url}}/graphiql/favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shopify/polaris@12.10.0/build/esm/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@shopify/polaris@12.10.0/build/esm/styles.css"
+      integrity="sha384-Hf961G5EtH2Bzpf8q3a7FibjfEPaKMyUpa1RUlLZa8NFyHi0Oel0bOUI30HMIucL"
+      crossorigin="anonymous"
+    />
     <style>
       body {
         height: 100%;
@@ -167,16 +172,21 @@ export function graphiqlTemplate({
     </style>
 
     <script
-      src="https://cdn.jsdelivr.net/npm/react@17/umd/react.development.js"
+      src="https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.development.js"
       integrity="sha512-Vf2xGDzpqUOEIKO+X2rgTLWPY+65++WPwCHkX2nFMu9IcstumPsf/uKKRd5prX3wOu8Q0GBylRpsDB26R6ExOg=="
       crossorigin="anonymous"
     ></script>
     <script
-      src="https://cdn.jsdelivr.net/npm/react-dom@17/umd/react-dom.development.js"
+      src="https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.development.js"
       integrity="sha512-Wr9OKCTtq1anK0hq5bY3X/AvDI5EflDSAh0mE9gma+4hl+kXdTJPKZ3TwLMBcrgUeoY0s3dq9JjhCQc7vddtFg=="
       crossorigin="anonymous"
     ></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphiql@3.0.4/graphiql.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/graphiql@3.0.4/graphiql.min.css"
+      integrity="sha384-yz3/sqpuplkA7msMo0FE4ekg0xdwdvZ8JX9MVZREsxipqjU4h8IRfmAMRcb1QpUy"
+      crossorigin="anonymous"
+    />
   </head>
   <body>
     <div id="graphiql">
@@ -243,6 +253,8 @@ export function graphiqlTemplate({
     </div>
     <script
       src="https://cdn.jsdelivr.net/npm/graphiql@3.0.4/graphiql.min.js"
+      integrity="sha384-U3dCpShwVLfbejTspleBBfS9rdysKUq1R5EGWFJk2DTXtc/cRsmwkDYYJ+xP19mO"
+      crossorigin="anonymous"
       type="application/javascript"
     ></script>
     <script>
