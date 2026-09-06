@@ -308,6 +308,23 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
   })
+
+  test('exchanges the app automation token if envvar is defined', async () => {
+    // Given
+    vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
+      accessToken: 'business_platform_token_from_env',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_app_automation_token')
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform()
+
+    // Then
+    expect(got).toEqual('business_platform_token_from_env')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_app_automation_token')
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
 })
 
 describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {

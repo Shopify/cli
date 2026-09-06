@@ -82,12 +82,12 @@ describe('tokenExchangeScopes', () => {
     expect(got).toEqual(['https://api.shopify.com/auth/organization.apps.manage'])
   })
 
-  test('returns transformed scopes for business-platform API', () => {
+  test('returns no scopes for business-platform API, so Identity grants the token its own scopes', () => {
     // When
     const got = tokenExchangeScopes('business-platform')
 
     // Then
-    expect(got).toEqual(['https://api.shopify.com/auth/destinations.readonly'])
+    expect(got).toEqual([])
   })
 
   test('throws an error for unsupported APIs', () => {

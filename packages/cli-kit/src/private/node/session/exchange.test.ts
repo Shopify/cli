@@ -259,7 +259,7 @@ const tokenExchangeMethods = [
   },
   {
     tokenExchangeMethod: exchangeAppAutomationTokenForBusinessPlatformAccessToken,
-    expectedScopes: ['https://api.shopify.com/auth/destinations.readonly'],
+    expectedScopes: [],
     expectedApi: 'business-platform',
     expectedErrorName: 'Business Platform',
   },
