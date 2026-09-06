@@ -300,6 +300,7 @@ ${outputToken.json(scopes)}
 
 /**
  * Ensure that we have a valid session to access the Business Platform API.
+ * If an app automation token exists in the environment, that token will be used and scopes will be ignored.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param options - Optional extra options to use.
@@ -312,6 +313,11 @@ export async function ensureAuthenticatedBusinessPlatform(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
 ${outputToken.json(scopes)}
 `)
+  const envToken = getAppAutomationToken()
+  if (envToken) {
+    const result = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken)
+    return result.accessToken
+  }
   const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, options)
   if (!tokens.businessPlatform) {
     throw new BugError('No business-platform token found after ensuring authenticated')
