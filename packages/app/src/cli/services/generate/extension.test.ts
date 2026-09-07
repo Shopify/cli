@@ -122,6 +122,109 @@ describe('initialize a extension', async () => {
     })
   })
 
+  test('removes a partially installed extension after dependency installation fails and allows retrying', async () => {
+    await withTemporaryApp(
+      async (tmpDir) => {
+        const name = 'failed-install'
+        const extensionDirectory = joinPath(tmpDir, 'extensions', name)
+        const installationError = new Error('ERR_PNPM_IGNORED_BUILDS: Run pnpm approve-builds')
+        vi.mocked(installNodeModules).mockImplementationOnce(async () => {
+          const dependencyDirectory = joinPath(extensionDirectory, 'node_modules', '.pnpm', 'dependency')
+          await file.mkdir(dependencyDirectory)
+          await file.writeFile(joinPath(dependencyDirectory, 'package.json'), '{}')
+          throw installationError
+        })
+        const options = {
+          name,
+          extensionTemplate: checkoutUITemplate,
+          extensionFlavor: 'vanilla-js' as const,
+          appDirectory: tmpDir,
+          specifications,
+          onGetTemplateRepository,
+        }
+
+        await expect(createFromTemplate(options)).rejects.toThrow(installationError)
+
+        await expect(file.fileExists(extensionDirectory)).resolves.toBe(false)
+        await expect(createFromTemplate(options)).resolves.toBe(extensionDirectory)
+      },
+      {useWorkspaces: true},
+    )
+  })
+
+  test.each([
+    {failureStage: 'workspace install', useWorkspaces: true, packageManager: 'pnpm'},
+    {failureStage: 'runtime install', useWorkspaces: true, packageManager: 'pnpm'},
+    {failureStage: 'type generation', useWorkspaces: true, packageManager: 'pnpm'},
+    {failureStage: 'runtime install', useWorkspaces: false, packageManager: 'npm'},
+  ])(
+    'preserves the function when $failureStage fails ($packageManager, workspaces: $useWorkspaces)',
+    async ({failureStage, useWorkspaces, packageManager}) => {
+      await withTemporaryApp(
+        async (tmpDir) => {
+          const name = 'failed-function'
+          const extensionDirectory = joinPath(tmpDir, 'extensions', name)
+          const extensionTemplate = allFunctionTemplates.find((spec) => spec.identifier === 'order_discounts')!
+          const failure = new Error('Function setup failed')
+          await file.writeFile(joinPath(tmpDir, packageManager === 'pnpm' ? 'pnpm-lock.yaml' : 'package-lock.json'), '')
+          const failAfterPartialInstall = async () => {
+            await file.mkdir(joinPath(extensionDirectory, 'node_modules', '.pnpm'))
+            await file.writeFile(joinPath(extensionDirectory, 'node_modules', '.pnpm', 'lock.yaml'), '')
+            throw failure
+          }
+          const buildGraphqlTypes = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue()
+          if (failureStage === 'workspace install') {
+            vi.mocked(installNodeModules).mockImplementationOnce(failAfterPartialInstall)
+          } else if (failureStage === 'runtime install') {
+            vi.mocked(addNPMDependenciesIfNeeded).mockImplementationOnce(failAfterPartialInstall)
+          } else {
+            buildGraphqlTypes.mockImplementationOnce(failAfterPartialInstall)
+          }
+
+          await expect(
+            createFromTemplate({
+              name,
+              extensionTemplate,
+              extensionFlavor: 'vanilla-js',
+              appDirectory: tmpDir,
+              specifications,
+              onGetTemplateRepository: async (_url, destination) => {
+                const templateDirectory = joinPath(destination, 'discounts/javascript/order-discounts/default')
+                await file.mkdir(joinPath(templateDirectory, 'src'))
+                await file.writeFile(joinPath(templateDirectory, 'src', 'index'), 'export default {}')
+                await file.writeFile(joinPath(templateDirectory, 'package.json'), '{}')
+                await file.writeFile(
+                  joinPath(templateDirectory, 'shopify.extension.toml'),
+                  `name = "${name}"\ntype = "function"\napi_version = "2026-07"`,
+                )
+              },
+            }),
+          ).rejects.toMatchObject({
+            message: failure.message,
+            cause: failure,
+            tryMessage: expect.stringContaining(extensionDirectory),
+            nextSteps: [
+              ...(packageManager === 'pnpm' ? [expect.stringContaining(`pnpm approve-builds in ${tmpDir}`)] : []),
+              expect.stringContaining(`with your package manager in ${useWorkspaces ? extensionDirectory : tmpDir}`),
+              expect.stringContaining(`shopify app function typegen from ${extensionDirectory}`),
+            ],
+          })
+
+          await expect(file.readFile(joinPath(extensionDirectory, 'src', 'index.js'))).resolves.toBe(
+            'export default {}',
+          )
+          await expect(file.fileExists(joinPath(extensionDirectory, 'package.json'))).resolves.toBe(true)
+          await expect(file.fileExists(joinPath(extensionDirectory, 'shopify.extension.toml'))).resolves.toBe(true)
+          await expect(file.fileExists(joinPath(extensionDirectory, configurationFileNames.lockFile))).resolves.toBe(
+            false,
+          )
+          if (failureStage !== 'type generation') expect(buildGraphqlTypes).not.toHaveBeenCalled()
+        },
+        {useWorkspaces},
+      )
+    },
+  )
+
   test('errors when trying to re-generate an existing extension', async () => {
     await withTemporaryApp(async (tmpDir: string) => {
       const name = 'my-ext-1'

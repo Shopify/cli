@@ -21,6 +21,7 @@ import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} fro
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppLinkedInterface
@@ -80,6 +81,27 @@ interface ExtensionInitOptions {
   onGetTemplateRepository: (url: string, destination: string) => Promise<void>
 }
 
+class FunctionSetupError extends AbortError {
+  constructor(error: unknown, {directory, project}: ExtensionInitOptions) {
+    const dependencyDirectory = project.usesWorkspaces ? directory : project.directory
+    const nextSteps = [
+      ...(project.packageManager === 'pnpm'
+        ? [
+            `If pnpm blocked dependency build scripts, run pnpm approve-builds in ${project.directory} and approve the dependencies you trust.`,
+          ]
+        : []),
+      `Install @shopify/shopify_function@~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0 with your package manager in ${dependencyDirectory}, then rerun its install command in ${project.directory}.`,
+      `Run shopify app function typegen from ${directory} to finish generating GraphQL types.`,
+    ]
+    super(
+      error instanceof Error ? error.message : String(error),
+      `Your function files were kept in ${directory}. Resolve the setup error, then finish setup manually.`,
+      nextSteps,
+    )
+    this.cause = error
+  }
+}
+
 export async function generateExtensionTemplate(
   options: GenerateExtensionTemplateOptions,
 ): Promise<GeneratedExtension> {
@@ -125,7 +147,11 @@ async function extensionInit(options: ExtensionInitOptions) {
     const lockFilePath = joinPath(options.directory, configurationFileNames.lockFile)
     await removeFile(lockFilePath)
   } catch (error) {
-    await removeFile(options.directory)
+    if (error instanceof FunctionSetupError) {
+      await removeFile(joinPath(options.directory, configurationFileNames.lockFile))
+    } else {
+      await removeFile(options.directory)
+    }
     throw error
   }
 }
@@ -149,17 +175,11 @@ async function themeExtensionInit({
   })
 }
 
-async function functionExtensionInit({
-  directory,
-  url,
-  app,
-  project,
-  name,
-  extensionFlavor,
-  onGetTemplateRepository,
-}: ExtensionInitOptions) {
+async function functionExtensionInit(options: ExtensionInitOptions) {
+  const {directory, url, app, project, name, extensionFlavor, onGetTemplateRepository} = options
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
   const taskList = []
+  let templateGenerated = false
 
   taskList.push({
     title: `Generating function extension`,
@@ -183,6 +203,7 @@ async function functionExtensionInit({
         const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'rust')
         await changeIndexFileExtension(directory, srcFileExtension, '!(*.graphql)')
       }
+      templateGenerated = true
     },
   })
 
@@ -214,7 +235,13 @@ async function functionExtensionInit({
     })
   }
 
-  await renderTasks(taskList)
+  try {
+    await renderTasks(taskList)
+  } catch (error) {
+    // Keep a complete scaffold so dependency approvals and type generation can be retried manually.
+    if (templateGenerated) throw new FunctionSetupError(error, options)
+    throw error
+  }
 }
 
 async function uiExtensionInit({
