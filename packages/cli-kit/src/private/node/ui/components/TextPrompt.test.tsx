@@ -3,20 +3,40 @@ import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeRe
 import {unstyled} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import colors from '../../../../public/node/colors.js'
+import {platformAndArch} from '../../../../public/node/os.js'
 import React from 'react'
 
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
+
+vi.mock('../../../../public/node/os.js')
+
+beforeEach(() => {
+  vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
+})
 
 const ENTER = '\r'
 
 describe('TextPrompt', () => {
+  test.each(['windows', 'darwin', 'linux'] as const)('renders the underline on %s', async (platform) => {
+    vi.mocked(platformAndArch).mockReturnValue({platform, arch: 'amd64'})
+    const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" />)
+    const underline = (platform === 'windows' ? '─' : '▔').repeat(77)
+
+    expect(renderInstance.lastFrame()).toContain(colors.cyan(underline))
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    expect(renderInstance.lastFrame()).toContain(colors.red(underline))
+  })
+
   test('default state', () => {
     const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question" defaultValue="Placeholder" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question:
       >  Placeholder
-         ─────────────────────────────────────────────────────────────────────────────
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
     `)
   })
@@ -30,7 +50,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [31m>[39m  [31m[41m█[49m[39m
-         [31m─────────────────────────────────────────────────────────────────────────────[39m
+         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mType an answer to the prompt.[39m
       "
     `)
@@ -39,7 +59,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [36m>[39m  [36mA[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
   })
@@ -60,7 +80,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [31m>[39m  [31mthis-test-includes-shopify[41m█[49m[39m
-         [31m─────────────────────────────────────────────────────────────────────────────[39m
+         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mApp name can't include the word shopify[39m
       "
     `)
@@ -145,7 +165,7 @@ describe('TextPrompt', () => {
       "?  Test question:
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
          [36mBBBBBB[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
   })
@@ -158,7 +178,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [36m>[39m  [36m***[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
 
@@ -176,7 +196,7 @@ describe('TextPrompt', () => {
     expect(lastFrame()!).toMatchInlineSnapshot(`
       "?  Test question?
       [36m>[39m  [36m[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
   })
@@ -223,7 +243,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  How tall are you in cm?
       [36m>[39m  [36m180[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          You are [36m1.8[39mm tall.
       "
     `)
@@ -248,7 +268,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()!).toMatchInlineSnapshot(`
       "?  How tall are you?
       [36m>[39m  [36muber[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          You are [36mincredibly humongously savagely unnaturally monstrously pathetically [39m
          [36marrogantly uber[39m tall.
       "

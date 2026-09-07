@@ -1,14 +1,37 @@
 import {DangerousConfirmationPrompt} from './DangerousConfirmationPrompt.js'
 import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
+import colors from '../../../../public/node/colors.js'
+import {platformAndArch} from '../../../../public/node/os.js'
 import React from 'react'
 
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
+
+vi.mock('../../../../public/node/os.js')
+
+beforeEach(() => {
+  vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
+})
 
 const ENTER = '\r'
 const ESC = '\x1b'
 
 describe('DangerousConfirmationPrompt', () => {
+  test.each(['windows', 'darwin', 'linux'] as const)('renders the underline on %s', async (platform) => {
+    vi.mocked(platformAndArch).mockReturnValue({platform, arch: 'amd64'})
+    const renderInstance = render(
+      <DangerousConfirmationPrompt onSubmit={() => {}} message="Test question" confirmation="yes" />,
+    )
+    const underline = (platform === 'windows' ? '─' : '▔').repeat(77)
+
+    expect(renderInstance.lastFrame()).toContain(colors.cyan(underline))
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    expect(renderInstance.lastFrame()).toContain(colors.red(underline))
+  })
+
   test('default state', () => {
     const {lastFrame} = render(
       <DangerousConfirmationPrompt onSubmit={() => {}} message="Test question" confirmation="yes" />,
@@ -19,7 +42,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type yes to confirm, or press Escape to cancel.
       >  █
-         ─────────────────────────────────────────────────────────────────────────────
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
     `)
   })
@@ -37,7 +60,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type [36myes[39m to confirm, or press Escape to cancel.
       [31m>[39m  [31m[41m█[49m[39m
-         [31m─────────────────────────────────────────────────────────────────────────────[39m
+         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mValue must be exactly [36myes[39m
       "
     `)
@@ -48,7 +71,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type [36myes[39m to confirm, or press Escape to cancel.
       [36m>[39m  [36mA[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
   })
@@ -86,7 +109,7 @@ describe('DangerousConfirmationPrompt', () => {
          Type [36myes[39m to confirm, or press Escape to cancel.
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
          [36mBBBBBB[46m█[49m[39m
-         [36m─────────────────────────────────────────────────────────────────────────────[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
   })
@@ -101,7 +124,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type yes to confirm, or press Escape to cancel.
       >  █
-         ─────────────────────────────────────────────────────────────────────────────
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
     `)
   })
