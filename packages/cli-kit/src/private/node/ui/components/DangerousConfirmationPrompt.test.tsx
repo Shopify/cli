@@ -19,7 +19,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type yes to confirm, or press Escape to cancel.
       >  █
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+         ─────────────────────────────────────────────────────────────────────────────
       "
     `)
   })
@@ -37,7 +37,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type [36myes[39m to confirm, or press Escape to cancel.
       [31m>[39m  [31m[41m█[49m[39m
-         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [31m─────────────────────────────────────────────────────────────────────────────[39m
          [31mValue must be exactly [36myes[39m
       "
     `)
@@ -48,7 +48,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type [36myes[39m to confirm, or press Escape to cancel.
       [36m>[39m  [36mA[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
       "
     `)
   })
@@ -86,7 +86,7 @@ describe('DangerousConfirmationPrompt', () => {
          Type [36myes[39m to confirm, or press Escape to cancel.
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
          [36mBBBBBB[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
       "
     `)
   })
@@ -101,7 +101,7 @@ describe('DangerousConfirmationPrompt', () => {
 
          Type yes to confirm, or press Escape to cancel.
       >  █
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+         ─────────────────────────────────────────────────────────────────────────────
       "
     `)
   })

@@ -64,7 +64,6 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const complete = useComplete()
   const [error, setError] = useState<string | undefined>(undefined)
   const color = promptState === PromptState.Error ? 'red' : 'cyan'
-  const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
 
   useInput((input, key) => {
@@ -128,9 +127,14 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
               />
             </Box>
           </Box>
-          <Box marginLeft={3}>
-            <Text color={color}>{underline}</Text>
-          </Box>
+          <Box
+            marginLeft={3}
+            borderStyle="single"
+            borderColor={color}
+            borderBottom={false}
+            borderLeft={false}
+            borderRight={false}
+          />
           {promptState === PromptState.Error ? (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>

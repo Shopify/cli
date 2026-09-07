@@ -16,7 +16,7 @@ describe('TextPrompt', () => {
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question:
       >  Placeholder
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+         ─────────────────────────────────────────────────────────────────────────────
       "
     `)
   })
@@ -30,7 +30,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [31m>[39m  [31m[41m█[49m[39m
-         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [31m─────────────────────────────────────────────────────────────────────────────[39m
          [31mType an answer to the prompt.[39m
       "
     `)
@@ -39,7 +39,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [36m>[39m  [36mA[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
       "
     `)
   })
@@ -60,7 +60,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [31m>[39m  [31mthis-test-includes-shopify[41m█[49m[39m
-         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [31m─────────────────────────────────────────────────────────────────────────────[39m
          [31mApp name can't include the word shopify[39m
       "
     `)
@@ -145,7 +145,7 @@ describe('TextPrompt', () => {
       "?  Test question:
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
          [36mBBBBBB[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
       "
     `)
   })
@@ -158,7 +158,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [36m>[39m  [36m***[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
       "
     `)
 
@@ -176,7 +176,7 @@ describe('TextPrompt', () => {
     expect(lastFrame()!).toMatchInlineSnapshot(`
       "?  Test question?
       [36m>[39m  [36m[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
       "
     `)
   })
@@ -223,7 +223,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  How tall are you in cm?
       [36m>[39m  [36m180[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
          You are [36m1.8[39mm tall.
       "
     `)
@@ -248,7 +248,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()!).toMatchInlineSnapshot(`
       "?  How tall are you?
       [36m>[39m  [36muber[46m█[49m[39m
-         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [36m─────────────────────────────────────────────────────────────────────────────[39m
          You are [36mincredibly humongously savagely unnaturally monstrously pathetically [39m
          [36marrogantly uber[39m tall.
       "

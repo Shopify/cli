@@ -44,7 +44,6 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
   const complete = useComplete()
   const [error, setError] = useState<TokenItem<InlineToken> | undefined>(undefined)
   const color = promptState === PromptState.Error ? 'red' : 'cyan'
-  const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
 
   useInput((input, key) => {
@@ -133,9 +132,14 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
                 />
               </Box>
             </Box>
-            <Box marginLeft={3}>
-              <Text color={color}>{underline}</Text>
-            </Box>
+            <Box
+              marginLeft={3}
+              borderStyle="single"
+              borderColor={color}
+              borderBottom={false}
+              borderLeft={false}
+              borderRight={false}
+            />
             {promptState === PromptState.Error && error ? (
               <Box marginLeft={3}>
                 <Text color={color}>
