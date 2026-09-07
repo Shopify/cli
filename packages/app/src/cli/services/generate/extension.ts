@@ -128,7 +128,7 @@ async function extensionInit(options: ExtensionInitOptions) {
     await removeFile(lockFilePath)
   } catch (error) {
     await removePartiallyGeneratedExtension(options.directory)
-    if (isPnpmBlockedBuildsError(error)) {
+    if (options.project.packageManager === 'pnpm' && isPnpmBlockedBuildsError(error)) {
       throw new AbortError(
         "Your extension couldn't be generated because pnpm blocked the build scripts of some of its dependencies.",
         null,
@@ -146,14 +146,12 @@ async function extensionInit(options: ExtensionInitOptions) {
   }
 }
 
-/**
- * Removes the partially generated extension directory so a failed generation leaves no files
- * behind. The removal is best-effort: if it fails we warn about the leftover directory instead of
- * throwing, so the error that interrupted the generation is still surfaced.
- */
+// Retries transient removal errors, such as an antivirus lock on the freshly written files.
+// If removal still fails, we warn about the leftover directory rather than throwing, so the
+// original error isn't lost.
 async function removePartiallyGeneratedExtension(directory: string): Promise<void> {
   try {
-    await removeFile(directory)
+    await removeFile(directory, {maxRetries: 10, retryDelay: 100})
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     renderWarning({
@@ -163,9 +161,8 @@ async function removePartiallyGeneratedExtension(directory: string): Promise<voi
   }
 }
 
-// pnpm refuses to run the build scripts of newly installed dependencies until they are approved,
-// and recent pnpm versions fail the install when they can't prompt for that approval, which is
-// the case while dependencies are installed from within the generation tasks.
+// pnpm can't prompt to approve build scripts during a non-interactive install like this one,
+// so recent versions fail the install outright instead.
 function isPnpmBlockedBuildsError(error: unknown): boolean {
   return error instanceof Error && error.message.includes('ERR_PNPM_IGNORED_BUILDS')
 }
