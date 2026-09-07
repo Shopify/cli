@@ -83,19 +83,17 @@ interface ExtensionInitOptions {
 
 class FunctionSetupError extends AbortError {
   constructor(error: unknown, {directory, project}: ExtensionInitOptions) {
-    const dependencyDirectory = project.usesWorkspaces ? directory : project.directory
     const nextSteps = [
       ...(project.packageManager === 'pnpm'
         ? [
             `If pnpm blocked dependency build scripts, run pnpm approve-builds in ${project.directory} and approve the dependencies you trust.`,
           ]
         : []),
-      `Install @shopify/shopify_function@~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0 with your package manager in ${dependencyDirectory}, then rerun its install command in ${project.directory}.`,
-      `Run shopify app function typegen from ${directory} to finish generating GraphQL types.`,
+      `Resolve the error above, then rerun shopify app generate extension from ${project.directory}. You can reuse the same extension name.`,
     ]
     super(
       error instanceof Error ? error.message : String(error),
-      `Your function files were kept in ${directory}. Resolve the setup error, then finish setup manually.`,
+      `The incomplete function directory at ${directory} was removed.`,
       nextSteps,
     )
     this.cause = error
@@ -147,11 +145,7 @@ async function extensionInit(options: ExtensionInitOptions) {
     const lockFilePath = joinPath(options.directory, configurationFileNames.lockFile)
     await removeFile(lockFilePath)
   } catch (error) {
-    if (error instanceof FunctionSetupError) {
-      await removeFile(joinPath(options.directory, configurationFileNames.lockFile))
-    } else {
-      await removeFile(options.directory)
-    }
+    await removeFile(options.directory)
     throw error
   }
 }
@@ -238,7 +232,7 @@ async function functionExtensionInit(options: ExtensionInitOptions) {
   try {
     await renderTasks(taskList)
   } catch (error) {
-    // Keep a complete scaffold so dependency approvals and type generation can be retried manually.
+    // Explain how to retry setup failures after extensionInit removes the incomplete function.
     if (templateGenerated) throw new FunctionSetupError(error, options)
     throw error
   }

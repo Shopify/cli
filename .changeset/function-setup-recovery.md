@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Preserve generated function files and provide recovery steps when dependency installation or type generation fails.
+Explain how to retry function generation after cleaning up a failed dependency installation or type generation.

@@ -158,7 +158,7 @@ describe('initialize a extension', async () => {
     {failureStage: 'type generation', useWorkspaces: true, packageManager: 'pnpm'},
     {failureStage: 'runtime install', useWorkspaces: false, packageManager: 'npm'},
   ])(
-    'preserves the function when $failureStage fails ($packageManager, workspaces: $useWorkspaces)',
+    'removes the function and allows retrying when $failureStage fails ($packageManager, workspaces: $useWorkspaces)',
     async ({failureStage, useWorkspaces, packageManager}) => {
       await withTemporaryApp(
         async (tmpDir) => {
@@ -181,44 +181,36 @@ describe('initialize a extension', async () => {
             buildGraphqlTypes.mockImplementationOnce(failAfterPartialInstall)
           }
 
-          await expect(
-            createFromTemplate({
-              name,
-              extensionTemplate,
-              extensionFlavor: 'vanilla-js',
-              appDirectory: tmpDir,
-              specifications,
-              onGetTemplateRepository: async (_url, destination) => {
-                const templateDirectory = joinPath(destination, 'discounts/javascript/order-discounts/default')
-                await file.mkdir(joinPath(templateDirectory, 'src'))
-                await file.writeFile(joinPath(templateDirectory, 'src', 'index'), 'export default {}')
-                await file.writeFile(joinPath(templateDirectory, 'package.json'), '{}')
-                await file.writeFile(
-                  joinPath(templateDirectory, 'shopify.extension.toml'),
-                  `name = "${name}"\ntype = "function"\napi_version = "2026-07"`,
-                )
-              },
-            }),
-          ).rejects.toMatchObject({
+          const options: CreateFromTemplateOptions = {
+            name,
+            extensionTemplate,
+            extensionFlavor: 'vanilla-js',
+            appDirectory: tmpDir,
+            specifications,
+            onGetTemplateRepository: async (_url, destination) => {
+              const templateDirectory = joinPath(destination, 'discounts/javascript/order-discounts/default')
+              await file.mkdir(joinPath(templateDirectory, 'src'))
+              await file.writeFile(joinPath(templateDirectory, 'src', 'index'), 'export default {}')
+              await file.writeFile(joinPath(templateDirectory, 'package.json'), '{}')
+              await file.writeFile(
+                joinPath(templateDirectory, 'shopify.extension.toml'),
+                `name = "${name}"\ntype = "function"\napi_version = "2026-07"`,
+              )
+            },
+          }
+          await expect(createFromTemplate(options)).rejects.toMatchObject({
             message: failure.message,
             cause: failure,
-            tryMessage: expect.stringContaining(extensionDirectory),
+            tryMessage: `The incomplete function directory at ${extensionDirectory} was removed.`,
             nextSteps: [
               ...(packageManager === 'pnpm' ? [expect.stringContaining(`pnpm approve-builds in ${tmpDir}`)] : []),
-              expect.stringContaining(`with your package manager in ${useWorkspaces ? extensionDirectory : tmpDir}`),
-              expect.stringContaining(`shopify app function typegen from ${extensionDirectory}`),
+              expect.stringContaining(`shopify app generate extension from ${tmpDir}`),
             ],
           })
 
-          await expect(file.readFile(joinPath(extensionDirectory, 'src', 'index.js'))).resolves.toBe(
-            'export default {}',
-          )
-          await expect(file.fileExists(joinPath(extensionDirectory, 'package.json'))).resolves.toBe(true)
-          await expect(file.fileExists(joinPath(extensionDirectory, 'shopify.extension.toml'))).resolves.toBe(true)
-          await expect(file.fileExists(joinPath(extensionDirectory, configurationFileNames.lockFile))).resolves.toBe(
-            false,
-          )
+          await expect(file.fileExists(extensionDirectory)).resolves.toBe(false)
           if (failureStage !== 'type generation') expect(buildGraphqlTypes).not.toHaveBeenCalled()
+          await expect(createFromTemplate(options)).resolves.toBe(extensionDirectory)
         },
         {useWorkspaces},
       )
