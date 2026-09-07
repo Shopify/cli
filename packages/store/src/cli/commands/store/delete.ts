@@ -9,8 +9,6 @@ import {isTTY, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui
 import {Flags} from '@oclif/core'
 
 export default class StoreDelete extends Command {
-  static hidden = true
-
   static summary = 'Delete a dev store.'
 
   static descriptionWithMarkdown = 'Deletes a dev store from your organization.'

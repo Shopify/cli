@@ -104,7 +104,9 @@
 │  │  ├─ execute
 │  │  └─ status
 │  ├─ create
+│  │  ├─ dev
 │  │  └─ preview
+│  ├─ delete
 │  ├─ execute
 │  ├─ graphiql
 │  ├─ info

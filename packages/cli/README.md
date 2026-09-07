@@ -84,7 +84,9 @@
 * [`shopify store bulk cancel`](#shopify-store-bulk-cancel)
 * [`shopify store bulk execute`](#shopify-store-bulk-execute)
 * [`shopify store bulk status`](#shopify-store-bulk-status)
+* [`shopify store create dev`](#shopify-store-create-dev)
 * [`shopify store create preview`](#shopify-store-create-preview)
+* [`shopify store delete`](#shopify-store-delete)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify store graphiql`](#shopify-store-graphiql)
 * [`shopify store info`](#shopify-store-info)
@@ -3655,6 +3657,68 @@ EXAMPLES
   $ shopify store bulk status --store shop.myshopify.com --id 123456789
 ```
 
+## `shopify store create dev`
+
+Create a new dev store.
+
+```
+USAGE
+  $ shopify store create dev [--country <value>] [--demo-data] [--feature-preview <value>] [-j] [--name <value>]
+    [--no-color] [--organization-id <value>] [--plan basic|grow|advanced|plus] [--verbose]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --country=<value>
+      Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.
+      [env: SHOPIFY_FLAG_STORE_COUNTRY]
+
+  --[no-]demo-data
+      Populate the new dev store with demo data.
+      [env: SHOPIFY_FLAG_STORE_DEMO_DATA]
+
+  --feature-preview=<value>
+      The handle of a feature preview to enable on the new dev store.
+      [env: SHOPIFY_FLAG_STORE_FEATURE_PREVIEW]
+
+  --name=<value>
+      Name for the new dev store. Required if non interactive.
+      [env: SHOPIFY_FLAG_STORE_NAME]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --organization-id=<value>
+      The numeric organization ID. Auto-selects if you belong to a single organization. Required if non interactive.
+      [env: SHOPIFY_FLAG_ORGANIZATION_ID]
+
+  --plan=<option>
+      The Shopify plan to use for the new dev store. Required if non interactive.
+      [env: SHOPIFY_FLAG_STORE_PLAN]
+      <options: basic|grow|advanced|plus>
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Create a new dev store.
+
+  Creates a new dev store in your organization.
+
+EXAMPLES
+  $ shopify store create dev
+
+  $ shopify store create dev --name "Lavender Candles" --organization-id 1234567 --plan basic
+
+  $ shopify store create dev --name "Lavender Candles" --organization-id 1234567 --plan basic --demo-data
+
+  $ shopify store create dev --name "Lavender Candles" --organization-id 1234567 --plan basic --json
+```
+
 ## `shopify store create preview`
 
 Create a preview Shopify store.
@@ -3695,6 +3759,52 @@ EXAMPLES
   $ shopify store create preview --name "Lavender Candles" --country US
 
   $ shopify store create preview --name "Lavender Candles" --json
+```
+
+## `shopify store delete`
+
+Delete a dev store.
+
+```
+USAGE
+  $ shopify store delete -s <value> [-f] [-j] [--no-color] [--organization-id <value>] [--verbose]
+
+FLAGS
+  -f, --force
+      Skip confirmation. Required if non interactive.
+      [env: SHOPIFY_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  -s, --store=<value>
+      (required) The myshopify.com domain of the store.
+      [env: SHOPIFY_FLAG_STORE]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --organization-id=<value>
+      The numeric organization ID. Auto-selects if you belong to a single organization.
+      [env: SHOPIFY_FLAG_ORGANIZATION_ID]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Delete a dev store.
+
+  Deletes a dev store from your organization.
+
+EXAMPLES
+  $ shopify store delete --store shop.myshopify.com --organization-id 1234567
+
+  $ shopify store delete --store shop.myshopify.com --organization-id 1234567 --json
+
+  $ shopify store delete --store shop.myshopify.com --organization-id 1234567 --force
 ```
 
 ## `shopify store execute`
