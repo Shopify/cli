@@ -15,12 +15,14 @@ import {
   readAndParsePackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppLinkedInterface
@@ -125,9 +127,47 @@ async function extensionInit(options: ExtensionInitOptions) {
     const lockFilePath = joinPath(options.directory, configurationFileNames.lockFile)
     await removeFile(lockFilePath)
   } catch (error) {
-    await removeFile(options.directory)
+    await removePartiallyGeneratedExtension(options.directory)
+    if (isPnpmBlockedBuildsError(error)) {
+      throw new AbortError(
+        "Your extension couldn't be generated because pnpm blocked the build scripts of some of its dependencies.",
+        null,
+        [
+          ['Run', {command: 'pnpm approve-builds'}, 'in your app directory to approve the build scripts.'],
+          [
+            'Run',
+            {command: formatPackageManagerCommand(options.project.packageManager, 'shopify app generate extension')},
+            'again.',
+          ],
+        ],
+      )
+    }
     throw error
   }
+}
+
+/**
+ * Removes the partially generated extension directory so a failed generation leaves no files
+ * behind. The removal is best-effort: if it fails we warn about the leftover directory instead of
+ * throwing, so the error that interrupted the generation is still surfaced.
+ */
+async function removePartiallyGeneratedExtension(directory: string): Promise<void> {
+  try {
+    await removeFile(directory)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    renderWarning({
+      headline: ["Couldn't remove", {filePath: directory}, {char: '.'}],
+      body: 'Delete this directory manually before generating an extension with the same name.',
+    })
+  }
+}
+
+// pnpm refuses to run the build scripts of newly installed dependencies until they are approved,
+// and recent pnpm versions fail the install when they can't prompt for that approval, which is
+// the case while dependencies are installed from within the generation tasks.
+function isPnpmBlockedBuildsError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('ERR_PNPM_IGNORED_BUILDS')
 }
 
 async function themeExtensionInit({
