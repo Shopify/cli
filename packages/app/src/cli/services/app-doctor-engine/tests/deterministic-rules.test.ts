@@ -194,6 +194,11 @@ describe('STATIC_FRAME_ANCESTORS regex mode', () => {
         source(`const headers = {'Content-Security-Policy': "frame-ancestors https://*.myshopify.com"}`, 'app/root.tsx'),
       ]),
     ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors https://*.mycompany.dev"}`, 'app/root.tsx'),
+      ]),
+    ).toEqual([])
   })
 })
 
