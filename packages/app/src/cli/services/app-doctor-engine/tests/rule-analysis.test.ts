@@ -197,6 +197,31 @@ describe('APP_PROXY_LIQUID_INJECTION body flow', () => {
         ),
       ]),
     ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  const shop = request.query.shop;
+  return new Response('<p>Visit our shop</p>', {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toEqual([])
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  const shop = request.query.shop;
+  const contentType = 'text/html';
+  return '<div>' +
+    shop +
+    '</div>';
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
   })
 })
 

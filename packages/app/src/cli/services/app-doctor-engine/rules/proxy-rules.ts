@@ -71,9 +71,9 @@ function responseBodyExpressions(source: string): {index: number; expression: st
 }
 
 function hasRequestControlledBodyFlow(expression: string, requestBindings: Set<string>): boolean {
-  const unescaped = removeSafeHtmlEscapes(expression)
-  if (REQUEST_SOURCE.test(unescaped)) return true
-  return [...requestBindings].some((binding) => new RegExp(`\\b${escapeRegExp(binding)}\\b`).test(unescaped))
+  const executableExpression = maskLiteralTextPreservingTemplateExpressions(removeSafeHtmlEscapes(expression))
+  if (REQUEST_SOURCE.test(executableExpression)) return true
+  return [...requestBindings].some((binding) => new RegExp(`\\b${escapeRegExp(binding)}\\b`).test(executableExpression))
 }
 
 function removeSafeHtmlEscapes(expression: string): string {
@@ -84,6 +84,30 @@ function removeSafeHtmlEscapes(expression: string): string {
     unescaped = next
   }
   return unescaped
+}
+
+function maskLiteralTextPreservingTemplateExpressions(source: string): string {
+  return source.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`\\])*`/g, (literal) => {
+    if (!literal.startsWith('`')) return literal.replace(/[^\n]/g, ' ')
+    const original = [...literal]
+    const masked: string[] = original.map((character) => (character === '\n' ? '\n' : ' '))
+    let depth = 0
+    for (let index = 0; index < original.length; index++) {
+      if (depth === 0 && original[index] === '$' && original[index + 1] === '{') {
+        depth = 1
+        index++
+        continue
+      }
+      if (depth === 0) continue
+      if (original[index] === '{') depth++
+      else if (original[index] === '}') {
+        depth--
+        continue
+      }
+      masked[index] = original[index]!
+    }
+    return masked.join('')
+  })
 }
 
 function firstCallArgument(source: string, start: number): {text: string; end: number} | undefined {
@@ -125,11 +149,18 @@ function statementExpression(source: string, start: number): {text: string; end:
     }
     if (character === '(' || character === '[' || character === '{') depth++
     else if (character === ')' || character === ']' || character === '}') depth--
-    else if (depth === 0 && (character === ';' || character === '\n'))
+    else if (depth === 0 && character === ';') return {text: source.slice(start, index).trim(), end: index + 1}
+    else if (depth === 0 && character === '\n' && !continuesAcrossNewline(source, start, index))
       return {text: source.slice(start, index).trim(), end: index + 1}
   }
   const text = source.slice(start).trim()
   return text ? {text, end: source.length} : undefined
+}
+
+function continuesAcrossNewline(source: string, start: number, newlineIndex: number): boolean {
+  const previous = source.slice(start, newlineIndex).trimEnd().at(-1)
+  const next = source.slice(newlineIndex + 1).trimStart().at(0)
+  return Boolean(previous && '+-*/%&|?:.,'.includes(previous)) || Boolean(next && '+-*/%&|?:.,'.includes(next))
 }
 
 function stripComments(source: string): string {
