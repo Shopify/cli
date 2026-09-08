@@ -25,7 +25,7 @@ export class ShopifyConfig extends Config {
   }
 
   /**
-   * Load the oclif config, after making sure its shell detection can't crash the CLI.
+   * Override load to protect oclif's shell detection from a failing OS user lookup.
    *
    * @returns A promise that resolves once the config is loaded.
    */
@@ -74,13 +74,8 @@ export class ShopifyConfig extends Config {
   }
 }
 
-/**
- * Set SHELL when the OS can't tell us what it is, so that oclif never has to ask.
- *
- * While loading, oclif reads the SHELL environment variable and falls back to Node's `userInfo()`, which
- * throws when the OS can't resolve the current user — taking the CLI down before it runs anything. Drop
- * this once oclif guards that call itself; both 4.8 and 4.11 leave it unguarded.
- */
+// oclif reads SHELL and falls back to os.userInfo(), which throws when the OS can't resolve the current
+// user, killing the CLI during load. Remove once oclif guards that call; 4.8 and 4.11 both don't.
 function setShellVariableWhenUserLookupFails(): void {
   if (process.env.SHELL !== undefined) return
 
@@ -88,7 +83,6 @@ function setShellVariableWhenUserLookupFails(): void {
     os.userInfo()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    // The value oclif itself falls back to for a shell it can't identify.
     process.env.SHELL = 'unknown'
   }
 }

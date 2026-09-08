@@ -128,7 +128,6 @@ describe('ShopifyConfig', () => {
   })
 
   test('loads successfully when the OS user lookup fails during shell detection', async () => {
-    // oclif and the guard both only reach os.userInfo() when SHELL is unset.
     vi.stubEnv('SHELL', undefined)
     vi.spyOn(os, 'userInfo').mockImplementation(() => {
       throw osUserLookupError()
