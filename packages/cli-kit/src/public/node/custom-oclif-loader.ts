@@ -61,4 +61,27 @@ export class ShopifyConfig extends Config {
     await this.runHook('postrun', {argv, Command: commandClass, result})
     return result
   }
+
+  /**
+   * Guard oclif's shell detection, which otherwise crashes the CLI when the OS can't resolve the current user.
+   *
+   * Oclif populates `config.shell` during `Config.load()`. When the SHELL environment variable is unset it
+   * falls back to Node's `userInfo()`, which throws a SystemError whenever the OS passwd lookup fails —
+   * ENOMEM on Windows profiles where the lookup is broken, ENOENT for a container UID with no passwd entry.
+   * The call is unguarded, so it kills the CLI before it can run any command.
+   *
+   * Note when bumping the oclif dependency: 4.11 drops `_shell` from `Config` and moves the logic into a
+   * module-level `getShell()`, so this override stops compiling. The call is still unguarded upstream, so
+   * reinstate the guard at whatever seam replaces it rather than dropping it.
+   *
+   * @returns The name of the active shell, or oclif's own 'unknown' sentinel when detection fails.
+   */
+  protected _shell(): string {
+    try {
+      return super._shell()
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return 'unknown'
+    }
+  }
 }

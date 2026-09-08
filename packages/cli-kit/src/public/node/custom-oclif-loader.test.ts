@@ -1,6 +1,8 @@
 import {ShopifyConfig} from './custom-oclif-loader.js'
 import {Config} from '@oclif/core'
 import {describe, expect, test, vi} from 'vitest'
+import os from 'node:os'
+import {fileURLToPath} from 'node:url'
 
 describe('ShopifyConfig', () => {
   test('delegates to super.runCommand when no lazy command loader is configured', async () => {
@@ -120,4 +122,46 @@ describe('ShopifyConfig', () => {
     expect(config.findCommand).not.toHaveBeenCalled()
     expect(lazyCommandLoader).toHaveBeenCalledWith('test-command')
   })
+
+  test('loads successfully when the OS user lookup fails during shell detection', async () => {
+    // SHELL short-circuits oclif's `process.env.SHELL ?? userInfo()`, so it has to be unset for the
+    // OS lookup — the call that crashes in production — to run at all.
+    vi.stubEnv('SHELL', undefined)
+    vi.spyOn(os, 'userInfo').mockImplementation(() => {
+      throw osUserLookupError()
+    })
+    const config = new ShopifyConfig({root: fileURLToPath(import.meta.url)})
+
+    await config.load()
+
+    expect(config.shell).toBe('unknown')
+  })
+
+  test('reports the shell oclif detected when the OS user lookup succeeds', async () => {
+    vi.stubEnv('SHELL', undefined)
+    vi.spyOn(os, 'userInfo').mockReturnValue({
+      username: 'test-user',
+      uid: 1000,
+      gid: 1000,
+      homedir: '/home/test-user',
+      shell: '/bin/fish',
+    })
+    const config = new ShopifyConfig({root: fileURLToPath(import.meta.url)})
+
+    await config.load()
+
+    expect(config.shell).toBe('fish')
+  })
 })
+
+/**
+ * The SystemError Node throws from os.userInfo() when the OS can't resolve the current user.
+ *
+ * @returns An error shaped like the real failure reported by affected users.
+ */
+function osUserLookupError(): Error {
+  return Object.assign(new Error('A system error occurred: uv_os_get_passwd returned ENOMEM (not enough memory)'), {
+    code: 'ERR_SYSTEM_ERROR',
+    info: {code: 'ENOMEM', errno: -4057, syscall: 'uv_os_get_passwd'},
+  })
+}
