@@ -1,6 +1,6 @@
 ---
 id: THEME_EXTENSION_XSS
-version: 1
+version: 2
 severity: high
 ---
 
@@ -48,6 +48,11 @@ template, not a JavaScript file.
    - Use `postMessage` with unvalidated origin — can receive XSS payloads
      from other windows
    - Read `window.Shopify` data that includes merchant-editable fields
+
+6. **Follow persisted values beyond the first Liquid render.** A metafield or
+   setting may later feed generated JavaScript/service workers, preview UIs,
+   emails, PDFs, App Proxy responses, or operator/admin views. Trace every
+   persisted field to every renderer before deciding the execution boundary.
 
 ## What to report
 

@@ -118,6 +118,27 @@ describe('review pack', () => {
     expect(pack.instructions).toMatch(/explore|find/i)
     expect(pack.instructions).toMatch(/findings/i)
   })
+
+  test('instructions require concrete trust-boundary evidence before reporting findings', () => {
+    const pack = buildReviewPack('0.1.0')
+    expect(pack.instructions).toContain('concrete trust-boundary violation')
+    expect(pack.instructions).toContain('affected authority')
+    expect(pack.instructions).toContain('code smell')
+  })
+
+  test('review prompts cover tenant provenance, authorization drift, proxy nuance, and data sensitivity', () => {
+    const checks = loadChecks()
+    expect(checks.get('REQUEST_DERIVED_SHOP_SCOPE')!.prompt).toContain('cache keys')
+    expect(checks.get('REQUEST_DERIVED_SHOP_SCOPE')!.prompt).toContain('unbound to the current installation/session')
+    expect(checks.get('MISSING_AUTHORIZATION_CHECK')!.prompt).toContain('create/read/update/delete')
+    expect(checks.get('APP_PROXY_UNVERIFIED_SIGNATURE')!.prompt).toContain('victim-signed request path')
+    expect(checks.get('OVERBROAD_DATA_ACCESS')!.prompt).toContain('public shop domains')
+    expect(checks.get('UNSAFE_INNERHTML')!.prompt).toContain('email and PDF rendering')
+    expect(checks.get('KNOWN_CVE_IN_DEPENDENCY')!.prompt).toContain('vulnerable API or helper')
+    expect(checks.get('OPEN_REDIRECT')!.prompt).toContain('sensitive trust transition')
+    expect(checks.get('CSRF_MISSING_PROTECTION')!.prompt).toContain('concrete sensitive action')
+    expect(checks.get('MISSING_EMBEDDED_CSP')!.prompt).toContain('concrete clickjacking impact')
+  })
 })
 
 describe('finding validation', () => {

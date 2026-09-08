@@ -1,6 +1,6 @@
 ---
 id: TEXT_SETTING_HTML_SMUGGLING
-version: 1
+version: 2
 severity: high
 ---
 
@@ -38,6 +38,10 @@ because the HTML is rendered server-side or in Liquid, not via
      field, not a URL param
    - React: `dangerouslySetInnerHTML` where the HTML comes from a
      settings/metafield value
+   - Generated JavaScript/service workers, email or PDF rendering, operator/admin
+     UIs, and previews that later treat the stored field as executable content
+   - App Proxy HTML/Liquid/JavaScript responses or script/iframe URL builders fed
+     by the same persisted setting
 
 3. **Check whether the setting is merchant-configurable.** The key
    question is: can the merchant (or an attacker who compromised the
@@ -58,6 +62,10 @@ because the HTML is rendered server-side or in Liquid, not via
    `"type": "richtext"` are designed to accept HTML — but if the app
    renders them without sanitisation in a context where script execution
    is possible, it's still a vulnerability.
+
+6. **Trace every persisted field to every renderer.** A settings write that looks
+   harmless in one route can become executable later in a preview, email, PDF,
+   service worker, or operator/admin UI. Do not stop at the first renderer.
 
 ## What to report
 

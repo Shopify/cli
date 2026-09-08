@@ -237,7 +237,7 @@ describe('framework and surface detection', () => {
     )?.deterministic_fallback
     expect(fallback).toMatchObject({
       check_id: 'UNSAFE_INNERHTML',
-      check_version: 1,
+      check_version: DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')!.version,
       prompt_hash: expect.stringMatching(/^sha256:/),
       framework: 'react_router',
       surface: 'react_router',
@@ -302,7 +302,7 @@ describe('runtime identities', () => {
       assertRegistryInvariants({
         catalog: sharedCatalog,
         deterministic: [shared],
-        agent: [{id: shared.id, version: 1, prompt_hash: `sha256:${'a'.repeat(64)}`}],
+        agent: [{id: shared.id, version: shared.version, prompt_hash: `sha256:${'a'.repeat(64)}`}],
       }),
     ).not.toThrow()
     expect(() =>

@@ -1,22 +1,23 @@
 ---
 id: REQUEST_DERIVED_SHOP_SCOPE
-version: 2
+version: 3
 severity: high
 ---
 
-Find cases where a shop identifier comes from request input (form data,
-query params, headers) instead of the authenticated session, and is used
-to scope a database query or select an Admin API context.
+Find cases where a shop or tenant selector comes from an untrusted or
+insufficiently bound source instead of the authenticated installation or
+session, and is used to scope a database query or select an Admin /
+Storefront API context.
 
 The key insight: a shop filter that uses an attacker-controlled value is
 no filter at all. The attacker can pass any shop's identifier and access
 that shop's data. This is distinct from `MISSING_TENANT_ISOLATION` (no
 shop filter at all) — here the filter or context selection exists, but
-the value comes from the request, not the session.
+the selector wins over the authenticated installation/session context.
 
-This bug appears in two forms:
+This bug appears in two common forms:
 
-**Form 1: Database query scoped by request input.**
+**Form 1: Database query scoped by an untrusted selector.**
 
 ```ruby
 # Rails — shop_id from params, not session
@@ -24,7 +25,7 @@ Token.where(shop_id: params[:shop_id]).delete_all
 Order.find_by(shop_id: params[:shop])
 ```
 
-**Form 2: Admin API context selected by request input.**
+**Form 2: API context selected by an untrusted selector.**
 
 ```typescript
 // Remix — shop from formData, not session
@@ -35,9 +36,9 @@ const { admin } = await unauthenticated.admin(shop);
 
 Both are the same vulnerability: the caller chooses which shop's data to
 access. In Form 1, the query filter is attacker-controlled. In Form 2,
-the Admin API context is attacker-controlled. `unauthenticated.admin()`
-deliberately takes a shop parameter (it's for offline/background jobs),
-so using it with request input is an IDOR — the caller selects the shop.
+the API context is attacker-controlled. `unauthenticated.admin()` and
+`unauthenticated.storefront()` deliberately take a shop parameter, so
+using either with an unbound selector is an IDOR.
 
 ## What to look for
 
@@ -45,30 +46,33 @@ so using it with request input is an IDOR — the caller selects the shop.
    - `where(shop_id:`, `where(shop:`, `where(store_id:`, `where(tenant_id:`
    - `.find_by(shop_id:`, `.find_or_initialize_by(shop_id:`
 
-2. **Find `unauthenticated.admin()` calls.** Search for:
-   - `unauthenticated.admin(` — this function takes a shop domain/id as
-     its argument. If that argument comes from request input, it's an IDOR.
-   - `unauthenticated.admin(shop)` where `shop` is traced to `formData.get()`,
-     `request.json()`, `url.searchParams.get()`, `params.shop`, etc.
+2. **Find privileged Shopify API context selectors.** Search for:
+   - `unauthenticated.admin(`
+   - `unauthenticated.storefront(`
+   - Helpers that construct Admin / Storefront API clients from a supplied shop
 
-3. **Trace the shop value for every query or admin context call.** Determine
+3. **Trace the selector for every query or API context call.** Determine
    where it comes from:
    - `params[:shop_id]`, `formData.get("shop")`, `url.searchParams.get("shop")`
      — request input, attacker-controlled
-   - `request.headers["X-Shopify-Shop-Domain"]` — header, attacker-controlled
-   - `session.shop`, `current_shop.shop_id`, `shop.shop_id` — session-derived,
-     safe
-   - A local variable — trace it back to its assignment
+   - `request.headers["X-Shopify-Shop-Domain"]` or equivalent raw headers
+     — attacker-controlled unless independently verified
+   - cache keys, serialized background-job payloads, token-exchange artifacts,
+     GraphQL IDs, or database fields originally written from lower-trust input
+   - `session.shop`, `current_shop.shop_id`, `shop.shop_id`, or a verified
+     installation/session record — trusted
+   - A local variable — trace it back to its first trusted or untrusted source
 
-4. **Check for compensating controls.** The shop value may be safe even
-   if it comes from params, IF there's a prior verification:
-   - An HMAC signature on the URL (e.g., `validate_path` with a signing key)
-   - A `before_action` that validates the shop against the session
-   - A Pundit policy check
-   - The params were set by trusted backend code, not the client
+4. **Check for compensating controls.** The selector may be safe even if it
+   came from lower-trust input, IF the code re-binds it before use:
+   - An HMAC signature on the URL or payload
+   - A `before_action` / middleware check that compares it to the session
+   - A Pundit policy or authorization check that proves tenant ownership
+   - A background-job lookup that loads the installation/session record and
+     ignores the raw job value after rebinding
 
-   Follow the control to its definition and verify it actually covers
-   this query's shop_id.
+   Follow the control to its definition and verify it actually dominates the
+   query or API-context creation you are reviewing.
 
 5. **Check for the OAuth callback pattern.** In Shopify OAuth flows,
    `shop_id` often comes from a signed URL that was generated by the
@@ -76,16 +80,17 @@ so using it with request input is an IDOR — the caller selects the shop.
    the control. This is safe — but verify the signing key isn't
    hardcoded or leaked.
 
-6. **Distinguish `authenticate.admin` from `unauthenticated.admin`.**
+6. **Distinguish `authenticate.admin` from `unauthenticated.*`.**
    `authenticate.admin(request)` derives the shop from the session — safe.
-   `unauthenticated.admin(shop)` takes the shop as an argument — only safe
-   if the argument is session-derived or verified, NOT if it comes from
-   request input.
+   `unauthenticated.admin(shop)` / `unauthenticated.storefront(shop)` take the
+   shop as an argument — only safe if the argument is session-derived or
+   independently verified.
 
 ## What to report
 
-For each query or admin context call where the shop value is
-attacker-controlled with no compensating control:
+For each query or API context call where the selector is proven
+attacker-controlled or unbound to the current installation/session and no
+compensating control dominates the sink:
 
 ```json
 {
@@ -106,16 +111,19 @@ attacker-controlled with no compensating control:
     }
   ],
   "confidence": "high",
-  "reasoning": "Shop comes from formData (request input) and is passed to unauthenticated.admin(). No session verification. An attacker can set shop to any value and access that shop's Admin API context."
+  "reasoning": "Shop comes from formData (request input) and is passed to unauthenticated.admin(). No session verification or rebinding occurs, so an attacker can select another shop's Admin API context."
 }
 ```
 
 Do not report:
 
-- Calls to `authenticate.admin(request)` — the shop comes from the
-  session, not from request input
-- Queries where shop_id comes from `current_shop`, `session.shop`, or
-  other session-derived sources
-- Queries guarded by an HMAC signature (verify the signature check first)
+- Calls to `authenticate.admin(request)` — the shop comes from the session
+- Queries where shop_id comes from `current_shop`, `session.shop`, or other
+  session-derived sources
+- Queries guarded by an HMAC signature or explicit rebinding to a trusted installation
 - Queries on the Shop model itself (looking up a shop by id is normal)
-- Queries in webhook handlers (the HMAC verification covers the payload)
+- Queries in webhook handlers where verified HMAC-bound context supplies the selector
+- Background-job, cache, header, or persisted shop values proven to be rebound to a
+  trusted installation/session record before use
+- Values whose provenance is unclear but not demonstrably attacker-controlled;
+  keep those unresolved instead of reporting a finding

@@ -92,14 +92,19 @@ const configRule = (rule: Rule): DeterministicCheckDefinition => ({
   runner: (context) => rule.check(context),
 })
 
-const jsCheck = (id: string, runner: Runner, target: CheckTarget = 'source'): DeterministicCheckDefinition => ({
+const jsCheck = (
+  id: string,
+  runner: Runner,
+  target: CheckTarget = 'source',
+  version = 1,
+): DeterministicCheckDefinition => ({
   id,
-  version: 1,
+  version,
   lifecycle: 'active',
   analysisMode: 'regex',
   target,
   extensions: JAVASCRIPT_EXTENSIONS,
-  guidance: `Review ${id} using the matching version 1 agent prompt; trace aliases, computed access, and non-local flows in the listed files.`,
+  guidance: `Review ${id} using the matching version ${version} agent prompt; trace aliases, computed access, and non-local flows in the listed files.`,
   runner,
 })
 
@@ -127,7 +132,12 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles)),
     requires: 'has_backend',
   },
-  jsCheck('REQUEST_CONTROLLED_ADMIN_CONTEXT', (context) => scanRequestControlledAdminContext(context.sourceFiles)),
+  jsCheck(
+    'REQUEST_CONTROLLED_ADMIN_CONTEXT',
+    (context) => scanRequestControlledAdminContext(context.sourceFiles),
+    'source',
+    2,
+  ),
   {
     ...configRule(deprecatedScriptTagScope),
     target: 'config_and_source',
@@ -152,12 +162,12 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles)),
   {
     id: 'KNOWN_CVE_IN_DEPENDENCY',
-    version: 2,
+    version: 3,
     lifecycle: 'active',
     analysisMode: 'audit',
     target: 'manifest',
     guidance:
-      'Run the matching version 2 dependency prompt for static lockfile review without executing repository-controlled code.',
+      'Run the matching version 3 dependency prompt for static lockfile review without executing repository-controlled code.',
     runner: async (context) => {
       const result = await auditKnownCves(context.appRoot, context.manifests, context.dependencyAuditExecutor)
       return {issues: result.issues, unresolvedReason: result.unresolvedReason, inspectedFiles: result.inspectedFiles}
@@ -176,7 +186,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
   },
   {
-    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme'),
+    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 2),
     analysisMode: 'regex',
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },
