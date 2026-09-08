@@ -165,10 +165,28 @@ describe('JavaScript regex mode', () => {
 })
 
 describe('STATIC_FRAME_ANCESTORS regex mode', () => {
-  test('flags literal wildcard frame-ancestors only', () => {
+  test('flags only literal clearly permissive frame-ancestors source tokens', () => {
     expect(
       scanStaticFrameAncestors([
         source(`const headers = {'Content-Security-Policy': "frame-ancestors *"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors https://*"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors *.myshopify.com"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "frame-ancestors https://*.myshopify.com"}`,
+          'app/root.tsx',
+        ),
       ]),
     ).toHaveLength(1)
     expect(
@@ -181,18 +199,12 @@ describe('STATIC_FRAME_ANCESTORS regex mode', () => {
     ).toEqual([])
     expect(
       scanStaticFrameAncestors([
-        source(`const policy = buildPolicy(shop); const headers = {'Content-Security-Policy': policy}`, 'app/root.tsx'),
-      ]),
-    ).toEqual([])
-    expect(scanStaticFrameAncestors([source(`const note = 'frame-ancestors *'`, 'app/root.tsx')])).toEqual([])
-    expect(
-      scanStaticFrameAncestors([
         source(
-          `const headers = {'Content-Security-Policy': "frame-ancestors https://*.myshopify.com"}`,
+          `const headers = {'Content-Security-Policy': "frame-ancestors https://*.myshopify.com.evil.test"}`,
           'app/root.tsx',
         ),
       ]),
-    ).toHaveLength(1)
+    ).toEqual([])
     expect(
       scanStaticFrameAncestors([
         source(
@@ -201,6 +213,44 @@ describe('STATIC_FRAME_ANCESTORS regex mode', () => {
         ),
       ]),
     ).toEqual([])
+  })
+
+  test('evaluates only static CSP header values and ignores commented examples', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(`headers.set('Content-Security-Policy', policy); const example = 'frame-ancestors *'`, 'app/root.tsx'),
+      ]),
+    ).toEqual([])
+    expect(scanStaticFrameAncestors([source(`const note = 'frame-ancestors *'`, 'app/root.tsx')])).toEqual([])
+    expect(
+      scanStaticFrameAncestors([
+        source(`const safe = true;// const headers = {'Content-Security-Policy': 'frame-ancestors *'}`, 'app/root.tsx'),
+      ]),
+    ).toEqual([])
+  })
+
+  test('handles multiline and long static CSP literal construction', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {
+  'Content-Security-Policy': [
+    "default-src 'self';",
+    'frame-ancestors *',
+  ].join(' '),
+}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "default-src ${'https://cdn.example.com '.repeat(40)}; frame-ancestors *"}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toHaveLength(1)
   })
 })
 

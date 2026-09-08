@@ -6,10 +6,11 @@ export function detectCapabilities(
   appToml: AppTomlContent | null,
   extensions: ExtensionInfo[],
   sourceFiles: SourceFile[],
+  appTomls: AppTomlContent[] = appToml ? [appToml] : [],
 ): Capabilities {
   const themeExtension = extensions.some((extension) => extension.type === 'theme')
   const appEmbed = extensions.some((extension) => extension.type === 'theme' && hasAppEmbedBlock(extension))
-  const embeddedApp = appToml?.raw.embedded === true
+  const embeddedApp = appTomls.some((configuration) => configuration.raw.embedded === true)
 
   const scriptTags = sourceFiles.some((file) =>
     file.content ? /script[_-]?tags?|ScriptTag/i.test(file.content) : false,

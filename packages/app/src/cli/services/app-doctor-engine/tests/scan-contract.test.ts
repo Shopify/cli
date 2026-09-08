@@ -180,6 +180,38 @@ describe('framework and surface detection', () => {
     )
   })
 
+  test('runs static frame-ancestors for embedded non-React-Router JavaScript apps', async () => {
+    const result = await scan(
+      await app({
+        'shopify.app.toml': `name = "Embedded generic app"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
+        'server.ts': `const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+
+    expect(result.detection.framework).toBe('unknown')
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+      inspected_files: ['server.ts'],
+    })
+  })
+
+  test('keeps embedded-app capability when any readable app config is embedded', async () => {
+    const result = await scan(
+      await app({
+        'shopify.app.toml': `name = "Embedded production"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
+        'shopify.app.staging.toml': `name = "Non-embedded staging"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
+        'server.ts': `const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+
+    expect(result.capabilities.embedded_app).toBe(true)
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+    })
+  })
+
   test('keeps React Router and theme implementations inside their supported file boundaries', async () => {
     const themeDirectory = await app({
       'shopify.app.toml': appConfig(),
