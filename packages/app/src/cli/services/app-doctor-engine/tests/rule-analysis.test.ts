@@ -675,7 +675,7 @@ setInterval(() => {}, 1000)
     }
   })
 
-  test('real npm audit does not fail by double-loading the isolated config', async () => {
+  test('isolated npm config does not double-load user and global config', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-npm-'))
     try {
       await Promise.all([
@@ -691,13 +691,35 @@ setInterval(() => {}, 1000)
         type: 'npm',
         dependencies: {},
       }
-      const result = await auditKnownCves(directory, [manifest])
+      const result = await auditKnownCves(directory, [manifest], async (command, args, options) => {
+        expect(command).toBe('npm')
+        expect(args.filter((argument) => argument.startsWith('--userconfig='))).toHaveLength(1)
+        expect(options.env.NPM_CONFIG_USERCONFIG).toBeTruthy()
+        expect(options.env.NPM_CONFIG_GLOBALCONFIG).toBeTruthy()
+        expect(options.env.NPM_CONFIG_USERCONFIG).not.toBe(options.env.NPM_CONFIG_GLOBALCONFIG)
+
+        const configResult = await executeAuditCommand(
+          command,
+          [
+            'config',
+            'list',
+            '--json',
+            ...args.filter((argument) => argument.startsWith('--userconfig=')),
+            '--no-color',
+          ],
+          options,
+        )
+        expect(configResult.exitCode).toBe(0)
+        expect(configResult.stderr).not.toMatch(/double-loading/i)
+
+        return {stdout: JSON.stringify({metadata: {vulnerabilities: {total: 0}}}), stderr: '', exitCode: 0}
+      })
       expect(result.unresolvedReason).toBeUndefined()
       expect(result.issues).toEqual([])
     } finally {
       await rm(directory, {recursive: true, force: true})
     }
-  }, 20_000)
+  })
 })
 
 describe('Liquid public AST analysis', () => {
