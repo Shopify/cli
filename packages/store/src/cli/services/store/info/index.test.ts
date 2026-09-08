@@ -470,7 +470,7 @@ The CLI is currently unable to prompt for reauthentication.`)
     ['DEVELOPMENT', 'dev'],
     ['DEVELOPMENT_SUPERSET', 'dev'],
     ['PRODUCTION', 'production'],
-    ['CLIENT_TRANSFER', 'client_transfer'],
+    ['CLIENT_TRANSFER', 'client-transfer'],
     ['COLLABORATOR', 'collaborator'],
   ])('maps the BP %s store type to the `%s` handle', async (storeType, expected) => {
     vi.mocked(fetchOrganizationShop).mockResolvedValue(orgShop({storeType}))

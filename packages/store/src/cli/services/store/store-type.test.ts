@@ -18,7 +18,7 @@ describe('storeTypeHandle', () => {
 describe('storeTypeLabel', () => {
   test('title-cases a handle and renders a missing one as blank', () => {
     expect(storeTypeLabel('dev')).toBe('Dev')
-    expect(storeTypeLabel('client_transfer')).toBe('Client Transfer')
+    expect(storeTypeLabel('client-transfer')).toBe('Client Transfer')
     expect(storeTypeLabel(undefined)).toBe('')
   })
 })
@@ -30,7 +30,7 @@ describe('storeTypeFilterValue', () => {
     expect(storeTypeFilters.map((filter) => [filter, storeTypeFilterValue(filter)])).toEqual([
       ['dev', 'development_superset'],
       ['production', 'production'],
-      ['client_transfer', 'client_transfer'],
+      ['client-transfer', 'client_transfer'],
       ['collaborator', 'collaborator'],
     ])
   })
@@ -38,7 +38,7 @@ describe('storeTypeFilterValue', () => {
   // Every filter has to name a type the listing can render back, so the Type column of a filtered
   // listing never disagrees with the filter that produced it.
   test('accepts only handles that store rows can also report', () => {
-    const rowHandles = ['dev', 'production', 'client_transfer', 'collaborator']
+    const rowHandles = ['dev', 'production', 'client-transfer', 'collaborator']
 
     expect(storeTypeFilters.every((filter) => rowHandles.includes(filter))).toBe(true)
   })

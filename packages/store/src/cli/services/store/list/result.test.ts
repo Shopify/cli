@@ -115,7 +115,7 @@ describe('writeStoreListResult', () => {
       {
         source: 'organization',
         organization,
-        storeType: 'client_transfer',
+        storeType: 'client-transfer',
         stores: [
           {
             store: 'my-shop.myshopify.com',
@@ -123,7 +123,7 @@ describe('writeStoreListResult', () => {
             organizationId: '1234',
             organizationName: 'Acme',
             name: 'My Shop',
-            type: 'client_transfer',
+            type: 'client-transfer',
           },
         ],
       },

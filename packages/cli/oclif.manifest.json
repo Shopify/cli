@@ -8029,7 +8029,7 @@
           "options": [
             "dev",
             "production",
-            "client_transfer",
+            "client-transfer",
             "collaborator"
           ],
           "type": "option"
