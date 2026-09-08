@@ -95,7 +95,7 @@ describe('listBusinessPlatformStores', () => {
   test('narrows the query to a single store type when one is requested', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
 
-    await listBusinessPlatformStores({token: 'bp-token', organization, storeType: 'client_transfer'})
+    await listBusinessPlatformStores({token: 'bp-token', organization, storeType: 'client-transfer'})
 
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({

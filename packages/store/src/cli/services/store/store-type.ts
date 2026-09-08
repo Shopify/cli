@@ -6,7 +6,7 @@ import {capitalizeWords} from '@shopify/cli-kit/common/string'
 // enum fails type-checking here until it's given an explicit handle.
 const STORE_TYPE_HANDLES: {[key in Store]: string} = {
   APP_DEVELOPMENT: 'dev',
-  CLIENT_TRANSFER: 'client_transfer',
+  CLIENT_TRANSFER: 'client-transfer',
   COLLABORATOR: 'collaborator',
   DEVELOPMENT: 'dev',
   DEVELOPMENT_SUPERSET: 'dev',
@@ -20,7 +20,7 @@ export function storeTypeHandle(storeType: string | null | undefined): string | 
   return STORE_TYPE_HANDLES[storeType as Store]
 }
 
-// Title-cased label for the `store list` table column (`dev` -> `Dev`, `client_transfer` ->
+// Title-cased label for the `store list` table column (`dev` -> `Dev`, `client-transfer` ->
 // `Client Transfer`).
 export function storeTypeLabel(handle: string | undefined): string {
   return handle ? capitalizeWords(handle) : ''
@@ -34,7 +34,7 @@ export function storeTypeLabel(handle: string | undefined): string {
 const STORE_TYPE_FILTERS = {
   dev: 'development_superset',
   production: 'production',
-  client_transfer: 'client_transfer',
+  'client-transfer': 'client_transfer',
   collaborator: 'collaborator',
 } as const
 

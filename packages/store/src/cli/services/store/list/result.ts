@@ -46,10 +46,10 @@ function truncationWarning(result: ListStoresResult): string {
   return `Showing the ${STORE_LIST_LIMIT} most recent ${storeNounPhrase(result.storeType)}${organization}. More stores exist.`
 }
 
-// Names what was listed, qualified by the active `--type` filter (`client_transfer` -> `client
+// Names what was listed, qualified by the active `--type` filter (`client-transfer` -> `client
 // transfer stores`).
 function storeNounPhrase(storeType: StoreTypeFilter | undefined): string {
-  return storeType ? `${storeType.replaceAll('_', ' ')} stores` : 'stores'
+  return storeType ? `${storeType.replaceAll('-', ' ')} stores` : 'stores'
 }
 
 function renderTextResult(result: ListStoresResult): void {

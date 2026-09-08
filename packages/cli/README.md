@@ -3983,7 +3983,7 @@ List stores in a Shopify organization.
 ```
 USAGE
   $ shopify store list [-j] [--no-color] [--organization-id <value>] [--type
-    dev|production|client_transfer|collaborator] [--verbose]
+    dev|production|client-transfer|collaborator] [--verbose]
 
 FLAGS
   -j, --json
@@ -4002,7 +4002,7 @@ FLAGS
   --type=<option>
       List only stores of this type.
       [env: SHOPIFY_FLAG_STORE_TYPE]
-      <options: dev|production|client_transfer|collaborator>
+      <options: dev|production|client-transfer|collaborator>
 
   --verbose
       Increase the verbosity of the output. May include sensitive data.

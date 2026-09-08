@@ -28,9 +28,9 @@ describe('store list command', () => {
   test('passes the store type filter through to the list service', async () => {
     vi.mocked(listStores).mockResolvedValue({stores: [], source: 'organization'})
 
-    await StoreList.run(['--type', 'client_transfer'])
+    await StoreList.run(['--type', 'client-transfer'])
 
-    expect(listStores).toHaveBeenCalledWith({organizationId: undefined, storeType: 'client_transfer'})
+    expect(listStores).toHaveBeenCalledWith({organizationId: undefined, storeType: 'client-transfer'})
   })
 
   test('writes json output when requested', async () => {
@@ -45,7 +45,7 @@ describe('store list command', () => {
   test('defines the expected flags', () => {
     expect(StoreList.flags.json).toBeDefined()
     expect(StoreList.flags['organization-id']).toBeDefined()
-    expect(StoreList.flags.type?.options).toEqual(['dev', 'production', 'client_transfer', 'collaborator'])
+    expect(StoreList.flags.type?.options).toEqual(['dev', 'production', 'client-transfer', 'collaborator'])
     expect(StoreList.flags).not.toHaveProperty('from')
   })
 })
