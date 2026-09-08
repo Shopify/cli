@@ -21,11 +21,11 @@ export function deepStrict<T>(schema: T): T {
       Object.entries(shape).map(([key, value]) => [key, deepStrict(value as ZodTypeAny)]),
     )
     return z.object(strictShape).strict() as T
-  } else if (schema instanceof ZodOptional) {
-    return deepStrict(schema._def.innerType).optional()
-  } else {
-    return schema
   }
+  if (schema instanceof ZodOptional) {
+    return deepStrict(schema._def.innerType).optional()
+  }
+  return schema
 }
 
 /**
@@ -35,14 +35,7 @@ export function deepStrict<T>(schema: T): T {
  * @returns The human-readable string.
  */
 export function errorsToString(errors: z.ZodIssueBase[]): string {
-  return errors
-    .map((error) =>
-      error.path
-        .join('.')
-        .concat(': ')
-        .concat(error.message ?? 'Unknow error'),
-    )
-    .join('\n')
+  return errors.map((error) => `${error.path.join('.')}: ${error.message ?? 'Unknow error'}`).join('\n')
 }
 
 /**
