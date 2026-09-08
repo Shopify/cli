@@ -127,7 +127,7 @@ Rules:
 - An executed source check must list every inspected project-relative file.
 - Record unresolved checks with a structured reason and actionable guidance.
 - An unsupported or unresolved check didn't pass. Never describe it as passing or complete.
-- If you cannot prove exploitability or affected authority, record the check as unresolved instead of reporting a finding.
+- If you can't prove exploitability or affected authority, record the check as unresolved instead of reporting a finding.
 - Don't report things you couldn't confirm — uncertainty is not a finding.`
 
 /** Files the review pack tells an agent it may inspect, and that compile will accept. */
