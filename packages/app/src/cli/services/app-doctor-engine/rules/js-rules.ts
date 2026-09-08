@@ -53,6 +53,7 @@ interface RequestShopState {
   requestContainers: Set<string>
   formDataContainers: Set<string>
   urlContainers: Set<string>
+  requestShopHelpers: Set<string>
 }
 
 export function scanRequestControlledAdminContext(files: SourceFile[]): Issue[] {
@@ -122,6 +123,7 @@ function collectRequestShopState(
     requestContainers,
     formDataContainers,
     urlContainers,
+    requestShopHelpers,
   }
 
   const destructurePattern = /(?:const|let|var)\s*\{([\s\S]{1,300}?)\}\s*=\s*([\s\S]{1,300}?)(?:;|\n)/g
@@ -163,10 +165,14 @@ function collectRequestShopState(
 function collectRequestShopHelpers(source: string): Set<string> {
   const helpers = new Set<string>()
   const parameterTail = '(?:\\s*:\\s*[^,)]+)?'
+  const returnTypeTail = '(?:\\s*:\\s*(?:[^{}]|\\{[^{}]*\\})*)?'
   const helperPatterns = [
-    new RegExp(`\\bfunction\\s+(${IDENTIFIER})\\s*\\(\\s*(${IDENTIFIER})${parameterTail}[^)]*\\)\\s*\\{`, 'g'),
     new RegExp(
-      `\\b(?:const|let|var)\\s+(${IDENTIFIER})\\s*=\\s*(?:async\\s+)?\\(\\s*(${IDENTIFIER})${parameterTail}[^)]*\\)\\s*=>\\s*\\{`,
+      `\\bfunction\\s+(${IDENTIFIER})\\s*\\(\\s*(${IDENTIFIER})${parameterTail}[^)]*\\)${returnTypeTail}\\s*\\{`,
+      'g',
+    ),
+    new RegExp(
+      `\\b(?:const|let|var)\\s+(${IDENTIFIER})\\s*=\\s*(?:async\\s+)?\\(\\s*(${IDENTIFIER})${parameterTail}[^)]*\\)${returnTypeTail}\\s*=>\\s*\\{`,
       'g',
     ),
   ]
@@ -221,7 +227,8 @@ function isRequestControlledShop(expression: string, state: RequestShopState): b
     /(?:searchParams|formData)\.get\s*\(\s*["']shop(?:Domain)?["']\s*\)/.test(expression) ||
     new RegExp(
       `new\\s+URL\\s*\\(\\s*(?:${state.requestPattern})\\.url\\s*\\)\\.searchParams\\.get\\s*\\(\\s*["']shop(?:Domain)?["']`,
-    ).test(expression)
+    ).test(expression) ||
+    isRequestShopHelperMember(expression, state)
   if (direct) return true
   for (const container of state.requestContainers)
     if (new RegExp(`\\b${escapeRegExp(container)}(?:\\?\\.|\\.|\\[\\s*["'])${SHOP_FIELD}`).test(expression)) return true
@@ -235,7 +242,27 @@ function isRequestControlledShop(expression: string, state: RequestShopState): b
       )
     )
       return true
-  return [...state.requestControlled].some((binding) => new RegExp(`\\b${escapeRegExp(binding)}\\b`).test(expression))
+  return [...state.requestControlled].some((binding) => containsStandaloneIdentifier(expression, binding))
+}
+
+function isRequestShopHelperMember(expression: string, state: RequestShopState): boolean {
+  return [...state.requestShopHelpers].some((helper) => {
+    const call = `(?:\\(\\s*)?(?:await\\s+)?${escapeRegExp(helper)}\\s*\\(\\s*(?:${state.requestPattern})\\s*\\)(?:\\s*\\))?`
+    return new RegExp(`${call}\\s*(?:\\?\\.|\\.|\\[\\s*["'])${SHOP_FIELD}`).test(expression)
+  })
+}
+
+function containsStandaloneIdentifier(expression: string, identifier: string): boolean {
+  const pattern = new RegExp(`\\b${escapeRegExp(identifier)}\\b`, 'g')
+  let match = pattern.exec(expression)
+  while (match) {
+    const previous = expression[match.index - 1]
+    const remainder = expression.slice(match.index + identifier.length)
+    if (previous !== '.' && previous !== '"' && previous !== "'" && previous !== '`' && !/^\s*:/.test(remainder))
+      return true
+    match = pattern.exec(expression)
+  }
+  return false
 }
 
 function blockContents(source: string, openBraceIndex: number): {text: string; end: number} | undefined {

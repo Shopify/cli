@@ -113,9 +113,9 @@ describe('REQUEST_CONTROLLED_ADMIN_CONTEXT trust provenance', () => {
     expect(findings).toEqual([])
   })
 
-  test('follows one-hop request parsing helpers that return shop params', () => {
+  test('follows typed one-hop request parsing helpers and inline helper member reads', () => {
     const findings = scanRequestControlledAdminContext([
-      source(`function readParams(request: Request) {
+      source(`function readParams(request: Request): {shop: string} {
   const url = new URL(request.url);
   return {shop: url.searchParams.get("shop") ?? ""};
 }
@@ -123,25 +123,29 @@ describe('REQUEST_CONTROLLED_ADMIN_CONTEXT trust provenance', () => {
 export const loader = async ({request}) => {
   const params = readParams(request);
   await unauthenticated.admin(params.shop);
+  await unauthenticated.admin(readParams(request).shop);
+  await unauthenticated.admin((await readParams(request)).shop);
 }`),
     ])
 
-    expect(findings).toHaveLength(1)
-    expect(findings[0]?.location.line).toBe(8)
+    expect(findings).toHaveLength(3)
+    expect(findings.map((finding) => finding.location.line)).toEqual([8, 9, 10])
   })
-  test('does not treat helper parsing as unsafe when the sink uses the verified session shop', () => {
-    const findings = scanRequestControlledAdminContext([
-      source(`function readParams(request: Request) {
-  const url = new URL(request.url);
-  return {shop: url.searchParams.get("shop") ?? ""};
-}
 
-export const loader = async ({request}) => {
-  const {session} = await authenticate.admin(request);
+  test('does not taint trusted session properties or helpers that return a rebound session shop', () => {
+    const findings = scanRequestControlledAdminContext([
+      source(`export const loader = async ({request}) => {
+  const {shop} = request.query;
+  const authenticated = await authenticate.admin(request);
+  await unauthenticated.admin(authenticated.session.shop);
+  function readParams(request: Request): {shop: string} {
+    const url = new URL(request.url);
+    const requestedShop = url.searchParams.get("shop") ?? "";
+    if (requestedShop !== authenticated.session.shop) throw new Error("invalid shop");
+    return {shop: authenticated.session.shop};
+  }
   const params = readParams(request);
-  const shop = session.shop;
-  await unauthenticated.admin(shop);
-  return params.shop;
+  await unauthenticated.admin(params.shop);
 }`),
     ])
 
@@ -150,7 +154,7 @@ export const loader = async ({request}) => {
 })
 
 describe('APP_PROXY_LIQUID_INJECTION body flow', () => {
-  test('flags only request data that reaches an active response body', () => {
+  test('flags request data only in the same active Response body', () => {
     expect(
       scanAppProxyLiquidInjection([
         source(
@@ -178,7 +182,8 @@ describe('APP_PROXY_LIQUID_INJECTION body flow', () => {
         source(
           `export const loader = ({request}) => {
   const shop = request.query.shop;
-  return new Response(\`<div>\${escapeHtml(shop)}</div>\`, {headers: {'Content-Type': 'text/html'}});
+  const session = {shop: 'trusted'};
+  return new Response(\`<div>\${session.shop}</div>\`, {headers: {'Content-Type': 'text/html'}});
 }`,
           'app/routes/proxy.ts',
         ),
@@ -189,8 +194,47 @@ describe('APP_PROXY_LIQUID_INJECTION body flow', () => {
         source(
           `export const loader = ({request}) => {
   const shop = request.query.shop;
-  const contentType = 'text/html';
-  return \`<div>\${shop}</div>\`;
+  const html = new Response('<div>safe</div>', {headers: {'Content-Type': 'text/html'}});
+  return new Response(JSON.stringify({shop}), {headers: {'Content-Type': 'application/json'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toEqual([])
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  const shop = request.query
+    .shop;
+  return new Response(\`<a href="https://example.com/\${shop}">Shop</a>\`, {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+  })
+
+  test('suppresses only imported HTML escapers, never local identities or Liquid bodies', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
+  const shop = request.query.shop;
+  return new Response(\`<div>\${escapeHtml(String(shop))}</div>\`, {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toEqual([])
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  function escapeHtml(value) { return value; }
+  const shop = request.query.shop;
+  return new Response(\`<div>\${escapeHtml(shop)}</div>\`, {headers: {'Content-Type': 'text/html'}});
 }`,
           'app/routes/proxy.ts',
         ),
@@ -199,23 +243,10 @@ describe('APP_PROXY_LIQUID_INJECTION body flow', () => {
     expect(
       scanAppProxyLiquidInjection([
         source(
-          `export const loader = ({request}) => {
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
   const shop = request.query.shop;
-  return new Response('<p>Visit our shop</p>', {headers: {'Content-Type': 'text/html'}});
-}`,
-          'app/routes/proxy.ts',
-        ),
-      ]),
-    ).toEqual([])
-    expect(
-      scanAppProxyLiquidInjection([
-        source(
-          `export const loader = ({request}) => {
-  const shop = request.query.shop;
-  const contentType = 'text/html';
-  return '<div>' +
-    shop +
-    '</div>';
+  return new Response(\`{{ \${escapeHtml(shop)} }}\`, {headers: {'Content-Type': 'application/liquid'}});
 }`,
           'app/routes/proxy.ts',
         ),
