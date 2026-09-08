@@ -9,6 +9,7 @@ export function detectCapabilities(
 ): Capabilities {
   const themeExtension = extensions.some((extension) => extension.type === 'theme')
   const appEmbed = extensions.some((extension) => extension.type === 'theme' && hasAppEmbedBlock(extension))
+  const embeddedApp = (appToml?.raw as Record<string, unknown> | undefined)?.embedded === true
 
   const scriptTags = sourceFiles.some((file) =>
     file.content ? /script[_-]?tags?|ScriptTag/i.test(file.content) : false,
@@ -23,6 +24,7 @@ export function detectCapabilities(
   return {
     theme_app_extension: themeExtension,
     app_embed: appEmbed,
+    embedded_app: embeddedApp,
     script_tags: scriptTags,
     webhooks: Boolean(appToml?.webhooks.length),
     app_proxy: Boolean((appToml?.raw as Record<string, unknown>)?.app_proxy),

@@ -132,6 +132,52 @@ describe('framework and surface detection', () => {
     ).toMatchObject({status: 'executed', findings: 0})
   })
 
+  test('runs static frame-ancestors only for embedded admin apps', async () => {
+    const embedded = await scan(
+      await app({
+        'shopify.app.toml': `name = "Embedded app"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
+        'package.json': reactPackage,
+        'app/shopify.server.ts': 'export const shopify = {}',
+        'app/routes/index.tsx': `export const loader = () => null; const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+    expect(embedded.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+    })
+
+    const plain = await scan(
+      await app({
+        'shopify.app.toml': `name = "Plain app"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
+        'package.json': reactPackage,
+        'app/shopify.server.ts': 'export const shopify = {}',
+        'app/routes/index.tsx': `export const loader = () => null; const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+    expect(plain.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'not_applicable',
+      applicable: false,
+    })
+    expect(plain.issues.some((issue) => issue.id === 'STATIC_FRAME_ANCESTORS')).toBe(false)
+
+    const themeOnly = await scan(
+      await app({
+        'shopify.app.toml': `name = "Theme app"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
+        'package.json': reactPackage,
+        'app/shopify.server.ts': 'export const shopify = {}',
+        'app/routes/index.tsx': `export const loader = () => null; const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+        'extensions/theme/shopify.extension.toml': 'type = "theme"\n',
+        'extensions/theme/blocks/app.liquid': `{% schema %}{"target":"body"}{% endschema %}`,
+      }),
+    )
+    expect(themeOnly.capabilities.app_embed).toBe(true)
+    expect(themeOnly.capabilities.embedded_app).toBe(false)
+    expect(themeOnly.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'not_applicable',
+      applicable: false,
+    })
+  })
+
   test('keeps React Router and theme implementations inside their supported file boundaries', async () => {
     const themeDirectory = await app({
       'shopify.app.toml': appConfig(),

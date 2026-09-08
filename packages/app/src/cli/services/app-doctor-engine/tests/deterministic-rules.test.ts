@@ -11,6 +11,7 @@ import {
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {auditKnownCves, parseAuditOutput} from '../rules/dependency-rules.js'
+import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {describe, expect, test} from 'vitest'
 import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
@@ -32,6 +33,7 @@ const ACTIVE_IDS = [
   'LIQUID_UNSAFE_RENDER',
   'UNSAFE_INNERHTML',
   'APP_PROXY_LIQUID_INJECTION',
+  'STATIC_FRAME_ANCESTORS',
 ].sort()
 
 const source = (content: string, path = 'app/routes/example.tsx'): SourceFile => ({
@@ -42,7 +44,7 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
 })
 
 describe('deterministic rules product contract', () => {
-  test('has exactly fourteen active executable deterministic identities', () => {
+  test('has exactly fifteen active executable deterministic identities', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
     const registry = getRegistry()
@@ -159,6 +161,39 @@ describe('JavaScript regex mode', () => {
     expect(scanUnsafeInnerHTML([source('// element.innerHTML = payload\nelement.textContent = payload')])).toHaveLength(
       0,
     )
+  })
+})
+
+describe('STATIC_FRAME_ANCESTORS regex mode', () => {
+  test('flags literal wildcard frame-ancestors only', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors *"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "frame-ancestors https://admin.shopify.com https://merchant.myshopify.com"}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toEqual([])
+    expect(
+      scanStaticFrameAncestors([
+        source(`const policy = buildPolicy(shop); const headers = {'Content-Security-Policy': policy}`, 'app/root.tsx'),
+      ]),
+    ).toEqual([])
+    expect(
+      scanStaticFrameAncestors([
+        source(`const note = 'frame-ancestors *'`, 'app/root.tsx'),
+      ]),
+    ).toEqual([])
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors https://*.myshopify.com"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
   })
 })
 

@@ -268,9 +268,10 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     title: 'Embedded app frame-ancestors uses a wildcard',
     severity: 'high',
     points: -12,
-    description: 'Detects wildcard frame-ancestors CSP policies in Shopify app code.',
-    fix: 'Build frame-ancestors per request from the authenticated shop domain and admin.shopify.com.',
+    description: 'Detects literal wildcard or clearly permissive frame-ancestors policies in embedded app code.',
+    fix: 'Restrict frame-ancestors to Shopify Admin and the authenticated shop origin.',
     guide: 'https://shopify.dev/docs/apps/build/security/set-up-iframe-protection',
+    requires: 'embedded_app',
   },
   {
     id: 'ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS',

@@ -29,6 +29,7 @@ import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
 import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
+import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
@@ -198,6 +199,10 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
       2,
     ),
     requires: 'app_proxy',
+  },
+  {
+    ...jsCheck('STATIC_FRAME_ANCESTORS', (context) => scanStaticFrameAncestors(context.sourceFiles)),
+    requires: 'embedded_app',
   },
 ]
 
