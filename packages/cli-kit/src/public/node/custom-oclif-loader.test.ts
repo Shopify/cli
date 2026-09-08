@@ -1,10 +1,14 @@
 import {ShopifyConfig} from './custom-oclif-loader.js'
 import {Config} from '@oclif/core'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import os from 'node:os'
 import {fileURLToPath} from 'node:url'
 
 describe('ShopifyConfig', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test('delegates to super.runCommand when no lazy command loader is configured', async () => {
     const config = new ShopifyConfig({root: import.meta.url})
     const superRunCommandSpy = vi.spyOn(Config.prototype, 'runCommand').mockResolvedValue('super-result')
@@ -124,8 +128,7 @@ describe('ShopifyConfig', () => {
   })
 
   test('loads successfully when the OS user lookup fails during shell detection', async () => {
-    // SHELL short-circuits oclif's `process.env.SHELL ?? userInfo()`, so it has to be unset for the
-    // OS lookup — the call that crashes in production — to run at all.
+    // oclif and the guard both only reach os.userInfo() when SHELL is unset.
     vi.stubEnv('SHELL', undefined)
     vi.spyOn(os, 'userInfo').mockImplementation(() => {
       throw osUserLookupError()
@@ -154,11 +157,6 @@ describe('ShopifyConfig', () => {
   })
 })
 
-/**
- * The SystemError Node throws from os.userInfo() when the OS can't resolve the current user.
- *
- * @returns An error shaped like the real failure reported by affected users.
- */
 function osUserLookupError(): Error {
   return Object.assign(new Error('A system error occurred: uv_os_get_passwd returned ENOMEM (not enough memory)'), {
     code: 'ERR_SYSTEM_ERROR',

@@ -1,4 +1,5 @@
 import {Command, Config} from '@oclif/core'
+import os from 'os'
 
 /**
  * Optional lazy command loader function.
@@ -21,6 +22,16 @@ export class ShopifyConfig extends Config {
    */
   setLazyCommandLoader(loader: LazyCommandLoader): void {
     this.lazyCommandLoader = loader
+  }
+
+  /**
+   * Load the oclif config, after making sure its shell detection can't crash the CLI.
+   *
+   * @returns A promise that resolves once the config is loaded.
+   */
+  async load(): Promise<void> {
+    setShellVariableWhenUserLookupFails()
+    return super.load()
   }
 
   /**
@@ -61,27 +72,23 @@ export class ShopifyConfig extends Config {
     await this.runHook('postrun', {argv, Command: commandClass, result})
     return result
   }
+}
 
-  /**
-   * Guard oclif's shell detection, which otherwise crashes the CLI when the OS can't resolve the current user.
-   *
-   * Oclif populates `config.shell` during `Config.load()`. When the SHELL environment variable is unset it
-   * falls back to Node's `userInfo()`, which throws a SystemError whenever the OS passwd lookup fails —
-   * ENOMEM on Windows profiles where the lookup is broken, ENOENT for a container UID with no passwd entry.
-   * The call is unguarded, so it kills the CLI before it can run any command.
-   *
-   * Note when bumping the oclif dependency: 4.11 drops `_shell` from `Config` and moves the logic into a
-   * module-level `getShell()`, so this override stops compiling. The call is still unguarded upstream, so
-   * reinstate the guard at whatever seam replaces it rather than dropping it.
-   *
-   * @returns The name of the active shell, or oclif's own 'unknown' sentinel when detection fails.
-   */
-  protected _shell(): string {
-    try {
-      return super._shell()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch {
-      return 'unknown'
-    }
+/**
+ * Set SHELL when the OS can't tell us what it is, so that oclif never has to ask.
+ *
+ * While loading, oclif reads the SHELL environment variable and falls back to Node's `userInfo()`, which
+ * throws when the OS can't resolve the current user — taking the CLI down before it runs anything. Drop
+ * this once oclif guards that call itself; both 4.8 and 4.11 leave it unguarded.
+ */
+function setShellVariableWhenUserLookupFails(): void {
+  if (process.env.SHELL !== undefined) return
+
+  try {
+    os.userInfo()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // The value oclif itself falls back to for a shell it can't identify.
+    process.env.SHELL = 'unknown'
   }
 }
