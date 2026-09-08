@@ -172,10 +172,12 @@ describe('framework and surface detection', () => {
     )
     expect(themeOnly.capabilities.app_embed).toBe(true)
     expect(themeOnly.capabilities.embedded_app).toBe(false)
-    expect(themeOnly.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
-      status: 'not_applicable',
-      applicable: false,
-    })
+    expect(themeOnly.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject(
+      {
+        status: 'not_applicable',
+        applicable: false,
+      },
+    )
   })
 
   test('keeps React Router and theme implementations inside their supported file boundaries', async () => {

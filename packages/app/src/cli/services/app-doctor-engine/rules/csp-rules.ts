@@ -2,8 +2,7 @@ import type {Issue} from '../types.js'
 import type {SourceFile} from './types.js'
 
 const JAVASCRIPT_EXTENSIONS = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts'])
-const CSP_FRAME_ANCESTORS_DIRECTIVE =
-  /\bContent-Security-Policy\b[^\r\n]{0,300}?\bframe-ancestors\b([^;\r\n]*)/gi
+const CSP_FRAME_ANCESTORS_DIRECTIVE = /\bContent-Security-Policy\b[^\r\n]{0,300}?\bframe-ancestors\b([^;\r\n]*)/gi
 const CLEARLY_PERMISSIVE_SOURCE = /(^|\s)\*(?=\s|["'`;,}]|$)|https?:\/\/\*\.myshopify\.com/i
 
 export function scanStaticFrameAncestors(files: SourceFile[]): Issue[] {
@@ -35,5 +34,7 @@ export function scanStaticFrameAncestors(files: SourceFile[]): Issue[] {
   return issues
 }
 function stripCommentsOnly(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' ')).replace(/(^|\s)\/\/[^\n]*/g, '$1')
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '))
+    .replace(/(^|\s)\/\/[^\n]*/g, '$1')
 }
