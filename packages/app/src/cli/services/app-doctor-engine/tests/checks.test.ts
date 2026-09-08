@@ -13,12 +13,14 @@ import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
 const EXPECTED_CHECK_IDS = [
+  'ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS',
   'APP_PROXY_LIQUID_INJECTION',
   'APP_PROXY_UNVERIFIED_SIGNATURE',
   'COMMITTED_SECRET',
   'CREDENTIAL_BROWSER_LEAKAGE',
   'CREDENTIAL_LOG_LEAKAGE',
   'CSRF_MISSING_PROTECTION',
+  'DEPENDENCY_REACHABILITY',
   'DEPRECATED_SCRIPT_TAG_SCOPE',
   'EOL_API_VERSION',
   'EXPIRING_OFFLINE_TOKEN',
@@ -36,6 +38,7 @@ const EXPECTED_CHECK_IDS = [
   'REQUEST_DERIVED_SHOP_SCOPE',
   'SCOPE_OVER_REQUEST',
   'SCRIPT_TAG_URL_INJECTION',
+  'SESSION_LIFECYCLE_AND_REPLAY',
   'SSRF_REQUEST_FORGERY',
   'STATIC_FRAME_ANCESTORS',
   'TEXT_SETTING_HTML_SMUGGLING',
@@ -79,7 +82,7 @@ describe('check loading', () => {
   test('loads all versioned checks with frontmatter parsed', () => {
     const checks = loadChecks()
     expect([...checks.keys()]).toEqual(EXPECTED_CHECK_IDS)
-    expect(checks.size).toBe(31)
+    expect(checks.size).toBe(34)
     const tenant = checks.get('MISSING_TENANT_ISOLATION')
     expect(tenant).toBeDefined()
     expect(tenant!.version).toBeGreaterThanOrEqual(1)
@@ -106,7 +109,7 @@ describe('review pack', () => {
   test('contains prompts, not candidates', () => {
     const pack = buildReviewPack('0.1.0')
     expect(pack.checks.map((check) => check.id)).toEqual(EXPECTED_CHECK_IDS)
-    expect(pack.checks).toHaveLength(31)
+    expect(pack.checks).toHaveLength(34)
     expect((pack as unknown as Record<string, unknown>).candidates).toBeUndefined()
     const tenant = pack.checks.find((c) => c.id === 'MISSING_TENANT_ISOLATION')
     expect(tenant).toBeDefined()
@@ -138,6 +141,18 @@ describe('review pack', () => {
     expect(checks.get('OPEN_REDIRECT')!.prompt).toContain('sensitive trust transition')
     expect(checks.get('CSRF_MISSING_PROTECTION')!.prompt).toContain('concrete sensitive action')
     expect(checks.get('MISSING_EMBEDDED_CSP')!.prompt).toContain('concrete clickjacking impact')
+  })
+
+  test('loads new lifecycle, dependency, and active-upload prompts with bounded reporting thresholds', () => {
+    const checks = loadChecks()
+    expect(checks.get('SESSION_LIFECYCLE_AND_REPLAY')!.prompt).toContain('stale sessions after logout or uninstall')
+    expect(checks.get('DEPENDENCY_REACHABILITY')!.prompt).toContain('vulnerable API or helper')
+    expect(checks.get('ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS')!.prompt).toContain(
+      'untrusted-upload-to-active-render path',
+    )
+    expect(checks.get('ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS')!.prompt).not.toContain(
+      'clearly unsafe serving configuration',
+    )
   })
 })
 
