@@ -288,9 +288,9 @@ redirect_urls = ["http://app.example/callback"]
       title: 'Configured callback URL is not HTTPS',
       message: expect.stringContaining('OAuth redirect URI'),
     })
-    expect(getRegistry().find((entry) => entry.kind === 'deterministic' && entry.id === 'INSECURE_WEBHOOK_URL')).not.toHaveProperty(
-      'requires',
-    )
+    expect(
+      getRegistry().find((entry) => entry.kind === 'deterministic' && entry.id === 'INSECURE_WEBHOOK_URL'),
+    ).not.toHaveProperty('requires')
   })
 
   test('keeps unsupported source as non-secret inventory while secret scanning reports unreadable text', async () => {

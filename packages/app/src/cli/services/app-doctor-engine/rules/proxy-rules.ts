@@ -63,7 +63,8 @@ function responseBodyExpressions(source: string): {index: number; expression: st
   let returned = returnPattern.exec(source)
   while (returned) {
     const expression = statementExpression(source, returnPattern.lastIndex)
-    if (expression && /^[`"']/.test(expression.text.trim())) expressions.push({index: returned.index, expression: expression.text})
+    if (expression && /^[`"']/.test(expression.text.trim()))
+      expressions.push({index: returned.index, expression: expression.text})
     returnPattern.lastIndex = expression?.end ?? returnPattern.lastIndex
     returned = returnPattern.exec(source)
   }
@@ -159,7 +160,10 @@ function statementExpression(source: string, start: number): {text: string; end:
 
 function continuesAcrossNewline(source: string, start: number, newlineIndex: number): boolean {
   const previous = source.slice(start, newlineIndex).trimEnd().at(-1)
-  const next = source.slice(newlineIndex + 1).trimStart().at(0)
+  const next = source
+    .slice(newlineIndex + 1)
+    .trimStart()
+    .at(0)
   return Boolean(previous && '+-*/%&|?:.,'.includes(previous)) || Boolean(next && '+-*/%&|?:.,'.includes(next))
 }
 

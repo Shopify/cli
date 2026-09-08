@@ -224,8 +224,7 @@ function isRequestControlledShop(expression: string, state: RequestShopState): b
     ).test(expression)
   if (direct) return true
   for (const container of state.requestContainers)
-    if (new RegExp(`\\b${escapeRegExp(container)}(?:\\?\\.|\\.|\\[\\s*["'])${SHOP_FIELD}`).test(expression))
-      return true
+    if (new RegExp(`\\b${escapeRegExp(container)}(?:\\?\\.|\\.|\\[\\s*["'])${SHOP_FIELD}`).test(expression)) return true
   for (const container of state.formDataContainers)
     if (new RegExp(`\\b${escapeRegExp(container)}\\.get\\s*\\(\\s*["']${SHOP_FIELD}["']\\s*\\)`).test(expression))
       return true
