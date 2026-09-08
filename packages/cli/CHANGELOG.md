@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 4.8.0
+
+### Minor Changes
+
+- 91af04a: Add `shopify store create dev` to create a development store in a Shopify organization.
+- 91af04a: Add `shopify store delete` to delete a development store from a Shopify organization.
+
+### Patch Changes
+
+- 2604627: Reject invalid variable values before store execute requests are sent.
+
 ## 4.7.0
 
 ## 4.6.0

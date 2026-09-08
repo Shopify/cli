@@ -1,5 +1,26 @@
 # @shopify/app
 
+## 4.8.0
+
+### Minor Changes
+
+- 86d164b: Add support for the `intercepts` UI extension target capability.
+- 4830793: Add a "Create a new dev store" option to the store picker in `app dev`.
+- 51de064: Show the organization name and ID in `app info`
+- af95c3e: Add `shopify app doctor` commands for Shopify-specific security reviews and coding-agent handoffs.
+- a4d5bb0: Allow `app dev` to create a development store when the organization has none.
+- 509c9de: Show a confirmation when configuration-only extensions are accepted during `shopify app dev`
+- 71ca2e7: Support the bundle_size_exception extension capability
+
+### Patch Changes
+
+- 30c4e00: Report extension compressed bundle size using Brotli
+- a0cc4a9: Prompt to generate the localhost certificate again instead of aborting on `app dev --use-localhost`
+  - @shopify/organizations@4.8.0
+  - @shopify/cli-kit@4.8.0
+  - @shopify/theme@4.8.0
+  - @shopify/plugin-cloudflare@4.8.0
+
 ## 4.7.0
 
 ### Minor Changes

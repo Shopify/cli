@@ -1,5 +1,23 @@
 # @shopify/store
 
+## 4.8.0
+
+### Minor Changes
+
+- 8ac01e0: Add `store list --type` to list only dev, production, client transfer, or collaborator stores
+- 5bdb862: Show `store list` context in an info banner, with the organization as a label/value row
+- f8ab0a2: Show each store's plan in `shopify store list`
+- 91af04a: Add `shopify store create dev` to create a development store in a Shopify organization.
+- 91af04a: Add `shopify store delete` to delete a development store from a Shopify organization.
+
+### Patch Changes
+
+- c60d9c3: Allow store auth recovery after a preview store is claimed.
+- 4df7a53: Report the client transfer store type as `client-transfer` in `store info`
+- 97943ff: Correct development store command help text.
+  - @shopify/organizations@4.8.0
+  - @shopify/cli-kit@4.8.0
+
 ## 4.7.0
 
 ### Patch Changes
