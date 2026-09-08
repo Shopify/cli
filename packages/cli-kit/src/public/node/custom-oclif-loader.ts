@@ -75,7 +75,7 @@ export class ShopifyConfig extends Config {
 }
 
 // oclif reads SHELL and falls back to os.userInfo(), which throws when the OS can't resolve the current
-// user, killing the CLI during load. Remove once oclif guards that call; no released version does.
+// user, killing the CLI during load. Remove once oclif guards that call.
 function setShellVariableWhenUserLookupFails(): void {
   if (process.env.SHELL !== undefined) return
 
