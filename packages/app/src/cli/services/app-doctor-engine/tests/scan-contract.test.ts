@@ -5,6 +5,7 @@ import {
   buildReviewPack,
   compileTrace,
   scan,
+  getRegistry,
   sha256,
   validateTrace,
 } from '../index.js'
@@ -268,6 +269,28 @@ shop_deletion_url = "http://app.example/shop/redact"
     expect(issueIds).toContain('DEPRECATED_SCRIPT_TAG_SCOPE')
     expect(issueIds).toContain('INSECURE_WEBHOOK_URL')
     expect(issueIds).not.toContain('MISSING_COMPLIANCE_WEBHOOKS')
+  })
+
+  test('reports unsafe OAuth redirect URLs without a webhook capability gate', async () => {
+    const result = await scan(
+      await app({
+        'shopify.app.toml': `name = "Redirect config"
+[auth]
+redirect_urls = ["http://app.example/callback"]
+`,
+      }),
+    )
+    const execution = result.scan.checks_executed.find((check) => check.id === 'INSECURE_WEBHOOK_URL')
+    const issue = result.issues.find((finding) => finding.id === 'INSECURE_WEBHOOK_URL')
+
+    expect(execution).toMatchObject({status: 'executed', required: true, applicable: true})
+    expect(issue).toMatchObject({
+      title: 'Configured callback URL is not HTTPS',
+      message: expect.stringContaining('OAuth redirect URI'),
+    })
+    expect(getRegistry().find((entry) => entry.kind === 'deterministic' && entry.id === 'INSECURE_WEBHOOK_URL')).not.toHaveProperty(
+      'requires',
+    )
   })
 
   test('keeps unsupported source as non-secret inventory while secret scanning reports unreadable text', async () => {
