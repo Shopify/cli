@@ -14,6 +14,7 @@ import {globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {SemVer} from 'semver'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
 
 vi.mock('./notifications-system.js', async (importOriginal) => {
@@ -265,14 +266,19 @@ describe('runCLIUpgrade', () => {
 
   test('throws when the install leaves the CLI on the current version instead of the expected one', async () => {
     // Given
+    // Derived from CLI_KIT_VERSION rather than hardcoded, so this keeps exercising the
+    // "the install was a no-op" branch after a release bumps the current version.
+    const expectedVersion = new SemVer(CLI_KIT_VERSION).inc('patch').version
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue()
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.7.1')
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(expectedVersion)
     vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
 
     // When/Then
-    await expect(runCLIUpgrade()).rejects.toThrow(`Expected to be on version 4.7.1, but version ${CLI_KIT_VERSION}`)
+    await expect(runCLIUpgrade()).rejects.toThrow(
+      `Expected to be on version ${expectedVersion}, but version ${CLI_KIT_VERSION} is now installed`,
+    )
   })
 
   test('throws when the installed version cannot be verified', async () => {
