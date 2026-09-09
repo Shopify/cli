@@ -20,19 +20,13 @@ interface SessionChoice {
  * @returns Array of session choices.
  */
 function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] {
-  const choices: SessionChoice[] = []
   const fqdnSessions = sessions[fqdn]
+  if (!fqdnSessions) return []
 
-  if (fqdnSessions) {
-    for (const [userId, session] of Object.entries(fqdnSessions)) {
-      choices.push({
-        label: session.identity.alias ?? userId,
-        value: userId,
-      })
-    }
-  }
-
-  return choices
+  return Object.entries(fqdnSessions).map(([userId, session]) => ({
+    label: session.identity.alias ?? userId,
+    value: userId,
+  }))
 }
 
 /**
