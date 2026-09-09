@@ -4,6 +4,7 @@ import {
   fetchNotificationsInBackground,
   filterNotifications,
   showNotificationsIfNeeded,
+  stringifyFilters,
 } from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {fetch} from './http.js'
@@ -507,5 +508,83 @@ describe('fetchNotifications', () => {
     // Then
     expect(fetch).toHaveBeenCalledWith(defaultUrl, undefined, expect.anything())
     vi.unstubAllEnvs()
+  })
+})
+
+describe('stringifyFilters', () => {
+  test('returns an empty string when notification has no filter options set', () => {
+    // Given
+    const notification: Notification = {
+      id: 'test',
+      message: 'msg',
+      type: 'info',
+      frequency: 'always',
+      ownerChannel: 'channel',
+    }
+
+    // When
+    const result = stringifyFilters(notification)
+
+    // Then
+    expect(result).toBe('')
+  })
+
+  test('stringifies dates, versions, frequencies, surface, and commands filters', () => {
+    // Given
+    const notification: Notification = {
+      id: 'test',
+      message: 'msg',
+      type: 'info',
+      frequency: 'once_a_day',
+      ownerChannel: 'channel',
+      minDate: '2023-01-01',
+      maxDate: '2023-12-31',
+      minVersion: '3.0.0',
+      maxVersion: '4.0.0',
+      surface: 'theme',
+      commands: ['theme:dev', 'theme:push'],
+    }
+
+    // When
+    const result = stringifyFilters(notification)
+
+    // Then
+    expect(result).toBe(
+      [
+        'from 2023-01-01',
+        'to 2023-12-31',
+        'from v3.0.0',
+        'to v4.0.0',
+        'show once a day',
+        'surface = theme',
+        'commands = theme:dev, theme:push',
+      ].join('\n'),
+    )
+  })
+
+  test('stringifies frequency once and once_a_week correctly', () => {
+    // Given
+    const onceNotification: Notification = {
+      id: 'once',
+      message: 'msg',
+      type: 'info',
+      frequency: 'once',
+      ownerChannel: 'channel',
+    }
+    const onceAWeekNotification: Notification = {
+      id: 'once_a_week',
+      message: 'msg',
+      type: 'info',
+      frequency: 'once_a_week',
+      ownerChannel: 'channel',
+    }
+
+    // When
+    const onceResult = stringifyFilters(onceNotification)
+    const onceAWeekResult = stringifyFilters(onceAWeekNotification)
+
+    // Then
+    expect(onceResult).toBe('show only once')
+    expect(onceAWeekResult).toBe('show once a week')
   })
 })
