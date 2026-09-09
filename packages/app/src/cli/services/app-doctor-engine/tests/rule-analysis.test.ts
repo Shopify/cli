@@ -253,6 +253,86 @@ export const loader = ({request}) => {
       ]),
     ).toHaveLength(1)
   })
+  test('does not suppress imported HTML escaping in executable attribute or URL contexts', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
+  const action = request.query.action;
+  return new Response(\`<button onclick="\${escapeHtml(action)}">Run</button>\`, {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
+  const target = request.query.target;
+  return new Response(\`<a href="\${escapeHtml(target)}">Open</a>\`, {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
+  const action = request.query.action;
+  return new Response(\`<button title="1 > 0" onclick="\${escapeHtml(action)}">Run</button>\`, {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+  })
+
+  test('parses only executable Response calls and handles regexes and nested templates', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `const example = "new Response(request.query.shop, {headers: {'Content-Type': 'text/html'}})"`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toEqual([])
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  return new Response(request.query.shop.replace(/\\)/g, ''), {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  return new Response(\`\${request.query.shop ? \`<div>\${request.query.shop}</div>\` : ''}\`, {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  const shop = request.query.shop;
+  return new Response(JSON.stringify({shop}), {headers: {'X-Content-Type': 'text/html', 'Content-Type': 'application/json'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toEqual([])
+  })
 })
 
 describe('string masking', () => {

@@ -1,6 +1,6 @@
 ---
 id: INSECURE_WEBHOOK_URL
-version: 1
+version: 2
 severity: high
 ---
 

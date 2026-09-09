@@ -51,6 +51,12 @@ describe('deterministic rules product contract', () => {
     expect(RULE_CATALOG.find((entry) => entry.id === 'EXTERNAL_CDN_DEPENDENCY')?.status).toBe('investigate')
   })
 
+  test('bumps deterministic versions when scanner behavior changes', () => {
+    expect(DETERMINISTIC_CHECKS.get('REQUEST_CONTROLLED_ADMIN_CONTEXT')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('APP_PROXY_LIQUID_INJECTION')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(2)
+  })
+
   test('extracts security fields from parsed TOML without source regexes', () => {
     const parsed = parseAppToml(
       {
