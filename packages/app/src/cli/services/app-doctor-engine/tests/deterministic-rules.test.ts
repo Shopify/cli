@@ -11,6 +11,7 @@ import {
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {auditKnownCves, parseAuditOutput} from '../rules/dependency-rules.js'
+import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {describe, expect, test} from 'vitest'
 import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
@@ -32,6 +33,7 @@ const ACTIVE_IDS = [
   'LIQUID_UNSAFE_RENDER',
   'UNSAFE_INNERHTML',
   'APP_PROXY_LIQUID_INJECTION',
+  'STATIC_FRAME_ANCESTORS',
 ].sort()
 
 const source = (content: string, path = 'app/routes/example.tsx'): SourceFile => ({
@@ -42,7 +44,7 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
 })
 
 describe('deterministic rules product contract', () => {
-  test('has exactly fourteen active executable deterministic identities', () => {
+  test('has exactly fifteen active executable deterministic identities', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
     const registry = getRegistry()
@@ -159,6 +161,129 @@ describe('JavaScript regex mode', () => {
     expect(scanUnsafeInnerHTML([source('// element.innerHTML = payload\nelement.textContent = payload')])).toHaveLength(
       0,
     )
+  })
+})
+
+describe('STATIC_FRAME_ANCESTORS regex mode', () => {
+  test('flags only literal clearly permissive frame-ancestors source tokens', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors *"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors https://*"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors *.myshopify.com"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "frame-ancestors https://*.myshopify.com"}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors https:"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors 'self' https:"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "frame-ancestors https://admin.shopify.com https://merchant.myshopify.com"}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toEqual([])
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "frame-ancestors https://*.myshopify.com.evil.test"}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toEqual([])
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "frame-ancestors https://*.mycompany.dev"}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+  test('evaluates only static CSP header values and ignores commented examples', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(`headers.set('Content-Security-Policy', policy); const example = 'frame-ancestors *'`, 'app/root.tsx'),
+      ]),
+    ).toEqual([])
+    expect(scanStaticFrameAncestors([source(`const note = 'frame-ancestors *'`, 'app/root.tsx')])).toEqual([])
+    expect(
+      scanStaticFrameAncestors([
+        source(`const safe = true;// const headers = {'Content-Security-Policy': 'frame-ancestors *'}`, 'app/root.tsx'),
+      ]),
+    ).toEqual([])
+  })
+
+  test('covers static header setters, concatenation, templates, and mixed source lists', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(`headers.set('Content-Security-Policy', 'frame-ancestors *')`, 'app/root.tsx'),
+        source(`response.headers.append('Content-Security-Policy', 'frame-ancestors *')`, 'app/response.tsx'),
+        source(`res.setHeader('Content-Security-Policy', 'frame-ancestors *')`, 'app/server.tsx'),
+      ]),
+    ).toHaveLength(3)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': 'frame-ancestors ' + '*'}`, 'app/root.tsx'),
+        source(`const headers = {'Content-Security-Policy': \`frame-ancestors *\`}`, 'app/template.tsx'),
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors 'self' *"}`, 'app/mixed.tsx'),
+      ]),
+    ).toHaveLength(3)
+  })
+
+  test('handles multiline and long static CSP literal construction', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {
+  'Content-Security-Policy': [
+    "default-src 'self';",
+    'frame-ancestors *',
+  ].join(' '),
+}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(
+          `const headers = {'Content-Security-Policy': "default-src ${'https://cdn.example.com '.repeat(40)}; frame-ancestors *"}`,
+          'app/root.tsx',
+        ),
+      ]),
+    ).toHaveLength(1)
+  })
+
+  test('consumes malformed string literals once', () => {
+    const malformed = `const broken = "${'\\"'.repeat(64_000)}`
+
+    expect(scanStaticFrameAncestors([source(malformed, 'app/broken.tsx')])).toEqual([])
   })
 })
 

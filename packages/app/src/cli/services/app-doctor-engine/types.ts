@@ -37,6 +37,7 @@ export interface Fix {
 export interface Capabilities {
   theme_app_extension: boolean
   app_embed: boolean
+  embedded_app: boolean
   script_tags: boolean
   webhooks: boolean
   app_proxy: boolean

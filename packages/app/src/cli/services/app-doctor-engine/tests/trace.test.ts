@@ -34,6 +34,7 @@ const result = (issues: Issue[] = []): ScanResult => ({
   capabilities: {
     theme_app_extension: false,
     app_embed: false,
+    embedded_app: false,
     script_tags: false,
     webhooks: false,
     app_proxy: false,

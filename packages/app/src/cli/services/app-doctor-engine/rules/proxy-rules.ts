@@ -59,16 +59,7 @@ export function scanAppProxyLiquidInjection(files: SourceFile[]): Issue[] {
 
 function collectRequestBindings(source: string): Set<string> {
   const requestBindings = new Set<string>()
-  const executableSource = maskLiteralTextPreservingTemplateExpressions(source)
-  const declarationPattern = new RegExp(`\\b(?:const|let|var)\\s+(${IDENTIFIER})\\s*=\\s*`, 'g')
-  const assignments: {name: string; expression: string}[] = []
-  let declaration = declarationPattern.exec(executableSource)
-  while (declaration) {
-    const expression = statementExpression(executableSource, declarationPattern.lastIndex)
-    if (expression && !/^(?:async\s*)?\([^)]*\)\s*=>/.test(expression.text) && !/^function\b/.test(expression.text))
-      assignments.push({name: declaration[1]!, expression: expression.text})
-    declaration = declarationPattern.exec(executableSource)
-  }
+  const assignments = collectRequestAssignments(maskLiteralTextPreservingTemplateExpressions(source))
 
   for (let pass = 0; pass < 5; pass++) {
     let changed = false
@@ -87,20 +78,57 @@ function collectRequestBindings(source: string): Set<string> {
   return requestBindings
 }
 
+function collectRequestAssignments(source: string): {name: string; expression: string}[] {
+  const assignments: {name: string; expression: string}[] = []
+  const declarationPattern = new RegExp(`\\b(?:const|let|var)\\s+(${IDENTIFIER})\\s*=\\s*`, 'g')
+  let declaration = declarationPattern.exec(source)
+  while (declaration) {
+    const expression = statementExpression(source, declarationPattern.lastIndex)
+    if (expression && !/^(?:async\s*)?\([^)]*\)\s*=>/.test(expression.text) && !/^function\b/.test(expression.text))
+      assignments.push({name: declaration[1]!, expression: expression.text})
+    declaration = declarationPattern.exec(source)
+  }
+
+  const assignmentPattern = new RegExp(`(?:^|[;{}\\n])\\s*(${IDENTIFIER})\\s*=\\s*`, 'g')
+  let assignment = assignmentPattern.exec(source)
+  while (assignment) {
+    const expression = statementExpression(source, assignmentPattern.lastIndex)
+    if (expression && !/^(?:async\s*)?\([^)]*\)\s*=>/.test(expression.text) && !/^function\b/.test(expression.text))
+      assignments.push({name: assignment[1]!, expression: expression.text})
+    assignment = assignmentPattern.exec(source)
+  }
+  return assignments
+}
+
 function collectTrustedHtmlEscapers(source: string): Set<string> {
   const escapers = new Set<string>()
   const importPattern = /\bimport\s+([A-Za-z_$][\w$]*)\s+from\s+["']escape-html["']/g
   let imported = importPattern.exec(source)
   while (imported) {
     const name = imported[1]!
-    if (!hasLocalDefinition(source, name)) escapers.add(name)
+    if (!hasShadowingBinding(source, name)) escapers.add(name)
     imported = importPattern.exec(source)
   }
   return escapers
 }
 
-function hasLocalDefinition(source: string, name: string): boolean {
-  return new RegExp(`\\b(?:function|const|let|var)\\s+${escapeRegExp(name)}\\b`).test(source)
+function hasShadowingBinding(source: string, name: string): boolean {
+  if (new RegExp(`\\b(?:function|const|let|var|class)\\s+${escapeRegExp(name)}\\b`).test(source)) return true
+  const parameterPatterns = [
+    /\bfunction(?:\s+[A-Za-z_$][\w$]*)?\s*\(([^)]*)\)/g,
+    /\(([^)]*)\)\s*(?::[^=]+)?=>/g,
+    /(?:^|[,{;]\s*)(?:async\s+)?(?:get\s+|set\s+)?[A-Za-z_$][\w$]*\s*\(([^)]*)\)\s*(?::[^={]+)?\s*\{/gm,
+    /\bcatch\s*\(([^)]*)\)/g,
+  ]
+  const bindingPattern = new RegExp(`(?:^|[,\\s{])${escapeRegExp(name)}(?=\\s*(?:[,}:=]|$))`)
+  for (const pattern of parameterPatterns) {
+    let parameters = pattern.exec(source)
+    while (parameters) {
+      if (bindingPattern.test(parameters[1] ?? '')) return true
+      parameters = pattern.exec(source)
+    }
+  }
+  return new RegExp(`\\b${escapeRegExp(name)}\\s*(?::[^=,)]*)?\\s*=>`).test(source)
 }
 
 function responseBodyCandidates(source: string): ResponseBodyCandidate[] {
@@ -117,13 +145,93 @@ function responseBodyCandidates(source: string): ResponseBodyCandidate[] {
     responsePattern.lastIndex = call?.end ?? responsePattern.lastIndex
     response = responsePattern.exec(executableSource)
   }
+
+  const responseMethodPattern = new RegExp(`\\b(${IDENTIFIER})\\.(?:send|end|write)\\s*\\(`, 'g')
+  let responseMethod = responseMethodPattern.exec(executableSource)
+  while (responseMethod) {
+    const openParen = responseMethod.index + responseMethod[0].lastIndexOf('(')
+    const call = callArguments(source, openParen + 1)
+    const responseType = activeResponseTypeForReceiver(
+      source,
+      executableSource,
+      responseMethod[1]!,
+      responseMethod.index,
+    )
+    if (call && responseType && call.args[0] !== undefined)
+      candidates.push({index: responseMethod.index, expression: call.args[0], responseType})
+    responseMethodPattern.lastIndex = call?.end ?? responseMethodPattern.lastIndex
+    responseMethod = responseMethodPattern.exec(executableSource)
+  }
   return candidates
+}
+
+function activeResponseTypeForReceiver(
+  source: string,
+  executableSource: string,
+  receiver: string,
+  sinkIndex: number,
+): ActiveResponseType | undefined {
+  const sinkPath = enclosingBlockPath(executableSource, sinkIndex)
+  const setterPattern = new RegExp(`\\b${escapeRegExp(receiver)}\\.(setHeader|set|header|type|contentType)\\s*\\(`, 'g')
+  let activeType: ActiveResponseType | undefined
+  let setter = setterPattern.exec(executableSource)
+  while (setter && setter.index < sinkIndex) {
+    const openParen = setter.index + setter[0].lastIndexOf('(')
+    const call = callArguments(source, openParen + 1)
+    if (call && isBlockPathPrefix(enclosingBlockPath(executableSource, setter.index), sinkPath)) {
+      const type = responseTypeForSetter(setter[1]!, call.args)
+      if (type) activeType = type
+    }
+    setterPattern.lastIndex = call?.end ?? setterPattern.lastIndex
+    setter = setterPattern.exec(executableSource)
+  }
+  return activeType
+}
+
+function responseTypeForSetter(method: string, args: string[]): ActiveResponseType | undefined {
+  const firstExpression = args[0]?.trim() ?? ''
+  if ((method === 'set' || method === 'header') && args.length === 1) {
+    const objectType = responseTypeFor(firstExpression)
+    if (objectType) return objectType
+  }
+  const firstArg = /^["']([^"']+)["']$/.exec(firstExpression)?.[1]
+  if (!firstArg) return undefined
+  if (method === 'type' || method === 'contentType') {
+    if (/^html$/i.test(firstArg)) return 'html'
+    return activeResponseTypeForContentType(firstArg)
+  }
+  if (!/^content-type$/i.test(firstArg)) return undefined
+  const secondArg = /^["']([^"']+)["']$/.exec(args[1]?.trim() ?? '')?.[1]
+  return secondArg ? activeResponseTypeForContentType(secondArg) : undefined
+}
+
+function enclosingBlockPath(source: string, end: number): number[] {
+  const path: number[] = []
+  for (let index = 0; index < end; index++) {
+    const skipped = skipLexicalToken(source, index)
+    if (skipped !== undefined) {
+      index = skipped - 1
+      continue
+    }
+    if (source[index] === '{') path.push(index)
+    else if (source[index] === '}') path.pop()
+  }
+  return path
+}
+
+function isBlockPathPrefix(prefix: number[], path: number[]): boolean {
+  return prefix.length <= path.length && prefix.every((value, index) => value === path[index])
 }
 
 function responseTypeFor(initExpression: string | undefined): ActiveResponseType | undefined {
   if (!initExpression) return undefined
-  const contentType = /(?:^|[,{]\s*)["']?Content-Type["']?\s*:\s*["']([^"']+)["']/i.exec(initExpression)?.[1]
-  if (!contentType) return undefined
+  const contentType =
+    /(?:^|[,{]\s*)["']?Content-Type["']?\s*:\s*["']([^"']+)["']/i.exec(initExpression)?.[1] ??
+    /\[\s*["']Content-Type["']\s*,\s*["']([^"']+)["']\s*\]/i.exec(initExpression)?.[1]
+  return contentType ? activeResponseTypeForContentType(contentType) : undefined
+}
+
+function activeResponseTypeForContentType(contentType: string): ActiveResponseType | undefined {
   if (LIQUID_RESPONSE_TYPE.test(contentType)) return 'liquid'
   if (HTML_RESPONSE_TYPE.test(contentType)) return 'html'
   return undefined
@@ -148,6 +256,7 @@ function maskTrustedHtmlTextEscapes(source: string, trustedHtmlEscapers: Set<str
   const characters = [...source]
   const context: HtmlContext = {inTag: false, closingTag: false}
   let literalStart = 1
+  let canTrustContext = true
   for (let index = 1; index < source.length - 1; index++) {
     if (source[index] === '\\') {
       index++
@@ -160,8 +269,10 @@ function maskTrustedHtmlTextEscapes(source: string, trustedHtmlEscapers: Set<str
     const expressionStart = index + 2
     const expressionEnd = end - 1
     const expression = source.slice(expressionStart, expressionEnd)
-    if (isSafeHtmlTextContext(context) && isExactTrustedEscaperCall(expression, trustedHtmlEscapers))
-      maskRange(characters, expressionStart, expressionEnd)
+    const canMaskExpression =
+      canTrustContext && isSafeHtmlTextContext(context) && isExactTrustedEscaperCall(expression, trustedHtmlEscapers)
+    if (canMaskExpression) maskRange(characters, expressionStart, expressionEnd)
+    else canTrustContext = false
     index = expressionEnd
     literalStart = end
   }

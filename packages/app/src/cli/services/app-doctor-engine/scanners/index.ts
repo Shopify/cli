@@ -29,6 +29,7 @@ import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
 import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
+import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
@@ -49,7 +50,15 @@ import type {
   SkippedFile,
 } from '../types.js'
 
-type CheckTarget = 'config' | 'source' | 'theme' | 'manifest' | 'secrets' | 'config_and_source' | 'source_and_theme'
+type CheckTarget =
+  | 'config'
+  | 'source'
+  | 'app_source'
+  | 'theme'
+  | 'manifest'
+  | 'secrets'
+  | 'config_and_source'
+  | 'source_and_theme'
 interface RunnerImplementationResult {
   id: string
   analysisMode: AnalysisMode
@@ -199,6 +208,10 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     ),
     requires: 'app_proxy',
   },
+  {
+    ...jsCheck('STATIC_FRAME_ANCESTORS', (context) => scanStaticFrameAncestors(context.sourceFiles), 'app_source'),
+    requires: 'embedded_app',
+  },
 ]
 
 function unsafeInnerHtmlRunner(context: ScanContext): RunnerResult {
@@ -345,9 +358,13 @@ function themeFiles(context: ScanContext): SourceFile[] {
   return context.extensions.filter((extension) => extension.type === 'theme').flatMap((extension) => extension.files)
 }
 
-function reactRouterFiles(context: ScanContext): SourceFile[] {
+function appSourceFiles(context: ScanContext): SourceFile[] {
   const themePaths = new Set(themeFiles(context).map((file) => file.path))
   return context.sourceFiles.filter((file) => !themePaths.has(file.path))
+}
+
+function reactRouterFiles(context: ScanContext): SourceFile[] {
+  return appSourceFiles(context)
 }
 
 async function gitProject(appRoot: string): Promise<ScanResult['project']> {
@@ -373,7 +390,7 @@ function selectedFiles(definition: DeterministicCheckDefinition, context: ScanCo
   if (definition.target === 'manifest') return context.manifests.map((manifest) => manifest.path)
   if (definition.target === 'secrets')
     return context.sensitiveFiles.filter((file) => file.content !== undefined).map((file) => file.path)
-  let files = reactRouterFiles(context)
+  let files = definition.target === 'app_source' ? appSourceFiles(context) : reactRouterFiles(context)
   if (definition.target === 'theme') files = themeFiles(context)
   else if (definition.target === 'source_and_theme') files = [...files, ...themeFiles(context)]
   const source = files
@@ -490,7 +507,10 @@ function executionDisposition(
       applicable: true,
       reason: {code: 'parser_unavailable', message: 'No readable Shopify app configuration was available.'},
     }
-  if (['source', 'theme', 'manifest', 'secrets', 'source_and_theme'].includes(definition.target) && files.length === 0)
+  if (
+    ['source', 'app_source', 'theme', 'manifest', 'secrets', 'source_and_theme'].includes(definition.target) &&
+    files.length === 0
+  )
     return {
       status: 'not_applicable',
       required: false,
@@ -526,7 +546,7 @@ function skippedInputsForCheck(
   return skippedFiles.filter((file) => {
     if (definition.target === 'config') return isConfig(file.path)
     if (definition.target === 'config_and_source') return isConfig(file.path) || isSourcePath(file.path)
-    if (definition.target === 'source') return isSourcePath(file.path)
+    if (definition.target === 'source' || definition.target === 'app_source') return isSourcePath(file.path)
     if (definition.target === 'theme') return isThemePath(file.path)
     if (definition.target === 'source_and_theme') return isSourcePath(file.path) || isThemePath(file.path)
     if (definition.target === 'manifest') return isManifest(file.path)
@@ -550,6 +570,7 @@ function skippedInputReason(definition: DeterministicCheckDefinition, files: Ski
 }
 
 function runnerContext(definition: DeterministicCheckDefinition, context: ScanContext): ScanContext {
+  if (definition.target === 'app_source') return {...context, sourceFiles: appSourceFiles(context)}
   return definition.target === 'source' || definition.target === 'config_and_source'
     ? {...context, sourceFiles: reactRouterFiles(context)}
     : context
@@ -584,7 +605,7 @@ export async function scan(
         raw: Object.assign({}, ...appTomls.map((configuration) => configuration.raw)),
       }
     : null
-  const capabilities = detectCapabilities(mergedConfig, extensions, sourceFiles)
+  const capabilities = detectCapabilities(mergedConfig, extensions, sourceFiles, appTomls)
   const detection = detectProject(manifests, extensions, sourceCandidates)
   const context: ScanContext = {
     appRoot,
