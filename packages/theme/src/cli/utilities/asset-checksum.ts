@@ -85,9 +85,12 @@ function md5(content: string | Buffer) {
  * as these are not needed for theme comparison.
  */
 export function rejectGeneratedStaticAssets(themeChecksums: Checksum[]) {
-  const liquidAssetKeys = new Set(
-    themeChecksums.filter(({key}) => key.startsWith('assets/') && key.endsWith('.liquid')).map(({key}) => key),
-  )
+  const liquidAssetKeys = new Set<string>()
+  for (const {key} of themeChecksums) {
+    if (key.startsWith('assets/') && key.endsWith('.liquid')) {
+      liquidAssetKeys.add(key)
+    }
+  }
 
   return themeChecksums.filter(({key}) => {
     const isStaticAsset = key.startsWith('assets/')
