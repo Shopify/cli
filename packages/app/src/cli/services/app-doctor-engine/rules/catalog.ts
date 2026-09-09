@@ -73,13 +73,12 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'INSECURE_WEBHOOK_URL',
-    title: 'Webhook URL is not HTTPS',
+    title: 'Configured callback URL is not HTTPS',
     severity: 'high',
     points: -12,
-    description: 'Detects webhook subscriptions configured with non-HTTPS absolute URLs.',
-    fix: 'Change the webhook URI to use HTTPS.',
+    description: 'Detects webhook subscriptions and OAuth redirect URLs configured with unsafe absolute URLs.',
+    fix: 'Use HTTPS or a supported Shopify-relative path for every configured callback URL.',
     guide: 'https://shopify.dev/docs/apps/webhooks',
-    requires: 'webhooks',
   },
   {
     id: 'COMMITTED_SECRET',

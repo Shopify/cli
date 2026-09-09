@@ -1,6 +1,6 @@
 ---
 id: APP_PROXY_LIQUID_INJECTION
-version: 1
+version: 2
 severity: high
 ---
 

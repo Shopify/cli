@@ -1,6 +1,6 @@
 ---
 id: REQUEST_CONTROLLED_ADMIN_CONTEXT
-version: 2
+version: 3
 severity: high
 ---
 

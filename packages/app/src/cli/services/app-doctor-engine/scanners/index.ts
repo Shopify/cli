@@ -81,9 +81,9 @@ export interface DeterministicCheckDefinition {
 const JAVASCRIPT_EXTENSIONS = ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts']
 const JAVASCRIPT_LOCKFILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'])
 
-const configRule = (rule: Rule): DeterministicCheckDefinition => ({
+const configRule = (rule: Rule, version = 1): DeterministicCheckDefinition => ({
   id: rule.id,
-  version: 1,
+  version,
   lifecycle: 'active',
   analysisMode: 'structured_config',
   target: 'config',
@@ -136,7 +136,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
     (context) => scanRequestControlledAdminContext(context.sourceFiles),
     'source',
-    2,
+    3,
   ),
   {
     ...configRule(deprecatedScriptTagScope),
@@ -148,7 +148,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
       ...scanDeprecatedScriptTagApi(context.sourceFiles),
     ],
   },
-  configRule(insecureWebhookUrl),
+  configRule(insecureWebhookUrl, 2),
   {
     id: 'COMMITTED_SECRET',
     version: 1,
@@ -191,7 +191,12 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },
   {
-    ...jsCheck('APP_PROXY_LIQUID_INJECTION', (context) => scanAppProxyLiquidInjection(context.sourceFiles)),
+    ...jsCheck(
+      'APP_PROXY_LIQUID_INJECTION',
+      (context) => scanAppProxyLiquidInjection(context.sourceFiles),
+      'source',
+      2,
+    ),
     requires: 'app_proxy',
   },
 ]
