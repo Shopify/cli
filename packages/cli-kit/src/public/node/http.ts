@@ -106,15 +106,16 @@ interface FetchOptions {
  * @returns An AbortSignal.
  */
 export function abortSignalFromRequestBehaviour(behaviour: RequestBehaviour): AbortSignal {
-  let signal: AbortSignal
   if (behaviour.useAbortSignal === true) {
-    signal = AbortSignal.timeout(behaviour.timeoutMs)
-  } else if (behaviour.useAbortSignal && typeof behaviour.useAbortSignal === 'function') {
-    signal = behaviour.useAbortSignal()
-  } else if (behaviour.useAbortSignal) {
-    signal = behaviour.useAbortSignal
+    return AbortSignal.timeout(behaviour.timeoutMs)
   }
-  return signal
+  if (typeof behaviour.useAbortSignal === 'function') {
+    return behaviour.useAbortSignal()
+  }
+  if (behaviour.useAbortSignal) {
+    return behaviour.useAbortSignal
+  }
+  return undefined
 }
 
 async function innerFetch({url, behaviour, init, logRequest, useHttpsAgent}: FetchOptions): Promise<Response> {
