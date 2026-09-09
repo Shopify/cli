@@ -7,7 +7,6 @@ import {
   copy as fsCopy,
   ensureFile as fsEnsureFile,
   ensureFileSync as fsEnsureFileSync,
-  remove as fsRemove,
   removeSync as fsRemoveSync,
   move as fsMove,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -260,14 +259,29 @@ export function mkdirSync(path: string): void {
   fsMkdirSync(path, {recursive: true})
 }
 
+interface RemoveFileOptions {
+  /**
+   * Number of times Node retries the removal when it hits a transient error
+   * (EBUSY, EMFILE, ENFILE, ENOTEMPTY or EPERM), waiting `retryDelay` milliseconds
+   * longer on each try. Defaults to 0 (no retries).
+   */
+  maxRetries?: number
+  /**
+   * Milliseconds to wait between retries. Defaults to 100.
+   */
+  retryDelay?: number
+}
+
 /**
- * Removes a file at the given path.
+ * Removes a file or directory (recursively) at the given path.
  *
- * @param path - Path to the file to be removed.
+ * @param path - Path to the file or directory to be removed.
+ * @param options - Retry behavior, passed through to Node's `fs.rm`. Useful when the removal can
+ * race with transient locks, such as an antivirus scanning freshly written files.
  */
-export async function removeFile(path: string): Promise<void> {
+export async function removeFile(path: string, options: RemoveFileOptions = {}): Promise<void> {
   outputDebug(outputContent`Removing file at ${outputToken.path(path)}...`)
-  await fsRemove(path)
+  await fsRm(path, {recursive: true, force: true, ...options})
 }
 
 /**

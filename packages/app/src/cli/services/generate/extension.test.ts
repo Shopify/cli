@@ -31,6 +31,7 @@ import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../models/app/validation/multi-cli-warning.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
@@ -458,6 +459,76 @@ describe('initialize a extension', async () => {
       expect(file.fileExistsSync(joinPath(tmpDir, 'extensions', name))).toBeFalsy()
     })
   })
+
+  test('cleans up and explains how to recover when pnpm blocks dependency build scripts', async () => {
+    await withTemporaryApp(
+      async (tmpDir) => {
+        // Given
+        const name = 'my-ext-1'
+        vi.mocked(installNodeModules).mockRejectedValueOnce(
+          new Error(
+            'Command failed with exit code 1: pnpm install\nERR_PNPM_IGNORED_BUILDS Ignored build scripts: esbuild@0.24.2.',
+          ),
+        )
+
+        // When
+        const got = createFromTemplate({
+          name,
+          extensionTemplate: checkoutUITemplate,
+          extensionFlavor: 'vanilla-js',
+          appDirectory: tmpDir,
+          specifications,
+          onGetTemplateRepository,
+        })
+
+        // Then
+        await expect(got).rejects.toThrow(
+          "Your extension couldn't be generated because pnpm blocked the build scripts of some of its dependencies.",
+        )
+        expect(file.fileExistsSync(joinPath(tmpDir, 'extensions', name))).toBeFalsy()
+      },
+      {useWorkspaces: true},
+    )
+  })
+
+  test.skipIf(process.platform === 'win32')(
+    'warns and surfaces the original error when the extension directory cleanup fails',
+    async () => {
+      await withTemporaryApp(
+        async (tmpDir) => {
+          // Given
+          const name = 'my-ext-1'
+          const extensionsDirectory = joinPath(tmpDir, 'extensions')
+          const outputMock = mockAndCaptureOutput()
+          vi.mocked(installNodeModules).mockImplementationOnce(async () => {
+            // Make the parent directory read-only so the cleanup can't remove the extension directory.
+            await file.chmod(extensionsDirectory, 0o555)
+            throw new Error('pnpm install failed')
+          })
+
+          try {
+            // When
+            const got = createFromTemplate({
+              name,
+              extensionTemplate: checkoutUITemplate,
+              extensionFlavor: 'vanilla-js',
+              appDirectory: tmpDir,
+              specifications,
+              onGetTemplateRepository,
+            })
+
+            // Then
+            await expect(got).rejects.toThrow('pnpm install failed')
+            expect(outputMock.warn()).toContain("Couldn't remove")
+          } finally {
+            await file.chmod(extensionsDirectory, 0o755)
+            outputMock.clear()
+          }
+        },
+        {useWorkspaces: true},
+      )
+    },
+  )
 
   test('reloads the app after generating the extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
