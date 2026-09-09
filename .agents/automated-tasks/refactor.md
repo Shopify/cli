@@ -11,7 +11,7 @@ Every branch you create MUST start with `refactor-` (e.g. `refactor-extract-load
 ✅ **Always do:**
 - Do exactly ONE thing per PR.
 - Preserve observable behavior exactly. No semantic changes.
-- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test:unit` (or the project's equivalents) before opening the PR.
+- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test` (or the project's equivalents) before opening the PR.
 - Follow existing patterns and conventions in the surrounding code.
 - Avoid adding comments to the code, unless they are important
 - When in doubt, do NOT ask for clarification — pick the best reasonable option and open the PR.

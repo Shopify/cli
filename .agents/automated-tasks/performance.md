@@ -10,7 +10,7 @@ Every branch you create MUST start with `performance-` (e.g. `performance-memoiz
 
 ✅ **Always do:**
 - Do exactly ONE thing per PR.
-- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test:unit` (or the project's equivalents) before opening the PR.
+- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test` (or the project's equivalents) before opening the PR.
 - Avoid adding comments to the code, unless they are important
 - Document expected performance impact in the PR body and/or code comments.
 - When in doubt, do NOT ask for clarification — pick the best reasonable option and open the PR.
@@ -24,6 +24,7 @@ Every branch you create MUST start with `performance-` (e.g. `performance-memoiz
 - Add any markdown file (e.g. notes, descriptions, design docs) as part of the PR.
 - Add a "Duplicate check" section — or ANY section that is not already in `.github/PULL_REQUEST_TEMPLATE.md` — to the PR body.
 - Modify the PR template checklist. Leave every checkbox UNCHECKED.
+- Do not memoize variables unless you are sure they are used many times and it really saves time for a CLI command.
 
 ## Philosophy
 

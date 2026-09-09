@@ -3,9 +3,8 @@ name: maintenance-prs
 on:
   workflow_dispatch:
   schedule:
-    # GitHub schedules use UTC: midnight is 02:00 at a fixed GMT+2 offset.
-    - cron: '0 0 * * 0,2-6'
-    - cron: '0 0 * * 1'
+    # Everyday at 00:00 UTC
+    - cron: '0 0 * * *'
 
 permissions:
   contents: write
@@ -26,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: ${{ fromJSON((github.event_name == 'workflow_dispatch' || github.event.schedule == '0 0 * * 1') && '["refactor","tests","performance","security"]' || '["refactor","tests"]') }}
+        task: [refactor, tests, performance, security]
     concurrency:
       group: maintenance-prs-${{ matrix.task }}
       cancel-in-progress: false
@@ -34,17 +33,33 @@ jobs:
       MAINTENANCE_TASK: ${{ matrix.task }}
       MAINTENANCE_BRANCH: ${{ matrix.task }}-maintenance-${{ github.run_id }}
     steps:
+      - name: Check task schedule
+        id: schedule
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == 'workflow_dispatch' ||
+                "$MAINTENANCE_TASK" == 'refactor' ||
+                "$MAINTENANCE_TASK" == 'tests' ||
+                "$(date -u +%u)" == '1' ]]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+            echo "Skipping $MAINTENANCE_TASK until Monday."
+          fi
+
       - uses: actions/checkout@v6
+        if: steps.schedule.outputs.run == 'true'
         with:
           # Include remote branches and history for the prompts' duplicate checks.
           fetch-depth: 0
 
       - name: Setup deps
+        if: steps.schedule.outputs.run == 'true'
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: '26.1.0'
 
       - name: Create maintenance branch
+        if: steps.schedule.outputs.run == 'true'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -52,6 +67,7 @@ jobs:
 
       - name: Run maintenance task
         id: maintenance
+        if: steps.schedule.outputs.run == 'true'
         uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
@@ -79,8 +95,7 @@ jobs:
             stop successfully without opening a PR.
 
             Dependencies are installed. Run all verification required by the task before
-            opening the PR. This repo uses `pnpm test` for its unit suite; use it wherever
-            the task says `pnpm test:unit`. Do not open a PR if the required checks fail.
+            opening the PR. Do not open a PR if the required checks fail.
             Keep duplicate-check notes out of the PR body and all template checkboxes unchecked.
             Do not post to Slack; the workflow will announce the PR after it exists.
           claude_args: |
@@ -105,9 +120,14 @@ jobs:
               return;
             }
 
+            const pullRequestTitle = pullRequest.title
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;');
+
             core.setOutput('payload', JSON.stringify({
               channel: 'C0ARV62K59C', // #devtools-gardener-backlog
-              text: `Maintenance PR (${process.env.MAINTENANCE_TASK}): ${pullRequest.html_url}`,
+              text: `Maintenance PR (${process.env.MAINTENANCE_TASK}): <${pullRequest.html_url}|${pullRequestTitle}>`,
               unfurl_links: false,
               unfurl_media: false,
             }));
