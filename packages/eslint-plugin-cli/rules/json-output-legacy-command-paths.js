@@ -33,7 +33,6 @@ const legacyCommandPaths = [
   'packages/app/src/cli/commands/app/release.ts',
   'packages/app/src/cli/commands/app/versions/list.ts',
   'packages/app/src/cli/commands/app/webhook/trigger.ts',
-  'packages/app/src/cli/commands/organization/list.ts',
   'packages/cli/src/cli/commands/auth/login.ts',
   'packages/cli/src/cli/commands/auth/logout.ts',
   'packages/cli/src/cli/commands/cache/clear.ts',

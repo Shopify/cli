@@ -1,52 +1,30 @@
-import {fetchOrganizations, NoOrgError} from '../dev/fetch.js'
-import {Organization} from '../../models/organization.js'
+import {fetchOrganizations} from '../dev/fetch.js'
 import {organizationGidForBP} from '../../utilities/developer-platform-client/app-management-client.js'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderTable} from '@shopify/cli-kit/node/ui'
+import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 
-interface OrganizationListOptions {
-  json: boolean
-}
+const OrganizationSchema = zod.object({
+  id: zod.string(),
+  gid: zod.string(),
+  name: zod.string(),
+})
 
-export async function organizationList(options: OrganizationListOptions): Promise<void> {
-  let organizations: Organization[]
-  try {
-    organizations = await fetchOrganizations()
-  } catch (error) {
-    // In JSON mode, return empty array for CI/agents instead of throwing
-    if (options.json && error instanceof NoOrgError) {
-      outputResult(JSON.stringify({organizations: []}, null, 2))
-      return
-    }
-    throw error
+export const organizationListJsonOutputSchema = defineJsonOutputSchema({
+  name: 'OrganizationListResult',
+  schema: zod.object({organizations: zod.array(OrganizationSchema)}),
+  definitions: {Organization: OrganizationSchema},
+})
+
+export type OrganizationListResult = InferJsonOutputSchema<typeof organizationListJsonOutputSchema>
+
+export async function organizationList(): Promise<OrganizationListResult> {
+  const organizations = await fetchOrganizations()
+
+  return {
+    organizations: organizations.map((organization) => ({
+      id: organization.id,
+      gid: organizationGidForBP(organization.id),
+      name: organization.businessName,
+    })),
   }
-
-  if (options.json) {
-    const jsonOutput = {
-      organizations: organizations.map((org) => ({
-        id: org.id,
-        gid: organizationGidForBP(org.id),
-        name: org.businessName,
-      })),
-    }
-    outputResult(JSON.stringify(jsonOutput, null, 2))
-    return
-  }
-
-  renderOrganizationsTable(organizations)
-}
-
-function renderOrganizationsTable(organizations: Organization[]): void {
-  const rows = organizations.map((org) => ({
-    id: org.id,
-    name: org.businessName,
-  }))
-
-  renderTable({
-    rows,
-    columns: {
-      id: {header: 'ID'},
-      name: {header: 'NAME'},
-    },
-  })
 }
