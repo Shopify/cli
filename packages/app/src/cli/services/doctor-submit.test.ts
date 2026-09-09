@@ -356,6 +356,23 @@ describe('doctorSubmit', () => {
     })
   })
 
+  test.each(['', ' \t '])('dry-run rejects an explicit blank client ID %j', async (clientId) => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = testDependencies(directory)
+      vi.mocked(dependencies.resolveClientId).mockImplementation(resolveDoctorSubmitClientId)
+
+      const error = await capturedAbort(doctorSubmit({...options(directory), dryRun: true, clientId}, dependencies))
+
+      expect(error.message).toContain('The --client-id value must be a non-empty string.')
+      expect(dependencies.resolveClientId).toHaveBeenCalledExactlyOnceWith({directory, clientId, configName: undefined})
+      expect(dependencies.writeSubmission).not.toHaveBeenCalled()
+      expect(dependencies.fetchApp).not.toHaveBeenCalled()
+      expect(dependencies.confirm).not.toHaveBeenCalled()
+      expect(dependencies.submitScan).not.toHaveBeenCalled()
+      await expect(fileExists(appDoctorArtifactPaths(directory).submissionPath)).resolves.toBe(false)
+    })
+  })
+
   test('dry run writes explicit feedback into the exact payload without prompting', async () => {
     await inTemporaryDirectory(async (directory) => {
       const dependencies = testDependencies(directory)
@@ -480,6 +497,7 @@ describe('doctorSubmit', () => {
       expect(dependencies.submitScan).toHaveBeenCalledOnce()
       expect(result).toEqual({
         status: 'submitted',
+        clientId: 'api-key',
         appTitle: 'Example app',
         payload: {path: appDoctorArtifactPaths(directory).submissionPath, schemaVersion: 1},
         submittedAt,
@@ -694,6 +712,7 @@ describe('doctorSubmit', () => {
       )
       expect(result).toEqual({
         status: 'submitted',
+        clientId: 'client-id',
         payload: {path: appDoctorArtifactPaths(directory).submissionPath, schemaVersion: 1},
         appTitle: 'Example app',
         submittedAt,

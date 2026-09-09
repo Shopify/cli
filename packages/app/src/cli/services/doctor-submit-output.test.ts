@@ -23,7 +23,13 @@ describe('renderDoctorSubmitResult', () => {
   test('renders dry-run and submitted results through the standard human output', () => {
     const payload = {path: submissionPath, schemaVersion: 1 as const}
     renderDoctorSubmitResult({status: 'dry-run', payload})
-    renderDoctorSubmitResult({status: 'submitted', payload, submittedAt: 'now', appTitle: 'Example app'})
+    renderDoctorSubmitResult({
+      status: 'submitted',
+      payload,
+      submittedAt: 'now',
+      appTitle: 'Example app',
+      clientId: 'example-client-id',
+    })
 
     expect(renderInfo).toHaveBeenCalledOnce()
     expect(renderSuccess).toHaveBeenCalledOnce()

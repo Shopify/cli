@@ -11,7 +11,7 @@ describe('App Doctor submit JSON', () => {
   test.each([
     {result: {status: 'dry-run', payload}, fixture: 'doctor-submit-dry-run-result.json'},
     {
-      result: {status: 'submitted', payload, submittedAt, appTitle: 'Example app'},
+      result: {status: 'submitted', payload, submittedAt, appTitle: 'Example app', clientId: 'example-client-id'},
       fixture: 'doctor-submit-result.json',
     },
   ] satisfies {result: Exclude<DoctorSubmitResult, {status: 'cancelled'}>; fixture: string}[])(

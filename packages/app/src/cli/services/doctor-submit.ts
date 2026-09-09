@@ -135,6 +135,14 @@ export default async function doctorSubmit(
   let payload = prepareFeedback(feedback)
 
   if (options.dryRun) {
+    // Bare dry runs only inspect the payload; explicit selections still need local validation.
+    if (options.clientId !== undefined || options.configName !== undefined) {
+      await dependencies.resolveClientId({
+        directory: appRoot,
+        clientId: options.clientId,
+        configName: options.configName,
+      })
+    }
     await dependencies.writeSubmission(appRoot, payload.bytes)
     return {status: 'dry-run', payload: {path: paths.submissionPath, schemaVersion: payload.submission.schemaVersion}}
   }
@@ -176,5 +184,6 @@ export default async function doctorSubmit(
     payload: {path: paths.submissionPath, schemaVersion: payload.submission.schemaVersion},
     submittedAt: payload.submission.report.submitted_at,
     appTitle: remoteApp.title,
+    clientId: remoteApp.apiKey,
   }
 }

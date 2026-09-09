@@ -8,7 +8,7 @@ interface DoctorSubmitJsonPayload {
 
 type DoctorSubmitJsonResult =
   | {operation: 'submit'; dry_run: true; payload: DoctorSubmitJsonPayload}
-  | {operation: 'submit'; dry_run: false; payload: DoctorSubmitJsonPayload; submitted_at: string}
+  | {operation: 'submit'; dry_run: false; payload: DoctorSubmitJsonPayload; submitted_at: string; client_id: string}
   | {
       operation: 'submit'
       error: {
@@ -42,7 +42,7 @@ export function toDoctorSubmitJson(result: Exclude<DoctorSubmitResult, {status: 
 
   const payload = {path: result.payload.path, schema_version: result.payload.schemaVersion}
   if (result.status === 'dry-run') return {operation: 'submit', dry_run: true, payload}
-  return {operation: 'submit', dry_run: false, payload, submitted_at: result.submittedAt}
+  return {operation: 'submit', dry_run: false, payload, submitted_at: result.submittedAt, client_id: result.clientId}
 }
 
 export function encodeDoctorSubmitJson(result: DoctorSubmitJsonResult): string {

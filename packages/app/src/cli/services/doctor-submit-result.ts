@@ -26,7 +26,7 @@ export type SubmitAppDoctorScanResult = {status: 'submitted'} | DoctorSubmitFail
 
 export type DoctorSubmitResult =
   | {status: 'dry-run'; payload: DoctorSubmitPayload}
-  | {status: 'submitted'; payload: DoctorSubmitPayload; submittedAt: string; appTitle: string}
+  | {status: 'submitted'; payload: DoctorSubmitPayload; submittedAt: string; appTitle: string; clientId: string}
   | {status: 'cancelled'}
   | DoctorSubmitFailure
 

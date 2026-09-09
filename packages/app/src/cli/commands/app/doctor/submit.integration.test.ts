@@ -9,6 +9,7 @@ import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch, FetchError, Response} from '@shopify/cli-kit/node/http'
+import {unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readStdinString, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
@@ -139,6 +140,7 @@ describe('app doctor submit command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       const client = remoteClient()
       const paths = await writeApp(directory)
+      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Unlinked app"\n')
       const result = await runCommand(['--path', directory, '--dry-run', ...(json ? ['--json'] : [])])
 
       expect(result.exitCode).toBe(0)
@@ -157,10 +159,80 @@ describe('app doctor submit command boundary', () => {
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
       expect(submission.schemaVersion).toBe(1)
       expect(submission.report.metadata).toEqual({version_tag: null})
+      expect(resolveDoctorSubmitClientId).not.toHaveBeenCalled()
       expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
       expect(client.appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetch).not.toHaveBeenCalled()
       await expect(readdir(joinPath(directory, '.shopify'))).resolves.toEqual(['app-doctor'])
+    })
+  })
+
+  test.each([
+    {flags: ['--config', 'staging'], clientId: undefined, configName: 'staging'},
+    {flags: ['--client-id', 'explicit-client-id'], clientId: 'explicit-client-id', configName: undefined},
+  ])('dry-run validates explicit selection $flags without network access', async ({flags, clientId, configName}) => {
+    await inTemporaryDirectory(async (directory) => {
+      const client = remoteClient()
+      const paths = await writeApp(directory)
+      await writeFile(joinPath(directory, 'shopify.app.staging.toml'), 'client_id = "staging-client-id"\n')
+
+      const result = await runCommand(['--path', directory, '--dry-run', '--json', ...flags])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stderr).toBe('')
+      expect(JSON.parse(result.stdout)).toEqual({
+        operation: 'submit',
+        dry_run: true,
+        payload: {path: paths.submissionPath, schema_version: 1},
+      })
+      expect(resolveDoctorSubmitClientId).toHaveBeenCalledExactlyOnceWith({directory, clientId, configName})
+      await expect(readFile(paths.submissionPath, 'utf8')).resolves.toContain('"schemaVersion": 1')
+      expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+      expect(client.appFromIdentifiers).not.toHaveBeenCalled()
+      expect(client.generateSourceScanUploadUrl).not.toHaveBeenCalled()
+      expect(client.createSourceScan).not.toHaveBeenCalled()
+      expect(fetch).not.toHaveBeenCalled()
+    })
+  })
+
+  describe.each([false, true])('dry-run rejects invalid explicit config (json=%s)', (json) => {
+    test.each([
+      {content: undefined, message: "Couldn't find app configuration"},
+      {content: 'client_id = [', message: "Couldn't read app configuration"},
+      {content: 'name = "Unlinked app"', message: 'must contain a non-empty string client_id'},
+      {content: 'client_id = " "', message: 'must contain a non-empty string client_id'},
+    ])('rejects config content $content before writing or network access', async ({content, message}) => {
+      await inTemporaryDirectory(async (directory) => {
+        remoteClient()
+        const paths = await writeApp(directory)
+        if (content !== undefined) await writeFile(joinPath(directory, 'shopify.app.staging.toml'), content)
+
+        const result = await runCommand([
+          '--path',
+          directory,
+          '--dry-run',
+          '--config',
+          'staging',
+          ...(json ? ['--json'] : []),
+        ])
+
+        expect(result.exitCode).toBe(1)
+        if (json) {
+          expect(JSON.parse(result.stdout)).toMatchObject({
+            operation: 'submit',
+            error: {stage: 'preparation', message: expect.stringContaining(message)},
+          })
+          expect(result.stderr).toBe('')
+        } else {
+          expect(result.stdout).toBe('')
+          const messageText = unstyled(result.stderr).replaceAll('│', '').replace(/\s+/g, ' ')
+          expect(messageText).toContain(message)
+        }
+        expect(resolveDoctorSubmitClientId).toHaveBeenCalledOnce()
+        await expect(readFile(paths.submissionPath)).rejects.toMatchObject({code: 'ENOENT'})
+        expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+        expect(fetch).not.toHaveBeenCalled()
+      })
     })
   })
 
@@ -225,7 +297,7 @@ describe('app doctor submit command boundary', () => {
     })
   })
 
-  test('successful submission retains the exact JSON shape', async () => {
+  test('successful submission JSON identifies the receiving app without changing the uploaded report', async () => {
     await inTemporaryDirectory(async (directory) => {
       remoteClient()
       const paths = await writeApp(directory)
@@ -236,7 +308,10 @@ describe('app doctor submit command boundary', () => {
         dry_run: false,
         payload: {path: paths.submissionPath, schema_version: 1},
         submitted_at: submission.report.submitted_at,
+        client_id: 'api-key',
       })
+      expect(submission).not.toHaveProperty('client_id')
+      expect(submission.report).not.toHaveProperty('client_id')
       expect(result.stderr).toBe('')
       expect(result.exitCode).toBe(0)
     })
