@@ -39,8 +39,7 @@ export async function loadEnvironment(
     return undefined
   }
   const file = await TomlFile.read(filePath)
-  const environmentsJson = file.content as Environments
-  const environments = environmentsJson.environments
+  const environments = (file.content as Environments).environments
   if (!environments) {
     renderWarningIfNeeded(
       {
