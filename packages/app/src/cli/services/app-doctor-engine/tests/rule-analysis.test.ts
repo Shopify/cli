@@ -133,6 +133,23 @@ export const loader = async ({request}) => {
     expect(findings.map((finding) => finding.location.line)).toEqual([8, 9, 10])
   })
 
+  test('follows request parsing helpers with additional arguments', () => {
+    const findings = scanRequestControlledAdminContext([
+      source(`function readParams(request: Request, context: AppLoadContext): {shop: string} {
+  return {shop: new URL(request.url).searchParams.get("shop") ?? ""};
+}
+
+export const loader = async ({request, context}) => {
+  const params = readParams(request, context);
+  await unauthenticated.admin(params.shop);
+  await unauthenticated.admin(readParams(request, context).shop);
+}`),
+    ])
+
+    expect(findings).toHaveLength(2)
+    expect(findings.map((finding) => finding.location.line)).toEqual([7, 8])
+  })
+
   test('does not taint trusted session properties or helpers that return a rebound session shop', () => {
     const findings = scanRequestControlledAdminContext([
       source(`export const loader = async ({request}) => {
@@ -216,6 +233,71 @@ describe('APP_PROXY_LIQUID_INJECTION body flow', () => {
     ).toHaveLength(1)
   })
 
+  test('follows post-declaration aliases and tuple-form Response headers', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}) => {
+  let shop;
+  shop = request.query.shop;
+  return new Response(
+    \`<div>\${shop}</div>\`,
+    {headers: [['Content-Type', 'text/html']]},
+  );
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+  })
+
+  test('follows Express response setters and body sinks', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(\`<div>\${request.query.shop}</div>\`);
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}, res) => {
+  res.type('html');
+  res.end(\`<div>\${request.query.shop}</div>\`);
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}, res) => {
+  res.set({'Content-Type': 'text/html'});
+  res.write(\`<div>\${request.query.shop}</div>\`);
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `export const loader = ({request}, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(\`<div>\${request.query.shop}</div>\`);
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
   test('suppresses only imported HTML escapers, never local identities or Liquid bodies', () => {
     expect(
       scanAppProxyLiquidInjection([
@@ -248,6 +330,56 @@ export const loader = ({request}) => {
 export const loader = ({request}) => {
   const shop = request.query.shop;
   return new Response(\`{{ \${escapeHtml(shop)} }}\`, {headers: {'Content-Type': 'application/liquid'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+  })
+
+  test('does not suppress imported HTML escaping when earlier interpolation can change HTML context', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
+  const opening = '<script>';
+  const closing = '</script>';
+  return new Response(\`\${opening}\${escapeHtml(request.query.action)}\${closing}\`, {headers: {'Content-Type': 'text/html'}});
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+  })
+
+  test('does not trust a shadowed escape-html binding', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
+  const render = (escapeHtml) => new Response(\`<div>\${escapeHtml(request.query.shop)}</div>\`, {headers: {'Content-Type': 'text/html'}});
+  return render((value) => value);
+}`,
+          'app/routes/proxy.ts',
+        ),
+      ]),
+    ).toHaveLength(1)
+  })
+
+  test('does not trust escape-html in method parameter scope', () => {
+    expect(
+      scanAppProxyLiquidInjection([
+        source(
+          `import escapeHtml from 'escape-html';
+export const loader = ({request}) => {
+  const renderer = {
+    render(escapeHtml) {
+      return new Response(\`<div>\${escapeHtml(request.query.shop)}</div>\`, {headers: {'Content-Type': 'text/html'}});
+    },
+  };
+  return renderer.render((value) => value);
 }`,
           'app/routes/proxy.ts',
         ),

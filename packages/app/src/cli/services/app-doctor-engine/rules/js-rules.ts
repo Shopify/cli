@@ -215,8 +215,12 @@ function returnedShopExpressions(source: string): string[] {
 
 function isRequestShopHelperCall(expression: string, requestPattern: string, helpers: Set<string>): boolean {
   return [...helpers].some((helper) =>
-    new RegExp(`^(?:await\\s+)?${escapeRegExp(helper)}\\s*\\(\\s*(?:${requestPattern})\\s*\\)$`).test(expression),
+    new RegExp(`^${requestShopHelperCallPattern(helper, requestPattern)}$`).test(expression),
   )
+}
+
+function requestShopHelperCallPattern(helper: string, requestPattern: string): string {
+  return `(?:await\\s+)?${escapeRegExp(helper)}\\s*\\(\\s*(?:${requestPattern})(?:\\s*,[\\s\\S]*?)?\\s*\\)`
 }
 
 function isRequestControlledShop(expression: string, state: RequestShopState): boolean {
@@ -247,7 +251,7 @@ function isRequestControlledShop(expression: string, state: RequestShopState): b
 
 function isRequestShopHelperMember(expression: string, state: RequestShopState): boolean {
   return [...state.requestShopHelpers].some((helper) => {
-    const call = `(?:\\(\\s*)?(?:await\\s+)?${escapeRegExp(helper)}\\s*\\(\\s*(?:${state.requestPattern})\\s*\\)(?:\\s*\\))?`
+    const call = `(?:\\(\\s*)?${requestShopHelperCallPattern(helper, state.requestPattern)}(?:\\s*\\))?`
     return new RegExp(`${call}\\s*(?:\\?\\.|\\.|\\[\\s*["'])${SHOP_FIELD}`).test(expression)
   })
 }
