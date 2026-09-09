@@ -1,4 +1,5 @@
 import {Command, Config} from '@oclif/core'
+import os from 'os'
 
 /**
  * Optional lazy command loader function.
@@ -21,6 +22,16 @@ export class ShopifyConfig extends Config {
    */
   setLazyCommandLoader(loader: LazyCommandLoader): void {
     this.lazyCommandLoader = loader
+  }
+
+  /**
+   * Override load to protect oclif's shell detection from a failing OS user lookup.
+   *
+   * @returns A promise that resolves once the config is loaded.
+   */
+  async load(): Promise<void> {
+    setShellVariableWhenUserLookupFails()
+    return super.load()
   }
 
   /**
@@ -60,5 +71,18 @@ export class ShopifyConfig extends Config {
     const result = (await commandClass.run(argv, this)) as T
     await this.runHook('postrun', {argv, Command: commandClass, result})
     return result
+  }
+}
+
+// oclif reads SHELL and falls back to os.userInfo(), which throws when the OS can't resolve the current
+// user, killing the CLI during load. Remove once oclif guards that call.
+function setShellVariableWhenUserLookupFails(): void {
+  if (process.env.SHELL !== undefined) return
+
+  try {
+    os.userInfo()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    process.env.SHELL = 'unknown'
   }
 }
