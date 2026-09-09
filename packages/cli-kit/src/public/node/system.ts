@@ -139,16 +139,16 @@ function parseCommand(command: string): string[] {
   for (const char of command) {
     if (inQuote) {
       if (char === inQuote) {
-        // End of quoted section
         inQuote = null
       } else {
         current += char
       }
-    } else if (char === '"' || char === "'") {
-      // Start of quoted section
+      continue
+    }
+
+    if (char === '"' || char === "'") {
       inQuote = char
     } else if (char === ' ' || char === '\t') {
-      // Whitespace outside quotes - end current token
       if (current) {
         result.push(current)
         current = ''
@@ -158,7 +158,6 @@ function parseCommand(command: string): string[] {
     }
   }
 
-  // Don't forget the last token
   if (current) {
     result.push(current)
   }
