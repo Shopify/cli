@@ -229,6 +229,23 @@ describe('STATIC_FRAME_ANCESTORS regex mode', () => {
     ).toEqual([])
   })
 
+  test('covers static header setters, concatenation, templates, and mixed source lists', () => {
+    expect(
+      scanStaticFrameAncestors([
+        source(`headers.set('Content-Security-Policy', 'frame-ancestors *')`, 'app/root.tsx'),
+        source(`response.headers.append('Content-Security-Policy', 'frame-ancestors *')`, 'app/response.tsx'),
+        source(`res.setHeader('Content-Security-Policy', 'frame-ancestors *')`, 'app/server.tsx'),
+      ]),
+    ).toHaveLength(3)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': 'frame-ancestors ' + '*'}`, 'app/root.tsx'),
+        source(`const headers = {'Content-Security-Policy': \`frame-ancestors *\`}`, 'app/template.tsx'),
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors 'self' *"}`, 'app/mixed.tsx'),
+      ]),
+    ).toHaveLength(3)
+  })
+
   test('handles multiline and long static CSP literal construction', () => {
     expect(
       scanStaticFrameAncestors([
