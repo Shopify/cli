@@ -191,6 +191,16 @@ describe('STATIC_FRAME_ANCESTORS regex mode', () => {
     ).toHaveLength(1)
     expect(
       scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors https:"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
+        source(`const headers = {'Content-Security-Policy': "frame-ancestors 'self' https:"}`, 'app/root.tsx'),
+      ]),
+    ).toHaveLength(1)
+    expect(
+      scanStaticFrameAncestors([
         source(
           `const headers = {'Content-Security-Policy': "frame-ancestors https://admin.shopify.com https://merchant.myshopify.com"}`,
           'app/root.tsx',
@@ -268,6 +278,12 @@ describe('STATIC_FRAME_ANCESTORS regex mode', () => {
         ),
       ]),
     ).toHaveLength(1)
+  })
+
+  test('consumes malformed string literals once', () => {
+    const malformed = `const broken = "${'\\"'.repeat(64_000)}`
+
+    expect(scanStaticFrameAncestors([source(malformed, 'app/broken.tsx')])).toEqual([])
   })
 })
 

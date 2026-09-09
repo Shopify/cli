@@ -6,6 +6,7 @@ const HEADER_NAME = 'content-security-policy'
 const HEADER_SETTER_PREFIX = /\b(?:headers|response\.headers|res)\.(?:set|append|setHeader)\s*\(\s*$/i
 const ALL_ORIGIN_WILDCARD = /^https?:\/\/\*(?::(?:\*|\d+))?(?:\/.*)?$/i
 const SHOPIFY_WILDCARD = /^(?:https?:\/\/)?\*\.myshopify\.com(?::(?:\*|\d+))?(?:\/.*)?$/i
+const SCHEME_ONLY_SOURCE = /^(?:http|https):$/i
 
 interface StaticHeaderValue {
   index: number
@@ -82,7 +83,12 @@ function hasClearlyPermissiveFrameAncestors(value: string): boolean {
 }
 
 function isClearlyPermissiveSource(source: string): boolean {
-  return source === '*' || ALL_ORIGIN_WILDCARD.test(source) || SHOPIFY_WILDCARD.test(source)
+  return (
+    source === '*' ||
+    SCHEME_ONLY_SOURCE.test(source) ||
+    ALL_ORIGIN_WILDCARD.test(source) ||
+    SHOPIFY_WILDCARD.test(source)
+  )
 }
 
 function evaluateStaticStringExpression(expression: string): string | undefined {
@@ -209,7 +215,7 @@ function parseStringLiteral(source: string, start: number): ParsedStringLiteral 
       }
     }
   }
-  return undefined
+  return {end: source.length, value: '', static: false}
 }
 
 function skipWhitespace(source: string, start: number): number {
