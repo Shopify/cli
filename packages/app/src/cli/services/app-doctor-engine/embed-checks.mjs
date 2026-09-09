@@ -32,15 +32,28 @@ export const EMBEDDED_CHECK_SOURCES: ReadonlyArray<string> = ${JSON.stringify(so
 export const EMBEDDED_APP_DOCTOR_INSTRUCTIONS = ${JSON.stringify(instructions)};
 `
 
-if (process.argv.includes('--check')) {
+const args = process.argv.slice(2)
+const unknownArgs = args.filter((arg) => arg !== '--check')
+
+if (unknownArgs.length > 0) {
+  console.error(`Unknown argument${unknownArgs.length === 1 ? '' : 's'}: ${unknownArgs.join(', ')}
+
+Usage:
+  node embed-checks.mjs           Write checks/embedded.ts
+  node embed-checks.mjs --check   Exit 1 if embedded.ts is stale`)
+  process.exitCode = 1
+} else if (args.includes('--check')) {
   let actual = ''
   try {
     actual = readFileSync(outputPath, 'utf8')
-  } catch {
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
     // Missing generated file is a mismatch.
   }
 
-  if (actual !== output) {
+  if (actual === output) {
+    console.log(`App Doctor embedded.ts is up to date (${files.length} semantic checks and instructions)`)
+  } else {
     console.error(`App Doctor embedded.ts is out of date.
 
 Markdown checks and instructions are the source of truth, but
@@ -51,10 +64,8 @@ Run:
   pnpm --filter @shopify/app generate:app-doctor-checks
 
 Then commit the updated embedded.ts.`)
-    process.exit(1)
+    process.exitCode = 1
   }
-
-  console.log(`App Doctor embedded.ts is up to date (${files.length} semantic checks and instructions)`)
 } else {
   writeFileSync(outputPath, output)
   console.log(
