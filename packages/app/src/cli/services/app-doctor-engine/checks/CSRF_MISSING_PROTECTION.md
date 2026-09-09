@@ -1,6 +1,6 @@
 ---
 id: CSRF_MISSING_PROTECTION
-version: 1
+version: 2
 severity: medium
 ---
 
@@ -40,7 +40,7 @@ app proxies still need explicit CSRF checks.
 
 4. **Distinguish webhooks from user-facing endpoints.** Webhooks use
    HMAC verification instead of CSRF tokens — `protect_from_forgery
-with: :null_session` is correct for webhooks. But the same pattern
+   with: :null_session` is correct for webhooks. But the same pattern
    on a user-facing POST handler is a CSRF vulnerability.
 
 5. **Check Shopify-specific patterns.** Embedded apps that use
@@ -48,9 +48,14 @@ with: :null_session` is correct for webhooks. But the same pattern
    prevents CSRF. But if an action skips `authenticate.admin` and still
    processes state changes, CSRF protection may be missing.
 
+6. **Require a concrete sensitive action.** A missing anti-CSRF signal is only a
+   finding when the forged request can change privileged state, access protected
+   data, or trigger another security-relevant action. A harmless no-op or public
+   write endpoint is not enough by itself.
+
 ## What to report
 
-For each state-changing endpoint without CSRF protection:
+For each state-changing endpoint without CSRF protection that reaches a concrete sensitive action:
 
 ```json
 {
@@ -71,7 +76,7 @@ For each state-changing endpoint without CSRF protection:
     }
   ],
   "confidence": "medium",
-  "reasoning": "The update action accepts POST requests but CSRF protection is explicitly skipped. This is not a webhook handler (no HMAC verification), so an attacker can forge a POST request from another site."
+  "reasoning": "The update action accepts POST requests but CSRF protection is explicitly skipped. This is not a webhook handler, and the action mutates privileged state, so an attacker can forge the request from another site."
 }
 ```
 
@@ -84,4 +89,5 @@ Do not report:
 - GET-only handlers (not state-changing)
 - API endpoints that use bearer token auth (not cookie-based, so
   CSRF doesn't apply)
+- State-changing handlers where no privileged or security-relevant effect is reachable
 - Test controllers

@@ -1,17 +1,19 @@
 ---
 id: UNSCOPED_SHOP_CONFIG_WRITE
-version: 1
+version: 2
 severity: high
 ---
 
-Find configuration writes where the target shop is determined by request
-input rather than the authenticated session, allowing an attacker to
-modify another shop's configuration.
+Find configuration writes where the target shop is determined by an
+untrusted or insufficiently bound selector instead of the authenticated
+installation/session, allowing an attacker to modify another shop's
+configuration.
 
 Some apps write per-shop configuration — metafields, app settings,
 webhook subscriptions. The target shop must come from the authenticated
-session, not from the request body or query string. If an attacker can
-control the target shop, they can write to another merchant's config.
+installation/session or be re-bound to it before the write. Request input,
+raw headers, cache keys, background-job payloads, token-exchange artifacts,
+and persisted values whose provenance is not bound are all suspect.
 
 ## What to look for
 
@@ -22,17 +24,20 @@ control the target shop, they can write to another merchant's config.
    - Rails: `.save`, `.update`, `.create` on config models
    - Any write that takes a shop identifier as a parameter
 
-2. **Trace the shop identifier.** For each write, determine where the
-   target shop comes from:
+2. **Trace the shop selector.** For each write, determine where the target
+   shop comes from:
    - `params[:shop_id]`, `request.body.shop`, `url.searchParams.get('shop')`
      — request input, attacker-controlled
-   - `session.shop`, `current_shop.shop_id`, `authenticate.admin(request)`
-     — session-derived, safe
-   - A variable — trace it back
+   - Raw headers, cache keys, background-job payloads, token-exchange artifacts,
+     or persisted values whose original source was lower trust
+   - `session.shop`, `current_shop.shop_id`, `authenticate.admin(request)`, or a
+     reloaded installation/session record — trusted
+   - A variable — trace it back to the first trusted or untrusted source
 
-3. **Check for session verification.** Is `authenticate.admin(request)`
-   called in this handler? Is there a `before_action` that establishes
-   the session? If the shop comes from the session, it's safe.
+3. **Check for session verification or rebinding.** Is `authenticate.admin(request)`
+   called in this handler? Is there a `before_action` that establishes the
+   session? Does a job/controller load a trusted installation record and ignore
+   the raw selector after rebinding? If so, the write may be safe.
 
 4. **Check the Remix pattern.** In Remix apps, the admin context comes
    from `authenticate.admin(request)`, which returns `{ admin, session }`.
@@ -41,6 +46,9 @@ control the target shop, they can write to another merchant's config.
    the vulnerability — `unauthenticated.admin` doesn't verify the caller.
 
 ## What to report
+
+Report only when the write target is both attacker-influenceable and not
+revalidated before the write:
 
 ```json
 {
@@ -66,12 +74,17 @@ control the target shop, they can write to another merchant's config.
     }
   ],
   "confidence": "high",
-  "reasoning": "The target shop comes from the request body and is passed to a configuration write. No session verification is present, so an attacker can write to any shop's config."
+  "reasoning": "The target shop comes from the request body and is passed to a configuration write. No session verification or rebinding is present, so an attacker can write to another shop's config."
 }
 ```
+
+If provenance is unclear, keep the check unresolved instead of reporting a finding.
 
 Do not report:
 
 - Writes where the shop comes from `authenticate.admin(request)` session
 - Writes where the shop comes from an HMAC-verified webhook payload
+- Writes where a raw header, job payload, cache key, or stored selector is re-bound
+  to a trusted installation/session before the write
+- Values whose provenance is unclear but not demonstrably attacker-controlled
 - Test handlers

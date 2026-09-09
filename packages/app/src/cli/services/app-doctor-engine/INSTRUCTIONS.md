@@ -37,12 +37,12 @@ For each applicable check:
 
 1. Follow the prompt from the review pack exactly.
 2. Trace relevant request, authentication, authorization, data-flow, configuration, and rendering paths far enough to verify the behavior.
-3. Report only findings grounded in repository evidence. Uncertainty is not a finding; record limitations separately.
+3. Report only findings that prove a concrete trust-boundary violation in repository evidence. Name the principal, untrusted source, missing or weak boundary, sink or action, and affected authority. A code smell alone is not a finding.
 4. Use project-relative file paths and accurate one-based line numbers.
 5. Keep the check ID, check version, and prompt hash exactly as emitted by the review pack.
 6. Include concise evidence citations. Never include a detected secret value or unnecessary personal data.
 
-A check with no verified issue must not produce a fabricated finding. Follow the review pack's current findings schema for recording executed checks, non-applicable checks, or empty results; that schema may evolve independently of these instructions.
+A check with no verified issue must not produce a fabricated finding. If you cannot establish exploitability or affected authority, record the check as unresolved with the review pack's structured reason/guidance fields instead. Follow the review pack's current findings schema for recording executed checks, non-applicable checks, or empty results; that schema may evolve independently of these instructions.
 
 ### 4. Write structured findings
 

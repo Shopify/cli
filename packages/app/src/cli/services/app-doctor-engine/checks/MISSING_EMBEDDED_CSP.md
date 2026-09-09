@@ -1,6 +1,6 @@
 ---
 id: MISSING_EMBEDDED_CSP
-version: 2
+version: 3
 severity: medium
 ---
 
@@ -43,9 +43,14 @@ buttons they can't see.
    CSP `frame-ancestors`. This is deprecated but functional in some
    browsers. Note it but don't flag if CSP is also present.
 
+6. **Require a concrete clickjacking impact.** Missing `frame-ancestors` is only a
+   finding when the embedded surface exposes a sensitive action or privileged UI
+   that an attacker could trick the merchant into invoking. If the surface is
+   informational only or the impact cannot be established, keep it unresolved.
+
 ## What to report
 
-For embedded apps with no `frame-ancestors` directive:
+For embedded apps with no `frame-ancestors` directive and a concrete sensitive UI action:
 
 ```json
 {
@@ -61,7 +66,7 @@ For embedded apps with no `frame-ancestors` directive:
     }
   ],
   "confidence": "medium",
-  "reasoning": "The app declares app_embed capability but no file sets a Content-Security-Policy with frame-ancestors. Without it, any website can iframe the app."
+  "reasoning": "The app declares app_embed capability but no file sets a Content-Security-Policy with frame-ancestors, and the embedded surface exposes a privileged action that can be clickjacked."
 }
 ```
 
@@ -70,4 +75,5 @@ Do not report:
 - Non-embedded apps (no app_embed or theme_app_extension)
 - Apps that call `addDocumentResponseHeaders` (handles CSP automatically)
 - Apps with an explicit `frame-ancestors` directive in their CSP
-- Test files (under test/ or \*\_test.rb)
+- Embedded surfaces with no demonstrated sensitive action or privileged UI
+- Test files (under test/ or \*_test.rb)

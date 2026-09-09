@@ -1,6 +1,6 @@
 ---
 id: OVERBROAD_DATA_ACCESS
-version: 1
+version: 2
 severity: medium
 ---
 
@@ -25,11 +25,15 @@ carelessly broad data returns.
 
 2. **Check what fields are returned.** For each API response:
    - Does it return the full model (all columns) or a filtered set?
-   - Does it include sensitive fields like:
-     - `email`, `phone`, `address`, `name` (PII)
-     - `api_key`, `access_token`, `secret` (credentials)
-     - `shop_id`, `tenant_id` (internal identifiers)
-     - `password`, `password_digest` (auth data)
+   - Sensitive data includes:
+     - access tokens, session tokens, API secrets, refresh tokens, auth cookies, signed links
+     - customer/order PII: names, email, phone, addresses, geolocation, private notes
+     - privileged admin actions or identifiers that enable replay
+     - internal-only financial, staff, or operational fields
+   - Not sensitive by itself:
+     - public shop domains
+     - public product handles, titles, storefront URLs
+     - public metadata already visible to storefront visitors
    - Is there a serializer or field selection that limits the output?
 
 3. **Find GraphQL over-selection.** Search for:
@@ -49,6 +53,11 @@ carelessly broad data returns.
      `cost` or `profit_margin` fields?
    - A customer can see their order, but should they see the merchant's
      internal notes?
+
+6. **Distinguish public metadata from sensitive response data.** A public shop
+   domain or storefront URL is not a finding by itself. Confirm the response
+   exposes data that grants authority, reveals private customer/order context, or
+   exceeds what the caller needs.
 
 ## What to report
 

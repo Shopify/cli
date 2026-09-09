@@ -1,6 +1,6 @@
 ---
 id: OPEN_REDIRECT
-version: 1
+version: 2
 severity: medium
 ---
 
@@ -10,8 +10,8 @@ allowing an attacker to redirect users to a malicious site.
 An open redirect occurs when a web application redirects to a URL that
 comes from an untrusted source (query parameters, form fields, headers)
 without checking that the destination is safe. In Shopify apps, this is
-particularly dangerous because the app runs inside an iframe in the admin
-— a redirect to an external site can be used for phishing.
+particularly dangerous when the redirect occurs after OAuth, token
+handling, login, or another sensitive trust transition.
 
 ## What to look for
 
@@ -36,6 +36,11 @@ particularly dangerous because the app runs inside an iframe in the admin
    user-controlled even though it comes from params. Verify the signature
    check exists before flagging.
 
+5. **Require a meaningful trust transition.** A redirect is a finding only when
+   it can move a user through a sensitive boundary — for example after OAuth,
+   token handling, login, account linking, or another privileged flow. A generic
+   navigation helper with no sensitive transition is not enough by itself.
+
 ## What to report
 
 ```json
@@ -53,7 +58,7 @@ particularly dangerous because the app runs inside an iframe in the admin
     }
   ],
   "confidence": "high",
-  "reasoning": "The redirect target comes from params[:return_url] with no allowlist, path validation, or signature check."
+  "reasoning": "The redirect target comes from params[:return_url] with no allowlist, path validation, or signature check and it runs after a sensitive authentication flow."
 }
 ```
 
@@ -62,4 +67,6 @@ Do not report:
 - Redirects to hardcoded paths (`redirect_to("/dashboard")`)
 - Redirects with allowlist validation (`if ALLOWED_HOSTS.include?(uri.host)`)
 - Signed redirect URLs (verify the HMAC check first)
+- Redirects with no demonstrated token, code, account-linking, login, or other
+  sensitive trust transition
 - Test controllers
