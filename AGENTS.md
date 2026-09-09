@@ -35,12 +35,12 @@ Adhere to the following guidelines in your code:
 
 ### PR creation
 
-- Use GitHub stacks for multiple dependant PRs
-- Follow the template from .github/PULL_REQUEST_TEMPLATE.md
-- Be concise
-- Remove empty sections and hidden comments
-- Do not mark checklist items as completed (except the changelog one if added)
-- In "How to test your changes?" only include CLI commands to test locally, do not add commands to run tests or other checks
+- Use GitHub stacks for multiple dependant PRs.
+- Follow the template from .github/PULL_REQUEST_TEMPLATE.md.
+- Write a concise description, explaining the problem and the high-level approach. Include implementation details only when they help reviewers understand a decision or tradeoff. Avoid repeating what is clear from the diff. Example for the WHAT section: "Refresh expired credentials before retrying the requests, so users can continue without signing in again".
+- Remove empty sections and hidden comments.
+- Do not mark checklist items as completed (except the changelog one if added).
+- In "How to test your changes?" only include CLI commands to test locally, do not add commands to run tests or other checks.
 
 ## Changesets
 
