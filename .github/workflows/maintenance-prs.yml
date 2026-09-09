@@ -2,11 +2,6 @@ name: maintenance-prs
 
 on:
   workflow_dispatch:
-    inputs:
-      include_weekly:
-        description: 'Also run performance and security tasks'
-        type: boolean
-        default: false
   schedule:
     # GitHub schedules use UTC: midnight is 02:00 at a fixed GMT+2 offset.
     - cron: '0 0 * * 0,2-6'
@@ -31,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: ${{ fromJSON((inputs.include_weekly || github.event.schedule == '0 0 * * 1') && '["refactor","tests","performance","security"]' || '["refactor","tests"]') }}
+        task: ${{ fromJSON((github.event_name == 'workflow_dispatch' || github.event.schedule == '0 0 * * 1') && '["refactor","tests","performance","security"]' || '["refactor","tests"]') }}
     concurrency:
       group: maintenance-prs-${{ matrix.task }}
       cancel-in-progress: false
