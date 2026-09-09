@@ -17,7 +17,7 @@ import {fileSize, readFile} from '@shopify/cli-kit/node/fs'
 
 const MAX_FINDINGS_FILE_SIZE_BYTES = 5_000_000
 
-export type {AppDoctorEngineMetadata, AppDoctorFindings, FindingsDocument}
+export type {AppDoctorEngineMetadata, AppDoctorFindings}
 
 export type AppDoctorBlockingLevel = Severity | 'none'
 
