@@ -1,14 +1,6 @@
-import {
-  redactIssue,
-  redactText,
-  sortIssues,
-  type Capabilities,
-  type Issue,
-  type ScanResult,
-  type Severity,
-} from './app-doctor-engine/index.js'
 import {formatAppDoctorCommand, type AppDoctorCommands} from './app-doctor-commands.js'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import type {Capabilities, Issue, ScanResult, Severity} from './app-doctor-engine/index.js'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
 interface DoctorEngineMetadata {
@@ -99,7 +91,7 @@ function doctorHeadline(input: DoctorReportInput): string {
 function doctorBody(input: DoctorReportInput): TokenItem {
   const scan = input.scan
   const tokens: Token[] = [
-    {userInput: redactText(scan.app.name)},
+    {userInput: scan.app.name},
     {char: '.'},
     `${scan.scan.files_scanned} files scanned in ${formatElapsed(input.elapsedMilliseconds)}.`,
   ]
@@ -140,7 +132,7 @@ function doctorCustomSections(input: DoctorReportInput): AlertCustomSection[] {
 
   if (input.scan.scan.coverage_gaps.length > 0) {
     const gaps = input.scan.scan.coverage_gaps
-    const items: TokenItem<InlineToken>[] = gaps.slice(0, 8).map((gap) => redactText(gap.message))
+    const items: TokenItem<InlineToken>[] = gaps.slice(0, 8).map((gap) => gap.message)
     if (gaps.length > 8) items.push({info: `${gaps.length - 8} more coverage gaps`})
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
@@ -150,8 +142,8 @@ function doctorCustomSections(input: DoctorReportInput): AlertCustomSection[] {
       input.findings.accepted === 0 && input.findings.rejected.length > 0
         ? 'No agent findings were merged.'
         : `Merged ${input.findings.accepted} agent finding(s) into the trace.`,
-      ...input.findings.rejected.map((reason) => ({error: `Rejected: ${redactText(reason)}`})),
-      ...(input.findings.warnings ?? []).map((reason) => ({warn: redactText(reason)})),
+      ...input.findings.rejected.map((reason) => ({error: `Rejected: ${reason}`})),
+      ...(input.findings.warnings ?? []).map((reason) => ({warn: reason})),
       ['Trace written to', {filePath: input.tracePath}],
     ]
     sections.push({title: 'Agent findings', body: {list: {items}}})
@@ -195,8 +187,7 @@ function doctorCustomSections(input: DoctorReportInput): AlertCustomSection[] {
   return sections
 }
 
-function issueListItem(issueInput: Issue, verbose: boolean): TokenItem<InlineToken> {
-  const issue = redactIssue(issueInput)
+function issueListItem(issue: Issue, verbose: boolean): TokenItem<InlineToken> {
   const location = issue.location.line ? `${issue.location.file}:${issue.location.line}` : issue.location.file
   const item: InlineToken[] = [{bold: issue.title}, {subdued: issue.id}, {filePath: location}]
 
@@ -213,6 +204,16 @@ function issueListItem(issueInput: Issue, verbose: boolean): TokenItem<InlineTok
   }
 
   return item
+}
+
+function sortIssues(issues: Issue[]): Issue[] {
+  const severityOrder: Record<Severity, number> = {high: 3, medium: 2, low: 1}
+  return [...issues].sort((left, right) => {
+    const severityDifference = severityOrder[right.severity] - severityOrder[left.severity]
+    if (severityDifference !== 0) return severityDifference
+    const fileDifference = left.location.file.localeCompare(right.location.file)
+    return fileDifference === 0 ? (left.location.line ?? 0) - (right.location.line ?? 0) : fileDifference
+  })
 }
 
 function groupIssuesBySeverity(issues: Issue[]): {severity: Severity; issues: Issue[]}[] {

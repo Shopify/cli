@@ -1,64 +1,30 @@
-export {scan, DETERMINISTIC_CHECKS, DETERMINISTIC_RULES} from './scanners/index.js'
-export type {DeterministicCheckDefinition} from './scanners/index.js'
-export {AppRootDiscoveryError, findAppRoot} from './scanners/discover.js'
-export {computeResultHash} from './scorer/index.js'
-export {redactText} from './rules/secret-rules.js'
-export {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './checks/embedded.js'
+/**
+ * Public App Doctor engine API.
+ *
+ * CLI code outside this directory should import only these operations and result
+ * types: locate an app, scan, parse/compile findings, parse a stored trace, and
+ * build a submission. Keep scanners, registries, merge helpers, and redaction
+ * inside the engine.
+ */
 export {
-  buildReviewPack,
-  loadChecks,
-  mergeFindings,
-  searchBoundaryFiles,
-  validateFinding,
-  validateAgentChecksExecuted,
-} from './checks/index.js'
-export type {AgentFinding, AgentFindingsDocument, Check, ReviewPack} from './checks/index.js'
-export {assertRegistryInvariants, getRegistry} from './registry/index.js'
-export type {RegistryEntry} from './registry/index.js'
-export {
-  compileTrace,
-  validateTrace,
-  validateSuppression,
-  assertCompatibleTrace,
-  isTraceSchemaVersionSupported,
-  canonicalJson,
-  findingFingerprint,
-  redactIssue,
-  sha256,
-} from './trace/index.js'
-export type {CompileTraceOptions, TraceValidationResult} from './trace/index.js'
-export {mergeExternalFindings, validateExternalFinding} from './external/index.js'
-export type {ExternalFinding} from './external/index.js'
+  AppRootDiscoveryError,
+  FindingsDocumentError,
+  compileFindings,
+  findAppRoot,
+  getAgentInstructions,
+  parseFindings,
+  parseTrace,
+  scanApp,
+} from './run.js'
+export type {
+  AppDoctorCompile,
+  AppDoctorEngineMetadata,
+  AppDoctorFindings,
+  AppDoctorScan,
+  FindingsDocument,
+  ParseTraceResult,
+} from './run.js'
 export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
 export type {AppDoctorSubmission, AppDoctorSubmissionReport, BuildSubmissionOptions} from './submission/index.js'
-export {formatJson, sortIssues} from './output/format.js'
-export {ENGINE_NAME, FINDINGS_SCHEMA_VERSION, SUPPORTED_TRACE_SCHEMA_VERSIONS, TRACE_SCHEMA_VERSION} from './types.js'
-export {getEngineVersion} from './version.js'
-export type {
-  AnalysisMode,
-  Capabilities,
-  CheckExecution,
-  CheckExecutionReason,
-  CheckExecutionStatus,
-  Confidence,
-  CoverageGap,
-  DetectedFramework,
-  DetectedLanguage,
-  DetectedSurface,
-  FindingEvidence,
-  FindingSource,
-  Fix,
-  Grade,
-  Issue,
-  Location,
-  ScanMetadata,
-  ScanResult,
-  ScoreResult,
-  Severity,
-  SkippedFile,
-  Suppression,
-  SuppressionProvenance,
-  TraceFinding,
-  TraceV1,
-  TraceV2,
-} from './types.js'
+export type {ReviewPack} from './checks/index.js'
+export type {Capabilities, Issue, ScanResult, Severity, TraceV2} from './types.js'

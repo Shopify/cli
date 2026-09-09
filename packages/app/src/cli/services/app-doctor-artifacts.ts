@@ -1,4 +1,4 @@
-import {validateTrace, type TraceV2} from './app-doctor-engine/index.js'
+import {parseTrace, type TraceV2} from './app-doctor-engine/index.js'
 import {fileExists, fileSize, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -151,12 +151,9 @@ export async function readTrace(path: string): Promise<ReadTraceResult> {
     return {status: 'invalid', errors: [`Could not parse JSON: ${errorMessage(error)}`]}
   }
 
-  // Keep validation errors structured. Do not replace this with assertCompatibleTrace,
-  // which joins them into one exception string.
-  const validation = validateTrace(parsed)
-  if (!validation.valid) return {status: 'invalid', errors: validation.errors}
-
-  return {status: 'ok', trace: parsed as TraceV2}
+  const trace = parseTrace(parsed)
+  if (!trace.ok) return {status: 'invalid', errors: trace.errors}
+  return {status: 'ok', trace: trace.trace}
 }
 
 export async function writeSubmission(appRoot: string, bytes: Buffer): Promise<void> {

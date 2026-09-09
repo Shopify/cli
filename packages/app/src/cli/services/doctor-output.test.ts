@@ -245,22 +245,25 @@ describe('buildDoctorAlert', () => {
     expect(serialized).toContain('ignored inspected file outside the scanned inputs: vitest.config.ts')
   })
 
-  test('redacts secrets from titles, paths, and verbose evidence', () => {
-    const secret = `shpat_${'a'.repeat(24)}`
+  test('renders engine-redacted titles, paths, and verbose evidence unchanged', () => {
     const serialized = JSON.stringify(
       buildDoctorAlert(
         reportInput({
           verbose: true,
           scan: {
             ...scanWithIssues,
-            app: {name: `app ${secret}`, type: 'public'},
+            app: {name: 'app [REDACTED: Shopify token]', type: 'public'},
             issues: [
               {
                 ...scanWithIssues.issues[0]!,
-                title: `title ${secret}`,
-                message: `message ${secret}`,
-                snippet: `snippet ${secret}`,
-                fix: {automated: false, description: `fix ${secret}`, guide: `https://example.com/${secret}`},
+                title: 'title [REDACTED: Shopify token]',
+                message: 'message [REDACTED: Shopify token]',
+                snippet: 'snippet [REDACTED: Shopify token]',
+                fix: {
+                  automated: false,
+                  description: 'fix [REDACTED: Shopify token]',
+                  guide: 'https://example.com/[REDACTED: Shopify token]',
+                },
               },
             ],
           },
@@ -268,7 +271,7 @@ describe('buildDoctorAlert', () => {
       ),
     )
 
-    expect(serialized).not.toContain(secret)
-    expect(serialized).toContain('[REDACTED:')
+    expect(serialized).toContain('[REDACTED: Shopify token]')
+    expect(serialized).not.toContain('shpat_')
   })
 })
