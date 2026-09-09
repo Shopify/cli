@@ -29,6 +29,8 @@ export {
 export type {CompileTraceOptions, TraceValidationResult} from './trace/index.js'
 export {mergeExternalFindings, validateExternalFinding} from './external/index.js'
 export type {ExternalFinding} from './external/index.js'
+export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
+export type {AppDoctorSubmission, AppDoctorSubmissionReport, BuildSubmissionOptions} from './submission/index.js'
 export {formatJson, sortIssues} from './output/format.js'
 export {ENGINE_NAME, FINDINGS_SCHEMA_VERSION, SUPPORTED_TRACE_SCHEMA_VERSIONS, TRACE_SCHEMA_VERSION} from './types.js'
 export {getEngineVersion} from './version.js'

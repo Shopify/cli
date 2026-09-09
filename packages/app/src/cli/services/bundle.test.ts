@@ -212,6 +212,21 @@ describe('compressBundle', () => {
 })
 
 describe('uploadToGCS', () => {
+  test('uploads prepared bytes directly and reuses them when retrying', async () => {
+    const bytes = Buffer.from('{"feedback":"é😀"}\n', 'utf8')
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ok: false, status: 503, text: async () => 'retry'} as never)
+      .mockResolvedValueOnce({ok: true, status: 200} as never)
+
+    await uploadToGCS('https://signed.example/upload', bytes, {contentType: 'application/json'})
+
+    expect(fetch).toHaveBeenCalledTimes(2)
+    for (const [, options] of vi.mocked(fetch).mock.calls) {
+      expect(options?.body).toBe(bytes)
+      expect(options?.headers).toEqual({'Content-Type': 'application/json'})
+    }
+  })
+
   test('uploads the bundle when it is under the size limit', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -226,6 +241,26 @@ describe('uploadToGCS', () => {
       expect(fetch).toHaveBeenCalledWith(
         'https://signed.example/upload',
         expect.objectContaining({method: 'put'}),
+        'slow-request',
+      )
+      expect(vi.mocked(fetch).mock.calls[0]![1]).not.toHaveProperty('headers')
+    })
+  })
+
+  test('sends the content type when the signed URL requires it', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const submissionPath = joinPath(tmpDir, 'submission.json')
+      await writeFile(submissionPath, '{}')
+      vi.mocked(fetch).mockResolvedValue({ok: true, status: 200} as never)
+
+      await uploadToGCS('https://signed.example/upload', submissionPath, {contentType: 'application/json'})
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://signed.example/upload',
+        expect.objectContaining({
+          method: 'put',
+          headers: {'Content-Type': 'application/json'},
+        }),
         'slow-request',
       )
     })
@@ -300,6 +335,34 @@ describe('uploadToGCS', () => {
         /exceeds the 100 MB upload limit/,
       )
       expect(fetch).not.toHaveBeenCalled()
+    })
+  })
+
+  test('uses a custom artifact label in storage failure copy', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const artifactPath = joinPath(tmpDir, 'submission.json')
+      await writeFile(artifactPath, '{}')
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve('forbidden'),
+      } as never)
+
+      await expect(
+        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Doctor submission'}),
+      ).rejects.toThrow('Failed to upload your App Doctor submission to storage (HTTP 403).')
+    })
+  })
+
+  test('uses a custom artifact label in size-limit copy', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const artifactPath = joinPath(tmpDir, 'submission.json')
+      await writeFile(artifactPath, '{}')
+      vi.mocked(fileSize).mockResolvedValueOnce(101 * 1024 * 1024)
+
+      await expect(
+        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Doctor submission'}),
+      ).rejects.toThrow('Your App Doctor submission exceeds the 100 MB upload limit')
     })
   })
 })

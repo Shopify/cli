@@ -93,8 +93,6 @@ Pass the findings file back through the scan command:
 
 Use the findings path you wrote when it differs from the default above. This command validates and merges the findings into the final local {{TRACE_PATH}}. Do not ignore rejected findings or compilation diagnostics, and do not repair the trace by hand. Correct the source findings file and run the command again.
 
-`shopify app doctor submit` is reserved for a future authenticated upload workflow. It is not part of the current review or local trace-compilation workflow.
-
 ### 6. Explain findings and help fix them
 
 After successful compilation, read the CLI's final diagnostics and the compiled trace. Report:
@@ -107,6 +105,27 @@ After successful compilation, read the CLI's final diagnostics and the compiled 
 - prioritized remediation steps.
 
 Make clear that the trace is informative and unsigned; it is not proof of App Store approval. If the user asks for fixes, make the smallest safe changes, avoid weakening security controls or hiding findings, then run the complete App Doctor workflow again to verify the result and recompile the trace. Use the CLI's documented suppression mechanism only when the user has an explicit, justified false positive or accepted risk; never delete findings from the trace manually.
+
+### 7. Submit only when explicitly authorized (optional)
+
+Only after compiling and reviewing {{TRACE_PATH}}, submit only when the user explicitly requests or authorizes an upload to Shopify. Do not upload automatically; local compilation does not require submission.
+
+Run from the same app root used above (or pass `--path <app-root>` to each submit command). Inspect a dry run first:
+
+```bash
+shopify app doctor submit --dry-run
+```
+
+Read `.shopify/app-doctor/submission.json` before uploading. Select the intended app with `--config <name>` or `--client-id <id>` as needed, using the same selection for inspection and upload.
+
+With authorization, run `shopify app doctor submit` and use the normal interactive confirmation to check the target app and payload before uploading.
+For live automation, use `shopify app doctor submit --json --force` only with that authorization; these flags skip confirmation. Use `--json --dry-run` for non-uploading inspection.
+
+Optionally pass feedback directly with `--feedback <text>` or read it from stdin with `--feedback -`. Feedback is passed without redaction; include it in the dry run when inspecting the payload.
+Don't include source code, file paths or secrets in your optional feedback.
+
+Optionally use `--version` to identify the app version corresponding to the scanned files. This may be a past, current, or future app version. Providing it does not create an app version.
+Submission does not make the trace signed or proof of App Store approval; it remains informative and unsigned.
 
 ## Deterministic-only mode
 
