@@ -3,6 +3,9 @@
 /**
  * Embeds the versioned semantic-check markdown so the bundled CLI does not
  * depend on runtime assets. The markdown files remain the source of truth.
+ *
+ *   node embed-checks.mjs           Write checks/embedded.ts
+ *   node embed-checks.mjs --check   Exit 1 if embedded.ts is stale
  */
 import {readFileSync, readdirSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
@@ -29,7 +32,32 @@ export const EMBEDDED_CHECK_SOURCES: ReadonlyArray<string> = ${JSON.stringify(so
 export const EMBEDDED_APP_DOCTOR_INSTRUCTIONS = ${JSON.stringify(instructions)};
 `
 
-writeFileSync(outputPath, output)
-console.log(
-  `Embedded ${files.length} semantic checks and App Doctor instructions in app-doctor-engine/checks/embedded.ts`,
-)
+if (process.argv.includes('--check')) {
+  let actual = ''
+  try {
+    actual = readFileSync(outputPath, 'utf8')
+  } catch {
+    // Missing generated file is a mismatch.
+  }
+
+  if (actual !== output) {
+    console.error(`App Doctor embedded.ts is out of date.
+
+Markdown checks and instructions are the source of truth, but
+packages/app/src/cli/services/app-doctor-engine/checks/embedded.ts
+does not match what embed-checks.mjs would generate.
+
+Run:
+  pnpm --filter @shopify/app generate:app-doctor-checks
+
+Then commit the updated embedded.ts.`)
+    process.exit(1)
+  }
+
+  console.log(`App Doctor embedded.ts is up to date (${files.length} semantic checks and instructions)`)
+} else {
+  writeFileSync(outputPath, output)
+  console.log(
+    `Embedded ${files.length} semantic checks and App Doctor instructions in app-doctor-engine/checks/embedded.ts`,
+  )
+}
