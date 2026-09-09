@@ -48,10 +48,27 @@ describe('fetchStoreThemes', () => {
     // Then
     expect(themes).toHaveLength(5)
     expect(themes[0]!.name).toBe('theme 3')
-    expect(themes[1]!.name).toBe('theme 1')
-    expect(themes[2]!.name).toBe('theme 4')
-    expect(themes[3]!.name).toBe('theme 5')
-    expect(themes[4]!.name).toBe('theme 7')
+    expect(themes[1]!.name).toBe('theme 4')
+    expect(themes[2]!.name).toBe('theme 1')
+    expect(themes[3]!.name).toBe('theme 7')
+    expect(themes[4]!.name).toBe('theme 5')
+  })
+
+  test('sorts themes newest first within each role group', async () => {
+    // Given
+    vi.mocked(fetchThemes).mockResolvedValue([
+      theme(120, 'development'),
+      theme(3, 'unpublished'),
+      theme(45, 'live'),
+      theme(89, 'unpublished'),
+      theme(7, 'development'),
+    ])
+
+    // When
+    const themes = await fetchStoreThemes(session)
+
+    // Then
+    expect(themes.map((theme) => theme.id)).toEqual([45, 89, 3, 120, 7])
   })
 
   test('throws an error when there are no themes', async () => {
