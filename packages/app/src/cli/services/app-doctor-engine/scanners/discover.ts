@@ -1,7 +1,9 @@
+import {APP_CONFIG_FILE_GLOB, isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../../../models/extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
+import {removeTrailingSlash} from '../../../models/extensions/specifications/validation/common.js'
 import {fileExistsSync, fileSizeSync, globSync, readFileSync} from '@shopify/cli-kit/node/fs'
-import {cwd, dirname, extname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {basename, cwd, dirname, extname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {lstatSync} from 'node:fs'
@@ -19,11 +21,12 @@ export class AppRootDiscoveryError extends Error {
 /**
  * Find the nearest app root without ever substituting CWD for a bad explicit path.
  *
- * This is intentionally not `Project.load()`. That loader also reads package,
- * environment, and hidden configuration, and it does not keep the bounded raw
- * bytes App Doctor hashes and reports as coverage. App Doctor reuses the same
- * `shopify.app*.toml` candidate shape, then reads those files through its own
- * repository boundary.
+ * App identity matches the rest of Shopify CLI: walk up for
+ * `shopify.app.toml` / `shopify.app.<name>.toml` using
+ * `isValidFormatAppConfigurationFileName`. This is not `Project.load()` — that
+ * loader also reads package, environment, and hidden configuration, follows
+ * different symlink policy, and does not keep the bounded raw bytes App Doctor
+ * hashes and reports as coverage.
  */
 export function findAppRoot(startPath?: string): string {
   const requestedPath = resolvePath(startPath ?? cwd())
@@ -33,7 +36,7 @@ export function findAppRoot(startPath?: string): string {
 
   let directory = requestedPath
   if (startPath && lstatSync(requestedPath).isFile()) {
-    if (!requestedPath.endsWith('.toml')) {
+    if (!isValidFormatAppConfigurationFileName(basename(requestedPath))) {
       throw new AppRootDiscoveryError(`App path is not a directory or TOML file: ${startPath}`)
     }
     return dirname(requestedPath)
@@ -43,14 +46,7 @@ export function findAppRoot(startPath?: string): string {
   }
 
   while (true) {
-    const tomls = globSync('shopify.app*.toml', {
-      cwd: directory,
-      deep: 1,
-      dot: false,
-      onlyFiles: false,
-      followSymbolicLinks: false,
-    })
-    if (tomls.length > 0) return directory
+    if (listAppConfigFiles(directory).length > 0) return directory
 
     const parent = dirname(directory)
     if (parent === directory) break
@@ -60,22 +56,25 @@ export function findAppRoot(startPath?: string): string {
   throw new AppRootDiscoveryError(`Could not find a shopify.app*.toml from: ${startPath ?? cwd()}`)
 }
 
-/**
- * Find and parse all shopify.app.*.toml files in the app root.
- *
- * Candidate discovery matches `Project.load()`, but parsing stays on bounded
- * raw reads so unreadable files become coverage gaps instead of loader errors.
- */
-export function findAppTomls(appRoot: string): AppTomlContent[] {
-  const files = globSync('shopify.app*.toml', {
-    cwd: appRoot,
+function listAppConfigFiles(directory: string): string[] {
+  return globSync(APP_CONFIG_FILE_GLOB, {
+    cwd: directory,
     deep: 1,
     dot: false,
     onlyFiles: false,
     followSymbolicLinks: false,
-  })
+  }).filter((file) => isValidFormatAppConfigurationFileName(basename(file)))
+}
 
-  return files.flatMap((file) => {
+/**
+ * Find and parse all shopify.app.*.toml files in the app root.
+ *
+ * Candidate discovery uses the same config-file identity as `Project.load()`,
+ * but parsing stays on bounded raw reads so unreadable files become coverage
+ * gaps instead of loader errors.
+ */
+export function findAppTomls(appRoot: string): AppTomlContent[] {
+  return listAppConfigFiles(appRoot).flatMap((file) => {
     const path = joinPath(appRoot, file)
     const content = readRepositoryText(appRoot, path)
     if (content === undefined) return []
@@ -116,6 +115,7 @@ export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppT
   }
 }
 
+/** CLI webhook section shape. URI fields stay strings so INSECURE_WEBHOOK_URL can report http. */
 const WebhooksSectionSchema = zod.object({
   api_version: zod.string().optional(),
   privacy_compliance: zod
@@ -128,10 +128,11 @@ const WebhooksSectionSchema = zod.object({
   subscriptions: zod.array(zod.unknown()).optional(),
 })
 
-const EvidenceWebhookSubscriptionSchema = zod.object({
-  uri: zod.string(),
-  topics: zod.array(zod.string()).optional(),
-  compliance_topics: zod.array(zod.string()).optional(),
+const SecurityWebhookSubscriptionSchema = WebhookSubscriptionSchema.extend({
+  uri: zod.preprocess(
+    (arg) => removeTrailingSlash(arg as string),
+    zod.string({invalid_type_error: 'Value must be string'}),
+  ),
 })
 
 export function parseAppToml(
@@ -170,14 +171,11 @@ function projectAccessScopes(value: unknown, path: string, appRoot?: string): st
 function projectRedirectUrls(value: unknown, path: string, appRoot?: string): string[] {
   if (value === undefined) return []
   const parsed = AppAuthSchema.safeParse(value)
-  if (parsed.success) return parsed.data.redirect_urls
-
-  const fallback = zod.object({redirect_urls: zod.array(zod.string())}).safeParse(value)
-  if (!fallback.success) {
+  if (!parsed.success) {
     recordSectionGap(appRoot, path, 'auth section could not be parsed')
     return []
   }
-  return fallback.data.redirect_urls
+  return parsed.data.redirect_urls
 }
 
 function projectWebhooks(
@@ -207,22 +205,12 @@ function projectWebhooks(
 }
 
 function projectWebhookSubscription(value: unknown): WebhookSubscription[] {
-  const strict = WebhookSubscriptionSchema.safeParse(value)
-  if (strict.success) {
-    return [
-      {
-        topics: [...(strict.data.topics ?? []), ...(strict.data.compliance_topics ?? [])],
-        uri: strict.data.uri,
-      },
-    ]
-  }
-
-  const evidence = EvidenceWebhookSubscriptionSchema.safeParse(value)
-  if (!evidence.success) return []
+  const parsed = SecurityWebhookSubscriptionSchema.safeParse(value)
+  if (!parsed.success) return []
   return [
     {
-      topics: [...(evidence.data.topics ?? []), ...(evidence.data.compliance_topics ?? [])],
-      uri: evidence.data.uri,
+      topics: [...(parsed.data.topics ?? []), ...(parsed.data.compliance_topics ?? [])],
+      uri: parsed.data.uri,
     },
   ]
 }
@@ -274,7 +262,7 @@ function normalizePath(path: string): string {
 function findNestedAppDirectories(appRoot: string): string[] {
   return [
     ...new Set(
-      globSync('**/shopify.app*.toml', {
+      globSync(`**/${APP_CONFIG_FILE_GLOB}`, {
         followSymbolicLinks: false,
         cwd: appRoot,
         ignore: IGNORED_DIRECTORIES,
@@ -282,6 +270,7 @@ function findNestedAppDirectories(appRoot: string): string[] {
         dot: false,
         onlyFiles: false,
       })
+        .filter((path) => isValidFormatAppConfigurationFileName(basename(path)))
         .map((path) => normalizePath(dirname(path)))
         .filter((path) => path !== '.' && path.length > 0),
     ),
@@ -300,7 +289,7 @@ function discoveryIgnores(directory: string, projectRoot: string): string[] {
  * Find extension-like repository content under the app root.
  *
  * `Project.load()` only considers paths in each app configuration's
- * `extension_directories`. App Doctor scans every `shopify.extension.toml`
+ * `extension_directories`. App Doctor still scans every `shopify.extension.toml`
  * inside the repository boundary, including unconfigured extensions, because
  * those files can still contain secrets, XSS, and other security evidence.
  * Nested apps, generated output, and test trees remain excluded.

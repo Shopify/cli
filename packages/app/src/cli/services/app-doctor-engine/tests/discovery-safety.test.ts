@@ -64,6 +64,13 @@ describe.sequential('app root discovery', () => {
     expect(() => findAppRoot(missing)).toThrow(AppRootDiscoveryError)
     expect(() => findAppRoot(missing)).toThrow(`App path does not exist: ${missing}`)
   })
+
+  test('ignores files that match the glob but are not CLI app configuration names', async () => {
+    const root = await makeDirectory()
+    await writeFile(join(root, 'shopify.application.toml'), appConfiguration)
+    await writeFile(join(root, 'shopify.app.foo.bar.toml'), appConfiguration)
+    expect(() => findAppRoot(root)).toThrow(AppRootDiscoveryError)
+  })
 })
 
 describe('repository discovery exclusions', () => {

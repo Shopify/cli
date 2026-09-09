@@ -5,6 +5,9 @@ import {basename} from '@shopify/cli-kit/node/path'
 const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 export type AppConfigurationFileName = 'shopify.app.toml' | `shopify.app.${string}.toml`
 
+/** Glob used to discover app configuration files. Always filter matches with `isValidFormatAppConfigurationFileName`. */
+export const APP_CONFIG_FILE_GLOB = 'shopify.app*.toml'
+
 /**
  * Gets the name of the app configuration file (e.g. `shopify.app.production.toml`) based on a provided config name.
  *
