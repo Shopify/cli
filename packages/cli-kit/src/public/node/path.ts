@@ -138,9 +138,8 @@ export function relativizePath(path: string, dir: string = cwd()): string {
   const relativeComponents = relativePath.split('/').filter((component) => component === '..').length
   if (result === '/' || relativePath === '' || relativeComponents > 2) {
     return path
-  } else {
-    return relativePath
   }
+  return relativePath
 }
 
 /**
