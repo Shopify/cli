@@ -69,4 +69,4 @@ commands:
 
 check:
   type-check: pnpm nx affected --target=type-check
-  lint: pnpm nx affected --target=lint
+  lint: pnpm lint:affected
