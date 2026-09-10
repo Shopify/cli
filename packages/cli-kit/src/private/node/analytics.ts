@@ -1,12 +1,20 @@
 import {getLastSeenAuthMethod} from './session.js'
 import {getAutoUpgradeEnabled} from './conf-store.js'
+import {detectedAgentEnvironmentVariables} from './context/agent.js'
 import {hashString} from '../../public/node/crypto.js'
 import {getPackageManager, packageManagerFromUserAgent} from '../../public/node/node-package-manager.js'
 import BaseCommand from '../../public/node/base-command.js'
 import {CommandContent} from '../../public/node/hooks/prerun.js'
 import * as metadata from '../../public/node/metadata.js'
 import {platformAndArch} from '../../public/node/os.js'
-import {ciPlatform, cloudEnvironment, macAddress} from '../../public/node/context/local.js'
+import {
+  alwaysLogAnalytics,
+  alwaysLogMetrics,
+  analyticsDisabled,
+  ciPlatform,
+  cloudEnvironment,
+  macAddress,
+} from '../../public/node/context/local.js'
 import {cwd} from '../../public/node/path.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from '../../public/node/is-global.js'
 import {isWsl} from '../../public/node/system.js'
@@ -115,14 +123,27 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
 export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   return {
     env_plugin_installed_all: JSON.stringify(getPluginNames(config)),
-    env_shopify_variables: JSON.stringify(getShopifyEnvironmentVariables()),
+    env_shopify_variables: JSON.stringify(await getShopifyEnvironmentVariables()),
   }
 }
 
-function getShopifyEnvironmentVariables() {
-  return Object.fromEntries(
-    Object.entries(process.env).filter(([key]) => allowedShopifyEnvironmentVariableNames.has(key)),
+async function getShopifyEnvironmentVariables(env: NodeJS.ProcessEnv = process.env) {
+  const declaredVariables = Object.fromEntries(
+    Object.entries(env).filter(([key]) => allowedShopifyEnvironmentVariableNames.has(key)),
   )
+
+  // An `alwaysLog*` override still sends the event, so this can't be `analyticsDisabled()` alone.
+  if (monorailAnalyticsSkipped() && metricAnalyticsSkipped()) return declaredVariables
+
+  return {...declaredVariables, ...(await detectedAgentEnvironmentVariables(env))}
+}
+
+export function monorailAnalyticsSkipped(): boolean {
+  return !alwaysLogAnalytics() && analyticsDisabled()
+}
+
+export function metricAnalyticsSkipped(): boolean {
+  return !alwaysLogMetrics() && analyticsDisabled()
 }
 
 function getPluginNames(config: Interfaces.Config) {
