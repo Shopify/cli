@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+import {APP_CONFIG_FILE_GLOB} from '../models/app/config-file-naming.js'
 import {AppConfigurationFileName, isValidFormatAppConfigurationFileName} from '../models/app/loader.js'
 import {
   RenderTextPromptOptions,
@@ -43,7 +44,7 @@ function filenameFromName(name: string, highlight = false): AppConfigurationFile
 }
 
 export async function findConfigFiles(directory: string): Promise<string[]> {
-  const files = await glob(joinPath(directory, 'shopify.app*.toml'))
+  const files = await glob(joinPath(directory, APP_CONFIG_FILE_GLOB))
   return files.filter((path) => isValidFormatAppConfigurationFileName(basename(path)))
 }
 

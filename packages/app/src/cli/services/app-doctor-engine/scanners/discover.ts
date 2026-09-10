@@ -37,7 +37,7 @@ export function findAppRoot(startPath?: string): string {
   let directory = requestedPath
   if (startPath && lstatSync(requestedPath).isFile()) {
     if (!isValidFormatAppConfigurationFileName(basename(requestedPath))) {
-      throw new AppRootDiscoveryError(`App path is not a directory or TOML file: ${startPath}`)
+      throw new AppRootDiscoveryError(`App path is not a directory or Shopify app configuration file: ${startPath}`)
     }
     return dirname(requestedPath)
   }
@@ -190,7 +190,9 @@ function projectWebhooks(
     return {subscriptions: []}
   }
 
-  const webhookSubscriptions = (parsed.data.subscriptions ?? []).flatMap(projectWebhookSubscription)
+  const webhookSubscriptions = (parsed.data.subscriptions ?? []).flatMap((subscription) =>
+    projectWebhookSubscription(subscription, path, appRoot),
+  )
   const privacyCompliance = parsed.data.privacy_compliance
   const privacyComplianceWebhooks = [
     {topic: 'customers/redact', uri: privacyCompliance?.customer_deletion_url},
@@ -204,15 +206,28 @@ function projectWebhooks(
   }
 }
 
-function projectWebhookSubscription(value: unknown): WebhookSubscription[] {
+const WebhookUriOnlySchema = zod.object({
+  uri: zod.preprocess(
+    (arg) => removeTrailingSlash(arg as string),
+    zod.string({invalid_type_error: 'Value must be string'}),
+  ),
+})
+
+function projectWebhookSubscription(value: unknown, path: string, appRoot?: string): WebhookSubscription[] {
   const parsed = SecurityWebhookSubscriptionSchema.safeParse(value)
-  if (!parsed.success) return []
-  return [
-    {
-      topics: [...(parsed.data.topics ?? []), ...(parsed.data.compliance_topics ?? [])],
-      uri: parsed.data.uri,
-    },
-  ]
+  if (parsed.success) {
+    return [
+      {
+        topics: [...(parsed.data.topics ?? []), ...(parsed.data.compliance_topics ?? [])],
+        uri: parsed.data.uri,
+      },
+    ]
+  }
+
+  recordSectionGap(appRoot, path, 'webhook subscription could not be parsed')
+  const uriOnly = WebhookUriOnlySchema.safeParse(value)
+  if (!uriOnly.success) return []
+  return [{topics: [], uri: uriOnly.data.uri}]
 }
 
 function recordSectionGap(appRoot: string | undefined, path: string, detail: string): void {

@@ -71,6 +71,16 @@ describe.sequential('app root discovery', () => {
     await writeFile(join(root, 'shopify.app.foo.bar.toml'), appConfiguration)
     expect(() => findAppRoot(root)).toThrow(AppRootDiscoveryError)
   })
+
+  test('rejects an explicit non-app TOML path with a configuration-file error', async () => {
+    const root = await makeDirectory()
+    const webToml = join(root, 'shopify.web.toml')
+    await writeFile(webToml, 'type = "frontend"\n')
+    expect(() => findAppRoot(webToml)).toThrow(AppRootDiscoveryError)
+    expect(() => findAppRoot(webToml)).toThrow(
+      `App path is not a directory or Shopify app configuration file: ${webToml}`,
+    )
+  })
 })
 
 describe('repository discovery exclusions', () => {

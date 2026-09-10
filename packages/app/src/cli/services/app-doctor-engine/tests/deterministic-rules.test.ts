@@ -132,6 +132,19 @@ describe('deterministic rules product contract', () => {
     )
     expect(parsed.webhooks).toEqual([])
   })
+
+  test('keeps an insecure URI when another subscription field is invalid', () => {
+    const parsed = parseAppToml(
+      {
+        webhooks: {
+          api_version: '2023-07',
+          subscriptions: [{topics: ['orders/create'], uri: 'http://insecure.example/webhooks', filter: 42}],
+        },
+      },
+      '/app/shopify.app.toml',
+    )
+    expect(parsed.webhooks).toEqual([{topics: [], uri: 'http://insecure.example/webhooks'}])
+  })
 })
 
 describe('JavaScript regex mode', () => {
