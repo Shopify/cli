@@ -99,6 +99,7 @@ jobs:
             Keep duplicate-check notes out of the PR body and all template checkboxes unchecked.
             Do not post to Slack; the workflow will announce the PR after it exists.
           claude_args: |
+            --model claude-opus-latest
             --allowedTools Read,Glob,Grep,Edit,Write,Bash
 
       - name: Find the created PR
