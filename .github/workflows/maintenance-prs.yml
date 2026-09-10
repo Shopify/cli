@@ -2,6 +2,11 @@ name: maintenance-prs
 
 on:
   workflow_dispatch:
+    inputs:
+      diagnose:
+        description: Check proxy and model access without running maintenance
+        type: boolean
+        default: false
   schedule:
     # Everyday at 00:00 UTC
     - cron: '0 0 * * *'
@@ -17,9 +22,80 @@ env:
   SHOPIFY_CONFIG: debug
 
 jobs:
+  diagnose:
+    name: Diagnose Claude model access
+    if: github.repository == 'Shopify/cli' && inputs.diagnose
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Check proxy responses
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          script: |
+            const baseUrl = (process.env.ANTHROPIC_BASE_URL || '').trim().replace(/\/$/, '');
+            const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
+            if (!baseUrl || !apiKey) {
+              core.setFailed('ANTHROPIC_BASE_URL and ANTHROPIC_API_KEY must both be set.');
+              return;
+            }
+            core.setSecret(baseUrl);
+            core.setSecret(apiKey);
+            if (new URL(baseUrl).origin !== 'https://proxy.shopify.ai') {
+              core.setFailed('ANTHROPIC_BASE_URL must point to the Shopify AI proxy.');
+              return;
+            }
+            core.info(`Using managed Anthropic route: ${baseUrl === 'https://proxy.shopify.ai/apis/anthropic'}`);
+            const headers = {
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+            };
+            async function probe(label, url, options = {}) {
+              try {
+                const response = await fetch(url, {
+                  ...options, redirect: 'error', signal: AbortSignal.timeout(60000),
+                });
+                const data = await response.json().catch(() => ({}));
+                core.info(`${label}: HTTP ${response.status}`);
+                if (!response.ok) {
+                  const error = data.error;
+                  // The request contains only a fixed test prompt. Never print headers or the full response.
+                  core.info(`Error type: ${JSON.stringify(error?.type ?? data.type ?? 'unknown')}`);
+                  core.info(`Error message: ${JSON.stringify(String(error?.message ?? data.message ?? 'No JSON error message').slice(0, 1000))}`);
+                }
+                return {ok: response.ok, data};
+              } catch {
+                core.warning(`${label}: network failure, redirect, or timeout.`);
+                return {ok: false, data: {}};
+              }
+            }
+            const catalogue = await probe('Model catalogue', 'https://proxy.shopify.ai/v1/models', {
+              headers: {authorization: `Bearer ${apiKey}`},
+            });
+            if (Array.isArray(catalogue.data.data)) {
+              const ids = catalogue.data.data.map((model) => model.id).filter((id) => typeof id === 'string');
+              core.info(`Opus latest in catalogue: ${ids.includes('claude-opus-latest')}`);
+              core.info(`Opus 5 in catalogue: ${ids.includes('claude-opus-5')}`);
+            }
+            await probe('Model lookup', `${baseUrl}/v1/models/claude-opus-latest`, {headers});
+            const message = await probe('Minimal model request', `${baseUrl}/v1/messages`, {
+              method: 'POST', headers,
+              body: JSON.stringify({
+                model: 'claude-opus-latest', max_tokens: 32,
+                messages: [{role: 'user', content: 'Reply with OK.'}],
+              }),
+            });
+            if (!message.ok || message.data.type !== 'message') {
+              core.setFailed('The direct model request failed. Inspect the HTTP status and error above.');
+            }
+
   maintenance:
     name: Maintenance - ${{ matrix.task }}
-    if: github.repository == 'Shopify/cli'
+    if: github.repository == 'Shopify/cli' && !inputs.diagnose
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
