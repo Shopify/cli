@@ -1,4 +1,4 @@
-import {resolveFramework} from './framework.js'
+import {resolveFramework, _frameworks} from './framework.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
@@ -129,6 +129,38 @@ describe('frontFrameworkUsed', () => {
 
       // Then
       expect(got).toEqual('unknown')
+    })
+  })
+
+  test('matches a custom framework if any detector in some matches and all in every match', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      _frameworks.push({
+        name: 'custom-framework',
+        detectors: {
+          some: [
+            {path: 'package.json', matchContent: '"custom-dep-1"'},
+            {path: 'package.json', matchContent: '"custom-dep-2"'},
+          ],
+          every: [{path: 'package.json', matchContent: '"framework-core"'}],
+        },
+      })
+
+      try {
+        const packageJsonPath = joinPath(tmpDir, 'package.json')
+        const packageJson = {
+          dependencies: {'framework-core': '1.0.0', 'custom-dep-2': '1.0.0'},
+        }
+        await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+        // When
+        const got = await resolveFramework(tmpDir)
+
+        // Then
+        expect(got).toEqual('custom-framework')
+      } finally {
+        _frameworks.pop()
+      }
     })
   })
 })
