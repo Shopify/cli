@@ -82,13 +82,21 @@ jobs:
               core.info(`Opus 5 in catalogue: ${ids.includes('claude-opus-5')}`);
             }
             await probe('Model lookup', `${baseUrl}/v1/models/claude-opus-latest`, {headers});
-            const message = await probe('Minimal model request', `${baseUrl}/v1/messages`, {
+            const testRequest = {
               method: 'POST', headers,
               body: JSON.stringify({
                 model: 'claude-opus-latest', max_tokens: 32,
                 messages: [{role: 'user', content: 'Reply with OK.'}],
               }),
-            });
+            };
+            const message = await probe('Minimal model request', `${baseUrl}/v1/messages`, testRequest);
+            if (baseUrl !== 'https://proxy.shopify.ai/apis/anthropic') {
+              const managed = await probe('Managed Anthropic model request', 'https://proxy.shopify.ai/apis/anthropic/v1/messages', testRequest);
+              if (managed.ok && managed.data.type === 'message') {
+                core.warning('The managed route works with this token and model. Update ANTHROPIC_BASE_URL to the managed Anthropic base URL.');
+                return;
+              }
+            }
             if (!message.ok || message.data.type !== 'message') {
               core.setFailed('The direct model request failed. Inspect the HTTP status and error above.');
             }
