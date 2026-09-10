@@ -51,7 +51,7 @@
   "devDependencies": {
     "@shopify/theme-hot-reload": "^0.0.22",
     "@vitest/coverage-istanbul": "^3.2.7",
-    "node-stream-zip": "^1.15.0"
+    "node-stream-zip": "^1.16.0"
   },
   "engines": {
     "node": ">=22.12.0"
