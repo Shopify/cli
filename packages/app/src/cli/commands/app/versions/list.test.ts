@@ -62,6 +62,7 @@ describe('app versions list command', () => {
                 {
                   message: 'message',
                   versionTag: 'versionTag',
+                  versionId: 'gid://shopify/Version/1',
                   status: 'active',
                   createdAt: '2021-01-01',
                   createdBy: {displayName: 'createdBy'},
@@ -95,6 +96,7 @@ describe('app versions list command', () => {
         status: 'active',
         createdAt: '2021-01-01 00:00:00',
         createdBy: 'createdBy',
+        versionId: 'gid://shopify/Version/1',
       },
     ])
     expect(streams.stderr()).not.toContain('No app versions found for this app')

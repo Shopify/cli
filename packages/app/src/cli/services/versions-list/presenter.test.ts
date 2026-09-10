@@ -72,6 +72,7 @@ describe('renderAppVersionsList', () => {
           status: 'active',
           createdAt: '2021-01-01 00:00:00',
           createdBy: 'createdBy',
+          versionId: 'gid://shopify/Version/1',
         },
         {
           message: 'message 2',
@@ -79,6 +80,7 @@ describe('renderAppVersionsList', () => {
           status: 'released',
           createdAt: '2021-01-01 00:00:00',
           createdBy: 'createdBy 2',
+          versionId: 'gid://shopify/Version/2',
         },
         {
           message: 'long message with more than 15 characters',
@@ -86,6 +88,7 @@ describe('renderAppVersionsList', () => {
           status: 'released',
           createdAt: '2021-01-01 00:00:00',
           createdBy: 'createdBy 3',
+          versionId: 'gid://shopify/Version/3',
         },
       ],
       totalResults: 31,

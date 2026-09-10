@@ -38,7 +38,7 @@ export async function renderAppVersionsList({
     return
   }
 
-  const appVersions = versionResults.map((appVersion) => ({
+  const appVersions = versionResults.map(({versionId: _, ...appVersion}) => ({
     ...appVersion,
     status: appVersion.status === 'active' ? colors.green(`★ ${appVersion.status}`) : appVersion.status,
   }))
