@@ -70,7 +70,7 @@ jobs:
         if: steps.schedule.outputs.run == 'true'
         uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
         env:
-          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          ANTHROPIC_BASE_URL: https://proxy.shopify.ai/vendors/anthropic-claude-code
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CLAUDE_BRANCH: ${{ env.MAINTENANCE_BRANCH }}
         with:
@@ -99,6 +99,7 @@ jobs:
             Keep duplicate-check notes out of the PR body and all template checkboxes unchecked.
             Do not post to Slack; the workflow will announce the PR after it exists.
           claude_args: |
+            --model claude-opus-4-8
             --allowedTools Read,Glob,Grep,Edit,Write,Bash
 
       - name: Find the created PR
