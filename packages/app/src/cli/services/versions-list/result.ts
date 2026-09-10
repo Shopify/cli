@@ -1,14 +1,16 @@
 import {renderCurrentlyUsedConfigInfo} from '../context.js'
-import {AppVersionsListResult} from '../versions-list.js'
+import {appVersionsListJsonOutputSchema, AppVersionsListResult} from '../versions-list.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import colors from '@shopify/cli-kit/node/colors'
-import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputResult, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 
 const TABLE_FORMATTING_CHARS = 12
+
+type AppVersionsListOutputFormat = 'text' | 'json'
 
 interface RenderAppVersionsListOptions {
   app: AppLinkedInterface
@@ -19,14 +21,22 @@ interface RenderAppVersionsListOptions {
   developerPlatformClient: DeveloperPlatformClient
 }
 
-export async function renderAppVersionsList({
-  app,
-  appVersions: versionResults,
-  totalResults,
-  remoteApp,
-  organization,
-  developerPlatformClient,
-}: RenderAppVersionsListOptions): Promise<void> {
+export async function renderAppVersionsListResult(
+  {
+    app,
+    appVersions: versionResults,
+    totalResults,
+    remoteApp,
+    organization,
+    developerPlatformClient,
+  }: RenderAppVersionsListOptions,
+  format: AppVersionsListOutputFormat,
+): Promise<void> {
+  if (format === 'json') {
+    outputResult(appVersionsListJsonOutputSchema.encode(versionResults))
+    return
+  }
+
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
     appName: remoteApp.title,

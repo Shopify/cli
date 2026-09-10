@@ -3,29 +3,7 @@ import {Organization, OrganizationSource} from '../../../models/organization.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/app-context.js')
-
-function captureStandardStreams() {
-  const stdout: string[] = []
-  const stderr: string[] = []
-
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stdout.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stdout.write)
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stderr.write)
-
-  return {
-    stdout: () => stdout.join(''),
-    stderr: () => stderr.join(''),
-    restore: () => {
-      stdoutSpy.mockRestore()
-      stderrSpy.mockRestore()
-    },
-  }
-}
+vi.mock('../../../services/versions-list/result.js')
 
 const originalUnitTestEnvironment = process.env.SHOPIFY_UNIT_TEST
 
@@ -39,7 +17,7 @@ afterEach(() => {
 })
 
 describe('app versions list command', () => {
-  test('writes one JSON document to stdout without text output', async () => {
+  test('passes the typed result to the JSON output boundary', async () => {
     process.env.SHOPIFY_UNIT_TEST = 'false'
     vi.resetModules()
 
@@ -74,6 +52,7 @@ describe('app versions list command', () => {
         }),
     })
     const {linkedAppContext} = await import('../../../services/app-context.js')
+    const {renderAppVersionsListResult} = await import('../../../services/versions-list/result.js')
     vi.mocked(linkedAppContext).mockResolvedValue({
       app,
       remoteApp,
@@ -81,27 +60,29 @@ describe('app versions list command', () => {
       developerPlatformClient,
     } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
     const {default: VersionsList} = await import('./list.js')
-    const streams = captureStandardStreams()
 
-    try {
-      await VersionsList.run(['--json'], import.meta.url)
-    } finally {
-      streams.restore()
-    }
+    await VersionsList.run(['--json'], import.meta.url)
 
-    expect(JSON.parse(streams.stdout())).toEqual([
+    expect(renderAppVersionsListResult).toHaveBeenCalledWith(
       {
-        message: 'message',
-        versionTag: 'versionTag',
-        status: 'active',
-        createdAt: '2021-01-01 00:00:00',
-        createdBy: 'createdBy',
-        versionId: 'gid://shopify/Version/1',
+        app,
+        remoteApp,
+        organization,
+        developerPlatformClient,
+        appVersions: [
+          {
+            message: 'message',
+            versionTag: 'versionTag',
+            status: 'active',
+            createdAt: '2021-01-01 00:00:00',
+            createdBy: 'createdBy',
+            versionId: 'gid://shopify/Version/1',
+          },
+        ],
+        totalResults: 1,
       },
-    ])
-    expect(streams.stderr()).not.toContain('No app versions found for this app')
-    expect(streams.stderr()).not.toContain('VERSION')
-    expect(streams.stderr()).not.toContain('View all')
+      'json',
+    )
   })
 
   test('keeps the existing invalid API key error', async () => {

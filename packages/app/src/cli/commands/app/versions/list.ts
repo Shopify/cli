@@ -1,11 +1,10 @@
 import {appFlags} from '../../../flags.js'
 import {appVersionsListJsonOutputSchema, getAppVersions} from '../../../services/versions-list.js'
-import {renderAppVersionsList} from '../../../services/versions-list/presenter.js'
+import {renderAppVersionsListResult} from '../../../services/versions-list/result.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class VersionsList extends AppLinkedCommand {
   static summary = 'List deployed versions of your app.'
@@ -37,17 +36,16 @@ export default class VersionsList extends AppLinkedCommand {
     const result = await getAppVersions(developerPlatformClient, remoteApp)
     if (!result) throw new AbortError(`Invalid API Key: ${remoteApp.apiKey}`)
 
-    if (flags.json) {
-      outputResult(appVersionsListJsonOutputSchema.encode(result.appVersions))
-    } else {
-      await renderAppVersionsList({
+    await renderAppVersionsListResult(
+      {
         app,
         remoteApp,
         organization,
         developerPlatformClient,
         ...result,
-      })
-    }
+      },
+      flags.json ? 'json' : 'text',
+    )
 
     return {app}
   }
