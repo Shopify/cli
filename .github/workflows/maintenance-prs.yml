@@ -1,0 +1,141 @@
+name: maintenance-prs
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Everyday at 00:00 UTC
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: write
+
+env:
+  PNPM_VERSION: '10.11.1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+
+jobs:
+  maintenance:
+    name: Maintenance - ${{ matrix.task }}
+    if: github.repository == 'Shopify/cli'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [refactor, tests, performance, security]
+    concurrency:
+      group: maintenance-prs-${{ matrix.task }}
+      cancel-in-progress: false
+    env:
+      MAINTENANCE_TASK: ${{ matrix.task }}
+      MAINTENANCE_BRANCH: ${{ matrix.task }}-maintenance-${{ github.run_id }}
+    steps:
+      - name: Check task schedule
+        id: schedule
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == 'workflow_dispatch' ||
+                "$MAINTENANCE_TASK" == 'refactor' ||
+                "$MAINTENANCE_TASK" == 'tests' ||
+                "$(date -u +%u)" == '1' ]]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+            echo "Skipping $MAINTENANCE_TASK until Monday."
+          fi
+
+      - uses: actions/checkout@v6
+        if: steps.schedule.outputs.run == 'true'
+        with:
+          # Include remote branches and history for the prompts' duplicate checks.
+          fetch-depth: 0
+
+      - name: Setup deps
+        if: steps.schedule.outputs.run == 'true'
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: '26.1.0'
+
+      - name: Create maintenance branch
+        if: steps.schedule.outputs.run == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$MAINTENANCE_BRANCH"
+
+      - name: Run maintenance task
+        id: maintenance
+        if: steps.schedule.outputs.run == 'true'
+        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
+        env:
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_BRANCH: ${{ env.MAINTENANCE_BRANCH }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          bot_name: 'github-actions[bot]'
+          bot_id: '41898282'
+          prompt: |
+            Perform the maintenance task in `.agents/automated-tasks/${{ matrix.task }}.md`.
+            Read the entire file, `AGENTS.md`, and `.github/PULL_REQUEST_TEMPLATE.md`
+            before choosing a change. Carefully follow every phase and boundary in the task file.
+
+            Work on the existing branch `${{ env.MAINTENANCE_BRANCH }}`. It already has
+            the required task prefix. Create at most ONE draft PR against the repository's
+            default branch. Use `gh pr create --draft` and the PR template exactly as instructed.
+            Never merge, approve, or mark a PR ready for review.
+
+            For duplicate checks, inspect remote branches and search open, merged, and closed
+            PRs with `gh pr list --state all`, then read the bodies and diffs of related PRs.
+            This includes previous maintenance PRs whose branches have been deleted.
+            If no worthwhile, non-duplicate change exists after the required candidate checks,
+            stop successfully without opening a PR.
+
+            Dependencies are installed. Run all verification required by the task before
+            opening the PR. Do not open a PR if the required checks fail.
+            Keep duplicate-check notes out of the PR body and all template checkboxes unchecked.
+            Do not post to Slack; the workflow will announce the PR after it exists.
+          claude_args: |
+            --allowedTools Read,Glob,Grep,Edit,Write,Bash
+
+      - name: Find the created PR
+        id: pull-request
+        # Claude may create a PR before a later step in its session fails.
+        if: ${{ !cancelled() && steps.maintenance.outcome != 'skipped' }}
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const {data: pullRequests} = await github.rest.pulls.list({
+              ...context.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${process.env.MAINTENANCE_BRANCH}`,
+              base: context.payload.repository.default_branch,
+            });
+            const pullRequest = pullRequests[0];
+            if (!pullRequest) {
+              core.info('No maintenance PR was created.');
+              return;
+            }
+
+            const pullRequestTitle = pullRequest.title
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;');
+
+            core.setOutput('payload', JSON.stringify({
+              channel: 'C0ARV62K59C', // #devtools-gardener-backlog
+              text: `Maintenance PR (${process.env.MAINTENANCE_TASK}): <${pullRequest.html_url}|${pullRequestTitle}>`,
+              unfurl_links: false,
+              unfurl_media: false,
+            }));
+
+      - name: Post PR to gardener backlog
+        if: ${{ !cancelled() && steps.pull-request.outputs.payload != '' }}
+        uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52 # v2.1.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_GARDENER_BOT_TOKEN }}
+          payload: ${{ steps.pull-request.outputs.payload }}

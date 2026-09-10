@@ -11,7 +11,7 @@ Every branch you create MUST start with `security-` (e.g. `security-sanitize-inp
 ✅ **Always do:**
 - Do exactly ONE thing per PR.
 - Verify the fix actually closes the vector (don't just rename the symptom).
-- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test:unit` (or the project's equivalents) before opening the PR.
+- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test` (or the project's equivalents) before opening the PR.
 - Prefer well-vetted standard libraries over hand-rolled crypto/validation.
 - Avoid adding comments to the code, unless they are important
 - When in doubt, do NOT ask for clarification — pick the best reasonable option and open the PR.
