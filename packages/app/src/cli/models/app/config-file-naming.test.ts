@@ -52,6 +52,8 @@ describe('isValidFormatAppConfigurationFileName', () => {
   test('returns false for invalid filenames', () => {
     expect(isValidFormatAppConfigurationFileName('production')).toBe(false)
     expect(isValidFormatAppConfigurationFileName('shopify.web.toml')).toBe(false)
+    expect(isValidFormatAppConfigurationFileName('shopify.application.toml')).toBe(false)
+    expect(isValidFormatAppConfigurationFileName('shopify.app.foo.bar.toml')).toBe(false)
     expect(isValidFormatAppConfigurationFileName('shopify.app..toml')).toBe(false)
     expect(isValidFormatAppConfigurationFileName('')).toBe(false)
   })

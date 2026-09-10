@@ -1,4 +1,5 @@
 import {configurationFileNames} from '../../constants.js'
+import {APP_CONFIG_FILE_GLOB, isValidFormatAppConfigurationFileName} from '../app/config-file-naming.js'
 import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, glob, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
@@ -12,8 +13,6 @@ import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
-const APP_CONFIG_GLOB = 'shopify.app*.toml'
-const APP_CONFIG_REGEX = /^shopify\.app(\.[-\w]+)?\.toml$/
 const EXTENSION_TOML = '*.extension.toml'
 const WEB_TOML = 'shopify.web.toml'
 const DEFAULT_EXTENSION_DIR = 'extensions/*'
@@ -164,8 +163,8 @@ export class Project {
 async function findProjectRoot(startDirectory: string): Promise<string> {
   const found = await findPathUp(
     async (directory) => {
-      const matches = await glob(joinPath(directory, APP_CONFIG_GLOB))
-      if (matches.length > 0) return directory
+      const matches = await glob(joinPath(directory, APP_CONFIG_FILE_GLOB))
+      if (matches.some((path) => isValidFormatAppConfigurationFileName(basename(path)))) return directory
     },
     {
       cwd: startDirectory,
@@ -181,9 +180,9 @@ async function findProjectRoot(startDirectory: string): Promise<string> {
 }
 
 async function discoverAppConfigFiles(directory: string, errors: TomlFileError[]): Promise<TomlFile[]> {
-  const pattern = joinPath(directory, APP_CONFIG_GLOB)
+  const pattern = joinPath(directory, APP_CONFIG_FILE_GLOB)
   const paths = await glob(pattern)
-  const validPaths = paths.filter((filePath) => APP_CONFIG_REGEX.test(basename(filePath)))
+  const validPaths = paths.filter((filePath) => isValidFormatAppConfigurationFileName(basename(filePath)))
   return readTomlFilesCollectingErrors(validPaths, errors)
 }
 
