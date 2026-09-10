@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -6,13 +6,13 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 export type GetThemeFileBodiesQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input']
   after?: Types.InputMaybe<Types.Scalars['String']['input']>
-  filenames?: Types.InputMaybe<Types.Scalars['String']['input'][] | Types.Scalars['String']['input']>
+  filenames?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>
 }>
 
 export type GetThemeFileBodiesQuery = {
   theme?: {
     files?: {
-      nodes: {
+      nodes: Array<{
         filename: string
         size: unknown
         checksumMd5?: string | null
@@ -20,8 +20,8 @@ export type GetThemeFileBodiesQuery = {
           | {__typename: 'OnlineStoreThemeFileBodyBase64'; contentBase64: string}
           | {__typename: 'OnlineStoreThemeFileBodyText'; content: string}
           | {__typename: 'OnlineStoreThemeFileBodyUrl'; url: string}
-      }[]
-      userErrors: {filename: string; code: Types.OnlineStoreThemeFileResultType}[]
+      }>
+      userErrors: Array<{filename: string; code: Types.OnlineStoreThemeFileResultType}>
       pageInfo: {hasNextPage: boolean; endCursor?: string | null}
     } | null
   } | null

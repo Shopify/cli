@@ -13,8 +13,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
               {'graphql-codegen-typescript-operation-types': {enumsAsTypes: true, useTypeImports: true}},
               {
                 add: {
-                  content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                  content: "/* oxlint-disable */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
             ],
@@ -35,7 +34,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
               {
                 add: {
                   content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                    "/* oxlint-disable typescript/consistent-type-definitions */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
               {
@@ -44,6 +43,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
                   skipTypename: true,
                   useTypeImports: true,
                   onlyOperationTypes: true,
+                  defaultScalarType: 'unknown',
                   scalars: {
                     GlobalID: 'string',
                     PropertyId: 'string',

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -15,7 +15,7 @@ export type MetafieldForImportFragment = {
     customerAccount: Types.MetafieldCustomerAccountAccess
   }
   capabilities: {adminFilterable: {enabled: boolean}}
-  validations: {name: string; value?: string | null}[]
+  validations: Array<{name: string; value?: string | null}>
 }
 
 export type MetafieldDefinitionsQueryVariables = Types.Exact<{
@@ -26,7 +26,7 @@ export type MetafieldDefinitionsQueryVariables = Types.Exact<{
 export type MetafieldDefinitionsQuery = {
   metafieldDefinitions: {
     pageInfo: {hasNextPage: boolean; endCursor?: string | null}
-    nodes: {
+    nodes: Array<{
       key: string
       name: string
       namespace: string
@@ -38,8 +38,8 @@ export type MetafieldDefinitionsQuery = {
         customerAccount: Types.MetafieldCustomerAccountAccess
       }
       capabilities: {adminFilterable: {enabled: boolean}}
-      validations: {name: string; value?: string | null}[]
-    }[]
+      validations: Array<{name: string; value?: string | null}>
+    }>
   }
 }
 

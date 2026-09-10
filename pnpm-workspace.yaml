@@ -16,6 +16,5 @@ onlyBuiltDependencies:
 publicHoistPattern:
   - '*vitest*'
   - '*vite*'
-  - '*eslint*'
   - '*prettier*'
 strictPeerDependencies: false

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -8,7 +8,7 @@ export type ProvisionShopAccessMutationVariables = Types.Exact<{
 }>
 
 export type ProvisionShopAccessMutation = {
-  organizationUserProvisionShopAccess: {success?: boolean | null; userErrors?: {message: string}[] | null}
+  organizationUserProvisionShopAccess: {success?: boolean | null; userErrors?: Array<{message: string}> | null}
 }
 
 export const ProvisionShopAccess = {

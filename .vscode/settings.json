@@ -21,7 +21,7 @@
     "**/node_modules": true
   },
   "editor.formatOnSave": false,
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "oxc.enable": true,
   "[javascript]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -31,9 +31,8 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.oxc": "explicit"
   },
-  "eslint.workingDirectories": [{ "pattern": "packages/*" }],
   "vitest.enable": true,
   "testing.automaticallyOpenPeekView": "never",
   "javascript.preferences.importModuleSpecifierEnding": "js",

@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type OrganizationExpFlagsQueryVariables = Types.Exact<{
   organizationId: Types.Scalars['OrganizationID']['input']
-  flagHandles: Types.Scalars['String']['input'][] | Types.Scalars['String']['input']
+  flagHandles: Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']
 }>
 
-export type OrganizationExpFlagsQuery = {organization?: {id: string; enabledFlags: boolean[]} | null}
+export type OrganizationExpFlagsQuery = {organization?: {id: string; enabledFlags: Array<boolean>} | null}
 
 export const OrganizationExpFlags = {
   kind: 'Document',

@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+/* oxlint-disable typescript/consistent-type-definitions */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -12,13 +12,13 @@ export type ReleaseVersionMutationVariables = Types.Exact<{
 export type ReleaseVersionMutation = {
   appReleaseCreate: {
     release?: {version: {id: string; metadata: {message?: string | null; versionTag?: string | null}}} | null
-    userErrors: {
-      field?: string[] | null
+    userErrors: Array<{
+      field?: Array<string> | null
       message: string
       category: string
       code?: Types.Code | null
       on: JsonMapType
-    }[]
+    }>
   }
 }
 

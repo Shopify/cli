@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -8,7 +8,10 @@ export type ThemeDeleteMutationVariables = Types.Exact<{
 }>
 
 export type ThemeDeleteMutation = {
-  themeDelete?: {deletedThemeId?: string | null; userErrors: {field?: string[] | null; message: string}[]} | null
+  themeDelete?: {
+    deletedThemeId?: string | null
+    userErrors: Array<{field?: Array<string> | null; message: string}>
+  } | null
 }
 
 export const ThemeDelete = {

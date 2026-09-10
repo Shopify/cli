@@ -1,17 +1,21 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type ThemeFilesDeleteMutationVariables = Types.Exact<{
   themeId: Types.Scalars['ID']['input']
-  files: Types.Scalars['String']['input'][] | Types.Scalars['String']['input']
+  files: Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']
 }>
 
 export type ThemeFilesDeleteMutation = {
   themeFilesDelete?: {
-    deletedThemeFiles?: {filename: string}[] | null
-    userErrors: {filename?: string | null; code?: Types.OnlineStoreThemeFilesUserErrorsCode | null; message: string}[]
+    deletedThemeFiles?: Array<{filename: string}> | null
+    userErrors: Array<{
+      filename?: string | null
+      code?: Types.OnlineStoreThemeFilesUserErrorsCode | null
+      message: string
+    }>
   } | null
 }
 

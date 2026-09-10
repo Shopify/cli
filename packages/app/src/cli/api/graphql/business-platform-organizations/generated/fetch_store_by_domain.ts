@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type FetchStoreByDomainQueryVariables = Types.Exact<{
   domain?: Types.InputMaybe<Types.Scalars['String']['input']>
-  filters?: Types.InputMaybe<Types.ShopFilterInput[] | Types.ShopFilterInput>
+  filters?: Types.InputMaybe<Array<Types.ShopFilterInput> | Types.ShopFilterInput>
 }>
 
 export type FetchStoreByDomainQuery = {
@@ -13,7 +13,7 @@ export type FetchStoreByDomainQuery = {
     id: string
     name: string
     accessibleShops?: {
-      edges: {
+      edges: Array<{
         node: {
           id: string
           externalId?: string | null
@@ -23,9 +23,9 @@ export type FetchStoreByDomainQuery = {
           shortName?: string | null
           url?: string | null
         }
-      }[]
+      }>
     } | null
-    currentUser?: {organizationPermissions: string[]} | {organizationPermissions: string[]} | null
+    currentUser?: {organizationPermissions: Array<string>} | {organizationPermissions: Array<string>} | null
   } | null
 }
 

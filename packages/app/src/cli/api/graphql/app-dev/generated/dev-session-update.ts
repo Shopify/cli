@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+/* oxlint-disable typescript/consistent-type-definitions */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -8,7 +8,7 @@ export type DevSessionUpdateMutationVariables = Types.Exact<{
   appId: Types.Scalars['String']['input']
   assetsUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
   manifest?: Types.InputMaybe<Types.Scalars['JSON']['input']>
-  inheritedModuleUids: Types.Scalars['String']['input'][] | Types.Scalars['String']['input']
+  inheritedModuleUids: Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']
 }>
 
 export type DevSessionUpdateMutation = {
@@ -19,7 +19,7 @@ export type DevSessionUpdateMutation = {
       user?: {id: string; email?: string | null} | null
       app: {id: string; key: string}
     } | null
-    userErrors: {message: string; on: JsonMapType; field?: string[] | null; category: string}[]
+    userErrors: Array<{message: string; on: JsonMapType; field?: Array<string> | null; category: string}>
   } | null
 }
 
