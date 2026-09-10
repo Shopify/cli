@@ -11,6 +11,7 @@ const appVersionJsonOutputSchema = zod.object({
   status: zod.string(),
   createdAt: zod.string(),
   createdBy: zod.string(),
+  versionId: zod.string(),
 })
 
 export const appVersionsListJsonOutputSchema = defineJsonOutputSchema({
@@ -21,7 +22,7 @@ export const appVersionsListJsonOutputSchema = defineJsonOutputSchema({
 
 export type AppVersionsListResult = InferJsonOutputSchema<typeof appVersionsListJsonOutputSchema>
 
-export interface AppVersionsList {
+interface AppVersionsList {
   appVersions: AppVersionsListResult
   totalResults: number
 }
@@ -40,6 +41,7 @@ export async function getAppVersions(
       status: appVersion.status,
       createdAt: formatDate(new Date(appVersion.createdAt)),
       createdBy: appVersion.createdBy?.displayName ?? '',
+      versionId: appVersion.versionId,
     })),
     totalResults: response.app.appVersions.pageInfo.totalResults,
   }

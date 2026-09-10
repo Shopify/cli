@@ -1993,6 +1993,7 @@ DESCRIPTION
     status: string
     createdAt: string
     createdBy: string
+    versionId: string
   }
   ```
 ```
