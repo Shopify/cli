@@ -1,4 +1,4 @@
-import {FunctionConfigType} from './function.js'
+import {FunctionConfigType, FunctionExtensionSchema} from './function.js'
 import {placeholderAppConfiguration, testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -6,6 +6,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test} from 'vitest'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -141,6 +142,36 @@ describe('functionConfiguration', () => {
         {handle: 'some.api.target1', input_query: inputQuery},
         {handle: 'some.api.target2', export: 'run_target2'},
       ])
+    })
+  })
+
+  test('maps target-level input variables to the deploy payload', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      extension.directory = tmpDir
+      extension.configuration.input = undefined
+      extension.configuration.targeting = [
+        {target: 'some.api.target1', input_variables: {namespace: 'target-namespace', key: 'target-key'}},
+        {target: 'some.api.target2', export: 'run_target2'},
+      ]
+
+      // When
+      const got = await extension.deployConfig({
+        apiKey,
+        appConfiguration: placeholderAppConfiguration,
+      })
+
+      // Then
+      expect(getPathValue(got!, 'targets')).toEqual([
+        {
+          handle: 'some.api.target1',
+          input_query_variables: {
+            single_json_metafield: {namespace: 'target-namespace', key: 'target-key'},
+          },
+        },
+        {handle: 'some.api.target2', export: 'run_target2'},
+      ])
+      expect(getPathValue(got!, 'input_query_variables')).toBeUndefined()
     })
   })
 
@@ -355,5 +386,92 @@ describe('functionConfiguration', () => {
     // Then
     expect(extension.configuration.build).toBeUndefined()
     expect(extension.outputPath).toBe(joinPath('/function', 'dist', 'index.wasm'))
+  })
+})
+
+describe('input variables placement', () => {
+  const baseConfig = {name: 'function', type: 'function', api_version: '2022-07'}
+  const extensionVariables = {namespace: 'namespace', key: 'key'}
+  const targetVariables = {namespace: 'target-namespace', key: 'target-key'}
+
+  const parseIssues = (config: object): zod.ZodIssue[] => {
+    const result = FunctionExtensionSchema.safeParse(config)
+    return result.success ? [] : result.error.issues
+  }
+
+  test('rejects a target declaring input variables when the extension declares them too', () => {
+    // Given
+    const config = {
+      ...baseConfig,
+      input: {variables: extensionVariables},
+      targeting: [{target: 'some.api.target1', input_variables: targetVariables}],
+    }
+
+    // When
+    const got = parseIssues(config)
+
+    // Then
+    expect(got).toEqual([
+      expect.objectContaining({
+        path: ['targeting', 0, 'input_variables'],
+        message:
+          'Input variables must be defined either at the extension level or on a target, not both. ' +
+          'Remove `[input.variables]` from your extension configuration and declare `input_variables` on each target that needs them.',
+      }),
+    ])
+  })
+
+  test('reports every offending target and leaves the others alone', () => {
+    // Given
+    const config = {
+      ...baseConfig,
+      input: {variables: extensionVariables},
+      targeting: [
+        {target: 'some.api.target1', input_variables: targetVariables},
+        {target: 'some.api.target2', export: 'run_target2'},
+        {target: 'some.api.target3', input_variables: targetVariables},
+      ],
+    }
+
+    // When
+    const got = parseIssues(config)
+
+    // Then
+    expect(got.map((issue) => issue.path)).toEqual([
+      ['targeting', 0, 'input_variables'],
+      ['targeting', 2, 'input_variables'],
+    ])
+  })
+
+  test('accepts input variables declared only on targets', () => {
+    // Given
+    const config = {
+      ...baseConfig,
+      targeting: [
+        {target: 'some.api.target1', input_variables: targetVariables},
+        {target: 'some.api.target2', export: 'run_target2'},
+      ],
+    }
+
+    // When
+    const got = parseIssues(config)
+
+    // Then
+    expect(got).toEqual([])
+  })
+
+  test('accepts extension-level input variables when no target declares them', () => {
+    // Given
+    const config = {
+      ...baseConfig,
+      input: {variables: extensionVariables},
+      targeting: [{target: 'some.api.target1', input_query: 'target1.graphql'}],
+    }
+
+    // When
+    const got = parseIssues(config)
+
+    // Then
+    expect(got).toEqual([])
   })
 })
