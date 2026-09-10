@@ -1598,7 +1598,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NAME]
 
   -p, --path=<value>
-      [default: ./packages/cli] [env: SHOPIFY_FLAG_PATH]
+      [default: .] [env: SHOPIFY_FLAG_PATH]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.

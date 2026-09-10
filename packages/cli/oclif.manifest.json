@@ -3154,7 +3154,7 @@
         },
         "path": {
           "char": "p",
-          "default": "./packages/cli",
+          "default": ".",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -4945,7 +4945,7 @@
         },
         "path": {
           "char": "p",
-          "default": "./packages/cli",
+          "default": ".",
           "description": "The path to run tests in. Defaults to current directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
