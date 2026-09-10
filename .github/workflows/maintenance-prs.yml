@@ -49,6 +49,16 @@ jobs:
               return;
             }
             core.info(`Using managed Anthropic route: ${baseUrl === 'https://proxy.shopify.ai/apis/anthropic'}`);
+            const configuredUrl = new URL(baseUrl);
+            const knownRoutes = new Map([
+              ['/apis/anthropic', 'managed Anthropic base'],
+              ['/apis/anthropic/v1', 'managed Anthropic base with v1 already appended'],
+              ['/vendors/anthropic-claude-code', 'Claude Code vendor base'],
+              ['/vendors/anthropic', 'Anthropic vendor base'],
+              ['/', 'proxy root'],
+            ]);
+            core.info(`Configured route category: ${knownRoutes.get(configuredUrl.pathname.replace(/\/$/, '') || '/') ?? 'other route'}`);
+            core.info(`URL has query or fragment: ${Boolean(configuredUrl.search || configuredUrl.hash)}`);
             const headers = {
               'x-api-key': apiKey,
               'anthropic-version': '2023-06-01',
