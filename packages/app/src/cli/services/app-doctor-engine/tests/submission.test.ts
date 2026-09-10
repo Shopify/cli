@@ -1,14 +1,10 @@
 import {submissionTraceFixture, submissionTraceHashes} from './fixtures/submission-trace.js'
-import {
-  buildSubmission,
-  SUBMISSION_SCHEMA_VERSION,
-  validateTrace,
-  type AppDoctorSubmission,
-  type BuildSubmissionOptions,
-} from '../index.js'
+import {buildSubmission, SUBMISSION_SCHEMA_VERSION} from '../submission/index.js'
+import {validateTrace} from '../trace/index.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+import type {AppDoctorSubmission, BuildSubmissionOptions} from '../submission/index.js'
 
 const fixturesDirectory = joinPath(moduleDirectory(import.meta.url), 'fixtures')
 

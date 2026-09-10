@@ -1,29 +1,8 @@
 import {appDoctorArtifactPaths, readTrace, writeSubmission} from './app-doctor-artifacts.js'
-import {sha256, SUBMISSION_SCHEMA_VERSION, type AppDoctorSubmission, type TraceV2} from './app-doctor-engine/index.js'
+import {scanApp, SUBMISSION_SCHEMA_VERSION, type AppDoctorSubmission} from './app-doctor-engine/index.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
-
-function validTrace(): TraceV2 {
-  const unsigned: Omit<TraceV2, 'attestation'> = {
-    schema_version: 2,
-    engine: {name: 'shopify-app-doctor', version: '0.1.0', ruleset: 'app-doctor-rules@0.1.0'},
-    generated_at: '2026-09-01T00:00:00.000Z',
-    project: {
-      commit: null,
-      dirty: false,
-      input_hash: `sha256:${'a'.repeat(64)}`,
-      input_hashes: {},
-    },
-    detection: {framework: 'none', surface: 'config_only', languages: []},
-    score: {total: 100, baseline: 100, grade: 'EXCELLENT'},
-    findings: [],
-    checks_executed: [],
-    suppressions: [],
-    coverage: {files_scanned: 1, files_skipped: [], complete: true, gaps: []},
-  }
-  return {...unsigned, attestation: {digest: sha256(unsigned), signed: false}}
-}
 
 const submission = {
   schemaVersion: SUBMISSION_SCHEMA_VERSION,
@@ -46,8 +25,9 @@ describe('appDoctorArtifactPaths', () => {
 describe('readTrace', () => {
   test('returns a validated v2 trace', async () => {
     await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
+      const {trace} = await scanApp(directory)
       const path = joinPath(directory, 'trace.json')
-      const trace = validTrace()
       await writeFile(path, `${JSON.stringify(trace)}\n`)
 
       await expect(readTrace(path)).resolves.toEqual({status: 'ok', trace})

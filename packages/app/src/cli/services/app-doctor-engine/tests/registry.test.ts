@@ -1,4 +1,6 @@
-import {DETERMINISTIC_RULES, getRegistry, loadChecks} from '../index.js'
+import {loadChecks} from '../checks/index.js'
+import {getRegistry} from '../registry/index.js'
+import {DETERMINISTIC_RULES} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {describe, expect, test} from 'vitest'
 

@@ -1,14 +1,8 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
-import {
-  DETERMINISTIC_CHECKS,
-  assertRegistryInvariants,
-  buildReviewPack,
-  compileTrace,
-  scan,
-  getRegistry,
-  sha256,
-  validateTrace,
-} from '../index.js'
+import {buildReviewPack} from '../checks/index.js'
+import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
+import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
+import {compileTrace, sha256, validateTrace} from '../trace/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {calculateScore} from '../scorer/index.js'
 import {afterEach, describe, expect, test} from 'vitest'

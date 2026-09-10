@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-imports -- deterministic scanners use real temporary repositories */
-import {DETERMINISTIC_CHECKS, getRegistry} from '../index.js'
+import {getRegistry} from '../registry/index.js'
+import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {parseAppToml} from '../scanners/discover.js'
 import {

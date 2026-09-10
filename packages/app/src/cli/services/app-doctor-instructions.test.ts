@@ -1,5 +1,5 @@
 import deliverAppDoctorInstructions, {appDoctorInstructions, shellQuote} from './app-doctor-instructions.js'
-import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/index.js'
+import {getAgentInstructions} from './app-doctor-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
@@ -24,7 +24,7 @@ async function createApp(directory: string): Promise<string> {
 describe('embedded instructions', () => {
   test('matches INSTRUCTIONS.md', () => {
     const source = readFileSync(fileURLToPath(new URL('./app-doctor-engine/INSTRUCTIONS.md', import.meta.url)), 'utf8')
-    expect(EMBEDDED_APP_DOCTOR_INSTRUCTIONS).toBe(source)
+    expect(getAgentInstructions()).toBe(source)
   })
 })
 

@@ -1,22 +1,14 @@
 /* eslint-disable no-restricted-imports -- trace fixtures use Node temporary-directory primitives */
 import {computeResultHash} from '../scorer/index.js'
-import {
-  compileTrace,
-  formatJson,
-  mergeExternalFindings,
-  scan,
-  sha256,
-  validateTrace,
-  validateExternalFinding,
-  validateSuppression,
-  type Issue,
-  type ScanResult,
-  type Suppression,
-} from '../index.js'
+import {mergeExternalFindings, validateExternalFinding} from '../external/index.js'
+import {formatJson} from '../output/format.js'
+import {scan} from '../scanners/index.js'
+import {compileTrace, sha256, validateSuppression, validateTrace} from '../trace/index.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdtempSync, rmSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import type {Issue, ScanResult, Suppression} from '../types.js'
 
 const dirs: string[] = []
 afterEach(() => dirs.splice(0).forEach((dir) => rmSync(dir, {recursive: true, force: true})))
