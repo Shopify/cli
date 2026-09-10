@@ -300,7 +300,7 @@ function reportEnvironmentApplication<
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
     const environmentContainsFlag = Object.prototype.hasOwnProperty.call(environment, name)
     if (!userSpecifiedThisFlag && environmentContainsFlag) {
-      const valueToReport = name === 'password' ? `********${value.substr(-4)}` : value
+      const valueToReport = name === 'password' && typeof value === 'string' ? `********${value.slice(-4)}` : value
       changes[name] = valueToReport
     }
   }
