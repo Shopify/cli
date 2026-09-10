@@ -12,16 +12,16 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
     "jsx": "react",
     "paths": {
-      "@shopify/ui-extensions-test-utils": ["../../ui-extensions-test-utils/src"],
+      "@shopify/ui-extensions-test-utils": ["../ui-extensions-test-utils/src"],
+      "i18n.js": ["./src/i18n.ts"]
     },
     "outDir": "dist",
-    "baseUrl": "src",
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
