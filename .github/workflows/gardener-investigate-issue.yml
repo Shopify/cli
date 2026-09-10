@@ -70,7 +70,7 @@ jobs:
         timeout-minutes: 30
         uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
         env:
-          ANTHROPIC_BASE_URL: https://proxy.shopify.ai/vendors/anthropic-claude-code
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -86,7 +86,7 @@ jobs:
             Always return an investigation report as the `report` field in your structured output.
             If you identify a straightforward fix, describe the proposed fix in the report instead of implementing it.
           claude_args: |
-            --model claude-opus-4-8
+            --model claude-opus-latest
             --json-schema '{"type":"object","properties":{"report":{"type":"string","description":"The full investigation report markdown"}},"required":["report"]}'
 
       - name: Write report to job summary
