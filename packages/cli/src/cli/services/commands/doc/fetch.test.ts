@@ -57,6 +57,14 @@ describe('docFetchService', () => {
     })
   })
 
+  test('sends Accept-Language when a language is provided', async () => {
+    await docFetchService('https://shopify.dev/docs/api/shopify-cli', undefined, 'ruby')
+
+    expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
+      headers: {Accept: 'text/markdown', 'X-Shopify-Surface': 'cli', 'Accept-Language': 'ruby'},
+    })
+  })
+
   test('throws when the response is not ok', async () => {
     vi.mocked(fetch).mockResolvedValue({ok: false, status: 404, statusText: 'Not Found'} as any)
 

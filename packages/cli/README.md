@@ -2134,13 +2134,21 @@ DESCRIPTION
 
 ## `shopify doc fetch`
 
-Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
+Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
 ```
 USAGE
-  $ shopify doc fetch --url <value> [--no-color] [--output <value>] [--verbose]
+  $ shopify doc fetch --url <value> [--language
+    javascript|typescript|python|ruby|php|rust|curl|liquid|graphql|html] [--no-color] [--output <value>] [--verbose]
 
 FLAGS
+  --language=<option>
+      Filter code examples in the returned Markdown to this language. Supply the language of the app you are building so
+      examples match your stack. Optional — if omitted, or if shopify.dev does not recognize the language for a given
+      page, the document includes examples in every language.
+      [env: SHOPIFY_FLAG_LANGUAGE]
+      <options: javascript|typescript|python|ruby|php|rust|curl|liquid|graphql|html>
+
   --no-color
       Disable color output.
       [env: SHOPIFY_FLAG_NO_COLOR]
@@ -2160,12 +2168,17 @@ FLAGS
 DESCRIPTION
   Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this
   tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like
-  a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
+  a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your
+  stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
 EXAMPLES
   # fetch the Markdown version of a Shopify.dev page
 
     $ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli
+
+  # filter code examples to the language of the app you are building
+
+    $ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --language ruby
 
   # save the document to a file instead of printing it
 
