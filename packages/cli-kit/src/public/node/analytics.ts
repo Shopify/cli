@@ -1,4 +1,4 @@
-import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, ciPlatform, isShopify} from './context/local.js'
+import {ciPlatform, isShopify} from './context/local.js'
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC, type Schemas} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
@@ -12,7 +12,12 @@ import {
   compileData as storageCompileData,
   RuntimeData,
 } from '../../private/node/analytics/storage.js'
-import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
+import {
+  getEnvironmentData,
+  getSensitiveEnvironmentData,
+  metricAnalyticsSkipped,
+  monorailAnalyticsSkipped,
+} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {recordMetrics} from '../../private/node/otel-metrics.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
@@ -127,8 +132,8 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       return
     }
 
-    const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
-    const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
+    const skipMonorailAnalytics = monorailAnalyticsSkipped()
+    const skipMetricAnalytics = metricAnalyticsSkipped()
     if (skipMonorailAnalytics && skipMetricAnalytics) {
       outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
       return

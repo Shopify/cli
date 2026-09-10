@@ -8,6 +8,8 @@ import {
 } from './analytics.js'
 import * as os from './os.js'
 import {
+  alwaysLogAnalytics,
+  alwaysLogMetrics,
   analyticsDisabled,
   ciPlatform,
   cloudEnvironment,
@@ -28,8 +30,16 @@ import * as store from '../../private/node/analytics/storage.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {determineAgent} from '@vercel/detect-agent'
 import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 import type BaseCommand from './base-command.js'
+
+// `mockResolvedValue` would be wiped by `mockReset: true`, silently forcing every test onto the detection error path.
+vi.mock('@vercel/detect-agent', () => {
+  return {
+    determineAgent: vi.fn(async () => ({isAgent: false, agent: undefined})),
+  }
+})
 
 vi.mock('./context/local.js')
 vi.mock('./os.js')
@@ -41,6 +51,11 @@ vi.mock('./monorail.js')
 vi.mock('./cli.js')
 vi.mock('./error-handler.js')
 vi.mock('./system.js')
+
+function stubDeclaredAgentVariablesEmpty(): void {
+  const declaredVariableNames = ['SHOPIFY_CLI_AGENT_INFO', 'SHOPIFY_CLI_AGENT_IDS']
+  declaredVariableNames.forEach((variableName) => vi.stubEnv(variableName, undefined))
+}
 
 function restoreEnvVariable(key: string, value: string | undefined): void {
   if (value === undefined) {
@@ -73,6 +88,7 @@ describe('event tracking', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllEnvs()
   })
 
   async function inProjectWithFile(file: string, execute: (args: string[]) => Promise<void>): Promise<void> {
@@ -624,6 +640,133 @@ describe('event tracking', () => {
       restoreEnvVariable('SHOPIFY_CLI_AGENT_IDS', originalShopifyCliAgentIds)
       restoreEnvVariable('SHOPIFY_SOMETHING_KEY', originalShopifySomethingKey)
     }
+  })
+
+  test('adds detected agent variables when explicit attribution is missing', async () => {
+    stubDeclaredAgentVariablesEmpty()
+    vi.mocked(determineAgent).mockResolvedValueOnce({
+      isAgent: true,
+      agent: {name: 'claude'},
+    })
+
+    await inProjectWithFile('package.json', async (args) => {
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(publishEventMock).toHaveBeenCalledOnce()
+
+      const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+      expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT_INFO', 'n:claude-code')
+      expect(shopifyVars).toHaveProperty('SHOPIFY_CLI_AGENT_DETECTED', 'true')
+    })
+  })
+
+  test('does not add a detected agent to the payload when only SHOPIFY_CLI_AGENT_INFO is declared', async () => {
+    stubDeclaredAgentVariablesEmpty()
+    vi.stubEnv('SHOPIFY_CLI_AGENT_INFO', 'n:shopify-ai-toolkit|v:1.0.0|p:anthropic|m:claude-opus-5')
+    vi.mocked(determineAgent).mockResolvedValueOnce({isAgent: true, agent: {name: 'claude'}})
+
+    await inProjectWithFile('package.json', async (args) => {
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+      expect(shopifyVars).toHaveProperty(
+        'SHOPIFY_CLI_AGENT_INFO',
+        'n:shopify-ai-toolkit|v:1.0.0|p:anthropic|m:claude-opus-5',
+      )
+      expect(shopifyVars).not.toHaveProperty('SHOPIFY_CLI_AGENT_DETECTED')
+    })
+  })
+
+  test('does not fail telemetry if determineAgent throws an error', async () => {
+    stubDeclaredAgentVariablesEmpty()
+    vi.mocked(determineAgent).mockRejectedValueOnce(new Error('EACCES: permission denied'))
+
+    await inProjectWithFile('package.json', async (args) => {
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      // Then
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(publishEventMock).toHaveBeenCalledOnce()
+
+      const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+      expect(shopifyVars).not.toHaveProperty('SHOPIFY_CLI_AGENT_INFO')
+      expect(shopifyVars).not.toHaveProperty('SHOPIFY_CLI_AGENT_DETECTED')
+    })
+  })
+
+  test('does not detect an agent when analytics are disabled', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      vi.mocked(analyticsDisabled).mockReturnValue(true)
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(publishMonorailEvent).not.toHaveBeenCalled()
+      expect(determineAgent).not.toHaveBeenCalled()
+    })
+  })
+
+  test.each([
+    ['alwaysLogAnalytics', alwaysLogAnalytics],
+    ['alwaysLogMetrics', alwaysLogMetrics],
+  ])('still detects an agent when analytics are disabled but %s is on', async (_description, override) => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      vi.mocked(analyticsDisabled).mockReturnValue(true)
+      vi.mocked(override).mockReturnValue(true)
+      stubDeclaredAgentVariablesEmpty()
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(determineAgent).toHaveBeenCalledOnce()
+    })
   })
 
   test('does nothing when analytics are disabled', async () => {
