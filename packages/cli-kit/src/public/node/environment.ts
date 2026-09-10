@@ -38,10 +38,9 @@ export function getOrganization(): string | undefined {
 }
 
 function parseEnvNumber(value: string | undefined): number | undefined {
-  if (value && !isNaN(Number(value))) {
-    return Number(value)
-  }
-  return undefined
+  if (!value) return undefined
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? undefined : parsed
 }
 
 /**
