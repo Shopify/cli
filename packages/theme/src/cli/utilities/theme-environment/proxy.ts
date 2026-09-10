@@ -1,14 +1,17 @@
-import {cleanHeader, defaultHeaders} from './storefront-utils.js'
+import {cleanHeader, defaultHeaders, STOREFRONT_REQUEST_BEHAVIOUR, toWebResponse} from './storefront-utils.js'
 import {buildCookies} from './storefront-renderer.js'
 import {injectStandardEventsInspector, rewriteStandardEventsRuntimeReferences} from './standard-events.js'
 import {logRequestLine} from '../log-request-line.js'
 
 import {createFetchError, extractFetchErrorInfo} from '../errors.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, type H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {recordError} from '@shopify/cli-kit/node/analytics'
+import {Readable} from 'stream'
+import {type ReadableStream as WebReadableStream} from 'stream/web'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -320,6 +323,11 @@ export function getProxyStorefrontHeaders(event: H3Event) {
   // so we must also remove it from the response CSP.
   delete proxyRequestHeaders['upgrade-insecure-requests']
 
+  // The client decodes gzip, deflate and br, and advertises exactly those when this header is absent.
+  // Forwarding the browser's list (Chrome adds zstd) would let the storefront answer with an encoding
+  // that is passed through undecoded, after `content-encoding` has been removed from the response.
+  delete proxyRequestHeaders['accept-encoding']
+
   const ipAddress = getRequestIP(event)
   if (ipAddress) proxyRequestHeaders['X-Forwarded-For'] = ipAddress
 
@@ -367,16 +375,19 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     })
   }
 
-  // eslint-disable-next-line no-restricted-globals
-  return fetch(url, {
-    method: event.method,
-    body,
-    duplex: body ? 'half' : undefined,
-    // Important to return 3xx responses to the client
-    redirect: 'manual',
-    headers,
-  } as RequestInit & {duplex?: 'half'})
-    .then((response) => patchProxiedResponseHeaders(ctx, response))
+  return fetch(
+    url.href,
+    {
+      method: event.method,
+      // The client reads request bodies as Node streams, unlike the built-in fetch.
+      body: body && Readable.fromWeb(body as WebReadableStream),
+      // Important to return 3xx responses to the client
+      redirect: 'manual',
+      headers,
+    },
+    STOREFRONT_REQUEST_BEHAVIOUR,
+  )
+    .then((response) => patchProxiedResponseHeaders(ctx, toWebResponse(response)))
     .catch((error: Error) => {
       throw createFetchError(recordError(error), url)
     })
