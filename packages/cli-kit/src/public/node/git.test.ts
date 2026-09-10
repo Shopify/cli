@@ -175,6 +175,40 @@ describe('downloadRepository()', async () => {
   })
 })
 
+describe('checkIfIgnoredInGitRepository()', () => {
+  test('returns the list of ignored files when git check-ignore finds ignored files', async () => {
+    const directory = '/tmp/git-repo'
+    const files = ['/tmp/git-repo/file1.txt', '/tmp/git-repo/file2.txt']
+    mockGitCommand('/tmp/git-repo/file1.txt\n/tmp/git-repo/file2.txt\n')
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, files)
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['check-ignore', ...files], {cwd: directory})
+    expect(result).toEqual(['/tmp/git-repo/file1.txt', '/tmp/git-repo/file2.txt'])
+  })
+
+  test('returns empty array if no files are ignored (returns exitCode 1)', async () => {
+    const directory = '/tmp/git-repo'
+    const files = ['/tmp/git-repo/file1.txt']
+    const error = Object.assign(new Error('exit code 1'), {exitCode: 1})
+    mockedExeca.mockRejectedValue(error)
+
+    const result = await git.checkIfIgnoredInGitRepository(directory, files)
+
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['check-ignore', ...files], {cwd: directory})
+    expect(result).toEqual([])
+  })
+
+  test('re-throws other errors when git check-ignore fails with a non-1 exit code', async () => {
+    const directory = '/tmp/git-repo'
+    const files = ['/tmp/git-repo/file1.txt']
+    const error = Object.assign(new Error('fatal error'), {exitCode: 128})
+    mockedExeca.mockRejectedValue(error)
+
+    await expect(git.checkIfIgnoredInGitRepository(directory, files)).rejects.toThrowError('fatal error')
+  })
+})
+
 describe('initializeRepository()', () => {
   test('calls git init and checkout in the given directory', async () => {
     const directory = '/tmp/git-repo'
