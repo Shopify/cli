@@ -56,7 +56,7 @@ export function patchEnvFile(envFileContent: string | null, updatedValues: Recor
   const outputLines: string[] = []
   const envFileLines = envFileContent === null ? [] : envFileContent.split('\n')
 
-  const alreadyPresentKeys: string[] = []
+  const alreadyPresentKeys = new Set<string>()
 
   let multilineVariable:
     | {
@@ -76,7 +76,7 @@ export function patchEnvFile(envFileContent: string | null, updatedValues: Recor
         )
         const newValue = updatedValues[multilineVariable.key]
         if (newValue) {
-          alreadyPresentKeys.push(multilineVariable.key)
+          alreadyPresentKeys.add(multilineVariable.key)
           lineToWrite = createDotEnvFileLine(multilineVariable.key, newValue)
         }
         outputLines.push(lineToWrite)
@@ -105,7 +105,7 @@ export function patchEnvFile(envFileContent: string | null, updatedValues: Recor
 
       const newValue = updatedValues[key]
       if (newValue) {
-        alreadyPresentKeys.push(key)
+        alreadyPresentKeys.add(key)
         lineToWrite = createDotEnvFileLine(key, newValue)
       }
     }
@@ -118,7 +118,7 @@ export function patchEnvFile(envFileContent: string | null, updatedValues: Recor
   }
 
   for (const [patchKey, updatedValue] of Object.entries(updatedValues)) {
-    if (!alreadyPresentKeys.includes(patchKey)) {
+    if (!alreadyPresentKeys.has(patchKey)) {
       outputLines.push(createDotEnvFileLine(patchKey, updatedValue))
     }
   }
