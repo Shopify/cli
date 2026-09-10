@@ -15,7 +15,11 @@ const BLOCKED_HEADERS = new Set([
   'trailer',
   'transfer-encoding',
   'upgrade',
-
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+  'x-real-ip',
+  'cf-connecting-ip',
   // Headers the proxy controls
   'host',
   'content-length',
