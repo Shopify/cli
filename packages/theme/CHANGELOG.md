@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 4.8.1
+
+### Patch Changes
+
+- 3b6170d: Include theme config stylesheets and agent instructions when pulling, pushing, and packaging themes.
+  - @shopify/cli-kit@4.8.1
+
 ## 4.8.0
 
 ### Patch Changes
