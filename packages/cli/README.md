@@ -3417,6 +3417,22 @@ DESCRIPTION
   List Shopify organizations you have access to.
 
   Lists the Shopify organizations that you have access to, along with their organization IDs.
+
+  Output from `--json` conforms to the `OrganizationListResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  interface OrganizationListResult {
+    organizations: OrganizationListEntry[]
+  }
+
+  interface OrganizationListEntry {
+    id: string
+    gid: string
+    name: string
+  }
+  ```
 ```
 
 ## `shopify plugins add PLUGIN`

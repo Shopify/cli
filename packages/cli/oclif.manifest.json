@@ -7419,7 +7419,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
+      "description": "Lists the Shopify organizations that you have access to, along with their organization IDs.\n\nOutput from `--json` conforms to the `OrganizationListResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ninterface OrganizationListResult {\n  organizations: OrganizationListEntry[]\n}\n\ninterface OrganizationListEntry {\n  id: string\n  gid: string\n  name: string\n}\n```",
       "descriptionWithMarkdown": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
       "enableJsonFlag": false,
       "flags": {
