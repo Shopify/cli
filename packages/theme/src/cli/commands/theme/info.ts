@@ -1,12 +1,12 @@
 import ThemeCommand from '../../utilities/theme-command.js'
-import {fetchThemeInfo, fetchDevInfo, formatThemeInfo, themeEnvironmentInfoJSON} from '../../services/info.js'
+import {fetchThemeInfo, getThemeEnvironmentInfo} from '../../services/info.js'
+import {renderThemeInfoResult} from '../../services/info/result.js'
+import {themeInfoJsonOutputSchema} from '../../services/info/types.js'
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {OutputFlags} from '@oclif/core/interfaces'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
@@ -34,6 +34,10 @@ export default class Info extends ThemeCommand {
 
   static multiEnvironmentsFlags = ['store', 'password']
 
+  static get jsonOutputSchema() {
+    return themeInfoJsonOutputSchema
+  }
+
   async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
     recordTiming('theme-command:info')
     if (flags.theme || flags.development) {
@@ -42,19 +46,10 @@ export default class Info extends ThemeCommand {
         throw new AbortError('Theme not found!')
       }
 
-      if (flags.json) {
-        return outputResult(JSON.stringify(output, null, 2))
-      }
-
-      const formattedInfo = await formatThemeInfo(output, flags)
-      renderInfo(formattedInfo)
+      renderThemeInfoResult(output, flags.json ? 'json' : 'text', flags)
     } else {
-      if (flags.json) {
-        return outputResult(JSON.stringify(themeEnvironmentInfoJSON({cliVersion: this.config.version}), null, 2))
-      }
-      const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
-
-      renderInfo({customSections: infoMessage})
+      const {result, developmentTheme} = getThemeEnvironmentInfo({cliVersion: this.config.version})
+      renderThemeInfoResult(result, flags.json ? 'json' : 'text', {developmentTheme})
     }
     recordTiming('theme-command:info')
   }
