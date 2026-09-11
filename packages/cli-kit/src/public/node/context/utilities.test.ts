@@ -22,6 +22,12 @@ describe('isTruthy', () => {
     expect(isTruthy('YES')).toBe(true)
   })
 
+  test('returns true for mixed case truthy values', () => {
+    expect(isTruthy('tRuE')).toBe(true)
+    expect(isTruthy('YEs')).toBe(true)
+    expect(isTruthy('True')).toBe(true)
+  })
+
   test('returns false for "0"', () => {
     expect(isTruthy('0')).toBe(false)
   })
