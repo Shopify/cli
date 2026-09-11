@@ -5,6 +5,12 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {timingSafeEqual} from 'crypto'
 import {createServer} from 'http'
+import type {IncomingHttpHeaders} from 'http'
+
+export interface AuthorizationRedirect {
+  nonce: string
+  authorizationUrl: string
+}
 
 export interface WaitForAuthCodeOptions {
   store: string
@@ -12,10 +18,14 @@ export interface WaitForAuthCodeOptions {
   port: number
   timeoutMs?: number
   onListening?: () => void | Promise<void>
-  authorizationRedirect?: {
-    nonce: string
-    authorizationUrl: string
-  }
+  authorizationRedirect?: AuthorizationRedirect
+}
+
+// Browsers announce a speculative fetch so servers can decline side effects. Serving one would spend
+// the single-use handoff before the navigation it is speculating about ever arrives.
+function isSpeculativeRequest(headers: IncomingHttpHeaders): boolean {
+  const purpose = [headers['sec-purpose'], headers.purpose, headers['x-moz']].flat().join(' ')
+  return purpose.includes('prefetch') || purpose.includes('prerender')
 }
 
 function renderAuthCallbackPage(title: string, message: string): string {
@@ -119,21 +129,26 @@ export async function waitForStoreAuthCode({
     const server = createServer((req, res) => {
       const requestUrl = new URL(req.url ?? '/', `http://127.0.0.1:${port}`)
 
-      if (requestUrl.pathname === STORE_AUTH_HANDOFF_PATH && authorizationRedirect) {
-        const returnedNonce = requestUrl.searchParams.get('nonce')
-        if (!returnedNonce || !constantTimeEqual(returnedNonce, authorizationRedirect.nonce)) {
-          res.statusCode = 403
-          res.setHeader('Cache-Control', 'no-store')
-          res.setHeader('Connection', 'close')
-          res.end('Forbidden')
-          return
-        }
+      const notFound = () => {
+        res.statusCode = 404
+        res.setHeader('Cache-Control', 'no-store')
+        res.setHeader('Connection', 'close')
+        res.end('Not found')
+      }
 
-        if (authorizationRedirectUsed) {
-          res.statusCode = 410
-          res.setHeader('Cache-Control', 'no-store')
-          res.setHeader('Connection', 'close')
-          res.end('Authorization handoff already used')
+      if (requestUrl.pathname === STORE_AUTH_HANDOFF_PATH) {
+        const returnedNonce = requestUrl.searchParams.get('nonce')
+        // Every rejection answers 404 so a local prober cannot tell a wrong nonce from a spent
+        // handoff, or either from a port with no store auth in flight.
+        const servable =
+          authorizationRedirect !== undefined &&
+          !authorizationRedirectUsed &&
+          req.method === 'GET' &&
+          returnedNonce !== null &&
+          constantTimeEqual(returnedNonce, authorizationRedirect.nonce)
+
+        if (!servable || isSpeculativeRequest(req.headers)) {
+          notFound()
           return
         }
 
@@ -148,8 +163,7 @@ export async function waitForStoreAuthCode({
       }
 
       if (requestUrl.pathname !== STORE_AUTH_CALLBACK_PATH) {
-        res.statusCode = 404
-        res.end('Not found')
+        notFound()
         return
       }
 

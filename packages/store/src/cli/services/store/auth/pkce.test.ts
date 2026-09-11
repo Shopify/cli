@@ -20,19 +20,28 @@ describe('store auth PKCE helpers', () => {
     expect(computeCodeChallenge(verifier)).toBe(expected)
   })
 
-  test('buildStoreAuthUrl includes signup JWT when provided', () => {
-    const url = new URL(
-      buildStoreAuthUrl({
-        store: 'shop.myshopify.com',
-        scopes: ['read_products'],
-        state: 'state-123',
-        redirectUri: 'http://127.0.0.1:13387/auth/callback',
-        codeChallenge: 'test-challenge-value',
-        signup: 'signed.signup.jwt',
-      }),
-    )
+  test('buildStoreAuthUrl builds a store authorization URL that carries no signup credential', () => {
+    const url = buildStoreAuthUrl({
+      store: 'shop.myshopify.com',
+      scopes: ['read_products'],
+      state: 'state-123',
+      redirectUri: 'http://127.0.0.1:13387/auth/callback',
+      codeChallenge: 'test-challenge-value',
+    })
 
-    expect(url.searchParams.get('signup')).toBe('signed.signup.jwt')
+    expect(new URL(url).searchParams.has('signup')).toBe(false)
+    expect(url).not.toContain('signup')
+  })
+
+  test('createPkceBootstrap keeps the signup credential off the authorization context', () => {
+    const bootstrap = createPkceBootstrap({
+      store: 'shop.myshopify.com',
+      scopes: ['read_products'],
+      signup: 'signed.signup.jwt',
+      exchangeCodeForToken: async () => ({access_token: 'token', scope: 'read_products'}),
+    })
+
+    expect(JSON.stringify(bootstrap.authorization)).not.toContain('signed.signup.jwt')
   })
 
   test('createPkceBootstrap uses a loopback handoff URL when signup is provided', () => {
