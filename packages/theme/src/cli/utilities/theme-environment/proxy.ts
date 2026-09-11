@@ -1,14 +1,17 @@
-import {cleanHeader, defaultHeaders} from './storefront-utils.js'
+import {cleanHeader, defaultHeaders, STOREFRONT_REQUEST_BEHAVIOUR, toWebResponse} from './storefront-utils.js'
 import {buildCookies} from './storefront-renderer.js'
 import {injectStandardEventsInspector, rewriteStandardEventsRuntimeReferences} from './standard-events.js'
 import {logRequestLine} from '../log-request-line.js'
 
 import {createFetchError, extractFetchErrorInfo} from '../errors.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, type H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {recordError} from '@shopify/cli-kit/node/analytics'
+import {Readable} from 'stream'
+import {type ReadableStream as WebReadableStream} from 'stream/web'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -256,13 +259,24 @@ const HOP_BY_HOP_HEADERS = [
   'host',
 ]
 
+/**
+ * The codings the client in `@shopify/cli-kit/node/http` decompresses, and only when
+ * `content-encoding` is exactly one of them. A chained value such as `br, gzip` is passed through
+ * still compressed.
+ */
+const DECODED_CONTENT_ENCODINGS = new Set(['gzip', 'x-gzip', 'deflate', 'x-deflate', 'br'])
+
 function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response) {
   const response = new Response(rawResponse.body, rawResponse)
 
-  // Node's `fetch` always decompresses the body, so we must remove these headers
-  // to prevent the browser from decompressing it again:
+  // The body no longer matches the original length, and the client decompresses it whenever it
+  // understands the coding, in which case the browser must not decompress it again. When it does
+  // not, the body arrives still compressed and `content-encoding` has to survive.
   response.headers.delete('content-length')
-  response.headers.delete('content-encoding')
+  const contentEncoding = response.headers.get('content-encoding')
+  if (contentEncoding && DECODED_CONTENT_ENCODINGS.has(contentEncoding.trim().toLowerCase())) {
+    response.headers.delete('content-encoding')
+  }
   for (const header of HOP_BY_HOP_HEADERS) {
     response.headers.delete(header)
   }
@@ -320,6 +334,11 @@ export function getProxyStorefrontHeaders(event: H3Event) {
   // so we must also remove it from the response CSP.
   delete proxyRequestHeaders['upgrade-insecure-requests']
 
+  // The client decodes gzip, deflate and br, and advertises exactly those when this header is absent.
+  // Forwarding the browser's list (Chrome adds zstd) would let the storefront answer with an encoding
+  // that is passed through undecoded, after `content-encoding` has been removed from the response.
+  delete proxyRequestHeaders['accept-encoding']
+
   const ipAddress = getRequestIP(event)
   if (ipAddress) proxyRequestHeaders['X-Forwarded-For'] = ipAddress
 
@@ -367,16 +386,19 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     })
   }
 
-  // eslint-disable-next-line no-restricted-globals
-  return fetch(url, {
-    method: event.method,
-    body,
-    duplex: body ? 'half' : undefined,
-    // Important to return 3xx responses to the client
-    redirect: 'manual',
-    headers,
-  } as RequestInit & {duplex?: 'half'})
-    .then((response) => patchProxiedResponseHeaders(ctx, response))
+  return fetch(
+    url.href,
+    {
+      method: event.method,
+      // The client reads request bodies as Node streams, unlike the built-in fetch.
+      body: body && Readable.fromWeb(body as WebReadableStream),
+      // Important to return 3xx responses to the client
+      redirect: 'manual',
+      headers,
+    },
+    STOREFRONT_REQUEST_BEHAVIOUR,
+  )
+    .then((response) => patchProxiedResponseHeaders(ctx, toWebResponse(response)))
     .catch((error: Error) => {
       throw createFetchError(recordError(error), url)
     })
