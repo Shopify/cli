@@ -71,9 +71,11 @@ describe('info', () => {
     })
   })
 
-  test('uses the JSON fallback values when no store or development theme is configured', () => {
+  test('uses the JSON fallback values without reading the development theme when no store is configured', () => {
     vi.mocked(getThemeStore).mockReturnValue(undefined)
-    vi.mocked(getDevelopmentTheme).mockReturnValue(undefined)
+    vi.mocked(getDevelopmentTheme).mockImplementation(() => {
+      throw new Error('The development theme needs a configured store')
+    })
 
     expect(themeEnvironmentInfoJSON({cliVersion: '3.91.0'})).toMatchObject({
       store: 'Not configured',
@@ -82,6 +84,7 @@ describe('info', () => {
       shell: process.env.SHELL ?? 'unknown',
       node_version: process.version,
     })
+    expect(getDevelopmentTheme).not.toHaveBeenCalled()
   })
 
   test('retains the raw development theme ID for text presentation', () => {
@@ -91,16 +94,6 @@ describe('info', () => {
     expect(getThemeEnvironmentInfo({cliVersion: '3.91.0'})).toMatchObject({
       result: {development_theme_id: null},
       developmentTheme: '0',
-    })
-  })
-
-  test('retains the raw development theme ID for text presentation when no store is configured', () => {
-    vi.mocked(getThemeStore).mockReturnValue(undefined)
-    vi.mocked(getDevelopmentTheme).mockReturnValue('123')
-
-    expect(getThemeEnvironmentInfo({cliVersion: '3.91.0'})).toMatchObject({
-      result: {development_theme_id: null},
-      developmentTheme: '123',
     })
   })
 
