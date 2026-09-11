@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Include Access-Control-Allow-Credentials on app-dev reverse-proxy CORS preflights so credentialed cross-origin fetches succeed.
+Forward app-dev preflight requests so target servers can safely authorize credentialed cross-origin fetches.

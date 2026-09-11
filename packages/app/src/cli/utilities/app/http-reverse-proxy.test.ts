@@ -8,6 +8,7 @@ import https from 'https'
 import net from 'net'
 
 const each = ['http', 'https'] as const
+const authorizedOrigin = 'https://extensions.shopifycdn.com'
 
 describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
   const test = getTestReverseProxy(protocol)
@@ -55,34 +56,58 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     })
   })
 
-  test('responds to CORS preflight OPTIONS with default headers', {retry: 2}, async ({setup}) => {
+  test('forwards an authorized credentialed CORS preflight to the target', {retry: 2}, async ({setup}) => {
     const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
       method: 'OPTIONS',
       headers: {
-        Origin: 'https://extensions.shopifycdn.com',
-        'Access-Control-Request-Method': 'GET',
-        'Access-Control-Request-Headers': 'Authorization',
+        Origin: authorizedOrigin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'Content-Type',
       },
       agent,
     })
     expect(response.status).toBe(204)
-    expect(response.headers.get('access-control-allow-origin')).toBe('https://extensions.shopifycdn.com')
-    expect(response.headers.get('access-control-allow-methods')).toBe('GET')
-    expect(response.headers.get('access-control-allow-headers')).toBe('Authorization')
-    expect(response.headers.get('access-control-max-age')).toBe('86400')
+    expect(response.headers.get('x-preflight-handled-by')).toBe('target')
+    expect(response.headers.get('access-control-allow-origin')).toBe(authorizedOrigin)
+    expect(response.headers.get('access-control-allow-methods')).toBe('POST')
+    expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type')
     expect(response.headers.get('access-control-allow-credentials')).toBe('true')
   })
 
-  test('responds to CORS preflight OPTIONS with defaults when no request headers', {retry: 2}, async ({setup}) => {
-    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
-      method: 'OPTIONS',
-      agent,
-    })
+  test('does not authorize credentials for untrusted origins', {retry: 2}, async ({setup}) => {
+    const untrustedOrigins = [
+      'https://evil.example',
+      'null',
+      'not a valid origin',
+      'http://extensions.shopifycdn.com',
+      'https://extensions.shopifycdn.com:3000',
+    ]
+
+    await Promise.all(
+      untrustedOrigins.map(async (origin) => {
+        const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
+          method: 'OPTIONS',
+          headers: {
+            Origin: origin,
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type',
+          },
+          agent,
+        })
+        expect(response.status).toBe(204)
+        expect(response.headers.get('access-control-allow-origin')).toBeNull()
+        expect(response.headers.get('access-control-allow-credentials')).toBeNull()
+        expect(response.headers.get('x-preflight-handled-by')).toBe('target')
+      }),
+    )
+  })
+
+  test('forwards OPTIONS without an Origin without authorizing credentials', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {method: 'OPTIONS', agent})
     expect(response.status).toBe(204)
-    expect(response.headers.get('access-control-allow-origin')).toBe('*')
-    expect(response.headers.get('access-control-allow-methods')).toBe('GET, POST, PUT, DELETE, PATCH, OPTIONS')
-    expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type, Authorization')
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
     expect(response.headers.get('access-control-allow-credentials')).toBeNull()
+    expect(response.headers.get('x-preflight-handled-by')).toBe('target')
   })
 
   test('closes the server when aborted', async ({setup}) => {
@@ -115,6 +140,21 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
     // eslint-disable-next-line no-empty-pattern
     setup: async ({}, use) => {
       const targetServer1 = http.createServer((req, res) => {
+        if (req.method === 'OPTIONS') {
+          const origin = req.headers.origin
+          res.writeHead(204, {
+            'X-Preflight-Handled-By': 'target',
+            ...(origin === authorizedOrigin
+              ? {
+                  'Access-Control-Allow-Origin': origin,
+                  'Access-Control-Allow-Credentials': 'true',
+                  'Access-Control-Allow-Methods': req.headers['access-control-request-method'] ?? '',
+                  'Access-Control-Allow-Headers': req.headers['access-control-request-headers'] ?? '',
+                }
+              : {}),
+          })
+          return res.end()
+        }
         res.writeHead(200, {'Content-Type': 'text/plain'})
         res.end('Response from target server 1')
       })
