@@ -14,6 +14,7 @@ import type {PreparedStoreExecuteRequest} from './request.js'
 import type {AdminStoreGraphQLContext} from './admin-context.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
 import type {StoreExecuteResult} from './types.js'
+import type {GraphQLResponse} from '@shopify/cli-kit/node/api/graphql'
 
 export {ABORTED_FETCH_MESSAGE_FRAGMENTS}
 
@@ -83,14 +84,22 @@ export async function runAdminStoreGraphQLOperation(input: {
     return await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
-        return graphqlRequest<StoreExecuteResult>({
+        let extensions: GraphQLResponse<StoreExecuteResult>['extensions']
+        const data = await graphqlRequest<StoreExecuteResult>({
           query: input.request.query,
           api: 'Admin',
           url: adminUrl(input.context.adminSession.storeFqdn, input.context.version, input.context.adminSession),
           token: input.context.adminSession.token,
           variables: input.request.parsedVariables,
-          responseOptions: {handleErrors: false},
+          responseOptions: {
+            handleErrors: false,
+            onResponse: (response) => {
+              extensions = response.extensions
+            },
+          },
         })
+        // Keep response metadata separate from query fields, including aliases named `extensions`.
+        return {data, ...(extensions === undefined ? {} : {extensions})}
       },
       renderOptions: {stdout: process.stderr},
     })
@@ -104,7 +113,10 @@ export async function runAdminStoreGraphQLOperation(input: {
     if (classified) throw classified
 
     if (isGraphQLClientErrorLike(error) && error.response.errors) {
-      const details = {errors: error.response.errors}
+      const details = {
+        errors: error.response.errors,
+        ...(error.response.extensions === undefined ? {} : {extensions: error.response.extensions}),
+      }
       const graphQLError = new AbortError('GraphQL operation failed.', JSON.stringify(details, null, 2))
       graphQLError.details = details
       throw graphQLError

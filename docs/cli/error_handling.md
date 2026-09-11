@@ -154,6 +154,8 @@ Unknown codes are omitted. Upstream API codes stay inside their native `details`
 Callers can explicitly attach selected, JSON-serializable data to `error.details`. The renderer includes this field as
 data, so consumers do not need to parse display strings. Do not attach a raw error, request, credentials, or other private
 properties. For example, `store execute` exposes GraphQL errors at `error.details.errors`, including their error codes.
+Response-level GraphQL metadata is available at `error.details.extensions`, including `cost.throttleStatus` when returned
+by the API.
 
 ```ts
 const error = new AbortError('GraphQL operation failed.', JSON.stringify({errors}, null, 2))
