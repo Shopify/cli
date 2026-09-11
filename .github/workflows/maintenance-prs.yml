@@ -3,8 +3,8 @@ name: maintenance-prs
 on:
   workflow_dispatch:
   schedule:
-    # Everyday at 00:00 UTC
-    - cron: '0 0 * * *'
+    # Monday–Friday at 00:00 UTC
+    - cron: '0 0 * * 1-5'
 
 permissions:
   contents: write
@@ -76,6 +76,8 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Scheduled runs can inherit the merge queue bot as their actor.
+          allowed_bots: github-merge-queue
           bot_name: 'github-actions[bot]'
           bot_id: '41898282'
           prompt: |
@@ -128,7 +130,7 @@ jobs:
 
             core.setOutput('payload', JSON.stringify({
               channel: 'C0ARV62K59C', // #devtools-gardener-backlog
-              text: `Maintenance PR (${process.env.MAINTENANCE_TASK}): <${pullRequest.html_url}|${pullRequestTitle}>`,
+              text: `Maintenance PR: <${pullRequest.html_url}|${pullRequestTitle}>`,
               unfurl_links: false,
               unfurl_media: false,
             }));
