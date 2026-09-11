@@ -1,4 +1,4 @@
-import {writeCreatePreviewStoreResult} from './result.js'
+import {presentCreatePreviewStoreResult} from './result.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
@@ -23,11 +23,16 @@ const result = {
     country: 'US',
     storefrontUrl: 'https://x12y45z.myshopify.com/?foo=bar',
   },
+  next_steps: [
+    'Use `shopify store open --store x12y45z.myshopify.com` to preview the storefront.',
+    'Use `shopify store execute --store x12y45z.myshopify.com` to add products, collections, pages, and more.',
+    'Use `shopify theme pull --store x12y45z.myshopify.com` and `shopify theme push --store x12y45z.myshopify.com` to edit your store design.',
+  ],
 }
 
 describe('preview store create result presenter', () => {
   test('writes JSON output with the next steps', () => {
-    writeCreatePreviewStoreResult(result, 'json')
+    presentCreatePreviewStoreResult(result, 'json')
 
     expect(outputResult).toHaveBeenCalledWith(
       JSON.stringify(
@@ -55,7 +60,7 @@ describe('preview store create result presenter', () => {
   })
 
   test('renders text output with store details and next steps', () => {
-    writeCreatePreviewStoreResult(result, 'text')
+    presentCreatePreviewStoreResult(result, 'text')
 
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
