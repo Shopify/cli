@@ -27,7 +27,7 @@ export default class WebhookTrigger extends AppLinkedCommand {
   - You can't use this method to validate your API webhook subscriptions.
   `
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...appFlags,

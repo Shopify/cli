@@ -6,7 +6,7 @@ export default class Upgrade extends Command {
 
   static descriptionWithMarkdown = 'Upgrades Shopify CLI using your package manager.'
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   async run(): Promise<void> {
     await runCLIUpgrade()

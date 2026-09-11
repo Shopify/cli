@@ -14,7 +14,7 @@ export default class Rename extends ThemeCommand {
   If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.
   `
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

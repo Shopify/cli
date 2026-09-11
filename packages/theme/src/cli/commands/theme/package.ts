@@ -16,7 +16,7 @@ export default class Package extends ThemeCommand {
 
   The ZIP file uses the name \`theme_name-theme_version.zip\`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

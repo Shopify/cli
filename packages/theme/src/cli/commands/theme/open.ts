@@ -18,7 +18,7 @@ export default class Open extends ThemeCommand {
 
   If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

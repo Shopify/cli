@@ -15,7 +15,7 @@ When more than one organization is available, the command prompts you to pick on
 
 Run \`<%= config.bin %> organization list\` to find organization IDs.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',
