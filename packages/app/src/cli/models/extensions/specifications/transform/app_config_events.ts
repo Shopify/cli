@@ -54,8 +54,11 @@ export function transformToEventsConfig(content: object) {
     return rest
   })
 
-  const events =
-    (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}
+  // Omit the section entirely when there is no events config, so an empty `events` object
+  // isn't injected into linked configurations or deploy diffs
+  if (apiVersion === undefined && cleanedSubscriptions === undefined) {
+    return {}
+  }
 
-  return {events}
+  return {events: {api_version: apiVersion, subscription: cleanedSubscriptions}}
 }
