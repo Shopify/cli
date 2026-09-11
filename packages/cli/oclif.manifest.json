@@ -9818,7 +9818,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
+      "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.\n\nUse `--json` for machine-readable output.\n\nOutput from `--json` conforms to the `ThemeInfoResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ntype ThemeInfoResult = ThemeInfoThemeResult | ThemeEnvironmentInfo\n\ninterface ThemeInfoTheme {\n  id: number\n  name: string\n  role: string\n  shop: string\n  preview_url: string\n  editor_url: string\n}\n\ninterface ThemeInfoThemeResult {\n  theme: ThemeInfoTheme\n}\n\ninterface ThemeEnvironmentInfo {\n  store: string\n  development_theme_id: number | null\n  cli_version: string\n  os: string\n  shell: string\n  node_version: string\n}\n```",
+      "descriptionWithMarkdown": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.\n\nUse `--json` for machine-readable output.",
       "enableJsonFlag": false,
       "flags": {
         "auth-alias": {

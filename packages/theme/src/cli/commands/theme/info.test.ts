@@ -134,6 +134,11 @@ describe('Info', () => {
     expect(Info.jsonOutputSchema).toBe(themeInfoJsonOutputSchema)
   })
 
+  test('includes the JSON output schema in the help description', () => {
+    expect(Info.description).toContain('ThemeInfoResult')
+    expect(Info.description).toContain('--json-schema')
+  })
+
   test('is removed from the JSON legacy exemption list', () => {
     const legacyCommandPaths = readFileSync(
       new URL('../../../../../eslint-plugin-cli/rules/json-output-legacy-command-paths.js', import.meta.url),
