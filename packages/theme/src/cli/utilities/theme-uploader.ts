@@ -201,7 +201,7 @@ function getRemoteFilesToBeDeleted(remoteChecksums: Checksum[], themeFileSystem:
   return filesToBeDeleted
 }
 
-// Contextual Json Files -> Json Files -> Liquid Files -> Config Files -> Static Asset Files
+// Contextual JSON files -> JSON files -> Liquid files -> Config files -> Other independent files
 function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
   const fileSets = partitionThemeFiles(files)
   return [
@@ -214,6 +214,8 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.layoutFiles,
     ...fileSets.otherLiquidFiles,
     ...fileSets.configDataFile,
+    ...fileSets.configStylesheetFiles,
+    ...fileSets.agentInstructionFiles,
     ...fileSets.configSchemaFile,
     ...fileSets.staticAssetFiles,
   ]
@@ -334,6 +336,8 @@ function selectUploadableFiles(themeFileSystem: ThemeFileSystem, remoteChecksums
  * - The other Liquid files (for example, snippets, and liquid templates)
  * - The other JSON files (for example, locales)
  * - The static assets
+ * - Config stylesheets
+ * - Agent instructions
  *
  */
 function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
@@ -344,7 +348,13 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
   return {
     // Most JSON files here are locales. Since we filter locales out in `replaceTemplates`,
     // and assets can be served locally, we can give priority to the unique Liquid files:
-    independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
+    independentFiles: [
+      fileSets.otherLiquidFiles,
+      fileSets.otherJsonFiles,
+      fileSets.staticAssetFiles,
+      fileSets.configStylesheetFiles,
+      fileSets.agentInstructionFiles,
+    ],
     // Follow order of dependencies:
     dependentFiles: [
       fileSets.configSchemaFile,

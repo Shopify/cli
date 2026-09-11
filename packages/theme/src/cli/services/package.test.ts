@@ -15,9 +15,11 @@ describe('packageTheme', () => {
       const inputDirectory = joinPath(tmpDir, 'theme')
       await mkdir(inputDirectory)
       const themeRelativePaths = [
+        'AGENTS.md',
         'assets/base.css',
         'layout/theme.liquid',
         'config/settings_schema.json',
+        'config/styles.css',
         'listings/canine-gourmand/sections/header-group.json',
         'listings/dawn/templates/index.json',
         'release-notes.md',
