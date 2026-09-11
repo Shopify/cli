@@ -1,5 +1,6 @@
 import {listStores} from './list.js'
 import * as bpSource from './list/bp-source.js'
+import {storeListJsonOutputSchema} from './list/types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -46,9 +47,9 @@ describe('listStores', () => {
     expect(renderAutocompletePrompt).not.toHaveBeenCalled()
     expect(result).toEqual({
       stores: [orgEntry],
-      source: 'organization',
       organization: {id: '1234', name: 'Acme'},
     })
+    expect(storeListJsonOutputSchema.validate(result)).toEqual(result)
   })
 
   test('passes the requested store type to the source and echoes it in the result', async () => {
@@ -142,7 +143,6 @@ describe('listStores', () => {
 
     expect(result).toEqual({
       stores: [],
-      source: 'organization',
       notice: "Couldn't resolve a Shopify account for the current CLI session.",
     })
   })
@@ -152,7 +152,7 @@ describe('listStores', () => {
 
     const result = await listStores()
 
-    expect(result).toEqual({stores: [], source: 'organization'})
+    expect(result).toEqual({stores: []})
   })
 
   test('propagates store listing failures', async () => {
