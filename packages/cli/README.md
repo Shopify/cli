@@ -1979,6 +1979,23 @@ DESCRIPTION
   List deployed versions of your app.
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
+
+  Output from `--json` conforms to the `AppVersionsListResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  type AppVersionsListResult = AppVersion[]
+
+  interface AppVersion {
+    message: string
+    versionTag?: string | null
+    status: string
+    createdAt: string
+    createdBy: string
+    versionId: string
+  }
+  ```
 ```
 
 ## `shopify app webhook trigger`

@@ -4374,7 +4374,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
+      "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.\n\nOutput from `--json` conforms to the `AppVersionsListResult` schema.\n\nUse `--json-schema` to print the schema directly:\n\n```ts\ntype AppVersionsListResult = AppVersion[]\n\ninterface AppVersion {\n  message: string\n  versionTag?: string | null\n  status: string\n  createdAt: string\n  createdBy: string\n  versionId: string\n}\n```",
       "descriptionWithMarkdown": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "flags": {
         "auth-alias": {

@@ -1,219 +1,126 @@
-import versionList from './versions-list.js'
-import {renderCurrentlyUsedConfigInfo} from './context.js'
-import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
-import {Organization, OrganizationSource} from '../models/organization.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {appVersionsListJsonOutputSchema, getAppVersions} from './versions-list.js'
+import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {afterEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {describe, expect, test} from 'vitest'
 
-vi.mock('../models/app/identifiers.js')
-vi.mock('./context.js')
+const remoteApp = testOrganizationApp({apiKey: 'api-key'})
 
-afterEach(() => {
-  mockAndCaptureOutput().clear()
-})
-
-const ORG1: Organization = {
-  id: 'org-id',
-  businessName: 'name of org 1',
-  source: OrganizationSource.BusinessPlatform,
+function appVersionsResponse(): AppVersionsQuerySchema {
+  return {
+    app: {
+      id: 'app-id',
+      title: 'app-title',
+      organizationId: 'org-id',
+      appVersions: {
+        nodes: [
+          {
+            message: 'message',
+            versionTag: 'versionTag',
+            versionId: 'gid://shopify/Version/1',
+            status: 'active',
+            createdAt: '2021-01-01',
+            createdBy: {displayName: 'createdBy'},
+          },
+          {
+            message: null,
+            versionTag: null,
+            versionId: 'gid://shopify/Version/2',
+            status: 'released',
+            createdAt: '2021-01-02',
+            createdBy: {displayName: null},
+          },
+          {
+            versionId: 'gid://shopify/Version/3',
+            status: 'released',
+            createdAt: '2021-01-03',
+          },
+        ],
+        pageInfo: {totalResults: 31},
+      },
+    },
+  }
 }
 
-const remoteApp = testOrganizationApp({organizationId: ORG1.id, apiKey: 'api-key', title: 'app-title', id: 'app-id'})
-
-function buildDeveloperPlatformClient(): DeveloperPlatformClient {
-  return testDeveloperPlatformClient({
-    orgFromId: (_orgId: string) => Promise.resolve(ORG1),
-  })
-}
-
-describe('versions-list', () => {
-  test('show a message when there are no app versions', async () => {
-    // Given
-    const app = testAppLinked({})
-    const outputMock = mockAndCaptureOutput()
-
-    // When
-    await versionList({
-      app,
-      remoteApp,
-      organization: ORG1,
-      developerPlatformClient: buildDeveloperPlatformClient(),
-      json: false,
+describe('getAppVersions', () => {
+  test('returns the existing JSON values and omission behavior as typed data', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appVersions: () => Promise.resolve(appVersionsResponse()),
     })
 
-    // Then
-    expect(outputMock.info()).toMatchInlineSnapshot(`"No app versions found for this app"`)
-  })
+    const result = await getAppVersions(developerPlatformClient, remoteApp)
 
-  test('show currently used config info', async () => {
-    // Given
-    const app = testAppLinked({})
-
-    // When
-    await versionList({
-      app,
-      remoteApp,
-      organization: ORG1,
-      developerPlatformClient: buildDeveloperPlatformClient(),
-      json: false,
-    })
-
-    // Then
-    expect(renderCurrentlyUsedConfigInfo).toHaveBeenCalledWith({
-      org: 'name of org 1',
-      appName: 'app-title',
-      configFile: 'shopify.app.toml',
-    })
-  })
-
-  test('throw error when there is no app', async () => {
-    // Given
-    const app = testAppLinked({})
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appVersions: (_appId) => Promise.resolve({app: null}),
-    })
-
-    // When
-    const output = versionList({
-      app,
-      remoteApp,
-      json: false,
-      organization: ORG1,
-      developerPlatformClient,
-    })
-
-    // Then
-    await expect(output).rejects.toThrow('Invalid API Key: api-key')
-  })
-
-  // asserting the exact format of the table is hard to do consistently across different environments
-  const terminalWidth = process.stdout.columns
-
-  test.skipIf(terminalWidth !== undefined)('render table when there are app versions', async () => {
-    // Given
-    const app = testAppLinked({})
-    const mockOutput = mockAndCaptureOutput()
-    const appVersionsResult: AppVersionsQuerySchema = {
-      app: {
-        id: 'appId',
-        title: 'title',
-        appVersions: {
-          nodes: [
-            {
-              message: 'message',
-              versionTag: 'versionTag',
-              status: 'active',
-              createdAt: '2021-01-01',
-              createdBy: {displayName: 'createdBy'},
-            },
-            {
-              message: 'message 2',
-              versionTag: 'versionTag 2',
-              status: 'released',
-              createdAt: '2021-01-01',
-              createdBy: {displayName: 'createdBy 2'},
-            },
-            {
-              message: 'long message with more than 15 characters',
-              versionTag: 'versionTag 3',
-              status: 'released',
-              createdAt: '2021-01-01',
-              createdBy: {displayName: 'createdBy 3'},
-            },
-          ],
-          pageInfo: {totalResults: 31},
+    expect(result).toEqual({
+      appVersions: [
+        {
+          message: 'message',
+          versionTag: 'versionTag',
+          status: 'active',
+          createdAt: '2021-01-01 00:00:00',
+          createdBy: 'createdBy',
+          versionId: 'gid://shopify/Version/1',
         },
-        organizationId: 'orgId',
-      },
-    }
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appVersions: (_appId) => Promise.resolve(appVersionsResult),
-    })
-
-    // When
-    await versionList({
-      app,
-      remoteApp,
-      json: false,
-      developerPlatformClient,
-      organization: ORG1,
-    })
-
-    // Then
-    expect(mockOutput.info())
-      .toMatchInlineSnapshot(`"VERSION       STATUS    MESSAGE        DATE CREATED         CREATED BY
-────────────  ────────  ─────────────  ───────────────────  ───────────
-versionTag    ★ active  message        2021-01-01 00:00:00  createdBy
-versionTag 2  released  message 2      2021-01-01 00:00:00  createdBy 2
-versionTag 3  released  long messa...  2021-01-01 00:00:00  createdBy 3
-
-View all 31 app versions in the Test Dashboard ( https://test.shopify.com/org-id/apps/app-id/versions )"`)
-  })
-
-  test('render json when there are app versions', async () => {
-    // Given
-    const app = testAppLinked({})
-
-    const mockOutput = mockAndCaptureOutput()
-    const appVersionsResult: AppVersionsQuerySchema = {
-      app: {
-        id: 'appId',
-        title: 'title',
-        appVersions: {
-          nodes: [
-            {
-              message: 'message',
-              versionTag: 'versionTag',
-              status: 'active',
-              createdAt: '2021-01-01',
-              createdBy: {displayName: 'createdBy'},
-            },
-            {
-              message: 'long message with more than 15 characters',
-              versionTag: 'versionTag 3',
-              status: 'released',
-              createdAt: '2021-01-01',
-              createdBy: {displayName: 'createdBy 3'},
-            },
-          ],
-          pageInfo: {totalResults: 31},
+        {
+          message: '',
+          versionTag: null,
+          status: 'released',
+          createdAt: '2021-01-02 00:00:00',
+          createdBy: '',
+          versionId: 'gid://shopify/Version/2',
         },
-        organizationId: 'orgId',
-      },
-    }
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appVersions: (_appId) => Promise.resolve(appVersionsResult),
+        {
+          message: '',
+          status: 'released',
+          createdAt: '2021-01-03 00:00:00',
+          createdBy: '',
+          versionId: 'gid://shopify/Version/3',
+        },
+      ],
+      totalResults: 31,
     })
+    if (!result) throw new Error('Expected app versions result')
 
-    // When
-    await versionList({
-      app,
-      remoteApp,
-      json: true,
-      developerPlatformClient,
-      organization: ORG1,
-    })
-
-    // Then
-    expect(mockOutput.info()).toMatchInlineSnapshot(`
+    expect(appVersionsListJsonOutputSchema.encode(result.appVersions)).toMatchInlineSnapshot(`
       "[
         {
           "message": "message",
           "versionTag": "versionTag",
           "status": "active",
           "createdAt": "2021-01-01 00:00:00",
-          "createdBy": "createdBy"
+          "createdBy": "createdBy",
+          "versionId": "gid://shopify/Version/1"
         },
         {
-          "message": "long message with more than 15 characters",
-          "versionTag": "versionTag 3",
+          "message": "",
+          "versionTag": null,
           "status": "released",
-          "createdAt": "2021-01-01 00:00:00",
-          "createdBy": "createdBy 3"
+          "createdAt": "2021-01-02 00:00:00",
+          "createdBy": "",
+          "versionId": "gid://shopify/Version/2"
+        },
+        {
+          "message": "",
+          "status": "released",
+          "createdAt": "2021-01-03 00:00:00",
+          "createdBy": "",
+          "versionId": "gid://shopify/Version/3"
         }
       ]"
     `)
+  })
+
+  test('returns undefined when the API response does not contain an app', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appVersions: () => Promise.resolve({app: null}),
+    })
+
+    await expect(getAppVersions(developerPlatformClient, remoteApp)).resolves.toBeUndefined()
+  })
+
+  test('rejects invalid result values', () => {
+    expect(() =>
+      appVersionsListJsonOutputSchema.validate([
+        {message: 'message', versionTag: 'versionTag', status: 'active', createdAt: '2021-01-01', createdBy: 1},
+      ]),
+    ).toThrow()
   })
 })
