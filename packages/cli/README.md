@@ -4935,6 +4935,38 @@ FLAGS
 DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
   specific theme.
+
+  Use `--json` for machine-readable output.
+
+  Output from `--json` conforms to the `ThemeInfoResult` schema.
+
+  Use `--json-schema` to print the schema directly:
+
+  ```ts
+  type ThemeInfoResult = ThemeInfoThemeResult | ThemeEnvironmentInfo
+
+  interface ThemeInfoTheme {
+    id: number
+    name: string
+    role: string
+    shop: string
+    preview_url: string
+    editor_url: string
+  }
+
+  interface ThemeInfoThemeResult {
+    theme: ThemeInfoTheme
+  }
+
+  interface ThemeEnvironmentInfo {
+    store: string
+    development_theme_id: number | null
+    cli_version: string
+    os: string
+    shell: string
+    node_version: string
+  }
+  ```
 ```
 
 ## `shopify theme init [name] [flags]`
