@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 4.9.0
+
+### Minor Changes
+
+- 4986275: Add `--language` to `doc fetch` to filter shopify.dev Markdown code examples to a single language.
+
+### Patch Changes
+
+- 667c628: Verify the installed version after `shopify upgrade` and fail instead of reporting a false success when the upgrade didn't complete
+
 ## 4.8.0
 
 ### Minor Changes
