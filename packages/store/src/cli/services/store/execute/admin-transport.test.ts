@@ -57,7 +57,7 @@ describe('runAdminStoreGraphQLOperation', () => {
   })
 
   test('executes the GraphQL request successfully', async () => {
-    vi.mocked(graphqlRequest).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
+    vi.mocked(graphqlRequest).mockResolvedValue({shop: {name: 'Test shop'}})
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
 
     const result = await runAdminStoreGraphQLOperation({context, request})
@@ -70,8 +70,31 @@ describe('runAdminStoreGraphQLOperation', () => {
       url: `https://${store}/admin/api/2025-10/graphql.json`,
       token: 'token',
       variables: undefined,
-      responseOptions: {handleErrors: false},
+      responseOptions: {handleErrors: false, onResponse: expect.any(Function)},
     })
+  })
+
+  test.each([
+    {},
+    {
+      cost: {
+        requestedQueryCost: 10,
+        actualQueryCost: 2,
+        throttleStatus: {maximumAvailable: 2000, currentlyAvailable: 1998, restoreRate: 100},
+      },
+      custom: {value: 'preserved'},
+    },
+  ])('preserves response extensions %j separately from query data', async (extensions) => {
+    const data = {extensions: {name: 'Test shop'}}
+    vi.mocked(graphqlRequest).mockImplementation(async ({responseOptions}) => {
+      responseOptions?.onResponse?.({data, extensions, status: 200, headers: new Headers()})
+      return data
+    })
+    const request = await prepareStoreExecuteRequest({query: 'query { extensions: shop { name } }'})
+
+    const result = await runAdminStoreGraphQLOperation({context, request})
+
+    expect(result).toStrictEqual({data, extensions})
   })
 
   test('clears stored auth and throws a re-auth error on 401 using the real session scopes', async () => {
@@ -137,17 +160,28 @@ describe('runAdminStoreGraphQLOperation', () => {
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, 'preview:placeholder-uuid')
   })
 
-  test('throws a GraphQL operation error when errors are returned', async () => {
+  test.each([
+    undefined,
+    {},
+    {
+      cost: {
+        requestedQueryCost: 10,
+        actualQueryCost: 0,
+        throttleStatus: {maximumAvailable: 2000, currentlyAvailable: 5, restoreRate: 100},
+      },
+    },
+  ])('preserves GraphQL errors and response extensions %j in JSON failures', async (extensions) => {
     const errors = [{message: 'Field does not exist', extensions: {code: 'UNDEFINED_FIELD'}, path: ['nope']}]
-    vi.mocked(graphqlRequest).mockRejectedValue({response: {errors}})
+    const details = {errors, ...(extensions === undefined ? {} : {extensions})}
+    vi.mocked(graphqlRequest).mockRejectedValue({response: {...details, status: 200, headers: {}}})
     const request = await prepareStoreExecuteRequest({query: 'query { nope }'})
 
     const error: unknown = await runAdminStoreGraphQLOperation({context, request}).catch((error: unknown) => error)
     expect(error).toBeInstanceOf(AbortError)
     expect(error).toMatchObject({
       message: 'GraphQL operation failed.',
-      tryMessage: JSON.stringify({errors}, null, 2),
-      details: {errors},
+      tryMessage: JSON.stringify(details, null, 2),
+      details,
     })
 
     const output = mockAndCaptureOutput()
@@ -160,8 +194,8 @@ describe('runAdminStoreGraphQLOperation', () => {
         error: {
           type: 'abort',
           message: 'GraphQL operation failed.',
-          tryMessage: JSON.stringify({errors}, null, 2),
-          details: {errors},
+          tryMessage: JSON.stringify(details, null, 2),
+          details,
         },
       })
     } finally {
