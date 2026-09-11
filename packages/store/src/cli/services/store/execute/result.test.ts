@@ -45,13 +45,14 @@ describe('writeOrOutputStoreExecuteResult', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputPath = joinPath(tmpDir, 'results.json')
+      const result = {data: {shop: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
       // When
-      await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, outputPath)
+      await writeOrOutputStoreExecuteResult(result, outputPath)
 
       // Then
       const content = await readFile(outputPath)
-      expect(content).toContain('Test shop')
+      expect(JSON.parse(content)).toStrictEqual(result)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Operation succeeded.',
         body: `Results written to ${outputPath}`,
@@ -70,11 +71,12 @@ describe('writeOrOutputStoreExecuteResult', () => {
 
   test('suppresses success rendering in json mode', async () => {
     const output = mockAndCaptureOutput()
+    const result = {data: {shop: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
-    await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, undefined, 'json')
+    await writeOrOutputStoreExecuteResult(result, undefined, 'json')
 
     expect(renderSuccess).not.toHaveBeenCalled()
-    expect(output.output()).toContain('Test shop')
+    expect(JSON.parse(output.output())).toStrictEqual(result)
   })
 
   test('writes json results to stdout without writing to stderr', async () => {
