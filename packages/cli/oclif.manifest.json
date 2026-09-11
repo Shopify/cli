@@ -7301,6 +7301,49 @@
       "pluginType": "core",
       "strict": true
     },
+    "kitchen-sink:json-output": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Exercise command JSON output infrastructure.\n\nOutput from `--json` conforms to the `KitchenSinkJsonOutputResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"items\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/SampleItem\"\n      }\n    }\n  },\n  \"required\": [\n    \"items\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"KitchenSinkJsonOutputResult\",\n  \"definitions\": {\n    \"SampleItem\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"number\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Exercise command JSON output infrastructure.",
+      "enableJsonFlag": false,
+      "flags": {
+        "fail": {
+          "allowNo": false,
+          "description": "Fail with a sample error.",
+          "env": "SHOPIFY_FLAG_FAIL",
+          "name": "fail",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "kitchen-sink:json-output",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "kitchen-sink:prompts": {
       "aliases": [
       ],
