@@ -28,5 +28,3 @@ export const FLOW_ACTION_URL_FIELDS = [
   'config_page_url',
   'config_page_preview_url',
 ] as const
-
-export type FlowActionUrlField = (typeof FLOW_ACTION_URL_FIELDS)[number]

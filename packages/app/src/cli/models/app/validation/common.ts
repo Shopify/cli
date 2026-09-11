@@ -10,6 +10,16 @@ export function validateRelativeUrl(zodType: zod.ZodString, {message = 'URL must
   return zodType.refine((value) => value.startsWith('/') || isValidUrl(value, true), {message})
 }
 
+/**
+ * Characters that are never legal in a URL, and that would let a malformed configuration value smuggle extra content
+ * into a request when the URL is later interpolated.
+ */
+export const URL_CONTROL_CHARACTERS = /[\r\n\t]/
+
+export function isHttpsUrl(url: string): boolean {
+  return isValidUrl(url, true)
+}
+
 function isValidUrl(input: string, httpsOnly: boolean) {
   try {
     const url = new URL(input)
