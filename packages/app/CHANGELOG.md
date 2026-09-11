@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 4.9.0
+
+### Patch Changes
+
+- f85d3e5: Add App Doctor agent checks for lifecycle replay, dependency reachability, and active upload previews.
+- c8f7f06: Add a narrow deterministic App Doctor check for wildcard `frame-ancestors` policies in embedded admin apps.
+- 93cc4d8: Recover gracefully when pnpm blocks dependency build scripts during `app generate extension`: clean up the partially generated extension and explain how to approve the builds
+- c5e5194: Fix App Doctor deterministic rule coverage for request-derived admin contexts, app-proxy body flows, and configured callback URL metadata.
+- 9920840: Tighten App Doctor agentic prompts around trust-boundary evidence, tenant-selector provenance, authorization drift, and dependency reachability.
+- Updated dependencies [267c622]
+- Updated dependencies [46dcc14]
+- Updated dependencies [667c628]
+- Updated dependencies [2a9b3a4]
+  - @shopify/cli-kit@4.9.0
+  - @shopify/organizations@4.9.0
+  - @shopify/plugin-cloudflare@4.9.0
+  - @shopify/theme@4.9.0
+
 ## 4.8.0
 
 ### Minor Changes
