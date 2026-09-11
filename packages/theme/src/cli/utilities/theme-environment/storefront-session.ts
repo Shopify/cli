@@ -10,6 +10,7 @@ import {sleep} from '@shopify/cli-kit/node/system'
 import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
 
 export class ShopifyEssentialError extends AbortError {}
+export class PreviewSessionError extends AbortError {}
 
 export async function isStorefrontPasswordProtected(session: AdminSession): Promise<boolean> {
   return passwordProtected(session)
@@ -65,33 +66,40 @@ export async function getStorefrontSessionCookies(
   headers: Record<string, string> = {},
 ): Promise<Record<string, string>> {
   const cookieRecord: Record<string, string> = {}
-  const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
-  const storeOrigin = prependHttps(storeFqdn)
-
-  cookieRecord._shopify_essential = shopifyEssential
 
   recordEvent(`theme-service:storefront-session:is-password-protected:${Boolean(password)}`)
 
   if (!password) {
-    /**
-     * When the store is not password protected, storefront_digest is not
-     * required.
-     */
+    // When the store is not password protected, storefront_digest is not required.
+    cookieRecord._shopify_essential = await sessionEssentialCookie(storeUrl, themeId, headers)
     return cookieRecord
   }
 
-  const additionalCookies = await enrichSessionWithStorefrontPassword(
-    shopifyEssential,
+  const storeOrigin = prependHttps(storeFqdn)
+
+  const passwordCookies = await enrichSessionWithStorefrontPassword(storeUrl, storeOrigin, password, headers)
+
+  cookieRecord._shopify_essential = await sessionEssentialCookie(
     storeUrl,
-    storeOrigin,
-    password,
+    themeId,
     headers,
+    passwordCookies._shopify_essential,
   )
 
-  return {...cookieRecord, ...additionalCookies}
+  if (passwordCookies.storefront_digest) {
+    cookieRecord.storefront_digest = passwordCookies.storefront_digest
+  }
+
+  return cookieRecord
 }
 
-async function sessionEssentialCookie(storeUrl: string, themeId: string, headers: Record<string, string>, retries = 1) {
+async function sessionEssentialCookie(
+  storeUrl: string,
+  themeId: string,
+  headers: Record<string, string>,
+  incomingEssential?: string,
+  retries = 1,
+) {
   const params = new URLSearchParams({
     preview_theme_id: themeId,
     _fd: '0',
@@ -102,9 +110,13 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
 
   recordEvent(`theme-service:storefront-session:get-session-essential-cookie`)
 
-  const requestHeaders = {
+  const requestHeaders: Record<string, string> = {
     ...headers,
     ...defaultHeaders(),
+  }
+
+  if (incomingEssential) {
+    requestHeaders.Cookie = serializeCookies({_shopify_essential: incomingEssential})
   }
 
   const response = await shopifyFetch(url, {
@@ -115,6 +127,16 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
+
+  outputDebug(
+    `Storefront preview session: status=${response.status}, request_id=${
+      response.headers.get('x-request-id') ?? 'unknown'
+    }, attempt=${retries}, forwarded_essential=${Boolean(
+      incomingEssential,
+    )}, returned_essential=${Boolean(shopifyEssential)}, essential_rotated=${Boolean(
+      incomingEssential && shopifyEssential && incomingEssential !== shopifyEssential,
+    )}`,
+  )
 
   /**
    * SFR should always define a _shopify_essential, so an error at this point
@@ -128,25 +150,40 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
        -Status: ${response.status}\n`,
     )
 
+    const isRedirect = response.status >= 300 && response.status < 400
+
+    if (incomingEssential && isRedirect) {
+      throw recordError(
+        new PreviewSessionError(
+          'Your development session could not be created because the theme preview could not be attached to the storefront session.',
+          'Verify the theme exists by running shopify theme list, then try again. If the problem persists, re-run with --verbose and share the request ID with Shopify Support.',
+        ),
+      )
+    }
+
     if (retries > 3) {
       throw recordError(
-        new ShopifyEssentialError(
-          'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
-        ),
+        incomingEssential
+          ? new PreviewSessionError(
+              'Your development session could not be created because the theme preview could not be attached to the storefront session.',
+              'Verify the theme exists by running shopify theme list, then try again. If the problem persists, re-run with --verbose and share the request ID with Shopify Support.',
+            )
+          : new ShopifyEssentialError(
+              'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+            ),
       )
     }
 
     outputDebug('Retrying to obtain the _shopify_essential cookie...')
     await sleep(retries)
 
-    return sessionEssentialCookie(storeUrl, themeId, headers, retries + 1)
+    return sessionEssentialCookie(storeUrl, themeId, headers, incomingEssential, retries + 1)
   }
 
   return shopifyEssential
 }
 
 async function enrichSessionWithStorefrontPassword(
-  shopifyEssential: string,
   storeUrl: string,
   storeOrigin: string,
   password: string,
@@ -157,7 +194,6 @@ async function enrichSessionWithStorefrontPassword(
   const requestHeaders = {
     ...headers,
     ...defaultHeaders(),
-    Cookie: serializeCookies({_shopify_essential: shopifyEssential}),
   }
 
   const response = await shopifyFetch(`${storeUrl}/password`, {
@@ -178,6 +214,12 @@ async function enrichSessionWithStorefrontPassword(
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
   const newShopifyEssential = getCookie(setCookies, '_shopify_essential')
+
+  outputDebug(
+    `Storefront password session: status=${response.status}, request_id=${
+      response.headers.get('x-request-id') ?? 'unknown'
+    }, returned_essential=${Boolean(newShopifyEssential)}, returned_digest=${Boolean(storefrontDigest)}`,
+  )
 
   const result: Record<string, string> = {}
 
