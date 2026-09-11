@@ -15,6 +15,8 @@ import {readStdinString, terminalSupportsPrompting} from '@shopify/cli-kit/node/
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {describe, expect, test, vi} from 'vitest'
 import {mkdir, readFile, readdir, writeFile} from 'node:fs/promises'
+// eslint-disable-next-line n/prefer-global/console
+import {Console} from 'node:console'
 import type {
   DeveloperPlatformClient,
   SourceScanCreateSchema,
@@ -97,6 +99,8 @@ async function runCommand(argv: string[]) {
     stderr += chunk.toString()
     return true
   })
+  // Vitest intercepts console.warn; use Node's console to exercise the captured streams.
+  const warn = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
   // Observe the real Oclif error handler's requested exit without terminating the test worker.
   const exit = vi.spyOn(process, 'exit').mockImplementation((code) => {
     process.exitCode = code ?? 0
@@ -109,6 +113,7 @@ async function runCommand(argv: string[]) {
     await DoctorSubmit.run(argv, config)
     return {stdout, stderr, exitCode: process.exitCode, exits: exit.mock.calls.map(([code]) => code)}
   } finally {
+    warn.mockRestore()
     out.mockRestore()
     err.mockRestore()
     exit.mockRestore()
