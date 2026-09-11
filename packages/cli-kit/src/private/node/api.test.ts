@@ -696,6 +696,161 @@ describe('retryAwareRequest', () => {
     expect(recordRetry).toHaveBeenCalledTimes(1)
     expect(recordRetry).toHaveBeenCalledWith('https://themes.example.com/auth', 'http-retry-1:can-retry:')
   })
+
+  test('retries a gateway error and resolves once the upstream recovers', async () => {
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError({status: 502, headers: new Headers()}, {query: ''})
+      })
+      .mockImplementation(() => {
+        return Promise.resolve({status: 200, data: {hello: 'world!'}, headers: new Headers()})
+      })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/api',
+        requestIsIdempotent: true,
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      {defaultDelayMs: 10, scheduleDelay: vi.fn((fn) => fn())},
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {hello: 'world!'},
+    })
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+  })
+
+  test('gives up on a persistent gateway error well before the general retry limit', async () => {
+    const mockRequestFn = vi.fn().mockImplementation(() => {
+      throw new ClientError({status: 503, headers: new Headers()}, {query: ''})
+    })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/api',
+        requestIsIdempotent: true,
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      {defaultDelayMs: 10, scheduleDelay: vi.fn((fn) => fn())},
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).rejects.toThrowError(ClientError)
+    // The initial attempt plus the 3 gateway retries, rather than the default limit of 10.
+    expect(mockRequestFn).toHaveBeenCalledTimes(4)
+  })
+
+  test('uses the retry-after header for a gateway error', async () => {
+    const gatewayError = new ClientError({status: 503, headers: new Headers({'retry-after': '250'})}, {query: ''})
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw gatewayError
+      })
+      .mockResolvedValue({status: 200, data: {hello: 'world!'}, headers: new Headers()})
+    const scheduleDelay = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/api',
+        requestIsIdempotent: true,
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      {scheduleDelay},
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {hello: 'world!'},
+    })
+    expect(scheduleDelay).toHaveBeenCalledWith(expect.anything(), 250)
+  })
+
+  test('does not retry a gateway error unless the request is known to be idempotent', async () => {
+    const mockRequestFn = vi.fn().mockImplementation(() => {
+      throw new ClientError({status: 504, headers: new Headers()}, {query: ''})
+    })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/api',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      {defaultDelayMs: 10, scheduleDelay: vi.fn((fn) => fn())},
+    )
+
+    await expect(result).rejects.toThrowError(ClientError)
+    expect(mockRequestFn).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not network-retry a mutation because its payload text contains a transient keyword', async () => {
+    // A ClientError's message embeds JSON.stringify({response, request}), so the mutation's own
+    // variables land in the string isTransientNetworkError searches. This asset value contains
+    // "setTimeout", which used to match 'timeout' and retry a non-idempotent request.
+    const mockRequestFn = vi.fn().mockImplementation(() => {
+      throw new ClientError(
+        {status: 502, headers: new Headers()},
+        {
+          query: 'mutation ThemeFilesUpsert($files: [FileInput!]!) { themeFilesUpsert(files: $files) { id } }',
+          variables: {files: [{filename: 'assets/app.js', body: {value: 'setTimeout(() => init(), 300)'}}]},
+        },
+      )
+    })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/api',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      {defaultDelayMs: 10, scheduleDelay: vi.fn((fn) => fn())},
+    )
+
+    await expect(result).rejects.toThrowError(ClientError)
+    expect(mockRequestFn).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not retry an HTTP 500', async () => {
+    const mockRequestFn = vi.fn().mockImplementation(() => {
+      throw new ClientError({status: 500, headers: new Headers()}, {query: ''})
+    })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/api',
+        requestIsIdempotent: true,
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      {defaultDelayMs: 10, scheduleDelay: vi.fn((fn) => fn())},
+    )
+
+    await expect(result).rejects.toThrowError(ClientError)
+    expect(mockRequestFn).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('isTransientNetworkError', () => {
