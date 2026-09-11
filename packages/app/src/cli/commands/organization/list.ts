@@ -1,4 +1,7 @@
+import {writeOrganizationListResult} from '../../services/organization/list/result.js'
 import {organizationList} from '../../services/organization/list.js'
+import {organizationListJsonOutputSchema} from '../../services/organization/list/types.js'
+import {NoOrgError} from '../../services/dev/fetch.js'
 import {authAliasFlag, globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
@@ -16,8 +19,22 @@ export default class OrganizationList extends BaseCommand {
     ...jsonFlag,
   }
 
+  static get jsonOutputSchema() {
+    return organizationListJsonOutputSchema
+  }
+
   async run(): Promise<void> {
     const {flags} = await this.parse(OrganizationList)
-    await organizationList({json: flags.json})
+
+    try {
+      const result = await organizationList()
+      writeOrganizationListResult(result, flags.json ? 'json' : 'text')
+    } catch (error) {
+      if (flags.json && error instanceof NoOrgError) {
+        writeOrganizationListResult({organizations: []}, 'json')
+        return
+      }
+      throw error
+    }
   }
 }
