@@ -154,6 +154,35 @@ describe('validateSession', () => {
     expect(got).toBe('needs_full_auth')
   })
 
+  test('returns needs_refresh when a requested application token is missing', async () => {
+    const session = {
+      identity: validIdentity,
+      applications: validApplications,
+    }
+
+    const got = await validateSession(requestedScopes, {appManagementApi: {scopes: []}}, session)
+
+    expect(got).toBe('needs_refresh')
+  })
+
+  test('treats a token expiring just inside the margin as expired', async () => {
+    const session = {
+      identity: {...validIdentity, expiresAt: new Date(currentDate.getTime() + 4 * 60 * 1000 - 1)},
+      applications: validApplications,
+    }
+
+    await expect(validateSession(requestedScopes, {}, session)).resolves.toBe('needs_refresh')
+  })
+
+  test('treats a token expiring just outside the margin as valid', async () => {
+    const session = {
+      identity: {...validIdentity, expiresAt: new Date(currentDate.getTime() + 4 * 60 * 1000 + 1)},
+      applications: validApplications,
+    }
+
+    await expect(validateSession(requestedScopes, {}, session)).resolves.toBe('ok')
+  })
+
   test('returns needs_refresh if identity is expired', async () => {
     // Given
     const session = {

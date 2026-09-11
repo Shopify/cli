@@ -65,6 +65,40 @@ afterAll(() => {
 describe('exchange identity token for application tokens', () => {
   const scopes = {admin: [], partners: [], storefront: [], businessPlatform: [], appManagement: []}
 
+  test('rejects when any application token exchange fails', async () => {
+    vi.mocked(shopifyFetch).mockRejectedValue(new Error('exchange failed'))
+
+    await expect(exchangeAccessForApplicationTokens(identityToken, scopes, 'storeFQDN')).rejects.toThrow(
+      'exchange failed',
+    )
+  })
+
+  test('sends admin destination and store parameters and uses the store-qualified key', async () => {
+    const requests: {body?: string}[] = []
+    vi.mocked(shopifyFetch).mockImplementation(async (_url, options) => {
+      requests.push(options as {body?: string})
+      return new Response(JSON.stringify(data))
+    })
+
+    const result = await requestAppToken('admin', 'identity-access', ['scope-a', 'scope-b'], 'shop.myshopify.com')
+
+    expect(result).toHaveProperty('shop.myshopify.com-admin')
+    const params = new URLSearchParams(requests[0]!.body)
+    expect(params.get('audience')).toBe('admin')
+    expect(params.get('scope')).toBe('scope-a scope-b')
+    expect(params.get('subject_token')).toBe('identity-access')
+    expect(params.get('destination')).toBe('https://shop.myshopify.com/admin')
+    expect(params.get('store')).toBe('shop.myshopify.com')
+  })
+
+  test('uses the application ID as the key for non-admin exchanges', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(data)))
+
+    const result = await requestAppToken('partners', 'identity-access', ['scope'])
+
+    expect(Object.keys(result)).toEqual(['partners'])
+  })
+
   test('returns tokens for all APIs if a store is passed', async () => {
     // Given
     vi.mocked(shopifyFetch).mockImplementation(async () => Promise.resolve(new Response(JSON.stringify(data))))
@@ -145,6 +179,23 @@ describe('exchange identity token for application tokens', () => {
 })
 
 describe('refresh access tokens', () => {
+  test('sends the current access and refresh tokens and preserves user ID and alias', async () => {
+    let requestBody = ''
+    vi.mocked(shopifyFetch).mockImplementation(async (_url, options) => {
+      requestBody = String((options as {body?: string}).body)
+      return new Response(JSON.stringify({...data, access_token: 'new-access', refresh_token: 'new-refresh'}))
+    })
+
+    const result = await refreshAccessToken({...identityToken, alias: 'named account'})
+    const params = new URLSearchParams(requestBody)
+
+    expect(params.get('grant_type')).toBe('refresh_token')
+    expect(params.get('access_token')).toBe(identityToken.accessToken)
+    expect(params.get('refresh_token')).toBe(identityToken.refreshToken)
+    expect(params.get('client_id')).toBe('clientId')
+    expect(result.userId).toBe(identityToken.userId)
+    expect(result.alias).toBe('named account')
+  })
   test('throws an InvalidGrantError when Identity returns invalid_grant', async () => {
     // Given
     const error = {error: 'invalid_grant'}
@@ -449,6 +500,12 @@ describe('exchange device code for access token', () => {
     expect(result).toEqual(err('authorization_pending'))
   })
 
+  test.each(['access_denied', 'expired_token', 'slow_down'])('passes %s through to the poll loop', async (error) => {
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify({error}), {status: 400}))
+
+    await expect(exchangeDeviceCodeForAccessToken('device_code')).resolves.toEqual(err(error as any))
+  })
+
   test('maps an unrecognized error code to unknown_failure', async () => {
     // Given: Identity can return OAuth codes outside the device set, e.g. invalid_client.
     vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify({error: 'invalid_client'}), {status: 400}))
@@ -458,6 +515,28 @@ describe('exchange device code for access token', () => {
 
     // Then
     expect(result).toEqual(err('unknown_failure'))
+  })
+
+  test('computes expiry and scopes from a successful response and reads user ID from the JWT', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(data)))
+
+    const result = await exchangeDeviceCodeForAccessToken('device_code')
+
+    expect(result).toEqual(ok({...identityToken, alias: undefined}))
+    if (result.isErr()) throw new Error('expected a successful device exchange')
+    expect(result.value.expiresAt).toEqual(new Date(currentDate.getTime() + 3600 * 1000))
+    expect(result.value.scopes).toEqual(['scope', 'scope2'])
+    expect(result.value.userId).toBe('1234-5678')
+  })
+
+  test('fails with BugError when a token has neither a JWT subject nor existing user ID', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      new Response(JSON.stringify({...data, id_token: undefined}), {status: 200}),
+    )
+
+    await expect(exchangeDeviceCodeForAccessToken('device_code')).rejects.toThrow(
+      'Error setting userId for session. No id_token or pre-existing user ID provided.',
+    )
   })
 
   test('maps a response with no error field to unknown_failure', async () => {
