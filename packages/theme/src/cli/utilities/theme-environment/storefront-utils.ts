@@ -3,14 +3,14 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {type Response as HttpResponse} from '@shopify/cli-kit/node/http'
 
 /**
- * The "null body statuses" of the Fetch spec, which the `Response` constructor refuses to pair with
- * a body.
+ * The "null body statuses" of the Fetch spec that a `Response` can represent. `101` and `103` are
+ * null-body too, but the constructor rejects any status outside 200-599, so they cannot be built here.
  *
  * The built-in fetch reports a `null` body for these, but the client in
  * `@shopify/cli-kit/node/http` always reports a stream, so the body has to be dropped explicitly.
  * `304` is the one that matters in practice: the browser revalidates every cached asset.
  */
-const NULL_BODY_STATUSES = new Set([101, 103, 204, 205, 304])
+const NULL_BODY_STATUSES = new Set([204, 205, 304])
 
 /**
  * Storefront requests are proxied straight through to the browser, so they keep the behaviour the

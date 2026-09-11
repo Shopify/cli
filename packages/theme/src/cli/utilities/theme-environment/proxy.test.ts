@@ -586,6 +586,36 @@ describe('dev proxy', () => {
       }
     })
 
+    test('removes content-encoding when the client decompressed the body', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(new HttpResponse('body', {headers: {'content-encoding': 'gzip'}}))
+      vi.mocked(fetch).mockImplementation(fetchMock)
+      const event = createH3Event('GET', '/cdn/shop/files/style.css')
+
+      try {
+        const response = await proxyStorefrontRequest(event, ctx)
+
+        expect(response.headers.get('content-encoding')).toBeNull()
+      } finally {
+        vi.mocked(fetch).mockReset()
+      }
+    })
+
+    test('keeps content-encoding when the client left the body compressed', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(new HttpResponse('still-compressed', {headers: {'content-encoding': 'br, gzip'}}))
+      vi.mocked(fetch).mockImplementation(fetchMock)
+      const event = createH3Event('GET', '/cdn/shop/files/style.css')
+
+      try {
+        const response = await proxyStorefrontRequest(event, ctx)
+
+        expect(response.headers.get('content-encoding')).toBe('br, gzip')
+      } finally {
+        vi.mocked(fetch).mockReset()
+      }
+    })
+
     test('forwards the request body as a stream, without retries or a timeout', async () => {
       const fetchMock = vi.fn().mockResolvedValue(new HttpResponse('OK'))
       vi.mocked(fetch).mockImplementation(fetchMock)

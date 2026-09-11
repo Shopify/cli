@@ -259,13 +259,24 @@ const HOP_BY_HOP_HEADERS = [
   'host',
 ]
 
+/**
+ * The codings the client in `@shopify/cli-kit/node/http` decompresses, and only when
+ * `content-encoding` is exactly one of them. A chained value such as `br, gzip` is passed through
+ * still compressed.
+ */
+const DECODED_CONTENT_ENCODINGS = new Set(['gzip', 'x-gzip', 'deflate', 'x-deflate', 'br'])
+
 function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response) {
   const response = new Response(rawResponse.body, rawResponse)
 
-  // Node's `fetch` always decompresses the body, so we must remove these headers
-  // to prevent the browser from decompressing it again:
+  // The body no longer matches the original length, and the client decompresses it whenever it
+  // understands the coding, in which case the browser must not decompress it again. When it does
+  // not, the body arrives still compressed and `content-encoding` has to survive.
   response.headers.delete('content-length')
-  response.headers.delete('content-encoding')
+  const contentEncoding = response.headers.get('content-encoding')
+  if (contentEncoding && DECODED_CONTENT_ENCODINGS.has(contentEncoding.trim().toLowerCase())) {
+    response.headers.delete('content-encoding')
+  }
   for (const header of HOP_BY_HOP_HEADERS) {
     response.headers.delete(header)
   }
