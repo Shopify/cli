@@ -13,8 +13,15 @@ import {recordTiming} from '@shopify/cli-kit/node/analytics'
 type InfoFlags = OutputFlags<typeof Info.flags>
 
 export default class Info extends ThemeCommand {
-  static description =
-    'Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.'
+  static get jsonOutputSchema() {
+    return themeInfoJsonOutputSchema
+  }
+
+  static descriptionWithMarkdown = `Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
+
+Use \`--json\` for machine-readable output.`
+
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
@@ -33,10 +40,6 @@ export default class Info extends ThemeCommand {
   }
 
   static multiEnvironmentsFlags = ['store', 'password']
-
-  static get jsonOutputSchema() {
-    return themeInfoJsonOutputSchema
-  }
 
   async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
     recordTiming('theme-command:info')
