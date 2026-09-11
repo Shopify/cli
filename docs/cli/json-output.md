@@ -1,7 +1,7 @@
 # JSON output contracts
 
 A finite command finishes its work, returns one final result, and exits, such as `shopify store list`. Commands that
-keep running and streaming updates, such as `shopify app dev`, are outside this contract.
+keep running and streaming updates, such as `shopify app dev`, are currently outside this contract.
 
 Finite commands expose their successful result as typed data independently from terminal presentation. The command's
 domain package owns this contract; CLI Kit only provides the shared schema and help infrastructure.
