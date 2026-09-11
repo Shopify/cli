@@ -1,5 +1,6 @@
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
-import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
+import {presentStoreAuthResult} from '../../services/store/auth/result.js'
+import {storeAuthJsonOutputSchema} from '../../services/store/auth/types.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -30,17 +31,17 @@ Re-run this command if the stored token is missing, expires, or no longer has th
     }),
   }
 
+  static get jsonOutputSchema() {
+    return storeAuthJsonOutputSchema
+  }
+
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreAuth)
 
-    await authenticateStoreWithApp(
-      {
-        store: flags.store,
-        scopes: flags.scopes,
-      },
-      {
-        presenter: createStoreAuthPresenter(flags.json ? 'json' : 'text'),
-      },
-    )
+    const result = await authenticateStoreWithApp({
+      store: flags.store,
+      scopes: flags.scopes,
+    })
+    presentStoreAuthResult(result, flags.json ? 'json' : 'text')
   }
 }
