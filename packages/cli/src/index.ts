@@ -15,6 +15,7 @@ import DocFetch from './cli/commands/doc/fetch.js'
 import DocSearch from './cli/commands/doc/search.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
+import {renderUncaughtError} from './uncaught-error-handler.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
@@ -30,10 +31,6 @@ import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI} from '@shopify/cli-kit/node/cli'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
-import {FatalError} from '@shopify/cli-kit/node/error'
-
-import fs from 'fs'
 
 export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
 export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunnel'
@@ -57,12 +54,9 @@ createGlobalProxyAgent({
 // not be called. The tunnel plugin is an example of that. Here we make sure to print
 // the error stack and manually call exit so that the cleanup code is called. This
 // makes sure that there are no lingering tunnel processes.
-process.on('uncaughtException', (err) => {
-  if (err instanceof FatalError) {
-    renderFatalError(err)
-  } else {
-    fs.writeSync(process.stderr.fd, `${err.stack ?? err.message ?? err}\n`)
-  }
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+process.on('uncaughtException', async (err) => {
+  await renderUncaughtError(err)
   process.exit(1)
 })
 const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']

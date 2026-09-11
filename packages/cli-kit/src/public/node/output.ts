@@ -257,6 +257,21 @@ export function outputResult(content: OutputMessage): void {
 }
 
 /**
+ * Waits for queued stdout writes to reach their destination before the process exits.
+ *
+ * @returns A promise that resolves when stdout has flushed.
+ */
+export async function flushStdout(): Promise<void> {
+  // An empty write completes after the preceding writes, including those queued for a pipe.
+  await new Promise<void>((resolve, reject) => {
+    process.stdout.write('', (error) => {
+      if (error) reject(error)
+      else resolve()
+    })
+  })
+}
+
+/**
  * Logs information at the info level.
  * Info messages don't get additional formatting.
  * Note: By default, info messages are sent through the standard error.
