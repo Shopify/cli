@@ -39,8 +39,8 @@ export function getThemeEnvironmentInfo(config: {cliVersion: string}): {
 } {
   const {platform, arch} = platformAndArch()
   const store = getThemeStore()
-  const developmentTheme = getDevelopmentTheme()
-  const developmentThemeID = store ? Number(developmentTheme) || null : null
+  const developmentTheme = store ? getDevelopmentTheme() : undefined
+  const developmentThemeID = Number(developmentTheme) || null
 
   return {
     result: {
