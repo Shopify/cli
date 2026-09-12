@@ -223,11 +223,11 @@ async function executePush(
   context?: {stdout?: Writable; stderr?: Writable},
 ) {
   recordTiming('theme-service:push:file-system')
-  const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {
     filters: options,
     listing: options.listing,
   })
+  const [themeChecksums] = await Promise.all([fetchChecksums(theme.id, session), themeFileSystem.ready()])
   recordTiming('theme-service:push:file-system')
 
   const {uploadResults, renderThemeSyncProgress} = uploadTheme(

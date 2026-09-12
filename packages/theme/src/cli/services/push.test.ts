@@ -2,13 +2,14 @@ import {setDevelopmentTheme} from './local-storage.js'
 import {PullFlags} from './pull.js'
 import {createOrSelectTheme, push, PushFlags} from './push.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
+import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
-import {themeCreate, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate, fetchTheme, themePublish, fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
   DEVELOPMENT_THEME_ROLE,
@@ -55,6 +56,8 @@ describe('push', () => {
     })
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
+    vi.mocked(mountThemeFileSystem).mockReturnValue(fakeThemeFileSystem(path, new Map()))
+    vi.mocked(fetchChecksums).mockResolvedValue([])
     vi.mocked(outputResult).mockReturnValue()
   })
 
