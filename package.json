@@ -61,6 +61,7 @@
     "esbuild": "0.28.1",
     "eslint": "^9.39.5",
     "eslint-plugin-jsdoc": "50.8.0",
+    "eslint-plugin-node-security": "4.13.1",
     "execa": "^7.2.0",
     "fast-glob": "3.3.3",
     "find-up": "^6.3.0",
