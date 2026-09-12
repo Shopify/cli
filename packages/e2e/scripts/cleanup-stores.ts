@@ -10,6 +10,7 @@
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts              # Full: uninstall apps + delete stores
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --list        # List stores with app counts
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --delete      # Delete only stores with 0 apps installed
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --force       # Delete stores via API, without checking installed apps
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --headed      # Show browser window
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern X   # Match stores containing "X" (default: "e2e-w")
  *
@@ -31,11 +32,11 @@ import {executables} from '../setup/env.js'
 import {refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
+import {DeleteAppDevelopmentStore} from '../../store/dist/cli/api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
 import {
-  ListAppDevStores,
-  type ListAppDevStoresQuery,
-} from '../../app/dist/cli/api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
-import {businessPlatformOrganizationsRequestDoc} from '../../cli-kit/dist/public/node/api/business-platform.js'
+  businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
+} from '../../cli-kit/dist/public/node/api/business-platform.js'
 import {ensureAuthenticatedBusinessPlatform} from '../../cli-kit/dist/public/node/session.js'
 import {extractHost} from '../../cli-kit/dist/public/common/url.js'
 import {execa} from 'execa'
@@ -57,12 +58,19 @@ if (
 // Core cleanup logic
 // ---------------------------------------------------------------------------
 
-export type CleanupStoresMode = 'full' | 'list' | 'delete'
+export type CleanupStoresMode = 'full' | 'list' | 'delete' | 'force'
+
+type CleanupOutcome = 'succeeded' | 'skipped' | 'failed'
+
+const CLEANUP_WORKER_COUNT = 5
+// Force mode is pure API calls (no browser pages), so it can run much wider.
+const FORCE_DELETE_WORKER_COUNT = 20
 
 const MODE_LABELS: Record<CleanupStoresMode, string> = {
   full: 'Uninstall apps + Delete stores',
   list: 'List only',
   delete: 'Delete empty stores only',
+  force: 'Delete stores via API, without checking installed apps',
 }
 
 export interface CleanupStoresOptions {
@@ -180,105 +188,242 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
       return
     }
 
-    // Step 3: Process each store in a single visit (count + uninstall + delete)
-    let succeeded = 0
-    let skipped = 0
-    let failed = 0
-
-    for (let i = 0; i < stores.length; i++) {
-      const store = stores[i]!
-      const tag = `[cleanup-stores] [${i + 1}/${stores.length}]`
-      const storeStart = Date.now()
-
-      console.log(`${tag} ${store.name}`)
-
-      try {
-        const storeSlug = store.fqdn.replace('.myshopify.com', '')
-
-        // Navigate to apps settings page once
-        await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
-          waitUntil: 'domcontentloaded',
-        })
-        await page.waitForTimeout(BROWSER_TIMEOUT.long)
-        await dismissDevConsole(page)
-
-        // Wait for page to settle: either the empty state or at least one app menu button
-        const emptyState = page.locator('text=Add apps to your store')
-        const firstMenuBtn = page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').first()
-        await Promise.race([
-          emptyState.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-          firstMenuBtn.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-        ])
-
-        // Gate: confirm zero apps before attempting delete.
-        let safeToDelete = false
-        if (await isStoreAppsEmpty(page)) {
-          console.log('  No apps installed (empty state confirmed)')
-          safeToDelete = true
-        } else {
-          const appMenuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
-          console.log(`  ${appMenuButtons.length || '?'} app(s) installed`)
-
-          if (mode === 'delete') {
-            console.log('  Skipped (still has apps)')
-            skipped++
-          } else {
-            // Full mode: uninstall all apps, then re-gate.
-            console.log('  Uninstalling apps...')
-            await uninstallAllAppsFromStore(page)
-            if (await isStoreAppsEmpty(page)) {
-              console.log('  Apps uninstalled (empty state confirmed)')
-              safeToDelete = true
-            } else {
-              console.warn('  Apps may still be installed (empty state not confirmed) — skipping delete')
-              skipped++
-            }
-          }
-        }
-
-        if (safeToDelete) {
-          console.log('  Deleting store...')
-          let deletionRequested = false
-          for (let attempt = 1; attempt <= 3; attempt++) {
-            try {
-              const deletionConfirmed = await deleteDevStoreWithCli({cli: cleanupCli, storeFqdn: store.fqdn, orgId})
-              console.log(deletionConfirmed ? '  Deletion confirmed by CLI' : '  Deletion requested with CLI')
-              deletionRequested = true
-              break
-              // eslint-disable-next-line no-catch-all/no-catch-all
-            } catch (err) {
-              console.log(`    (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
-            }
-          }
-          if (deletionRequested) {
-            succeeded++
-          } else {
-            console.warn('  Failed after 3 attempts')
-            failed++
-          }
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        console.warn(`  Failed: ${msg}`)
-        failed++
-      }
-
-      const storeElapsed = ((Date.now() - storeStart) / 1000).toFixed(1)
-      console.log(`  (${storeElapsed}s)`)
-      console.log('')
+    // Step 3: Process stores in parallel — each worker handles one store at a time.
+    // Force mode deletes via the Business Platform API directly (no app check, no CLI process, no
+    // confirmation polling); other modes visit each store's admin in a browser page first.
+    const outcomes =
+      mode === 'force'
+        ? await forceDeleteStoresInParallel({stores, orgId})
+        : await cleanupStoresInParallel({dashboardPage: page, mode, stores, orgId})
+    const stats: Record<CleanupOutcome, number> = {succeeded: 0, skipped: 0, failed: 0}
+    for (const outcome of outcomes) {
+      stats[outcome]++
     }
 
     // Summary
-    const parts = [`${succeeded} succeeded`]
-    if (skipped > 0) parts.push(`${skipped} skipped`)
-    if (failed > 0) parts.push(`${failed} failed`)
+    const parts = [`${stats.succeeded} succeeded`]
+    if (stats.skipped > 0) parts.push(`${stats.skipped} skipped`)
+    if (stats.failed > 0) parts.push(`${stats.failed} failed`)
     const totalElapsed = ((Date.now() - totalStart) / 1000).toFixed(1)
     console.log('')
     console.log(`[cleanup-stores] Complete: ${parts.join(', ')} (${totalElapsed}s total)`)
-    if (failed > 0) process.exitCode = 1
+    if (stats.failed > 0) process.exitCode = 1
   } finally {
     await browser.close()
   }
+}
+
+async function cleanupStoresInParallel(opts: {
+  dashboardPage: Page
+  mode: CleanupStoresMode
+  stores: StoreInfo[]
+  orgId: string
+}): Promise<CleanupOutcome[]> {
+  const {dashboardPage, mode, stores, orgId} = opts
+  const outcomes = new Array<CleanupOutcome>(stores.length)
+  const workerCount = Math.min(CLEANUP_WORKER_COUNT, stores.length)
+  let nextStoreIndex = 0
+
+  await Promise.all(
+    Array.from({length: workerCount}, async (_, workerIndex) => {
+      const workerPage = await dashboardPage.context().newPage()
+      trackMainFrameStatus(workerPage)
+
+      try {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const storeIndex = nextStoreIndex++
+          if (storeIndex >= stores.length) break
+
+          outcomes[storeIndex] = await cleanupStore({
+            page: workerPage,
+            mode,
+            store: stores[storeIndex]!,
+            orgId,
+            workerNumber: workerIndex + 1,
+            storeNumber: storeIndex + 1,
+            foundCount: stores.length,
+          })
+        }
+      } finally {
+        await workerPage.close()
+      }
+    }),
+  )
+
+  return outcomes
+}
+
+async function cleanupStore(opts: {
+  page: Page
+  mode: CleanupStoresMode
+  store: StoreInfo
+  orgId: string
+  workerNumber: number
+  storeNumber: number
+  foundCount: number
+}): Promise<CleanupOutcome> {
+  const {page, mode, store, orgId, workerNumber, storeNumber, foundCount} = opts
+  const tag = `[cleanup-stores] [worker ${workerNumber}] [${storeNumber}/${foundCount}] ${store.name}`
+  const storeStart = Date.now()
+  let outcome: CleanupOutcome = 'failed'
+
+  console.log(`${tag}: Starting`)
+
+  try {
+    const storeSlug = store.fqdn.replace('.myshopify.com', '')
+
+    // Navigate to apps settings page once
+    await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
+      waitUntil: 'domcontentloaded',
+    })
+    await page.waitForTimeout(BROWSER_TIMEOUT.long)
+    await dismissDevConsole(page)
+
+    // Wait for page to settle: either the empty state or at least one app menu button
+    const emptyState = page.locator('text=Add apps to your store')
+    const firstMenuBtn = page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').first()
+    await Promise.race([
+      emptyState.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
+      firstMenuBtn.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
+    ])
+
+    // Gate: confirm zero apps before attempting delete.
+    let safeToDelete = false
+    if (await isStoreAppsEmpty(page)) {
+      console.log(`${tag}: No apps installed (empty state confirmed)`)
+      safeToDelete = true
+    } else {
+      const appMenuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
+      console.log(`${tag}: ${appMenuButtons.length || '?'} app(s) installed`)
+
+      if (mode === 'delete') {
+        console.log(`${tag}: Skipped (still has apps)`)
+        outcome = 'skipped'
+      } else {
+        // Full mode: uninstall all apps, then re-gate.
+        console.log(`${tag}: Uninstalling apps...`)
+        await uninstallAllAppsFromStore(page, tag)
+        if (await isStoreAppsEmpty(page)) {
+          console.log(`${tag}: Apps uninstalled (empty state confirmed)`)
+          safeToDelete = true
+        } else {
+          console.warn(`${tag}: Apps may still be installed (empty state not confirmed) — skipping delete`)
+          outcome = 'skipped'
+        }
+      }
+    }
+
+    if (safeToDelete) {
+      console.log(`${tag}: Deleting store...`)
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const deletionConfirmed = await deleteDevStoreWithCli({cli: cleanupCli, storeFqdn: store.fqdn, orgId})
+          console.log(deletionConfirmed ? `${tag}: Deletion confirmed by CLI` : `${tag}: Deletion requested with CLI`)
+          outcome = 'succeeded'
+          break
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (err) {
+          console.log(`${tag}: (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
+        }
+      }
+      if (outcome !== 'succeeded') {
+        console.warn(`${tag}: Failed after 3 attempts`)
+      }
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn(`${tag}: Failed: ${msg}`)
+    outcome = 'failed'
+  }
+
+  const storeElapsed = ((Date.now() - storeStart) / 1000).toFixed(1)
+  console.log(`${tag}: ${outcome} (${storeElapsed}s)`)
+  return outcome
+}
+
+/**
+ * Force mode: request deletion for every store through the Business Platform API.
+ *
+ * This skips the per-store admin visit, the app check, the CLI subprocess, and the CLI's
+ * deletion-confirmation polling — deletions are requested and left to complete asynchronously.
+ * Stores that still have apps installed will leave those apps undeletable in the Dev Dashboard
+ * until their install records clear.
+ */
+async function forceDeleteStoresInParallel(opts: {stores: StoreInfo[]; orgId: string}): Promise<CleanupOutcome[]> {
+  const {stores, orgId} = opts
+  const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
+  const outcomes = new Array<CleanupOutcome>(stores.length)
+  const workerCount = Math.min(FORCE_DELETE_WORKER_COUNT, stores.length)
+  let nextStoreIndex = 0
+
+  await Promise.all(
+    Array.from({length: workerCount}, async (_, workerIndex) => {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const storeIndex = nextStoreIndex++
+        if (storeIndex >= stores.length) break
+
+        outcomes[storeIndex] = await forceDeleteStore({
+          store: stores[storeIndex]!,
+          orgId,
+          token,
+          workerNumber: workerIndex + 1,
+          storeNumber: storeIndex + 1,
+          foundCount: stores.length,
+        })
+      }
+    }),
+  )
+
+  return outcomes
+}
+
+async function forceDeleteStore(opts: {
+  store: StoreInfo
+  orgId: string
+  token: string
+  workerNumber: number
+  storeNumber: number
+  foundCount: number
+}): Promise<CleanupOutcome> {
+  const {store, orgId, token, workerNumber, storeNumber, foundCount} = opts
+  const tag = `[cleanup-stores] [worker ${workerNumber}] [${storeNumber}/${foundCount}] ${store.name}`
+  const storeStart = Date.now()
+  let outcome: CleanupOutcome = 'failed'
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const result = await businessPlatformOrganizationsRequestDoc({
+        query: DeleteAppDevelopmentStore,
+        token,
+        organizationId: orgId,
+        variables: {storeFqdn: store.fqdn},
+        unauthorizedHandler: {
+          type: 'token_refresh',
+          handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
+        },
+      })
+
+      const deletion = result.deleteAppDevelopmentStore
+      if (!deletion) throw new Error('Unexpected empty response from deleteAppDevelopmentStore')
+      const userErrors = deletion.userErrors ?? []
+      if (userErrors.length > 0) throw new Error(userErrors.map((error) => error.message).join(', '))
+      if (deletion.success === false) throw new Error('Deletion was not accepted')
+
+      outcome = 'succeeded'
+      break
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (err) {
+      console.log(`${tag}: (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, BROWSER_TIMEOUT.medium))
+    }
+  }
+
+  const storeElapsed = ((Date.now() - storeStart) / 1000).toFixed(1)
+  const summary = outcome === 'succeeded' ? 'Deletion requested' : 'Failed after 3 attempts'
+  console.log(`${tag}: ${summary} (${storeElapsed}s)`)
+  return outcome
 }
 
 // ---------------------------------------------------------------------------
@@ -311,45 +456,98 @@ async function findStores(page: Page, opts: FindStoresOptions): Promise<StoreInf
   return findStoresOnDashboard(page, opts)
 }
 
+// Local paginated variant of the app package's ListAppDevStores query, which fetches a single
+// page of the server's default size. Selects only the fields toStoreInfo reads.
+const ListAppDevStoresPaginated = `
+  query ListAppDevStoresPaginated($searchTerm: String, $first: Int, $after: String) {
+    organization {
+      accessibleShops(
+        filters: [
+          {field: STORE_TYPE, operator: EQUALS, value: "app_development"}
+          {field: STORE_STATUS, operator: EQUALS, value: "ACTIVE"}
+        ]
+        search: $searchTerm
+        first: $first
+        after: $after
+      ) {
+        edges {
+          node {
+            name
+            shortName
+            primaryDomain
+            url
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+`
+
+interface AppDevStoreNode {
+  name?: string | null
+  shortName?: string | null
+  primaryDomain?: string | null
+  url?: string | null
+}
+
+interface ListAppDevStoresPaginatedResult {
+  organization?: {
+    accessibleShops?: {
+      edges: {node: AppDevStoreNode}[]
+      pageInfo: {hasNextPage: boolean; endCursor?: string | null}
+    } | null
+  } | null
+}
+
+const STORE_DISCOVERY_PAGE_SIZE = 100
+const STORE_DISCOVERY_MAX_PAGES = 50
+
 /** Find app development stores matching a name pattern using Business Platform GraphQL. */
 async function findStoresWithBusinessPlatformApi(namePattern: string, orgId: string): Promise<StoreInfo[]> {
   console.log('[cleanup-stores] Discovering stores via Business Platform API...')
 
   const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
-  const result = await businessPlatformOrganizationsRequestDoc({
-    query: ListAppDevStores,
-    token,
-    organizationId: orgId,
-    variables: {searchTerm: namePattern},
-    unauthorizedHandler: {
-      type: 'token_refresh',
-      handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
-    },
-  })
-
-  const accessibleShops = result.organization?.accessibleShops
-  if (!accessibleShops) return []
-  if (accessibleShops.pageInfo.hasNextPage) {
-    console.warn(
-      `[cleanup-stores] API discovery has more pages for pattern "${namePattern}"; use a narrower pattern if matches are missing.`,
-    )
-  }
-
   const seen = new Set<string>()
   const stores: StoreInfo[] = []
-  for (const edge of accessibleShops.edges) {
-    const store = toStoreInfo(edge.node, namePattern)
-    if (!store || seen.has(store.fqdn)) continue
-    seen.add(store.fqdn)
-    stores.push(store)
+  let after: string | undefined
+
+  for (let pageNumber = 1; pageNumber <= STORE_DISCOVERY_MAX_PAGES; pageNumber++) {
+    const result = await businessPlatformOrganizationsRequest<ListAppDevStoresPaginatedResult>({
+      query: ListAppDevStoresPaginated,
+      token,
+      organizationId: orgId,
+      variables: {searchTerm: namePattern, first: STORE_DISCOVERY_PAGE_SIZE, ...(after ? {after} : {})},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})}),
+      },
+    })
+
+    const accessibleShops = result.organization?.accessibleShops
+    if (!accessibleShops) break
+
+    for (const edge of accessibleShops.edges) {
+      const store = toStoreInfo(edge.node, namePattern)
+      if (!store || seen.has(store.fqdn)) continue
+      seen.add(store.fqdn)
+      stores.push(store)
+    }
+
+    const {hasNextPage, endCursor} = accessibleShops.pageInfo
+    if (!hasNextPage || !endCursor) return stores
+    after = endCursor
+    console.log(`[cleanup-stores]   ...${stores.length} stores after ${pageNumber} page(s)`)
   }
 
+  console.warn(
+    `[cleanup-stores] Stopped discovery after ${STORE_DISCOVERY_MAX_PAGES} pages; more stores may match pattern "${namePattern}".`,
+  )
   return stores
 }
-
-type AppDevStoreNode = NonNullable<
-  NonNullable<NonNullable<ListAppDevStoresQuery['organization']>['accessibleShops']>['edges'][number]['node']
->
 
 function toStoreInfo(node: AppDevStoreNode, namePattern: string): StoreInfo | undefined {
   const fqdn =
@@ -483,9 +681,9 @@ async function countInstalledApps(page: Page, storeFqdn: string): Promise<number
 
     const nextBtn = page.locator('button#nextURL')
     if (!(await nextBtn.isVisible({timeout: BROWSER_TIMEOUT.short}).catch(() => false))) break
-    const isNextDisabled = await nextBtn.evaluate(
-      (el) => el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('disabled'),
-    ).catch(() => true)
+    const isNextDisabled = await nextBtn
+      .evaluate((el) => el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('disabled'))
+      .catch(() => true)
     if (isNextDisabled) break
 
     await nextBtn.click()
@@ -500,7 +698,7 @@ async function countInstalledApps(page: Page, storeFqdn: string): Promise<number
  * Uninstall every app from the store's admin settings/apps page.
  * Caller must have already navigated to /settings/apps and dismissed Dev Console.
  */
-async function uninstallAllAppsFromStore(page: Page): Promise<void> {
+async function uninstallAllAppsFromStore(page: Page, tag: string): Promise<void> {
   // Uninstall apps one at a time using the ⋯ "More actions" menu buttons.
   // The admin paginates installed apps, so after clearing the current page
   // we check for a "Next" button and continue on subsequent pages.
@@ -519,13 +717,15 @@ async function uninstallAllAppsFromStore(page: Page): Promise<void> {
       if (!(await menuBtn.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) break
 
       // Get the app name from the list item container
-      const appName = await menuBtn.evaluate((el) => {
-        const row = el.closest('div[role="listitem"]')
-        if (!row) return 'unknown'
-        // The app name is in a <span> inside the clickable <a> link
-        const link = row.querySelector('a span')
-        return link?.textContent?.trim() || 'unknown'
-      }).catch(() => 'unknown')
+      const appName = await menuBtn
+        .evaluate((el) => {
+          const row = el.closest('div[role="listitem"]')
+          if (!row) return 'unknown'
+          // The app name is in a <span> inside the clickable <a> link
+          const link = row.querySelector('a span')
+          return link?.textContent?.trim() || 'unknown'
+        })
+        .catch(() => 'unknown')
 
       await menuBtn.click()
       await page.waitForTimeout(BROWSER_TIMEOUT.short)
@@ -546,10 +746,10 @@ async function uninstallAllAppsFromStore(page: Page): Promise<void> {
         await confirmBtn.click()
         await page.waitForTimeout(BROWSER_TIMEOUT.medium)
         consecutiveSkips = 0
-        console.log(`    Uninstalled ${appName}`)
+        console.log(`${tag}: Uninstalled ${appName}`)
       } else {
         // Confirm never appeared — skip this app to avoid infinite loop
-        console.log(`    Uninstall confirm not found for ${appName}, skipping`)
+        console.log(`${tag}: Uninstall confirm not found for ${appName}, skipping`)
         consecutiveSkips++
       }
 
@@ -562,9 +762,9 @@ async function uninstallAllAppsFromStore(page: Page): Promise<void> {
     // Check for pagination — if there's a next page, navigate to it
     const nextBtn = page.locator('button#nextURL')
     if (!(await nextBtn.isVisible({timeout: BROWSER_TIMEOUT.short}).catch(() => false))) break
-    const isNextDisabled = await nextBtn.evaluate(
-      (el) => el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('disabled'),
-    ).catch(() => true)
+    const isNextDisabled = await nextBtn
+      .evaluate((el) => el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('disabled'))
+      .catch(() => true)
     if (isNextDisabled) break
 
     await nextBtn.click()
@@ -595,6 +795,7 @@ async function main() {
   let mode: CleanupStoresMode = 'full'
   if (args.includes('--list')) mode = 'list'
   else if (args.includes('--delete')) mode = 'delete'
+  else if (args.includes('--force')) mode = 'force'
 
   await cleanupStores({mode, pattern, headed})
 }
