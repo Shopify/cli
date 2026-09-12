@@ -1,0 +1,46 @@
+{
+  "name": "dev-platform-auth",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/dev-platform-auth/src",
+  "projectType": "library",
+  "tags": ["scope:foundation"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/dev-platform-auth"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/packages/dev-platform-auth/dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json", "{projectRoot}/tsconfig.build.json"],
+      "options": {
+        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "cwd": "packages/dev-platform-auth"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src",
+        "cwd": "packages/dev-platform-auth"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src --fix",
+        "cwd": "packages/dev-platform-auth"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc --noEmit",
+        "cwd": "packages/dev-platform-auth"
+      }
+    }
+  }
+}
