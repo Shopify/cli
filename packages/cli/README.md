@@ -3420,17 +3420,47 @@ DESCRIPTION
 
   Output from `--json` conforms to the `OrganizationListResult` schema.
 
-  Use `--json-schema` to print the schema directly:
+  Use `--json-schema` to print the result, error, and event schemas.
 
-  ```ts
-  interface OrganizationListResult {
-    organizations: OrganizationListEntry[]
-  }
-
-  interface OrganizationListEntry {
-    id: string
-    gid: string
-    name: string
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "organizations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/OrganizationListEntry"
+        }
+      }
+    },
+    "required": [
+      "organizations"
+    ],
+    "additionalProperties": false,
+    "title": "OrganizationListResult",
+    "definitions": {
+      "OrganizationListEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "gid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gid",
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```
 ```
