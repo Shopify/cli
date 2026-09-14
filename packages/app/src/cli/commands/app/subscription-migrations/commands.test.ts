@@ -7,7 +7,10 @@ import {appFlags} from '../../../flags.js'
 import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
+import {
+  cancelMigrationOperations,
+  migrationCancellationJsonOutputSchema,
+} from '../../../services/subscription-migrations/cancel-operations.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
@@ -22,7 +25,10 @@ import type {MigrationCancellationResult} from '../../../services/subscription-m
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 vi.mock('../../../services/app-context.js')
-vi.mock('../../../services/subscription-migrations/cancel-operations.js')
+vi.mock('../../../services/subscription-migrations/cancel-operations.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/subscription-migrations/cancel-operations.js')>()),
+  cancelMigrationOperations: vi.fn(),
+}))
 vi.mock('../../../services/subscription-migrations/command-output.js')
 vi.mock('../../../services/subscription-migrations/get-operations.js')
 vi.mock('../../../services/subscription-migrations/run-submission-command.js')
@@ -430,6 +436,10 @@ describe('subscription migration command metadata', () => {
     expect(Command.flags.json).toBe(jsonFlag.json)
   })
 
+  test('cancel exposes its JSON output schema', () => {
+    expect(Cancel.jsonOutputSchema).toBe(migrationCancellationJsonOutputSchema)
+  })
+
   test.each([Schedule, Unschedule, Status, Cancel, List])('$name has no legacy migration flags', (Command) => {
     expect(Object.keys(Command.flags)).not.toEqual(
       expect.arrayContaining(['yes', 'operation', 'operation-id', 'run', 'run-id', 'idempotency-key']),
@@ -549,10 +559,15 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test.each([Schedule, Unschedule, Status, Cancel, List])(
+  test.each([Schedule, Unschedule, Status, List])(
     '$name has no fenced-code markers in its plain description',
     (Command) => {
       expect(Command.description).not.toContain('```')
     },
   )
+
+  test('cancel documents its JSON output schema', () => {
+    expect(Cancel.description).toContain('`MigrationCancellationResult` schema')
+    expect(Cancel.description).toContain('```json')
+  })
 })
