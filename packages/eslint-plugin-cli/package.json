@@ -1,14 +1,12 @@
 {
   "name": "@shopify/eslint-plugin-cli",
   "version": "3.47.2",
+  "private": true,
   "packageManager": "pnpm@10.11.1",
-  "description": "Shopify CLI's ESLint rules and configs.",
+  "description": "Shopify CLI lint rules.",
   "keywords": [
-    "eslint",
-    "eslintconfig",
-    "eslintplugin",
-    "eslint-config",
-    "eslint-plugin"
+    "lint",
+    "oxlint"
   ],
   "bugs": {
     "url": "https://community.shopify.dev/c/shopify-cli-libraries/14"
@@ -16,24 +14,7 @@
   "license": "MIT",
   "author": "Shopify Inc.",
   "dependencies": {
-    "@shopify/eslint-plugin": "50.0.0",
-    "@typescript-eslint/eslint-plugin": "8.56.1",
-    "@typescript-eslint/parser": "8.56.1",
-    "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-no-catch-all": "1.1.0",
-    "eslint-plugin-react": "7.37.5",
-    "eslint-plugin-react-hooks": "5.2.0",
-    "eslint-plugin-tsdoc": "0.5.2",
-    "eslint-plugin-unused-imports": "4.4.1",
-    "@vitest/eslint-plugin": "1.1.44",
-    "globals": "16.5.0",
-    "execa": "7.2.0"
-  },
-  "peerDependencies": {
-    "eslint": "^9.0.0"
-  },
-  "publishConfig": {
-    "@shopify:registry": "https://registry.npmjs.org",
-    "access": "public"
+    "@microsoft/tsdoc": "0.16.0",
+    "pathe": "1.1.2"
   }
 }

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -9,7 +9,7 @@ export type StoreInfoDestinationsQueryVariables = Types.Exact<{
 
 export type StoreInfoDestinationsQuery = {
   currentUserAccount?: {
-    destinations: {nodes: {publicId: unknown; primaryDomain?: string | null; webUrl: string}[]}
+    destinations: {nodes: Array<{publicId: unknown; primaryDomain?: string | null; webUrl: string}>}
   } | null
 }
 

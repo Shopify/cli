@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -9,13 +9,13 @@ export type MetafieldDefinitionsByOwnerTypeQueryVariables = Types.Exact<{
 
 export type MetafieldDefinitionsByOwnerTypeQuery = {
   metafieldDefinitions: {
-    nodes: {
+    nodes: Array<{
       key: string
       name: string
       namespace: string
       description?: string | null
       type: {category: string; name: string}
-    }[]
+    }>
   }
 }
 

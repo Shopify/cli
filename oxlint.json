@@ -12,8 +12,14 @@
       "name": "@shopify/cli",
       "specifier": "./packages/eslint-plugin-cli/index.js"
     },
-    "eslint-plugin-no-catch-all",
-    "eslint-plugin-tsdoc"
+    {
+      "name": "no-catch-all",
+      "specifier": "./packages/eslint-plugin-cli/no-catch-all.js"
+    },
+    {
+      "name": "tsdoc",
+      "specifier": "./packages/eslint-plugin-cli/tsdoc.js"
+    }
   ],
   "categories": {
     "correctness": "off"
@@ -106,7 +112,8 @@
     "**/bin/bundle.js",
     "**/*.d.ts",
     "**/*.cjs",
-    "packages/e2e/scripts/**"
+    "packages/e2e/scripts/**",
+    "packages/eslint-plugin-cli/vite.config.ts"
   ],
   "rules": {
     "array-callback-return": "error",
@@ -578,6 +585,14 @@
     },
     {
       "files": [
+        "**/api/graphql/**/generated/*.ts"
+      ],
+      "rules": {
+        "typescript/array-type": "off"
+      }
+    },
+    {
+      "files": [
         "**/*.test.ts",
         "**/*.test.tsx",
         "**/*.test-data.ts",
@@ -702,6 +717,21 @@
           "error",
           1
         ]
+      }
+    },
+    {
+      "files": [
+        "packages/eslint-plugin-cli/**/*.js"
+      ],
+      "rules": {
+        "no-implicit-globals": "off",
+        "no-redeclare": [
+          "error",
+          {
+            "builtinGlobals": false
+          }
+        ],
+        "tsdoc/syntax": "off"
       }
     }
   ]

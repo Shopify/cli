@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+/* oxlint-disable typescript/consistent-type-definitions */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -11,8 +11,8 @@ export type CreateAppMutationVariables = Types.Exact<{
 
 export type CreateAppMutation = {
   appCreate: {
-    app?: {id: string; key: string; activeRoot: {clientCredentials: {secrets: {key: string}[]}}} | null
-    userErrors: {category: string; message: string; on: JsonMapType}[]
+    app?: {id: string; key: string; activeRoot: {clientCredentials: {secrets: Array<{key: string}>}}} | null
+    userErrors: Array<{category: string; message: string; on: JsonMapType}>
   }
 }
 

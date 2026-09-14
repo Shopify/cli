@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -10,7 +10,7 @@ export type StoreInfoShopQueryVariables = Types.Exact<{
 export type StoreInfoShopQuery = {
   organization?: {
     accessibleShops?: {
-      edges: {
+      edges: Array<{
         node: {
           shopifyShopId?: string | null
           name: string
@@ -20,7 +20,7 @@ export type StoreInfoShopQuery = {
           planName?: string | null
           ownerDetails?: {fullName?: string | null; email?: string | null} | null
         }
-      }[]
+      }>
     } | null
   } | null
 }

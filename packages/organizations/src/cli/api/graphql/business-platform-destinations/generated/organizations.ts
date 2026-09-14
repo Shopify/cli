@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -8,7 +8,7 @@ export type ListOrganizationsQueryVariables = Types.Exact<{[key: string]: never}
 export type ListOrganizationsQuery = {
   currentUserAccount?: {
     uuid: string
-    organizationsWithAccessToDestination: {nodes: {id: string; name: string}[]}
+    organizationsWithAccessToDestination: {nodes: Array<{id: string; name: string}>}
   } | null
 }
 

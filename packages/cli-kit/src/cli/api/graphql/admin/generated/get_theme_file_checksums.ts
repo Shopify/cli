@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -11,8 +11,8 @@ export type GetThemeFileChecksumsQueryVariables = Types.Exact<{
 export type GetThemeFileChecksumsQuery = {
   theme?: {
     files?: {
-      nodes: {filename: string; size: unknown; checksumMd5?: string | null}[]
-      userErrors: {filename: string; code: Types.OnlineStoreThemeFileResultType}[]
+      nodes: Array<{filename: string; size: unknown; checksumMd5?: string | null}>
+      userErrors: Array<{filename: string; code: Types.OnlineStoreThemeFileResultType}>
       pageInfo: {hasNextPage: boolean; endCursor?: string | null}
     } | null
   } | null

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -8,18 +8,18 @@ export type FetchSpecificationsQueryVariables = Types.Exact<{
 }>
 
 export type FetchSpecificationsQuery = {
-  specifications: {
+  specifications: Array<{
     name: string
     identifier: string
     externalIdentifier: string
     experience: string
-    features: string[]
+    features: Array<string>
     uidStrategy:
       | {__typename: 'UidStrategiesClientProvided'; appModuleLimit: number; isClientProvided: boolean}
       | {__typename: 'UidStrategiesDynamic'; appModuleLimit: number; isClientProvided: boolean}
       | {__typename: 'UidStrategiesStatic'; appModuleLimit: number; isClientProvided: boolean}
     validationSchema?: {jsonSchema: string} | null
-  }[]
+  }>
 }
 
 export const FetchSpecifications = {

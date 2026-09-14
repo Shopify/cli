@@ -1,18 +1,20 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type StagedUploadsCreateMutationVariables = Types.Exact<{
-  input: Types.StagedUploadInput[] | Types.StagedUploadInput
+  input: Array<Types.StagedUploadInput> | Types.StagedUploadInput
 }>
 
 export type StagedUploadsCreateMutation = {
   stagedUploadsCreate?: {
-    stagedTargets?:
-      | {url?: string | null; resourceUrl?: string | null; parameters: {name: string; value: string}[]}[]
-      | null
-    userErrors: {field?: string[] | null; message: string}[]
+    stagedTargets?: Array<{
+      url?: string | null
+      resourceUrl?: string | null
+      parameters: Array<{name: string; value: string}>
+    }> | null
+    userErrors: Array<{field?: Array<string> | null; message: string}>
   } | null
 }
 
