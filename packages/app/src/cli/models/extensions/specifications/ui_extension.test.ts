@@ -117,12 +117,12 @@ describe('ui_extension', async () => {
             },
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2026-10' as const,
         handle: 'test-ui-extension',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
-        metafields: [{namespace: 'test', key: 'test'}],
+        metafields: [{namespace: 'test', key: 'test', owner_type: 'PRODUCT' as const}],
         capabilities: {
           block_progress: false,
           network_access: false,
@@ -155,7 +155,7 @@ describe('ui_extension', async () => {
           intents: undefined,
           assets: undefined,
           module: './src/ExtensionPointA.js',
-          metafields: [{namespace: 'test', key: 'test'}],
+          metafields: [{namespace: 'test', key: 'test', owner_type: 'PRODUCT'}],
           default_placement_reference: undefined,
           capabilities: undefined,
           preloads: {},
@@ -174,6 +174,34 @@ describe('ui_extension', async () => {
           urls: {},
         },
       ])
+    })
+
+    test('target-level metafields override extension-level metafields', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            metafields: [{namespace: 'target', key: 'value', owner_type: 'COMPANY_LOCATION' as const}],
+          },
+        ],
+        api_version: '2026-10' as const,
+        handle: 'test-ui-extension',
+        name: 'UI Extension',
+        type: 'ui_extension',
+        metafields: [{namespace: 'extension', key: 'value', owner_type: 'SHOP' as const}],
+      }
+
+      const parsed = specification.parseConfigurationObject(configuration)
+
+      expect(parsed.state).toBe('ok')
+      if (parsed.state === 'ok') {
+        expect(parsed.data.extension_points[0]?.metafields).toStrictEqual([
+          {namespace: 'target', key: 'value', owner_type: 'COMPANY_LOCATION'},
+        ])
+      }
     })
 
     test('targeting object accepts a default_placement', async () => {
