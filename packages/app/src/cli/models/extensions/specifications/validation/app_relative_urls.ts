@@ -2,23 +2,6 @@ import {prependApplicationUrl} from './url_prepender.js'
 import {URL_CONTROL_CHARACTERS, isHttpsUrl} from '../../../app/validation/common.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-interface RelativeUrlModule {
-  label: string
-  fields: string[]
-}
-
-/**
- * Contract based modules have no local specification, so their configuration is sent to the server exactly as it
- * appears in the TOML. These fields are the exception: a relative value (a path starting with a single slash) is
- * resolved against the app's URL, the same way `flow_action`'s URL fields are resolved by its own specification.
- *
- * To give another contract based module the same treatment, add it here. The server side contract has to accept the
- * relative form as well, otherwise the configuration is rejected when it is parsed, before any of this runs.
- */
-const MODULES_WITH_RELATIVE_URLS: {[identifier: string]: RelativeUrlModule} = {
-  flow_trigger_lifecycle_callback: {label: 'Flow trigger lifecycle callback', fields: ['url']},
-}
-
 /**
  * Resolves a single app relative URL field against the app's URL, rejecting anything that cannot become a valid
  * absolute HTTPS URL. `label` and `fieldName` only appear in the error messages, so callers can name the field the
@@ -61,18 +44,20 @@ export const resolveAppRelativeUrl = (
 }
 
 /**
- * Resolves in place every app relative URL field of a contract based module's configuration. Absolute URLs, and
- * modules with no relative URL fields, are left untouched.
+ * Resolves declared top-level URL fields in place. Absolute URLs, missing fields, and non-string values are left
+ * untouched; configuration validation remains the specification's responsibility.
  */
-export function patchAppRelativeUrls(identifier: string, config: object, appUrl: string | undefined): void {
-  const module = MODULES_WITH_RELATIVE_URLS[identifier]
-  if (!module) return
-
+export function patchAppRelativeUrls(
+  label: string,
+  fields: ReadonlyArray<string>,
+  config: object,
+  appUrl: string | undefined,
+): void {
   const indexableConfig = config as {[key: string]: unknown}
-  for (const field of module.fields) {
+  for (const field of fields) {
     const value = indexableConfig[field]
     if (typeof value === 'string' && value.startsWith('/')) {
-      indexableConfig[field] = resolveAppRelativeUrl(module.label, field, value, appUrl)
+      indexableConfig[field] = resolveAppRelativeUrl(label, field, value, appUrl)
     }
   }
 }

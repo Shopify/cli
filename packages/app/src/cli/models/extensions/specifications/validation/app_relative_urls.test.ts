@@ -1,7 +1,6 @@
 import {patchAppRelativeUrls, resolveAppRelativeUrl} from './app_relative_urls.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test} from 'vitest'
-
-const LIFECYCLE_CALLBACK = 'flow_trigger_lifecycle_callback'
 
 describe('resolveAppRelativeUrl', () => {
   const resolve = (url: string, appUrl: string | undefined) => resolveAppRelativeUrl('Test module', 'url', url, appUrl)
@@ -60,76 +59,59 @@ describe('resolveAppRelativeUrl', () => {
 })
 
 describe('patchAppRelativeUrls', () => {
-  const patch = (config: object, appUrl: string | undefined, identifier = LIFECYCLE_CALLBACK) => {
-    patchAppRelativeUrls(identifier, config, appUrl)
-    return config
-  }
+  test('resolves all declared relative fields without changing undeclared fields', () => {
+    const config = {
+      url: '/callback',
+      validation_url: '/validate',
+      other_url: '/leave-alone',
+      name: 'Example extension',
+    }
 
-  test('prepends the app URL to a relative url', () => {
-    // When
-    const got = patch({name: 'Auction lifecycle', url: '/api/flow/lifecycle'}, 'https://my-app.example.com')
+    patchAppRelativeUrls('Test module', ['url', 'validation_url'], config, 'https://my-app.example.com')
 
-    // Then
-    expect(got).toEqual({name: 'Auction lifecycle', url: 'https://my-app.example.com/api/flow/lifecycle'})
+    expect(config).toEqual({
+      url: 'https://my-app.example.com/callback',
+      validation_url: 'https://my-app.example.com/validate',
+      other_url: '/leave-alone',
+      name: 'Example extension',
+    })
   })
 
-  test('removes a trailing slash from the app URL', () => {
-    // When
-    const got = patch({url: '/api/flow/lifecycle'}, 'https://my-app.example.com/')
+  test('leaves absolute URLs untouched without an app URL', () => {
+    const config = {url: 'https://my-prod-host.example.com/callback'}
 
-    // Then
-    expect(got).toEqual({url: 'https://my-app.example.com/api/flow/lifecycle'})
+    patchAppRelativeUrls('Test module', ['url'], config, undefined)
+
+    expect(config).toEqual({url: 'https://my-prod-host.example.com/callback'})
   })
 
-  test('leaves an absolute url untouched', () => {
-    // When
-    const got = patch({url: 'https://my-prod-host.example.com/api/flow/lifecycle'}, 'https://my-app.example.com')
+  test('leaves configuration untouched when no fields are declared', () => {
+    const config = {url: '/callback'}
 
-    // Then
-    expect(got).toEqual({url: 'https://my-prod-host.example.com/api/flow/lifecycle'})
+    patchAppRelativeUrls('Test module', [], config, undefined)
+
+    expect(config).toEqual({url: '/callback'})
   })
 
-  test('leaves a module with no relative URL fields untouched', () => {
-    // When
-    const got = patch({url: '/api/something'}, 'https://my-app.example.com', 'some_other_contract_module')
+  test('leaves missing and non-string fields for schema validation', () => {
+    const config = {url: 42, optional_url: undefined}
 
-    // Then
-    expect(got).toEqual({url: '/api/something'})
+    patchAppRelativeUrls('Test module', ['url', 'optional_url', 'missing_url'], config, undefined)
+
+    expect(config).toEqual({url: 42, optional_url: undefined})
   })
 
-  test('throws when there is no app URL to resolve against', () => {
-    // When/Then
-    expect(() => patch({url: '/api/flow/lifecycle'}, undefined)).toThrow(
-      'Flow trigger lifecycle callback url is a relative URL, but no application_url is configured. Set application_url in your app configuration or use an absolute HTTPS URL.',
-    )
+  test('rejects relative fields that cannot be resolved', () => {
+    expect(() => patchAppRelativeUrls('Test module', ['url'], {url: '/callback'}, undefined)).toThrow(AbortError)
   })
 
-  test('throws when the app URL is not HTTPS', () => {
-    // When/Then
-    expect(() => patch({url: '/api/flow/lifecycle'}, 'http://my-app.example.com')).toThrow(
-      'Flow trigger lifecycle callback url must resolve to an HTTPS URL.',
-    )
-  })
+  test.each([
+    {name: 'newline', character: '\n'},
+    {name: 'carriage return', character: '\r'},
+    {name: 'tab', character: '\t'},
+  ])('rejects relative URL fields containing a $name', ({character}) => {
+    const config = {url: `/callback${character}injected-content`}
 
-  test('throws on a protocol relative url', () => {
-    // When/Then
-    expect(() => patch({url: '//example.com/api'}, 'https://my-app.example.com')).toThrow(
-      'a URL relative to the app URL must start with a single slash',
-    )
-  })
-
-  test('throws on a url containing control characters', () => {
-    // When/Then
-    expect(() => patch({url: '/api/flow/lifecycle\nmalicious-header: value'}, 'https://my-app.example.com')).toThrow(
-      'a URL must not contain control characters',
-    )
-  })
-
-  test('resolves against the dev tunnel URL', () => {
-    // When
-    const got = patch({url: '/api/flow/lifecycle'}, 'https://my-tunnel.example.com')
-
-    // Then
-    expect(got).toEqual({url: 'https://my-tunnel.example.com/api/flow/lifecycle'})
+    expect(() => patchAppRelativeUrls('Test module', ['url'], config, 'https://my-app.example.com')).toThrow(AbortError)
   })
 })
