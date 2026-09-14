@@ -55,6 +55,7 @@ const hookEntryPoints = glob.sync('./src/hooks/*.ts', {
 const manifest = JSON.parse(readFileSync(joinPath(process.cwd(), 'oclif.manifest.json'), 'utf8'))
 const commandEntryPointOverrides = {
   'app:logs:sources': 'cli/commands/app/app-logs/sources',
+  'app:logs:query': 'cli/commands/app/app-logs/query',
   'demo:watcher': 'cli/commands/app/demo/watcher',
   'kitchen-sink': 'cli/commands/kitchen-sink/index',
   'doctor-release': 'cli/commands/doctor-release/doctor-release',
