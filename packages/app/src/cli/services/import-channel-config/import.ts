@@ -23,7 +23,7 @@ const FAILURE_MESSAGES: {[reason: string]: string} = {
     'The Shopify-authored default for this app could not be projected into a valid public channel_config spec.',
 }
 
-export interface ImportChannelConfigOptions {
+interface ImportChannelConfigOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient

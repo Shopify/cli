@@ -10,7 +10,7 @@ export interface ChannelSpecExportWarning {
   message: string
 }
 
-export type ChannelSpecExportResult =
+type ChannelSpecExportResult =
   | {
       success: true
       handle: string
