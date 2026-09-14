@@ -81,13 +81,13 @@ function assertActiveVersion(opts: {
 }
 
 test.describe('App deploy', () => {
-  test('init, deploy, versions list, config link, deploy to secondary', async ({cli, env, browserPage}) => {
+  test('init, deploy, versions list, config link, deploy to secondary', async ({cli, env, browserPage}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('deploy1')
-    const secondaryAppName = e2eAppName('deploy2')
+    const appName = e2eAppName('deploy1', testInfo.retry)
+    const secondaryAppName = e2eAppName('deploy2', testInfo.retry)
 
     let primaryAppUrl: string | undefined
     let secondaryAppUrl: string | undefined

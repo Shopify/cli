@@ -14,12 +14,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('TOML config regression', () => {
-  test('deploy succeeds with fully populated toml', async ({cli, env, browserPage}) => {
+  test('deploy succeeds with fully populated toml', async ({cli, env, browserPage}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('toml-deploy')
+    const appName = e2eAppName('toml-deploy', testInfo.retry)
     let appUrl: string | undefined
 
     try {
@@ -51,12 +51,12 @@ test.describe('TOML config regression', () => {
     }
   })
 
-  test('dev starts with fully populated toml', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev starts with fully populated toml', async ({cli, env, browserPage, storeFqdn}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('toml-dev')
+    const appName = e2eAppName('toml-dev', testInfo.retry)
     let appUrl: string | undefined
     let appDir: string | undefined
 

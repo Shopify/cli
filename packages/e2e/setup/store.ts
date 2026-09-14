@@ -2,7 +2,7 @@
 import {appTestFixture} from './app.js'
 import {isVisibleWithin} from './browser.js'
 import {BROWSER_TIMEOUT, CLI_TIMEOUT} from './constants.js'
-import {createLogger, e2eRunSegment, e2eSection, requireEnv} from './env.js'
+import {createLogger, e2eRunSegment, e2eSection, requireEnv, retryScopedTimestamp} from './env.js'
 import type {CLIProcess, ExecResult} from './cli.js'
 import type {Locator, Page} from '@playwright/test'
 
@@ -13,8 +13,8 @@ const log = createLogger('cli')
 // ---------------------------------------------------------------------------
 
 /** Generate a unique store name for a worker. */
-export function generateStoreName(workerIndex: number): string {
-  const timestampSegment = Date.now().toString(36)
+export function generateStoreName(workerIndex: number, retry = 0): string {
+  const timestampSegment = retryScopedTimestamp(retry)
   return `e2e-w${workerIndex}-${e2eRunSegment()}-${timestampSegment}`
 }
 
@@ -275,7 +275,7 @@ export async function isStoreAppsEmpty(page: Page): Promise<boolean> {
  * Tests that don't (scaffold, deploy, commands, smoke) stay on appTestFixture.
  */
 export const storeTestFixture = appTestFixture.extend<{storeFqdn: string}>({
-  storeFqdn: async ({cli, env}, use) => {
+  storeFqdn: async ({cli, env}, use, testInfo) => {
     requireEnv(env, 'orgId')
     const wi = env.workerIndex
 
@@ -284,7 +284,7 @@ export const storeTestFixture = appTestFixture.extend<{storeFqdn: string}>({
     env.processEnv.SHOPIFY_FLAG_GRAPHIQL_PORT = String(portBase)
     env.processEnv.SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT = String(portBase + 2)
 
-    const storeName = generateStoreName(wi)
+    const storeName = generateStoreName(wi, testInfo.retry)
     const fqdn = await createDevStoreWithCli({cli, workerIndex: wi, storeName, orgId: env.orgId})
 
     env.processEnv.SHOPIFY_FLAG_STORE = fqdn // eslint-disable-line require-atomic-updates

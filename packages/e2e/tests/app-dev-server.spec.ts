@@ -8,12 +8,12 @@ import * as fs from 'fs'
 import * as path from 'path' // eslint-disable-line no-restricted-imports
 
 test.describe('App dev server', () => {
-  test('dev starts, shows ready message, and quits with q', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev starts, shows ready message, and quits with q', async ({cli, env, browserPage, storeFqdn}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('dev')
+    const appName = e2eAppName('dev', testInfo.retry)
     let appUrl: string | undefined
     let appDir: string | undefined
 

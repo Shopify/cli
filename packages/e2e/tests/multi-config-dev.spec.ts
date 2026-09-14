@@ -14,12 +14,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('Multi-config dev', () => {
-  test('dev with -c flag loads the named config', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev with -c flag loads the named config', async ({cli, env, browserPage, storeFqdn}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('multi-cfg')
+    const appName = e2eAppName('multi-cfg', testInfo.retry)
     let appUrl: string | undefined
     let appDir: string | undefined
 
@@ -107,12 +107,12 @@ extensions_summary = "E2E staging app extensions"
     }
   })
 
-  test('dev without -c flag uses default config', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev without -c flag uses default config', async ({cli, env, browserPage, storeFqdn}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('mcfg-def')
+    const appName = e2eAppName('mcfg-def', testInfo.retry)
     let appUrl: string | undefined
     let appDir: string | undefined
 

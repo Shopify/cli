@@ -8,12 +8,12 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 test.describe('App scaffold', () => {
-  test('init creates a react-router app and builds', async ({cli, env, browserPage}) => {
+  test('init creates a react-router app and builds', async ({cli, env, browserPage}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('scaffold')
+    const appName = e2eAppName('scaffold', testInfo.retry)
     let appUrl: string | undefined
 
     try {
@@ -61,12 +61,12 @@ test.describe('App scaffold', () => {
     }
   })
 
-  test('init creates an extension-only app', async ({cli, env, browserPage}) => {
+  test('init creates an extension-only app', async ({cli, env, browserPage}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('ext-only')
+    const appName = e2eAppName('ext-only', testInfo.retry)
     let appUrl: string | undefined
 
     try {
@@ -99,12 +99,12 @@ test.describe('App scaffold', () => {
     }
   })
 
-  test('generates extensions and builds', async ({cli, env, browserPage}) => {
+  test('generates extensions and builds', async ({cli, env, browserPage}, testInfo) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
-    const appName = e2eAppName('ext-gen')
+    const appName = e2eAppName('ext-gen', testInfo.retry)
     let appUrl: string | undefined
 
     try {
