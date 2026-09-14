@@ -6,6 +6,7 @@ import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
+import {fetch} from './http.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {parseJSON} from '../common/json.js'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
@@ -702,8 +703,12 @@ export async function addResolutionOrOverride(directory: string, dependencies: R
 async function getLatestNPMPackageVersion(name: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    const {default: latestVersion} = await import('latest-version')
-    return latestVersion(name)
+    const response = await fetch(`https://registry.npmjs.org/${name}/latest`)
+    if (!response.ok) {
+      throw new AbortError(`Failed to get the latest version of ${name}: ${response.statusText}`)
+    }
+    const packageManifest = (await response.json()) as {version: string}
+    return packageManifest.version
   })
 }
 
