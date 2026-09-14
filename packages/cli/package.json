@@ -128,6 +128,9 @@
       "app:function": {
         "description": "Manage Shopify Functions."
       },
+      "app:import": {
+        "description": "Import resources into your app."
+      },
       "auth": {
         "description": "Auth operations."
       },

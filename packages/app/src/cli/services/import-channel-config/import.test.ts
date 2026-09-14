@@ -1,5 +1,5 @@
 import {fetchChannelSpecExport} from './fetch.js'
-import {generateChannelSpec, CHANNEL_SPEC_DIRECTORY} from './generate.js'
+import {importChannelConfig, CHANNEL_SPEC_DIRECTORY} from './import.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -31,7 +31,7 @@ function testOptions(app: AppLinkedInterface, {stdout = false, overwrite = false
   }
 }
 
-describe('generateChannelSpec', () => {
+describe('importChannelConfig', () => {
   test('writes the TOML to the channel-config specifications directory', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -40,13 +40,13 @@ describe('generateChannelSpec', () => {
       const outputMock = mockAndCaptureOutput()
 
       // When
-      await generateChannelSpec(testOptions(app))
+      await importChannelConfig(testOptions(app))
 
       // Then
       const outputPath = joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml')
       await expect(fileExists(outputPath)).resolves.toBe(true)
       await expect(readFile(outputPath)).resolves.toEqual(TOML)
-      expect(outputMock.info()).toContain('Generated a channel spec')
+      expect(outputMock.info()).toContain('Imported the channel spec')
       expect(outputMock.info()).toContain('shopify app deploy')
     })
   })
@@ -61,7 +61,7 @@ describe('generateChannelSpec', () => {
       await writeFile(outputPath, 'existing = true\n')
 
       // When/Then
-      await expect(generateChannelSpec(testOptions(app))).rejects.toThrow(/already exists/)
+      await expect(importChannelConfig(testOptions(app))).rejects.toThrow(/already exists/)
       await expect(readFile(outputPath)).resolves.toEqual('existing = true\n')
     })
   })
@@ -76,7 +76,7 @@ describe('generateChannelSpec', () => {
       await writeFile(outputPath, 'existing = true\n')
 
       // When
-      await generateChannelSpec(testOptions(app, {overwrite: true}))
+      await importChannelConfig(testOptions(app, {overwrite: true}))
 
       // Then
       await expect(readFile(outputPath)).resolves.toEqual(TOML)
@@ -96,7 +96,7 @@ describe('generateChannelSpec', () => {
       const outputMock = mockAndCaptureOutput()
 
       // When
-      await generateChannelSpec(testOptions(app, {stdout: true}))
+      await importChannelConfig(testOptions(app, {stdout: true}))
 
       // Then
       expect(outputMock.output()).toContain(TOML)
@@ -119,7 +119,7 @@ describe('generateChannelSpec', () => {
       const outputMock = mockAndCaptureOutput()
 
       // When
-      await generateChannelSpec(testOptions(app))
+      await importChannelConfig(testOptions(app))
 
       // Then
       expect(outputMock.warn()).toContain(warning.message)
@@ -136,7 +136,7 @@ describe('generateChannelSpec', () => {
       const app = testAppLinked({directory: tmpDir})
 
       // When/Then
-      await expect(generateChannelSpec(testOptions(app))).rejects.toThrow(
+      await expect(importChannelConfig(testOptions(app))).rejects.toThrow(
         /No deployable channel spec is available for this app yet/,
       )
     })
@@ -149,7 +149,7 @@ describe('generateChannelSpec', () => {
       const app = testAppLinked({directory: tmpDir})
 
       // When/Then
-      await expect(generateChannelSpec(testOptions(app))).rejects.toThrow(/mystery_reason/)
+      await expect(importChannelConfig(testOptions(app))).rejects.toThrow(/mystery_reason/)
     })
   })
 })

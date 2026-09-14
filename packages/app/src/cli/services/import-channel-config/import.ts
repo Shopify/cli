@@ -23,7 +23,7 @@ const FAILURE_MESSAGES: {[reason: string]: string} = {
     'The Shopify-authored default for this app could not be projected into a valid public channel_config spec.',
 }
 
-export interface GenerateChannelSpecOptions {
+export interface ImportChannelConfigOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
@@ -32,14 +32,14 @@ export interface GenerateChannelSpecOptions {
 }
 
 /**
- * Generates a deployable channel_config spec TOML file for the app.
+ * Imports the Shopify-authored default channel spec as a deployable channel_config TOML file.
  *
  * On success the TOML is either printed to stdout (`--stdout`) or written to
  * `extensions/channel-config/specifications/<handle>.toml` inside the app directory. Warnings
  * returned by the backend are rendered out-of-band and are never written into the TOML file.
  * This command never deploys; the partner reviews the generated file and runs `shopify app deploy`.
  */
-export async function generateChannelSpec(options: GenerateChannelSpecOptions): Promise<void> {
+export async function importChannelConfig(options: ImportChannelConfigOptions): Promise<void> {
   const {app, remoteApp, developerPlatformClient, stdout, overwrite} = options
 
   const result = await fetchChannelSpecExport({remoteApp, developerPlatformClient})
@@ -71,7 +71,7 @@ export async function generateChannelSpec(options: GenerateChannelSpecOptions): 
   result.warnings.forEach((warning) => renderExportWarning(warning))
 
   renderSuccess({
-    headline: ['Generated a channel spec for', {userInput: remoteApp.title}, {char: '.'}],
+    headline: ['Imported the channel spec for', {userInput: remoteApp.title}, {char: '.'}],
     body: ['The spec was written to', {filePath: relativePath(app.directory, outputPath)}, {char: '.'}],
     nextSteps: [
       'Review the generated spec before deploying it.',
