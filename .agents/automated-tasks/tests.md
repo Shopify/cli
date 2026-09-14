@@ -13,7 +13,7 @@ Every branch you create MUST start with `tests-` (e.g. `tests-cover-loader`).
 - Test behavior, not implementation details.
 - Use real files and directories in temporary directories — NEVER mock the filesystem.
 - Keep tests isolated: avoid `beforeAll` / `afterAll` and minimize shared state.
-- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test:unit` before opening the PR.
+- Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test` before opening the PR.
 - Avoid adding comments to the code, unless they are important
 - When in doubt, do NOT ask for clarification — pick the best reasonable option and open the PR.
 

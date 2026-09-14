@@ -73,13 +73,12 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'INSECURE_WEBHOOK_URL',
-    title: 'Webhook URL is not HTTPS',
+    title: 'Configured callback URL is not HTTPS',
     severity: 'high',
     points: -12,
-    description: 'Detects webhook subscriptions configured with non-HTTPS absolute URLs.',
-    fix: 'Change the webhook URI to use HTTPS.',
+    description: 'Detects webhook subscriptions and OAuth redirect URLs configured with unsafe absolute URLs.',
+    fix: 'Use HTTPS or a supported Shopify-relative path for every configured callback URL.',
     guide: 'https://shopify.dev/docs/apps/webhooks',
-    requires: 'webhooks',
   },
   {
     id: 'COMMITTED_SECRET',
@@ -269,9 +268,37 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     title: 'Embedded app frame-ancestors uses a wildcard',
     severity: 'high',
     points: -12,
-    description: 'Detects wildcard frame-ancestors CSP policies in Shopify app code.',
-    fix: 'Build frame-ancestors per request from the authenticated shop domain and admin.shopify.com.',
+    description: 'Detects literal wildcard or clearly permissive frame-ancestors policies in embedded app code.',
+    fix: 'Restrict frame-ancestors to Shopify Admin and the authenticated shop origin.',
     guide: 'https://shopify.dev/docs/apps/build/security/set-up-iframe-protection',
+    requires: 'embedded_app',
+  },
+  {
+    id: 'ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS',
+    title: 'Active upload or privileged preview may execute untrusted content',
+    severity: 'high',
+    points: -15,
+    description:
+      'Investigates uploaded or imported active content that may execute in storefront, embedded admin, customer-account, or operator preview surfaces.',
+    fix: 'Sanitize or re-encode active content and isolate previews from privileged origins.',
+  },
+  {
+    id: 'DEPENDENCY_REACHABILITY',
+    title: 'Vulnerable dependency may be reachable in app code',
+    severity: 'medium',
+    points: -10,
+    description:
+      'Investigates whether a vulnerable dependency version is actually used through the affected API, helper, or configuration.',
+    fix: 'Upgrade the dependency or remove the reachable vulnerable code path.',
+  },
+  {
+    id: 'SESSION_LIFECYCLE_AND_REPLAY',
+    title: 'Session lifecycle or replay control may be missing',
+    severity: 'high',
+    points: -15,
+    description:
+      'Investigates stale sessions, replayable signed links, and missing invalidation or idempotency across lifecycle transitions.',
+    fix: 'Invalidate stale authority and enforce replay protection or re-authorization before sensitive actions.',
   },
   {
     id: 'OVERBROAD_DATA_ACCESS',

@@ -14,8 +14,23 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "dependsOn": ["^build", "check-app-doctor-checks"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
+        "cwd": "packages/app"
+      }
+    },
+    "check-app-doctor-checks": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/src/cli/services/app-doctor-engine/embed-checks.mjs",
+        "{projectRoot}/src/cli/services/app-doctor-engine/INSTRUCTIONS.md",
+        "{projectRoot}/src/cli/services/app-doctor-engine/checks/*.md",
+        "{projectRoot}/src/cli/services/app-doctor-engine/checks/embedded.ts"
+      ],
+      "options": {
+        "command": "node src/cli/services/app-doctor-engine/embed-checks.mjs --check",
         "cwd": "packages/app"
       }
     },

@@ -37,6 +37,7 @@ export interface Fix {
 export interface Capabilities {
   theme_app_extension: boolean
   app_embed: boolean
+  embedded_app: boolean
   script_tags: boolean
   webhooks: boolean
   app_proxy: boolean
@@ -177,45 +178,6 @@ export interface ScanMetadata {
   result_hash: string
   file_hashes?: Record<string, string>
   checks_executed: CheckExecution[]
-}
-
-/** Trace v1 is retained as a legacy type. Its shape is intentionally frozen. */
-export interface TraceV1 {
-  schema_version: 1
-  engine: {
-    name: typeof ENGINE_NAME
-    version: string
-    ruleset: string
-  }
-  generated_at: string
-  project: {
-    commit: string | null
-    dirty: boolean | null
-    input_hash: string
-    input_hashes: Record<string, string>
-  }
-  findings: TraceFinding[]
-  checks_executed: LegacyCheckExecution[]
-  suppressions: Suppression[]
-  coverage: {
-    files_scanned: number
-    files_skipped: SkippedFile[]
-    complete: boolean
-  }
-  attestation: {
-    digest: string
-    signed: false
-  }
-}
-
-interface LegacyCheckExecution {
-  id: string
-  version: number
-  kind: 'rule' | 'check' | 'external'
-  status: 'executed' | 'skipped'
-  findings: number
-  prompt_hash?: string
-  reason?: string
 }
 
 export const TRACE_SCHEMA_VERSION = 2 as const

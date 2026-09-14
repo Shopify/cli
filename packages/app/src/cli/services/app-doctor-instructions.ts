@@ -6,7 +6,7 @@ import {
   shellForPlatform,
   type AppDoctorCommands,
 } from './app-doctor-commands.js'
-import {EMBEDDED_APP_DOCTOR_INSTRUCTIONS} from './app-doctor-engine/index.js'
+import {getAgentInstructions} from './app-doctor-engine/index.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -109,7 +109,8 @@ export function appDoctorInstructions(options: {
 }): string {
   const paths = instructionPaths(options.directory, options.commands)
   const scanContext = options.scanComplete ? completedScanInstructions(paths) : initialScanInstructions(paths)
-  return EMBEDDED_APP_DOCTOR_INSTRUCTIONS.replace(SCAN_CONTEXT_PLACEHOLDER, scanContext)
+  return getAgentInstructions()
+    .replace(SCAN_CONTEXT_PLACEHOLDER, scanContext)
     .replaceAll('{{SCAN_COMMAND}}', paths.scanCommand)
     .replaceAll('{{COMPILE_COMMAND}}', paths.compileCommand)
     .replaceAll('{{REVIEW_PATH}}', markdownPath(paths.reviewPath))

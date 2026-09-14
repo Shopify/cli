@@ -1,6 +1,6 @@
 ---
 id: MISSING_TENANT_ISOLATION
-version: 3
+version: 4
 severity: high
 ---
 
@@ -11,13 +11,13 @@ This is a multi-tenant app: every merchant's data must be isolated by
 shop. A query that doesn't filter on the current shop is a cross-tenant
 leak. Static analysis can't catch these reliably because the scoping is
 often indirect — applied by a `before_action`, inherited from a parent
-controller, or baked into a default scope on the model. Your job is to
-follow those threads.
+controller, baked into a default scope on the model, or lost across a
+job/cache/persisted boundary. Your job is to follow those threads.
 
 ## What to look for
 
-Search for ActiveRecord queries that filter on a column other than
-`shop_id` / `shop`, or that take no tenant filter at all:
+Search for queries that filter on a column other than `shop_id` / `shop`,
+or that take no tenant filter at all:
 
 ```ruby
 Product.where(id: params[:id])
@@ -58,6 +58,17 @@ shop's id.
    holds — an unguessable capability token is a real control; a sequential
    integer id is not.
 
+7. **Trace selector provenance across boundaries.** A shop value copied into a
+   background-job payload, cache key, database row, raw header, helper argument,
+   or token-exchange artifact is only safe if you can show it was originally
+   derived from the authenticated installation/session or revalidated before use.
+
+8. **Compare read/write/update/delete paths and state transitions.** A resource
+   may be correctly scoped when created but become cross-tenant on later update,
+   delete, replay, or background-job processing. Check whether role changes,
+   uninstall/reinstall, revocation, or UI-disabled states are enforced again at
+   the backend sink.
+
 ## What to report
 
 For each genuine cross-tenant risk you find, report:
@@ -77,9 +88,10 @@ For each genuine cross-tenant risk you find, report:
 ```
 
 Be precise about the gap. "No shop filter" is not enough — explain where
-the scoping _should_ have come from and why it's missing. If you read a
-file and it turns out the query IS scoped, don't report it. You are not
-trying to find problems — you are trying to find the real ones.
+the scoping should have come from and why it is missing. If the code is
+scoped, rebound to a trusted installation/session, or only looks suspicious
+because provenance is unclear, do not report it. You are not trying to find
+problems — you are trying to find the real ones.
 
-Every finding must cite at least one file and line you actually read.
-An finding with no evidence is not a finding.
+Every finding must cite at least one file and line you actually read. A finding
+with no evidence or no demonstrated untrusted tenant path is not a finding.

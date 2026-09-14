@@ -40,10 +40,10 @@ export const deprecatedScriptTagScope: Rule = {
   },
 }
 
-/** Rule 7: INSECURE_WEBHOOK_URL (-12, high) */
+/** Rule 7: INSECURE_WEBHOOK_URL (-12, high). Stable ID also covers OAuth redirect URLs. */
 export const insecureWebhookUrl: Rule = {
   id: 'INSECURE_WEBHOOK_URL',
-  title: 'Webhook URL is not HTTPS',
+  title: 'Configured callback URL is not HTTPS',
   severity: 'high',
   points: -12,
   check(ctx: ScanContext): Issue[] {
@@ -65,7 +65,10 @@ export const insecureWebhookUrl: Rule = {
           fix: {
             automated: false,
             description: 'Use an HTTPS URL with an exact host and path, or a Shopify-relative path where supported.',
-            guide: 'https://shopify.dev/docs/apps/webhooks',
+            guide:
+              kind === 'Webhook URI'
+                ? 'https://shopify.dev/docs/apps/webhooks'
+                : 'https://shopify.dev/docs/apps/build/authentication-authorization',
           },
         })
       }

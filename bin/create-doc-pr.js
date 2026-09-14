@@ -6,7 +6,7 @@ import {createRequire} from 'node:module'
 import * as path from "pathe"
 import {findUp} from "find-up"
 
-import {withOctokit} from './github-utils.js'
+import {createWorldPullRequest} from './gitstream-utils.js'
 
 const require = createRequire(import.meta.url)
 const {readFile} = require('fs-extra')
@@ -24,32 +24,20 @@ async function createPR() {
     files[`areas/platforms/shopify-dev/db/data/docs/templated_apis/shopify_cli/${fileName}`] = (await readFile(path.join(generatedDirectory, fileName))).toString()
   }
 
-  await withOctokit("shop", async (octokit) => {
-    const response = await octokit
-      .createPullRequest({
-        owner: "shop",
-        repo: "world",
-        title: `[CLI] Update docs for version: ${version}`,
-        body: `We are updating the CLI documentation with the contents of the recently released version of the Shopify CLI [${version}](https://www.npmjs.com/package/@shopify/cli/v/${version})`,
-        head: `shopify-cli-${version}`,
-        base: "main",
-        update: true,
-        forceFork: false,
-        changes: [
-          {
-            files,
-            commit: `Update Shopify CLI documentation to version ${version}`,
-          },
-        ],
-        createWhenEmpty: false,
-      })
-
-    if (response) {
-      console.log(`PR URL: https://github.com/shop/world/pull/${response.data.number}`)
-    } else {
-      console.log("No changes detected, PR not created.")
-    }
+  const pullRequest = await createWorldPullRequest({
+    branch: `shopify-cli-${version}`,
+    base: "main",
+    title: `[CLI] Update docs for version: ${version}`,
+    body: `We are updating the CLI documentation with the contents of the recently released version of the Shopify CLI [${version}](https://www.npmjs.com/package/@shopify/cli/v/${version})`,
+    commitMessage: `Update Shopify CLI documentation to version ${version}`,
+    files,
   })
+
+  if (pullRequest) {
+    console.log(`PR URL: ${pullRequest.url}`)
+  } else {
+    console.log("No changes detected, PR not created.")
+  }
 }
 
 async function versionToRelease() {

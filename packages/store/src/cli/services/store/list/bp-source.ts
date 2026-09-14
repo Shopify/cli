@@ -2,11 +2,12 @@ import {STORE_LIST_LIMIT} from './constants.js'
 import {type StoreListEntry} from './types.js'
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
 import {planHandle} from '../plan.js'
-import {storeTypeHandle} from '../store-type.js'
+import {storeTypeFilterValue, storeTypeHandle, type StoreTypeFilter} from '../store-type.js'
 import {
   ListAccessibleShops,
   type ListAccessibleShopsQuery,
 } from '../../../api/graphql/business-platform-organizations/generated/list_accessible_shops.js'
+import {type ShopFilterInput} from '../../../api/graphql/business-platform-organizations/generated/types.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {extractHost} from '@shopify/cli-kit/common/url'
 import {type Organization} from '@shopify/organizations'
@@ -14,6 +15,7 @@ import {type Organization} from '@shopify/organizations'
 interface ListBusinessPlatformStoresOptions {
   token: string
   organization: Organization
+  storeType?: StoreTypeFilter
 }
 
 interface BusinessPlatformStoreListResult {
@@ -25,7 +27,7 @@ interface BusinessPlatformStoreListResult {
 export async function listBusinessPlatformStores(
   options: ListBusinessPlatformStoresOptions,
 ): Promise<BusinessPlatformStoreListResult> {
-  const {entries, hasMore} = await fetchOrganizationStores(options.token, options.organization)
+  const {entries, hasMore} = await fetchOrganizationStores(options.token, options.organization, options.storeType)
 
   return {
     entries: entries.sort(byCreatedAtDescending),
@@ -38,6 +40,7 @@ export async function listBusinessPlatformStores(
 async function fetchOrganizationStores(
   token: string,
   organization: Organization,
+  storeType: StoreTypeFilter | undefined,
 ): Promise<{entries: StoreListEntry[]; hasMore: boolean}> {
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
@@ -45,7 +48,7 @@ async function fetchOrganizationStores(
     query: ListAccessibleShops,
     token,
     organizationId: organization.id,
-    variables: {first: STORE_LIST_LIMIT},
+    variables: {first: STORE_LIST_LIMIT, filters: shopFilters(storeType)},
     unauthorizedHandler,
   })
 
@@ -59,6 +62,16 @@ async function fetchOrganizationStores(
   }
 
   return {entries, hasMore: accessibleShops.pageInfo.hasNextPage}
+}
+
+function shopFilters(storeType: StoreTypeFilter | undefined): ShopFilterInput[] {
+  const filters: ShopFilterInput[] = [{field: 'STORE_STATUS', operator: 'EQUALS', value: 'active'}]
+
+  if (storeType) {
+    filters.push({field: 'STORE_TYPE', operator: 'EQUALS', value: storeTypeFilterValue(storeType)})
+  }
+
+  return filters
 }
 
 type ShopNode = NonNullable<

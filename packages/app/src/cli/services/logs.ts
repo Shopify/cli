@@ -129,12 +129,7 @@ function renderAppLogsConfigInfo(
   configFile?: string,
   org?: string,
 ) {
-  const devStores = []
-  if (storeFqdns && storeFqdns.length > 0) {
-    storeFqdns.forEach((storeUrl) => devStores.push(storeUrl))
-  } else {
-    devStores.push(storeFqdn)
-  }
+  const devStores = storeFqdns && storeFqdns.length > 0 ? storeFqdns : [storeFqdn]
 
   const fileName = configFile ? getAppConfigurationFileName(configFile) : undefined
 

@@ -1,6 +1,6 @@
 ---
 id: APP_PROXY_UNVERIFIED_SIGNATURE
-version: 1
+version: 2
 severity: high
 ---
 
@@ -50,10 +50,18 @@ the proxy endpoint with forged parameters — including `shop`,
    - `hash_hmac('sha256', ...)`
    - Comparison with `timingSafeEqual` or `secure_compare`
 
+5. **Separate app-local findings from protocol hardening signals.** Missing
+   verification is a finding when the handler trusts signed parameters without
+   any verification boundary. Weak comparison, unusual canonicalization, or
+   delimiterless concatenation is not automatically an app finding: keep it
+   unresolved unless you can show a usable victim-signed request path or another
+   concrete exploit condition in this app.
+
 ## What to report
 
 For each proxy handler that reads shop/customer parameters without
-signature verification:
+signature verification, or where you can demonstrate a usable victim-signed
+request path through a weak verification implementation:
 
 ```json
 {
@@ -83,4 +91,5 @@ Do not report:
 - Handlers that call `authenticate.public.appProxy(request)` (Remix)
 - Handlers with manual HMAC verification
 - Handlers that return only static content (no shop-specific data)
+- Protocol-only canonicalization concerns with no demonstrated app-local exploit path
 - Test handlers

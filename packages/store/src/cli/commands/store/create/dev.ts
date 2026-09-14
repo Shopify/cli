@@ -11,8 +11,6 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 
 export default class StoreCreateDev extends Command {
-  static hidden = true
-
   static summary = 'Create a new dev store.'
 
   static descriptionWithMarkdown = 'Creates a new dev store in your organization.'

@@ -4,6 +4,7 @@ import {handleCtrlC, useComplete} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
+import {platformAndArch} from '../../../../public/node/os.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
@@ -64,7 +65,6 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const complete = useComplete()
   const [error, setError] = useState<string | undefined>(undefined)
   const color = promptState === PromptState.Error ? 'red' : 'cyan'
-  const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
 
   useInput((input, key) => {
@@ -128,9 +128,20 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
               />
             </Box>
           </Box>
-          <Box marginLeft={3}>
-            <Text color={color}>{underline}</Text>
-          </Box>
+          {platformAndArch().platform === 'windows' ? (
+            <Box
+              marginLeft={3}
+              borderStyle="single"
+              borderColor={color}
+              borderBottom={false}
+              borderLeft={false}
+              borderRight={false}
+            />
+          ) : (
+            <Box marginLeft={3}>
+              <Text color={color}>{'▔'.repeat(oneThird - 3)}</Text>
+            </Box>
+          )}
           {promptState === PromptState.Error ? (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>

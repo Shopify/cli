@@ -1,6 +1,6 @@
 ---
 id: SCRIPT_TAG_URL_INJECTION
-version: 1
+version: 2
 severity: high
 ---
 
@@ -45,6 +45,12 @@ injection vector, not just a deprecation issue.
    `event` and `cache` parameters. If these come from user input, they
    can be used to control when the script loads and how it's cached.
 
+5. **Follow the same URL source into adjacent executable surfaces.** Check
+   whether the persisted URL also feeds generated JavaScript/service workers,
+   iframe/script URL builders, App Proxy active responses, or admin/operator
+   previews. A field that is safe in one renderer may still become executable in
+   another.
+
 ## What to report
 
 For each ScriptTag with a user-controlled `src` URL:
@@ -78,3 +84,5 @@ Do not report:
 - ScriptTags where the URL is validated against an allowlist
 - ScriptTags in test files
 - Code that only reads existing ScriptTags (no create/update)
+- A URL that is only suspicious in one renderer but is proven non-executable or
+  safely validated before every downstream executable use
