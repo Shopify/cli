@@ -5,7 +5,9 @@ import {
 } from '../../api/graphql/business-platform-organizations/generated/poll_store_creation.js'
 import {Organization} from '../../models/organization.js'
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {recordStoreFqdnMetadata} from '../store-attribution.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
+import {numericIdFromGid} from '@shopify/cli-kit/common/gid'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -89,10 +91,15 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
     throw new AbortError(`Failed to create dev store: ${messages}`)
   }
 
-  const {shopDomain, shopAdminUrl} = createAppDevelopmentStore
+  const {shopDomain, shopAdminUrl, shopifyShopId} = createAppDevelopmentStore
   if (!shopDomain) {
     throw new AbortError('Store creation succeeded but no shop domain was returned.')
   }
+
+  // Recorded before polling so that a store which is created but never reaches COMPLETE is still
+  // attributed to the CLI. Business Platform can't tell the CLI apart from the dev dashboard in its
+  // own `store_creations` data, so command analytics are what make the split visible.
+  await recordStoreFqdnMetadata({storeFqdn: shopDomain, validated: true, storeId: numericShopId(shopifyShopId)})
 
   await renderSingleTask({
     title: outputContent`Waiting for store to be ready`,
@@ -173,6 +180,15 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
   }
 
   return shopDomain
+}
+
+/**
+ * Business Platform returns the new shop's id as a global id (`gid://shopify/Shop/123`), while store
+ * metadata records a numeric id. Values that are already numeric pass through unchanged.
+ */
+function numericShopId(shopifyShopId: string | null | undefined): string | undefined {
+  if (!shopifyShopId) return undefined
+  return shopifyShopId.startsWith('gid://') ? numericIdFromGid(shopifyShopId) : shopifyShopId
 }
 
 function pushRow(rows: InlineToken[][], label: string, value: InlineToken | undefined): void {

@@ -28,7 +28,7 @@ describe('prepareBulkAdminContext', () => {
     const result = await prepareBulkAdminContext(store)
 
     expect(loadStoredStoreSession).toHaveBeenCalledWith(store)
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(store, true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: store, validated: true})
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
     expect(result).toEqual({token: 'token', storeFqdn: store})
   })

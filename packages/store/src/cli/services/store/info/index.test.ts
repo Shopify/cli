@@ -178,7 +178,7 @@ describe('getStoreInfo', () => {
 
     expect(fetchDestinationsContext).not.toHaveBeenCalled()
     expect(fetchOrganizationShop).not.toHaveBeenCalled()
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(SHOP, true, '123')
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: SHOP, validated: true, storeId: '123'})
     expect(setLastSeenUserId).toHaveBeenCalledWith('placeholder-uuid')
     expect(getPreviewStore).toHaveBeenCalledWith({
       shopId: '123',
@@ -354,7 +354,7 @@ describe('getStoreInfo', () => {
     expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: true})
     expect(fetchOrganizationShop).not.toHaveBeenCalled()
     expect(loadStoredStoreSession).toHaveBeenCalledWith(SHOP)
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith(SHOP, true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: SHOP, validated: true})
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
     expect(adminUrl).toHaveBeenCalledWith(SHOP, 'unstable')
     expect(graphqlRequest).toHaveBeenCalledWith({
@@ -418,7 +418,7 @@ The CLI is currently unable to prompt for reauthentication.`)
 
     const result = await getStoreInfo({store: SHOP})
 
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('permanent-shop.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: 'permanent-shop.myshopify.com', validated: true})
     expect(adminUrl).toHaveBeenCalledWith('permanent-shop.myshopify.com', 'unstable')
     expect(graphqlRequest).toHaveBeenCalledWith(expect.objectContaining({token: 'fresh-token'}))
     expect(result.subdomain).toBe('permanent-shop.myshopify.com')
