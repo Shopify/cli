@@ -5,6 +5,7 @@ import {
   deepDifference,
   deepMergeObjects,
   getPathValue,
+  isEmpty,
   mapValues,
   pickBy,
   setPathValue,
@@ -361,6 +362,26 @@ describe('compact', () => {
 
     // Then
     expect(result).toEqual({})
+  })
+})
+
+describe('isEmpty', () => {
+  test('returns true for empty objects, arrays, maps, sets, strings, and nil values', () => {
+    expect(isEmpty({})).toBe(true)
+    expect(isEmpty([])).toBe(true)
+    expect(isEmpty(new Map())).toBe(true)
+    expect(isEmpty(new Set())).toBe(true)
+    expect(isEmpty('' as unknown as object)).toBe(true)
+    expect(isEmpty(null as unknown as object)).toBe(true)
+    expect(isEmpty(undefined as unknown as object)).toBe(true)
+  })
+
+  test('returns false for non-empty objects, arrays, maps, sets, and strings', () => {
+    expect(isEmpty({key: 'value'})).toBe(false)
+    expect(isEmpty([1])).toBe(false)
+    expect(isEmpty(new Map([['key', 'value']]))).toBe(false)
+    expect(isEmpty(new Set([1]))).toBe(false)
+    expect(isEmpty('text' as unknown as object)).toBe(false)
   })
 })
 
