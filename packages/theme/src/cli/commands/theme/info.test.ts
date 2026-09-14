@@ -141,7 +141,7 @@ describe('Info', () => {
 
   test('is removed from the JSON legacy exemption list', () => {
     const legacyCommandPaths = readFileSync(
-      new URL('../../../../../eslint-plugin-cli/rules/json-output-legacy-command-paths.js', import.meta.url),
+      new URL('../../../../../eslint-plugin-cli/rules/json-output-command-exceptions.js', import.meta.url),
       'utf8',
     )
 
