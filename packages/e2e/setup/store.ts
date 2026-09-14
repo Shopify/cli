@@ -162,7 +162,7 @@ export async function uninstallAppFromStore(page: Page, storeSlug: string, appNa
 
     // Force a DOM click to bypass Playwright actionability (the button can read as
     // disabled mid-transition).
-    await confirmBtn.evaluate((button) => button.click())
+    await confirmBtn.evaluate((button) => (button as HTMLButtonElement).click())
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 

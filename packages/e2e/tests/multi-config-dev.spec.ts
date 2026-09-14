@@ -98,9 +98,8 @@ extensions_summary = "E2E staging app extensions"
           appName,
           appUrl,
           appDir,
-          orgId: env.orgId,
+          env,
           storeFqdn,
-          workerIndex: env.workerIndex,
         })
         fs.rmSync(parentDir, {recursive: true, force: true})
       }
@@ -179,9 +178,8 @@ extensions_summary = "E2E staging app extensions"
           appName,
           appUrl,
           appDir,
-          orgId: env.orgId,
+          env,
           storeFqdn,
-          workerIndex: env.workerIndex,
         })
         fs.rmSync(parentDir, {recursive: true, force: true})
       }

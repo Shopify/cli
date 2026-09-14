@@ -1,182 +1,219 @@
 /* eslint-disable no-await-in-loop */
 import {uninstallAppWithAdminApi} from './admin-api.js'
-import {findAppOnDevDashboard, deleteAppFromDevDashboard} from './app.js'
-import {refreshIfPageError} from './browser.js'
-import {createLogger, e2eSection} from './env.js'
+import {waitForAppDeletionReadiness} from './app-management-api.js'
+import {deleteAppFromDevDashboard, extractClientId} from './app.js'
+import {e2eSection} from './env.js'
 import {BROWSER_TIMEOUT} from './constants.js'
-import {uninstallAppFromStore, deleteDevStoreWithCli, isStoreAppsEmpty, dismissDevConsole} from './store.js'
+import {deleteDevStoreWithCli} from './store.js'
 import type {CLIProcess} from './cli.js'
+import type {E2EEnv} from './env.js'
 import type {Page} from '@playwright/test'
 
-const log = createLogger('browser')
-
-interface BaseTeardownCtx {
+interface BaseTeardownContext {
   browserPage: Page
   appName: string
-  /** Direct Dev Dashboard app URL. Prefer this when available to avoid slow org-wide pagination. */
+  env: E2EEnv
   appUrl?: string
-  /** Local app directory. When present, uninstall goes through the Admin API instead of the store admin UI. */
-  appDir?: string
-  workerIndex?: number
 }
 
-type TeardownCtx = BaseTeardownCtx &
-  ({storeFqdn: string; orgId: string; cli: CLIProcess} | {storeFqdn?: undefined; orgId?: string; cli?: CLIProcess})
+type StoreTeardownContext = BaseTeardownContext & {
+  storeFqdn: string
+  cli: CLIProcess
+  appDir: string | undefined
+}
+
+type TeardownContext = StoreTeardownContext | (BaseTeardownContext & {storeFqdn?: undefined; appDir?: string})
+
+interface CleanupPhaseRecord {
+  phase: CleanupPhase
+  status: 'completed' | 'failed' | 'skipped'
+  detail: string
+}
+
+type CleanupPhase = 'uninstall-app' | 'wait-for-zero-installs' | 'delete-app' | 'delete-store'
 
 /**
- * Best-effort per-test teardown. Each phase retries up to 3 times.
+ * Best-effort per-test teardown.
  *
- * App + store flow:
- *   Phase 1: uninstall app from store admin
- *   Phase 2: delete store (skipped if phase 1 failed)
- *   Phase 3: delete app from dev dashboard (skipped if phase 1 failed)
- *
- * App-only flow:
- *   Phase 3 only
+ * Store-backed tests use this order:
+ * uninstall app, wait for zero installs, delete app, then delete store.
+ * Every phase records its own result and teardown never replaces the test result.
  */
-export async function teardownAll(ctx: TeardownCtx): Promise<void> {
-  const wCtx = {workerIndex: ctx.workerIndex ?? 0}
-  const page = ctx.browserPage
+export async function teardownAll(context: TeardownContext): Promise<void> {
+  const {workerIndex} = context.env
+  const clientId = resolveClientId(context)
+  const storeContext = hasStore(context) ? context : undefined
+  e2eSection({workerIndex}, `Teardown: app ${context.appName}`)
 
-  // Phase 1 + 2: Store cleanup (app+store tests only)
-  if (ctx.storeFqdn) {
-    const storeSlug = ctx.storeFqdn.replace('.myshopify.com', '')
-    e2eSection(wCtx, `Teardown: store ${ctx.storeFqdn}`)
-
-    // Phase 1: Uninstall app from store — Admin API when the app dir is known.
-    // No browser fallback: an API failure must surface loudly so it gets fixed
-    // instead of hiding behind the flaky store-admin click-through.
-    let uninstalled = false
-    if (ctx.appDir) {
-      log.log(wCtx, 'uninstalling app via admin API')
-      await uninstallAppWithAdminApi({cli: ctx.cli, appDir: ctx.appDir, storeFqdn: ctx.storeFqdn})
-      uninstalled = true
-      log.log(wCtx, 'app uninstalled via admin API')
-    }
-    if (!uninstalled) {
-      log.log(wCtx, 'uninstalling app from store')
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          uninstalled = await uninstallAppFromStore(page, storeSlug, ctx.appName)
-          if (uninstalled) {
-            log.log(wCtx, 'app uninstalled')
-            break
-          }
-          log.log(wCtx, `(${attempt}/3) app uninstall attempt failed, app still visible`)
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (err) {
-          log.log(wCtx, `(${attempt}/3) app uninstall attempt failed: ${err instanceof Error ? err.message : err}`)
-        }
-      }
-    }
-    if (!uninstalled) {
-      log.error(wCtx, 'app uninstall failed after 3 attempts')
-    }
-
-    // Phase 2: Delete store
-    log.log(wCtx, 'deleting store')
-    let storeDeletionRequested = false
-    let safeToDelete = false
-
-    // Gate: confirm the store has zero apps before attempting delete store.
-    try {
-      await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
-        waitUntil: 'domcontentloaded',
+  if (storeContext) {
+    const {appDir} = storeContext
+    if (appDir) {
+      await runCleanupPhase(workerIndex, 'uninstall-app', 'app uninstalled', () =>
+        uninstallAppWithAdminApi({
+          cli: storeContext.cli,
+          appDir,
+          storeFqdn: storeContext.storeFqdn,
+        }),
+      )
+    } else {
+      recordCleanupPhase(workerIndex, {
+        phase: 'uninstall-app',
+        status: 'skipped',
+        detail: 'app directory unavailable',
       })
-      await page.waitForTimeout(BROWSER_TIMEOUT.long)
-
-      if (page.url().includes('access_account')) {
-        log.log(wCtx, 'store already deleted')
-        storeDeletionRequested = true
-      } else {
-        await dismissDevConsole(page)
-        // Reload once in case the page is stale (Phase 1 just uninstalled)
-        if (!(await isStoreAppsEmpty(page))) {
-          await page.reload({waitUntil: 'domcontentloaded'})
-          await page.waitForTimeout(BROWSER_TIMEOUT.long)
-          await dismissDevConsole(page)
-        }
-        if (await isStoreAppsEmpty(page)) {
-          safeToDelete = true
-        } else {
-          log.error(wCtx, 'store has apps installed, skipping delete')
-        }
-      }
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (err) {
-      log.error(wCtx, `store empty state unclear, skipping delete: ${err instanceof Error ? err.message : err}`)
-    }
-
-    if (safeToDelete) {
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          const deletionConfirmed = await deleteDevStoreWithCli({
-            cli: ctx.cli,
-            storeFqdn: ctx.storeFqdn,
-            orgId: ctx.orgId,
-          })
-          log.log(wCtx, deletionConfirmed ? 'store deletion confirmed by CLI' : 'store deletion requested with CLI')
-          storeDeletionRequested = true
-          break
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (err) {
-          log.log(wCtx, `(${attempt}/3) store deletion failed: ${err instanceof Error ? err.message : err}`)
-        }
-      }
-      if (!storeDeletionRequested) {
-        log.error(wCtx, 'store deletion request failed after 3 attempts')
-      }
-    }
-
-    // Gate: confirm the store has zero apps before attempting delete app.
-    if (!uninstalled) {
-      log.log(wCtx, 'skipping app delete — uninstall failed, run `pnpm test:e2e-cleanup-apps` after')
-      return
     }
   }
 
-  // Phase 3: Delete app from dev dashboard
-  e2eSection(wCtx, `Teardown: app ${ctx.appName}`)
-  log.log(wCtx, 'deleting app')
-  let appDeleted = false
-  let stillHasInstalls = false
+  let readiness
+  try {
+    readiness = await waitForAppDeletionReadiness(context.env.processEnv, {
+      appName: context.appName,
+      clientId,
+      orgId: context.env.orgId,
+    })
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    recordCleanupPhase(workerIndex, {
+      phase: 'wait-for-zero-installs',
+      status: 'failed',
+      detail: errorMessage(error),
+    })
+    recordSkippedDeletion(workerIndex, Boolean(storeContext), 'installation state is unknown')
+    return
+  }
+
+  if (readiness.status === 'still-installed') {
+    recordCleanupPhase(workerIndex, {
+      phase: 'wait-for-zero-installs',
+      status: 'failed',
+      detail: `app still has ${readiness.installCount} install(s)`,
+    })
+    recordSkippedDeletion(workerIndex, Boolean(storeContext), 'app still has installs')
+    return
+  }
+
+  recordCleanupPhase(workerIndex, {
+    phase: 'wait-for-zero-installs',
+    status: 'completed',
+    detail: readiness.status === 'already-deleted' ? 'app already deleted' : 'app has zero installs',
+  })
+
+  let appDeleted = true
+  if (readiness.status === 'already-deleted') {
+    recordCleanupPhase(workerIndex, {phase: 'delete-app', status: 'completed', detail: 'app already deleted'})
+  } else {
+    appDeleted = await runCleanupPhase(workerIndex, 'delete-app', 'app deleted', () =>
+      deleteAppWithRetry(context, readiness.app),
+    )
+  }
+
+  if (!appDeleted) {
+    if (storeContext) {
+      recordCleanupPhase(workerIndex, {phase: 'delete-store', status: 'skipped', detail: 'app deletion failed'})
+    }
+    return
+  }
+
+  if (storeContext) {
+    await runCleanupPhase(workerIndex, 'delete-store', 'store deletion requested', () =>
+      deleteStoreWithRetry(storeContext),
+    )
+  }
+}
+
+function hasStore(context: TeardownContext): context is StoreTeardownContext {
+  return context.storeFqdn !== undefined
+}
+
+async function runCleanupPhase(
+  workerIndex: number,
+  phase: CleanupPhase,
+  detail: string,
+  operation: () => Promise<void>,
+): Promise<boolean> {
+  try {
+    await operation()
+    recordCleanupPhase(workerIndex, {phase, status: 'completed', detail})
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    recordCleanupPhase(workerIndex, {phase, status: 'failed', detail: errorMessage(error)})
+    return false
+  }
+}
+
+function recordSkippedDeletion(workerIndex: number, hasStore: boolean, detail: string): void {
+  recordCleanupPhase(workerIndex, {phase: 'delete-app', status: 'skipped', detail})
+  if (hasStore) recordCleanupPhase(workerIndex, {phase: 'delete-store', status: 'skipped', detail})
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+async function deleteAppWithRetry(context: TeardownContext, app: {id: string; key: string}): Promise<void> {
+  const numericAppId = app.id.match(/(\d+)$/)?.[1]
+  // The dashboard exposes the Delete button on its numeric app route. Keep the
+  // client-key URL only as a fallback when the API does not return a numeric GID.
+  const appUrl =
+    numericAppId && context.env.orgId
+      ? `https://dev.shopify.com/dashboard/${context.env.orgId}/apps/${numericAppId}`
+      : (context.appUrl ?? `https://dev.shopify.com/dashboard/${context.env.orgId}/apps/${app.key}`)
+
+  await retryCleanup(
+    async () => {
+      if (!(await deleteAppFromDevDashboard(context.browserPage, appUrl))) {
+        throw new Error('app deletion was not confirmed')
+      }
+    },
+    () => context.browserPage.waitForTimeout(BROWSER_TIMEOUT.medium),
+  )
+}
+
+async function deleteStoreWithRetry(context: StoreTeardownContext): Promise<void> {
+  await retryCleanup(async () => {
+    await deleteDevStoreWithCli({
+      cli: context.cli,
+      storeFqdn: context.storeFqdn,
+      orgId: context.env.orgId,
+    })
+  })
+}
+
+async function retryCleanup(operation: () => Promise<void>, waitBeforeRetry?: () => Promise<void>): Promise<void> {
+  let lastError: unknown
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const appUrl = ctx.appUrl ?? (await findAppOnDevDashboard(page, ctx.appName, ctx.orgId))
-      log.log(wCtx, ctx.appUrl ? 'using direct app URL for delete' : 'using dashboard search for delete')
-      if (!appUrl) {
-        // null could mean "app not in the list" OR "pagination ended on a stuck error page"
-        // — findAppOnDevDashboard's refresh-on-error doesn't cover every iteration.
-        // Detect and retry so we don't misclassify an error page as "already deleted".
-        if (await refreshIfPageError(page)) {
-          log.log(wCtx, `page error, refreshing...`)
-          continue
-        }
-        log.log(wCtx, 'app already deleted')
-        appDeleted = true
-        break
-      }
-      log.log(wCtx, 'app found, deleting')
-      const deleted = await deleteAppFromDevDashboard(page, appUrl)
-      if (deleted) {
-        log.log(wCtx, 'app deleted')
-        appDeleted = true
-        break
-      }
-      log.log(wCtx, `(${attempt}/3) app deletion failed`)
+      await operation()
+      return
       // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (err) {
-      // Fail fast: Delete button stays disabled while installs exist — retries won't help.
-      // cleanup-apps.ts reaps the orphan.
-      if (err instanceof Error && err.message === 'STILL_HAS_INSTALLS') {
-        log.log(wCtx, 'app delete skipped — still has installs, run `pnpm test:e2e-cleanup-apps` after')
-        stillHasInstalls = true
-        break
-      }
-      log.log(wCtx, `(${attempt}/3) app deletion failed: ${err instanceof Error ? err.message : err}`)
+    } catch (error) {
+      lastError = error
+    }
+
+    if (attempt < 3) await waitBeforeRetry?.()
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError))
+}
+
+function recordCleanupPhase(workerIndex: number, record: CleanupPhaseRecord): void {
+  const output = record.status === 'failed' ? process.stderr : process.stdout
+  output.write(
+    `[e2e][w${workerIndex}][teardown] phase=${record.phase} status=${record.status} detail=${record.detail}\n`,
+  )
+}
+
+function resolveClientId(context: TeardownContext): string | undefined {
+  if (context.appDir) {
+    try {
+      return extractClientId(context.appDir)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // The app TOML can be unavailable when setup failed partway through.
     }
   }
-  if (!appDeleted && !stillHasInstalls) {
-    log.error(wCtx, 'app deletion failed after 3 attempts')
-  }
+
+  const urlSegment = context.appUrl?.match(/\/apps\/([^/?#]+)/)?.[1]
+  return urlSegment && !/^\d+$/.test(urlSegment) ? urlSegment : undefined
 }

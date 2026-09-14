@@ -60,9 +60,8 @@ test.describe('App dev server', () => {
           appName,
           appUrl,
           appDir,
-          orgId: env.orgId,
+          env,
           storeFqdn,
-          workerIndex: env.workerIndex,
         })
         fs.rmSync(parentDir, {recursive: true, force: true})
       }
