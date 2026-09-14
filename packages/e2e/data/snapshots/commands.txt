@@ -27,6 +27,7 @@
 │  │  └─ extension
 │  ├─ graphiql
 │  ├─ import
+│  │  ├─ channel-config
 │  │  ├─ custom-data-definitions
 │  │  └─ dashboard-extensions
 │  ├─ info
