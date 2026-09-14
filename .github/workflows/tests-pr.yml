@@ -310,7 +310,6 @@ jobs:
     if: ${{ always() && needs.e2e-tests.result != 'skipped' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v6
         with:
@@ -356,6 +355,19 @@ jobs:
         run: |
           RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
           pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern "r${RUN_TOKEN}"
+      - name: Verify current-run E2E cleanup
+        if: ${{ always() }}
+        env:
+          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
+          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
+          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+          E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
+        run: |
+          RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
+          FAILED=0
+          pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --list --fail-if-found --pattern "r${RUN_TOKEN}" || FAILED=1
+          pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --list --fail-if-found --pattern "r${RUN_TOKEN}" || FAILED=1
+          exit "${FAILED}"
 
   type-diff:
     if: github.event.pull_request.head.repo.full_name == github.repository
