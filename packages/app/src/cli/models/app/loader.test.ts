@@ -1345,7 +1345,7 @@ describe('load', () => {
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      api_version = "unstable"
+      api_version = "2026-10"
       [[extensions]]
       name = "my-admin-action"
       handle = "admin-action-handle"
@@ -1356,6 +1356,11 @@ describe('load', () => {
       [[extensions.metafields]]
       namespace = "my-namespace"
       key = "my-key"
+      owner_type = "PRODUCT"
+
+      [[extensions.metafields]]
+      namespace = "my-namespace"
+      key = "my-key-without-owner-type"
 
       # extra fields not included in the schema should be ignored
       [[extensions.invalid_field]]
@@ -1384,7 +1389,7 @@ describe('load', () => {
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
-        api_version: 'unstable',
+        api_version: '2026-10',
         name: 'my-admin-action',
         handle: 'admin-action-handle',
         type: 'ui_extension',
@@ -1392,6 +1397,11 @@ describe('load', () => {
           {
             namespace: 'my-namespace',
             key: 'my-key',
+            owner_type: 'PRODUCT',
+          },
+          {
+            namespace: 'my-namespace',
+            key: 'my-key-without-owner-type',
           },
         ],
         extension_points: [
@@ -1400,6 +1410,11 @@ describe('load', () => {
               {
                 namespace: 'my-namespace',
                 key: 'my-key',
+                owner_type: 'PRODUCT',
+              },
+              {
+                namespace: 'my-namespace',
+                key: 'my-key-without-owner-type',
               },
             ],
             module: './src/ActionExtension.js',
@@ -1421,7 +1436,7 @@ describe('load', () => {
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      api_version = "2023-07"
+      api_version = "2026-10"
 
       [[extensions]]
       name = "My checkout extension"
@@ -1465,6 +1480,11 @@ describe('load', () => {
         target = "purchase.checkout.block.render"
         module = "./CheckoutDynamicRender.jsx"
 
+          [[extensions.targeting.metafields]]
+          namespace = "target-namespace"
+          key = "target-key"
+          owner_type = "CART"
+
             # extra fields not included in the schema should be ignored
       [[extensions.invalid_field]]
       namespace = "my-namespace"
@@ -1502,7 +1522,7 @@ describe('load', () => {
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
-        api_version: '2023-07',
+        api_version: '2026-10',
         name: 'My checkout extension',
         handle: 'checkout-ui',
         type: 'ui_extension',
@@ -1559,12 +1579,9 @@ describe('load', () => {
           {
             metafields: [
               {
-                key: 'my-key',
-                namespace: 'my-namespace',
-              },
-              {
-                key: 'my-other-key',
-                namespace: 'my-namespace',
+                key: 'target-key',
+                namespace: 'target-namespace',
+                owner_type: 'CART',
               },
             ],
             module: './CheckoutDynamicRender.jsx',
@@ -1575,6 +1592,13 @@ describe('load', () => {
           {
             target: 'purchase.checkout.block.render',
             module: './CheckoutDynamicRender.jsx',
+            metafields: [
+              {
+                key: 'target-key',
+                namespace: 'target-namespace',
+                owner_type: 'CART',
+              },
+            ],
           },
         ],
       })

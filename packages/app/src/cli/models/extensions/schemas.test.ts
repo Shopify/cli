@@ -1,4 +1,4 @@
-import {BaseSchema, MAX_UID_LENGTH, NewExtensionPointsSchema} from './schemas.js'
+import {BaseSchema, MAX_UID_LENGTH, MetafieldSchema, NewExtensionPointsSchema} from './schemas.js'
 import {describe, expect, test} from 'vitest'
 
 const validUIDTestCases = [
@@ -53,6 +53,32 @@ describe('UIDSchema', () => {
         expect(result.error.issues[0]?.message).toBe(expectedError)
       }
     })
+  })
+})
+
+describe('MetafieldSchema', () => {
+  test.each(['COMPANY', 'COMPANY_LOCATION', 'CUSTOMER', 'CART', 'PRODUCT', 'PRODUCTVARIANT', 'SHOP'])(
+    'accepts %s as an owner type',
+    (ownerType) => {
+      const result = MetafieldSchema.safeParse({namespace: 'custom', key: 'value', owner_type: ownerType})
+
+      expect(result).toEqual({
+        success: true,
+        data: {namespace: 'custom', key: 'value', owner_type: ownerType},
+      })
+    },
+  )
+
+  test('accepts a metafield without an owner type', () => {
+    const result = MetafieldSchema.safeParse({namespace: 'custom', key: 'value'})
+
+    expect(result.success).toBe(true)
+  })
+
+  test('rejects an unsupported owner type', () => {
+    const result = MetafieldSchema.safeParse({namespace: 'custom', key: 'value', owner_type: 'ORDER'})
+
+    expect(result.success).toBe(false)
   })
 })
 
