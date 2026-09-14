@@ -35,8 +35,13 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
   }
 }
 
+interface UploadToGCSOptions {
+  artifactName?: string
+  contentType?: string
+}
+
 /**
- * Upload a file to GCS using a signed URL.
+ * Upload a file or prepared bytes to GCS using a signed URL.
  *
  * GCS replies to the signed PUT with a non-2xx status code when the upload fails
  * (for example an expired signature, a malformed request, or a transient server
@@ -47,27 +52,41 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
  * the bundle is consumed (e.g. during devSessionCreate).
  *
  * @param signedURL - The signed URL to upload the file to
- * @param filePath - The path to the file
+ * @param filePathOrBytes - The path to the file, or prepared bytes to upload without rereading a file
+ * @param options - Optional settings; `artifactName` labels the uploaded artifact in error copy (defaults to `app bundle`), and `contentType` sends a signed Content-Type header.
  */
-export async function uploadToGCS(signedURL: string, filePath: string) {
-  const size = await fileSize(filePath)
+export async function uploadToGCS(
+  signedURL: string,
+  filePathOrBytes: string | Buffer,
+  {artifactName = 'app bundle', contentType}: UploadToGCSOptions = {},
+) {
+  const size = typeof filePathOrBytes === 'string' ? await fileSize(filePathOrBytes) : filePathOrBytes.length
   if (size > MAX_BUNDLE_SIZE_BYTES) {
     // Round up so a size that barely exceeds the cap never displays as the cap.
     const humanSize = `${(Math.ceil((size / MEGABYTE) * 100) / 100).toFixed(2)} MB`
     throw new AbortError(
-      `Your app bundle exceeds the ${MAX_BUNDLE_SIZE_MB} MB upload limit (it is ${humanSize}).`,
+      `Your ${artifactName} exceeds the ${MAX_BUNDLE_SIZE_MB} MB upload limit (it is ${humanSize}).`,
       `Check the asset paths in your extension configuration — a misconfigured source can pull in much more than intended. Exclude large files or directories from your bundle, then try again.`,
     )
   }
 
-  const buffer = readFileSync(filePath)
+  const buffer = typeof filePathOrBytes === 'string' ? readFileSync(filePathOrBytes) : filePathOrBytes
 
   let response: Response | undefined
   for (let attempt = 1; attempt <= UPLOAD_MAX_ATTEMPTS; attempt++) {
-    // The signed URL only signs the `host` header, so no extra headers are
-    // required; node-fetch derives Content-Length from the buffer body.
+    // Most signed URLs only bind the `host` header, but some (including App
+    // Doctor source scans) are also bound to a Content-Type and must send it.
+    // node-fetch derives Content-Length from the buffer body.
     // eslint-disable-next-line no-await-in-loop
-    response = await fetch(signedURL, {method: 'put', body: buffer}, 'slow-request')
+    response = await fetch(
+      signedURL,
+      {
+        method: 'put',
+        body: buffer,
+        ...(contentType === undefined ? {} : {headers: {'Content-Type': contentType}}),
+      },
+      'slow-request',
+    )
     if (response.ok) return
     const lastAttempt = attempt === UPLOAD_MAX_ATTEMPTS
     const retryable = RETRYABLE_UPLOAD_STATUS_CODES.has(response.status)
@@ -87,7 +106,7 @@ export async function uploadToGCS(signedURL: string, filePath: string) {
   const status = response?.status
   const responseBody = (await response?.text().catch(() => ''))?.trim()
   throw new AbortError(
-    `Failed to upload your app bundle to storage${status ? ` (HTTP ${status})` : ''}.`,
+    `Failed to upload your ${artifactName} to storage${status ? ` (HTTP ${status})` : ''}.`,
     'This is usually transient. Please try again, and check your network connection if it persists.',
     responseBody ? [`Storage responded with: ${responseBody.slice(0, 300)}`] : undefined,
   )

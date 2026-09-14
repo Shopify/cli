@@ -33,6 +33,15 @@ Adhere to the following guidelines in your code:
 - In tests, always avoid mocking the filesystem. Use real files and directories, in temporary directories if needed.
 - In tests, prefer to have as little shared state between tests as possible. Avoid beforeAll and afterAll.
 
+### PR creation
+
+- Use GitHub stacks for multiple dependant PRs.
+- Follow the template from .github/PULL_REQUEST_TEMPLATE.md.
+- Write a concise description, explaining the problem and the high-level approach. Include implementation details only when they help reviewers understand a decision or tradeoff. Avoid repeating what is clear from the diff. Example for the WHAT section: "Refresh expired credentials before retrying the requests, so users can continue without signing in again".
+- Remove empty sections and hidden comments.
+- Do not mark checklist items as completed (except the changelog one if added).
+- In "How to test your changes?" only include CLI commands to test locally, do not add commands to run tests or other checks.
+
 ## Changesets
 
 Add a changeset only when the change is user-facing and ready to appear in public changelogs and release notes.

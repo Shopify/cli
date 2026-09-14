@@ -1,13 +1,8 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
-import {
-  DETERMINISTIC_CHECKS,
-  assertRegistryInvariants,
-  buildReviewPack,
-  compileTrace,
-  scan,
-  sha256,
-  validateTrace,
-} from '../index.js'
+import {buildReviewPack} from '../checks/index.js'
+import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
+import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
+import {compileTrace, sha256, validateTrace} from '../trace/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {calculateScore} from '../scorer/index.js'
 import {afterEach, describe, expect, test} from 'vitest'
@@ -131,6 +126,86 @@ describe('framework and surface detection', () => {
     ).toMatchObject({status: 'executed', findings: 0})
   })
 
+  test('runs static frame-ancestors only for embedded admin apps', async () => {
+    const embedded = await scan(
+      await app({
+        'shopify.app.toml': `name = "Embedded app"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
+        'package.json': reactPackage,
+        'app/shopify.server.ts': 'export const shopify = {}',
+        'app/routes/index.tsx': `export const loader = () => null; const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+    expect(embedded.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+    })
+
+    const plain = await scan(
+      await app({
+        'shopify.app.toml': `name = "Plain app"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
+        'package.json': reactPackage,
+        'app/shopify.server.ts': 'export const shopify = {}',
+        'app/routes/index.tsx': `export const loader = () => null; const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+    expect(plain.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'not_applicable',
+      applicable: false,
+    })
+    expect(plain.issues.some((issue) => issue.id === 'STATIC_FRAME_ANCESTORS')).toBe(false)
+
+    const themeOnly = await scan(
+      await app({
+        'shopify.app.toml': `name = "Theme app"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
+        'package.json': reactPackage,
+        'app/shopify.server.ts': 'export const shopify = {}',
+        'app/routes/index.tsx': `export const loader = () => null; const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+        'extensions/theme/shopify.extension.toml': 'type = "theme"\n',
+        'extensions/theme/blocks/app.liquid': `{% schema %}{"target":"body"}{% endschema %}`,
+      }),
+    )
+    expect(themeOnly.capabilities.app_embed).toBe(true)
+    expect(themeOnly.capabilities.embedded_app).toBe(false)
+    expect(themeOnly.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject(
+      {
+        status: 'not_applicable',
+        applicable: false,
+      },
+    )
+  })
+
+  test('runs static frame-ancestors for embedded non-React-Router JavaScript apps', async () => {
+    const result = await scan(
+      await app({
+        'shopify.app.toml': `name = "Embedded generic app"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
+        'server.ts': `const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+
+    expect(result.detection.framework).toBe('unknown')
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+      inspected_files: ['server.ts'],
+    })
+  })
+
+  test('keeps embedded-app capability when any readable app config is embedded', async () => {
+    const result = await scan(
+      await app({
+        'shopify.app.toml': `name = "Embedded production"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
+        'shopify.app.staging.toml': `name = "Non-embedded staging"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
+        'server.ts': `const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+      }),
+    )
+
+    expect(result.capabilities.embedded_app).toBe(true)
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'executed',
+      findings: 1,
+    })
+  })
+
   test('keeps React Router and theme implementations inside their supported file boundaries', async () => {
     const themeDirectory = await app({
       'shopify.app.toml': appConfig(),
@@ -237,7 +312,7 @@ describe('framework and surface detection', () => {
     )?.deterministic_fallback
     expect(fallback).toMatchObject({
       check_id: 'UNSAFE_INNERHTML',
-      check_version: 1,
+      check_version: DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')!.version,
       prompt_hash: expect.stringMatching(/^sha256:/),
       framework: 'react_router',
       surface: 'react_router',
@@ -268,6 +343,28 @@ shop_deletion_url = "http://app.example/shop/redact"
     expect(issueIds).toContain('DEPRECATED_SCRIPT_TAG_SCOPE')
     expect(issueIds).toContain('INSECURE_WEBHOOK_URL')
     expect(issueIds).not.toContain('MISSING_COMPLIANCE_WEBHOOKS')
+  })
+
+  test('reports unsafe OAuth redirect URLs without a webhook capability gate', async () => {
+    const result = await scan(
+      await app({
+        'shopify.app.toml': `name = "Redirect config"
+[auth]
+redirect_urls = ["http://app.example/callback"]
+`,
+      }),
+    )
+    const execution = result.scan.checks_executed.find((check) => check.id === 'INSECURE_WEBHOOK_URL')
+    const issue = result.issues.find((finding) => finding.id === 'INSECURE_WEBHOOK_URL')
+
+    expect(execution).toMatchObject({status: 'executed', required: true, applicable: true})
+    expect(issue).toMatchObject({
+      title: 'Configured callback URL is not HTTPS',
+      message: expect.stringContaining('OAuth redirect URI'),
+    })
+    expect(
+      getRegistry().find((entry) => entry.kind === 'deterministic' && entry.id === 'INSECURE_WEBHOOK_URL'),
+    ).not.toHaveProperty('requires')
   })
 
   test('keeps unsupported source as non-secret inventory while secret scanning reports unreadable text', async () => {
@@ -302,7 +399,7 @@ describe('runtime identities', () => {
       assertRegistryInvariants({
         catalog: sharedCatalog,
         deterministic: [shared],
-        agent: [{id: shared.id, version: 1, prompt_hash: `sha256:${'a'.repeat(64)}`}],
+        agent: [{id: shared.id, version: shared.version, prompt_hash: `sha256:${'a'.repeat(64)}`}],
       }),
     ).not.toThrow()
     expect(() =>

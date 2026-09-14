@@ -29,8 +29,10 @@ import type {
 const FILE_EVENT_DEBOUNCE_TIME_IN_MS = 250
 
 const THEME_DIRECTORY_PATTERNS = [
+  'AGENTS.md',
   'assets/**/*.*',
   'config/**/*.json',
+  'config/styles.css',
   'layout/**/*.liquid',
   'locales/**/*.json',
   'sections/**/*.{liquid,json}',
@@ -41,11 +43,13 @@ const THEME_DIRECTORY_PATTERNS = [
 ]
 
 const THEME_PARTITION_REGEX = {
+  agentInstructionsRegex: /^AGENTS\.md$/,
   layoutLiquidRegex: /^layout\/.+\.liquid$/,
   sectionLiquidRegex: /^sections\/.+\.liquid$/,
   blockLiquidRegex: /^blocks\/.+\.liquid$/,
   configSchemaRegex: /^config\/settings_schema\.json$/,
   configDataRegex: /^config\/settings_data\.json$/,
+  configStylesheetRegex: /^config\/styles\.css$/,
   sectionJsonRegex: /^sections\/.+\.json$/,
   templateJsonRegex: /^templates\/.+\.json$/,
   jsonRegex: /^(?!config\/).*\.json$/,
@@ -468,13 +472,17 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
   const contextualizedJsonFiles: T[] = []
   const configSchemaFile: T[] = []
   const configDataFile: T[] = []
+  const configStylesheetFiles: T[] = []
   const staticAssetFiles: T[] = []
   const blockLiquidFiles: T[] = []
   const layoutFiles: T[] = []
+  const agentInstructionFiles: T[] = []
 
   files.forEach((file) => {
     const fileKey = file.key
-    if (fileKey.endsWith('.liquid')) {
+    if (THEME_PARTITION_REGEX.agentInstructionsRegex.test(fileKey)) {
+      agentInstructionFiles.push(file)
+    } else if (fileKey.endsWith('.liquid')) {
       if (THEME_PARTITION_REGEX.sectionLiquidRegex.test(fileKey)) {
         sectionLiquidFiles.push(file)
       } else if (THEME_PARTITION_REGEX.blockLiquidRegex.test(fileKey)) {
@@ -488,6 +496,8 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
       configSchemaFile.push(file)
     } else if (THEME_PARTITION_REGEX.configDataRegex.test(fileKey)) {
       configDataFile.push(file)
+    } else if (THEME_PARTITION_REGEX.configStylesheetRegex.test(fileKey)) {
+      configStylesheetFiles.push(file)
     } else if (THEME_PARTITION_REGEX.jsonRegex.test(fileKey)) {
       if (THEME_PARTITION_REGEX.contextualizedJsonRegex.test(fileKey)) {
         contextualizedJsonFiles.push(file)
@@ -512,9 +522,11 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
     otherJsonFiles,
     configSchemaFile,
     configDataFile,
+    configStylesheetFiles,
     staticAssetFiles,
     blockLiquidFiles,
     layoutFiles,
+    agentInstructionFiles,
   }
 }
 
@@ -533,6 +545,7 @@ export function isTextFile(path: string) {
     'text/x-sass',
     'text/x-scss',
     'image/svg+xml',
+    'text/markdown',
   ]
 
   return textFileTypes.includes(lookupMimeType(path))

@@ -1,6 +1,6 @@
 ---
 id: UNSAFE_INNERHTML
-version: 1
+version: 2
 severity: high
 ---
 
@@ -45,7 +45,13 @@ session, make API calls on their behalf, or exfiltrate data.
    - A literal string — not a finding
    - A config constant — not user-controlled, not a finding
 
-5. **Check for sanitisation.** Is the data passed through:
+5. **Trace persisted fields to every renderer.** Do not stop at browser DOM
+   sinks. Check whether the same lower-trust value later reaches generated
+   JavaScript or service workers, email and PDF rendering, operator/admin UIs,
+   previews, App Proxy active responses, or script/iframe URL construction.
+   The key question is where the value becomes executable or privileged content.
+
+6. **Check for sanitisation.** Is the data passed through:
    - `DOMPurify.sanitize(...)` — but verify it handles event handler
      attributes (onerror, onload, onfocus, onclick), not just tag removal
    - `escapeHTML(...)` or a similar escaping function

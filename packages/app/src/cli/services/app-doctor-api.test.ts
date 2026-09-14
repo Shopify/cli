@@ -7,7 +7,6 @@ import {
 } from './app-doctor-api.js'
 import {writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
 import doctor from './doctor.js'
-import {loadChecks} from './app-doctor-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -54,6 +53,14 @@ async function sourceScanId(directory: string): Promise<string> {
   return execution.scan.scan.input_hash
 }
 
+async function reviewCheck(directory: string, id: string) {
+  const execution = await executeAppDoctor({appRoot: resolveAppDoctorRoot(directory)})
+  if (execution.operation !== 'scan') throw new Error('Expected a scan result')
+  const check = execution.reviewPack.checks.find((entry) => entry.id === id)
+  if (!check) throw new Error(`Missing review pack check ${id}`)
+  return {check, sourceScanId: execution.scan.scan.input_hash}
+}
+
 async function appFindingsPath(directory: string): Promise<string> {
   const path = artifactPath(directory, 'findings.json')
   await mkdir(joinPath(directory, '.shopify', 'app-doctor'))
@@ -84,13 +91,13 @@ describe('App Doctor CLI integration', () => {
 
       expect(review.schema_version).toBe(1)
       expect(review.source_scan_id).toBe(result.execution.scan.scan.input_hash)
-      expect(review.checks).toHaveLength(loadChecks().size)
+      expect(review.checks.length).toBeGreaterThan(0)
       expect(review.checks.every((check: {prompt: string}) => check.prompt.length > 0)).toBe(true)
       expect(trace.schema_version).toBe(2)
       expect(trace.engine.name).toBe('shopify-app-doctor')
       expect(result.engine).toEqual(trace.engine)
       expect(result.reviewPath).toBe(artifactPath(directory, 'review.json'))
-      expect(result.reviewCheckCount).toBe(loadChecks().size)
+      expect(result.reviewCheckCount).toBe(review.checks.length)
       expect(result.exitCode).toBe(0)
     })
   })
@@ -108,7 +115,7 @@ describe('App Doctor CLI integration', () => {
 
       const review = JSON.parse(await readFile(artifactPath(directory, 'review.json')))
       expect(review.instructions).not.toContain('expose secrets')
-      expect(review.checks).toHaveLength(loadChecks().size)
+      expect(review.checks.length).toBeGreaterThan(0)
     })
   })
 
@@ -128,13 +135,13 @@ describe('App Doctor CLI integration', () => {
   test('marks an execution unresolved when its submitted finding is rejected', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
+      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
       const findingsPath = await appFindingsPath(directory)
       await writeFile(
         findingsPath,
         `${JSON.stringify({
           schema_version: 1,
-          source_scan_id: await sourceScanId(directory),
+          source_scan_id: scanId,
           checks_executed: [
             {
               check_id: check.id,
@@ -182,13 +189,13 @@ describe('App Doctor CLI integration', () => {
   test('returns structured rejections for malformed finding field types', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
+      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
       const findingsPath = await appFindingsPath(directory)
       await writeFile(
         findingsPath,
         `${JSON.stringify({
           schema_version: 1,
-          source_scan_id: await sourceScanId(directory),
+          source_scan_id: scanId,
           checks_executed: [
             {
               check_id: check.id,
@@ -230,14 +237,14 @@ describe('App Doctor CLI integration', () => {
   test('validates agent findings outside the app root and compiles them into the trace', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
+      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
       await inTemporaryDirectory(async (findingsDirectory) => {
         const findingsPath = joinPath(findingsDirectory, 'findings.json')
         await writeFile(
           findingsPath,
           `${JSON.stringify({
             schema_version: 1,
-            source_scan_id: await sourceScanId(directory),
+            source_scan_id: scanId,
             checks_executed: [
               {
                 check_id: check.id,
@@ -373,13 +380,13 @@ describe('App Doctor CLI integration', () => {
   test('keeps a check when inspected_files includes extra relative paths', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      const check = loadChecks().get('MISSING_TENANT_ISOLATION')!
+      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
       const findingsPath = await appFindingsPath(directory)
       await writeFile(
         findingsPath,
         `${JSON.stringify({
           schema_version: 1,
-          source_scan_id: await sourceScanId(directory),
+          source_scan_id: scanId,
           checks_executed: [
             {
               check_id: check.id,

@@ -1,6 +1,6 @@
-import {NOTIFICATION_KINDS, PRICE_BEHAVIORS} from './subscription-migrations.js'
+import {MIGRATABLE_SUBSCRIPTION_STATUSES, NOTIFICATION_KINDS, PRICE_BEHAVIORS} from './subscription-migrations.js'
 import {describe, expect, test} from 'vitest'
-import type {MigrationOperation, MigrationPlanResult} from './subscription-migrations.js'
+import type {MigratableSubscription, MigrationOperation, MigrationPlanResult} from './subscription-migrations.js'
 
 describe('subscription migration domain models', () => {
   test('matches the Partners API price behaviors', () => {
@@ -8,6 +8,47 @@ describe('subscription migration domain models', () => {
   })
 
   test('matches the Partners API notification kinds', () => {
+    expect(NOTIFICATION_KINDS).toEqual(['OPT_OUT', 'WHEN_REQUIRED'])
+  })
+
+  test('matches the Partners API migratable subscription statuses', () => {
+    expect(MIGRATABLE_SUBSCRIPTION_STATUSES).toEqual(['UNSCHEDULED', 'SCHEDULED', 'MIGRATED'])
+  })
+
+  test('represents every field returned for a migratable subscription', () => {
+    const subscription: MigratableSubscription = {
+      shopId: 'gid://shopify/Shop/1',
+      status: 'MIGRATED',
+      manualSubscriptionName: 'Legacy plan',
+      manualSubscriptionPrice: {amount: '19.99', currencyCode: 'USD'},
+      manualSubscriptionInterval: 'EVERY_30_DAYS',
+      targetPlanHandle: 'pro',
+      notification: {
+        kind: 'NONE',
+        optOutDeadline: '2025-01-02T03:04:05Z',
+        sentAt: '2025-01-01T03:04:05Z',
+      },
+      priceBehavior: 'HONOR_BILLING_PRICE',
+      effectiveDate: '2025-02-01',
+      lastFailureReason: 'SUPERSEDED',
+    }
+
+    expect(subscription).toEqual({
+      shopId: 'gid://shopify/Shop/1',
+      status: 'MIGRATED',
+      manualSubscriptionName: 'Legacy plan',
+      manualSubscriptionPrice: {amount: '19.99', currencyCode: 'USD'},
+      manualSubscriptionInterval: 'EVERY_30_DAYS',
+      targetPlanHandle: 'pro',
+      notification: {
+        kind: 'NONE',
+        optOutDeadline: '2025-01-02T03:04:05Z',
+        sentAt: '2025-01-01T03:04:05Z',
+      },
+      priceBehavior: 'HONOR_BILLING_PRICE',
+      effectiveDate: '2025-02-01',
+      lastFailureReason: 'SUPERSEDED',
+    })
     expect(NOTIFICATION_KINDS).toEqual(['OPT_OUT', 'WHEN_REQUIRED'])
   })
 

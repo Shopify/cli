@@ -1,6 +1,6 @@
 ---
 id: MISSING_AUTHORIZATION_CHECK
-version: 1
+version: 2
 severity: high
 ---
 
@@ -52,9 +52,14 @@ actions.
    - `Product.find(params[:id])` — is there a policy check, or just
      tenant scoping?
 
+6. **Compare authorization across state transitions.** Do not stop at one
+   handler. Compare create/read/update/delete paths, replay after role or UI
+   changes, direct URLs that survive permission downgrades, and backend actions
+   that remain callable after a feature is hidden or disabled in the UI.
+
 ## What to report
 
-For each action that accesses resources without authorization checks:
+For each action that exposes a concrete unauthorized operation beyond authentication:
 
 ```json
 {
@@ -78,6 +83,9 @@ For each action that accesses resources without authorization checks:
   "reasoning": "The destroy action authenticates the user but does not call authorize or check a policy. Any authenticated merchant can delete any order within their shop, even if they shouldn't have delete permissions."
 }
 ```
+
+Only report when you can show an unauthorized operation is actually reachable;
+different helper names or inconsistent UI affordances are not enough by themselves.
 
 Do not report:
 
