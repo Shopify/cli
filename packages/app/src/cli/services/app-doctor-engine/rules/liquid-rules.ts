@@ -66,6 +66,7 @@ function liquidExecutableContextVisitor(file: SourceFile) {
       const context = liquidOutputContext(ancestors)
       if (context !== 'javascript' && context !== 'executable_attribute') return undefined
       if (context === 'javascript' && filterNames(node).includes('json')) return undefined
+      if (isStaticScriptAssetUrl(node, ancestors)) return undefined
       return [
         makeLiquidIssue(
           'UNSAFE_INNERHTML',
@@ -116,6 +117,14 @@ function liquidOutputContext(ancestors: LiquidHtmlNode[]): LiquidOutputContext {
 function attributeName(attribute: AttributeNode): string {
   if (!('name' in attribute) || !Array.isArray(attribute.name)) return ''
   return attribute.name.map((part) => ('value' in part && typeof part.value === 'string' ? part.value : '')).join('')
+}
+
+function isStaticScriptAssetUrl(node: LiquidVariableOutput, ancestors: LiquidHtmlNode[]): boolean {
+  const script = ancestors.find((ancestor) => ancestor.type === 'HtmlRawNode' && ancestor.name === 'script')
+  const attribute = ancestors.find((ancestor): ancestor is AttributeNode => ancestor.type.startsWith('Attr'))
+  if (!script || !attribute || attributeName(attribute).toLowerCase() !== 'src') return false
+
+  return /^(['"])(?:\\.|(?!\1)[^\\\n])+\1\s*\|\s*asset_url\s*$/.test(outputSource(node).trim())
 }
 
 function outputSource(node: LiquidVariableOutput): string {

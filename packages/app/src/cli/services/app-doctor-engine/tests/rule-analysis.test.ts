@@ -1084,8 +1084,16 @@ describe('Liquid public AST analysis', () => {
     ])
     expect(ordinary.issues).toEqual([])
 
+    const staticAsset = scanLiquidSecurity([
+      source('<script src="{{ \'chat.js\' | asset_url }}" defer></script>', 'extensions/theme/blocks/chat.liquid'),
+    ])
+    expect(staticAsset.issues).toEqual([])
+
     const script = scanLiquidSecurity([
-      source('<script src="{{ block.settings.script | escape }}"></script>', 'extensions/theme/blocks/script.liquid'),
+      source(
+        '<script src="{{ block.settings.script | asset_url }}"></script>',
+        'extensions/theme/blocks/script.liquid',
+      ),
     ])
     expect(script.issues.map((finding) => finding.id)).toEqual(['LIQUID_UNSAFE_RENDER', 'UNSAFE_INNERHTML'])
   })
