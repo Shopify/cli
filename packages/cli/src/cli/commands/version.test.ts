@@ -1,5 +1,6 @@
 import Version from './version.js'
 import {versionJsonOutputSchema, versionService} from '../services/commands/version.js'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execa} from 'execa'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -12,6 +13,33 @@ vi.mock('../services/commands/version.js', async (importOriginal) => ({
 afterEach(() => {
   mockAndCaptureOutput().clear()
 })
+
+const commandUrl = new URL('./version.ts', import.meta.url).href
+const sourceLoaderUrl = new URL('../../../../cli-kit/test/fixtures/cli-kit-source-loader.js', import.meta.url).href
+
+const runVersion = async (arguments_: string[]) => {
+  const script = `
+    const {default: Version} = await import(${JSON.stringify(commandUrl)})
+    await Version.run(${JSON.stringify(arguments_)}, ${JSON.stringify(commandUrl)})
+  `
+
+  return execa(
+    process.execPath,
+    ['--loader', 'ts-node/esm', '--loader', sourceLoaderUrl, '--input-type=module', '--eval', script],
+    {
+      env: {
+        ...process.env,
+        FORCE_COLOR: '0',
+        NODE_NO_WARNINGS: '1',
+        SHOPIFY_CLI_ENV: 'development',
+        SHOPIFY_CLI_NO_ANALYTICS: '1',
+        SHOPIFY_UNIT_TEST: 'false',
+      },
+      reject: false,
+      stripFinalNewline: false,
+    },
+  )
+}
 
 describe('version command', () => {
   test('writes the raw version text by default', async () => {
@@ -43,43 +71,28 @@ describe('version command', () => {
     expect(Version.description).toContain('"type": "string"')
   })
 
-  test('writes raw, JSON, and JSON Schema output without stderr output', {timeout: 20000}, async () => {
-    const commandUrl = new URL('./version.ts', import.meta.url).href
-    const sourceLoaderUrl = new URL('../../../../cli-kit/test/fixtures/cli-kit-source-loader.js', import.meta.url).href
-    const run = async (arguments_: string[]) => {
-      const script = `
-        const {default: Version} = await import(${JSON.stringify(commandUrl)})
-        await Version.run(${JSON.stringify(arguments_)}, ${JSON.stringify(commandUrl)})
-      `
+  test('writes the installed version without stderr output', {timeout: 20000}, async () => {
+    const result = await runVersion([])
 
-      return execa(
-        process.execPath,
-        ['--loader', 'ts-node/esm', '--loader', sourceLoaderUrl, '--input-type=module', '--eval', script],
-        {
-          env: {
-            ...process.env,
-            FORCE_COLOR: '0',
-            NODE_NO_WARNINGS: '1',
-            SHOPIFY_CLI_ENV: 'development',
-            SHOPIFY_CLI_NO_ANALYTICS: '1',
-            SHOPIFY_UNIT_TEST: 'false',
-          },
-          reject: false,
-          stripFinalNewline: false,
-        },
-      )
-    }
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).toBe('')
+    expect(result.stdout).toBe(`${CLI_KIT_VERSION}\n`)
+  })
 
-    const text = await run([])
-    const json = await run(['--json'])
-    const jsonSchema = await run(['--json-schema'])
+  test('writes the installed version as JSON without stderr output', {timeout: 20000}, async () => {
+    const result = await runVersion(['--json'])
 
-    expect(text.exitCode, text.stderr).toBe(0)
-    expect(json.exitCode, json.stderr).toBe(0)
-    expect(jsonSchema.exitCode, jsonSchema.stderr).toBe(0)
-    expect(text.stdout).toMatch(/^.+\n$/)
-    expect(json.stdout).toMatch(/^".+"\n$/)
-    expect(JSON.parse(json.stdout)).toBe(text.stdout.trim())
-    expect(JSON.parse(jsonSchema.stdout).definitions.Result).toMatchObject({type: 'string'})
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).toBe('')
+    expect(result.stdout).toBe(`${JSON.stringify(CLI_KIT_VERSION)}\n`)
+    expect(JSON.parse(result.stdout)).toBe(CLI_KIT_VERSION)
+  })
+
+  test('writes a schema with a string result without stderr output', {timeout: 20000}, async () => {
+    const result = await runVersion(['--json-schema'])
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).toBe('')
+    expect(JSON.parse(result.stdout).definitions.Result.type).toBe('string')
   })
 })
