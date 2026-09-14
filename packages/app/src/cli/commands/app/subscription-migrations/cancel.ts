@@ -1,8 +1,12 @@
 import {operationFlags} from './flags.js'
 import {presentMigrationCancellationResult} from './result-presenter.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
+import {
+  cancelMigrationOperations,
+  migrationCancellationJsonOutputSchema,
+} from '../../../services/subscription-migrations/cancel-operations.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Cancel extends AppLinkedCommand {
   static hidden = true
@@ -24,7 +28,11 @@ Run the command from an app project. By default, it uses the Client ID from the 
     '<%= config.bin %> <%= command.id %> --client-id <client-id> --id <operation-id> --json',
   ]
 
-  static flags = {...operationFlags}
+  static flags = {...operationFlags, ...jsonFlag}
+
+  static get jsonOutputSchema() {
+    return migrationCancellationJsonOutputSchema
+  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Cancel)
