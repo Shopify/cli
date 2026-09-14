@@ -1,5 +1,5 @@
 ---
-'@shopify/app': patch
+'@shopify/app': minor
 ---
 
 Support owner types in UI extension metafield configuration.
