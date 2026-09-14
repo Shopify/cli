@@ -28,6 +28,8 @@
 │  ├─ graphiql
 │  ├─ import-custom-data-definitions
 │  ├─ import-extensions
+│  ├─ import
+│  │  └─ channel-config
 │  ├─ info
 │  ├─ init
 │  ├─ logs
