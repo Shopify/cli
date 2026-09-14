@@ -1982,18 +1982,52 @@ DESCRIPTION
 
   Output from `--json` conforms to the `AppVersionsListResult` schema.
 
-  Use `--json-schema` to print the schema directly:
+  Use `--json-schema` to print the result, error, and event schemas.
 
-  ```ts
-  type AppVersionsListResult = AppVersion[]
-
-  interface AppVersion {
-    message: string
-    versionTag?: string | null
-    status: string
-    createdAt: string
-    createdBy: string
-    versionId: string
+  ```json
+  {
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/AppVersion"
+    },
+    "title": "AppVersionsListResult",
+    "definitions": {
+      "AppVersion": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "versionTag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "createdAt",
+          "createdBy",
+          "versionId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```
 ```
