@@ -2,6 +2,7 @@ import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
   getCurrentStoredStoreAppSession,
@@ -374,6 +375,43 @@ describe('ThemeCommand', () => {
       expect(command.commandCalls[0]).toMatchObject({
         session: {token: 'shpat_preview_token', storeFqdn: 'test-store.myshopify.com'},
       })
+    })
+
+    test('attaches the skipped store auth session reason to a device authentication error', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'preview:123',
+        accessToken: 'shpat_preview_token',
+        scopes: ['read_themes'],
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(new AbortError('Failed to authenticate.'))
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      const error = await command.run().catch((thrown: unknown) => thrown)
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'The CLI found a stored store auth session for test-store.myshopify.com, but did not use it: it is a standard session and this command only reuses preview store sessions.',
+      ])
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'Pass a Theme Access password with `--password`, or run `theme pull` or `theme push`, which reuse standard store auth sessions.',
+      ])
+    })
+
+    test('propagates a device authentication error unchanged when no stored session was skipped', async () => {
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(new AbortError('Failed to authenticate.'))
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      const error = await command.run().catch((thrown: unknown) => thrown)
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect((error as AbortError).nextSteps).toBeUndefined()
     })
 
     test('treats a matching write scope in the stored session as satisfying a required read scope', async () => {

@@ -56,8 +56,15 @@ type EnvironmentName = string
  */
 export type RequiredFlags = (string | string[])[] | null
 
+interface SkippedStoreAuthSession {
+  reason: string
+  advice: string
+}
+
 export default abstract class ThemeCommand extends Command {
   static baseFlags = authAliasFlag
+
+  private readonly skippedStoreAuthSessions = new Map<string, SkippedStoreAuthSession>()
 
   environmentsFilename(): string {
     return configurationFileName
@@ -362,13 +369,23 @@ export default abstract class ThemeCommand extends Command {
   private async createSession(flags: FlagValues, storeAuthSession?: AdminSession) {
     const store = ensureThemeStore({store: flags.store as string | undefined})
     const password = flags.password as string | undefined
-    const session = password
-      ? await ensureAuthenticatedThemes(store, password)
-      : (storeAuthSession ??
-        (await this.storeAuthSessionForTheme({store})) ??
-        (await ensureAuthenticatedThemes(store, password)))
+    if (password) return ensureAuthenticatedThemes(store, password)
 
-    return session
+    const session = storeAuthSession ?? (await this.storeAuthSessionForTheme({store}))
+    if (session) return session
+
+    try {
+      return await ensureAuthenticatedThemes(store, password)
+    } catch (error) {
+      const skipped = this.skippedStoreAuthSessions.get(normalizeStoreFqdn(store))
+      if (!(error instanceof AbortError) || !skipped) throw error
+
+      throw new AbortError(error.message, error.tryMessage, [
+        ...(error.nextSteps ?? []),
+        [`The CLI found a stored store auth session for ${store}, but did not use it: ${skipped.reason}`],
+        [skipped.advice],
+      ])
+    }
   }
 
   private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {
@@ -423,27 +440,37 @@ export default abstract class ThemeCommand extends Command {
     requiredScopes: string[] | undefined,
   ): AdminSession | undefined {
     if (isSessionExpired(storedSession)) {
-      outputDebug(
-        `Ignoring stored store auth session for ${storeFqdn}: it expired at ${storedSession.expiresAt ?? 'unknown'}.`,
-      )
+      const reason = `it expired at ${storedSession.expiresAt ?? 'an unknown time'}.`
+      outputDebug(`Ignoring stored store auth session for ${storeFqdn}: ${reason}`)
+      this.skippedStoreAuthSessions.set(storeFqdn, {
+        reason,
+        advice: `Run \`shopify store auth --store ${storeFqdn}\` to store a fresh session.`,
+      })
       return undefined
     }
 
     const isPreviewSession = storedSession.kind === 'preview'
     if (!isPreviewSession) {
       if (!requiredScopes) {
-        outputDebug(
-          `Ignoring stored store auth session for ${storeFqdn}: it is a standard session and this command only reuses preview store sessions.`,
-        )
+        const reason = 'it is a standard session and this command only reuses preview store sessions.'
+        outputDebug(`Ignoring stored store auth session for ${storeFqdn}: ${reason}`)
+        this.skippedStoreAuthSessions.set(storeFqdn, {
+          reason,
+          advice:
+            'Pass a Theme Access password with `--password`, or run `theme pull` or `theme push`, which reuse standard store auth sessions.',
+        })
         return undefined
       }
 
       if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
-        outputDebug(
-          `Ignoring stored store auth session for ${storeFqdn}: it is missing required scopes (has: ${storedSession.scopes.join(
-            ', ',
-          )}; needs: ${requiredScopes.join(', ')}).`,
-        )
+        const reason = `it is missing required scopes (has: ${storedSession.scopes.join(
+          ', ',
+        )}; needs: ${requiredScopes.join(', ')}).`
+        outputDebug(`Ignoring stored store auth session for ${storeFqdn}: ${reason}`)
+        this.skippedStoreAuthSessions.set(storeFqdn, {
+          reason,
+          advice: `Run \`shopify store auth --store ${storeFqdn} --scopes ${requiredScopes.join(',')}\` to grant the required scopes.`,
+        })
         return undefined
       }
     }
