@@ -17,6 +17,7 @@ import checkoutSpec from './specifications/checkout_ui_extension.js'
 import flowActionSpecification from './specifications/flow_action.js'
 import flowTemplateSpec from './specifications/flow_template.js'
 import flowTriggerSpecification from './specifications/flow_trigger.js'
+import flowTriggerLifecycleCallbackSpec from './specifications/flow_trigger_lifecycle_callback.js'
 import functionSpec from './specifications/function.js'
 import paymentExtensionSpec from './specifications/payments_app_extension.js'
 import posUISpec from './specifications/pos_ui_extension.js'
@@ -70,6 +71,7 @@ function loadSpecifications() {
     flowActionSpecification,
     flowTemplateSpec,
     flowTriggerSpecification,
+    flowTriggerLifecycleCallbackSpec,
     functionSpec,
     paymentExtensionSpec,
     posUISpec,
