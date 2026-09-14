@@ -38,19 +38,23 @@ test.describe('App dev server', () => {
         env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
-      // Step 3: Wait for the ready message
-      await dev.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
+      try {
+        // Step 3: Wait for the ready message
+        await dev.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
 
-      // Step 4: Verify keyboard shortcuts are shown (indicates TTY mode is working)
-      const output = dev.getOutput()
-      expect(output).toContain('q')
+        // Step 4: Verify keyboard shortcuts are shown (indicates TTY mode is working)
+        const output = dev.getOutput()
+        expect(output).toContain('q')
 
-      // Step 5: Press q to quit
-      dev.sendKey('q')
+        // Step 5: Press q to quit
+        dev.sendKey('q')
 
-      // Step 6: Wait for clean exit
-      const exitCode = await dev.waitForExit(CLI_TIMEOUT.short)
-      expect(exitCode, `dev exited with non-zero code. Output:\n${dev.getOutput()}`).toBe(0)
+        // Step 6: Wait for clean exit
+        const exitCode = await dev.waitForExit(CLI_TIMEOUT.short)
+        expect(exitCode, `dev exited with non-zero code. Output:\n${dev.getOutput()}`).toBe(0)
+      } finally {
+        await dev.terminate()
+      }
     } finally {
       // E2E_SKIP_TEARDOWN=1 skips teardown for debugging. Run cleanup scripts afterward.
       if (!process.env.E2E_SKIP_TEARDOWN) {

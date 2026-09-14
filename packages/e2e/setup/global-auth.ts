@@ -8,6 +8,7 @@
 import {isVisibleWithin} from './browser.js'
 import {executables, globalLog} from './env.js'
 import {authStatePaths} from './auth-state.js'
+import {observePtyExit, terminateProcessTree} from './process.js'
 import {
   AuthSetupError,
   isExpectedAuthDestination,
@@ -130,6 +131,7 @@ async function authenticateOnce({
   } catch (_error) {
     throw new AuthSetupError('pty-startup', 'spawn-failed')
   }
+  const exitObserver = observePtyExit(ptyProcess)
 
   let output = ''
   ptyProcess.onData((data: string) => {
@@ -177,11 +179,13 @@ async function authenticateOnce({
       throw error
     }
   } finally {
-    try {
-      ptyProcess.kill()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_error) {
-      // Process may already be dead
+    if (!exitObserver.hasExited()) {
+      await terminateProcessTree({
+        pid: ptyProcess.pid,
+        command: `node ${executables.cli} auth login`,
+        owner: 'global-auth',
+        waitForExit: exitObserver.waitForExit,
+      })
     }
   }
 }

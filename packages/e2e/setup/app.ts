@@ -315,7 +315,7 @@ export async function configLink(
     const exitCode = await proc.waitForExit(CLI_TIMEOUT.long)
     return {exitCode, stdout: proc.getOutput(), stderr: ''}
   } finally {
-    proc.kill()
+    await proc.terminate()
   }
 }
 

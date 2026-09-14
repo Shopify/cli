@@ -1,5 +1,7 @@
 import {CLI_TIMEOUT} from './constants.js'
 import {createLogger, envFixture, executables} from './env.js'
+import {assertPortsAvailable} from './ports.js'
+import {observePtyExit, terminateProcessTree} from './process.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {execa, type Options as ExecaOptions} from 'execa'
 import type {E2EEnv} from './env.js'
@@ -30,8 +32,8 @@ export interface SpawnedProcess {
   sendLine(line: string): void
   /** Wait for the process to exit */
   waitForExit(timeoutMs?: number): Promise<number>
-  /** Kill the process */
-  kill(): void
+  /** Terminate the complete process tree and wait for it to exit */
+  terminate(timeoutMs?: number): Promise<void>
   /** Get all output captured so far (ANSI stripped) */
   getOutput(): string
   /** The underlying node-pty process */
@@ -49,7 +51,7 @@ export interface CLIProcess {
 
 /**
  * Test-scoped fixture providing CLI process management.
- * Tracks all spawned processes and kills them in teardown.
+ * Tracks all spawned processes and terminates them in teardown.
  */
 export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
   cli: async ({env}, use) => {
@@ -124,6 +126,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
 
         cliLog.log(env, `spawn: node ${executables.cli}`)
         cliLog.log(env, args.join(' '))
+        const command = ['node', executables.cli, ...args].map((value) => JSON.stringify(value)).join(' ')
 
         const ptyProcess = nodePty.spawn('node', [executables.cli, ...args], {
           name: 'xterm-color',
@@ -153,14 +156,9 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           }
         })
 
-        let exitCode: number | undefined
-        let exitResolve: ((code: number) => void) | undefined
+        const exitObserver = observePtyExit(ptyProcess)
 
         ptyProcess.onExit(({exitCode: code}) => {
-          exitCode = code
-          if (exitResolve) {
-            exitResolve(code)
-          }
           // Reject any remaining output waiters. reject() removes each waiter
           // from outputWaiters, so iterate over a snapshot to avoid skipping.
           for (const waiter of [...outputWaiters]) {
@@ -241,29 +239,21 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           },
 
           waitForExit(timeoutMs = CLI_TIMEOUT.short) {
-            if (exitCode !== undefined) {
-              return Promise.resolve(exitCode)
-            }
-
-            return new Promise<number>((resolve, reject) => {
-              const timer = setTimeout(() => {
-                reject(new Error(`Timed out after ${timeoutMs}ms waiting for process exit`))
-              }, timeoutMs)
-
-              exitResolve = (code) => {
-                clearTimeout(timer)
-                resolve(code)
-              }
-            })
+            return exitObserver.waitForExit(timeoutMs)
           },
 
-          kill() {
-            try {
-              ptyProcess.kill()
-              // eslint-disable-next-line no-catch-all/no-catch-all
-            } catch (_error) {
-              // Process may already be dead
-            }
+          async terminate(timeoutMs) {
+            if (exitObserver.hasExited()) return
+
+            await terminateProcessTree(
+              {
+                pid: ptyProcess.pid,
+                command,
+                owner: `worker=${env.workerIndex}`,
+                waitForExit: exitObserver.waitForExit,
+              },
+              timeoutMs,
+            )
           },
 
           getOutput() {
@@ -276,11 +266,43 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
       },
     }
 
-    await use(cli)
+    let testFailed = false
+    let testFailure: unknown
+    try {
+      await use(cli)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      testFailed = true
+      testFailure = error
+    }
 
-    // Teardown: kill all spawned processes
+    const cleanupFailures: Error[] = []
+    const ownedPorts = env.ownedPorts
+
     for (const proc of spawnedProcesses) {
-      proc.kill()
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await proc.terminate()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        cleanupFailures.push(error instanceof Error ? error : new Error(String(error)))
+      }
+    }
+
+    try {
+      await assertPortsAvailable(ownedPorts, `worker=${env.workerIndex} phase=release`)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      cleanupFailures.push(error instanceof Error ? error : new Error(String(error)))
+    }
+    ownedPorts.splice(0, ownedPorts.length)
+
+    if (testFailed && cleanupFailures.length > 0) {
+      throw new AggregateError([testFailure, ...cleanupFailures], `[e2e][w${env.workerIndex}] test and cleanup failed`)
+    }
+    if (testFailed) throw testFailure
+    if (cleanupFailures.length > 0) {
+      throw new AggregateError(cleanupFailures, `[e2e][w${env.workerIndex}] cleanup failed`)
     }
   },
 })
