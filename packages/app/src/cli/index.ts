@@ -12,6 +12,7 @@ import DoctorSubmit from './commands/app/doctor/submit.js'
 import Doctor from './commands/app/doctor.js'
 import Logs from './commands/app/logs.js'
 import Sources from './commands/app/app-logs/sources.js'
+import QueryLogs from './commands/app/app-logs/query.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import BulkExecute from './commands/app/bulk/execute.js'
@@ -61,6 +62,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:doctor': Doctor,
   'app:logs': Logs,
   'app:logs:sources': Sources,
+  'app:logs:query': QueryLogs,
   'app:import-custom-data-definitions': ImportCustomDataDefinitions,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
