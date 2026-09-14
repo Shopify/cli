@@ -1,6 +1,7 @@
 import {DevServerContext} from './types.js'
 import {setupDevServer} from './theme-environment.js'
 import {render} from './storefront-renderer.js'
+import {STOREFRONT_REQUEST_BEHAVIOUR} from './storefront-utils.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {hotReloadScriptId} from './hot-reload/server.js'
 import {
@@ -14,6 +15,7 @@ import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
 
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
+import {fetch, Response as HttpResponse} from '@shopify/cli-kit/node/http'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {createEvent} from 'h3'
 import * as output from '@shopify/cli-kit/node/output'
@@ -25,6 +27,10 @@ import {Socket} from 'node:net'
 vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: vi.fn(() => Promise.resolve([]))}))
 vi.mock('./remote-theme-watcher.js')
 vi.mock('./storefront-renderer.js')
+vi.mock('@shopify/cli-kit/node/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/http')>()),
+  fetch: vi.fn(),
+}))
 vi.spyOn(output, 'outputDebug')
 
 // Vitest is resetting this mock between tests due to a global config `mockReset: true`.
@@ -768,8 +774,8 @@ describe('setupDevServer', () => {
     })
 
     test('forwards unknown compiled_assets requests to SFR', async () => {
-      const fetchStub = vi.fn(async () => new Response())
-      vi.stubGlobal('fetch', fetchStub)
+      const fetchStub = vi.fn(async () => new HttpResponse())
+      vi.mocked(fetch).mockImplementation(fetchStub)
 
       // Request a compiled asset that doesn't exist
       await dispatchEvent(server, '/compiled_assets/nonexistent.js', {host: defaultHost})
@@ -777,10 +783,9 @@ describe('setupDevServer', () => {
       // Should fall back to proxy
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        new URL(
-          `https://${defaultServerContext.session.storeFqdn}/compiled_assets/nonexistent.js?${targetQuerystring}`,
-        ),
+        `https://${defaultServerContext.session.storeFqdn}/compiled_assets/nonexistent.js?${targetQuerystring}`,
         expect.any(Object),
+        STOREFRONT_REQUEST_BEHAVIOUR,
       )
     })
 
@@ -814,12 +819,12 @@ describe('setupDevServer', () => {
     test('proxies other requests to SFR', async () => {
       const fetchStub = vi.fn(
         async () =>
-          new Response('mocked', {
+          new HttpResponse('mocked', {
             headers: {'proxy-authorization': 'true', 'content-type': 'application/javascript'},
           }),
       )
 
-      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(fetch).mockImplementation(fetchStub)
 
       // --- Unknown endpoint:
       const eventPromise = dispatchEvent(server, '/path/to/something-else.js', {host: defaultHost})
@@ -828,7 +833,7 @@ describe('setupDevServer', () => {
 
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        new URL(`https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js?${targetQuerystring}`),
+        `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js?${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -838,6 +843,7 @@ describe('setupDevServer', () => {
             Authorization: expect.stringContaining('Bearer'),
           }),
         }),
+        STOREFRONT_REQUEST_BEHAVIOUR,
       )
 
       const {res, body} = await eventPromise
@@ -853,9 +859,7 @@ describe('setupDevServer', () => {
       ).resolves.not.toThrow()
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        new URL(
-          `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css?${targetQuerystring}`,
-        ),
+        `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css?${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -865,13 +869,14 @@ describe('setupDevServer', () => {
             Authorization: expect.stringContaining('Bearer'),
           }),
         }),
+        STOREFRONT_REQUEST_BEHAVIOUR,
       )
     })
 
     test('proxies .css.liquid assets with injected CDN', async () => {
       const fetchStub = vi.fn(
         async () =>
-          new Response(
+          new HttpResponse(
             `.some-class {
               font-family: "My Font";
               src: url(//${defaultServerContext.session.storeFqdn}/cdn/shop/t/img/assets/font.woff2);
@@ -880,7 +885,7 @@ describe('setupDevServer', () => {
           ),
       )
 
-      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(fetch).mockImplementation(fetchStub)
 
       const eventPromise = dispatchEvent(server, '/cdn/shop/t/img/assets/file3.css', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
@@ -891,8 +896,8 @@ describe('setupDevServer', () => {
     })
 
     test('proxies .js.liquid assets replacing the error query string', async () => {
-      const fetchStub = vi.fn(async () => new Response())
-      vi.stubGlobal('fetch', fetchStub)
+      const fetchStub = vi.fn(async () => new HttpResponse())
+      vi.mocked(fetch).mockImplementation(fetchStub)
       vi.useFakeTimers()
       const now = Date.now()
 
@@ -902,15 +907,16 @@ describe('setupDevServer', () => {
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
       expect(fetchStub).toHaveBeenCalledWith(
-        new URL(`https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&${targetQuerystring}`),
+        `https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&${targetQuerystring}`,
         expect.any(Object),
+        STOREFRONT_REQUEST_BEHAVIOUR,
       )
     })
 
     test('falls back to proxying if a rendering request fails with 4xx status', async () => {
       const fetchStub = vi.fn()
-      vi.stubGlobal('fetch', fetchStub)
-      fetchStub.mockResolvedValueOnce(new Response(null, {status: 302}))
+      vi.mocked(fetch).mockImplementation(fetchStub)
+      fetchStub.mockResolvedValueOnce(new HttpResponse(null, {status: 302}))
       vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
 
       const eventPromise = dispatchEvent(server, '/non-renderable-path', {host: defaultHost})
@@ -919,7 +925,7 @@ describe('setupDevServer', () => {
 
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        new URL(`https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`),
+        `https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -929,6 +935,7 @@ describe('setupDevServer', () => {
             Authorization: expect.stringContaining('Bearer'),
           }),
         }),
+        STOREFRONT_REQUEST_BEHAVIOUR,
       )
 
       await expect(eventPromise).resolves.toHaveProperty('status', 302)
@@ -946,9 +953,9 @@ describe('setupDevServer', () => {
       const standardEventsServer = setupDevServer(developmentTheme, standardEventsContext)
 
       const fetchStub = vi.fn()
-      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(fetch).mockImplementation(fetchStub)
       fetchStub.mockResolvedValueOnce(
-        new Response(`<html><head><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`, {
+        new HttpResponse(`<html><head><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`, {
           status: 200,
           headers: {'content-type': 'text/html; charset=utf-8'},
         }),
@@ -965,8 +972,8 @@ describe('setupDevServer', () => {
 
     test('forwards rendering error after proxy failure', async () => {
       const fetchStub = vi.fn()
-      vi.stubGlobal('fetch', fetchStub)
-      fetchStub.mockResolvedValueOnce(new Response(null, {status: 404}))
+      vi.mocked(fetch).mockImplementation(fetchStub)
+      fetchStub.mockResolvedValueOnce(new HttpResponse(null, {status: 404}))
       vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
 
       const eventPromise = dispatchEvent(server, '/non-renderable-path', {host: defaultHost})
@@ -975,7 +982,7 @@ describe('setupDevServer', () => {
 
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        new URL(`https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`),
+        `https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -985,6 +992,7 @@ describe('setupDevServer', () => {
             Authorization: expect.stringContaining('Bearer'),
           }),
         }),
+        STOREFRONT_REQUEST_BEHAVIOUR,
       )
 
       await expect(eventPromise).resolves.toHaveProperty('status', 401)
@@ -992,8 +1000,8 @@ describe('setupDevServer', () => {
 
     test('skips proxy for known rendering requests like Section Rendering API', async () => {
       const fetchStub = vi.fn()
-      vi.stubGlobal('fetch', fetchStub)
-      fetchStub.mockResolvedValueOnce(new Response(null, {status: 200}))
+      vi.mocked(fetch).mockImplementation(fetchStub)
+      fetchStub.mockResolvedValueOnce(new HttpResponse(null, {status: 200}))
       vi.mocked(render).mockResolvedValue(new Response(null, {status: 404}))
 
       await expect(
@@ -1017,14 +1025,14 @@ describe('setupDevServer', () => {
 
     test('only handles compiled assets for theme context, not theme-extension context', async () => {
       // Given
-      const fetchStub = vi.fn(async () => new Response('mocked compiled asset', {status: 200}))
+      const fetchStub = vi.fn(async () => new HttpResponse('mocked compiled asset', {status: 200}))
       const themeExtensionContext = {
         ...defaultServerContext,
         type: 'theme-extension' as const,
       }
       const themeExtServer = setupDevServer(developmentTheme, themeExtensionContext)
 
-      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(fetch).mockImplementation(fetchStub)
 
       // When
       const event = createH3Event({url: '/compiled_assets/styles.css', headers: {host: defaultHost}})
@@ -1033,7 +1041,7 @@ describe('setupDevServer', () => {
       // Then
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenCalledWith(
-        new URL(`https://${defaultServerContext.session.storeFqdn}/compiled_assets/styles.css?${targetQuerystring}`),
+        `https://${defaultServerContext.session.storeFqdn}/compiled_assets/styles.css?${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -1042,6 +1050,7 @@ describe('setupDevServer', () => {
             'User-Agent': expect.stringContaining('Shopify CLI'),
           }),
         }),
+        STOREFRONT_REQUEST_BEHAVIOUR,
       )
 
       // Reset for comparison with theme context
@@ -1057,7 +1066,7 @@ describe('setupDevServer', () => {
 
     test('renders error page on network errors with hot reload script injected', async () => {
       const fetchStub = vi.fn()
-      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(fetch).mockImplementation(fetchStub)
       vi.mocked(render).mockRejectedValueOnce(new Error('Network error'))
 
       const eventPromise = dispatchEvent(server, '/', {host: defaultHost})
@@ -1091,7 +1100,7 @@ describe('setupDevServer', () => {
 
     test('renders error page on upload errors with hot reload script injected', async () => {
       const fetchStub = vi.fn()
-      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(fetch).mockImplementation(fetchStub)
       localThemeFileSystem.uploadErrors.set('templates/asset.json', ['Error 1', 'Error 2'])
 
       const eventPromise = dispatchEvent(server, '/', {host: defaultHost})

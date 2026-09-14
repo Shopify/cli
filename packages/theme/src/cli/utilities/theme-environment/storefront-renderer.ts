@@ -1,7 +1,14 @@
 import {DevServerSession, DevServerRenderContext} from './types.js'
-import {cleanHeader, defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
+import {
+  cleanHeader,
+  defaultHeaders,
+  storefrontReplaceTemplatesParams,
+  STOREFRONT_REQUEST_BEHAVIOUR,
+  toWebResponse,
+} from './storefront-utils.js'
 import {parseCookies, serializeCookies} from './cookies.js'
 import {createFetchError} from '../errors.js'
+import {fetch, type Response as HttpResponse} from '@shopify/cli-kit/node/http'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
@@ -14,7 +21,7 @@ export async function render(session: DevServerSession, context: DevServerRender
     ...headers,
     ...defaultHeaders(),
   }
-  let response: Response
+  let response: HttpResponse
 
   const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
 
@@ -23,24 +30,30 @@ export async function render(session: DevServerSession, context: DevServerRender
 
     const bodyParams = storefrontReplaceTemplatesParams(context)
 
-    // eslint-disable-next-line no-restricted-globals
-    response = await fetch(url, {
-      method: 'POST',
-      body: bodyParams,
-      redirect: 'manual',
-      headers: requestHeaders,
-    }).catch((error) => {
+    response = await fetch(
+      url,
+      {
+        method: 'POST',
+        body: bodyParams,
+        redirect: 'manual',
+        headers: requestHeaders,
+      },
+      STOREFRONT_REQUEST_BEHAVIOUR,
+    ).catch((error) => {
       throw createFetchError(recordError(error), url)
     })
   } else {
     outputDebug(`→ Rendering ${url}...`)
 
-    // eslint-disable-next-line no-restricted-globals
-    response = await fetch(url, {
-      method: context.method,
-      redirect: 'manual',
-      headers: requestHeaders,
-    }).catch((error) => {
+    response = await fetch(
+      url,
+      {
+        method: context.method,
+        redirect: 'manual',
+        headers: requestHeaders,
+      },
+      STOREFRONT_REQUEST_BEHAVIOUR,
+    ).catch((error) => {
       throw createFetchError(recordError(error), url)
     })
   }
@@ -56,13 +69,13 @@ export async function render(session: DevServerSession, context: DevServerRender
   const contentType = response.headers.get('Content-Type')
   const isJsonResponse = contentType?.includes('application/json')
 
-  response = new Response(response.body, response)
+  const webResponse = toWebResponse(response)
 
   if (!isJsonResponse) {
-    response.headers.delete('Content-Type')
+    webResponse.headers.delete('Content-Type')
   }
 
-  return response
+  return webResponse
 }
 
 export async function buildHeaders(session: DevServerSession, context: Pick<DevServerRenderContext, 'headers'>) {
