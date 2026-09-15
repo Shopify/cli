@@ -37,7 +37,7 @@ interface ValidEnvironment {
   environment: EnvironmentName
   flags: FlagValues
   requiresAuth: boolean
-  storeAuthSession?: AdminSession
+  storeAuthResult?: StoreAuthSessionResult
 }
 type EnvironmentName = string
 /**
@@ -58,13 +58,16 @@ export type RequiredFlags = (string | string[])[] | null
 
 interface SkippedStoreAuthSession {
   reason: string
-  advice: string
+  advice?: string
+}
+
+interface StoreAuthSessionResult {
+  session?: AdminSession
+  skipped?: SkippedStoreAuthSession
 }
 
 export default abstract class ThemeCommand extends Command {
   static baseFlags = authAliasFlag
-
-  private readonly skippedStoreAuthSessions = new Map<string, SkippedStoreAuthSession>()
 
   environmentsFilename(): string {
     return configurationFileName
@@ -216,25 +219,25 @@ export default abstract class ThemeCommand extends Command {
 
     const storeAuthSessionsByStore = requiresAuth
       ? this.storeAuthSessionsForTheme(Array.from(environmentMap.values()).map(({validationFlags}) => validationFlags))
-      : new Map<string, AdminSession>()
+      : new Map<string, StoreAuthSessionResult>()
 
     const entriesWithStoreAuthSessions = Array.from(environmentMap.entries()).map(
       ([environmentName, {flags, validationFlags}]) => ({
         environmentName,
         flags,
         validationFlags,
-        storeAuthSession: this.storeAuthSessionFromCache(validationFlags, storeAuthSessionsByStore),
+        storeAuthResult: this.storeAuthSessionFromCache(validationFlags, storeAuthSessionsByStore),
       }),
     )
 
-    for (const {environmentName, flags, validationFlags, storeAuthSession} of entriesWithStoreAuthSessions) {
-      const validationResult = this.validConfig(validationFlags, requiredFlags, environmentName, storeAuthSession)
+    for (const {environmentName, flags, validationFlags, storeAuthResult} of entriesWithStoreAuthSessions) {
+      const validationResult = this.validConfig(validationFlags, requiredFlags, environmentName, storeAuthResult)
       if (validationResult !== true) {
         const missingFlagsText = validationResult.join(', ')
         invalid.push({environment: environmentName, reason: `Missing flags: ${missingFlagsText}`})
         continue
       }
-      valid.push({environment: environmentName, flags, requiresAuth, storeAuthSession})
+      valid.push({environment: environmentName, flags, requiresAuth, storeAuthResult})
     }
 
     return {valid, invalid}
@@ -310,13 +313,13 @@ export default abstract class ThemeCommand extends Command {
     for (const runGroup of runGroups) {
       // eslint-disable-next-line no-await-in-loop
       await renderConcurrent({
-        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthSession}) => ({
+        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthResult}) => ({
           prefix: environment,
           action: async (stdout: Writable, stderr: Writable, _signal) => {
             try {
               const store = flags.store as string
               await useThemeStoreContext(store, async () => {
-                const session = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
+                const session = requiresAuth ? await this.createSession(flags, storeAuthResult) : undefined
 
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
@@ -366,41 +369,42 @@ export default abstract class ThemeCommand extends Command {
    * @param flags - The environment flags containing store and password
    * @returns The unauthenticated session object
    */
-  private async createSession(flags: FlagValues, storeAuthSession?: AdminSession) {
+  private async createSession(flags: FlagValues, storeAuthResult?: StoreAuthSessionResult) {
     const store = ensureThemeStore({store: flags.store as string | undefined})
     const password = flags.password as string | undefined
     if (password) return ensureAuthenticatedThemes(store, password)
 
-    const session = storeAuthSession ?? (await this.storeAuthSessionForTheme({store}))
-    if (session) return session
+    const result = storeAuthResult ?? (await this.storeAuthSessionForTheme({store}))
+    if (result.session) return result.session
 
     try {
       return await ensureAuthenticatedThemes(store, password)
     } catch (error) {
-      const skipped = this.skippedStoreAuthSessions.get(normalizeStoreFqdn(store))
+      const skipped = result.skipped
       if (!(error instanceof AbortError) || !skipped) throw error
 
-      throw new AbortError(error.message, error.tryMessage, [
+      error.nextSteps = [
         ...(error.nextSteps ?? []),
         [`The CLI found a stored store auth session for ${store}, but did not use it: ${skipped.reason}`],
-        [skipped.advice],
-      ])
+        ...(skipped.advice === undefined ? [] : [[skipped.advice]]),
+      ]
+      throw error
     }
   }
 
-  private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {
+  private async storeAuthSessionForTheme(flags: FlagValues): Promise<StoreAuthSessionResult> {
     const store = typeof flags.store === 'string' ? flags.store : undefined
     const password = flags.password
-    if (!store || password) return undefined
+    if (!store || password) return {}
 
     const storeFqdn = normalizeStoreFqdn(store)
     const storedSession = getCurrentStoredStoreAppSession(storeFqdn)
-    if (!storedSession) return undefined
+    if (!storedSession) return {}
 
     return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, this.storeAuthScopes())
   }
 
-  private storeAuthSessionsForTheme(flagsList: FlagValues[]): Map<string, AdminSession> {
+  private storeAuthSessionsForTheme(flagsList: FlagValues[]): Map<string, StoreAuthSessionResult> {
     const requiredScopes = this.storeAuthScopes()
 
     const stores = new Set(
@@ -416,17 +420,16 @@ export default abstract class ThemeCommand extends Command {
           const storeFqdn = normalizeStoreFqdn(storedSession.store)
           if (!stores.has(storeFqdn)) return undefined
 
-          const session = this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
-          return session ? ([storeFqdn, session] as const) : undefined
+          return [storeFqdn, this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)] as const
         })
-        .filter((entry): entry is readonly [string, AdminSession] => entry !== undefined),
+        .filter((entry): entry is readonly [string, StoreAuthSessionResult] => entry !== undefined),
     )
   }
 
   private storeAuthSessionFromCache(
     flags: FlagValues,
-    storeAuthSessionsByStore: Map<string, AdminSession>,
-  ): AdminSession | undefined {
+    storeAuthSessionsByStore: Map<string, StoreAuthSessionResult>,
+  ): StoreAuthSessionResult | undefined {
     const store = typeof flags.store === 'string' ? flags.store : undefined
     const password = flags.password
     if (!store || password) return undefined
@@ -438,28 +441,28 @@ export default abstract class ThemeCommand extends Command {
     storedSession: StoredStoreAppSession,
     storeFqdn: string,
     requiredScopes: string[] | undefined,
-  ): AdminSession | undefined {
+  ): StoreAuthSessionResult {
+    const isPreviewSession = storedSession.kind === 'preview'
+
     if (isSessionExpired(storedSession)) {
       const reason = `it expired at ${storedSession.expiresAt ?? 'an unknown time'}.`
       outputDebug(`Ignoring stored store auth session for ${storeFqdn}: ${reason}`)
-      this.skippedStoreAuthSessions.set(storeFqdn, {
-        reason,
-        advice: `Run \`shopify store auth --store ${storeFqdn}\` to store a fresh session.`,
-      })
-      return undefined
+      return {
+        skipped: {
+          reason,
+          // A preview store has no account to log in as, so `store auth` cannot replace its session.
+          advice: isPreviewSession
+            ? undefined
+            : `Run \`shopify store auth --store ${storeFqdn}\` to store a fresh session.`,
+        },
+      }
     }
 
-    const isPreviewSession = storedSession.kind === 'preview'
     if (!isPreviewSession) {
       if (!requiredScopes) {
         const reason = 'it is a standard session and this command only reuses preview store sessions.'
         outputDebug(`Ignoring stored store auth session for ${storeFqdn}: ${reason}`)
-        this.skippedStoreAuthSessions.set(storeFqdn, {
-          reason,
-          advice:
-            'Pass a Theme Access password with `--password`, or run `theme pull` or `theme push`, which reuse standard store auth sessions.',
-        })
-        return undefined
+        return {skipped: {reason, advice: 'Pass a Theme Access password with `--password`.'}}
       }
 
       if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
@@ -467,11 +470,12 @@ export default abstract class ThemeCommand extends Command {
           ', ',
         )}; needs: ${requiredScopes.join(', ')}).`
         outputDebug(`Ignoring stored store auth session for ${storeFqdn}: ${reason}`)
-        this.skippedStoreAuthSessions.set(storeFqdn, {
-          reason,
-          advice: `Run \`shopify store auth --store ${storeFqdn} --scopes ${requiredScopes.join(',')}\` to grant the required scopes.`,
-        })
-        return undefined
+        return {
+          skipped: {
+            reason,
+            advice: `Run \`shopify store auth --store ${storeFqdn} --scopes ${requiredScopes.join(',')}\` to grant the required scopes.`,
+          },
+        }
       }
     }
 
@@ -480,8 +484,10 @@ export default abstract class ThemeCommand extends Command {
     setLastSeenUserId(storedSession.userId)
 
     return {
-      token: storedSession.accessToken,
-      storeFqdn,
+      session: {
+        token: storedSession.accessToken,
+        storeFqdn,
+      },
     }
   }
 
@@ -514,13 +520,13 @@ export default abstract class ThemeCommand extends Command {
     environmentFlags: FlagValues,
     requiredFlags: Exclude<RequiredFlags, null>,
     environmentName: string,
-    storeAuthSession?: AdminSession,
+    storeAuthResult?: StoreAuthSessionResult,
   ): string[] | true {
     const missingFlags = requiredFlags
       .filter((flag) =>
         Array.isArray(flag)
-          ? !flag.some((flag) => this.hasRequiredFlag(environmentFlags, flag, storeAuthSession))
-          : !this.hasRequiredFlag(environmentFlags, flag, storeAuthSession),
+          ? !flag.some((flag) => this.hasRequiredFlag(environmentFlags, flag, storeAuthResult))
+          : !this.hasRequiredFlag(environmentFlags, flag, storeAuthResult),
       )
       .map((flag) => (Array.isArray(flag) ? flag.join(' or ') : flag))
 
@@ -537,8 +543,12 @@ export default abstract class ThemeCommand extends Command {
     return true
   }
 
-  private hasRequiredFlag(environmentFlags: FlagValues, flag: string, storeAuthSession?: AdminSession): boolean {
-    if (flag === 'password' && storeAuthSession) return true
+  private hasRequiredFlag(
+    environmentFlags: FlagValues,
+    flag: string,
+    storeAuthResult?: StoreAuthSessionResult,
+  ): boolean {
+    if (flag === 'password' && storeAuthResult?.session) return true
     return Boolean(environmentFlags[flag])
   }
 

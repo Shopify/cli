@@ -377,6 +377,29 @@ describe('ThemeCommand', () => {
       })
     })
 
+    test('reuses an unscoped preview store session for a command that declares store auth scopes', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'preview:123',
+        accessToken: 'shpat_preview_token',
+        scopes: [],
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+        kind: 'preview',
+        preview: {shopId: '1', name: 'Preview Store', createdAt: '2026-06-08T11:00:00.000Z'},
+      })
+
+      await CommandConfig.load()
+      const command = new TestScopedThemeCommand([], CommandConfig)
+
+      await command.run()
+
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(command.commandCalls[0]).toMatchObject({
+        session: {token: 'shpat_preview_token', storeFqdn: 'test-store.myshopify.com'},
+      })
+    })
+
     test('attaches the skipped store auth session reason to a device authentication error', async () => {
       vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
         store: 'test-store.myshopify.com',
@@ -385,6 +408,36 @@ describe('ThemeCommand', () => {
         accessToken: 'shpat_preview_token',
         scopes: ['read_themes'],
         acquiredAt: '2026-06-08T11:00:00.000Z',
+      })
+      const abortError = new AbortError('Failed to authenticate.')
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(abortError)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      const error = await command.run().catch((thrown: unknown) => thrown)
+
+      expect(error).toBe(abortError)
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'The CLI found a stored store auth session for test-store.myshopify.com, but did not use it: it is a standard session and this command only reuses preview store sessions.',
+      ])
+      expect((error as AbortError).nextSteps).toContainEqual(['Pass a Theme Access password with `--password`.'])
+      expect((error as AbortError).nextSteps).not.toContainEqual([
+        'Pass a Theme Access password with `--password`, or run `theme pull` or `theme push`, which reuse standard store auth sessions.',
+      ])
+    })
+
+    test('omits the store auth advice when an expired preview store session is skipped', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'preview:123',
+        accessToken: 'shpat_preview_token',
+        scopes: [],
+        expiresAt: '2020-01-01T00:00:00.000Z',
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+        kind: 'preview',
+        preview: {shopId: '1', name: 'Preview Store', createdAt: '2026-06-08T11:00:00.000Z'},
       })
       vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(new AbortError('Failed to authenticate.'))
 
@@ -395,10 +448,10 @@ describe('ThemeCommand', () => {
 
       expect(error).toBeInstanceOf(AbortError)
       expect((error as AbortError).nextSteps).toContainEqual([
-        'The CLI found a stored store auth session for test-store.myshopify.com, but did not use it: it is a standard session and this command only reuses preview store sessions.',
+        'The CLI found a stored store auth session for test-store.myshopify.com, but did not use it: it expired at 2020-01-01T00:00:00.000Z.',
       ])
-      expect((error as AbortError).nextSteps).toContainEqual([
-        'Pass a Theme Access password with `--password`, or run `theme pull` or `theme push`, which reuse standard store auth sessions.',
+      expect((error as AbortError).nextSteps).not.toContainEqual([
+        'Run `shopify store auth --store test-store.myshopify.com` to store a fresh session.',
       ])
     })
 
@@ -412,6 +465,102 @@ describe('ThemeCommand', () => {
 
       expect(error).toBeInstanceOf(AbortError)
       expect((error as AbortError).nextSteps).toBeUndefined()
+    })
+
+    test('attaches the missing-scopes reason and scope advice to a device authentication error', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'store-auth-user',
+        accessToken: 'shpat_standard_token',
+        scopes: ['read_products'],
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(new AbortError('Failed to authenticate.'))
+
+      await CommandConfig.load()
+      const command = new TestScopedThemeCommand([], CommandConfig)
+
+      const error = await command.run().catch((thrown: unknown) => thrown)
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'The CLI found a stored store auth session for test-store.myshopify.com, but did not use it: it is missing required scopes (has: read_products; needs: read_themes).',
+      ])
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'Run `shopify store auth --store test-store.myshopify.com --scopes read_themes` to grant the required scopes.',
+      ])
+    })
+
+    test('attaches the store auth advice when an expired standard session is skipped', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'store-auth-user',
+        accessToken: 'shpat_standard_token',
+        scopes: ['read_themes'],
+        expiresAt: '2020-01-01T00:00:00.000Z',
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(new AbortError('Failed to authenticate.'))
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      const error = await command.run().catch((thrown: unknown) => thrown)
+
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'The CLI found a stored store auth session for test-store.myshopify.com, but did not use it: it expired at 2020-01-01T00:00:00.000Z.',
+      ])
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'Run `shopify store auth --store test-store.myshopify.com` to store a fresh session.',
+      ])
+    })
+
+    test('names the stored expiry when the expiry timestamp is invalid', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'store-auth-user',
+        accessToken: 'shpat_standard_token',
+        scopes: ['read_themes'],
+        expiresAt: 'not-a-date',
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(new AbortError('Failed to authenticate.'))
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      const error = await command.run().catch((thrown: unknown) => thrown)
+
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'The CLI found a stored store auth session for test-store.myshopify.com, but did not use it: it expired at not-a-date.',
+      ])
+      expect((error as AbortError).nextSteps).toContainEqual([
+        'Run `shopify store auth --store test-store.myshopify.com` to store a fresh session.',
+      ])
+    })
+
+    test('propagates a non-AbortError unchanged when a stored session was skipped', async () => {
+      vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+        store: 'test-store.myshopify.com',
+        clientId: 'store-auth-client-id',
+        userId: 'store-auth-user',
+        accessToken: 'shpat_standard_token',
+        scopes: ['read_themes'],
+        acquiredAt: '2026-06-08T11:00:00.000Z',
+      })
+      const failure = new Error('Network failed.')
+      vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(failure)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      const error = await command.run().catch((thrown: unknown) => thrown)
+
+      expect(error).toBe(failure)
+      expect((error as {nextSteps?: unknown}).nextSteps).toBeUndefined()
     })
 
     test('treats a matching write scope in the stored session as satisfying a required read scope', async () => {
@@ -1269,6 +1418,43 @@ describe('ThemeCommand', () => {
       )
       expect(renderConcurrent).not.toHaveBeenCalled()
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+
+    test('multiple environment commands reuse the pre-pass result instead of re-reading a skipped session', async () => {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2'})
+      vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([
+        {
+          store: 'store1.myshopify.com',
+          clientId: 'store-auth-client-id',
+          userId: 'store-auth-user',
+          accessToken: 'shpat_standard_token',
+          scopes: ['read_themes'],
+          acquiredAt: '2026-06-08T11:00:00.000Z',
+        },
+      ])
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'preview', '--environment', 'another-preview'],
+        CommandConfig,
+      )
+
+      await command.run()
+
+      expect(listCurrentStoredStoreAppSessions).toHaveBeenCalledOnce()
+      expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('store1.myshopify.com', undefined)
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith('store2.myshopify.com', 'password2')
     })
 
     test('commands will only create a session object if the password flag is supported', async () => {
