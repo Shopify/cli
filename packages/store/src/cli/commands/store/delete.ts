@@ -13,7 +13,7 @@ export default class StoreDelete extends Command {
 
   static descriptionWithMarkdown = 'Deletes a dev store from your organization.'
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567',

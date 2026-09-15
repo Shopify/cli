@@ -16,7 +16,7 @@ export default class Preview extends ThemeCommand {
 
   The command returns a preview URL and a preview identifier. You can reuse the preview identifier with \`--preview-id\` to update an existing preview instead of creating a new one.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

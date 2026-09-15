@@ -11,7 +11,7 @@ export default class Execute extends AppLinkedCommand {
 
   For operations that process large amounts of data, use [\`bulk execute\`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

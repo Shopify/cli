@@ -46,7 +46,7 @@ export default class Push extends ThemeCommand {
   \`\`\`
     `
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

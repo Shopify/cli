@@ -21,7 +21,7 @@ export default class FunctionInfo extends AppUnlinkedCommand {
   - The WASM path
   - The function runner path`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
