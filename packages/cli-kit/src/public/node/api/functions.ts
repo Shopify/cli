@@ -1,5 +1,4 @@
-import {handleDeprecations} from './app-management.js'
-import {graphqlRequestDoc, UnauthorizedHandler} from './graphql.js'
+import {graphqlRequestDoc, handleDeprecations, UnauthorizedHandler} from './graphql.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
