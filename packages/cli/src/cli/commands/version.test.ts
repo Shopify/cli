@@ -1,12 +1,13 @@
 import Version from './version.js'
-import {versionJsonOutputSchema, versionService} from '../services/commands/version.js'
+import {versionService} from '../services/commands/version/index.js'
+import {versionJsonOutputSchema} from '../services/commands/version/types.js'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execa} from 'execa'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('../services/commands/version.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../services/commands/version.js')>()),
+vi.mock('../services/commands/version/index.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../services/commands/version/index.js')>()),
   versionService: vi.fn(),
 }))
 
@@ -44,7 +45,7 @@ const runVersion = async (arguments_: string[]) => {
 describe('version command', () => {
   test('writes the raw version text by default', async () => {
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(versionService).mockResolvedValue('2.2.2')
+    vi.mocked(versionService).mockResolvedValue({version: '2.2.2'})
 
     await Version.run([], import.meta.url)
 
@@ -53,22 +54,22 @@ describe('version command', () => {
     expect(outputMock.warn()).toBe('')
   })
 
-  test('writes one scalar JSON document when requested', async () => {
+  test('writes one JSON document when requested', async () => {
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(versionService).mockResolvedValue('2.2.2')
+    vi.mocked(versionService).mockResolvedValue({version: '2.2.2'})
 
     await Version.run(['--json'], import.meta.url)
 
-    expect(outputMock.output()).toBe('"2.2.2"')
-    expect(JSON.parse(outputMock.output())).toBe('2.2.2')
+    expect(outputMock.output()).toBe(JSON.stringify({version: '2.2.2'}, null, 2))
+    expect(JSON.parse(outputMock.output())).toEqual({version: '2.2.2'})
     expect(outputMock.warn()).toBe('')
   })
 
-  test('exposes the scalar schema and JSON flags in help', () => {
+  test('exposes the object schema and JSON flags in help', () => {
     expect(Version.jsonOutputSchema).toBe(versionJsonOutputSchema)
     expect(Version.flags.json).toBeDefined()
     expect(Version.description).toContain('Output from `--json` conforms to the `VersionResult` schema.')
-    expect(Version.description).toContain('"type": "string"')
+    expect(Version.description).toContain('"type": "object"')
   })
 
   test('writes the installed version without stderr output', {timeout: 20000}, async () => {
@@ -84,15 +85,19 @@ describe('version command', () => {
 
     expect(result.exitCode).toBe(0)
     expect(result.stderr).toBe('')
-    expect(result.stdout).toBe(`${JSON.stringify(CLI_KIT_VERSION)}\n`)
-    expect(JSON.parse(result.stdout)).toBe(CLI_KIT_VERSION)
+    expect(result.stdout).toBe(`${JSON.stringify({version: CLI_KIT_VERSION}, null, 2)}\n`)
+    expect(JSON.parse(result.stdout)).toEqual({version: CLI_KIT_VERSION})
   })
 
-  test('writes a schema with a string result without stderr output', {timeout: 20000}, async () => {
+  test('writes a schema with an object result without stderr output', {timeout: 20000}, async () => {
     const result = await runVersion(['--json-schema'])
 
     expect(result.exitCode).toBe(0)
     expect(result.stderr).toBe('')
-    expect(JSON.parse(result.stdout).definitions.Result.type).toBe('string')
+    const definition = JSON.parse(result.stdout).definitions.Result
+    expect(definition.type).toBe('object')
+    expect(definition.properties.version).toEqual({type: 'string'})
+    expect(definition.required).toEqual(['version'])
+    expect(definition.additionalProperties).toBe(false)
   })
 })

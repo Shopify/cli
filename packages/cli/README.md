@@ -5859,7 +5859,16 @@ DESCRIPTION
 
   ```json
   {
-    "type": "string",
+    "type": "object",
+    "properties": {
+      "version": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "version"
+    ],
+    "additionalProperties": false,
     "title": "VersionResult",
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
