@@ -11492,7 +11492,7 @@
       ],
       "args": {
       },
-      "description": "Shopify CLI version currently installed.\n\nOutput from `--json` conforms to the `VersionResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"string\",\n  \"title\": \"VersionResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "description": "Shopify CLI version currently installed.\n\nOutput from `--json` conforms to the `VersionResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"version\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"version\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"VersionResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Shopify CLI version currently installed.",
       "enableJsonFlag": false,
       "flags": {

@@ -1,7 +1,8 @@
-import {versionJsonOutputSchema, versionService} from '../services/commands/version.js'
+import {versionService} from '../services/commands/version/index.js'
+import {presentVersionResult} from '../services/commands/version/result.js'
+import {versionJsonOutputSchema} from '../services/commands/version/types.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class Version extends Command {
   static descriptionWithMarkdown = 'Shopify CLI version currently installed.'
@@ -19,8 +20,8 @@ export default class Version extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Version)
-    const version = await versionService()
+    const result = await versionService()
 
-    outputResult(flags.json ? versionJsonOutputSchema.encode(version) : version)
+    presentVersionResult(result, flags.json ? 'json' : 'text')
   }
 }
