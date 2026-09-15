@@ -1,5 +1,5 @@
+import {appVersionsListJsonOutputSchema, type AppVersionsListResult} from './types.js'
 import {renderCurrentlyUsedConfigInfo} from '../context.js'
-import {appVersionsListJsonOutputSchema, AppVersionsListResult} from '../versions-list.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
