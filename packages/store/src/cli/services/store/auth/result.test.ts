@@ -1,6 +1,8 @@
 import {createStoreAuthPresenter} from './result.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+// eslint-disable-next-line n/prefer-global/console
+import {Console} from 'node:console'
 
 function captureStandardStreams() {
   const stdout: string[] = []
@@ -14,11 +16,14 @@ function captureStandardStreams() {
     stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
     return true
   }) as typeof process.stderr.write)
+  // Vitest intercepts console.warn; use Node's console to exercise the captured streams.
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
 
   return {
     stdout: () => stdout.join(''),
     stderr: () => stderr.join(''),
     restore: () => {
+      warnSpy.mockRestore()
       stdoutSpy.mockRestore()
       stderrSpy.mockRestore()
     },

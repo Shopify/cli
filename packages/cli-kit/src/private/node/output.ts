@@ -39,7 +39,9 @@ export function consoleLog(message: string): void {
  * @param message - The message to print.
  */
 export function consoleWarn(message: string): void {
-  process.stderr.write(`${withOrWithoutStyle(message)}\n`)
+  // Ink intercepts console calls to preserve its active UI around log messages.
+  // eslint-disable-next-line no-console
+  console.warn(withOrWithoutStyle(message))
 }
 
 /**
