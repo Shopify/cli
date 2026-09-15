@@ -121,7 +121,14 @@ describe('getAppVersions', () => {
   test('rejects invalid result values', () => {
     expect(() =>
       appVersionsListJsonOutputSchema.validate([
-        {message: 'message', versionTag: 'versionTag', status: 'active', createdAt: '2021-01-01', createdBy: 1},
+        {
+          createdAt: '2021-01-01',
+          createdBy: 1,
+          versionTag: 'versionTag',
+          status: 'active',
+          versionId: 'versionId',
+          message: 'message',
+        },
       ]),
     ).toThrow()
   })
