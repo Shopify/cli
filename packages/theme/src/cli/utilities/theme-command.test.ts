@@ -1,4 +1,4 @@
-import ThemeCommand, {RequiredFlags} from './theme-command.js'
+import ThemeCommand, {RequiredFlags, type ThemeCommandMultiEnvironmentEntry} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
@@ -155,6 +155,42 @@ class TestUnauthenticatedThemeCommand extends ThemeCommand {
 
 class TestNoMultiEnvThemeCommand extends TestThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = null
+}
+
+class TestResultThemeCommand extends ThemeCommand<string> {
+  static flags = {...TestThemeCommand.flags}
+
+  static multiEnvironmentsFlags: RequiredFlags = ['store']
+
+  completedEntries: ThemeCommandMultiEnvironmentEntry<string>[] = []
+  lifecycle: string[] = []
+
+  async command(flags: any, _session?: AdminSession, _multiEnvironment = false): Promise<string | undefined> {
+    const environment = flags.environment?.[0] as string
+    this.lifecycle.push(`command:${environment}`)
+
+    if (environment === 'command-error') {
+      throw new Error('Mocking a command error')
+    }
+
+    return `result-for-${environment}`
+  }
+
+  protected onMultiEnvironmentComplete(entries: ThemeCommandMultiEnvironmentEntry<string>[]): void {
+    this.lifecycle.push('complete')
+    this.completedEntries = entries
+  }
+}
+
+class TestResultThemeCommandWithDefaultHook extends ThemeCommand<string> {
+  static flags = {...TestThemeCommand.flags}
+
+  static multiEnvironmentsFlags: RequiredFlags = ['store']
+
+  async command(flags: any): Promise<string | undefined> {
+    const environment = flags.environment?.[0] as string
+    return `result-for-${environment}`
+  }
 }
 
 class TestThemeCommandWithoutStoreRequired extends ThemeCommand {
@@ -1187,6 +1223,143 @@ describe('ThemeCommand', () => {
 
       // Then
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('multi environment result collection', () => {
+    test('collects successful results in requested order when completion order differs', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com'})
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+
+      await CommandConfig.load()
+      const command = new TestResultThemeCommand(
+        ['--environment', 'first', '--environment', 'second', '--environment', 'third'],
+        CommandConfig,
+      )
+
+      // Completion happens in reverse requested order
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of [...processes].reverse()) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      // When
+      await command.run()
+
+      // Then
+      expect(command.lifecycle.filter((event) => event.startsWith('command:'))).toEqual([
+        'command:third',
+        'command:second',
+        'command:first',
+      ])
+      expect(command.completedEntries).toEqual([
+        {environment: 'first', result: 'result-for-first'},
+        {environment: 'second', result: 'result-for-second'},
+        {environment: 'third', result: 'result-for-third'},
+      ])
+    })
+
+    test('omits failed executions from the collected results', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com'})
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestResultThemeCommand(
+        ['--environment', 'ok', '--environment', 'command-error', '--environment', 'another'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(command.completedEntries).toEqual([
+        {environment: 'ok', result: 'result-for-ok'},
+        {environment: 'another', result: 'result-for-another'},
+      ])
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({body: ['Environment command-error failed: \n\nMocking a command error']}),
+      )
+    })
+
+    test('runs the completion hook after all duplicate-store groups finish', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+
+      await CommandConfig.load()
+      const command = new TestResultThemeCommand(
+        ['--environment', 'first', '--environment', 'second', '--environment', 'third'],
+        CommandConfig,
+      )
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        command.lifecycle.push(`group:${processes.map((process) => process.prefix).join('+')}`)
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      // When
+      await command.run()
+
+      // Then
+      expect(vi.mocked(renderConcurrent)).toHaveBeenCalledTimes(2)
+      expect(command.lifecycle).toEqual([
+        'group:first+third',
+        'command:first',
+        'command:third',
+        'group:second',
+        'command:second',
+        'complete',
+      ])
+      expect(command.completedEntries.map((entry) => entry.environment)).toEqual(['first', 'second', 'third'])
+    })
+
+    test('the default completion hook leaves command output unchanged', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
+      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestResultThemeCommandWithDefaultHook(
+        ['--environment', 'first', '--environment', 'second'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(mockAndCaptureOutput().output()).toBe('')
+      expect(renderError).not.toHaveBeenCalled()
     })
   })
 })
