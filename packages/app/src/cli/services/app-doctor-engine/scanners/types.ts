@@ -42,6 +42,13 @@ export interface SourceFile {
   content?: string
 }
 
+/** Explicitly allowlisted dependency-management configuration inside the app-root evidence boundary. */
+export interface DependencyAutomationInputs {
+  files: SourceFile[]
+  /** A specific discovery obstacle, including an app nested below its repository root. */
+  unresolvedReason?: string
+}
+
 export interface ManifestFile {
   path: string
   absolutePath: string
