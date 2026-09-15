@@ -143,7 +143,7 @@ function committedSecretFileIssue(file: SourceFile, status: GitFileStatus, envir
 
   return {
     id: 'COMMITTED_SECRET',
-    pattern_id: environmentFile ? 'environment-file' : 'secret-file',
+    pattern_id: `${environmentFile ? 'environment-file' : 'secret-file'}:${tracked ? 'tracked' : 'unconfirmed'}`,
     severity: 'high',
     points: -50,
     title,
