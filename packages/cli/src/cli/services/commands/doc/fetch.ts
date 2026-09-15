@@ -32,10 +32,6 @@ export async function docFetchService(url: string, outputPath?: string, language
     throw new AbortError(`Only documents from the following hosts can be fetched: ${ALLOWED_HOSTS.join(', ')}.`)
   }
 
-  // Path only: it identifies which document was fetched (e.g. the App Store
-  // self-review requirements page) without carrying query strings or fragments.
-  await addPublicMetadata(() => ({cmd_doc_fetch_url_path: parsedURL.pathname}))
-
   // shopify.dev filters Markdown code examples when Accept-Language is a
   // recognized programming-language key. Unrecognized values are ignored and
   // the unfiltered document is returned.
@@ -50,6 +46,10 @@ export async function docFetchService(url: string, outputPath?: string, language
   if (!response.ok) {
     throw new AbortError(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
   }
+
+  // Recorded only after a successful response, so the field can only hold the
+  // path of a real shopify.dev document. Path only: no query string or fragment.
+  await addPublicMetadata(() => ({cmd_doc_fetch_url_path: parsedURL.pathname}))
 
   const body = await response.text()
 

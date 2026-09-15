@@ -28,7 +28,7 @@ describe('docFetchService', () => {
     expect(outputResult).toHaveBeenCalledWith('# Doc')
   })
 
-  test('records the fetched URL path, without query or fragment, in command analytics', async () => {
+  test('records the fetched URL path, without query or fragment, after a successful response', async () => {
     await docFetchService(
       'https://shopify.dev/docs/apps/launch/app-store-review/app-store-ai-self-review-requirements?utm=x#top',
     )
@@ -84,5 +84,6 @@ describe('docFetchService', () => {
 
     await expect(docFetchService('https://shopify.dev/missing')).rejects.toThrowError(AbortError)
     expect(outputResult).not.toHaveBeenCalled()
+    expect(addPublicMetadata).not.toHaveBeenCalled()
   })
 })
