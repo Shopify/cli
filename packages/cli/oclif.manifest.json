@@ -3413,7 +3413,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Prototype only: query app log summaries through the local App Management API."
+      "summary": "Prototype only: query app log summaries through the local Dev Platform API."
     },
     "app:logs:sources": {
       "aliases": [

@@ -42,11 +42,11 @@ test('refuses an unexpected host before obtaining a token', async () => {
 })
 
 test('sends a bounded app query using the normal CLI authentication helper', async () => {
-  const result = {app_key: 'test-app', events: [{'payload.type': 'WEBHOOK_DELIVERY'}], exhaustive: false}
-  vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(result), {status: 200}))
+  const result = {appKey: 'test-app', events: [{type: 'WEBHOOK_DELIVERY'}], exhaustive: false}
+  vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({data: {appLogs: result}}), {status: 200}))
   await expect(queryAppLogs({...options, types: ['WEBHOOK_DELIVERY']})).resolves.toEqual(result)
   expect(fetch).toHaveBeenCalledWith(
-    'https://app.shop.dev/app_management/unstable/organizations/1/app_logs/query',
+    'https://app.shop.dev/dev_platform/unstable/organizations/1/graphql',
     expect.objectContaining({
       method: 'POST',
       redirect: 'error',
@@ -54,11 +54,15 @@ test('sends a bounded app query using the normal CLI authentication helper', asy
       body: expect.stringContaining('"types":["WEBHOOK_DELIVERY"]'),
     }),
   )
-  const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
-  expect(input.api_key).toBe('test-app')
+  const request = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
+  expect(request.query).toContain('query AppLogs($input: AppLogQueryInput!)')
+  expect(request.query).toContain('recordUid timestamp type')
+  expect(request.operationName).toBe('AppLogs')
+  const input = request.variables.input
+  expect(input.appKey).toBe('test-app')
   expect(input.limit).toBe(3)
   expect(input.offset).toBe(0)
-  expect(Date.parse(input.end_time) - Date.parse(input.start_time)).toBe(15 * 60 * 1000)
+  expect(Date.parse(input.endTime) - Date.parse(input.startTime)).toBe(15 * 60 * 1000)
 })
 
 test('uses the temporary token only for the fixed loopback demo, without logging into Identity', async () => {
@@ -66,10 +70,10 @@ test('uses the temporary token only for the fixed loopback demo, without logging
     const path = joinPath(directory, 'token')
     await writeFile(path, 'atkn_demo-only')
     vi.stubEnv('APP_LOG_QUERY_DEMO_TOKEN_FILE', path)
-    vi.mocked(fetch).mockResolvedValue(new Response('{"events":[]}', {status: 200}))
+    vi.mocked(fetch).mockResolvedValue(new Response('{"data":{"appLogs":{"events":[]}}}', {status: 200}))
     await expect(queryAppLogs({...options, demo: true})).resolves.toEqual({events: []})
     expect(fetch).toHaveBeenCalledWith(
-      'http://127.0.0.1:4387/app_management/unstable/organizations/1/app_logs/query',
+      'http://127.0.0.1:4387/dev_platform/unstable/organizations/1/graphql',
       expect.objectContaining({headers: expect.objectContaining({authorization: 'Bearer atkn_demo-only'})}),
     )
     expect(ensureAuthenticatedAppManagementAndBusinessPlatform).not.toHaveBeenCalled()
@@ -82,26 +86,28 @@ test('surfaces API errors instead of turning them into an empty result', async (
 })
 
 test('forwards a 10000 event limit and 1000000 offset independently', async () => {
-  vi.mocked(fetch).mockResolvedValue(new Response('{"events":[]}', {status: 200}))
+  vi.mocked(fetch).mockResolvedValue(new Response('{"data":{"appLogs":{"events":[]}}}', {status: 200}))
   await expect(queryAppLogs({...options, limit: 10_000, offset: 1_000_000})).resolves.toEqual({events: []})
-  const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
+  const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string).variables.input
   expect(input.limit).toBe(10_000)
   expect(input.offset).toBe(1_000_000)
 })
 
 test('leaves upper policy limits to the server', async () => {
-  vi.mocked(fetch).mockResolvedValue(new Response('{"error":"Query limits exceeded"}', {status: 400}))
-  await expect(queryAppLogs({...options, minutes: 61, limit: 10_001, offset: 1_000_001})).rejects.toThrow('HTTP 400')
-  const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
+  vi.mocked(fetch).mockResolvedValue(new Response('{"errors":[{"message":"Query limits exceeded"}]}', {status: 200}))
+  await expect(queryAppLogs({...options, minutes: 61, limit: 10_001, offset: 1_000_001})).rejects.toThrow(
+    'Query limits exceeded',
+  )
+  const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string).variables.input
   expect(input.limit).toBe(10_001)
   expect(input.offset).toBe(1_000_001)
 })
 
 test('reads valid responses larger than one MiB without a client byte cap', async () => {
-  const result = {events: [{'payload.target': 'x'.repeat(2 * 1024 * 1024)}]}
+  const result = {events: [{target: 'x'.repeat(2 * 1024 * 1024)}]}
   vi.mocked(fetch).mockImplementation(async (_url, init) => {
     const responseOptions = {status: 200, size: init?.size}
-    return new Response(JSON.stringify(result), responseOptions)
+    return new Response(JSON.stringify({data: {appLogs: result}}), responseOptions)
   })
 
   await expect(queryAppLogs(options)).resolves.toEqual(result)
@@ -111,6 +117,25 @@ test('reads valid responses larger than one MiB without a client byte cap', asyn
 test('rejects a path-injection organization ID', async () => {
   await expect(queryAppLogs({...options, organizationId: '../2'})).rejects.toThrow('numeric organization ID')
   expect(fetch).not.toHaveBeenCalled()
+})
+
+test('surfaces GraphQL errors even when HTTP succeeds and partial data is present', async () => {
+  vi.mocked(fetch).mockResolvedValue(
+    new Response(JSON.stringify({data: {appLogs: {events: []}}, errors: [{message: 'Log query failed'}]}), {
+      status: 200,
+    }),
+  )
+  await expect(queryAppLogs(options)).rejects.toThrow('Log query failed')
+})
+
+test.each([{data: {appLogs: null}}, {data: null}, {}])('rejects a missing log result %j', async (body) => {
+  vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(body), {status: 200}))
+  await expect(queryAppLogs(options)).rejects.toThrow('no appLogs result')
+})
+
+test.each([null, [], {data: {appLogs: []}}])('rejects a malformed GraphQL envelope %j', async (body) => {
+  vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(body), {status: 200}))
+  await expect(queryAppLogs(options)).rejects.toThrow('invalid GraphQL response')
 })
 
 test.each([{minutes: 0}, {minutes: 1.5}, {limit: 0}, {limit: 1.5}, {offset: -1}, {offset: 1.5}])(

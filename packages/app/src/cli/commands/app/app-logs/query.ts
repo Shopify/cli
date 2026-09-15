@@ -6,7 +6,7 @@ import {Flags} from '@oclif/core'
 
 export default class Query extends BaseCommand {
   static hidden = true
-  static summary = 'Prototype only: query app log summaries through the local App Management API.'
+  static summary = 'Prototype only: query app log summaries through the local Dev Platform API.'
 
   static flags = {
     ...globalFlags,

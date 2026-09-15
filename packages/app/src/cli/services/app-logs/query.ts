@@ -4,6 +4,24 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {z} from 'zod'
+
+const query = `
+  query AppLogs($input: AppLogQueryInput!) {
+    appLogs(input: $input) {
+      appKey limit offset limitReached exhaustive ordering
+      events { recordUid timestamp type resultStatus target shopDomain }
+    }
+  }
+`
+
+const responseSchema = z.object({
+  data: z
+    .object({appLogs: z.record(z.unknown()).nullable()})
+    .nullable()
+    .optional(),
+  errors: z.array(z.object({message: z.string()})).optional(),
+})
 
 interface QueryOptions {
   organizationId: string
@@ -35,27 +53,36 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
 
   const {origin, token} = await queryConnection(options.demo)
   const end = new Date()
-  const response = await fetch(
-    `${origin}/app_management/unstable/organizations/${options.organizationId}/app_logs/query`,
-    {
-      method: 'POST',
-      redirect: 'error',
-      signal: AbortSignal.timeout(15000),
-      headers: appManagementHeaders(token),
-      body: JSON.stringify({
-        api_key: options.clientId,
-        start_time: new Date(end.getTime() - options.minutes * 60 * 1000).toISOString(),
-        end_time: end.toISOString(),
-        limit: options.limit,
-        offset: options.offset,
-        ...(options.types ? {types: options.types} : {}),
-      }),
-    },
-  )
+  const response = await fetch(`${origin}/dev_platform/unstable/organizations/${options.organizationId}/graphql`, {
+    method: 'POST',
+    redirect: 'error',
+    signal: AbortSignal.timeout(15000),
+    headers: appManagementHeaders(token),
+    body: JSON.stringify({
+      query,
+      operationName: 'AppLogs',
+      variables: {
+        input: {
+          appKey: options.clientId,
+          startTime: new Date(end.getTime() - options.minutes * 60 * 1000).toISOString(),
+          endTime: end.toISOString(),
+          limit: options.limit,
+          offset: options.offset,
+          ...(options.types ? {types: options.types} : {}),
+        },
+      },
+    }),
+  })
   if (!response.ok) {
     throw new AbortError(`Local log query failed (HTTP ${response.status}). Check the local API server output.`)
   }
-  return response.json()
+  const result = responseSchema.safeParse(await response.json())
+  if (!result.success) throw new AbortError('Local log query returned an invalid GraphQL response.')
+  if (result.data.errors?.length) {
+    throw new AbortError(`Local log query failed: ${result.data.errors.map((error) => error.message).join('; ')}`)
+  }
+  if (!result.data.data?.appLogs) throw new AbortError('Local log query returned no appLogs result.')
+  return result.data.data.appLogs
 }
 
 async function queryConnection(demo: boolean): Promise<{origin: string; token: string}> {
