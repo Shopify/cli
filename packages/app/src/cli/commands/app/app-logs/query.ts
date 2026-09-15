@@ -19,16 +19,20 @@ export default class Query extends BaseCommand {
     minutes: Flags.integer({
       default: 15,
       min: 1,
-      max: 60,
       env: 'SHOPIFY_FLAG_MINUTES',
       description: 'Query the last N minutes.',
     }),
     limit: Flags.integer({
       default: 10,
       min: 1,
-      max: 100,
       env: 'SHOPIFY_FLAG_LIMIT',
       description: 'Maximum summary events to return.',
+    }),
+    offset: Flags.integer({
+      default: 0,
+      min: 0,
+      env: 'SHOPIFY_FLAG_OFFSET',
+      description: 'Number of matching rows to skip. Results are unordered; this is not a reliable export cursor.',
     }),
     type: Flags.string({
       multiple: true,
@@ -50,6 +54,7 @@ export default class Query extends BaseCommand {
       clientId: flags['client-id'],
       minutes: flags.minutes,
       limit: flags.limit,
+      offset: flags.offset,
       types: flags.type,
       demo: flags.demo,
     })

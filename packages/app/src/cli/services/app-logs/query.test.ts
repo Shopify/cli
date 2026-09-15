@@ -11,7 +11,7 @@ vi.mock('@shopify/cli-kit/node/context/fqdn')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/session')
 
-const options = {organizationId: '1', clientId: 'test-app', minutes: 15, limit: 3, demo: false}
+const options = {organizationId: '1', clientId: 'test-app', minutes: 15, limit: 3, offset: 0, demo: false}
 
 beforeEach(() => {
   vi.stubEnv('SHOPIFY_APP_LOG_QUERY_PROTOTYPE', '1')
@@ -50,7 +50,6 @@ test('sends a bounded app query using the normal CLI authentication helper', asy
     expect.objectContaining({
       method: 'POST',
       redirect: 'error',
-      size: 1024 * 1024,
       headers: expect.objectContaining({authorization: 'Bearer atkn_local-identity'}),
       body: expect.stringContaining('"types":["WEBHOOK_DELIVERY"]'),
     }),
@@ -58,6 +57,7 @@ test('sends a bounded app query using the normal CLI authentication helper', asy
   const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
   expect(input.api_key).toBe('test-app')
   expect(input.limit).toBe(3)
+  expect(input.offset).toBe(0)
   expect(Date.parse(input.end_time) - Date.parse(input.start_time)).toBe(15 * 60 * 1000)
 })
 
@@ -81,8 +81,42 @@ test('surfaces API errors instead of turning them into an empty result', async (
   await expect(queryAppLogs(options)).rejects.toThrow('HTTP 502')
 })
 
-test('rejects a path-injection organization ID and oversized request limits', async () => {
+test('forwards a 10000 event limit and 1000000 offset independently', async () => {
+  vi.mocked(fetch).mockResolvedValue(new Response('{"events":[]}', {status: 200}))
+  await expect(queryAppLogs({...options, limit: 10_000, offset: 1_000_000})).resolves.toEqual({events: []})
+  const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
+  expect(input.limit).toBe(10_000)
+  expect(input.offset).toBe(1_000_000)
+})
+
+test('leaves upper policy limits to the server', async () => {
+  vi.mocked(fetch).mockResolvedValue(new Response('{"error":"Query limits exceeded"}', {status: 400}))
+  await expect(queryAppLogs({...options, minutes: 61, limit: 10_001, offset: 1_000_001})).rejects.toThrow('HTTP 400')
+  const input = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
+  expect(input.limit).toBe(10_001)
+  expect(input.offset).toBe(1_000_001)
+})
+
+test('reads valid responses larger than one MiB without a client byte cap', async () => {
+  const result = {events: [{'payload.target': 'x'.repeat(2 * 1024 * 1024)}]}
+  vi.mocked(fetch).mockImplementation(async (_url, init) => {
+    const responseOptions = {status: 200, size: init?.size}
+    return new Response(JSON.stringify(result), responseOptions)
+  })
+
+  await expect(queryAppLogs(options)).resolves.toEqual(result)
+  expect(vi.mocked(fetch).mock.calls[0]![1]?.size).toBeUndefined()
+})
+
+test('rejects a path-injection organization ID', async () => {
   await expect(queryAppLogs({...options, organizationId: '../2'})).rejects.toThrow('numeric organization ID')
-  await expect(queryAppLogs({...options, limit: 101})).rejects.toThrow('limit of 1–100')
   expect(fetch).not.toHaveBeenCalled()
 })
+
+test.each([{minutes: 0}, {minutes: 1.5}, {limit: 0}, {limit: 1.5}, {offset: -1}, {offset: 1.5}])(
+  'rejects malformed numeric options %j before making a request',
+  async (invalidOptions) => {
+    await expect(queryAppLogs({...options, ...invalidOptions})).rejects.toThrow('positive integers')
+    expect(fetch).not.toHaveBeenCalled()
+  },
+)

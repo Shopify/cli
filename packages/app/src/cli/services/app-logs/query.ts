@@ -10,6 +10,7 @@ interface QueryOptions {
   clientId: string
   minutes: number
   limit: number
+  offset: number
   types?: string[]
   demo: boolean
 }
@@ -24,12 +25,12 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
   if (
     !Number.isInteger(options.minutes) ||
     options.minutes < 1 ||
-    options.minutes > 60 ||
     !Number.isInteger(options.limit) ||
     options.limit < 1 ||
-    options.limit > 100
+    !Number.isInteger(options.offset) ||
+    options.offset < 0
   ) {
-    throw new AbortError('Use 1–60 minutes and a limit of 1–100 events.')
+    throw new AbortError('Use positive integers for minutes and limit, and a nonnegative integer for offset.')
   }
 
   const {origin, token} = await queryConnection(options.demo)
@@ -40,13 +41,13 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
       method: 'POST',
       redirect: 'error',
       signal: AbortSignal.timeout(15000),
-      size: 1024 * 1024,
       headers: appManagementHeaders(token),
       body: JSON.stringify({
         api_key: options.clientId,
         start_time: new Date(end.getTime() - options.minutes * 60 * 1000).toISOString(),
         end_time: end.toISOString(),
         limit: options.limit,
+        offset: options.offset,
         ...(options.types ? {types: options.types} : {}),
       }),
     },

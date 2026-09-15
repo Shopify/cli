@@ -3363,6 +3363,15 @@
           "name": "no-color",
           "type": "boolean"
         },
+        "offset": {
+          "default": 0,
+          "description": "Number of matching rows to skip. Results are unordered; this is not a reliable export cursor.",
+          "env": "SHOPIFY_FLAG_OFFSET",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "offset",
+          "type": "option"
+        },
         "organization-id": {
           "description": "Local Business Platform organization ID.",
           "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
