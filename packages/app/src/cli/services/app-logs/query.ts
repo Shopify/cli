@@ -1,5 +1,5 @@
 import {appManagementHeaders} from '@shopify/cli-kit/node/api/app-management'
-import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -54,7 +54,7 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
 
   const {origin, token} = await queryConnection(options.demo)
   const end = new Date()
-  const response = await fetch(`${origin}/dev_platform/unstable/graphql`, {
+  const response = await fetch(`${origin}/api/unstable/graphql`, {
     method: 'POST',
     redirect: 'error',
     signal: AbortSignal.timeout(15000),
@@ -95,8 +95,8 @@ async function queryConnection(demo: boolean): Promise<{origin: string; token: s
     return {origin: 'http://127.0.0.1:4387', token}
   }
 
-  const host = await appManagementFqdn()
-  if (host !== 'app.shop.dev') throw new AbortError('This prototype can only call app.shop.dev.')
+  const host = await developerDashboardFqdn()
+  if (host !== 'dev.shop.dev') throw new AbortError('This prototype can only call dev.shop.dev.')
   const {appManagementToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform()
   return {origin: `https://${host}`, token: appManagementToken}
 }

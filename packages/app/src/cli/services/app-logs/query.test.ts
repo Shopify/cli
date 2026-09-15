@@ -1,5 +1,5 @@
 import {queryAppLogs} from './query.js'
-import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -16,7 +16,7 @@ const options = {clientId: 'test-app', minutes: 15, limit: 3, offset: 0, demo: f
 beforeEach(() => {
   vi.stubEnv('SHOPIFY_APP_LOG_QUERY_PROTOTYPE', '1')
   vi.stubEnv('SHOPIFY_SERVICE_ENV', 'local')
-  vi.mocked(appManagementFqdn).mockResolvedValue('app.shop.dev')
+  vi.mocked(developerDashboardFqdn).mockResolvedValue('dev.shop.dev')
   vi.mocked(ensureAuthenticatedAppManagementAndBusinessPlatform).mockResolvedValue({
     appManagementToken: 'atkn_local-identity',
     userId: 'local-user',
@@ -36,8 +36,8 @@ test('refuses production services before authenticating or sending a request', a
 })
 
 test('refuses an unexpected host before obtaining a token', async () => {
-  vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-  await expect(queryAppLogs(options)).rejects.toThrow('only call app.shop.dev')
+  vi.mocked(developerDashboardFqdn).mockResolvedValue('dev.shopify.com')
+  await expect(queryAppLogs(options)).rejects.toThrow('only call dev.shop.dev')
   expect(ensureAuthenticatedAppManagementAndBusinessPlatform).not.toHaveBeenCalled()
 })
 
@@ -46,7 +46,7 @@ test('sends a bounded app query using the normal CLI authentication helper', asy
   vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({data: {app: {logs: result}}}), {status: 200}))
   await expect(queryAppLogs({...options, types: ['WEBHOOK_DELIVERY']})).resolves.toEqual(result)
   expect(fetch).toHaveBeenCalledWith(
-    'https://app.shop.dev/dev_platform/unstable/graphql',
+    'https://dev.shop.dev/api/unstable/graphql',
     expect.objectContaining({
       method: 'POST',
       redirect: 'error',
@@ -76,7 +76,7 @@ test('uses the temporary token only for the fixed loopback demo, without logging
     vi.mocked(fetch).mockResolvedValue(new Response('{"data":{"app":{"logs":{"events":[]}}}}', {status: 200}))
     await expect(queryAppLogs({...options, demo: true})).resolves.toEqual({events: []})
     expect(fetch).toHaveBeenCalledWith(
-      'http://127.0.0.1:4387/dev_platform/unstable/graphql',
+      'http://127.0.0.1:4387/api/unstable/graphql',
       expect.objectContaining({headers: expect.objectContaining({authorization: 'Bearer atkn_demo-only'})}),
     )
     expect(ensureAuthenticatedAppManagementAndBusinessPlatform).not.toHaveBeenCalled()
@@ -130,7 +130,7 @@ test('passes the app key as a variable instead of interpolating query syntax or 
 
   const [url, init] = vi.mocked(fetch).mock.calls[0]!
   const request = JSON.parse(init!.body as string)
-  expect(url).toBe('https://app.shop.dev/dev_platform/unstable/graphql')
+  expect(url).toBe('https://dev.shop.dev/api/unstable/graphql')
   expect(request.variables.appKey).toBe(clientId)
   expect(request.query).not.toContain(clientId)
 })
