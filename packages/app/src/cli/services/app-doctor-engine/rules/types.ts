@@ -3,18 +3,6 @@ import type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../s
 
 export type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../scanners/types.js'
 
-export interface AuditCommandResult {
-  stdout: string
-  stderr: string
-  exitCode: number
-}
-
-export type AuditExecutor = (
-  command: string,
-  args: string[],
-  options: {cwd: string; signal: AbortSignal; env: Record<string, string | undefined>},
-) => Promise<AuditCommandResult>
-
 /**
  * A rule defines:
  * - Which capability gates it (skip if not applicable)
@@ -60,6 +48,4 @@ export interface ScanContext {
   detection: ProjectDetection
   /** Path-only inventory, including unsupported source candidates. */
   sourceCandidates: SourceCandidate[]
-  /** Test seam for running audits without invoking a package-manager process. */
-  dependencyAuditExecutor?: AuditExecutor
 }

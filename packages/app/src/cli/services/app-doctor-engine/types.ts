@@ -106,7 +106,7 @@ export interface SkippedFile {
 
 export type CheckExecutionKind = 'deterministic' | 'agent' | 'external'
 export type CheckExecutionStatus = 'executed' | 'not_applicable' | 'unsupported_framework' | 'unresolved'
-export type AnalysisMode = 'regex' | 'structured_config' | 'audit' | 'ast' | 'agent' | 'external'
+export type AnalysisMode = 'regex' | 'structured_config' | 'ast' | 'agent' | 'external'
 
 export type CheckExecutionReasonCode =
   | 'capability_absent'
@@ -114,7 +114,6 @@ export type CheckExecutionReasonCode =
   | 'unsupported_framework'
   | 'unsupported_language'
   | 'parser_unavailable'
-  | 'audit_unavailable'
   | 'agent_investigation_required'
   | 'not_reported'
   | 'input_rejected'

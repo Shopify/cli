@@ -355,7 +355,6 @@ interface RepositoryReadFailure {
   reason: 'too_large' | 'unreadable'
   sizeBytes?: number
   detail?: string
-  errorCode?: string
 }
 
 type RepositoryReadResult = RepositoryReadSuccess | RepositoryReadFailure
@@ -405,38 +404,28 @@ function readBoundedFile(path: string): RepositoryReadResult {
     // Discovery records unreadable files for trace coverage.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    const errorCode = (error as NodeJS.ErrnoException).code
     return {
       ok: false,
       reason: 'unreadable',
       detail: error instanceof Error ? error.message : String(error),
-      ...(errorCode && /^[A-Z0-9_]+$/.test(errorCode) ? {errorCode} : {}),
     }
   }
 }
 
-function cachedRepositoryFile(appRoot: string, path: string, recordMissing: boolean): RepositoryReadResult {
+function readRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
   const absolutePath = resolvePath(path)
   const cached = repositoryFileCache.get(absolutePath)
   if (cached) return cached
 
   const result = readBoundedFile(absolutePath)
   repositoryFileCache.set(absolutePath, result)
-  if (!result.ok && (recordMissing || result.errorCode !== 'ENOENT')) recordSkippedFile(appRoot, path, result)
+  if (!result.ok) recordSkippedFile(appRoot, path, result)
   return result
-}
-
-function readRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
-  return cachedRepositoryFile(appRoot, path, true)
 }
 
 function readRepositoryText(appRoot: string, path: string): string | undefined {
   const result = readRepositoryFile(appRoot, path)
   return result.ok ? result.content.toString() : undefined
-}
-
-export function readOptionalRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
-  return cachedRepositoryFile(appRoot, path, false)
 }
 
 const SOURCE_LANGUAGES = {
@@ -641,7 +630,6 @@ export function findManifests(appRoot: string, discoveredPaths = findManifestPat
         content,
         dependencies: pkg.dependencies ?? {},
         devDependencies: pkg.devDependencies ?? {},
-        packageManager: typeof pkg.packageManager === 'string' ? pkg.packageManager : undefined,
       })
       // Invalid repository JSON is a coverage gap, not a scanner crash.
       // eslint-disable-next-line no-catch-all/no-catch-all

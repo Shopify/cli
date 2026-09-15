@@ -6,15 +6,9 @@ import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import type {AuditExecutor} from '../rules/dependency-rules.js'
 
 const temporaryDirectories: string[] = []
 const appConfiguration = 'name = "Discovery safety"\napplication_url = "https://example.com"\n'
-const harmlessAudit: AuditExecutor = async () => ({
-  stdout: JSON.stringify({metadata: {vulnerabilities: {total: 0}}}),
-  stderr: '',
-  exitCode: 0,
-})
 
 afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, {recursive: true, force: true})))
@@ -166,46 +160,5 @@ describe('repository discovery exclusions', () => {
         'unconfigured/blocks/unconfigured.liquid',
       ]),
     )
-  })
-})
-
-describe('dependency audit input hashes', () => {
-  for (const [manager, lockfile, content] of [
-    ['npm@10.0.0', 'package-lock.json', '{"lockfileVersion":3}'],
-    ['pnpm@10.0.0', 'pnpm-lock.yaml', 'lockfileVersion: 9'],
-    ['yarn@4.1.0', 'yarn.lock', '# yarn lock'],
-  ] as const) {
-    test(`hashes the selected ${lockfile} bytes`, async () => {
-      const root = await makeDirectory()
-      await writeFiles(root, {
-        'shopify.app.toml': appConfiguration,
-        'package.json': JSON.stringify({packageManager: manager}),
-        [lockfile]: content,
-      })
-      const options = {dependencyAuditExecutor: harmlessAudit}
-      const before = await scan(root, options)
-      await writeFile(join(root, lockfile), `${content}\nchanged`)
-      const after = await scan(root, options)
-
-      expect(before.scan.file_hashes?.[lockfile]).toMatch(/^sha256:[0-9a-f]{64}$/)
-      expect(after.scan.file_hashes?.[lockfile]).not.toBe(before.scan.file_hashes?.[lockfile])
-      expect(after.scan.input_hash).not.toBe(before.scan.input_hash)
-    })
-  }
-
-  test('hashes only the lockfile selected by packageManager when candidates coexist', async () => {
-    const root = await makeDirectory()
-    await writeFiles(root, {
-      'shopify.app.toml': appConfiguration,
-      'package.json': JSON.stringify({packageManager: 'yarn@4.1.0'}),
-      'package-lock.json': '{"lockfileVersion":3}',
-      'pnpm-lock.yaml': 'lockfileVersion: 9',
-      'yarn.lock': '# selected yarn lock',
-    })
-    const result = await scan(root, {dependencyAuditExecutor: harmlessAudit})
-
-    expect(result.scan.file_hashes).toHaveProperty('yarn.lock')
-    expect(result.scan.file_hashes).not.toHaveProperty('package-lock.json')
-    expect(result.scan.file_hashes).not.toHaveProperty('pnpm-lock.yaml')
   })
 })

@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-imports -- deterministic scanners use real temporary repositories */
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
@@ -11,13 +10,9 @@ import {
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
-import {auditKnownCves, parseAuditOutput} from '../rules/dependency-rules.js'
 import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {describe, expect, test} from 'vitest'
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
-import {join} from 'node:path'
-import {tmpdir} from 'node:os'
-import type {ManifestFile, SourceFile} from '../rules/types.js'
+import type {SourceFile} from '../rules/types.js'
 
 const ACTIVE_IDS = [
   'MISSING_COMPLIANCE_WEBHOOKS',
@@ -30,7 +25,6 @@ const ACTIVE_IDS = [
   'COMMITTED_SECRET',
   'CREDENTIAL_LOG_LEAKAGE',
   'CREDENTIAL_BROWSER_LEAKAGE',
-  'KNOWN_CVE_IN_DEPENDENCY',
   'LIQUID_UNSAFE_RENDER',
   'UNSAFE_INNERHTML',
   'APP_PROXY_LIQUID_INJECTION',
@@ -45,7 +39,7 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
 })
 
 describe('deterministic rules product contract', () => {
-  test('has exactly fifteen active executable deterministic identities', () => {
+  test('has exactly fourteen active executable deterministic identities', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
     const registry = getRegistry()
@@ -335,54 +329,5 @@ describe('Liquid AST mode', () => {
     expect(scanLiquidSecurity([source('{% if', 'extensions/theme/blocks/a.liquid')]).parserFailures).toEqual([
       'extensions/theme/blocks/a.liquid',
     ])
-  })
-})
-
-describe('package-manager audit', () => {
-  test('parses npm and yarn machine output', () => {
-    expect(parseAuditOutput(JSON.stringify({vulnerabilities: {lodash: {severity: 'high'}}}), 'npm')).toEqual([
-      {packageName: 'lodash', severity: 'high', cves: [], topLevelParents: []},
-    ])
-    expect(parseAuditOutput('{not-json', 'npm')).toBeNull()
-    expect(
-      parseAuditOutput(
-        `${JSON.stringify({type: 'auditAdvisory', data: {advisory: {module_name: 'x', severity: 'medium'}}})}\n${JSON.stringify({type: 'auditSummary', data: {}})}`,
-        'yarn',
-      ),
-    ).toEqual([{packageName: 'x', severity: 'medium', cves: [], topLevelParents: []}])
-  })
-
-  test('uses an injected non-mutating executor and surfaces operational failure', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'app-doctor-audit-'))
-    try {
-      await writeFile(join(directory, 'package-lock.json'), '{}')
-      const manifest: ManifestFile = {
-        path: 'package.json',
-        absolutePath: join(directory, 'package.json'),
-        type: 'npm',
-        dependencies: {},
-      }
-      const success = await auditKnownCves(directory, [manifest], async (command, args, options) => {
-        expect(command).toBe('npm')
-        expect(args.slice(0, 2)).toEqual(['audit', '--json'])
-        expect(args).toContain('--omit=dev')
-        expect(args).toContain('--ignore-scripts')
-        expect(args).toContain('--registry=https://registry.npmjs.org/')
-        expect(options.env.NPM_CONFIG_USERCONFIG).toBeTruthy()
-        expect(options.env.NPM_CONFIG_GLOBALCONFIG).toBeTruthy()
-        expect(options.env.NPM_CONFIG_USERCONFIG).not.toBe(options.env.NPM_CONFIG_GLOBALCONFIG)
-        return {stdout: JSON.stringify({vulnerabilities: {lodash: {severity: 'high'}}}), stderr: '', exitCode: 1}
-      })
-      expect(success.issues.map((finding) => finding.id)).toEqual(['KNOWN_CVE_IN_DEPENDENCY'])
-      expect(success.issues[0]?.title).toBe('lodash has a high vulnerability')
-      const failure = await auditKnownCves(directory, [manifest], async () => ({
-        stdout: 'bad',
-        stderr: 'network unavailable',
-        exitCode: 1,
-      }))
-      expect(failure.unresolvedReason).toMatch(/unusable output/)
-    } finally {
-      await rm(directory, {recursive: true, force: true})
-    }
   })
 })
