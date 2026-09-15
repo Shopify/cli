@@ -1,7 +1,8 @@
+import {canonicalJson, sha256} from './hash.js'
+import {withFindingPartialFingerprints} from './fingerprints.js'
 import {ENGINE_NAME, SUPPORTED_TRACE_SCHEMA_VERSIONS, TRACE_SCHEMA_VERSION} from '../types.js'
 import {loadChecks} from '../checks/index.js'
 import {redactText} from '../rules/secret-rules.js'
-import {sha256 as sha256Buffer} from '@shopify/cli-kit/node/crypto'
 import type {
   AnalysisMode,
   CheckExecution,
@@ -15,6 +16,8 @@ import type {
   TraceFinding,
   TraceV2,
 } from '../types.js'
+
+export {canonicalJson, sha256} from './hash.js'
 
 const SHA256 = /^sha256:[0-9a-f]{64}$/
 const MAX_TRACE_VALIDATION_NODES = 500_000
@@ -42,23 +45,6 @@ const REASON_CODES = new Set([
 const FRAMEWORKS = new Set(['react_router', 'none', 'unknown', 'mixed'])
 const SURFACES = new Set(['react_router', 'theme_app_extension', 'config_only', 'unknown', 'mixed'])
 
-export function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`
-  if (value !== null && typeof value === 'object') {
-    const object = value as Record<string, unknown>
-    return `{${Object.keys(object)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${canonicalJson(object[key])}`)
-      .join(',')}}`
-  }
-  return JSON.stringify(value)
-}
-
-export function sha256(value: unknown): string {
-  const input = typeof value === 'string' ? value : canonicalJson(value)
-  return `sha256:${sha256Buffer(input).toString('hex')}`
-}
-
 const safeLocation = (location: Location): Location => ({
   file: redactText(location.file.replace(/\\/g, '/')),
   ...(location.line === undefined ? {} : {line: location.line}),
@@ -75,6 +61,7 @@ export function redactIssue(issue: Issue): Issue {
   return {
     ...issue,
     id: redactText(issue.id),
+    ...(issue.pattern_id === undefined ? {} : {pattern_id: redactText(issue.pattern_id)}),
     title: redactText(issue.title),
     message: redactText(issue.message),
     location: safeLocation(issue.location),
@@ -121,6 +108,7 @@ function issueToFinding(issueInput: Issue): TraceFinding {
   const source = issueSource(issue)
   const core: Omit<TraceFinding, 'fingerprint' | 'suppression' | 'suppressed'> = {
     source,
+    ...(issue.pattern_id === undefined ? {} : {pattern_id: issue.pattern_id}),
     ...(source === 'agent'
       ? {check_id: issue.id, check_version: issue.check_version, prompt_hash: issue.prompt_hash}
       : {rule_id: issue.id, rule_version: issue.rule_version ?? 1}),
@@ -146,13 +134,11 @@ export interface CompileTraceOptions {
 
 /** Compile trace schema v2. Version 1 remains a separate frozen type. */
 export function compileTrace(result: ScanResult, options: CompileTraceOptions = {}): TraceV2 {
-  const findings = result.issues
-    .map(issueToFinding)
-    .sort((left, right) =>
-      `${left.source}|${left.check_id ?? left.rule_id}|${left.location.file}|${left.location.line ?? 0}|${left.fingerprint}`.localeCompare(
-        `${right.source}|${right.check_id ?? right.rule_id}|${right.location.file}|${right.location.line ?? 0}|${right.fingerprint}`,
-      ),
-    )
+  const findings = withFindingPartialFingerprints(result.issues.map(issueToFinding)).sort((left, right) =>
+    `${left.source}|${left.check_id ?? left.rule_id}|${left.location.file}|${left.location.line ?? 0}|${left.fingerprint}`.localeCompare(
+      `${right.source}|${right.check_id ?? right.rule_id}|${right.location.file}|${right.location.line ?? 0}|${right.fingerprint}`,
+    ),
+  )
   const suppressions = applySuppressions(findings, options.suppressions ?? [])
   const deterministicExecutions = result.scan.checks_executed.map((execution) => withFindingCount(execution, findings))
   const explicitAgent = new Map((options.agentChecksExecuted ?? []).map((execution) => [execution.id, execution]))
@@ -424,6 +410,20 @@ function validateFindingValue(finding: Record<string, unknown>, index: number, e
   const source = String(finding.source)
   if (!['deterministic', 'agent', 'external'].includes(source)) errors.push(`findings[${index}].source is invalid`)
   if (!SEVERITIES.has(finding.severity as Severity)) errors.push(`findings[${index}].severity is invalid`)
+  if (finding.pattern_id !== undefined && (typeof finding.pattern_id !== 'string' || !finding.pattern_id.trim()))
+    errors.push(`findings[${index}].pattern_id is invalid`)
+  if (finding.partial_fingerprints !== undefined) {
+    const partial = finding.partial_fingerprints
+    if (
+      !isObject(partial) ||
+      !SHA256.test(String(partial['rulePattern/v1'])) ||
+      Object.entries(partial).some(
+        ([key, value]) =>
+          !['rulePattern/v1', 'occurrence/v1'].includes(key) || typeof value !== 'string' || !SHA256.test(value),
+      )
+    )
+      errors.push(`findings[${index}].partial_fingerprints is invalid`)
+  }
   if (!validLocation(finding.location)) errors.push(`findings[${index}].location is invalid`)
   if (
     typeof finding.title !== 'string' ||
@@ -672,6 +672,19 @@ function validateTraceValue(value: unknown): TraceValidationResult {
         : errors.push(`findings[${index}] must be an object`),
     )
   else errors.push('findings must be an array')
+  // Only recompute after structural validation, including the legacy full-content fingerprint.
+  if (errors.length === 0 && Array.isArray(value.findings)) {
+    const findings = value.findings as TraceFinding[]
+    withFindingPartialFingerprints(findings).forEach((finding, index) => {
+      const original = findings[index]!
+      if (
+        original.partial_fingerprints !== undefined &&
+        canonicalJson(original.partial_fingerprints) !== canonicalJson(finding.partial_fingerprints)
+      ) {
+        errors.push(`findings[${index}].partial_fingerprints mismatch`)
+      }
+    })
+  }
   if (Array.isArray(value.checks_executed))
     value.checks_executed.forEach((execution, index) =>
       isObject(execution)

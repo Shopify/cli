@@ -37,6 +37,7 @@ export function computeResultHash(issues: Issue[], score: ScoreResult | null): s
   const canonicalIssues = issues
     .map((issue) => ({
       id: issue.id,
+      ...(issue.pattern_id === undefined ? {} : {pattern_id: issue.pattern_id}),
       source: issue.found_by ?? 'static',
       rule_version: issue.rule_version ?? (issue.found_by === 'agent' ? null : 1),
       check_version: issue.check_version ?? null,

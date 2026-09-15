@@ -2,6 +2,8 @@
 import {computeResultHash} from '../scorer/index.js'
 import {mergeExternalFindings, validateExternalFinding} from '../external/index.js'
 import {formatJson} from '../output/format.js'
+import {groupIssues} from '../output/group-issues.js'
+import {buildSubmission} from '../submission/index.js'
 import {scan} from '../scanners/index.js'
 import {compileTrace, sha256, validateSuppression, validateTrace} from '../trace/index.js'
 import {afterEach, describe, expect, test} from 'vitest'
@@ -103,6 +105,116 @@ describe('trace v2', () => {
     expect(trace.attestation).toMatchObject({signed: false})
     expect(trace.attestation.digest).toMatch(/^sha256:[0-9a-f]{64}$/)
     expect(validateTrace(trace)).toEqual({valid: true, errors: []})
+  })
+
+  test('retains every occurrence and identity in traces and submissions while grouping only the display', () => {
+    const issues = Array.from({length: 200}, (_, index) => ({
+      ...deterministicIssue(),
+      location: {file: `app/${index}.ts`, line: 2},
+    }))
+    const scanResult = result(issues)
+    const before = structuredClone(scanResult)
+    const trace = compileTrace(scanResult)
+    const groups = groupIssues(issues)
+    const submission = buildSubmission(trace, {cliVersion: '1.0.0', submittedAt: trace.generated_at})
+
+    expect(groups).toHaveLength(1)
+    expect(trace.findings).toHaveLength(200)
+    expect(submission.report.findings).toHaveLength(200)
+    expect(new Set(trace.findings.map((finding) => finding.fingerprint)).size).toBe(200)
+    expect(new Set(trace.findings.map((finding) => finding.partial_fingerprints!['occurrence/v1'])).size).toBe(200)
+    for (const [index, finding] of trace.findings.entries()) {
+      expect(finding.location.line).toBe(2)
+      expect(finding.partial_fingerprints!['rulePattern/v1']).toBe(groups[0]!.fingerprint)
+      expect(submission.report.findings[index]!.partial_fingerprints).toEqual(finding.partial_fingerprints)
+    }
+    expect(
+      trace.checks_executed.find((check) => check.id === 'CREDENTIAL_LOG_LEAKAGE' && check.kind === 'deterministic')!
+        .findings,
+    ).toBe(200)
+    expect(scanResult).toEqual(before)
+    expect(validateTrace(trace)).toEqual({valid: true, errors: []})
+  })
+
+  test('partial identities survive line shifts, wording, severity, and rule version changes', () => {
+    const original = deterministicIssue()
+    const first = compileTrace(result([original])).findings[0]!
+    const changed = {
+      ...original,
+      title: 'Updated title',
+      message: 'Updated message',
+      severity: 'low' as const,
+      rule_version: 2,
+      location: {file: 'app\\a.ts', line: 12},
+      evidence: [{location: {file: 'app/a.ts', line: 12}, quote: 'console.log(token)'}],
+      fix: {automated: true, description: 'Updated remediation'},
+    }
+    const updated = result([changed])
+    updated.scan.checks_executed[0]!.version = 2
+    const second = compileTrace(updated).findings[0]!
+    expect(second.partial_fingerprints).toEqual(first.partial_fingerprints)
+    expect(second.fingerprint).not.toBe(first.fingerprint)
+  })
+
+  test('distinguishes identical source anchors in the same file without removing occurrences', () => {
+    const original = deterministicIssue()
+    const issues = [original, {...original, location: {...original.location, line: 10}}]
+    const first = compileTrace(result(issues))
+    const second = compileTrace(
+      result(
+        issues.map((issue) => ({...issue, location: {...issue.location, line: issue.location.line! + 5}})).reverse(),
+      ),
+    )
+    const identities = (trace: typeof first) =>
+      trace.findings.map((finding) => finding.partial_fingerprints!['occurrence/v1']).sort()
+    expect(new Set(identities(first)).size).toBe(2)
+    expect(identities(second)).toEqual(identities(first))
+    expect(validateTrace(first).valid).toBe(true)
+
+    const duplicates = compileTrace(result([original, {...original}]))
+    expect(duplicates.findings).toHaveLength(2)
+    expect(validateTrace(duplicates)).toEqual({valid: true, errors: []})
+  })
+
+  test('does not claim stable occurrence identity without a source anchor', () => {
+    const issue = {...deterministicIssue(), snippet: undefined, evidence: []}
+    const finding = compileTrace(result([issue])).findings[0]!
+    expect(finding.partial_fingerprints).toEqual({'rulePattern/v1': expect.stringMatching(/^sha256:/)})
+  })
+
+  test('changes occurrence identity when source or file changes, and pattern identity when the variant changes', () => {
+    const original = deterministicIssue()
+    const first = compileTrace(result([original])).findings[0]!
+    for (const change of [
+      {snippet: 'console.log(otherToken)'},
+      {location: {file: 'app/b.ts', line: 2}},
+      {pattern_id: 'another-pattern'},
+    ]) {
+      const changed = compileTrace(result([{...original, ...change}])).findings[0]!
+      expect(changed.partial_fingerprints!['occurrence/v1']).not.toBe(first.partial_fingerprints!['occurrence/v1'])
+    }
+  })
+
+  test('validates legacy v2 traces without partial fingerprints and preserves their suppression keys', () => {
+    const trace = compileTrace(result([deterministicIssue()]))
+    delete trace.findings[0]!.partial_fingerprints
+    const {attestation: _attestation, ...unsigned} = trace
+    trace.attestation.digest = sha256(unsigned)
+    expect(validateTrace(trace)).toEqual({valid: true, errors: []})
+  })
+
+  test.each([
+    null,
+    {'rulePattern/v1': 'not-a-hash'},
+    {'rulePattern/v1': `sha256:${'e'.repeat(64)}`},
+    {'rulePattern/v1': `sha256:${'e'.repeat(64)}`, 'occurrence/v1': 42},
+  ])('rejects invalid or forged partial fingerprints even with a recomputed attestation: %j', (partial) => {
+    const trace = compileTrace(result([deterministicIssue()]))
+    const malformed = trace as unknown as {findings: {partial_fingerprints: unknown}[]}
+    malformed.findings[0]!.partial_fingerprints = partial
+    const {attestation: _attestation, ...unsigned} = trace
+    trace.attestation.digest = sha256(unsigned)
+    expect(validateTrace(trace).errors.join(' ')).toContain('partial_fingerprints')
   })
 
   test('rejects malformed required fields even when the outer digest is recomputed', () => {

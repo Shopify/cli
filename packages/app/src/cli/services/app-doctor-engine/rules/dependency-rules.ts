@@ -489,6 +489,7 @@ function toCveIssue(advisory: ParsedAdvisory, lockfile: string): Issue {
     id: 'KNOWN_CVE_IN_DEPENDENCY',
     severity: classification.severity,
     points: classification.points,
+    pattern_id: JSON.stringify([packageName, [...cves].sort()]),
     title: cveIssueTitle(packageName, classification.severity, cves),
     message: cveIssueMessage(packageName, classification.severity, cves, parents),
     location: {file: lockfile},
