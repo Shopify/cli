@@ -1,6 +1,8 @@
 /* eslint-disable tsdoc/syntax */
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
-import {outputContent, outputDebug, outputToken, TokenizedString} from './output.js'
+import {commandEventOutputMode, emitCommandEvent} from './command-events.js'
+import {randomUUID} from './crypto.js'
+import {outputContent, outputDebug, outputToken, TokenizedString, unstyled} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
@@ -529,11 +531,46 @@ export async function renderSingleTask<T>({
   onAbort,
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
+  // Keep updates correlated even when titles change or concurrent tasks share the same title.
+  const operation = randomUUID()
+  let currentStatus = title
+  const taskWithProgressEvents = async (updateStatus: (status: TokenizedString) => void): Promise<T> => {
+    emitCommandEvent(
+      {type: 'progress', operation, status: 'started', message: unstyled(currentStatus.value)},
+      {alreadyRendered: true},
+    )
+    const result = await task((status) => {
+      currentStatus = status
+      emitCommandEvent(
+        {type: 'progress', operation, status: 'updated', message: unstyled(status.value)},
+        {alreadyRendered: true},
+      )
+      updateStatus(status)
+    })
+    emitCommandEvent(
+      {type: 'progress', operation, status: 'completed', message: unstyled(currentStatus.value), current: 1, total: 1},
+      {alreadyRendered: true},
+    )
+    return result
+  }
+
+  if (commandEventOutputMode() === 'json') {
+    // Without Ink's raw input handling, Ctrl+C arrives as SIGINT. Leave the default
+    // signal behavior intact when the caller has no custom abort callback.
+    const onSigint = () => onAbort?.()
+    if (onAbort) process.once('SIGINT', onSigint)
+    try {
+      return await taskWithProgressEvents(() => {})
+    } finally {
+      if (onAbort) process.removeListener('SIGINT', onSigint)
+    }
+  }
+
   let taskResult: T
   await render(
     <SingleTask
       title={title}
-      task={task}
+      task={taskWithProgressEvents}
       onComplete={(result) => {
         taskResult = result
       }}
