@@ -28,11 +28,18 @@ import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
+import {adminFqdn} from '../context/fqdn.js'
+import {openURL} from '../system.js'
+import {isTTY} from '../ui.js'
+import {waitForEnter} from '../../../private/node/ui/wait-for-enter.js'
 
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
 
 vi.mock('../api/admin.js')
+vi.mock('../context/fqdn.js')
+vi.mock('../ui.js')
+vi.mock('../../../private/node/ui/wait-for-enter.js')
 vi.mock('@shopify/cli-kit/node/system')
 vi.stubGlobal('fetch', vi.fn())
 
@@ -483,6 +490,79 @@ describe('themePublish', () => {
   }
 })
 
+describe('trust challenges', () => {
+  const challengeUrl = 'https://admin.shopify.com/challenges/user_verification?token=abc'
+
+  beforeEach(() => {
+    vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(openURL).mockResolvedValue(true)
+    vi.mocked(waitForEnter).mockResolvedValue(undefined)
+  })
+
+  test('themePublish opens the challenge in the browser and retries after the user completes it', async () => {
+    // Given
+    const id = 123
+    vi.mocked(adminRequestDoc)
+      .mockRejectedValueOnce(trustChallengeError(challengeUrl))
+      .mockResolvedValueOnce({
+        themePublish: {
+          theme: {id: `gid://shopify/OnlineStoreTheme/${id}`, name: 'live theme', role: 'live'},
+          userErrors: [],
+        },
+      })
+
+    // When
+    const theme = await themePublish(id, session)
+
+    // Then
+    expect(openURL).toHaveBeenCalledWith(challengeUrl)
+    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+    expect(theme!.id).toEqual(id)
+  })
+
+  test('bulkUploadThemeAssets retries the challenged batch after the user completes the challenge', async () => {
+    // Given
+    vi.mocked(adminRequestDoc)
+      .mockRejectedValueOnce(trustChallengeError(challengeUrl))
+      .mockResolvedValueOnce({
+        themeFilesUpsert: {
+          upsertedThemeFiles: [{filename: 'snippets/product-variant-picker.liquid'}],
+          userErrors: [],
+        },
+      })
+
+    // When
+    const results = await bulkUploadThemeAssets(
+      123,
+      [{key: 'snippets/product-variant-picker.liquid', value: 'content'}],
+      session,
+    )
+
+    // Then
+    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+    expect(results).toEqual([
+      {key: 'snippets/product-variant-picker.liquid', success: true, operation: Operation.Upload},
+    ])
+  })
+
+  test('a non-challenge GraphQL error is not retried', async () => {
+    // Given
+    const error = new ClientError({status: 200, errors: [{message: 'boom'} as any]}, {query: ''})
+    vi.mocked(adminRequestDoc).mockRejectedValue(error)
+
+    // When
+    const promise = themePublish(123, session)
+
+    // Then
+    await expect(promise).rejects.toBe(error)
+    expect(openURL).not.toHaveBeenCalled()
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('deleteThemeAssets', () => {
   test('deletes a theme asset', async () => {
     // Given
@@ -820,6 +900,21 @@ describe('parseThemeFileContent', () => {
     })
   })
 })
+
+function trustChallengeError(redirectTo: string): ClientError {
+  return new ClientError(
+    {
+      status: 200,
+      errors: [
+        {
+          message: 'Challenge Required',
+          extensions: {code: 'CHALLENGE_REQUIRED', redirect_to: redirectTo},
+        } as any,
+      ],
+    },
+    {query: ''},
+  )
+}
 
 function themeAccessDeniedError(requiredAccess?: string, field = 'themes'): ClientError {
   const extensions = requiredAccess ? {code: 'ACCESS_DENIED', requiredAccess} : {code: 'ACCESS_DENIED'}
