@@ -6,20 +6,10 @@ export const MAX_UID_LENGTH = 250
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZodSchemaType<T> = zod.ZodType<T, any, any>
 
-const MetafieldOwnerTypeSchema = zod.enum([
-  'COMPANY',
-  'COMPANY_LOCATION',
-  'CUSTOMER',
-  'CART',
-  'PRODUCT',
-  'PRODUCTVARIANT',
-  'SHOP',
-])
-
 export const MetafieldSchema = zod.object({
   namespace: zod.string(),
   key: zod.string(),
-  owner_type: MetafieldOwnerTypeSchema.optional(),
+  owner_type: zod.string().optional(),
 })
 
 const CollectBuyerConsentCapabilitySchema = zod.object({
