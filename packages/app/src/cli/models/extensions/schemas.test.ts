@@ -1,4 +1,4 @@
-import {BaseSchema, MAX_UID_LENGTH, NewExtensionPointsSchema} from './schemas.js'
+import {BaseSchema, MAX_UID_LENGTH, MetafieldSchema, NewExtensionPointsSchema} from './schemas.js'
 import {describe, expect, test} from 'vitest'
 
 const validUIDTestCases = [
@@ -53,6 +53,23 @@ describe('UIDSchema', () => {
         expect(result.error.issues[0]?.message).toBe(expectedError)
       }
     })
+  })
+})
+
+describe('MetafieldSchema', () => {
+  test('accepts an owner type for API validation', () => {
+    const result = MetafieldSchema.safeParse({namespace: 'custom', key: 'value', owner_type: 'PRODUCT'})
+
+    expect(result).toEqual({
+      success: true,
+      data: {namespace: 'custom', key: 'value', owner_type: 'PRODUCT'},
+    })
+  })
+
+  test('accepts a metafield without an owner type', () => {
+    const result = MetafieldSchema.safeParse({namespace: 'custom', key: 'value'})
+
+    expect(result.success).toBe(true)
   })
 })
 
