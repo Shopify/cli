@@ -1,0 +1,56 @@
+{
+  "name": "@shopify/dev-platform-auth",
+  "version": "4.6.0",
+  "packageManager": "pnpm@10.11.1",
+  "private": false,
+  "description": "Portable Shopify developer auth flows",
+  "homepage": "https://github.com/shopify/cli#readme",
+  "bugs": {
+    "url": "https://community.shopify.dev/c/shopify-cli-libraries/14"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/dev-platform-auth"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "node": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js",
+      "node": "./dist/testing/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "type-check": "nx type-check",
+    "vitest": "vitest"
+  },
+  "eslintConfig": {
+    "extends": ["../../.eslintrc.cjs"]
+  },
+  "devDependencies": {
+    "@types/node": "18.19.130",
+    "@vitest/coverage-istanbul": "^3.2.7",
+    "esbuild": "0.28.1"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "sideEffects": false,
+  "engine-strict": true
+}
