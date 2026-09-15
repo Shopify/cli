@@ -623,6 +623,10 @@ function issue(
     title,
     message,
     location: {file: file.path, line: file.content!.slice(0, index).split('\n').length},
+    snippet: file
+      .content!.slice(file.content!.lastIndexOf('\n', index - 1) + 1)
+      .split('\n')[0]!
+      .trim(),
     fix: {automated: false, description: fix},
   }
 }

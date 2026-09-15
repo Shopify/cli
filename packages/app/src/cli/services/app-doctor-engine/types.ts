@@ -1,5 +1,7 @@
 export interface Issue {
   id: string
+  /** Stable detector-defined variant within a rule, independent of display wording. */
+  pattern_id?: string
   severity: Severity
   points: number
   title: string
@@ -205,8 +207,17 @@ export interface Suppression {
   provenance: SuppressionProvenance
 }
 
+export interface FindingPartialFingerprints {
+  'rulePattern/v1': string
+  'occurrence/v1'?: string
+}
+
 export interface TraceFinding {
+  /** Full-content fingerprint retained for existing trace validation and suppressions. */
   fingerprint: string
+  pattern_id?: string
+  /** Additive identities for grouping and cross-run matching; absent in older v2 traces. */
+  partial_fingerprints?: FindingPartialFingerprints
   source: FindingSource
   rule_id?: string
   rule_version?: number

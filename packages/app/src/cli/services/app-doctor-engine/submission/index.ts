@@ -7,6 +7,7 @@ import type {
   DetectedFramework,
   DetectedSurface,
   FindingSource,
+  FindingPartialFingerprints,
   LanguageSupport,
   Severity,
   SuppressionProvenance,
@@ -25,6 +26,7 @@ export interface BuildSubmissionOptions {
 
 interface SubmissionFinding {
   fingerprint: string
+  partial_fingerprints?: FindingPartialFingerprints
   source: FindingSource
   severity: Severity
   title: string
@@ -101,6 +103,7 @@ export interface AppDoctorSubmissionReport {
 function submissionFinding(finding: TraceFinding): SubmissionFinding {
   const common = {
     fingerprint: finding.fingerprint,
+    ...(finding.partial_fingerprints === undefined ? {} : {partial_fingerprints: finding.partial_fingerprints}),
     source: finding.source,
     severity: finding.severity,
     // External titles are caller-provided and may contain source code or file paths.

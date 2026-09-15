@@ -189,6 +189,7 @@ describe('git status drives severity, not .gitignore text', () => {
     expect(finding!.severity).toBe('high')
     expect(finding!.points).toBe(-50)
     expect(finding!.detection_evidence?.join(' ')).toContain('TRACKED')
+    expect(finding!.pattern_id).toBe('environment-file:tracked')
     rmSync(dir, {recursive: true, force: true})
   })
 
@@ -239,6 +240,7 @@ describe('git status drives severity, not .gitignore text', () => {
     const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
     expect(finding).toBeDefined()
     expect(finding!.severity).toBe('high')
+    expect(finding!.pattern_id).toBe('environment-file:unconfirmed')
     rmSync(dir, {recursive: true, force: true})
   })
 
