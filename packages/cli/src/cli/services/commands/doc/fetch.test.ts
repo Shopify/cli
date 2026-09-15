@@ -5,9 +5,11 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/metadata')
 
 const okResponse = (body: string) =>
   ({ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(body)}) as any
@@ -26,6 +28,17 @@ describe('docFetchService', () => {
     expect(outputResult).toHaveBeenCalledWith('# Doc')
   })
 
+  test('records the fetched URL path, without query or fragment, in command analytics', async () => {
+    await docFetchService(
+      'https://shopify.dev/docs/apps/launch/app-store-review/app-store-ai-self-review-requirements?utm=x#top',
+    )
+
+    expect(addPublicMetadata).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(addPublicMetadata).mock.calls[0]![0]()).toEqual({
+      cmd_doc_fetch_url_path: '/docs/apps/launch/app-store-review/app-store-ai-self-review-requirements',
+    })
+  })
+
   test('accepts shopify.dev subdomains', async () => {
     await docFetchService('https://www.shopify.dev/docs')
 
@@ -35,6 +48,7 @@ describe('docFetchService', () => {
   test('rejects URLs from disallowed hosts without fetching', async () => {
     await expect(docFetchService('https://example.com/docs')).rejects.toThrowError(AbortError)
     expect(fetch).not.toHaveBeenCalled()
+    expect(addPublicMetadata).not.toHaveBeenCalled()
   })
 
   test('rejects malformed URLs without fetching', async () => {

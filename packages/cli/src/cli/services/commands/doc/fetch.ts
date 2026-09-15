@@ -2,6 +2,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {dirname, resolvePath} from '@shopify/cli-kit/node/path'
 
 // Every page on shopify.dev has a Markdown representation, which is the clean,
@@ -30,6 +31,10 @@ export async function docFetchService(url: string, outputPath?: string, language
   if (!isAllowed) {
     throw new AbortError(`Only documents from the following hosts can be fetched: ${ALLOWED_HOSTS.join(', ')}.`)
   }
+
+  // Path only: it identifies which document was fetched (e.g. the App Store
+  // self-review requirements page) without carrying query strings or fragments.
+  await addPublicMetadata(() => ({cmd_doc_fetch_url_path: parsedURL.pathname}))
 
   // shopify.dev filters Markdown code examples when Accept-Language is a
   // recognized programming-language key. Unrecognized values are ignored and
