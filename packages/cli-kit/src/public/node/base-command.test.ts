@@ -10,7 +10,8 @@ import {unstyled} from './output.js'
 import {defineJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {Flags} from '@oclif/core'
+import {Flags, type Config} from '@oclif/core'
+import {Ajv} from 'ajv'
 
 let originalStdinIsTTY: boolean | undefined
 let originalStdoutIsTTY: boolean | undefined
@@ -285,6 +286,20 @@ describe('command events', () => {
 })
 
 describe('command descriptions', () => {
+  test('preserves schema patterns that resemble Markdown links', () => {
+    class CommandWithPattern extends Command {
+      static get jsonOutputSchema() {
+        return defineJsonOutputSchema({name: 'Result', schema: zod.string().regex(/[a-z](value)/)})
+      }
+
+      public async run(): Promise<void> {}
+    }
+
+    const description = CommandWithPattern.descriptionForHelp()!
+    const schema = JSON.parse(description.match(/```json\n([\s\S]+)\n```/)![1]!)
+    expect(schema.pattern).toBe('[a-z](value)')
+  })
+
   test('includes a JSON output schema without mutating the Markdown description', () => {
     class CommandWithJsonOutput extends Command {
       static get jsonOutputSchema() {
@@ -301,20 +316,143 @@ describe('command descriptions', () => {
       public async run(): Promise<void> {}
     }
 
-    expect(CommandWithJsonOutput.description).toBe(`Returns a value. "Learn more" (https://shopify.dev).
-
-With \`--json\`, the command returns \`CommandResult\`:
-
-\`\`\`ts
-interface CommandResult {
-  value: string
-}
-\`\`\``)
+    expect(CommandWithJsonOutput.description).toContain('Returns a value. "Learn more" (https://shopify.dev).')
+    expect(CommandWithJsonOutput.description).toContain(
+      'Use `--json-schema` to print the result, error, and event schemas.',
+    )
+    const helpSchema = JSON.parse(CommandWithJsonOutput.description!.match(/```json\n([\s\S]+)\n```/)![1]!)
+    expect(helpSchema).toEqual({
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      title: 'CommandResult',
+      type: 'object',
+      properties: {value: {type: 'string'}},
+      required: ['value'],
+      additionalProperties: false,
+    })
+    const validate = new Ajv().compile(helpSchema)
+    expect(validate({value: 'ready'})).toBe(true)
+    expect(validate({value: 1})).toBe(false)
     expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
 
     CommandWithJsonOutput.descriptionForHelp()
     expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
     expect(CommandWithJsonOutput.descriptionWithoutMarkdown()).toBe(CommandWithJsonOutput.descriptionForHelp())
+  })
+})
+
+describe('JSON output schema flag', () => {
+  class CommandWithJsonOutput extends Command {
+    static get jsonOutputSchema() {
+      return defineJsonOutputSchema({
+        name: 'CommandResult',
+        schema: zod.object({value: zod.string()}),
+      })
+    }
+
+    public async run(): Promise<void> {}
+  }
+
+  test.each([
+    {argv: ['--json-schema'], environment: ''},
+    {argv: ['--json-schema', '--', 'forwarded'], environment: ''},
+    {argv: [], environment: '1'},
+  ])('prints only the schema and exits: %j', async ({argv, environment}) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON_SCHEMA', environment)
+    const outputMock = mockAndCaptureOutput()
+    const command = new CommandWithJsonOutput(argv, {} as Config)
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit')
+    })
+
+    try {
+      await expect(
+        (
+          command as unknown as {
+            exitWithJsonSchemaWhenRequested(): Promise<void>
+          }
+        ).exitWithJsonSchemaWhenRequested(),
+      ).rejects.toThrow('process.exit')
+      expect(exit).toHaveBeenCalledWith(0)
+      const schema = JSON.parse(outputMock.output())
+      expect(schema).toMatchObject({
+        $schema: 'http://json-schema.org/draft-07/schema#',
+        title: 'CommandOutput',
+        anyOf: [{$ref: '#/definitions/Result'}, {$ref: '#/definitions/Error'}, {$ref: '#/definitions/Event'}],
+      })
+      const validate = new Ajv({validateFormats: false}).compile(schema)
+      expect(validate({value: 'ready'})).toBe(true)
+      expect(validate({error: {type: 'abort', message: 'Failed'}})).toBe(true)
+      expect(
+        validate({type: 'diagnostic', timestamp: '2026-08-26T12:00:00.000Z', level: 'info', message: 'Ready'}),
+      ).toBe(true)
+      expect(
+        validate({type: 'progress', timestamp: '2026-08-26T12:00:00.000Z', status: 'started', operation: 'upload'}),
+      ).toBe(true)
+      expect(validate({value: 1})).toBe(false)
+      expect(validate({error: {type: 'external', message: 'Missing command and args'}})).toBe(false)
+      expect(validate({type: 'progress', timestamp: '2026-08-26T12:00:00.000Z', status: 'started'})).toBe(false)
+    } finally {
+      exit.mockRestore()
+    }
+  })
+
+  test('ignores the schema flag after the passthrough boundary', async () => {
+    const outputMock = mockAndCaptureOutput()
+    const command = new CommandWithJsonOutput(['--', '--json-schema'], {} as Config)
+
+    await expect(
+      (
+        command as unknown as {
+          exitWithJsonSchemaWhenRequested(): Promise<void>
+        }
+      ).exitWithJsonSchemaWhenRequested(),
+    ).resolves.toBeUndefined()
+    expect(outputMock.output()).toBe('')
+  })
+
+  test('waits for stdout to flush before exiting', async () => {
+    mockAndCaptureOutput()
+    const command = new CommandWithJsonOutput(['--json-schema'], {} as Config)
+    let finishWrite: (() => void) | undefined
+    const write = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementationOnce((_chunk, callback: BufferEncoding | (() => void) | undefined) => {
+        if (typeof callback === 'function') finishWrite = callback
+        return true
+      })
+    const exit = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit')
+    })
+
+    try {
+      const result = (
+        command as unknown as {
+          exitWithJsonSchemaWhenRequested(): Promise<void>
+        }
+      ).exitWithJsonSchemaWhenRequested()
+      const assertion = expect(result).rejects.toThrow('process.exit')
+
+      expect(write).toHaveBeenCalledWith('', expect.any(Function))
+      expect(exit).not.toHaveBeenCalled()
+      finishWrite?.()
+      await assertion
+      expect(exit).toHaveBeenCalledWith(0)
+    } finally {
+      write.mockRestore()
+      exit.mockRestore()
+    }
+  })
+
+  test('throws an error when the command has no schema', async () => {
+    const command = new MockCommand(['--json-schema'], {} as Config)
+
+    await expect(
+      (
+        command as unknown as {
+          exitWithJsonSchemaWhenRequested(): Promise<void>
+        }
+      ).exitWithJsonSchemaWhenRequested(),
+    ).rejects.toThrow('This command does not define a JSON output schema.')
   })
 })
 

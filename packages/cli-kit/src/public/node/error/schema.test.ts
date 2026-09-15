@@ -1,14 +1,19 @@
 import {jsonErrorOutputSchema} from './schema.js'
 import {describe, expect, test} from 'vitest'
+import {Ajv} from 'ajv'
 
 describe('JSON error output schema', () => {
   test('documents and validates every fatal JSON error type', () => {
-    expect(jsonErrorOutputSchema.typescript).toContain(
-      'type JsonError = JsonAbortError | JsonBugError | JsonExternalError',
-    )
-    expect(jsonErrorOutputSchema.typescript).toContain('interface JsonAbortError')
-    expect(jsonErrorOutputSchema.typescript).toContain('interface JsonBugError')
-    expect(jsonErrorOutputSchema.typescript).toContain('interface JsonExternalError')
+    const validate = new Ajv().compile(jsonErrorOutputSchema.jsonSchema)
+    for (const error of [
+      {type: 'abort', message: 'Expected failure'},
+      {type: 'bug', message: 'Unexpected failure'},
+      {type: 'external', message: 'Command failed', command: 'npm', args: ['install']},
+    ]) {
+      expect(validate({error})).toBe(true)
+    }
+    expect(validate({error: {type: 'unknown', message: 'Failed'}})).toBe(false)
+    expect(validate({error: {type: 'external', message: 'Failed'}})).toBe(false)
 
     expect(jsonErrorOutputSchema.validate({error: {type: 'abort', message: 'Expected failure'}})).toEqual({
       error: {type: 'abort', message: 'Expected failure'},
@@ -30,6 +35,6 @@ describe('JSON error output schema', () => {
 
     expect(jsonErrorOutputSchema.validate(document)).toEqual(document)
     expect(JSON.parse(jsonErrorOutputSchema.encode(document))).toEqual(document)
-    expect(jsonErrorOutputSchema.typescript).toContain('details?: unknown')
+    expect(new Ajv().compile(jsonErrorOutputSchema.jsonSchema)(document)).toBe(true)
   })
 })
