@@ -16,6 +16,7 @@ import type {SourceFile} from '../rules/types.js'
 
 const ACTIVE_IDS = [
   'MISSING_COMPLIANCE_WEBHOOKS',
+  'MISSING_DEPENDENCY_AUDITING',
   'EOL_API_VERSION',
   'EXPIRING_OFFLINE_TOKEN',
   'UNAUTHENTICATED_ENDPOINT',
@@ -39,7 +40,7 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
 })
 
 describe('deterministic rules product contract', () => {
-  test('has exactly fourteen active executable deterministic identities', () => {
+  test('has exactly fifteen active executable deterministic identities', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
     const registry = getRegistry()

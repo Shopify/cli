@@ -146,6 +146,14 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     guide: 'https://shopify.dev/docs/apps/webhooks/configuration/mandatory-webhooks',
   },
   {
+    id: 'MISSING_DEPENDENCY_AUDITING',
+    title: 'Dependency auditing configuration not detected',
+    severity: 'low',
+    points: -5,
+    description: 'Detects apps with dependencies but no recognized automated dependency vulnerability auditing.',
+    fix: 'Add dependency vulnerability auditing to an allowlisted CI configuration for the app.',
+  },
+  {
     id: 'EOL_API_VERSION',
     title: 'End-of-life API version',
     severity: 'low',

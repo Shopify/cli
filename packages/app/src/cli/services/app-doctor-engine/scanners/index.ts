@@ -10,6 +10,7 @@ import {
   getSkippedFiles,
   findManifests,
   findManifestPaths,
+  findDependencyAuditingInputs,
 } from './discover.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
 import {calculateScore, computeScanMetadata} from '../scorer/index.js'
@@ -28,6 +29,7 @@ import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance
 import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
 import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
 import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
+import {scanDependencyAuditing} from '../rules/dependency-auditing-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
@@ -47,7 +49,15 @@ import type {
   SkippedFile,
 } from '../types.js'
 
-type CheckTarget = 'config' | 'source' | 'app_source' | 'theme' | 'secrets' | 'config_and_source' | 'source_and_theme'
+type CheckTarget =
+  | 'config'
+  | 'source'
+  | 'app_source'
+  | 'theme'
+  | 'secrets'
+  | 'config_and_source'
+  | 'source_and_theme'
+  | 'dependency_auditing'
 interface RunnerImplementationResult {
   id: string
   analysisMode: AnalysisMode
@@ -108,6 +118,16 @@ const jsCheck = (
 /** The only active deterministic product checks. Shared agent IDs are deliberate fallback coverage. */
 const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinition> = [
   configRule(missingComplianceWebhooks),
+  {
+    id: 'MISSING_DEPENDENCY_AUDITING',
+    version: 1,
+    lifecycle: 'active',
+    analysisMode: 'structured_config',
+    target: 'dependency_auditing',
+    guidance:
+      'Resolve unreadable or malformed inputs and inspect unsupported configuration references manually. Repository-level CI configuration is not inspected for nested apps; verify that dependency vulnerability auditing covers this app.',
+    runner: (context) => scanDependencyAuditing(context),
+  },
   {
     id: 'EOL_API_VERSION',
     version: 1,
@@ -362,6 +382,11 @@ async function gitProject(appRoot: string): Promise<ScanResult['project']> {
 function selectedFiles(definition: DeterministicCheckDefinition, context: ScanContext): string[] {
   const configurations = context.appTomls.map((toml) => relativePath(context.appRoot, toml.path).replace(/\\/g, '/'))
   if (definition.target === 'config') return configurations
+  if (definition.target === 'dependency_auditing')
+    return [
+      ...context.manifests.map((manifest) => manifest.path),
+      ...context.dependencyAuditing.files.filter((file) => file.content !== undefined).map((file) => file.path),
+    ]
   if (definition.target === 'secrets')
     return context.sensitiveFiles.filter((file) => file.content !== undefined).map((file) => file.path)
   let files = definition.target === 'app_source' ? appSourceFiles(context) : reactRouterFiles(context)
@@ -389,6 +414,13 @@ function executionDisposition(
   const reactRouterSupported = context.detection.framework === 'react_router'
   const hasTheme = context.capabilities.theme_app_extension
 
+  if (definition.target === 'dependency_auditing' && !context.manifests.some(manifestHasDependencies))
+    return {
+      status: 'not_applicable',
+      required: false,
+      applicable: false,
+      reason: {code: 'no_relevant_files', message: 'No supported package manifest declares dependencies.'},
+    }
   if (definition.target === 'source' && !reactRouterSupported) {
     if (nonThemeCandidates.length > 0)
       return {
@@ -497,6 +529,10 @@ function executionDisposition(
   return {status: 'executed', required: true, applicable: true}
 }
 
+function manifestHasDependencies(manifest: ScanContext['manifests'][number]): boolean {
+  return Object.keys(manifest.dependencies).length > 0 || Object.keys(manifest.devDependencies ?? {}).length > 0
+}
+
 function skippedInputsForCheck(
   definition: DeterministicCheckDefinition,
   context: ScanContext,
@@ -510,6 +546,8 @@ function skippedInputsForCheck(
   const isSourcePath = (path: string) =>
     !isThemePath(path) && Boolean(definition.extensions?.some((extension) => path.endsWith(extension)))
   const isConfig = (path: string) => /^shopify\.app(?:\.[^/]+)?\.toml$/.test(path)
+  const isDependencyAuditingInput = (path: string) =>
+    /(^|\/)package\.json$/.test(path) || /^\.github\/workflows\/[^/]+\.ya?ml$/i.test(path)
   const isSecretInput = (file: SkippedFile) =>
     !file.detail?.includes('could not be parsed') &&
     (context.sourceCandidates.some((candidate) => candidate.path === file.path) ||
@@ -518,6 +556,7 @@ function skippedInputsForCheck(
 
   return skippedFiles.filter((file) => {
     if (definition.target === 'config') return isConfig(file.path)
+    if (definition.target === 'dependency_auditing') return isDependencyAuditingInput(file.path)
     if (definition.target === 'config_and_source') return isConfig(file.path) || isSourcePath(file.path)
     if (definition.target === 'source' || definition.target === 'app_source') return isSourcePath(file.path)
     if (definition.target === 'theme') return isThemePath(file.path)
@@ -562,6 +601,9 @@ export async function scan(startPath?: string): Promise<ScanResult> {
   const sensitiveFiles = findSensitiveFiles(appRoot)
   const manifestPaths = findManifestPaths(appRoot)
   const manifests = findManifests(appRoot, manifestPaths)
+  const dependencyAuditing = manifests.some(manifestHasDependencies)
+    ? findDependencyAuditingInputs(appRoot)
+    : {files: []}
   const requestedAppToml = startPath?.endsWith('.toml')
     ? (appTomls.find((toml) => basename(toml.path) === basename(startPath)) ??
       loadAppToml(joinPath(appRoot, basename(startPath)), appRoot))
@@ -583,6 +625,7 @@ export async function scan(startPath?: string): Promise<ScanResult> {
     extensions,
     sourceFiles,
     manifests,
+    dependencyAuditing,
     sensitiveFiles,
     capabilities,
     detection,
@@ -596,10 +639,16 @@ export async function scan(startPath?: string): Promise<ScanResult> {
     let inspectedFiles = disposition.status === 'unsupported_framework' ? [] : selectedFiles(definition, context)
     let implementations: RunnerImplementationResult[] | undefined
     const before = issues.length
-    if ((disposition.status === 'executed' || disposition.status === 'unresolved') && definition.runner) {
+    const rejectedInputs = skippedInputsForCheck(definition, context, getSkippedFiles())
+    const suppressRunnerForRejectedInput = definition.target === 'dependency_auditing' && rejectedInputs.length > 0
+    if (
+      (disposition.status === 'executed' || disposition.status === 'unresolved') &&
+      definition.runner &&
+      !suppressRunnerForRejectedInput
+    ) {
       // eslint-disable-next-line no-await-in-loop
       const output = normalizeRunnerResult(await definition.runner(runnerContext(definition, context)))
-      issues.push(...output.issues)
+      if (definition.target !== 'dependency_auditing' || !output.unresolvedReason) issues.push(...output.issues)
       implementations = output.implementations
       if (output.inspectedFiles) inspectedFiles = output.inspectedFiles
       if (output.unresolvedReason)
@@ -613,7 +662,6 @@ export async function scan(startPath?: string): Promise<ScanResult> {
           },
         }
     }
-    const rejectedInputs = skippedInputsForCheck(definition, context, getSkippedFiles())
     if (disposition.status !== 'unsupported_framework' && rejectedInputs.length > 0) {
       const reason = skippedInputReason(definition, rejectedInputs)
       disposition = {status: 'unresolved', required: true, applicable: true, reason}
@@ -683,6 +731,7 @@ export async function scan(startPath?: string): Promise<ScanResult> {
     ...appTomls.map((toml) => ({absolutePath: toml.path, content: toml.content})),
     ...extensions.map((extension) => ({absolutePath: joinPath(appRoot, extension.path), content: extension.content})),
     ...manifests.map((manifest) => ({absolutePath: manifest.absolutePath, content: manifest.content})),
+    ...dependencyAuditing.files.map((file) => ({absolutePath: joinPath(appRoot, file.path), content: file.content})),
   ]
   for (const {absolutePath, content} of configFiles)
     if (content !== undefined) {
