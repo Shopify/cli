@@ -23,7 +23,24 @@ import {
   GitLabScriptsSchema,
   GitLabVariablesSchema,
 } from './dependency-auditing-gitlab-schema.js'
+import {
+  CircleCheckoutSchema,
+  CircleConfigurationHeaderSchema,
+  CircleConfigurationSchema,
+  CircleJobInvocationSchema,
+  CircleJobSchema,
+  CircleRunCommandSchema,
+  CircleRunHeaderSchema,
+  CircleSnykSettingsSchema,
+  CircleSnykTargetSchema,
+  CircleStepSchema,
+  CircleWhenStepHeaderSchema,
+  CircleWhenStepSchema,
+  CircleWorkflowHeaderSchema,
+  CircleWorkflowSchema,
+} from './dependency-auditing-circle-schema.js'
 import {parseDocument} from 'yaml'
+import type {CircleJob} from './dependency-auditing-circle-schema.js'
 import type {GitHubActionStep, GitHubDefaults, GitHubRunStep} from './dependency-auditing-github-schema.js'
 import type {Issue} from '../types.js'
 import type {ManifestFile, ScanContext, SourceFile} from './types.js'
@@ -80,6 +97,17 @@ const SHELL_CONTROL_WORDS = new Set([
   'trap',
   'until',
   'while',
+])
+const CIRCLE_BUILT_IN_STEPS = new Set([
+  'add_ssh_keys',
+  'attach_workspace',
+  'checkout',
+  'persist_to_workspace',
+  'restore_cache',
+  'save_cache',
+  'setup_remote_docker',
+  'store_artifacts',
+  'store_test_results',
 ])
 const MAX_YAML_ALIASES = 20
 
@@ -148,6 +176,9 @@ function analyzeConfiguration(
   }
   if (/(?:^|\/)\.gitlab-ci\.ya?ml$/i.test(path)) {
     return combine(warnings, analyzeGitLabConfiguration(parsed.value, path, manifests))
+  }
+  if (/^\.circleci\/config\.ya?ml$/i.test(path)) {
+    return combine(warnings, analyzeCircleConfiguration(parsed.value, path, manifests))
   }
   return warnings
 }
@@ -398,6 +429,166 @@ function analyzeGitLabIncludes(value: unknown, path: string, dependencyScanningD
     }
   }
   return analysis
+}
+
+function analyzeCircleConfiguration(value: unknown, path: string, manifests: ManifestFile[]): Analysis {
+  const header = CircleConfigurationHeaderSchema.safeParse(value)
+  if (!header.success) return obstacle(`CircleCI configuration has an unsupported structure: ${path}`)
+  if (header.data.workflows === undefined) return noEvidence()
+  const configuration = CircleConfigurationSchema.safeParse(value)
+  if (!configuration.success) return obstacle(`CircleCI configuration has unsupported jobs or workflows: ${path}`)
+  const {jobs, workflows, commands, orbs} = configuration.data
+
+  const snykAliases = new Set(
+    Object.entries(orbs)
+      .filter(([, orb]) => typeof orb === 'string' && /^snyk\/snyk@[^\s]+$/i.test(orb))
+      .map(([alias]) => alias),
+  )
+  const customCommands = new Set(Object.keys(commands ?? {}))
+  let analysis = noEvidence()
+  for (const [workflowName, workflowValue] of Object.entries(workflows)) {
+    if (workflowName === 'version') continue
+    const workflowHeader = CircleWorkflowHeaderSchema.safeParse(workflowValue)
+    if (!workflowHeader.success) {
+      analysis = combine(analysis, obstacle(`CircleCI workflow has an unsupported structure in ${path}`))
+      continue
+    }
+    if (isDisabled(workflowHeader.data.when)) continue
+    const workflow = CircleWorkflowSchema.safeParse(workflowValue)
+    if (!workflow.success) {
+      analysis = combine(analysis, obstacle(`CircleCI workflow has unsupported jobs in ${path}`))
+      continue
+    }
+    for (const invocation of workflow.data.jobs) {
+      const parsedInvocation = CircleJobInvocationSchema.safeParse(invocation)
+      if (!parsedInvocation.success) {
+        analysis = combine(analysis, obstacle(`CircleCI workflow has an unsupported job invocation in ${path}`))
+        continue
+      }
+      const jobName = parsedInvocation.data
+      if (!jobName) continue
+      if (jobName.includes('/')) {
+        analysis = combine(analysis, obstacle(`Unsupported CircleCI orb job referenced by ${path}`))
+        continue
+      }
+      const job = CircleJobSchema.safeParse(jobs[jobName])
+      if (!job.success) {
+        analysis = combine(analysis, obstacle(`Unknown CircleCI job referenced by ${path}`))
+        continue
+      }
+      analysis = combine(analysis, analyzeCircleJob(job.data, snykAliases, customCommands, path, manifests))
+    }
+  }
+  return analysis
+}
+
+function analyzeCircleJob(
+  job: CircleJob,
+  snykAliases: Set<string>,
+  customCommands: Set<string>,
+  path: string,
+  manifests: ManifestFile[],
+): Analysis {
+  const directory = resolveCircleDirectory(job.working_directory)
+  if (!directory.ok) return obstacle(`Unsupported CircleCI working_directory in ${path}`)
+  if (
+    job.steps.some((step) => {
+      const checkout = CircleCheckoutSchema.safeParse(step)
+      return checkout.success && checkout.data.checkout.path !== undefined
+    })
+  ) {
+    return obstacle(`Unsupported CircleCI checkout path in ${path}`)
+  }
+
+  let analysis = noEvidence()
+  for (const stepValue of job.steps) {
+    const header = CircleWhenStepHeaderSchema.safeParse(stepValue)
+    if (header.success && header.data.when !== undefined) {
+      const when = CircleWhenStepSchema.safeParse(header.data.when)
+      if (!when.success) {
+        analysis = combine(analysis, obstacle(`CircleCI when step has an unsupported structure in ${path}`))
+        continue
+      }
+      if (isDisabled(when.data.condition)) continue
+      for (const nestedStep of when.data.steps) {
+        analysis = combine(
+          analysis,
+          analyzeCircleStep(nestedStep, directory.value, snykAliases, customCommands, path, manifests),
+        )
+      }
+      continue
+    }
+    analysis = combine(
+      analysis,
+      analyzeCircleStep(stepValue, directory.value, snykAliases, customCommands, path, manifests),
+    )
+  }
+  return analysis
+}
+
+function analyzeCircleStep(
+  stepValue: unknown,
+  directory: string,
+  snykAliases: Set<string>,
+  customCommands: Set<string>,
+  path: string,
+  manifests: ManifestFile[],
+): Analysis {
+  if (typeof stepValue === 'string') {
+    if (CIRCLE_BUILT_IN_STEPS.has(stepValue)) return noEvidence()
+    const [alias, command] = stepValue.split('/')
+    if (alias && command) {
+      if (command === 'scan' && snykAliases.has(alias)) {
+        return targetCoversManifest(directory, undefined, manifests) ? evidence() : noEvidence()
+      }
+      return obstacle(`Unsupported CircleCI orb command referenced by ${path}`)
+    }
+    return obstacle(`Unsupported CircleCI custom command referenced by ${path}`)
+  }
+  const step = CircleStepSchema.safeParse(stepValue)
+  if (!step.success) return obstacle(`CircleCI job has an unsupported step in ${path}`)
+  const {name, settings: settingsValue} = step.data
+  if (name === 'run' && settingsValue !== undefined) {
+    const runValue = typeof settingsValue === 'string' ? {command: settingsValue} : settingsValue
+    const header = CircleRunHeaderSchema.safeParse(runValue)
+    if (!header.success) return obstacle(`CircleCI run step has an unsupported structure in ${path}`)
+    if (header.data.when === 'never') return noEvidence()
+    const run = CircleRunCommandSchema.safeParse(runValue)
+    if (!run.success) return obstacle(`CircleCI run command has an unsupported structure in ${path}`)
+    const runDirectory =
+      run.data.working_directory === undefined
+        ? {ok: true as const, value: directory}
+        : resolveCircleDirectory(run.data.working_directory)
+    if (!runDirectory.ok) return obstacle(`Unsupported CircleCI run working_directory in ${path}`)
+    return analyzeCommands(run.data.command, {directory: runDirectory.value, manifests, allowPackageScript: true}, path)
+  }
+
+  if (CIRCLE_BUILT_IN_STEPS.has(name)) return noEvidence()
+  const [alias, command] = name.split('/')
+  if (!alias || !command) {
+    return customCommands.has(name)
+      ? obstacle(`Unsupported CircleCI custom command referenced by ${path}`)
+      : obstacle(`Unknown CircleCI command referenced by ${path}`)
+  }
+  if (!snykAliases.has(alias) || command !== 'scan') {
+    return obstacle(`Unsupported CircleCI orb command referenced by ${path}`)
+  }
+  const settings = CircleSnykSettingsSchema.safeParse(settingsValue)
+  if (!settings.success) return obstacle(`CircleCI Snyk settings have an unsupported structure in ${path}`)
+  const packageManagerValue = settings.data['package-manager']
+  if (packageManagerValue !== undefined) {
+    if (packageManagerValue.length === 0 || isDynamic(packageManagerValue)) {
+      return obstacle(`CircleCI Snyk package manager has an unsupported value in ${path}`)
+    }
+    if (!SUPPORTED_PACKAGE_MANAGERS.has(packageManagerValue.toLowerCase())) return noEvidence()
+  }
+  const target = CircleSnykTargetSchema.safeParse(settings.data['target-file'] ?? settings.data.file)
+  if (!target.success) return obstacle(`CircleCI Snyk target has an unsupported structure in ${path}`)
+  const targetValue = target.data
+  if (targetValue !== undefined && (!targetValue || !isSafeRelativePath(targetValue))) {
+    return obstacle(`Unsupported CircleCI Snyk target prevents auditing analysis in ${path}`)
+  }
+  return targetCoversManifest(directory, targetValue, manifests) ? evidence() : noEvidence()
 }
 
 function analyzeCommands(command: string, context: CommandContext, configurationPath: string): Analysis {
@@ -683,6 +874,15 @@ function resolveSelectedDirectory(value: unknown): ResolvedValue {
   if (value === undefined) return {ok: true, value: ''}
   if (typeof value !== 'string' || !isSafeRelativePath(value)) return {ok: false}
   return {ok: true, value: normalizeDirectory(value)}
+}
+
+function resolveCircleDirectory(value: unknown): ResolvedValue {
+  if (value === undefined) return {ok: true, value: ''}
+  if (typeof value !== 'string' || isDynamic(value)) return {ok: false}
+  const normalized = normalizePath(value)
+  if (normalized !== '~/project' && !normalized.startsWith('~/project/')) return {ok: false}
+  const relative = normalized === '~/project' ? '' : normalized.slice('~/project/'.length)
+  return isSafeRelativePath(relative) ? {ok: true, value: normalizeDirectory(relative)} : {ok: false}
 }
 
 function normalizeDirectory(value: string): string {

@@ -749,7 +749,7 @@ function nestedRepositoryReason(appRoot: string): string | undefined {
   }
 }
 
-const DEPENDENCY_AUDITING_FILES = ['.gitlab-ci.yml']
+const DEPENDENCY_AUDITING_FILES = ['.gitlab-ci.yml', '.circleci/config.yml', '.circleci/config.yaml']
 
 /** Discover only repository CI files that can explicitly invoke dependency auditing. */
 export function findDependencyAuditingInputs(appRoot: string): DependencyAuditingInputs {

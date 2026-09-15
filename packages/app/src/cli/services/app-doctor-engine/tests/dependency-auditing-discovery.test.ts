@@ -45,6 +45,8 @@ describe('dependency auditing input discovery', () => {
       '.github/workflows/release.yaml': 'name: release\n',
       '.github/workflows/ignored.json': '{}',
       '.gitlab-ci.yml': 'audit:\n  script: npm audit\n',
+      '.circleci/config.yml': 'version: 2.1\n',
+      '.circleci/other.yml': 'not: allowlisted\n',
       '.hidden/config.yml': 'not: allowlisted\n',
     })
 
@@ -52,6 +54,7 @@ describe('dependency auditing input discovery', () => {
 
     expect(result.unresolvedReason).toBeUndefined()
     expect(result.files.map(({path}) => path)).toEqual([
+      '.circleci/config.yml',
       '.github/workflows/dependencies.yml',
       '.github/workflows/release.yaml',
       '.gitlab-ci.yml',

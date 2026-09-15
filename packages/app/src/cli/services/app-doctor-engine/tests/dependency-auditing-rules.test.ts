@@ -28,6 +28,7 @@ ${body}`,
   )
 
 const gitlab = (content: string): SourceFile => configuration('.gitlab-ci.yml', content)
+const circle = (content: string): SourceFile => configuration('.circleci/config.yml', content)
 
 function scan(files: SourceFile[], manifests: ManifestFile[] = [manifest()]) {
   return scanDependencyAuditing({manifests, dependencyAuditing: {files}})
@@ -485,6 +486,163 @@ describe('GitLab dependency scanning', () => {
   })
 })
 
+describe('CircleCI dependency scanning', () => {
+  const config = (workflowJobs: string, jobs: string, orbs = '  security: snyk/snyk@2.1.0') =>
+    circle(`version: 2.1
+orbs:
+${orbs}
+jobs:
+${jobs}
+workflows:
+  checks:
+    jobs:
+${workflowJobs}`)
+
+  test('resolves an arbitrary Snyk orb alias in a workflow-invoked job', () => {
+    expectRecognized([
+      config(
+        '      - audit',
+        '  audit:\n    steps:\n      - security/scan:\n          package-manager: npm\n          target-file: package.json',
+      ),
+    ])
+  })
+
+  test('recognizes a scalar Snyk scan in an invoked job', () => {
+    expectRecognized([config('      - audit', '  audit:\n    steps:\n      - security/scan')])
+  })
+
+  test('recognizes an explicit run command in an invoked job', () => {
+    expectRecognized([config('      - audit', '  audit:\n    steps:\n      - run: yarn npm audit')])
+  })
+
+  test('does not use an unused orb, alias, or job as evidence', () => {
+    expectMissing([
+      config(
+        '      - build',
+        '  build:\n    steps:\n      - run: npm test\n  audit:\n    steps:\n      - security/scan',
+      ),
+    ])
+  })
+
+  test('matches CircleCI target files and package managers to an actual manifest', () => {
+    const file = config(
+      '      - audit',
+      '  audit:\n    working_directory: ~/project/packages/web\n    steps:\n      - security/scan:\n          package-manager: pnpm\n          target-file: package.json',
+    )
+    expectRecognized([file], [manifest('packages/web/package.json')])
+    expectMissing([file], [manifest('packages/admin/package.json')])
+
+    const unrelated = config(
+      '      - audit',
+      '  audit:\n    steps:\n      - security/scan:\n          package-manager: pip\n          target-file: requirements.txt',
+    )
+    expectMissing([unrelated])
+  })
+
+  test('leaves invoked custom and non-Snyk orb commands unresolved', () => {
+    expectUnresolved([
+      circle(
+        'version: 2.1\ncommands:\n  security:\n    steps:\n      - run: npm audit\njobs:\n  build:\n    steps:\n      - security\nworkflows:\n  checks:\n    jobs:\n      - build',
+      ),
+    ])
+    expectUnresolved([
+      config('      - audit', '  audit:\n    steps:\n      - other/scan', '  other: acme/security@1.0.0'),
+    ])
+  })
+
+  test('ignores unused custom commands and non-audit tools', () => {
+    expectMissing([
+      circle(
+        'version: 2.1\ncommands:\n  security:\n    steps:\n      - run: npm audit\njobs:\n  build:\n    steps:\n      - run: gitleaks detect\nworkflows:\n  checks:\n    jobs:\n      - build',
+      ),
+    ])
+  })
+
+  test('does not recognize disabled workflows or run steps', () => {
+    expectMissing([
+      circle(
+        'version: 2.1\njobs:\n  audit:\n    steps:\n      - run: npm audit\nworkflows:\n  checks:\n    when: false\n    jobs:\n      - audit',
+      ),
+    ])
+    expectMissing([
+      config(
+        '      - audit',
+        '  audit:\n    steps:\n      - run:\n          when: never\n          command: npm audit',
+      ),
+    ])
+  })
+
+  test.each([
+    '    working_directory: $PROJECT_DIR',
+    '    working_directory: /tmp',
+    '    working_directory: ~/other/project',
+  ])('leaves unsupported CircleCI job directory unresolved', (workingDirectory) => {
+    expectUnresolved([config('      - audit', `  audit:\n${workingDirectory}\n    steps:\n      - run: npm audit`)])
+  })
+
+  test('leaves unsupported CircleCI run directory unresolved', () => {
+    expectUnresolved([
+      config(
+        '      - audit',
+        '  audit:\n    steps:\n      - run:\n          working_directory: ../\n          command: npm audit',
+      ),
+    ])
+  })
+
+  test.each([
+    'jobs: invalid\ncommands: invalid',
+    'workflows:\n  checks:\n    when: false\n    jobs: invalid',
+    'jobs:\n  build:\n    steps:\n      - run: npm test\n  unused: invalid\nworkflows:\n  checks:\n    jobs: [build]',
+  ])('does not validate configuration outside invoked workflows: %s', (content) => {
+    expectMissing([circle(content)])
+  })
+
+  test.each([
+    '      - run:\n          when: never\n          command: [invalid]\n          working_directory: [invalid]',
+    '      - when:\n          condition: false\n          steps:\n            - run: [invalid]',
+    '      - security/scan:\n          package-manager: pip\n          target-file: [invalid]',
+  ])('does not validate disabled execution or unsupported ecosystems: %s', (steps) => {
+    expectMissing([config('      - audit', `  audit:\n    steps:\n${steps}`)])
+  })
+
+  test.each([
+    '      - security/scan:\n          target-file: package.json\n          file: [invalid]\n          monitor-on-build: false',
+    '      - run: {command: npm audit, name: audit dependencies}',
+    '      - when:\n          condition: true\n          steps:\n            - run: npm audit',
+    '      - run: [invalid]\n      - run: npm audit',
+  ])('retains selected targets, nested execution, and independent evidence: %s', (steps) => {
+    expectRecognized([config('      - audit', `  audit:\n    steps:\n${steps}`)])
+  })
+
+  test.each(['      - {audit: {}, build: {}}', '      - {}', '      - null'])(
+    'rejects malformed job invocations without stripping keys: %s',
+    (invocation) => {
+      expectUnresolved([config(invocation, '  audit:\n    steps:\n      - run: npm audit')])
+    },
+  )
+
+  test.each([
+    '      - run: npm audit\n        unexpected: true',
+    '      - when:\n          condition: false\n          steps: invalid',
+  ])('retains structural obstacles in steps: %s', (steps) => {
+    expectUnresolved([config('      - audit', `  audit:\n    steps:\n${steps}`)])
+  })
+
+  test('does not treat unsupported orb declarations as a reason to discard independent evidence', () => {
+    expectRecognized([
+      circle(
+        'orbs: invalid\njobs:\n  audit:\n    steps:\n      - run: npm audit\nworkflows:\n  checks:\n    jobs:\n      - audit: {name: dependency audit}',
+      ),
+    ])
+  })
+
+  test('treats malformed jobs, steps, and run commands as unresolved', () => {
+    expectUnresolved([config('      - audit', '  audit: invalid')])
+    expectUnresolved([config('      - audit', '  audit:\n    steps: invalid')])
+    expectUnresolved([config('      - audit', '  audit:\n    steps:\n      - run:\n          command: [npm, audit]')])
+  })
+})
+
 describe('execution boundaries', () => {
   test.each(['repository: other/project', 'path: other'])('leaves a scoped checkout unresolved (%s)', (input) => {
     const file = github(
@@ -506,6 +664,19 @@ describe('execution boundaries', () => {
     expectMissing([file])
   })
 
+  test('does not lose unknown CircleCI orb jobs when there are no local jobs', () => {
+    const file = circle(
+      'version: 2.1\norbs:\n  security: example/security@1\nworkflows:\n  audit:\n    jobs:\n      - security/audit',
+    )
+    expect(scan([file])).toMatchObject({issues: [], unresolvedReason: expect.any(String)})
+  })
+
+  test('does not attribute a scoped CircleCI checkout to the app root', () => {
+    const file = circle(
+      'version: 2.1\njobs:\n  audit:\n    steps:\n      - checkout:\n          path: other\n      - run: npm audit\nworkflows:\n  checks:\n    jobs:\n      - audit',
+    )
+    expect(scan([file])).toMatchObject({issues: [], unresolvedReason: expect.any(String)})
+  })
   test.each([
     ['quoted heredoc', "cat <<'EOF'\nnpm audit\nEOF"],
     ['function definition', 'audit() {\n npm audit\n}'],
@@ -543,6 +714,7 @@ describe('configuration obstacles', () => {
   test.each([
     ['malformed GitHub workflow', configuration('.github/workflows/ci.yml', 'jobs: [')],
     ['malformed GitLab configuration', gitlab('include: [')],
+    ['malformed CircleCI configuration', circle('jobs: {')],
     [
       'excessive YAML aliases',
       github(
@@ -561,6 +733,10 @@ describe('configuration obstacles', () => {
       ),
     ],
     ['unknown local GitHub action', github('    steps:\n      - uses: ./.github/actions/security')],
+    [
+      'unknown CircleCI invoked job',
+      circle('version: 2.1\njobs: {}\nworkflows:\n  checks:\n    jobs:\n      - delegated'),
+    ],
   ])('returns no finding and an unresolved reason for %s', (_name, file) => {
     const result = scan([file])
     expect(result.issues).toEqual([])

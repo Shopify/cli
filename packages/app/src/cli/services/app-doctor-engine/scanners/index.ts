@@ -549,7 +549,8 @@ function skippedInputsForCheck(
   const isDependencyAuditingInput = (path: string) =>
     /(^|\/)package\.json$/.test(path) ||
     /^\.github\/workflows\/[^/]+\.ya?ml$/i.test(path) ||
-    /^\.gitlab-ci\.ya?ml$/i.test(path)
+    /^\.gitlab-ci\.ya?ml$/i.test(path) ||
+    /^\.circleci\/config\.ya?ml$/i.test(path)
   const isSecretInput = (file: SkippedFile) =>
     !file.detail?.includes('could not be parsed') &&
     (context.sourceCandidates.some((candidate) => candidate.path === file.path) ||
