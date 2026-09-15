@@ -4374,7 +4374,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
+      "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.\n\nOutput from `--json` conforms to the `AppVersionsListResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"array\",\n  \"items\": {\n    \"$ref\": \"#/definitions/AppVersion\"\n  },\n  \"title\": \"AppVersionsListResult\",\n  \"definitions\": {\n    \"AppVersion\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"createdAt\": {\n          \"type\": \"string\"\n        },\n        \"createdBy\": {\n          \"type\": \"string\"\n        },\n        \"versionTag\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"versionId\": {\n          \"type\": \"string\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"createdAt\",\n        \"createdBy\",\n        \"status\",\n        \"versionId\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "flags": {
         "auth-alias": {
