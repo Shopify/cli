@@ -3,6 +3,7 @@ import * as generateManifest from './include-assets/generate-manifest.js'
 import * as buildExtension from '../extension.js'
 import {BundleUIStep, BuildContext} from '../client-steps.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {AssetIdentifier} from '../../../models/extensions/specification.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -19,7 +20,8 @@ describe('executeBundleUIStep', () => {
         directory: '/test/extension',
         outputPath: '/test/extension/dist/handle.js',
         configuration: {},
-      } as ExtensionInstance,
+        getBundleExtensionStdinContent: () => ({main: "import './src/index.js';"}),
+      } as unknown as ExtensionInstance,
       options: {
         stdout: {write: vi.fn()} as any,
         stderr: {write: vi.fn()} as any,
@@ -57,6 +59,60 @@ describe('executeBundleUIStep', () => {
 
       // Then
       await expect(fileExists(joinPath(bundleOutputDir, 'handle.js'))).resolves.toBe(true)
+    })
+  })
+
+  test('copies only the built artifacts, excluding stale files in the local output directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleOutputDir = joinPath(tmpDir, 'bundle', 'handle')
+
+      await mkdir(localOutputDir)
+      await writeFile(joinPath(localOutputDir, 'handle.js'), 'console.log("fresh")')
+      await writeFile(joinPath(localOutputDir, 'handle.js.map'), '{}')
+      await writeFile(joinPath(localOutputDir, 'old-handle.js'), 'console.log("stale")')
+
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleOutputDir, 'handle.js')
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When
+      await executeBundleUIStep(step, mockContext)
+
+      // Then
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle.js'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle.js.map'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(bundleOutputDir, 'old-handle.js'))).resolves.toBe(false)
+    })
+  })
+
+  test('copies extra built assets alongside the main output', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleOutputDir = joinPath(tmpDir, 'bundle', 'handle')
+
+      await mkdir(localOutputDir)
+      await writeFile(joinPath(localOutputDir, 'handle.js'), 'console.log("main")')
+      await writeFile(joinPath(localOutputDir, 'handle-conditions.js'), 'console.log("conditions")')
+
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleOutputDir, 'handle.js')
+      mockContext.extension.getBundleExtensionStdinContent = () => ({
+        main: "import './src/index.js';",
+        assets: [{identifier: AssetIdentifier.ShouldRender, outputFileName: 'handle-conditions.js', content: ''}],
+      })
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When
+      await executeBundleUIStep(step, mockContext)
+
+      // Then
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle.js'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle-conditions.js'))).resolves.toBe(true)
     })
   })
 

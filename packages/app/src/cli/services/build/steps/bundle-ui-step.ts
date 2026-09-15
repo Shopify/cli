@@ -1,8 +1,8 @@
 import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import {copyFile} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import {copyFile, glob} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath, parsePath, resolvePath} from '@shopify/cli-kit/node/path'
 import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
 interface ExtensionPointWithBuildManifest {
@@ -30,7 +30,7 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   // If the final output path is the same as the local one: don't copy the results and don't generate manifests.
   if (resolvePath(localOutputDir) === resolvePath(bundleOutputDir)) return
 
-  await copyFile(localOutputDir, bundleOutputDir)
+  await copyBuiltArtifacts(context, localOutputPath, bundleOutputDir)
 
   if (!step.config?.generatesAssetsManifest) return
 
@@ -44,6 +44,32 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   if (Object.keys(entries).length > 0) {
     await createOrUpdateManifestFile(context, entries)
   }
+}
+
+/**
+ * Copies only the artifacts produced by the build (the main output and any extra
+ * assets, plus their sourcemaps and metafiles) into the bundle directory.
+ *
+ * The local output directory can contain stale files from previous builds (for
+ * example a script built under an old extension handle). Copying the whole
+ * directory would ship those files inside the module, which breaks extensions
+ * that only accept a single script, like web pixels.
+ */
+async function copyBuiltArtifacts(
+  context: BuildContext,
+  localOutputPath: string,
+  bundleOutputDir: string,
+): Promise<void> {
+  const localOutputDir = dirname(localOutputPath)
+  const {assets = []} = context.extension.getBundleExtensionStdinContent()
+  const builtOutputNames = [localOutputPath, ...assets.map((asset) => asset.outputFileName)]
+  const builtFiles = await glob(
+    builtOutputNames.map((outputName) => `${parsePath(outputName).name}.*`),
+    {cwd: localOutputDir},
+  )
+  await Promise.all(
+    builtFiles.map((fileName) => copyFile(joinPath(localOutputDir, fileName), joinPath(bundleOutputDir, fileName))),
+  )
 }
 
 /**
