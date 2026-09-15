@@ -47,4 +47,21 @@ describe('getOrCreateHiddenShopifyFolder', () => {
       expect(writeFileSpy).not.toHaveBeenCalled()
     })
   })
+
+  test('creates .gitignore when hidden folder exists but .gitignore does not', async () => {
+    await fs.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const hiddenFolder = joinPath(tmpDir, '.shopify')
+      await fs.mkdir(hiddenFolder)
+      const gitignorePath = joinPath(hiddenFolder, '.gitignore')
+
+      // When
+      await getOrCreateHiddenShopifyFolder(tmpDir)
+
+      // Then
+      await expect(fs.fileExists(gitignorePath)).resolves.toBe(true)
+      const gitignoreContent = await fs.readFile(gitignorePath)
+      expect(gitignoreContent).toContain('# Ignore the entire .shopify directory')
+    })
+  })
 })
