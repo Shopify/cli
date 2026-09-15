@@ -256,6 +256,23 @@ export function cleanSingleStackTracePath(filePath: string): string {
     .replace(/^\/?[A-Z]:/, '')
 }
 
+const ENVIRONMENT_ISSUE_MESSAGES = [
+  'EPERM: operation not permitted, scandir',
+  'EPERM: operation not permitted, rename',
+  'EACCES: permission denied',
+  'EPERM: operation not permitted, symlink',
+  'This version of npm supports the following node versions',
+  'EBUSY: resource busy or locked',
+  'ENOTEMPTY: directory not empty',
+  'getaddrinfo ENOTFOUND',
+  'Client network socket disconnected before secure TLS connection was established',
+  'spawn EPERM',
+  'socket hang up',
+  'The user aborted a request.',
+  'write EPIPE',
+  'Unsupported platform',
+]
+
 /**
  * There are certain errors that we know are not due to a CLI bug, but are environmental/user error.
  *
@@ -263,22 +280,5 @@ export function cleanSingleStackTracePath(filePath: string): string {
  * @returns A boolean indicating if the error message implies an environment issue.
  */
 function errorMessageImpliesEnvironmentIssue(message: string): boolean {
-  const environmentIssueMessages = [
-    'EPERM: operation not permitted, scandir',
-    'EPERM: operation not permitted, rename',
-    'EACCES: permission denied',
-    'EPERM: operation not permitted, symlink',
-    'This version of npm supports the following node versions',
-    'EBUSY: resource busy or locked',
-    'ENOTEMPTY: directory not empty',
-    'getaddrinfo ENOTFOUND',
-    'Client network socket disconnected before secure TLS connection was established',
-    'spawn EPERM',
-    'socket hang up',
-    'The user aborted a request.',
-    'write EPIPE',
-    'Unsupported platform',
-  ]
-  const anyMatches = environmentIssueMessages.some((issueMessage) => message.includes(issueMessage))
-  return anyMatches
+  return ENVIRONMENT_ISSUE_MESSAGES.some((issueMessage) => message.includes(issueMessage))
 }
