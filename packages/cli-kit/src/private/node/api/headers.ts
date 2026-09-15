@@ -38,16 +38,13 @@ export function sanitizedHeadersOutput(headers: Record<string, string>): string 
     return ''
   }
 
-  const sanitized: Record<string, string> = {}
-  Object.keys(headers).forEach((header) => {
-    if (SENSITIVE_HEADERS.find((keyword) => header.toLowerCase().includes(keyword)) === undefined) {
-      sanitized[header] = headers[header]!
-    }
-  })
-  return Object.keys(sanitized)
-    .map((header) => {
-      return ` - ${header}: ${sanitized[header]}`
+  // Optimize header sanitization by single-pass filtering with cached lowercasing and short-circuit boolean checking
+  return Object.entries(headers)
+    .filter(([header]) => {
+      const lowerHeader = header.toLowerCase()
+      return !SENSITIVE_HEADERS.some((keyword) => lowerHeader.includes(keyword))
     })
+    .map(([header, value]) => ` - ${header}: ${value}`)
     .join('\n')
 }
 
