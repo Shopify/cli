@@ -1,3 +1,4 @@
+import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
 import {APP_CONFIG_FILE_GLOB, isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../../../models/extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
@@ -15,11 +16,11 @@ import {
 } from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
-import {lstatSync, readdirSync, realpathSync} from 'node:fs'
+import {lstatSync, realpathSync} from 'node:fs'
 import type {SourceCandidate} from '../types.js'
 import type {
   AppTomlContent,
-  DependencyAuditingInputs,
+  DependencyAutomationInputs,
   ExtensionInfo,
   SourceFile,
   ManifestFile,
@@ -669,7 +670,7 @@ function isMissingFilesystemEntry(error: unknown): boolean {
  * directory link, allowing contained links but rejecting escapes and dangling
  * links explicitly.
  */
-function inspectAllowedPath(appRoot: string, relative: string, expectedType: 'file' | 'directory'): AllowedPathResult {
+function inspectAllowedPath(appRoot: string, relative: string): AllowedPathResult {
   const path = resolvePath(appRoot, relative)
   if (!isSubpath(appRoot, path)) return {exists: false, unresolvedReason: `${relative} escapes the app root`}
 
@@ -686,7 +687,7 @@ function inspectAllowedPath(appRoot: string, relative: string, expectedType: 'fi
 
       const stats = lstatSync(canonicalPath)
       const isLastSegment = index === segments.length - 1
-      const requiredType = isLastSegment ? expectedType : 'directory'
+      const requiredType = isLastSegment ? 'file' : 'directory'
       const hasRequiredType = requiredType === 'file' ? stats.isFile() : stats.isDirectory()
       if (!hasRequiredType) {
         return {exists: false, unresolvedReason: `${relative} contains an entry that is not a ${requiredType}`}
@@ -749,8 +750,8 @@ function nestedRepositoryReason(appRoot: string): string | undefined {
   }
 }
 
-/** Discover only repository CI files that can explicitly invoke dependency auditing. */
-export function findDependencyAuditingInputs(appRoot: string): DependencyAuditingInputs {
+/** Read local bot configuration only; hosted integrations and CI workflows are outside this check's scope. */
+export function findDependencyAutomationInputs(appRoot: string): DependencyAutomationInputs {
   let canonicalRoot: string
   try {
     canonicalRoot = realpathSync(resolvePath(appRoot))
@@ -765,25 +766,9 @@ export function findDependencyAuditingInputs(appRoot: string): DependencyAuditin
   const repositoryReason = nestedRepositoryReason(canonicalRoot)
   if (repositoryReason) return {files: [], unresolvedReason: repositoryReason}
 
-  const candidatePaths: string[] = []
-  const workflows = inspectAllowedPath(canonicalRoot, '.github/workflows', 'directory')
-  if (workflows.unresolvedReason) return {files: [], unresolvedReason: workflows.unresolvedReason}
-  if (workflows.exists) {
-    try {
-      candidatePaths.push(
-        ...readdirSync(workflows.path!, {withFileTypes: true})
-          .filter((entry) => /\.ya?ml$/u.test(entry.name))
-          .map((entry) => `.github/workflows/${entry.name}`),
-      )
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      return {files: [], unresolvedReason: filesystemError('.github/workflows', error)}
-    }
-  }
-
   const files: SourceFile[] = []
-  for (const relative of [...new Set(candidatePaths)].sort()) {
-    const inspected = inspectAllowedPath(canonicalRoot, relative, 'file')
+  for (const relative of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
+    const inspected = inspectAllowedPath(canonicalRoot, relative)
     if (inspected.unresolvedReason) return {files, unresolvedReason: inspected.unresolvedReason}
     if (!inspected.exists) continue
 
@@ -798,6 +783,8 @@ export function findDependencyAuditingInputs(appRoot: string): DependencyAuditin
     if (!result.ok && result.reason === 'unreadable') {
       return {files, unresolvedReason: `Could not read ${relative}: ${result.detail ?? 'unknown filesystem error'}`}
     }
+    // One safely inspected configuration file is enough for this presence-only check.
+    break
   }
   return {files}
 }
@@ -818,7 +805,6 @@ export function findManifestPaths(appRoot: string): string[] {
 const PackageManifestSchema = zod.object({
   dependencies: zod.record(zod.string()).optional(),
   devDependencies: zod.record(zod.string()).optional(),
-  scripts: zod.record(zod.string()).optional(),
 })
 
 export function findManifests(appRoot: string, discoveredPaths = findManifestPaths(appRoot)): ManifestFile[] {
@@ -839,7 +825,6 @@ export function findManifests(appRoot: string, discoveredPaths = findManifestPat
         content,
         dependencies: pkg.dependencies ?? {},
         devDependencies: pkg.devDependencies ?? {},
-        scripts: pkg.scripts,
       })
       // Invalid repository JSON is a coverage gap, not a scanner crash.
       // eslint-disable-next-line no-catch-all/no-catch-all

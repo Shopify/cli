@@ -78,8 +78,7 @@
     "proper-lockfile": "4.1.2",
     "react": "19.2.4",
     "which": "4.0.0",
-    "ws": "8.21.0",
-    "yaml": "2.9.0"
+    "ws": "8.21.0"
   },
   "devDependencies": {
     "@types/diff": "^5.0.3",

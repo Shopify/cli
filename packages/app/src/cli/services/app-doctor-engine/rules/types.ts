@@ -1,7 +1,7 @@
 import type {Issue, Capabilities, ProjectDetection, Severity, SourceCandidate} from '../types.js'
 import type {
   AppTomlContent,
-  DependencyAuditingInputs,
+  DependencyAutomationInputs,
   ExtensionInfo,
   ManifestFile,
   SourceFile,
@@ -46,8 +46,8 @@ export interface ScanContext {
   sourceFiles: SourceFile[]
   /** Supported JavaScript package manifests found. */
   manifests: ManifestFile[]
-  /** Allowlisted dependency-auditing configuration and discovery obstacles. */
-  dependencyAuditing: DependencyAuditingInputs
+  /** Local dependency-management configuration and discovery obstacles. */
+  dependencyAutomation: DependencyAutomationInputs
   /** Safely readable repository text evidence available to secret scanning. */
   sensitiveFiles: SourceFile[]
   /** Detected capabilities */
