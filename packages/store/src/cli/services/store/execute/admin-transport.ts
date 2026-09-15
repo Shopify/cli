@@ -91,7 +91,10 @@ export async function runAdminStoreGraphQLOperation(input: {
     if (classified) throw classified
 
     if (isGraphQLClientErrorLike(error) && error.response.errors) {
-      throw new AbortError('GraphQL operation failed.', JSON.stringify({errors: error.response.errors}, null, 2))
+      const details = {errors: error.response.errors}
+      const graphQLError = new AbortError('GraphQL operation failed.', JSON.stringify(details, null, 2))
+      graphQLError.details = details
+      throw graphQLError
     }
 
     throw error
