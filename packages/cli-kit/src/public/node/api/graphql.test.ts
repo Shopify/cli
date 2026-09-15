@@ -131,6 +131,43 @@ afterEach(() => {
 })
 
 describe('graphqlRequest', () => {
+  test.each([
+    ['query', 'query QueryName { example }', true],
+    ['mutation', 'mutation MutationName($some: String!) { example }', false],
+  ])('marks a %s operation as idempotent when appropriate', async (_operation, query, requestIsIdempotent) => {
+    const retryAwareSpy = vi
+      .spyOn(api, 'retryAwareRequest')
+      .mockImplementation(async () => ({status: 200, headers: new Headers(), data: {}}))
+
+    await graphqlRequest({
+      query,
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      variables: mockVariables,
+    })
+
+    expect(retryAwareSpy).toHaveBeenCalledWith(expect.objectContaining({requestIsIdempotent}), expect.anything())
+    retryAwareSpy.mockRestore()
+  })
+
+  test('treats an unparseable query as non-idempotent instead of throwing', async () => {
+    const retryAwareSpy = vi
+      .spyOn(api, 'retryAwareRequest')
+      .mockImplementation(async () => ({status: 200, headers: new Headers(), data: {}}))
+
+    await graphqlRequest({
+      query: 'this is not graphql',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      variables: mockVariables,
+    })
+
+    expect(retryAwareSpy).toHaveBeenCalledWith(expect.objectContaining({requestIsIdempotent: false}), expect.anything())
+    retryAwareSpy.mockRestore()
+  })
+
   test('calls debugLogRequestInfo once', async () => {
     let headers: any
     server.events.on('request:start', ({request}) => {
@@ -328,6 +365,40 @@ describe('graphqlRequest', () => {
 })
 
 describe('graphqlRequestDoc', () => {
+  test.each([
+    ['query', true],
+    ['mutation', false],
+  ] as const)('marks a typed %s operation as idempotent when appropriate', async (operation, requestIsIdempotent) => {
+    const document = {
+      kind: 'Document',
+      definitions: [
+        {
+          kind: 'OperationDefinition',
+          operation,
+          name: {kind: 'Name', value: 'OperationName'},
+          selectionSet: {
+            kind: 'SelectionSet',
+            selections: [{kind: 'Field', name: {kind: 'Name', value: 'example'}}],
+          },
+        },
+      ],
+    } as unknown as TypedDocumentNode<unknown, unknown>
+    const retryAwareSpy = vi
+      .spyOn(api, 'retryAwareRequest')
+      .mockImplementation(async () => ({status: 200, headers: new Headers(), data: {}}))
+
+    await graphqlRequestDoc({
+      query: document,
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      variables: mockVariables,
+    })
+
+    expect(retryAwareSpy).toHaveBeenCalledWith(expect.objectContaining({requestIsIdempotent}), expect.anything())
+    retryAwareSpy.mockRestore()
+  })
+
   test('converts document before querying', async () => {
     // Given
     const document = {

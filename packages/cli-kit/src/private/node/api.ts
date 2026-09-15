@@ -1,4 +1,5 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
+import {isGatewayErrorStatus} from './api/gateway-status.js'
 import {sanitizeURL} from './api/urls.js'
 import {hasRateLimitCode} from './analytics/graphql-error-codes.js'
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
@@ -17,6 +18,13 @@ export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'busi
 const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_RETRY_LIMIT = 10
 
+/**
+ * Gateway errors on idempotent requests get a much smaller retry budget than rate limits. A 429
+ * response tells us exactly how long to wait, whereas a 502/503/504 means an upstream is already
+ * struggling and should not be hit ten more times on its way down.
+ */
+const GATEWAY_ERROR_RETRY_LIMIT = 3
+
 export type NetworkRetryBehaviour =
   | {
       useNetworkLevelRetry: true
@@ -31,6 +39,7 @@ export type NetworkRetryBehaviour =
 type RequestOptions<T> = {
   request: () => Promise<T>
   url: string
+  requestIsIdempotent?: boolean
 } & NetworkRetryBehaviour
 
 const interestingResponseHeaders = new Set([
@@ -46,6 +55,14 @@ function responseHeaderIsInteresting(header: string): boolean {
   return interestingResponseHeaders.has(header)
 }
 
+function retryDelayMsFromHeaders(responseHeaders: Record<string, string>): number | undefined {
+  const retryAfter = responseHeaders['retry-after']
+  if (!retryAfter) return undefined
+
+  const delayMs = Number.parseInt(retryAfter, 10)
+  return Number.isNaN(delayMs) ? undefined : delayMs
+}
+
 interface CommonResponse {
   duration: number
   sanitizedHeaders: string
@@ -54,10 +71,20 @@ interface CommonResponse {
 }
 
 type OkResponse<T> = CommonResponse & {status: 'ok'; response: T}
+
+/**
+ * `'client-error'` names the graphql-request `ClientError` wrapper, not an HTTP 4xx: it is the
+ * terminal bucket for every status that is not classified as retryable or unauthorized below.
+ */
 type ClientErrorResponse = CommonResponse & {status: 'client-error'; clientError: ClientError}
 type UnknownErrorResponse = CommonResponse & {status: 'unknown-error'; error: unknown}
+
+/** Why a response was classified as retryable, so each cause can carry its own retry budget. */
+type RetryReason = 'rate-limit' | 'gateway-error'
+
 type CanRetryErrorResponse = CommonResponse & {
   status: 'can-retry'
+  retryReason: RetryReason
   clientError: ClientError
   delayMs: number | undefined
 }
@@ -152,7 +179,15 @@ async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; stat
       return await requestOptions.request()
     } catch (err) {
       lastSeenError = err
-      if (!isTransientNetworkError(err)) {
+      // A `ClientError` means the request reached the API and came back with a response, so it is
+      // never a connection-level failure. It must not be matched by message text: a ClientError's
+      // message embeds `JSON.stringify({response, request})`, so the request's own query and
+      // variables are part of the string `isTransientNetworkError` searches. A theme asset
+      // containing `setTimeout` matches `'timeout'` and used to make a 502 on the
+      // `ThemeFilesUpsert` mutation retry here, non-idempotently, purely because of the file's
+      // contents. Retryable statuses are classified deliberately in `makeVerboseRequest` instead,
+      // where the idempotency of the request is known.
+      if (err instanceof ClientError || !isTransientNetworkError(err)) {
         throw err
       }
 
@@ -195,22 +230,15 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
       const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
 
       if (isThrottled(err)) {
-        let delayMs: number | undefined
-
-        try {
-          delayMs = responseHeaders['retry-after'] ? Number.parseInt(responseHeaders['retry-after'], 10) : undefined
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch {
-          // ignore errors in extracting retry-after header
-        }
         return {
           status: 'can-retry',
+          retryReason: 'rate-limit',
           clientError: err,
           duration,
           sanitizedHeaders,
           sanitizedUrl,
           requestId: responseHeaders['x-request-id'],
-          delayMs,
+          delayMs: retryDelayMsFromHeaders(responseHeaders),
         }
       } else if (err.response.status === 401) {
         return {
@@ -221,6 +249,17 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
           sanitizedUrl,
           requestId: responseHeaders['x-request-id'],
           delayMs: 500,
+        }
+      } else if (requestOptions.requestIsIdempotent && isGatewayErrorStatus(err.response.status)) {
+        return {
+          status: 'can-retry',
+          retryReason: 'gateway-error',
+          clientError: err,
+          duration,
+          sanitizedHeaders,
+          sanitizedUrl,
+          requestId: responseHeaders['x-request-id'],
+          delayMs: retryDelayMsFromHeaders(responseHeaders),
         }
       }
 
@@ -340,6 +379,7 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
   },
 ): Promise<T> {
   let retriesUsed = 0
+  let gatewayRetriesUsed = 0
   const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
 
   let result = await makeVerboseRequest(requestOptions)
@@ -371,8 +411,11 @@ ${result.sanitizedHeaders}
       throw result.clientError
     }
 
-    if (limitRetriesTo <= retriesUsed) {
-      outputDebug(`${limitRetriesTo} retries exhausted for request to ${result.sanitizedUrl}`)
+    const gatewayBudgetExhausted =
+      result.retryReason === 'gateway-error' && GATEWAY_ERROR_RETRY_LIMIT <= gatewayRetriesUsed
+    if (limitRetriesTo <= retriesUsed || gatewayBudgetExhausted) {
+      const exhaustedLimit = gatewayBudgetExhausted ? GATEWAY_ERROR_RETRY_LIMIT : limitRetriesTo
+      outputDebug(`${exhaustedLimit} retries exhausted for request to ${result.sanitizedUrl}`)
       if (errorHandler) {
         throw errorHandler(result.clientError, result.requestId)
       } else {
@@ -380,6 +423,9 @@ ${result.sanitizedHeaders}
       }
     }
     retriesUsed += 1
+    if (result.retryReason === 'gateway-error') {
+      gatewayRetriesUsed += 1
+    }
 
     // Record command retries
     if (requestOptions.recordCommandRetries) {
