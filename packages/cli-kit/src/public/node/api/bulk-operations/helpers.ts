@@ -36,6 +36,17 @@ export function extractBulkOperationId(gid: string): string {
   return match?.[1] ?? gid
 }
 
+function parseGraphQLDocument(graphqlOperation: string) {
+  try {
+    return parse(graphqlOperation)
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new AbortError(`Invalid GraphQL syntax: ${error.message}`)
+    }
+    throw error
+  }
+}
+
 /**
  * Validates that a GraphQL document contains exactly one operation definition.
  *
@@ -43,15 +54,7 @@ export function extractBulkOperationId(gid: string): string {
  * @throws AbortError if the document doesn't contain exactly one operation or has syntax errors.
  */
 export function validateSingleOperation(graphqlOperation: string): void {
-  let document
-  try {
-    document = parse(graphqlOperation)
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new AbortError(`Invalid GraphQL syntax: ${error.message}`)
-    }
-    throw error
-  }
+  const document = parseGraphQLDocument(graphqlOperation)
 
   const operationDefinitions = document.definitions.filter((def) => def.kind === 'OperationDefinition')
 
@@ -70,15 +73,7 @@ export function validateSingleOperation(graphqlOperation: string): void {
  * @throws AbortError if the operation has invalid GraphQL syntax.
  */
 export function isMutation(graphqlOperation: string): boolean {
-  let document
-  try {
-    document = parse(graphqlOperation)
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new AbortError(`Invalid GraphQL syntax: ${error.message}`)
-    }
-    throw error
-  }
+  const document = parseGraphQLDocument(graphqlOperation)
 
   const operationDefinition = document.definitions.find((def) => def.kind === 'OperationDefinition')
 
