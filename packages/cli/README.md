@@ -1995,7 +1995,10 @@ DESCRIPTION
       "AppVersion": {
         "type": "object",
         "properties": {
-          "message": {
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
             "type": "string"
           },
           "versionTag": {
@@ -2004,25 +2007,22 @@ DESCRIPTION
               "null"
             ]
           },
-          "versionId": {
-            "type": "string"
-          },
           "status": {
             "type": "string"
           },
-          "createdAt": {
+          "versionId": {
             "type": "string"
           },
-          "createdBy": {
+          "message": {
             "type": "string"
           }
         },
         "required": [
-          "message",
-          "versionId",
-          "status",
           "createdAt",
-          "createdBy"
+          "createdBy",
+          "status",
+          "versionId",
+          "message"
         ],
         "additionalProperties": false
       }

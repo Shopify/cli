@@ -123,38 +123,38 @@ describe('app versions list command', () => {
 
     const expected = [
       {
-        message: 'message',
-        versionTag: 'versionTag',
-        versionId: 'gid://shopify/Version/1',
-        status: 'active',
         createdAt: '2021-01-01 00:00:00',
         createdBy: 'createdBy',
+        versionTag: 'versionTag',
+        status: 'active',
+        versionId: 'gid://shopify/Version/1',
+        message: 'message',
       },
       {
-        message: '',
-        versionTag: null,
-        versionId: 'gid://shopify/Version/2',
-        status: 'released',
         createdAt: '2021-01-02 00:00:00',
         createdBy: '',
+        versionTag: null,
+        status: 'released',
+        versionId: 'gid://shopify/Version/2',
+        message: '',
       },
     ]
     const expectedStdout = `[
   {
-    "message": "message",
-    "versionTag": "versionTag",
-    "versionId": "gid://shopify/Version/1",
-    "status": "active",
     "createdAt": "2021-01-01 00:00:00",
-    "createdBy": "createdBy"
+    "createdBy": "createdBy",
+    "versionTag": "versionTag",
+    "status": "active",
+    "versionId": "gid://shopify/Version/1",
+    "message": "message"
   },
   {
-    "message": "",
-    "versionTag": null,
-    "versionId": "gid://shopify/Version/2",
-    "status": "released",
     "createdAt": "2021-01-02 00:00:00",
-    "createdBy": ""
+    "createdBy": "",
+    "versionTag": null,
+    "status": "released",
+    "versionId": "gid://shopify/Version/2",
+    "message": ""
   }
 ]
 `
