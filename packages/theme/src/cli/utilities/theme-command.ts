@@ -40,6 +40,12 @@ interface ValidEnvironment {
   storeAuthSession?: AdminSession
 }
 type EnvironmentName = string
+
+export interface ThemeCommandMultiEnvironmentEntry<TResult> {
+  environment: EnvironmentName
+  result: TResult
+}
+
 /**
  * Flags required to run a command in multiple environments
  *
@@ -56,7 +62,7 @@ type EnvironmentName = string
  */
 export type RequiredFlags = (string | string[])[] | null
 
-export default abstract class ThemeCommand extends Command {
+export default abstract class ThemeCommand<TResult = void> extends Command {
   static baseFlags = {...Command.baseFlags, ...authAliasFlag}
 
   environmentsFilename(): string {
@@ -69,7 +75,9 @@ export default abstract class ThemeCommand extends Command {
     _multiEnvironment = false,
     _args?: ArgOutput,
     _context?: {stdout?: Writable; stderr?: Writable},
-  ): Promise<void> {}
+  ): Promise<TResult | undefined> {
+    return undefined
+  }
 
   async run<
     TFlags extends FlagOutput & {path?: string; verbose?: boolean},
@@ -138,8 +146,24 @@ export default abstract class ThemeCommand extends Command {
       if (!confirmed) return
     }
 
-    await this.runConcurrent(validationResults.valid)
+    const successfulResults = new Map<EnvironmentName, TResult>()
+    await this.runConcurrent(validationResults.valid, successfulResults)
+
+    const entries = validationResults.valid
+      .filter(({environment}) => successfulResults.has(environment))
+      .map(({environment}) => ({environment, result: successfulResults.get(environment) as TResult}))
+
+    await this.onMultiEnvironmentComplete(entries, flags)
   }
+
+  /**
+   * Receives the successful multi-environment results in the requested environment order.
+   * The default does nothing so commands keep their current output behavior.
+   */
+  protected onMultiEnvironmentComplete(
+    _entries: ThemeCommandMultiEnvironmentEntry<TResult>[],
+    _flags: FlagValues,
+  ): void | Promise<void> {}
 
   /**
    * Admin API scopes that a stored `store auth` session must include for this
@@ -289,7 +313,7 @@ export default abstract class ThemeCommand extends Command {
    * Run the command in each valid environment concurrently
    * @param validEnvironments - The valid environments to run the command in
    */
-  private async runConcurrent(validEnvironments: ValidEnvironment[]) {
+  private async runConcurrent(validEnvironments: ValidEnvironment[], successfulResults: Map<EnvironmentName, TResult>) {
     const abortController = new AbortController()
 
     const stores = validEnvironments.map((env) => env.flags.store as string)
@@ -311,10 +335,17 @@ export default abstract class ThemeCommand extends Command {
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
+                let result: TResult | undefined
                 try {
-                  await this.command(flags, session, true, {}, {stdout, stderr})
+                  result = await this.command(flags, session, true, {}, {stdout, stderr})
                 } finally {
                   await this.logAnalyticsData(session)
+                }
+
+                // Only publish a result after analytics cleanup succeeds, so a
+                // cleanup failure reports the environment as failed.
+                if (result !== undefined) {
+                  successfulResults.set(environment, result)
                 }
               })
 

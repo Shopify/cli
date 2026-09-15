@@ -1,20 +1,27 @@
-import ThemeCommand from '../../utilities/theme-command.js'
-import {fetchThemeInfo, fetchDevInfo, formatThemeInfo, themeEnvironmentInfoJSON} from '../../services/info.js'
+import ThemeCommand, {type ThemeCommandMultiEnvironmentEntry} from '../../utilities/theme-command.js'
+import {fetchThemeInfo, getThemeEnvironmentInfo} from '../../services/info.js'
+import {renderThemeInfoMultiEnvironmentResult, renderThemeInfoResult} from '../../services/info/result.js'
+import {themeInfoJsonOutputSchema, type ThemeInfoResult} from '../../services/info/types.js'
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {OutputFlags} from '@oclif/core/interfaces'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 type InfoFlags = OutputFlags<typeof Info.flags>
 
-export default class Info extends ThemeCommand {
-  static description =
-    'Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.'
+export default class Info extends ThemeCommand<ThemeInfoResult> {
+  static get jsonOutputSchema() {
+    return themeInfoJsonOutputSchema
+  }
+
+  static descriptionWithMarkdown = `Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
+
+Use \`--json\` for machine-readable output.`
+
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
@@ -34,28 +41,41 @@ export default class Info extends ThemeCommand {
 
   static multiEnvironmentsFlags = ['store', 'password']
 
-  async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
+  async command(
+    flags: InfoFlags,
+    adminSession: AdminSession,
+    multiEnvironment = false,
+  ): Promise<ThemeInfoResult | undefined> {
     recordTiming('theme-command:info')
+
     if (flags.theme || flags.development) {
       const output = await fetchThemeInfo(adminSession, flags)
       if (!output) {
         throw new AbortError('Theme not found!')
       }
 
-      if (flags.json) {
-        return outputResult(JSON.stringify(output, null, 2))
-      }
+      if (multiEnvironment && flags.json) return output
 
-      const formattedInfo = await formatThemeInfo(output, flags)
-      renderInfo(formattedInfo)
+      renderThemeInfoResult(output, flags.json ? 'json' : 'text', flags)
     } else {
-      if (flags.json) {
-        return outputResult(JSON.stringify(themeEnvironmentInfoJSON({cliVersion: this.config.version}), null, 2))
-      }
-      const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
+      const {result, developmentTheme} = getThemeEnvironmentInfo({cliVersion: this.config.version})
 
-      renderInfo({customSections: infoMessage})
+      if (multiEnvironment && flags.json) return result
+
+      renderThemeInfoResult(result, flags.json ? 'json' : 'text', {developmentTheme})
     }
-    recordTiming('theme-command:info')
+
+    if (!flags.json) recordTiming('theme-command:info')
+
+    return undefined
+  }
+
+  protected onMultiEnvironmentComplete(
+    entries: ThemeCommandMultiEnvironmentEntry<ThemeInfoResult>[],
+    flags: InfoFlags,
+  ): void {
+    if (flags.json !== true) return
+
+    renderThemeInfoMultiEnvironmentResult({environments: entries})
   }
 }
