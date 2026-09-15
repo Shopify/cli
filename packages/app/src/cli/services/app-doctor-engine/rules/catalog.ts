@@ -146,12 +146,12 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     guide: 'https://shopify.dev/docs/apps/webhooks/configuration/mandatory-webhooks',
   },
   {
-    id: 'MISSING_DEPENDENCY_AUDITING',
-    title: 'Dependency auditing configuration not detected',
+    id: 'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
+    title: 'Dependency management configuration file not detected',
     severity: 'low',
     points: -5,
-    description: 'Detects apps with dependencies but no recognized automated dependency vulnerability auditing.',
-    fix: 'Add dependency vulnerability auditing to an allowlisted CI configuration for the app.',
+    description: 'Looks for a local Dependabot or Renovate configuration file without validating its contents.',
+    fix: 'Configure Dependabot or Renovate for this app, or verify existing coverage.',
   },
   {
     id: 'EOL_API_VERSION',

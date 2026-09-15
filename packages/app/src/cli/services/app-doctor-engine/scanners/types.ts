@@ -42,8 +42,8 @@ export interface SourceFile {
   content?: string
 }
 
-/** Explicitly allowlisted CI configuration inside the app-root evidence boundary. */
-export interface DependencyAuditingInputs {
+/** Explicitly allowlisted dependency-management configuration inside the app-root evidence boundary. */
+export interface DependencyAutomationInputs {
   files: SourceFile[]
   /** A specific discovery obstacle, including an app nested below its repository root. */
   unresolvedReason?: string
@@ -58,6 +58,4 @@ export interface ManifestFile {
   /** Parsed dependencies, keyed by name with version specifications as values. */
   dependencies: Record<string, string>
   devDependencies?: Record<string, string>
-  /** Literal package scripts; only one CI-invoked script reference is followed. */
-  scripts?: Record<string, string>
 }
