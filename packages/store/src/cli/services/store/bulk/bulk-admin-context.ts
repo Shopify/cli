@@ -13,7 +13,7 @@ import type {AdminSession} from '@shopify/cli-kit/node/session'
  */
 export async function prepareBulkAdminContext(store: string): Promise<AdminSession> {
   const session = await loadStoredStoreSession(store)
-  await recordStoreFqdnMetadata(session.store, true)
+  await recordStoreFqdnMetadata({storeFqdn: session.store, validated: true})
   setLastSeenUserId(session.userId)
 
   return {

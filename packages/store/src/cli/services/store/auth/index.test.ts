@@ -56,8 +56,8 @@ describe('store auth service', () => {
       }),
     )
     expect(presenter.success).toHaveBeenCalledWith(result)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, 'shop.myshopify.com', false)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, 'shop.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, {storeFqdn: 'shop.myshopify.com', validated: false})
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, {storeFqdn: 'shop.myshopify.com', validated: true})
     expect(setLastSeenUserId).toHaveBeenCalledWith('42')
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
@@ -370,8 +370,8 @@ describe('store auth service', () => {
       ),
     ).rejects.toThrow('scope lookup failed')
 
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
-    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith('shop.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: false})
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: true})
     expect(setLastSeenUserId).not.toHaveBeenCalled()
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
@@ -398,8 +398,8 @@ describe('store auth service', () => {
       ),
     ).rejects.toThrow('callback failed')
 
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
-    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith('shop.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: false})
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: true})
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
@@ -428,8 +428,8 @@ describe('store auth service', () => {
       ),
     ).rejects.toThrow('token exchange failed')
 
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
-    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith('shop.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: false})
+    expect(recordStoreFqdnMetadata).not.toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: true})
     expect(setLastSeenUserId).not.toHaveBeenCalled()
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
@@ -463,8 +463,8 @@ describe('store auth service', () => {
       ),
     ).rejects.toThrow('Shopify did not return associated user information for the online access token.')
 
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, 'shop.myshopify.com', false)
-    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, 'shop.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(1, {storeFqdn: 'shop.myshopify.com', validated: false})
+    expect(recordStoreFqdnMetadata).toHaveBeenNthCalledWith(2, {storeFqdn: 'shop.myshopify.com', validated: true})
     expect(setLastSeenUserId).not.toHaveBeenCalled()
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })

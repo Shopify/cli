@@ -48,7 +48,7 @@ export async function authenticateStoreWithApp(
 
   throwIfPreviewStore(store, resolvedDependencies)
 
-  await recordStoreFqdnMetadata(store, false)
+  await recordStoreFqdnMetadata({storeFqdn: store, validated: false})
   const requestedScopes = parseStoreAuthScopes(input.scopes)
   const existingScopeResolution = await resolvedDependencies.resolveExistingScopes(store)
   const scopes = mergeRequestedAndStoredScopes(requestedScopes, existingScopeResolution.scopes)
@@ -80,7 +80,7 @@ export async function authenticateStoreWithApp(
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
-  await recordStoreFqdnMetadata(store, true)
+  await recordStoreFqdnMetadata({storeFqdn: store, validated: true})
 
   const userId = tokenResponse.associated_user?.id?.toString()
   if (!userId) {

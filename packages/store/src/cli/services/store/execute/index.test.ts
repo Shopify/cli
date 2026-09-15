@@ -61,7 +61,7 @@ describe('executeStoreOperation', () => {
       }),
     ).resolves.toEqual(result)
 
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: false})
     expect(getStoreGraphQLTarget).toHaveBeenCalledWith('admin')
     expect(prepareStoreExecuteRequest).toHaveBeenCalledWith({
       query: 'query { shop { name } }',
@@ -96,7 +96,7 @@ describe('executeStoreOperation', () => {
       }),
     ).rejects.toThrow('Query should have a value')
 
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('shop.myshopify.com', false)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: 'shop.myshopify.com', validated: false})
     expect(target.prepareContext).not.toHaveBeenCalled()
     expect(target.execute).not.toHaveBeenCalled()
   })
