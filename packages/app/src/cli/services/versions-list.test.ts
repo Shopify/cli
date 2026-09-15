@@ -53,27 +53,27 @@ describe('getAppVersions', () => {
     expect(result).toEqual({
       appVersions: [
         {
-          message: 'message',
-          versionTag: 'versionTag',
-          status: 'active',
           createdAt: '2021-01-01 00:00:00',
           createdBy: 'createdBy',
+          versionTag: 'versionTag',
+          status: 'active',
           versionId: 'gid://shopify/Version/1',
+          message: 'message',
         },
         {
-          message: '',
-          versionTag: null,
-          status: 'released',
           createdAt: '2021-01-02 00:00:00',
           createdBy: '',
+          versionTag: null,
+          status: 'released',
           versionId: 'gid://shopify/Version/2',
+          message: '',
         },
         {
-          message: '',
-          status: 'released',
           createdAt: '2021-01-03 00:00:00',
           createdBy: '',
+          status: 'released',
           versionId: 'gid://shopify/Version/3',
+          message: '',
         },
       ],
       totalResults: 31,
@@ -82,27 +82,27 @@ describe('getAppVersions', () => {
     expect(appVersionsListJsonOutputSchema.encode(result.appVersions)).toMatchInlineSnapshot(`
       "[
         {
-          "message": "message",
-          "versionTag": "versionTag",
-          "versionId": "gid://shopify/Version/1",
-          "status": "active",
           "createdAt": "2021-01-01 00:00:00",
-          "createdBy": "createdBy"
+          "createdBy": "createdBy",
+          "versionTag": "versionTag",
+          "status": "active",
+          "versionId": "gid://shopify/Version/1",
+          "message": "message"
         },
         {
-          "message": "",
-          "versionTag": null,
-          "versionId": "gid://shopify/Version/2",
-          "status": "released",
           "createdAt": "2021-01-02 00:00:00",
-          "createdBy": ""
+          "createdBy": "",
+          "versionTag": null,
+          "status": "released",
+          "versionId": "gid://shopify/Version/2",
+          "message": ""
         },
         {
-          "message": "",
-          "versionId": "gid://shopify/Version/3",
-          "status": "released",
           "createdAt": "2021-01-03 00:00:00",
-          "createdBy": ""
+          "createdBy": "",
+          "status": "released",
+          "versionId": "gid://shopify/Version/3",
+          "message": ""
         }
       ]"
     `)
