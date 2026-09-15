@@ -4,10 +4,10 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const appVersionJsonOutputSchema = zod.object({
   message: zod.string(),
   versionTag: zod.string().nullable().optional(),
+  versionId: zod.string(),
   status: zod.string(),
   createdAt: zod.string(),
   createdBy: zod.string(),
-  versionId: zod.string(),
 })
 
 export const appVersionsListJsonOutputSchema = defineJsonOutputSchema({

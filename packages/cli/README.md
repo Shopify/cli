@@ -2004,6 +2004,9 @@ DESCRIPTION
               "null"
             ]
           },
+          "versionId": {
+            "type": "string"
+          },
           "status": {
             "type": "string"
           },
@@ -2012,17 +2015,14 @@ DESCRIPTION
           },
           "createdBy": {
             "type": "string"
-          },
-          "versionId": {
-            "type": "string"
           }
         },
         "required": [
           "message",
+          "versionId",
           "status",
           "createdAt",
-          "createdBy",
-          "versionId"
+          "createdBy"
         ],
         "additionalProperties": false
       }

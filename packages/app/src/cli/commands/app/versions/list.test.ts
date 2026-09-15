@@ -125,23 +125,41 @@ describe('app versions list command', () => {
       {
         message: 'message',
         versionTag: 'versionTag',
+        versionId: 'gid://shopify/Version/1',
         status: 'active',
         createdAt: '2021-01-01 00:00:00',
         createdBy: 'createdBy',
-        versionId: 'gid://shopify/Version/1',
       },
       {
         message: '',
         versionTag: null,
+        versionId: 'gid://shopify/Version/2',
         status: 'released',
         createdAt: '2021-01-02 00:00:00',
         createdBy: '',
-        versionId: 'gid://shopify/Version/2',
       },
     ]
-    const {appVersionsListJsonOutputSchema} = await import('../../../services/versions-list/types.js')
+    const expectedStdout = `[
+  {
+    "message": "message",
+    "versionTag": "versionTag",
+    "versionId": "gid://shopify/Version/1",
+    "status": "active",
+    "createdAt": "2021-01-01 00:00:00",
+    "createdBy": "createdBy"
+  },
+  {
+    "message": "",
+    "versionTag": null,
+    "versionId": "gid://shopify/Version/2",
+    "status": "released",
+    "createdAt": "2021-01-02 00:00:00",
+    "createdBy": ""
+  }
+]
+`
 
-    expect(streams.stdout()).toBe(`${appVersionsListJsonOutputSchema.encode(expected)}\n`)
+    expect(streams.stdout()).toBe(expectedStdout)
     expect(JSON.parse(streams.stdout())).toEqual(expected)
     expect(streams.stderr()).toBe('')
   })

@@ -84,25 +84,25 @@ describe('getAppVersions', () => {
         {
           "message": "message",
           "versionTag": "versionTag",
+          "versionId": "gid://shopify/Version/1",
           "status": "active",
           "createdAt": "2021-01-01 00:00:00",
-          "createdBy": "createdBy",
-          "versionId": "gid://shopify/Version/1"
+          "createdBy": "createdBy"
         },
         {
           "message": "",
           "versionTag": null,
+          "versionId": "gid://shopify/Version/2",
           "status": "released",
           "createdAt": "2021-01-02 00:00:00",
-          "createdBy": "",
-          "versionId": "gid://shopify/Version/2"
+          "createdBy": ""
         },
         {
           "message": "",
+          "versionId": "gid://shopify/Version/3",
           "status": "released",
           "createdAt": "2021-01-03 00:00:00",
-          "createdBy": "",
-          "versionId": "gid://shopify/Version/3"
+          "createdBy": ""
         }
       ]"
     `)
