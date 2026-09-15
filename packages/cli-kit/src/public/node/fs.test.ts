@@ -22,6 +22,7 @@ import {
   copyDirectoryContents,
   symlink,
   fileRealPath,
+  matchGlob,
 } from './fs.js'
 import {joinPath, normalizePath} from './path.js'
 import * as array from '../common/array.js'
@@ -563,5 +564,30 @@ describe('symlink', () => {
       // Then
       await expect(readFile(linkPath)).resolves.toEqual('modified content')
     })
+  })
+})
+
+describe('matchGlob', () => {
+  test('matches a key against a glob pattern', () => {
+    expect(matchGlob('templates/index.json', 'templates/*.json')).toBe(true)
+    expect(matchGlob('assets/base.css', 'templates/*.json')).toBe(false)
+  })
+
+  test('returns consistent results when the same pattern is reused', () => {
+    // Compiled matchers are cached by pattern, so reuse must not leak state between keys.
+    expect(matchGlob('templates/index.json', 'templates/*.json')).toBe(true)
+    expect(matchGlob('assets/base.css', 'templates/*.json')).toBe(false)
+    expect(matchGlob('templates/index.json', 'templates/*.json')).toBe(true)
+  })
+
+  test('caches matchers per set of options', () => {
+    const options = {matchBase: true, noglobstar: true}
+
+    expect(matchGlob('sections/header.liquid', '*.liquid', options)).toBe(true)
+    expect(matchGlob('sections/header.liquid', '*.liquid')).toBe(false)
+  })
+
+  test('does not match comment patterns', () => {
+    expect(matchGlob('#comment', '#comment')).toBe(false)
   })
 })
