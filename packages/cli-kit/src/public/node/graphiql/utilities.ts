@@ -35,11 +35,8 @@ const BLOCKED_HEADERS = new Set([
  * @returns The subset of headers that are safe to forward to the Admin API.
  */
 export function filterCustomHeaders(headers: {[key: string]: string | string[] | undefined}): {[key: string]: string} {
-  const customHeaders: {[key: string]: string} = {}
-  for (const [key, value] of Object.entries(headers)) {
-    if (!BLOCKED_HEADERS.has(key.toLowerCase()) && typeof value === 'string') {
-      customHeaders[key] = value
-    }
-  }
-  return customHeaders
+  const validEntries = Object.entries(headers).filter(
+    (entry): entry is [string, string] => !BLOCKED_HEADERS.has(entry[0].toLowerCase()) && typeof entry[1] === 'string',
+  )
+  return Object.fromEntries(validEntries)
 }
