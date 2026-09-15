@@ -1,4 +1,5 @@
-import {appVersionsListJsonOutputSchema, getAppVersions} from './versions-list.js'
+import {getAppVersions} from './versions-list.js'
+import {appVersionsListJsonOutputSchema} from './versions-list/types.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {describe, expect, test} from 'vitest'
@@ -77,7 +78,6 @@ describe('getAppVersions', () => {
       ],
       totalResults: 31,
     })
-    if (!result) throw new Error('Expected app versions result')
 
     expect(appVersionsListJsonOutputSchema.encode(result.appVersions)).toMatchInlineSnapshot(`
       "[
@@ -108,12 +108,14 @@ describe('getAppVersions', () => {
     `)
   })
 
-  test('returns undefined when the API response does not contain an app', async () => {
+  test('throws the factual error when the API response does not contain an app', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({
       appVersions: () => Promise.resolve({app: null}),
     })
 
-    await expect(getAppVersions(developerPlatformClient, remoteApp)).resolves.toBeUndefined()
+    await expect(getAppVersions(developerPlatformClient, remoteApp)).rejects.toThrow(
+      'Shopify did not return app information for API key api-key.',
+    )
   })
 
   test('rejects invalid result values', () => {
