@@ -435,6 +435,11 @@ export async function getLatestTag(directory?: string): Promise<string | undefin
  * @returns A promise that resolves when the remote is removed.
  */
 export async function removeGitRemote(directory: string, remoteName = 'origin'): Promise<void> {
+  // Guard against command/argument injection attacks if remoteName starts with '-'
+  if (remoteName.startsWith('-')) {
+    throw new AbortError(`Invalid remote name: ${remoteName}. Remote names can't start with a hyphen.`)
+  }
+
   outputDebug(outputContent`Removing git remote ${remoteName} from ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
 
