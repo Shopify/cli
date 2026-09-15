@@ -28,6 +28,7 @@ import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {extractGraphQLErrors} from '../../../private/node/api/graphql.js'
+import {withTrustChallengeRetry} from '../../../private/node/themes/trust-challenge.js'
 import {RequestModeInput} from '../http.js'
 import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
@@ -629,7 +630,7 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
   options: AdminRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   try {
-    const response = await adminRequestDoc(options)
+    const response = await withTrustChallengeRetry(() => adminRequestDoc(options))
     return response
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
