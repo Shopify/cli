@@ -23,10 +23,10 @@ export async function getAppVersions(
     appVersions: response.app.appVersions.nodes.map((appVersion) => ({
       message: appVersion.message ?? '',
       versionTag: appVersion.versionTag,
+      versionId: appVersion.versionId,
       status: appVersion.status,
       createdAt: formatDate(new Date(appVersion.createdAt)),
       createdBy: appVersion.createdBy?.displayName ?? '',
-      versionId: appVersion.versionId,
     })),
     totalResults: response.app.appVersions.pageInfo.totalResults,
   }
