@@ -62,6 +62,7 @@ function resolvePackageDir(packageName: string): string {
 
 const entryPointOverrides: Record<string, string> = {
   'app:logs:sources': 'dist/cli/commands/app/app-logs/sources.js',
+  'app:logs:query': 'dist/cli/commands/app/app-logs/query.js',
   'demo:watcher': 'dist/cli/commands/app/demo/watcher.js',
   'kitchen-sink': 'dist/cli/commands/kitchen-sink/index.js',
   'doctor-release': 'dist/cli/commands/doctor-release/doctor-release.js',
