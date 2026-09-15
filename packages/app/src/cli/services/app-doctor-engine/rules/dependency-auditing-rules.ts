@@ -13,6 +13,16 @@ import {
   SnykArgsInputsSchema,
   SnykCommandInputsSchema,
 } from './dependency-auditing-github-schema.js'
+import {
+  GitLabConfigurationSchema,
+  GitLabDefaultsSchema,
+  GitLabDependencyScanningTemplateSchema,
+  GitLabIncludeHeaderSchema,
+  GitLabJobSchema,
+  GitLabNeverRulesSchema,
+  GitLabScriptsSchema,
+  GitLabVariablesSchema,
+} from './dependency-auditing-gitlab-schema.js'
 import {parseDocument} from 'yaml'
 import type {GitHubActionStep, GitHubDefaults, GitHubRunStep} from './dependency-auditing-github-schema.js'
 import type {Issue} from '../types.js'
@@ -34,6 +44,19 @@ type ResolvedValue = {ok: true; value: string} | {ok: false}
 type OptionalValue = {ok: true; present: boolean; value?: unknown} | {ok: false}
 type ParsedShell = {ok: true; segments: string[]} | {ok: false}
 
+const GITLAB_RESERVED_KEYS = new Set([
+  'after_script',
+  'before_script',
+  'cache',
+  'default',
+  'image',
+  'include',
+  'pages',
+  'services',
+  'stages',
+  'variables',
+  'workflow',
+])
 const SUPPORTED_PACKAGE_MANAGERS = new Set(['javascript', 'node', 'npm', 'pnpm', 'yarn'])
 const LOCAL_SCRIPT_EXECUTORS = new Set(['.', 'bash', 'node', 'sh', 'source', 'tsx'])
 const SHELL_CONTROL_WORDS = new Set([
@@ -122,6 +145,9 @@ function analyzeConfiguration(
   if (parsed.warnings.length > 0 || parsed.value === null || parsed.value === undefined) return warnings
   if (/^\.github\/workflows\/[^/]+\.ya?ml$/i.test(path)) {
     return combine(warnings, analyzeGitHubWorkflow(parsed.value, path, manifests))
+  }
+  if (/(?:^|\/)\.gitlab-ci\.ya?ml$/i.test(path)) {
+    return combine(warnings, analyzeGitLabConfiguration(parsed.value, path, manifests))
   }
   return warnings
 }
@@ -287,6 +313,91 @@ function analyzeGitHubAction(step: GitHubActionStep, workflowPath: string, manif
   if (/^snyk\/actions\/(?:setup|code|docker|container)@[^\s]+$/i.test(uses)) return noEvidence()
   if (uses.startsWith('./')) return obstacle(`Unsupported local action referenced by ${workflowPath}`)
   return noEvidence()
+}
+
+function analyzeGitLabConfiguration(value: unknown, path: string, manifests: ManifestFile[]): Analysis {
+  const configuration = GitLabConfigurationSchema.safeParse(value)
+  if (!configuration.success) return obstacle(`GitLab CI configuration has an unsupported structure: ${path}`)
+  const root = configuration.data
+  if (GitLabNeverRulesSchema.safeParse(root.workflow?.rules).success) return noEvidence()
+
+  const variables = GitLabVariablesSchema.safeParse(root.variables)
+  if (!variables.success) return obstacle(`GitLab CI variables have an unsupported structure: ${path}`)
+  const dependencyScanningDisabled = variables.data.DS_DISABLED === true || variables.data.DS_DISABLED === 'true'
+  let analysis = analyzeGitLabIncludes(root.include, path, dependencyScanningDisabled)
+  const defaults = GitLabDefaultsSchema.safeParse(root.default)
+  if (!defaults.success) {
+    analysis = combine(analysis, obstacle(`GitLab CI default has an unsupported structure: ${path}`))
+  }
+  const defaultConfiguration = defaults.success ? defaults.data : undefined
+
+  for (const [jobName, jobValue] of Object.entries(root)) {
+    if (jobName.startsWith('.') || GITLAB_RESERVED_KEYS.has(jobName)) continue
+    const jobResult = GitLabJobSchema.safeParse(jobValue)
+    if (!jobResult.success) {
+      analysis = combine(analysis, obstacle(`GitLab CI has an unsupported job in ${path}`))
+      continue
+    }
+    const job = jobResult.data
+    if (job.when === 'never' || GitLabNeverRulesSchema.safeParse(job.rules).success) continue
+    if (job.extends !== undefined || job.inherit !== undefined) {
+      analysis = combine(analysis, obstacle(`Unsupported GitLab job inheritance referenced by ${path}`))
+      continue
+    }
+    if (job.script === undefined) continue
+
+    const scripts = GitLabScriptsSchema.safeParse({
+      before_script: job.before_script ?? defaultConfiguration?.before_script ?? root.before_script,
+      script: job.script,
+      after_script: job.after_script ?? defaultConfiguration?.after_script ?? root.after_script,
+    })
+    if (!scripts.success) {
+      analysis = combine(analysis, obstacle(`GitLab CI job has an unsupported script structure in ${path}`))
+      continue
+    }
+    const mainCommands = [...scripts.data.before_script, ...scripts.data.script]
+    if (mainCommands.length > 0) {
+      analysis = combine(
+        analysis,
+        analyzeCommands(mainCommands.join('\n'), {directory: '', manifests, allowPackageScript: true}, path),
+      )
+    }
+    if (scripts.data.after_script.length > 0) {
+      analysis = combine(
+        analysis,
+        analyzeCommands(
+          scripts.data.after_script.join('\n'),
+          {directory: '', manifests, allowPackageScript: true},
+          path,
+        ),
+      )
+    }
+  }
+  return analysis
+}
+
+function analyzeGitLabIncludes(value: unknown, path: string, dependencyScanningDisabled: boolean): Analysis {
+  if (value === undefined) return noEvidence()
+  let analysis = noEvidence()
+  for (const include of Array.isArray(value) ? value : [value]) {
+    const header = GitLabIncludeHeaderSchema.safeParse(include)
+    if (!header.success) {
+      analysis = combine(analysis, obstacle(`Unsupported GitLab include referenced by ${path}`))
+      continue
+    }
+    if (header.data.rules !== undefined) {
+      if (GitLabNeverRulesSchema.safeParse(header.data.rules).success) continue
+      analysis = combine(analysis, obstacle(`Conditional GitLab include can't be resolved in ${path}`))
+      continue
+    }
+    if (GitLabDependencyScanningTemplateSchema.safeParse(include).success) {
+      if (dependencyScanningDisabled) continue
+      analysis = combine(analysis, evidence())
+    } else {
+      analysis = combine(analysis, obstacle(`Unsupported GitLab include referenced by ${path}`))
+    }
+  }
+  return analysis
 }
 
 function analyzeCommands(command: string, context: CommandContext, configurationPath: string): Analysis {

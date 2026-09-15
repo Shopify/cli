@@ -44,6 +44,7 @@ describe('dependency auditing input discovery', () => {
       '.github/workflows/dependencies.yml': workflow,
       '.github/workflows/release.yaml': 'name: release\n',
       '.github/workflows/ignored.json': '{}',
+      '.gitlab-ci.yml': 'audit:\n  script: npm audit\n',
       '.hidden/config.yml': 'not: allowlisted\n',
     })
 
@@ -53,6 +54,7 @@ describe('dependency auditing input discovery', () => {
     expect(result.files.map(({path}) => path)).toEqual([
       '.github/workflows/dependencies.yml',
       '.github/workflows/release.yaml',
+      '.gitlab-ci.yml',
     ])
     const discoveredWorkflow = result.files.find(({path}) => path.endsWith('dependencies.yml'))
     expect(discoveredWorkflow?.content).toBe(workflow)

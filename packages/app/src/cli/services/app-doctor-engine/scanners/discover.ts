@@ -749,6 +749,8 @@ function nestedRepositoryReason(appRoot: string): string | undefined {
   }
 }
 
+const DEPENDENCY_AUDITING_FILES = ['.gitlab-ci.yml']
+
 /** Discover only repository CI files that can explicitly invoke dependency auditing. */
 export function findDependencyAuditingInputs(appRoot: string): DependencyAuditingInputs {
   let canonicalRoot: string
@@ -765,7 +767,7 @@ export function findDependencyAuditingInputs(appRoot: string): DependencyAuditin
   const repositoryReason = nestedRepositoryReason(canonicalRoot)
   if (repositoryReason) return {files: [], unresolvedReason: repositoryReason}
 
-  const candidatePaths: string[] = []
+  const candidatePaths = [...DEPENDENCY_AUDITING_FILES]
   const workflows = inspectAllowedPath(canonicalRoot, '.github/workflows', 'directory')
   if (workflows.unresolvedReason) return {files: [], unresolvedReason: workflows.unresolvedReason}
   if (workflows.exists) {

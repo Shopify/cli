@@ -27,6 +27,8 @@ jobs:
 ${body}`,
   )
 
+const gitlab = (content: string): SourceFile => configuration('.gitlab-ci.yml', content)
+
 function scan(files: SourceFile[], manifests: ManifestFile[] = [manifest()]) {
   return scanDependencyAuditing({manifests, dependencyAuditing: {files}})
 }
@@ -387,6 +389,102 @@ describe('package scripts and bounded shell handling', () => {
   })
 })
 
+describe('GitLab dependency scanning', () => {
+  test.each(['Security/Dependency-Scanning.gitlab-ci.yml', 'Jobs/Dependency-Scanning.gitlab-ci.yml'])(
+    'recognizes the %s template',
+    (template) => expectRecognized([gitlab(`include:\n  - template: ${template}`)]),
+  )
+
+  test('recognizes explicit commands only in executable job fields', () => {
+    expectRecognized(
+      [gitlab('security:\n  script:\n    - cd packages/web\n    - npm audit')],
+      [manifest('packages/web/package.json')],
+    )
+    expectMissing([gitlab('variables:\n  AUDIT_EXAMPLE: "npm audit"\nsecurity:\n  script: npm test')])
+  })
+
+  test('ignores an unexecuted hidden job and an always-disabled job', () => {
+    expectMissing([
+      gitlab(
+        '.audit-template:\n  script: npm audit\naudit:\n  when: never\n  script: npm audit\nbuild:\n  script: npm test',
+      ),
+    ])
+  })
+
+  test('leaves an unknown include unresolved, unless direct evidence is present', () => {
+    const unknown = gitlab('include:\n  - local: .gitlab/security.yml\nbuild:\n  script: npm test')
+    expect(scan([unknown])).toMatchObject({issues: [], unresolvedReason: expect.any(String)})
+
+    expectRecognized([gitlab('include:\n  - project: platform/ci\n    file: audit.yml\naudit:\n  script: npm audit')])
+  })
+
+  test('does not recognize disabled dependency-scanning templates or pipelines', () => {
+    expectMissing([
+      gitlab('include:\n  - template: Security/Dependency-Scanning.gitlab-ci.yml\n    rules:\n      - when: never'),
+    ])
+    expectMissing([
+      gitlab('variables:\n  DS_DISABLED: "true"\ninclude:\n  - template: Security/Dependency-Scanning.gitlab-ci.yml'),
+    ])
+    expectMissing([
+      gitlab(
+        'workflow:\n  rules:\n    - if: $ON_BRANCH\n      when: never\n    - when: never\ninclude:\n  - template: Security/Dependency-Scanning.gitlab-ci.yml',
+      ),
+    ])
+  })
+
+  test('leaves conditional includes unresolved', () => {
+    expectUnresolved([
+      gitlab(
+        'include:\n  - template: Security/Dependency-Scanning.gitlab-ci.yml\n    rules:\n      - if: $RUN_SECURITY',
+      ),
+    ])
+  })
+
+  test('keeps one shell directory across inherited before_script and script fields', () => {
+    const file = gitlab('before_script:\n  - cd packages/web\naudit:\n  script:\n    - npm audit')
+    expectRecognized([file], [manifest('packages/web/package.json')])
+    expectMissing([file], [manifest('package.json')])
+
+    expectRecognized([gitlab('default:\n  before_script:\n    - npm audit\nbuild:\n  script: npm test')])
+  })
+
+  test('does not let a direct command bypass unsupported inheritance in the same job', () => {
+    expectUnresolved([gitlab('.base:\n  script: npm test\naudit:\n  extends: .base\n  script: npm audit')])
+    expectUnresolved([gitlab('before_script: npm audit\nbuild:\n  inherit: false\n  script: npm test')])
+  })
+
+  test.each([
+    '.unused: invalid\nbuild:\n  script: npm test',
+    'audit:\n  when: never\n  script: {invalid: true}',
+    'audit:\n  rules:\n    - when: never\n  script: {invalid: true}',
+    'workflow:\n  rules:\n    - when: never\nvariables: invalid\naudit: invalid',
+    'include:\n  template: [invalid]\n  rules:\n    - when: never',
+    'build:\n  before_script: {invalid: true}',
+  ])('does not validate scripts or templates that do not execute: %s', (content) => {
+    expectMissing([gitlab(content)])
+  })
+
+  test.each([
+    'default:\n  before_script: {invalid: true}\naudit:\n  before_script: []\n  script: npm audit',
+    'before_script: {invalid: true}\naudit:\n  before_script: []\n  script: npm audit',
+    'variables:\n  EXAMPLE: [npm, audit]\naudit:\n  stage: security\n  script: npm audit',
+    'broken: invalid\naudit:\n  script: npm audit',
+  ])('preserves jobs and evidence when parsing configuration subsets: %s', (content) => {
+    expectRecognized([gitlab(content)])
+  })
+
+  test('normalizes scalar and array scripts without sharing the after_script directory', () => {
+    expectRecognized([
+      gitlab('before_script: cd packages/web\naudit:\n  script: [npm test]\n  after_script: npm audit'),
+    ])
+  })
+
+  test('treats malformed jobs and scripts as unresolved', () => {
+    expectUnresolved([gitlab('audit: invalid')])
+    expectUnresolved([gitlab('audit:\n  script:\n    command: npm audit')])
+  })
+})
+
 describe('execution boundaries', () => {
   test.each(['repository: other/project', 'path: other'])('leaves a scoped checkout unresolved (%s)', (input) => {
     const file = github(
@@ -400,6 +498,11 @@ describe('execution boundaries', () => {
       '.github/workflows/reusable.yml',
       'on: workflow_call\njobs:\n  audit:\n    steps:\n      - run: npm audit',
     )
+    expectMissing([file])
+  })
+
+  test('honors disabled jobs inherited through YAML merge keys', () => {
+    const file = gitlab('.disabled: &disabled\n  when: never\naudit:\n  <<: *disabled\n  script: npm audit')
     expectMissing([file])
   })
 
@@ -429,16 +532,26 @@ describe('execution boundaries', () => {
       expectMissing([github(`    steps:\n      - run: ${command}`)])
     },
   )
+
+  test('does not crash on unsupported GitLab rule value objects', () => {
+    const file = gitlab('audit:\n  when: {toString: false}\n  script: echo done')
+    expect(() => scan([file])).not.toThrow()
+  })
 })
 
 describe('configuration obstacles', () => {
   test.each([
     ['malformed GitHub workflow', configuration('.github/workflows/ci.yml', 'jobs: [')],
+    ['malformed GitLab configuration', gitlab('include: [')],
     [
       'excessive YAML aliases',
       github(
         `    x: &values [one, two]\n    y: [${Array.from({length: 21}, () => '*values').join(', ')}]\n    steps:\n      - run: npm test`,
       ),
+    ],
+    [
+      'unsupported GitLab YAML reference',
+      gitlab('.security:\n  script: npm audit\naudit:\n  script: !reference [.security, script]'),
     ],
     [
       'unknown GitHub reusable workflow',

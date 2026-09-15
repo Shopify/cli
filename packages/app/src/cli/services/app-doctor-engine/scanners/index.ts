@@ -547,7 +547,9 @@ function skippedInputsForCheck(
     !isThemePath(path) && Boolean(definition.extensions?.some((extension) => path.endsWith(extension)))
   const isConfig = (path: string) => /^shopify\.app(?:\.[^/]+)?\.toml$/.test(path)
   const isDependencyAuditingInput = (path: string) =>
-    /(^|\/)package\.json$/.test(path) || /^\.github\/workflows\/[^/]+\.ya?ml$/i.test(path)
+    /(^|\/)package\.json$/.test(path) ||
+    /^\.github\/workflows\/[^/]+\.ya?ml$/i.test(path) ||
+    /^\.gitlab-ci\.ya?ml$/i.test(path)
   const isSecretInput = (file: SkippedFile) =>
     !file.detail?.includes('could not be parsed') &&
     (context.sourceCandidates.some((candidate) => candidate.path === file.path) ||
