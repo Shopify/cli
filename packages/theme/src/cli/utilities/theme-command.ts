@@ -153,7 +153,7 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
       .filter(({environment}) => successfulResults.has(environment))
       .map(({environment}) => ({environment, result: successfulResults.get(environment) as TResult}))
 
-    this.onMultiEnvironmentComplete(entries, flags)
+    await this.onMultiEnvironmentComplete(entries, flags)
   }
 
   /**
@@ -163,7 +163,7 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
   protected onMultiEnvironmentComplete(
     _entries: ThemeCommandMultiEnvironmentEntry<TResult>[],
     _flags: FlagValues,
-  ): void {}
+  ): void | Promise<void> {}
 
   /**
    * Admin API scopes that a stored `store auth` session must include for this
@@ -335,13 +335,17 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
+                let result: TResult | undefined
                 try {
-                  const result = await this.command(flags, session, true, {}, {stdout, stderr})
-                  if (result !== undefined) {
-                    successfulResults.set(environment, result)
-                  }
+                  result = await this.command(flags, session, true, {}, {stdout, stderr})
                 } finally {
                   await this.logAnalyticsData(session)
+                }
+
+                // Only publish a result after analytics cleanup succeeds, so a
+                // cleanup failure reports the environment as failed.
+                if (result !== undefined) {
+                  successfulResults.set(environment, result)
                 }
               })
 

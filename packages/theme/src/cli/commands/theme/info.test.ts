@@ -207,6 +207,18 @@ describe('Info', () => {
       restoreUnitTestEnvironment(originalUnitTestEnv)
     }
 
+    const expectedStdout = `{
+  "theme": {
+    "id": 123,
+    "name": "my theme",
+    "role": "live",
+    "shop": "my-shop.myshopify.com",
+    "preview_url": "https://my-shop.myshopify.com/preview",
+    "editor_url": "https://my-shop.myshopify.com/editor"
+  }
+}\n`
+
+    expect(streams.stdout()).toBe(expectedStdout)
     expect(JSON.parse(streams.stdout())).toEqual(themeResult)
     expect(streams.stderr()).toBe('')
   })
@@ -233,6 +245,16 @@ describe('Info', () => {
       restoreUnitTestEnvironment(originalUnitTestEnv)
     }
 
+    const expectedStdout = `{
+  "store": "my-shop.myshopify.com",
+  "development_theme_id": null,
+  "cli_version": "3.91.0",
+  "os": "darwin-arm64",
+  "shell": "/bin/zsh",
+  "node_version": "v24.15.0"
+}\n`
+
+    expect(streams.stdout()).toBe(expectedStdout)
     expect(JSON.parse(streams.stdout())).toEqual(environmentResult)
     expect(streams.stderr()).toBe('')
   })
