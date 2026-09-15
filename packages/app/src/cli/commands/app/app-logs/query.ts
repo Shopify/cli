@@ -10,11 +10,6 @@ export default class Query extends BaseCommand {
 
   static flags = {
     ...globalFlags,
-    'organization-id': Flags.string({
-      required: true,
-      env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
-      description: 'Local Business Platform organization ID.',
-    }),
     'client-id': Flags.string({required: true, env: 'SHOPIFY_FLAG_CLIENT_ID', description: 'App API key.'}),
     minutes: Flags.integer({
       default: 15,
@@ -50,7 +45,6 @@ export default class Query extends BaseCommand {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Query)
     const result = await queryAppLogs({
-      organizationId: flags['organization-id'],
       clientId: flags['client-id'],
       minutes: flags.minutes,
       limit: flags.limit,

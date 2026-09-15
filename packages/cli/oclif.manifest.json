@@ -3372,15 +3372,6 @@
           "name": "offset",
           "type": "option"
         },
-        "organization-id": {
-          "description": "Local Business Platform organization ID.",
-          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "organization-id",
-          "required": true,
-          "type": "option"
-        },
         "type": {
           "description": "Restrict results to these event types.",
           "env": "SHOPIFY_FLAG_TYPE",

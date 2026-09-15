@@ -7,24 +7,25 @@ import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-
 import {z} from 'zod'
 
 const query = `
-  query AppLogs($input: AppLogQueryInput!) {
-    appLogs(input: $input) {
-      appKey limit offset limitReached exhaustive ordering
-      events { recordUid timestamp type resultStatus target shopDomain }
+  query AppLogs($appKey: String!, $search: AppLogSearchInput!) {
+    app(key: $appKey) {
+      logs(input: $search) {
+        appKey limit offset limitReached exhaustive ordering
+        events { recordUid timestamp type resultStatus target shopDomain }
+      }
     }
   }
 `
 
 const responseSchema = z.object({
   data: z
-    .object({appLogs: z.record(z.unknown()).nullable()})
+    .object({app: z.object({logs: z.record(z.unknown()).nullable()}).nullable()})
     .nullable()
     .optional(),
   errors: z.array(z.object({message: z.string()})).optional(),
 })
 
 interface QueryOptions {
-  organizationId: string
   clientId: string
   minutes: number
   limit: number
@@ -37,8 +38,8 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
   if (process.env.SHOPIFY_APP_LOG_QUERY_PROTOTYPE !== '1' || process.env.SHOPIFY_SERVICE_ENV !== 'local') {
     throw new AbortError('Prototype only: set SHOPIFY_APP_LOG_QUERY_PROTOTYPE=1 and SHOPIFY_SERVICE_ENV=local.')
   }
-  if (!/^\d+$/.test(options.organizationId) || !options.clientId) {
-    throw new AbortError('Provide a numeric organization ID and a nonempty app client ID.')
+  if (!options.clientId) {
+    throw new AbortError('Provide a nonempty app client ID.')
   }
   if (
     !Number.isInteger(options.minutes) ||
@@ -53,7 +54,7 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
 
   const {origin, token} = await queryConnection(options.demo)
   const end = new Date()
-  const response = await fetch(`${origin}/dev_platform/unstable/organizations/${options.organizationId}/graphql`, {
+  const response = await fetch(`${origin}/dev_platform/unstable/graphql`, {
     method: 'POST',
     redirect: 'error',
     signal: AbortSignal.timeout(15000),
@@ -62,8 +63,8 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
       query,
       operationName: 'AppLogs',
       variables: {
-        input: {
-          appKey: options.clientId,
+        appKey: options.clientId,
+        search: {
           startTime: new Date(end.getTime() - options.minutes * 60 * 1000).toISOString(),
           endTime: end.toISOString(),
           limit: options.limit,
@@ -81,8 +82,8 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
   if (result.data.errors?.length) {
     throw new AbortError(`Local log query failed: ${result.data.errors.map((error) => error.message).join('; ')}`)
   }
-  if (!result.data.data?.appLogs) throw new AbortError('Local log query returned no appLogs result.')
-  return result.data.data.appLogs
+  if (!result.data.data?.app?.logs) throw new AbortError('Local log query returned no app logs result.')
+  return result.data.data.app.logs
 }
 
 async function queryConnection(demo: boolean): Promise<{origin: string; token: string}> {
