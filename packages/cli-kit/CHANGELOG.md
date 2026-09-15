@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 4.9.0
+
+### Minor Changes
+
+- 46dcc14: Add optional `maxRetries` and `retryDelay` options to `removeFile`, passed through to Node's `fs.rm` to retry transient removal errors
+
+### Patch Changes
+
+- 267c622: Fix a startup crash on machines where the OS can't look up the current user's shell
+- 667c628: Verify the installed version after `shopify upgrade` and fail instead of reporting a false success when the upgrade didn't complete
+- 2a9b3a4: Fix text prompt underlines rendering as unsupported characters in Windows consoles.
+
 ## 4.8.0
 
 ## 4.7.0
