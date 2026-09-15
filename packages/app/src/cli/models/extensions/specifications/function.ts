@@ -17,8 +17,18 @@ interface UI {
   ui_extension_handle?: string
 }
 
+const mixedInputVariablesMessage =
+  'Input variables must be defined either at the extension level or on a target, not both. ' +
+  'Remove `input.variables` from your extension configuration. ' +
+  'Declare `input_variables` on each target that needs them instead.'
+
+const InputVariablesSchema = zod.object({
+  namespace: zod.string(),
+  key: zod.string(),
+})
+
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
-const FunctionExtensionSchema = BaseSchema.extend({
+export const FunctionExtensionSchema = BaseSchema.extend({
   build: zod
     .object({
       command: zod
@@ -52,12 +62,7 @@ const FunctionExtensionSchema = BaseSchema.extend({
   api_version: zod.string(),
   input: zod
     .object({
-      variables: zod
-        .object({
-          namespace: zod.string(),
-          key: zod.string(),
-        })
-        .optional(),
+      variables: InputVariablesSchema.optional(),
     })
     .optional(),
   targeting: zod
@@ -65,10 +70,20 @@ const FunctionExtensionSchema = BaseSchema.extend({
       zod.object({
         target: zod.string(),
         input_query: zod.string().optional(),
+        input_variables: InputVariablesSchema.optional(),
         export: zod.string().optional(),
       }),
     )
     .optional(),
+}).superRefine((config, ctx) => {
+  if (!config.input?.variables) return
+  if (!config.targeting?.some((targeting) => targeting.input_variables)) return
+
+  ctx.addIssue({
+    code: zod.ZodIssueCode.custom,
+    path: ['input', 'variables'],
+    message: mixedInputVariablesMessage,
+  })
 })
 
 const functionSpec = createExtensionSpecification({
@@ -118,14 +133,21 @@ const functionSpec = createExtensionSpecification({
     const targets =
       config.targeting &&
       (await Promise.all(
-        config.targeting.map(async (config) => {
+        config.targeting.map(async (targeting) => {
           let inputQuery
 
-          if (config.input_query) {
-            inputQuery = await readInputQuery(joinPath(directory, config.input_query))
+          if (targeting.input_query) {
+            inputQuery = await readInputQuery(joinPath(directory, targeting.input_query))
           }
 
-          return {handle: config.target, export: config.export, input_query: inputQuery}
+          return {
+            handle: targeting.target,
+            export: targeting.export,
+            input_query: inputQuery,
+            input_query_variables: targeting.input_variables
+              ? {single_json_metafield: targeting.input_variables}
+              : undefined,
+          }
         }),
       ))
 
