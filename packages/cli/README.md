@@ -3764,6 +3764,81 @@ DESCRIPTION
 
   Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
 
+  Output from `--json` conforms to the `StoreAuthResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "scopes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "acquiredAt": {
+        "type": "string"
+      },
+      "expiresAt": {
+        "type": "string"
+      },
+      "refreshTokenExpiresAt": {
+        "type": "string"
+      },
+      "hasRefreshToken": {
+        "type": "boolean"
+      },
+      "associatedUser": {
+        "$ref": "#/definitions/StoreAuthAssociatedUser"
+      }
+    },
+    "required": [
+      "store",
+      "userId",
+      "scopes",
+      "acquiredAt",
+      "hasRefreshToken"
+    ],
+    "additionalProperties": false,
+    "title": "StoreAuthResult",
+    "definitions": {
+      "StoreAuthAssociatedUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "accountOwner": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
@@ -3802,6 +3877,51 @@ DESCRIPTION
 
   Use this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.
   To list stores in a Shopify organization, run `shopify store list`.
+
+  Output from `--json` conforms to the `StoreAuthListResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "sessions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/StoreAuthListSession"
+        }
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "sessions"
+    ],
+    "additionalProperties": false,
+    "title": "StoreAuthListResult",
+    "definitions": {
+      "StoreAuthListSession": {
+        "type": "object",
+        "properties": {
+          "subdomain": {
+            "type": "string"
+          },
+          "connected": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subdomain",
+          "connected"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store auth list
