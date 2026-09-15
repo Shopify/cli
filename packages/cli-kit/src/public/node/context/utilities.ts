@@ -8,5 +8,5 @@ export function isTruthy(variable: string | undefined): boolean {
   if (!variable) {
     return false
   }
-  return ['1', 'true', 'TRUE', 'yes', 'YES'].includes(variable)
+  return ['1', 'true', 'yes'].includes(variable.toLowerCase())
 }
