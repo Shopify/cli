@@ -2,4 +2,4 @@
 '@shopify/theme': minor
 ---
 
-Add a JSON output schema for `theme info`
+Add JSON output for `theme info`, including one document for multi-environment runs
