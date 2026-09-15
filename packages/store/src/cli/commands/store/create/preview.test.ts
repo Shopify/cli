@@ -1,6 +1,7 @@
 import StoreCreatePreview from './preview.js'
 import {createPreviewStoreCommand} from '../../../services/store/create/preview/index.js'
-import {writeCreatePreviewStoreResult} from '../../../services/store/create/preview/result.js'
+import {presentCreatePreviewStoreResult} from '../../../services/store/create/preview/result.js'
+import {createPreviewStoreJsonOutputSchema} from '../../../services/store/create/preview/types.js'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -23,6 +24,7 @@ describe('store create preview command', () => {
         country: 'US',
         storefrontUrl: 'https://x.myshopify.com',
       },
+      next_steps: [],
     }
     vi.mocked(createPreviewStoreCommand).mockResolvedValueOnce(result)
 
@@ -33,12 +35,16 @@ describe('store create preview command', () => {
       task: expect.any(Function),
     })
     expect(createPreviewStoreCommand).toHaveBeenCalledWith({name: 'Lavender Candles', country: 'US'})
-    expect(writeCreatePreviewStoreResult).toHaveBeenCalledWith(result, 'json')
+    expect(presentCreatePreviewStoreResult).toHaveBeenCalledWith(result, 'json')
   })
 
   test('rejects invalid country codes before calling the service', async () => {
     await expect(StoreCreatePreview.run(['--country', 'USA'])).rejects.toThrow('process.exit unexpectedly called')
 
     expect(createPreviewStoreCommand).not.toHaveBeenCalled()
+  })
+
+  test('exposes the JSON output schema', () => {
+    expect(StoreCreatePreview.jsonOutputSchema).toBe(createPreviewStoreJsonOutputSchema)
   })
 })
