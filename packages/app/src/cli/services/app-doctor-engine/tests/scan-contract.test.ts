@@ -48,8 +48,6 @@ describe('framework and surface detection', () => {
     const result = await scan(directory)
 
     expect(result.detection).toMatchObject({framework: 'react_router', surface: 'react_router'})
-    expect(result.scan.coverage_complete).toBe(false)
-    expect(result.scan.coverage_gaps.some((gap) => gap.check_id === 'KNOWN_CVE_IN_DEPENDENCY')).toBe(true)
   })
 
   test('detects config-only, theme extension, mixed, and unknown surfaces', async () => {

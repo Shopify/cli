@@ -25,7 +25,6 @@ const EXPECTED_CHECK_IDS = [
   'EOL_API_VERSION',
   'EXPIRING_OFFLINE_TOKEN',
   'INSECURE_WEBHOOK_URL',
-  'KNOWN_CVE_IN_DEPENDENCY',
   'LIQUID_UNSAFE_RENDER',
   'METAFIELD_OFFLINE_TOKEN',
   'MISSING_AUTHORIZATION_CHECK',
@@ -82,7 +81,7 @@ describe('check loading', () => {
   test('loads all versioned checks with frontmatter parsed', () => {
     const checks = loadChecks()
     expect([...checks.keys()]).toEqual(EXPECTED_CHECK_IDS)
-    expect(checks.size).toBe(34)
+    expect(checks.size).toBe(33)
     const tenant = checks.get('MISSING_TENANT_ISOLATION')
     expect(tenant).toBeDefined()
     expect(tenant!.version).toBeGreaterThanOrEqual(1)
@@ -109,7 +108,7 @@ describe('review pack', () => {
   test('contains prompts, not candidates', () => {
     const pack = buildReviewPack('0.1.0')
     expect(pack.checks.map((check) => check.id)).toEqual(EXPECTED_CHECK_IDS)
-    expect(pack.checks).toHaveLength(34)
+    expect(pack.checks).toHaveLength(33)
     expect((pack as unknown as Record<string, unknown>).candidates).toBeUndefined()
     const tenant = pack.checks.find((c) => c.id === 'MISSING_TENANT_ISOLATION')
     expect(tenant).toBeDefined()
@@ -137,7 +136,6 @@ describe('review pack', () => {
     expect(checks.get('APP_PROXY_UNVERIFIED_SIGNATURE')!.prompt).toContain('victim-signed request path')
     expect(checks.get('OVERBROAD_DATA_ACCESS')!.prompt).toContain('public shop domains')
     expect(checks.get('UNSAFE_INNERHTML')!.prompt).toContain('email and PDF rendering')
-    expect(checks.get('KNOWN_CVE_IN_DEPENDENCY')!.prompt).toContain('vulnerable API or helper')
     expect(checks.get('OPEN_REDIRECT')!.prompt).toContain('sensitive trust transition')
     expect(checks.get('CSRF_MISSING_PROTECTION')!.prompt).toContain('concrete sensitive action')
     expect(checks.get('MISSING_EMBEDDED_CSP')!.prompt).toContain('concrete clickjacking impact')

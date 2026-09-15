@@ -4,7 +4,7 @@
   "web/package.json",
   "extensions/private.liquid",
   "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-  "LEAK_MESSAGE_DEPENDENCY_CHAIN",
+  "LEAK_DETERMINISTIC_MESSAGE",
   "LEAK_EVIDENCE_QUOTE",
   "LEAK_CODE_SNIPPET",
   "LEAK_FIX_DESCRIPTION",

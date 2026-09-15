@@ -51,6 +51,4 @@ export interface ManifestFile {
   /** Parsed dependencies, keyed by name with version specifications as values. */
   dependencies: Record<string, string>
   devDependencies?: Record<string, string>
-  /** packageManager declared by package.json, for example pnpm version 10. */
-  packageManager?: string
 }
