@@ -73,8 +73,10 @@ export async function initializeGitRepository(directory: string, initialBranch =
  * @returns Files ignored by the lockfile.
  */
 export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
+  if (files.length === 0) return []
   try {
-    const stdout = await gitCommand(['check-ignore', ...files], directory)
+    // Pass '--' to separate git check-ignore options from file paths and prevent option injection
+    const stdout = await gitCommand(['check-ignore', '--', ...files], directory)
     return stdout.split('\n').filter(Boolean)
   } catch (error) {
     // git check-ignore exits with code 1 when no files are ignored
