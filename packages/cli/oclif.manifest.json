@@ -9111,12 +9111,21 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Opens the storefront for a store you have access to in your default web browser.",
+      "description": "Opens the storefront for a store you have access to in your default web browser.\n\nOutput from `--json` conforms to the `OpenStoreResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"store\": {\n      \"type\": \"string\"\n    },\n    \"url\": {\n      \"type\": \"string\"\n    },\n    \"opened\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"store\",\n    \"url\",\n    \"opened\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"OpenStoreResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Opens the storefront for a store you have access to in your default web browser.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com"
       ],
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",

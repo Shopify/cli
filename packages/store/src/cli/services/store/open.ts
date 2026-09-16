@@ -1,8 +1,7 @@
 import {getStoreInfo} from './info/index.js'
 import {openURL as defaultOpenURL} from '@shopify/cli-kit/node/system'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import type {StoreInfoResult} from './info/types.js'
+import type {OpenStoreResult} from './open/types.js'
 
 interface OpenStoreOptions {
   store: string
@@ -24,22 +23,14 @@ const defaultDependencies: OpenStoreDependencies = {
 export async function openStore(
   options: OpenStoreOptions,
   dependencies: Partial<OpenStoreDependencies> = {},
-): Promise<void> {
+): Promise<OpenStoreResult> {
   const {getStoreInfo: getInfo, openURL} = {...defaultDependencies, ...dependencies}
 
   const info = await getInfo({store: options.store})
   const url = storefrontUrl(info)
 
   const opened = await openURL(url)
-  if (opened) {
-    renderInfo({headline: `Opening the storefront for ${options.store} in your browser.`})
-    return
-  }
-
-  renderInfo({
-    headline: `Browser didn't open automatically. Open the storefront manually:`,
-    body: [outputContent`${outputToken.link(url, url)}`.value],
-  })
+  return {store: options.store, url, opened}
 }
 
 function storefrontUrl(info: StoreInfoResult): string {
