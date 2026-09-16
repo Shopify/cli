@@ -1,6 +1,7 @@
 import {ExtensionInstance} from '../extension-instance.js'
-import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {placeholderAppConfiguration} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testDeveloperPlatformClient, testOrganizationApp} from '../../app/app.test-data.js'
+import {RemoteSpecification} from '../../../api/graphql/extension_specifications.js'
+import {fetchSpecifications} from '../../../services/generate/fetch-extension-specifications.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -8,8 +9,34 @@ import {describe, expect, test} from 'vitest'
 describe('flow_trigger_lifecycle_callback', () => {
   test('resolves relative URLs against the app URL for deployment and the tunnel URL for dev', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      const allSpecs = await loadLocalExtensionsSpecifications()
+      const remoteSpec: RemoteSpecification = {
+        name: 'Flow trigger lifecycle callback',
+        externalName: 'Flow trigger lifecycle callback',
+        identifier: 'flow_trigger_lifecycle_callback',
+        externalIdentifier: 'flow_trigger_lifecycle_callback',
+        experience: 'extension',
+        managementExperience: 'cli',
+        gated: false,
+        registrationLimit: 1,
+        uidStrategy: 'uuid',
+        validationSchema: {
+          jsonSchema: JSON.stringify({
+            type: 'object',
+            properties: {
+              name: {type: 'string'},
+              url: {type: 'string', pattern: '^(https://|/[^/])'},
+            },
+            required: ['url'],
+            additionalProperties: false,
+          }),
+        },
+      }
+      const allSpecs = await fetchSpecifications({
+        developerPlatformClient: testDeveloperPlatformClient({specifications: async () => [remoteSpec]}),
+        app: testOrganizationApp(),
+      })
       const specification = allSpecs.find((spec) => spec.identifier === 'flow_trigger_lifecycle_callback')!
+      expect(specification.parseConfigurationObject({url: 42}).state).toBe('error')
       const parsed = specification.parseConfigurationObject({
         type: 'flow_trigger_lifecycle_callback',
         name: 'Lifecycle callback',
