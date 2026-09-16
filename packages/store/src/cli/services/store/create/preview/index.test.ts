@@ -1,4 +1,5 @@
 import {createPreviewStoreCommand} from './index.js'
+import {createPreviewStoreJsonOutputSchema} from './types.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../../auth/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import type {PreviewStoreClientOptions} from './client.js'
@@ -57,7 +58,13 @@ describe('preview store create service', () => {
         country: 'US',
         storefrontUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
       },
+      next_steps: [
+        'Use `shopify store open --store x12y45z.myshopify.com` to preview the storefront.',
+        'Use `shopify store execute --store x12y45z.myshopify.com` to add products, collections, pages, and more.',
+        'Use `shopify theme pull --store x12y45z.myshopify.com` and `shopify theme push --store x12y45z.myshopify.com` to edit your store design.',
+      ],
     })
+    expect(createPreviewStoreJsonOutputSchema.validate(result)).toEqual(result)
   })
 
   test('uses the shop id as the preview user id when no placeholder account uuid is returned', async () => {
