@@ -10,6 +10,7 @@ import {
 } from './ui.js'
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
+import {runWithCommandEvents} from './command-events.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {TokenizedString} from './output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -424,6 +425,146 @@ describe('keypress', async () => {
 })
 
 describe('renderSingleTask', async () => {
+  test.each(['text', 'json'] as const)('emits correlated progress in %s mode', async (outputMode) => {
+    const sink = vi.fn()
+
+    await runWithCommandEvents({sink, outputMode}, () =>
+      renderSingleTask({
+        title: new TokenizedString('Creating store'),
+        task: async (updateStatus) => {
+          updateStatus(new TokenizedString('Saving session'))
+          return 'store'
+        },
+      }),
+    )
+
+    expect(sink).toHaveBeenCalledTimes(3)
+    const operation = sink.mock.calls[0]![0].operation
+    expect(operation).toEqual(expect.any(String))
+    expect(sink.mock.calls).toEqual([
+      [
+        expect.objectContaining({type: 'progress', operation, status: 'started', message: 'Creating store'}),
+        {alreadyRendered: true},
+      ],
+      [
+        expect.objectContaining({type: 'progress', operation, status: 'updated', message: 'Saving session'}),
+        {alreadyRendered: true},
+      ],
+      [
+        expect.objectContaining({
+          type: 'progress',
+          operation,
+          status: 'completed',
+          message: 'Saving session',
+          current: 1,
+          total: 1,
+        }),
+        {alreadyRendered: true},
+      ],
+    ])
+  })
+
+  test('distinguishes concurrent JSON tasks with the same title', async () => {
+    const sink = vi.fn()
+
+    await runWithCommandEvents({sink, outputMode: 'json'}, () =>
+      Promise.all(
+        [1, 2].map(() =>
+          renderSingleTask({title: new TokenizedString('Uploading files'), task: async () => undefined}),
+        ),
+      ),
+    )
+
+    const events = sink.mock.calls.map(([event]) => event)
+    const operations = events.filter((event) => event.status === 'started').map((event) => event.operation)
+    expect(new Set(operations).size).toBe(2)
+    for (const operation of operations) {
+      expect(events.filter((event) => event.operation === operation).map((event) => event.status)).toEqual([
+        'started',
+        'completed',
+      ])
+    }
+  })
+
+  test('calls onAbort on SIGINT in JSON mode and removes the listener', async () => {
+    const listeners = process.listeners('SIGINT')
+    const onAbort = vi.fn()
+
+    await runWithCommandEvents({outputMode: 'json'}, () =>
+      renderSingleTask({
+        title: new TokenizedString('Waiting'),
+        onAbort,
+        task: async () => {
+          expect(process.listenerCount('SIGINT')).toBe(listeners.length + 1)
+          process.emit('SIGINT')
+          expect(onAbort).toHaveBeenCalledOnce()
+          expect(process.listeners('SIGINT')).toEqual(listeners)
+        },
+      }),
+    )
+
+    expect(process.listeners('SIGINT')).toEqual(listeners)
+  })
+
+  test.each([false, true])('removes the JSON abort listener when the task settles (failure: %s)', async (fails) => {
+    const listeners = process.listeners('SIGINT')
+    const onAbort = vi.fn()
+    const sink = vi.fn()
+    const error = new Error('Task failed')
+
+    const result = runWithCommandEvents({sink, outputMode: 'json'}, () =>
+      renderSingleTask({
+        title: new TokenizedString('Uploading files'),
+        onAbort,
+        task: async () => {
+          expect(process.listenerCount('SIGINT')).toBe(listeners.length + 1)
+          if (fails) throw error
+          return 'done'
+        },
+      }),
+    )
+
+    if (fails) {
+      await expect(result).rejects.toBe(error)
+      expect(sink.mock.calls.map(([event]) => event.status)).toEqual(['started'])
+    } else {
+      await expect(result).resolves.toBe('done')
+    }
+    expect(onAbort).not.toHaveBeenCalled()
+    expect(process.listeners('SIGINT')).toEqual(listeners)
+  })
+
+  test('preserves default SIGINT handling when a JSON task has no onAbort callback', async () => {
+    const listeners = process.listeners('SIGINT')
+
+    await runWithCommandEvents({outputMode: 'json'}, () =>
+      renderSingleTask({
+        title: new TokenizedString('Uploading files'),
+        task: async () => {
+          expect(process.listeners('SIGINT')).toEqual(listeners)
+        },
+      }),
+    )
+  })
+
+  test('uses progress events instead of task UI for JSON output', async () => {
+    const sink = vi.fn()
+    const write = vi.fn((_chunk, _encoding, callback: () => void) => callback())
+    const stdout = new Writable({write})
+
+    const result = await runWithCommandEvents({sink, outputMode: 'json'}, () =>
+      renderSingleTask({
+        title: new TokenizedString('Creating store'),
+        task: async () => 'store',
+        renderOptions: {stdout: stdout as unknown as NodeJS.WriteStream},
+      }),
+    )
+
+    expect(result).toBe('store')
+    expect(write).not.toHaveBeenCalled()
+    expect(sink).toHaveBeenCalledTimes(2)
+  })
+
   test('returns promise result when task resolves successfully', async () => {
     // Given
     const expectedResult = {id: 123, name: 'test-result'}
