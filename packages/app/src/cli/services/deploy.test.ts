@@ -796,7 +796,7 @@ describe('ImportExtensionsIfNeeded', () => {
         "App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:\n",
         '  - Extension 1\n  - Extension 2',
         '\n\nRun ',
-        {command: 'shopify app import-extensions'},
+        {command: 'shopify app import dashboard-extensions'},
         ' to add legacy extensions now?',
       ],
       confirmationMessage: 'Yes, add legacy extensions and deploy',

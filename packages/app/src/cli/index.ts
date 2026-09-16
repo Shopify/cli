@@ -24,6 +24,7 @@ import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
 import ImportExtensions from './commands/app/import-extensions.js'
+import ImportDashboardExtensions from './commands/app/import/dashboard-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
 import ConfigValidate from './commands/app/config/validate.js'
@@ -41,7 +42,8 @@ import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
-import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
+import ImportCustomDataDefinitions from './commands/app/import/custom-data-definitions.js'
+import ImportCustomDataDefinitionsDeprecated from './commands/app/import-custom-data-definitions.js'
 import OrganizationList from './commands/organization/list.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
@@ -61,7 +63,10 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:doctor': Doctor,
   'app:logs': Logs,
   'app:logs:sources': Sources,
-  'app:import-custom-data-definitions': ImportCustomDataDefinitions,
+  'app:import:custom-data-definitions': ImportCustomDataDefinitions,
+  'app:import:dashboard-extensions': ImportDashboardExtensions,
+  // Deprecated paths, kept registered (and hidden) so existing scripts keep working.
+  'app:import-custom-data-definitions': ImportCustomDataDefinitionsDeprecated,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,

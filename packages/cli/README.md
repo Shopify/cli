@@ -22,8 +22,8 @@
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app graphiql`](#shopify-app-graphiql)
-* [`shopify app import-custom-data-definitions`](#shopify-app-import-custom-data-definitions)
-* [`shopify app import-extensions`](#shopify-app-import-extensions)
+* [`shopify app import custom-data-definitions`](#shopify-app-import-custom-data-definitions)
+* [`shopify app import dashboard-extensions`](#shopify-app-import-dashboard-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app logs`](#shopify-app-logs)
@@ -1512,13 +1512,13 @@ EXAMPLES
   $ shopify app graphiql --store shop.myshopify.com --port 9123
 ```
 
-## `shopify app import-custom-data-definitions`
+## `shopify app import custom-data-definitions`
 
 Import metafield and metaobject definitions.
 
 ```
 USAGE
-  $ shopify app import-custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing]
+  $ shopify app import custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing]
     [--json-schema] [--no-color] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
@@ -1569,13 +1569,13 @@ DESCRIPTION
   definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
 ```
 
-## `shopify app import-extensions`
+## `shopify app import dashboard-extensions`
 
 Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+  $ shopify app import dashboard-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
     [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
